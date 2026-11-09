@@ -15,6 +15,17 @@ The container runs each phase as a separate pass over all beans, each pass in de
 Separate passes, not per-bean. Every bean's `load` has run before the first `enable`, and every bean
 exists before the first `load`.
 
+Steps 1-3 happen in `SurfContainer.startChild(owner)` and step 4 in `SurfContainer.enableFor(owner)`
+— two calls, because the platform has two phases and a bean's `enable` belongs in the server's,
+where the rest of the server exists. The container never chains them: asking for `enable` does not
+run `load` first.
+
+**A `Scope.SHARED` bean is the exception.** It is published into the root, where it outlives the
+container that declared it and serves every other application in the process, so it runs *both*
+phases at the moment it joins — inside `startChild`, before the declaring application's own beans
+load. Otherwise the root's contents would depend on which application happened to introduce it, and
+on that application reaching its enable phase at all.
+
 ```kotlin
 interface SurfComponent {
     suspend fun load() = Unit

@@ -122,6 +122,31 @@ that boundary by being published into the root with `Scope.SHARED`, and only tha
 One exception to "own beans first": a collection parameter is a union - it takes this container's
 candidates *and* the parents', because a registrar wants every handler in the process.
 
+## An application starts its own container
+
+surf-api starts the root. Everything else asks for a child, from its own lifecycle, through
+`SurfContainer` in `surf-api-di-api` - no implementation module needed:
+
+```kotlin
+class MyPlugin : SuspendingJavaPlugin() {
+    override suspend fun onLoadAsync() { SurfContainer.startChild(this) }
+    override suspend fun onEnableAsync() { SurfContainer.enableFor(this) }
+    override suspend fun onDisableAsync() { SurfContainer.stopFor(this) }
+}
+```
+
+`startChild` reads *this* application's bean metadata off its own classpath entry, builds the graph
+and runs `load`. `enableFor` runs `enable`. They are two calls because the platform has two phases:
+a bean's `enable` belongs in the server's enable phase, where the rest of the server exists, not in
+its load phase. `stopFor` runs `disable` in reverse and forgets the container, so the same owner
+could start again.
+
+Pass the application itself as the owner - the plugin instance, not its class. The owner is what
+the platform is asked about when the container needs a classloader, a logger or a data directory.
+
+A failure here is a startup failure: a bean the container cannot build, a cycle, an ambiguity. It
+throws rather than carrying on with a half-built container.
+
 ## `SurfComponent` is opt-in lifecycle
 
 Implement it only when the bean owns something that must be opened and closed. The container runs
@@ -130,8 +155,17 @@ the phases as separate passes over all beans, each in dependency order:
 1. every bean is constructed and injected
 2. every bean passes through the `BeanPostProcessor` chain
 3. `load()` on every bean
+
+...then, in the platform's *enable* phase:
+
 4. `enable()` on every bean
+
+...and on shutdown:
+
 5. `disable()` on every bean, **in reverse**
+
+Steps 1-3 are `startChild`, step 4 is `enableFor`, step 5 is `stopFor`. The phases are not chained:
+nothing runs `load` for you because you asked for `enable`.
 
 `load`, `enable` and `disable` all suspend and all default to doing nothing, so override
 only what you need.
