@@ -9,6 +9,10 @@ dependencies {
         exclude(libs.brigadier)
     }
     api(projects.surfApiInventoryApi)
+    // The configuration domain sits downstream of surf-api-core-api, so a consumer of
+    // surf-api-minestom reaches the config contracts through here, the way it reaches the
+    // shared inventory framework.
+    api(projects.surfApiConfigApi)
 
     compileOnlyApi(libs.minestom.server)
     api(libs.minestom.brigadier)

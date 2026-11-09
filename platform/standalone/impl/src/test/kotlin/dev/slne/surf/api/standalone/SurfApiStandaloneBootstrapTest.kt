@@ -1,6 +1,6 @@
 package dev.slne.surf.api.standalone
 
-import dev.slne.surf.api.core.config.SurfConfigApi
+import dev.slne.surf.api.config.SurfConfigApi
 import dev.slne.surf.api.core.reflection.SurfReflection
 import dev.slne.surf.api.di.SurfContainer
 import dev.slne.surf.api.shared.api.util.InternalSurfApi

@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.test.config;
 
-import dev.slne.surf.api.core.config.type.BooleanOrDefault;
+import dev.slne.surf.api.config.type.BooleanOrDefault;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 import org.spongepowered.configurate.objectmapping.meta.Matches;

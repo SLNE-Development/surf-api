@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.config
 
-import dev.slne.surf.api.core.config.SpongeYmlConfigClass
-import dev.slne.surf.api.core.config.migration.ConfigMigration
+import dev.slne.surf.api.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.migration.ConfigMigration
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.objectmapping.ConfigSerializable

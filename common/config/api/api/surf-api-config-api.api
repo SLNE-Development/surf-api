@@ -1,0 +1,526 @@
+public abstract interface annotation class dev/slne/surf/api/config/JsonConfigFileNamePattern : java/lang/annotation/Annotation {
+}
+
+public abstract class dev/slne/surf/api/config/SpongeConfigClass {
+	public synthetic fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun edit (ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun edit$default (Ldev/slne/surf/api/config/SpongeConfigClass;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun getConfig ()Ljava/lang/Object;
+	public abstract fun getManager ()Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun init ()V
+	public abstract fun isInitialized ()Z
+	public final fun reloadFromFile ()Ljava/lang/Object;
+	public final fun save ()V
+}
+
+public abstract class dev/slne/surf/api/config/SpongeJsonConfigClass : dev/slne/surf/api/config/SpongeConfigClass {
+	public fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)V
+	public final fun getManager ()Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun isInitialized ()Z
+}
+
+public abstract class dev/slne/surf/api/config/SpongeYmlConfigClass : dev/slne/surf/api/config/SpongeConfigClass {
+	public fun <init> (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)V
+	public final fun getManager ()Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun isInitialized ()Z
+}
+
+public abstract interface class dev/slne/surf/api/config/SurfConfigApi {
+	public static final field Companion Ldev/slne/surf/api/config/SurfConfigApi$Companion;
+	public abstract fun createSpongeJsonConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
+	public fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public abstract fun createSpongeJsonConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public abstract fun createSpongeYmlConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
+	public fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public abstract fun createSpongeYmlConfigManager (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public abstract fun getSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
+	public abstract fun getSpongeConfigManagerForConfig (Ljava/lang/Class;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public abstract fun reloadSpongeConfig (Ljava/lang/Class;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/config/SurfConfigApi$Companion {
+	public final fun getInstance ()Ldev/slne/surf/api/config/SurfConfigApi;
+}
+
+public final class dev/slne/surf/api/config/SurfConfigApi$DefaultImpls {
+	public static fun createSpongeJsonConfigManager (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public static fun createSpongeYmlConfigManager (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+}
+
+public final class dev/slne/surf/api/config/SurfConfigApiKt {
+	public static final synthetic fun createSpongeJsonConfigManager (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public static final synthetic fun createSpongeYmlConfigManager (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public static final fun getSurfConfigApi ()Ldev/slne/surf/api/config/SurfConfigApi;
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/YamlConfigFileNamePattern : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/Contains : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/Contains$Companion;
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/constraints/Contains$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/Directory : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/Directory$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/Directory$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/DisallowValues : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/DisallowValues$Companion;
+	public abstract fun values ()[Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/constraints/DisallowValues$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/EndsWith : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/EndsWith$Companion;
+	public abstract fun suffix ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/constraints/EndsWith$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/ExistingFile : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/ExistingFile$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/ExistingFile$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MaxDuration : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MaxDuration$Companion;
+	public abstract fun seconds ()J
+}
+
+public final class dev/slne/surf/api/config/constraints/MaxDuration$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MaxLength : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MaxLength$Companion;
+	public abstract fun max ()I
+}
+
+public final class dev/slne/surf/api/config/constraints/MaxLength$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MaxNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MaxNumber$Companion;
+	public abstract fun max ()D
+}
+
+public final class dev/slne/surf/api/config/constraints/MaxNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MaxSize : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MaxSize$Companion;
+	public abstract fun max ()I
+}
+
+public final class dev/slne/surf/api/config/constraints/MaxSize$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MinDuration : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MinDuration$Companion;
+	public abstract fun seconds ()J
+}
+
+public final class dev/slne/surf/api/config/constraints/MinDuration$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MinLength : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MinLength$Companion;
+	public abstract fun min ()I
+}
+
+public final class dev/slne/surf/api/config/constraints/MinLength$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MinNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MinNumber$Companion;
+	public abstract fun min ()D
+}
+
+public final class dev/slne/surf/api/config/constraints/MinNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/MinSize : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/MinSize$Companion;
+	public abstract fun min ()I
+}
+
+public final class dev/slne/surf/api/config/constraints/MinSize$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/Namespace : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/Namespace$Companion;
+	public abstract fun namespace ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/constraints/Namespace$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/NegativeNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/NegativeNumber$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/NegativeNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/NoDuplicates : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/NoDuplicates$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/NoDuplicates$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/NotBlank : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/NotBlank$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/NotBlank$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/NotEmpty : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/NotEmpty$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/NotEmpty$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/PositiveNumber : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/PositiveNumber$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/PositiveNumber$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/Range : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/Range$Companion;
+	public abstract fun max ()D
+	public abstract fun min ()D
+}
+
+public final class dev/slne/surf/api/config/constraints/Range$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/StartsWith : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/StartsWith$Companion;
+	public abstract fun prefix ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/constraints/StartsWith$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/Trimmed : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/Trimmed$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/Trimmed$Companion {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/constraints/WritablePath : java/lang/annotation/Annotation {
+	public static final field Companion Ldev/slne/surf/api/config/constraints/WritablePath$Companion;
+}
+
+public final class dev/slne/surf/api/config/constraints/WritablePath$Companion {
+}
+
+public final class dev/slne/surf/api/config/manager/LoadConfigException : java/lang/RuntimeException {
+	public static final field Companion Ldev/slne/surf/api/config/manager/LoadConfigException$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public fun <init> (Lorg/spongepowered/configurate/ConfigurateException;)V
+}
+
+public final class dev/slne/surf/api/config/manager/LoadConfigException$Companion {
+}
+
+public final class dev/slne/surf/api/config/manager/SerializationConfigException : java/lang/RuntimeException {
+	public static final field Companion Ldev/slne/surf/api/config/manager/SerializationConfigException$Companion;
+	public fun <init> (Lorg/spongepowered/configurate/serialize/SerializationException;)V
+}
+
+public final class dev/slne/surf/api/config/manager/SerializationConfigException$Companion {
+}
+
+public final class dev/slne/surf/api/config/manager/SpongeConfigManager {
+	public static final field Companion Ldev/slne/surf/api/config/manager/SpongeConfigManager$Companion;
+	public field config Ljava/lang/Object;
+	public final fun addMigration (ILdev/slne/surf/api/config/migration/ConfigMigration;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun addMigration (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun edit (ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun edit$default (Ldev/slne/surf/api/config/manager/SpongeConfigManager;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun migrations ()Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;
+	public final fun reloadFromFile ()Ljava/lang/Object;
+	public final fun save ()V
+}
+
+public final class dev/slne/surf/api/config/manager/SpongeConfigManager$Companion {
+	public final fun json (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun json (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public static synthetic fun json$default (Ldev/slne/surf/api/config/manager/SpongeConfigManager$Companion;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;ILjava/lang/Object;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun yaml (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public final fun yaml (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+	public static synthetic fun yaml$default (Ldev/slne/surf/api/config/manager/SpongeConfigManager$Companion;Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;ILjava/lang/Object;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
+}
+
+public abstract interface class dev/slne/surf/api/config/migration/ConfigMigration {
+	public abstract fun migrate (Lorg/spongepowered/configurate/ConfigurationNode;)V
+}
+
+public final class dev/slne/surf/api/config/migration/ConfigMigrationBuilder {
+	public static final field Companion Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder$Companion;
+	public static final field DEFAULT_VERSION_KEY Ljava/lang/String;
+	public fun <init> ()V
+	public final fun buildTransformation ()Lorg/spongepowered/configurate/transformation/ConfigurationTransformation$Versioned;
+	public final fun hasMigrations ()Z
+	public final fun latestVersion ()I
+	public final fun migrate (Lorg/spongepowered/configurate/ConfigurationNode;)Ldev/slne/surf/api/config/migration/MigrationResult;
+	public final fun migration (ILdev/slne/surf/api/config/migration/ConfigMigration;)Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;
+	public final fun migration (ILkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;
+	public final fun versionKey ([Ljava/lang/Object;)Ldev/slne/surf/api/config/migration/ConfigMigrationBuilder;
+}
+
+public final class dev/slne/surf/api/config/migration/ConfigMigrationBuilder$Companion {
+}
+
+public final class dev/slne/surf/api/config/migration/MigrationResult {
+	public fun <init> (IIZ)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Z
+	public final fun copy (IIZ)Ldev/slne/surf/api/config/migration/MigrationResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/config/migration/MigrationResult;IIZILjava/lang/Object;)Ldev/slne/surf/api/config/migration/MigrationResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFromVersion ()I
+	public final fun getMigrated ()Z
+	public final fun getToVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class dev/slne/surf/api/config/serializer/SpongeConfigSerializers {
+	public fun <init> ()V
+	public final fun buildSerializersModule ()Ljava/util/function/Consumer;
+	public final fun getClassSerializers ()Ljava/util/Map;
+	public final fun getTypeTokenSerializers ()Ljava/util/Map;
+	public final fun registerClassSerializer (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	protected fun registerDefaults (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;)V
+	public final fun registerTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
+	public final fun unregisterSerializer (Ljava/lang/Class;)V
+	public final fun unregisterTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;)V
+}
+
+public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializers$ComponentSerializer : org/spongepowered/configurate/serialize/ScalarSerializer$Annotated {
+	public fun <init> ()V
+	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Lnet/kyori/adventure/text/Component;
+	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializers$LinkedListSerializer : org/spongepowered/configurate/serialize/AbstractListChildSerializer {
+	public static final field Companion Ldev/slne/surf/api/config/serializer/SpongeConfigSerializers$LinkedListSerializer$Companion;
+	public fun <init> ()V
+	public synthetic fun createNew (ILjava/lang/reflect/AnnotatedType;)Ljava/lang/Object;
+	public synthetic fun deserializeSingle (ILjava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun forEachElement (Ljava/lang/Object;Lorg/spongepowered/configurate/util/CheckedConsumer;)V
+}
+
+public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializers$LinkedListSerializer$Companion {
+	public final fun getTYPE ()Lio/leangen/geantyref/TypeToken;
+}
+
+public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializersKt {
+	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/api/config/serializer/SpongeConfigSerializers;
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/serializer/collection/map/ThrowExceptions : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/serializer/collection/map/WriteKeyBack : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/api/config/type/BooleanOrDefault {
+	public static final field Companion Ldev/slne/surf/api/config/type/BooleanOrDefault$Companion;
+	public static final field FALSE Ldev/slne/surf/api/config/type/BooleanOrDefault;
+	public static final field TRUE Ldev/slne/surf/api/config/type/BooleanOrDefault;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/config/type/BooleanOrDefault;
+	public final fun component1 ()Ljava/lang/Boolean;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Boolean;
+	public fun hashCode ()I
+	public final fun or (Z)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/BooleanOrDefault$Companion {
+}
+
+public final class dev/slne/surf/api/config/type/ConfigDuration {
+	public static final field Companion Ldev/slne/surf/api/config/type/ConfigDuration$Companion;
+	public synthetic fun <init> (JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLjava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun asDuration-UwyO8pc ()J
+	public final fun component1-UwyO8pc ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy-VtjQ1oo (JLjava/lang/String;)Ldev/slne/surf/api/config/type/ConfigDuration;
+	public static synthetic fun copy-VtjQ1oo$default (Ldev/slne/surf/api/config/type/ConfigDuration;JLjava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/config/type/ConfigDuration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRawValue ()Ljava/lang/String;
+	public final fun getValue-UwyO8pc ()J
+	public fun hashCode ()I
+	public final fun inWholeSeconds ()J
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/ConfigDuration$Companion {
+	public final fun format-LRDsOJo (J)Ljava/lang/String;
+	public final fun parse (Ljava/lang/String;)Ldev/slne/surf/api/config/type/ConfigDuration;
+}
+
+public final class dev/slne/surf/api/config/type/DurationOrDisabled {
+	public static final field Companion Ldev/slne/surf/api/config/type/DurationOrDisabled$Companion;
+	public static final field DISABLED Ldev/slne/surf/api/config/type/DurationOrDisabled;
+	public final fun component1-FghU774 ()Lkotlin/time/Duration;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue-FghU774 ()Lkotlin/time/Duration;
+	public fun hashCode ()I
+	public final fun isDisabled ()Z
+	public final fun or-wmV0flA (J)J
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/DurationOrDisabled$Companion {
+}
+
+public final class dev/slne/surf/api/config/type/StringOrDefault {
+	public static final field Companion Ldev/slne/surf/api/config/type/StringOrDefault$Companion;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/config/type/StringOrDefault;
+	public final fun component1 ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun or (Ljava/lang/String;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/StringOrDefault$Companion {
+	public final fun of (Ljava/lang/String;)Ldev/slne/surf/api/config/type/StringOrDefault;
+}
+
+public abstract interface annotation class dev/slne/surf/api/config/type/number/BelowZeroToEmpty : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/config/type/number/DoubleOr {
+	public fun doubleValue ()D
+	public abstract fun getValue ()Ljava/lang/Double;
+	public abstract fun or (D)D
+}
+
+public final class dev/slne/surf/api/config/type/number/DoubleOr$Default : dev/slne/surf/api/config/type/number/DoubleOr {
+	public static final field Companion Ldev/slne/surf/api/config/type/number/DoubleOr$Default$Companion;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/config/type/number/DoubleOr$Default;
+	public fun <init> (Ljava/lang/Double;)V
+	public final fun component1 ()Ljava/lang/Double;
+	public final fun copy (Ljava/lang/Double;)Ldev/slne/surf/api/config/type/number/DoubleOr$Default;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/config/type/number/DoubleOr$Default;Ljava/lang/Double;ILjava/lang/Object;)Ldev/slne/surf/api/config/type/number/DoubleOr$Default;
+	public fun doubleValue ()D
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Double;
+	public fun hashCode ()I
+	public fun or (D)D
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/number/DoubleOr$Default$Companion {
+}
+
+public final class dev/slne/surf/api/config/type/number/DoubleOr$DefaultImpls {
+	public static fun doubleValue (Ldev/slne/surf/api/config/type/number/DoubleOr;)D
+}
+
+public final class dev/slne/surf/api/config/type/number/DoubleOr$Disabled : dev/slne/surf/api/config/type/number/DoubleOr {
+	public static final field Companion Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled$Companion;
+	public static final field DISABLED Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled;
+	public fun <init> (Ljava/lang/Double;)V
+	public final fun component1 ()Ljava/lang/Double;
+	public final fun copy (Ljava/lang/Double;)Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled;Ljava/lang/Double;ILjava/lang/Object;)Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled;
+	public fun doubleValue ()D
+	public final fun enabled ()Z
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Double;
+	public fun hashCode ()I
+	public fun or (D)D
+	public final fun test (Lkotlin/jvm/functions/Function1;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/number/DoubleOr$Disabled$Companion {
+}
+
+public final class dev/slne/surf/api/config/type/number/DoubleOr$Disabled$Serializer : org/spongepowered/configurate/serialize/ScalarSerializer$Annotated {
+	public static final field INSTANCE Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled$Serializer;
+	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled;
+	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
+	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/api/config/type/number/IntOr {
+	public abstract fun getValue ()Ljava/lang/Integer;
+	public fun intValue ()I
+	public fun isDefined ()Z
+	public abstract fun or (I)I
+}
+
+public final class dev/slne/surf/api/config/type/number/IntOr$Default : dev/slne/surf/api/config/type/number/IntOr {
+	public static final field Companion Ldev/slne/surf/api/config/type/number/IntOr$Default$Companion;
+	public static final field USE_DEFAULT Ldev/slne/surf/api/config/type/number/IntOr$Default;
+	public fun <init> (Ljava/lang/Integer;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;)Ldev/slne/surf/api/config/type/number/IntOr$Default;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/config/type/number/IntOr$Default;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/slne/surf/api/config/type/number/IntOr$Default;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun intValue ()I
+	public fun isDefined ()Z
+	public fun or (I)I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/number/IntOr$Default$Companion {
+}
+
+public final class dev/slne/surf/api/config/type/number/IntOr$DefaultImpls {
+	public static fun intValue (Ldev/slne/surf/api/config/type/number/IntOr;)I
+	public static fun isDefined (Ldev/slne/surf/api/config/type/number/IntOr;)Z
+}
+
+public final class dev/slne/surf/api/config/type/number/IntOr$Disabled : dev/slne/surf/api/config/type/number/IntOr {
+	public static final field Companion Ldev/slne/surf/api/config/type/number/IntOr$Disabled$Companion;
+	public static final field DISABLED Ldev/slne/surf/api/config/type/number/IntOr$Disabled;
+	public fun <init> (Ljava/lang/Integer;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun copy (Ljava/lang/Integer;)Ldev/slne/surf/api/config/type/number/IntOr$Disabled;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/config/type/number/IntOr$Disabled;Ljava/lang/Integer;ILjava/lang/Object;)Ldev/slne/surf/api/config/type/number/IntOr$Disabled;
+	public final fun enabled ()Z
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getValue ()Ljava/lang/Integer;
+	public fun hashCode ()I
+	public fun intValue ()I
+	public fun isDefined ()Z
+	public fun or (I)I
+	public final fun test (Lkotlin/jvm/functions/Function1;)Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/config/type/number/IntOr$Disabled$Companion {
+}
+

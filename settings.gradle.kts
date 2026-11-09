@@ -76,6 +76,9 @@ includeModule("common/inventory/api")
 // Only the api half exists: the serializers, the serializer modules and the codec extensions are
 // declarations with no runtime wiring, so there is nothing for an impl module to hold.
 includeModule("common/serialization/api")
+// Both halves exist: the contracts, the constraint annotations and the helper types are compiled
+// against, and `SurfConfigApi` is a bean whose implementation has to ship somewhere.
+includePair("common", "config")
 
 // platform
 includePair("platform", "paper")

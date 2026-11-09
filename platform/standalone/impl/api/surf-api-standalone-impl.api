@@ -7,7 +7,7 @@ public final class dev/slne/surf/api/standalone/SurfApiStandaloneBootstrap {
 	public final fun shutdown (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/api/standalone/impl/StandaloneSpongeConfigSerializers : dev/slne/surf/api/core/config/serializer/SpongeConfigSerializers {
+public final class dev/slne/surf/api/standalone/impl/StandaloneSpongeConfigSerializers : dev/slne/surf/api/config/serializer/SpongeConfigSerializers {
 	public fun <init> ()V
 }
 

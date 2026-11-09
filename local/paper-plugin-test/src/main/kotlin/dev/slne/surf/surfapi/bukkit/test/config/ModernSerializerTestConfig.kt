@@ -1,15 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.test.config
 
-import dev.slne.surf.api.core.config.SpongeYmlConfigClass
-import dev.slne.surf.api.core.config.constraints.*
-import dev.slne.surf.api.core.config.serializer.collection.map.ThrowExceptions
-import dev.slne.surf.api.core.config.serializer.collection.map.WriteKeyBack
-import dev.slne.surf.api.core.config.type.BooleanOrDefault
-import dev.slne.surf.api.core.config.type.ConfigDuration
-import dev.slne.surf.api.core.config.type.DurationOrDisabled
-import dev.slne.surf.api.core.config.type.number.BelowZeroToEmpty
-import dev.slne.surf.api.core.config.type.number.DoubleOr
-import dev.slne.surf.api.core.config.type.number.IntOr
+import dev.slne.surf.api.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.constraints.*
+import dev.slne.surf.api.config.serializer.collection.map.ThrowExceptions
+import dev.slne.surf.api.config.serializer.collection.map.WriteKeyBack
+import dev.slne.surf.api.config.type.BooleanOrDefault
+import dev.slne.surf.api.config.type.ConfigDuration
+import dev.slne.surf.api.config.type.DurationOrDisabled
+import dev.slne.surf.api.config.type.number.BelowZeroToEmpty
+import dev.slne.surf.api.config.type.number.DoubleOr
+import dev.slne.surf.api.config.type.number.IntOr
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component

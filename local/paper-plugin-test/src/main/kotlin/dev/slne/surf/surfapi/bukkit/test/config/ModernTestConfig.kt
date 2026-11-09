@@ -1,7 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.config
 
-import dev.slne.surf.api.core.config.SpongeYmlConfigClass
-import dev.slne.surf.api.core.config.type.BooleanOrDefault
+import dev.slne.surf.api.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.type.BooleanOrDefault
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment

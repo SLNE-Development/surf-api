@@ -6,6 +6,10 @@ plugins {
 dependencies {
     api(projects.surfApiCoreApi)
     api(projects.surfApiInventoryApi)
+    // The configuration domain sits downstream of surf-api-core-api, so a consumer of
+    // surf-api-paper reaches the config contracts through here, the way it reaches the
+    // shared inventory framework.
+    api(projects.surfApiConfigApi)
     compileOnly(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.commandapi.paper)

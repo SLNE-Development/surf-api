@@ -5,6 +5,9 @@ plugins {
 
 dependencies {
     api(projects.surfApiCoreApi)
+    // The configuration domain sits downstream of surf-api-core-api, so a consumer of
+    // surf-api-velocity reaches the config contracts through here.
+    api(projects.surfApiConfigApi)
     api(libs.mccoroutine.velocity.api)
     api(libs.mccoroutine.velocity.core)
     compileOnlyApi(libs.velocity.api)
