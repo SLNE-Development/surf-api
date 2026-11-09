@@ -90,12 +90,15 @@ internal class BeanContainerImpl(
     suspend fun stop(onFailure: (String, Throwable) -> Unit) {
         if (!started) return
 
-        instances.entries.reversed().forEach { (id, instance) ->
-            processors.asReversed().forEach { processor ->
-                runCatching { processor.beforeDestruction(instance, id) }
-                    .onFailure { onFailure(id, it) }
+        // A post processor never sees another processor, on the way up or on the way down.
+        instances.entries.reversed()
+            .filterNot { (_, instance) -> processors.any { it === instance } }
+            .forEach { (id, instance) ->
+                processors.asReversed().forEach { processor ->
+                    runCatching { processor.beforeDestruction(instance, id) }
+                        .onFailure { onFailure(id, it) }
+                }
             }
-        }
 
         lifecycle.asReversed().forEach { component ->
             runCatching { component.disable() }

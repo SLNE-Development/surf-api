@@ -31,4 +31,17 @@ enum class Scope {
      * it down nor unregister it again.
      */
     PROTOTYPE,
+
+    /**
+     * Takes the scope of the bean that declares it.
+     *
+     * Only meaningful on [Bean], where it is the default: a factory on a [SHARED] connection
+     * publishes a shared bean without having to repeat the scope, and one on an ordinary bean stays
+     * in its container. It exists as a value of its own so that "not stated" and an explicitly
+     * stated scope are different things — with `SINGLETON` as the default they would be the same
+     * value, and inheritance could only be guessed at.
+     *
+     * A bean class never carries it; the container resolves it away before anything sees it.
+     */
+    INHERIT,
 }

@@ -9,7 +9,7 @@ package dev.slne.surf.api.di
  * ```kotlin
  * @Service(scope = Scope.SHARED)
  * class RedisConnection : SurfComponent {
- *     @Bean(scope = Scope.SHARED)
+ *     @Bean
  *     val api: RedisApi = RedisApi.create()
  *
  *     override suspend fun enable() = api.freezeAndConnect()
@@ -25,15 +25,13 @@ package dev.slne.surf.api.di
  * explicitly rather than letting it be inferred — an inferred implementation type would be
  * published instead of the contract.
  *
- * The published bean's [scope] is its own and defaults to [Scope.SINGLETON] — it is not inherited
- * from the declaring bean, so a factory on a [Scope.SHARED] bean that should also be shared has to
- * say `@Bean(scope = Scope.SHARED)`. Inheriting would read better but cannot be expressed: an
- * omitted scope and an explicit `SINGLETON` are the same value, so the two cases are
- * indistinguishable.
+ * [scope] defaults to [Scope.INHERIT], so a factory on a [Scope.SHARED] bean publishes a shared
+ * bean without repeating it — which is what makes one connection visible to every application in
+ * the process. State a scope to override that.
  *
  * A factory carries no conditions of its own. Guard the declaring bean instead: if it is not
  * created, neither is anything it publishes.
  */
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Bean(val scope: Scope = Scope.SINGLETON)
+annotation class Bean(val scope: Scope = Scope.INHERIT)

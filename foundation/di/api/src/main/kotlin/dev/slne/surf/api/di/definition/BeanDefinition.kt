@@ -98,7 +98,7 @@ data class FactoryDefinition(
     val kind: FactoryKind,
     val returnType: String,
     val provides: List<String> = emptyList(),
-    val scope: Scope = Scope.SINGLETON,
+    val scope: Scope = Scope.INHERIT,
     val qualifier: String? = null,
     val primary: Boolean = false,
     val priority: Int = 0,

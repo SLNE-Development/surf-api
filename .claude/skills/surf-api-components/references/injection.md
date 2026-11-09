@@ -83,8 +83,9 @@ annotation class Bean(val scope: Scope = Scope.SINGLETON)
   bean.
 - `scope` defaults to `Scope.SINGLETON`. Set it explicitly when the published value should live in
   the root container: `@Bean(scope = Scope.SHARED)`.
-- A factory can carry `@Qualifier`, `@Primary`, `@Priority` and any `@ConditionalOn*` - all of them
-  target properties and functions as well as classes.
+- A factory can carry `@Qualifier`, `@Primary` and `@Priority`; those are recorded per factory.
+  Conditions are not - put a `@ConditionalOn*` on the declaring class instead
+  (see `references/conditions.md`).
 - In failure messages a factory is identified as `DeclaringClass#memberName`.
 
 ## Qualifier, primary, priority

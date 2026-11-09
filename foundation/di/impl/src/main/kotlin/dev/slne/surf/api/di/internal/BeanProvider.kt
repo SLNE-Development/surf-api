@@ -46,7 +46,9 @@ internal data class ClassProvider(override val definition: BeanDefinition) : Bea
     override val qualifier get() = definition.qualifier
     override val primary get() = definition.primary
     override val priority get() = definition.priority
-    override val scope get() = definition.scope
+    override val scope
+        get() = definition.scope.takeUnless { it == Scope.INHERIT } ?: Scope.SINGLETON
+
     override val dependencies get() = definition.ctorParams
 }
 
@@ -66,7 +68,10 @@ internal data class FactoryProvider(
     override val qualifier get() = factory.qualifier
     override val primary get() = factory.primary
     override val priority get() = factory.priority
-    override val scope get() = factory.scope
+    // A factory's scope may say it takes the declaring bean's, which is resolved here so nothing
+    // downstream ever meets Scope.INHERIT.
+    override val scope
+        get() = factory.scope.takeUnless { it == Scope.INHERIT } ?: definition.scope
     override val dependencies
         get() = listOf(InjectionPoint(type = definition.className)) + factory.params
 }

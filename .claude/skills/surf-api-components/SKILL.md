@@ -38,7 +38,8 @@ annotation class Projection
 class BalanceProjection(private val cache: BalanceCache)
 ```
 
-Lifecycle is **separate and opt-in** through `SurfComponent` - a plain service never implements it.
+Lifecycle is **separate and opt-in** through `SurfComponent` - a bean with nothing to open or close
+does not implement it.
 
 The container is eager: starting it constructs every non-`PROTOTYPE` bean it owns. Which classes
 those are comes from compile-time metadata, one file per module under `META-INF/surf-api/beans`,
@@ -132,7 +133,8 @@ the phases as separate passes over all beans, each in dependency order:
 4. `enable()` on every bean
 5. `disable()` on every bean, **in reverse**
 
-All three are `suspend`, all three default to doing nothing, so override only what you need.
+`load`, `enable` and `disable` all suspend and all default to doing nothing, so override
+only what you need.
 
 **Why the gap between `load` and `enable` exists:** it is what makes a two-phase resource work. A
 connection is created or opened in `load` while the beans that register against it are still being
@@ -165,8 +167,10 @@ A bean whose condition does not hold is **skipped: never constructed, never inje
 point that requires it then fails. That is deliberate - a missing bean is a configuration error, not
 something to paper over. Make the parameter `T?` if the absence is legitimate.
 
-Every annotation is repeatable, every one has to hold, and all of them work on a class, on an
-annotation class (so a stereotype can carry a condition) and on a `@Bean` member.
+Every annotation is repeatable and every one has to hold. Put them on the class, or on an
+annotation class so a stereotype carries the condition. They also target a property or function,
+but guard the **declaring class** rather than a single `@Bean` member - see
+`references/conditions.md`.
 
 | Annotation | Holds when |
 | --- | --- |
@@ -207,7 +211,7 @@ class Writer(@Qualifier("fallback") private val storage: Storage)
 | Message | Means | Do |
 | --- | --- | --- |
 | `Cyclic dependency between beans: A -> B -> A. Break it by taking one of these as Lazy<T>.` | the path is spelled out provider by provider | pick the step in that path where the value is genuinely needed later and make that parameter `Lazy<T>`. If both sides need each other at construction, the split is wrong - a `BeanPostProcessor` often removes the edge entirely |
-| `<Type> is provided by several beans and none is marked @Primary: <ids>` | two candidates, nothing to choose between them | `@Primary` on the one that should win, or `@Qualifier` at the injection point. The ids name the candidates; a factory's id is `DeclaringClass#memberName` |
+| `<Type> is provided by several beans and none is marked @Primary: <ids>` | several candidates, nothing to choose between them | `@Primary` on the one that should win, or `@Qualifier` at the injection point. The ids name the candidates; a factory's id is `DeclaringClass#memberName` |
 | `<Type> is provided by several beans marked @Primary: <ids>` | two `@Primary` for one type | remove one |
 | `<Consumer> needs <Type>, but no bean provides it.` | the consumer is named first, the missing type second | annotate the implementation, publish it with `@Bean`, make the parameter nullable - or check whether a condition skipped the bean that would have provided it |
 | `No bean provides <Type> in the container for <owner>.` | the same, from an explicit `bean()` lookup | as above; also check you are asking the right container - lookups never walk down or sideways |

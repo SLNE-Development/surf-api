@@ -21,6 +21,9 @@ dependencies {
     implementation(libs.auto.service.annotations)
     api(projects.surfApiInternal)
 
+    // The container's annotations and the bean metadata schema the bean processor writes.
+    api(projects.surfApiDiApi)
+
     // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
     implementation("com.squareup:kotlinpoet:2.4.0")
     implementation("com.palantir.javapoet:javapoet:0.22.0")

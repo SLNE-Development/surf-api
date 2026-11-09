@@ -7,6 +7,7 @@ import dev.slne.surf.api.di.condition.BeanConditionContext
 import dev.slne.surf.api.di.definition.BeanConditions
 import dev.slne.surf.api.di.definition.BeanDefinition
 import dev.slne.surf.api.di.definition.PropertyCondition
+import java.lang.reflect.Modifier
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -320,10 +321,19 @@ internal class ConditionEvaluator(
      */
     private fun instantiate(className: String, classLoader: ClassLoader): BeanCondition? {
         val conditionClass = Class.forName(className, false, classLoader)
-        conditionClass.kotlin.objectInstance?.let { return it as? BeanCondition }
+
+        // A condition is usually an `object`, and often a private one declared next to the bean it
+        // guards — which is the readable way to write one. `KClass.objectInstance` refuses a private
+        // object, so the INSTANCE field is read directly instead.
+        conditionClass.declaredFields
+            .find { it.name == "INSTANCE" && Modifier.isStatic(it.modifiers) }
+            ?.let { field ->
+                field.trySetAccessible()
+                return field.get(null) as? BeanCondition
+            }
 
         val constructor = conditionClass.getDeclaredConstructor()
-        if (!constructor.canAccess(null)) constructor.trySetAccessible()
+        constructor.trySetAccessible()
 
         return constructor.newInstance() as? BeanCondition
     }
