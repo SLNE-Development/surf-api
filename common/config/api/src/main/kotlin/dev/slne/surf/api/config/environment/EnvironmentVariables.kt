@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.environment
+package dev.slne.surf.api.config.environment
 
 import java.util.UUID
 import kotlin.time.Duration

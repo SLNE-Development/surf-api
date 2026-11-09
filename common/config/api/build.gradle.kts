@@ -1,6 +1,19 @@
 // surf-api's configuration surface: the Configurate loader presets and `SpongeConfigManager`, the
 // `SpongeConfigClass` companions, `SurfConfigApi`, the versioned migrations, the ~25 constraint
-// annotations, the three-state helper types and the `TypeSerializer`s that read and write them.
+// annotations, the three-state helper types and the `TypeSerializer`s that read and write them --
+// plus `environment`, the `env`/`EnvironmentVariables` surface for reading an environment variable
+// with conversion, validation and property delegates.
+//
+// `environment` arrived from `surf-api-core-api`, which had nothing left to keep it: not one of its
+// five files names a surf declaration at all -- `java.util.UUID`, `kotlin.properties`,
+// `kotlin.reflect.KProperty` and `kotlin.time.Duration` are its whole import list -- and no module
+// in the repository consumes it; it is a published surface for downstream plugins. It is filed here
+// rather than in a module of its own because `.claude/skills/surf-api-config` already documents it
+// as part of configuration, and reading `System.getenv` is not a domain. It must not be confused
+// with `core.server.component.environment`/`core.server.environment` in `surf-api-core-impl`:
+// `EnvironmentConfig` and `EnvironmentAccessor` there read `SURF_ENVIRONMENT` out of a `.env` file
+// for `@ConditionalOnEnvironment`, share not one import with these files and stay where the
+// `ContainerPlatform` implementations call them.
 //
 // This module used to carry a blanket `api(projects.surfApiCoreApi)` for two declarations:
 // `common.util.logger`, which `SpongeConfigManager` and `ConfigMigrationBuilder` log through, and

@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.environment
+package dev.slne.surf.api.config.environment
 
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadOnlyProperty

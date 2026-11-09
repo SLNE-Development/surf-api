@@ -1,4 +1,4 @@
-package dev.slne.surf.api.core.environment
+package dev.slne.surf.api.config.environment
 
 /**
  * Supplies raw environment-variable values.
