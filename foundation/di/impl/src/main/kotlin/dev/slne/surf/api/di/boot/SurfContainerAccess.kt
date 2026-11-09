@@ -34,6 +34,8 @@ class SurfContainerAccess : ContainerAccess {
 
     override fun of(owner: Any): BeanContainer? = installed?.containerOf(owner)
 
+    override val starting: Any? get() = installed?.starting
+
     @InternalSurfApi
     companion object {
 

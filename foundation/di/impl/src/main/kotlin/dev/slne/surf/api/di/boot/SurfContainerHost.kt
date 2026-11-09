@@ -50,8 +50,21 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
     @Volatile
     private var rootImpl: BeanContainerImpl? = null
 
+    @Volatile
+    private var startingOwner: Any? = null
+
     /** The process-wide container, or `null` until [startRoot] has returned. */
     val root: BeanContainer? get() = rootImpl
+
+    /**
+     * The application whose container is being built at this moment, or `null`.
+     *
+     * Only ever read to explain a failure. A container is unreachable while it is being built, and
+     * the one thing that reaches for it anyway is a static initialiser of a class the container is
+     * instantiating — which is a cycle rather than an ordering mistake. Knowing whether a build is
+     * in flight is what lets [dev.slne.surf.api.di.SurfContainer] say which of the two happened.
+     */
+    val starting: Any? get() = startingOwner
 
     /** The container for [owner], or `null` if it has none. */
     fun containerOf(owner: Any): BeanContainer? = containers[owner]
@@ -72,8 +85,9 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
         // Published only once `start` has returned. A root whose beans failed to build must not be
         // reachable: it would hand out a connection nobody opened, it could never be retried
         // because a root would already exist, and children would be built on top of it.
-        val container = build(owner, parent = null)
-        container.start()
+        val container = startBuilding(owner) {
+            build(owner, parent = null).also { it.start() }
+        }
 
         rootImpl = container
         containers[owner] = container
@@ -103,13 +117,30 @@ class SurfContainerHost(private val platform: ContainerPlatform) {
 
         // Published after `start`, for the same reason as the root: a container whose beans failed
         // to build would otherwise be handed out by containerOf, and a retry would be refused.
-        val container = build(owner, parent)
-        container.start()
+        val container = startBuilding(owner) {
+            build(owner, parent).also { it.start() }
+        }
 
         containers[owner] = container
         order += owner
 
         return container
+    }
+
+    /**
+     * Runs [build] with [owner] named as the application currently being built.
+     *
+     * The name is cleared on the way out whether the build succeeded or threw, so a failed start
+     * does not leave the host claiming to be busy forever — the owner is allowed to try again, and
+     * a later unrelated failure must not be explained as a cycle.
+     */
+    private inline fun <T> startBuilding(owner: Any, build: () -> T): T {
+        startingOwner = owner
+        try {
+            return build()
+        } finally {
+            startingOwner = null
+        }
     }
 
     /**

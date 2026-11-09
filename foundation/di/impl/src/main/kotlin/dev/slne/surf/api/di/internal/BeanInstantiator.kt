@@ -27,8 +27,12 @@ internal fun interface BeanInstantiator {
 /**
  * Creates beans by reflection, loading their classes from [classLoader].
  *
- * Classes are loaded without initialising them until they are actually needed, so a bean a
- * condition rules out never runs its static initialiser.
+ * A class is looked up without being initialised; reading its object instance or calling its
+ * constructor is what initialises it. So a bean a condition rules out never runs its static
+ * initialiser, and one that is built runs it at the moment it is built — which is also the moment
+ * a static initialiser asking the container back for a bean becomes a cycle. The container cannot
+ * prevent that from here: creating an instance has to initialise the class. What it can do is let
+ * `SurfContainer` say so, which is why the host publishes the owner it is building.
  */
 internal class ReflectiveBeanInstantiator(private val classLoader: ClassLoader) : BeanInstantiator {
 
@@ -39,7 +43,7 @@ internal class ReflectiveBeanInstantiator(private val classLoader: ClassLoader) 
         }
 
     private fun instantiateClass(provider: ClassProvider, arguments: List<Any?>): Any {
-        val type = Class.forName(provider.definition.className, true, classLoader).kotlin
+        val type = Class.forName(provider.definition.className, false, classLoader).kotlin
 
         // An `object` has no constructor to call; its instance is the bean.
         type.objectInstance?.let { instance ->

@@ -53,11 +53,32 @@ object SurfContainer {
 
     /** The process-wide container. */
     val root: BeanContainer
-        get() = checkNotNull(access.root) {
-            "The root container has not been started yet. A bean was asked for while surf-api was " +
-                    "still loading — take it as a constructor parameter, or as a Lazy, so it is " +
-                    "resolved when it is used rather than when the class is loaded."
-        }
+        get() = access.root ?: error(unreachable())
+
+    /**
+     * Why there is no container to answer with.
+     *
+     * The two cases look the same from here and are not the same mistake. Asking before surf-api
+     * has started is an ordering problem in the caller. Asking *while* a container is being built
+     * is a cycle: the container is instantiating a bean class, and initialising that class ran a
+     * static initialiser that asked for a bean — most often a `companion object : Foo by someBean`
+     * in the very interface the bean implements, because that form has to read the bean to store
+     * it. Nothing can satisfy that request, so the message names the shape instead of the symptom.
+     */
+    private fun unreachable(): String {
+        val owner = access.starting
+            ?: return "The root container has not been started yet. A bean was asked for while " +
+                    "surf-api was still loading — take it as a constructor parameter, or as a " +
+                    "Lazy, so it is resolved when it is used rather than when the class is loaded."
+
+        return "A bean was asked for while the container for $owner was still being built, which " +
+                "nothing can answer: the container is part-way through creating its beans. This " +
+                "happens when initialising a bean's class runs a static initialiser that asks " +
+                "for a bean — in Kotlin, typically `companion object : Foo by someBean`, which " +
+                "has to read the bean to store it, in the same interface the bean implements. " +
+                "Hold the bean lazily instead (`val instance by surfBean<Foo>()` inside the " +
+                "companion), so the initialiser stores the lookup rather than performing it."
+    }
 
     /** The process-wide container, or `null` while surf-api is still loading. */
     val rootOrNull: BeanContainer? get() = access.root
@@ -81,6 +102,14 @@ interface ContainerAccess {
 
     /** The container for [owner], or `null` if there is none. */
     fun of(owner: Any): BeanContainer?
+
+    /**
+     * The application whose container is being built at this moment, or `null`.
+     *
+     * Read only to explain a failure, which is why it has a default: an implementation that cannot
+     * tell loses the better message and nothing else.
+     */
+    val starting: Any? get() = null
 }
 
 /**
