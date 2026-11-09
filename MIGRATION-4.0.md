@@ -132,15 +132,57 @@ published artifact:
 
 [fastutil]: https://fastutil.di.unimi.it/
 
-## 7. `requiredService` is being replaced by a container
+## 7. `requiredService` has been replaced by a container
 
-The service-loader lookup (`requiredService<T>()`) is being replaced by a dependency-injection
-container that works the way Spring's does: constructor injection, scopes, conditions, an
-explicit lifecycle and post processors.
+The service-loader lookup (`requiredService<T>()`) is gone from surf-api's own services, replaced
+by a dependency-injection container that works the way Spring's does: constructor injection,
+scopes, conditions, an explicit lifecycle and post processors.
 
-**This part of 4.0.0 is still being built.** It is listed here so the shape is known, not so you
-can migrate against it yet — the contracts are in `surf-api-di-api` and may still move. What is
-settled:
+**This part of 4.0.0 is being built, and the container now runs.** The root container starts on
+both platforms before anything else in surf-api loads, and all 40 of surf-api's own service
+lookups resolve through it. The contracts are in `surf-api-di-api` and may still move in detail,
+so the shape below is what to plan against rather than what to compile against today.
+
+What this changes for you, concretely:
+
+- **A surf-api service now resolves when you first use it, not when its class is loaded.** Every
+  accessor you already call — `surfConfigApi`, `surfReflection`, `SurfScoreboardApi`,
+  `surfSpongeConfigSerializers`, the NMS bridges — kept its name and its type. What changed is the
+  moment behind it: it used to be a `ServiceLoader` lookup running at class initialisation, and it
+  is now a lazy read of the container. Code that touched one of these during its own class
+  initialisation, before surf-api had started, used to get a `ServiceConfigurationError`; it now
+  gets a clear `IllegalStateException` naming the fix.
+- **`@AutoService` is no longer how an implementation is published.** A class becomes available by
+  carrying a stereotype, and the metadata is written at compile time. If a downstream repository
+  registered an implementation of a surf-api interface through `@AutoService` and expected surf-api
+  to find it, that no longer works — surf-api asks the container, not the service loader.
+- **An interface's companion no longer *is* its implementation.** This is the one change in section
+  7 that will break your code, and it is mechanical. 35 api types used to declare
+  `companion object : Foo by someService`, so `Foo.doThing()` worked as a shorthand for
+  `theFoo.doThing()`. Those delegations are gone; the companion now holds the instance and nothing
+  else. Every such call gains one hop:
+
+  | Was | Is |
+  |---|---|
+  | `SurfPaperNmsSpawnPackets.despawn(ids)` | `SurfPaperNmsSpawnPackets.INSTANCE.despawn(ids)` |
+  | `SurfEventBus.callAsync(event)` | `SurfEventBus.INSTANCE.callAsync(event)` |
+  | `SurfReflection.createProxy<T>()` | `SurfReflection.INSTANCE.createProxy<T>()` |
+  | `SurfApiCore.getPlayer(uuid)` | `SurfApiCore.instance.getPlayer(uuid)` |
+  | `Foo.Companion.bar()` *(from Java)* | `Foo.Companion.getINSTANCE().bar()` |
+
+  The compiler finds every one of them, so the migration is "compile, follow the unresolved
+  references". The member is `INSTANCE` on most types and `instance` on `SurfApiCore`,
+  `SurfConfigApi` and `SuspendRequirementService`, which already had it under that name.
+
+  It is not a cosmetic change. Interface delegation stores the delegate in a field, so the
+  companion's initialiser has to resolve the service — and a Kotlin interface with default methods
+  is initialised as part of initialising its own implementation, which the container does *while it
+  is building that very bean*. The result was a cycle the container could not answer: it is
+  part-way through creating the instance the initialiser is asking for. The service loader never
+  noticed because it needed no running container. Reading the instance through a getter means the
+  initialiser stores the lookup instead of performing it.
+
+What is settled:
 
 - A class becomes a bean by carrying a stereotype (`@Service`, `@Repository`, or your own
   annotation meta-annotated with `@BeanMeta`). Its constructor parameters are its dependencies.
@@ -157,7 +199,14 @@ settled:
   can build the graph, evaluate conditions and report a cycle or an unsatisfiable parameter
   before it loads a single bean class.
 
-One `ServiceLoader` seam remains, and only one: the container cannot resolve itself.
+One `ServiceLoader` seam remains, and only one: the container cannot resolve itself. The platform
+publishes a `ContainerAccess` provider right after it starts the root, and `SurfContainer` finds
+that one provider. Everything else that used to be looked up this way is a bean.
+
+Two of surf-api's own lookups are deliberately still on the old mechanism: `SurfComponentApi` and
+`ComponentService`. Those are the previous component framework, which this release removes
+outright, so converting them would be work thrown away. They disappear together with
+`requiredService` itself.
 
 A separate note will follow for the broker repositories once the container is in place, with the
 actual before-and-after for each.
@@ -239,4 +288,7 @@ of `AbstractSurfView` or `surfView` does not change.
    is still on your runtime classpath (the open question in section 2).
 5. Rewrite every inventory import that names one of the types in section 10; the other
    inventory imports are unchanged.
-6. Leave `requiredService` alone for now. The container note will follow.
+6. Compile, and add `.INSTANCE` to every call that went through an api type's companion
+   (section 7). The compiler lists them all.
+7. If you published an implementation of a surf-api interface with `@AutoService`, stop expecting
+   surf-api to find it (section 7). The container note will follow with the replacement.
