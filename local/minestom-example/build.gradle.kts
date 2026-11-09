@@ -91,25 +91,4 @@ tasks {
             attributes["Multi-Release"] = "true"
         }
     }
-
-    register<Exec>("runServer") {
-        group = "application"
-        description = "Builds the example server and runs it in run/"
-        dependsOn(shadowJar)
-
-        val runDirectory = layout.projectDirectory.dir("run").asFile
-        val launcher = project.extensions.getByType<JavaToolchainService>().launcherFor {
-            languageVersion = JavaLanguageVersion.of(project.findProperty("javaVersion") as String)
-        }
-
-        workingDir = runDirectory
-        standardInput = System.`in`
-        doFirst {
-            runDirectory.mkdirs()
-            executable = launcher.get().executablePath.asFile.absolutePath
-        }
-        argumentProviders += CommandLineArgumentProvider {
-            listOf("-jar", shadowJar.get().archiveFile.get().asFile.absolutePath)
-        }
-    }
 }

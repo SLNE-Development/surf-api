@@ -160,7 +160,6 @@ internal class MinestomServerSurfPlugin :
             configureShadedAsmVersion()
         }
 
-        registerRunServer(extension)
         registerDefaultLoggingConfiguration(console = MinestomServerFeature.CONSOLE in features)
     }
 
@@ -334,34 +333,6 @@ internal class MinestomServerSurfPlugin :
         fun isShaded(dependency: ResolvedDependency) =
             isShaded(dependency.moduleGroup, dependency.moduleName) ||
                     dependency.moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
-    }
-
-    /**
-     * Registers `runServer`, which runs the server jar with `java -jar` so that the manifest's
-     * agents apply.
-     */
-    private fun Project.registerRunServer(extension: MinestomServerSurfExtension) {
-        val shadowJar = tasks.named<ShadowJar>("shadowJar")
-        val runDirectory = layout.projectDirectory.dir(extension.runDirectory.get()).asFile
-        val launcher = extensions.getByType<JavaToolchainService>().launcherFor {
-            languageVersion.set(JavaLanguageVersion.of(Constants.JAVA_VERSION))
-        }
-
-        tasks.register<Exec>("runServer") {
-            group = "surf-api"
-            description = "Builds the server jar and runs it in ${extension.runDirectory.get()}/"
-            dependsOn(shadowJar)
-
-            workingDir = runDirectory
-            standardInput = System.`in`
-            doFirst {
-                runDirectory.mkdirs()
-                executable = launcher.get().executablePath.asFile.absolutePath
-            }
-            argumentProviders += CommandLineArgumentProvider {
-                listOf("-jar", shadowJar.get().archiveFile.get().asFile.absolutePath)
-            }
-        }
     }
 
     private companion object {

@@ -236,16 +236,22 @@ the runtime) and `defaultJarRelocatorDependencies = false` (gremlin's default AS
 current class files), with `me.lucko:jar-relocator:1.7`, `asm` and `asm-commons` added to
 `jarRelocatorRuntime` instead.
 
-## `runServer`
+## Starting a server
 
-The plugin registers `runServer` in the `surf-api` group. It depends on `shadowJar` and runs the jar
-with `java -jar` from the toolchain launcher, so the manifest's agents actually apply - which is why
-it is an `Exec` task rather than a `JavaExec`. `standardInput` is wired to `System.in` for the
-console feature. The working directory is `runDirectory`, default `run`, created if missing.
+The plugin registers **no** run task, and `surfMinestomServer { }` has no `runDirectory`. A
+`runServer` task existed until 4.0.0 and was removed because it did not work reliably.
+
+Build the jar and start it yourself:
 
 ```
-./gradlew runServer
+./gradlew shadowJar
+java -jar build/libs/<name>-all.jar
 ```
+
+It has to be `java -jar` on the shaded jar. The server's agents are declared in the jar manifest
+(`Launcher-Agent-Class`, `Surf-Delegate-Agent-Classes`), and a manifest agent only applies when the
+JVM is started on that jar — running the main class off a classpath silently skips the mixin
+transformer. Wire your own task to `System.in` if you want the console feature to read input.
 
 ## Logging
 
@@ -258,7 +264,8 @@ replaces it entirely.
 
 `local/minestom-example` does **not** apply `dev.slne.surf.api.gradle.minestom-server` - the
 published plugin is not available inside this build - so its `build.gradle.kts` reproduces the
-manifest attributes, the gremlin wiring, the shadow filter and `runServer` by hand, with a comment
-saying so. It is the best place to see what the plugin generates, and `./gradlew
-:surf-api-minestom-example:runServer` starts it on `localhost:25565`. It also shades
-`surf-api-minestom-example-plugin` in, so the plugins feature finds it on the class path.
+manifest attributes, the gremlin wiring and the shadow filter by hand, with a comment saying so. It
+is the best place to see what the plugin generates. Build it with `./gradlew
+:surf-api-minestom-example:shadowJar` and start the jar with `java -jar`; it listens on
+`localhost:25565`. It also shades `surf-api-minestom-example-plugin` in, so the plugins feature
+finds it on the class path.

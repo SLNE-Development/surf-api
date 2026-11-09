@@ -40,8 +40,9 @@ val SPAWN = Pos(0.5, 41.0, 0.5)
 /**
  * A Minestom server that uses every feature of the surf api.
  *
- * Run it with `./gradlew :surf-api-minestom-example:runServer` and join
- * `localhost:25565`.
+ * Build it with `./gradlew :surf-api-minestom-example:shadowJar` and start the jar with
+ * `java -jar` from a directory of your own — the manifest's agents only apply that way. It then
+ * listens on `localhost:25565`.
  */
 fun main() {
     val server = MinecraftServer.init(Auth.Online())

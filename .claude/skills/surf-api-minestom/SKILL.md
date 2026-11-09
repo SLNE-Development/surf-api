@@ -1,6 +1,6 @@
 ---
 name: surf-api-minestom
-description: Use when writing or building something that runs on Minestom against surf-api - deciding whether the thing being built is a Minestom plugin (SurfMinestomPlugin, minestom-plugin.json, dev.slne.surf.api.gradle.minestom) or a runnable server (surfMinestomServer { }, dev.slne.surf.api.gradle.minestom-server), switching server features on with withSignedChat, withLuckPerms, withSpark, withNpcLib, withPlayerVisibility, withConsole or withPlugins, working on the bootstrap agent, a mixin configuration, the gremlin dependency set and libraries/, the shaded configuration or the runServer task, shaping the configuration phase, or reaching for a Minestom-only part of the api - mannequin NPCs, player visibility, async chat, block highlights, SurfMinestomPlayer, the plugin manager or the coroutine dispatchers.
+description: Use when writing or building something that runs on Minestom against surf-api - deciding whether the thing being built is a Minestom plugin (SurfMinestomPlugin, minestom-plugin.json, dev.slne.surf.api.gradle.minestom) or a runnable server (surfMinestomServer { }, dev.slne.surf.api.gradle.minestom-server), switching server features on with withSignedChat, withLuckPerms, withSpark, withNpcLib, withPlayerVisibility, withConsole or withPlugins, working on the bootstrap agent, a mixin configuration, the gremlin dependency set and libraries/, the shaded configuration or how a built server is started, shaping the configuration phase, or reaching for a Minestom-only part of the api - mannequin NPCs, player visibility, async chat, block highlights, SurfMinestomPlayer, the plugin manager or the coroutine dispatchers.
 ---
 
 # surf-api on Minestom
@@ -112,7 +112,8 @@ and disabled in reverse. A feature throwing in `load` or `enable` fails the whol
 what was loaded; one throwing in `disable` is only logged.
 
 The bootstrap agent, the `MinestomServerFeature` enum and how `withXxx()` relates to it, the mixin
-configurations, the gremlin dependency set, the `shaded` configuration and `runServer`:
+configurations, the gremlin dependency set, the `shaded` configuration and how to start a built
+server:
 **`references/server.md`**.
 
 ## What only exists on Minestom

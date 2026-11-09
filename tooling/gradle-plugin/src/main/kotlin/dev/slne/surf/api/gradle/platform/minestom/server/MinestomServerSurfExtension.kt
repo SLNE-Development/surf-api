@@ -112,11 +112,6 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
     }
 
     /**
-     * The directory `runServer` starts the server in, relative to the project.
-     */
-    val runDirectory = objects.property<String>().convention("run")
-
-    /**
      * The class holding the server's `main` function, e.g. `dev.slne.example.server.MainKt`.
      */
     fun mainClass(value: String) {
