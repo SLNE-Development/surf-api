@@ -3910,12 +3910,6 @@ public final class dev/slne/surf/api/core/util/SerializableErrorKt {
 	public static final fun toSerializableError (Ljava/lang/Throwable;)Ldev/slne/surf/api/core/util/SerializableError;
 }
 
-public final class dev/slne/surf/api/core/util/ServiceUtil {
-	public static final field INSTANCE Ldev/slne/surf/api/core/util/ServiceUtil;
-	public final fun serviceWithFallback (Ljava/lang/Class;)Ljava/lang/Object;
-	public final synthetic fun serviceWithFallback (Ljava/util/ServiceLoader;Ljava/lang/Class;)Ljava/lang/Object;
-}
-
 public abstract class dev/slne/surf/api/core/util/SurfTypeParameterMatcher {
 	public static final field Companion Ldev/slne/surf/api/core/util/SurfTypeParameterMatcher$Companion;
 	public fun <init> ()V
@@ -3934,7 +3928,6 @@ public final class dev/slne/surf/api/core/util/SurfUtil {
 	public static final fun byIdMap (Lkotlin/jvm/functions/Function1;[Ljava/lang/Object;)Ljava/util/Map;
 	public static final fun byStringIdMap (Ljava/lang/Class;Lkotlin/jvm/functions/Function1;)Ljava/util/Map;
 	public static final fun checkCallerClass (Ljava/lang/Class;)V
-	public static final fun checkInstantiationByServiceLoader ()V
 	public static final fun collectionSizeOrDefault (Ljava/lang/Iterable;I)I
 	public static final fun getCallerClass ()Ljava/lang/Class;
 	public static final fun getCallerClass (I)Ljava/lang/Class;

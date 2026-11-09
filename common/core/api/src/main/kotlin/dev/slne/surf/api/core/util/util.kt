@@ -121,17 +121,6 @@ fun checkCallerClass(expected: Class<*>) {
 }
 
 /**
- * Verifies that instantiation occurs via [ServiceLoader].
- *
- * Prevents direct instantiation by ensuring the caller is from the ServiceLoader class hierarchy.
- *
- * @throws IllegalStateException if not instantiated by ServiceLoader.
- */
-fun checkInstantiationByServiceLoader() {
-    check(getCallerClass(1)?.name?.startsWith("java.util.ServiceLoader") == true) { "Cannot instantiate instance directly" }
-}
-
-/**
  * Direct access to the JVM's Unsafe API.
  *
  * This provides low-level memory operations that bypass Java's type safety and access control.
