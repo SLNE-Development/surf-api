@@ -15,6 +15,10 @@ import java.util.stream.IntStream
 import java.util.stream.LongStream
 import java.util.stream.Stream
 
+// The rest of this package moved to surf-api-serialization-api. This file stayed behind
+// because it reads dev.slne.surf.api.core.nbt, which belongs to a later cut: taking it along
+// would make the serialization module depend on surf-api-core-api, and surf-api-core-api
+// re-exports the serialization module, so the two would form a cycle.
 object NbtOps : DynamicOps<BinaryTag> {
 
     override fun empty() = EndBinaryTag.endBinaryTag()
