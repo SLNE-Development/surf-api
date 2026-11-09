@@ -10,9 +10,9 @@ upstream's documentation for those. surf only adds the pieces below.
 `platform/paper/api/build.gradle.kts` has `compileOnlyApi(libs.commandapi.paper)` and
 `api(libs.commandapi.bukkit.kotlin)`; the Velocity module the equivalent pair.
 
-## Shared, in `common/core/api`
+## Shared, in `surf-api-command-api`
 
-`common/core/api/src/main/kotlin/dev/slne/surf/api/core/command/` — built against
+`common/command/api/src/main/kotlin/dev/slne/surf/api/command/` — its own module, built against
 `compileOnlyApi(libs.commandapi.core)`, so it is for Paper and Velocity. **Minestom's module
 explicitly excludes `commandapi-core`, so none of this is reachable from Minestom code.**
 

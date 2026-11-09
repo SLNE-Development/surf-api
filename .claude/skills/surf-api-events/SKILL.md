@@ -5,9 +5,13 @@ description: Use when working with surf-api events - declaring a SurfSyncEvent o
 
 # surf-api events
 
-Every claim below comes from `common/core/api/src/main/kotlin/dev/slne/surf/api/core/event/` and
+Every claim below comes from `common/event/api/src/main/kotlin/dev/slne/surf/api/event/` and
 `common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/impl/event/`. Read those files when
 in doubt; they are the only source of truth.
+
+The contracts are their own module, `surf-api-event-api`. You do not name it: every published
+coordinate that carried them re-exports it. The implementation stays in `surf-api-core-impl` --
+nothing compiles against it, so an `-impl` module of its own would buy no boundary.
 
 ## One bus, two flavours
 
@@ -169,7 +173,7 @@ suspending events such as `AsyncPlayerChatEvent`. Details: `references/platform-
   mid-dispatch. A `CancellationException` thrown by a handler itself is only logged.
 - **No impl, no bus.** `SurfEventBus.INSTANCE` reads a private `by surfBean<SurfEventBus>()`, which
   resolves on first access, so a missing `-impl` module - or a touch before surf-api has started -
-  fails there with `No bean provides dev.slne.surf.api.core.event.SurfEventBus ...`.
+  fails there with `No bean provides dev.slne.surf.api.event.SurfEventBus ...`.
 
 Dispatch internals, the hidden-class invokers and the exact exception and cancellation semantics:
 `references/dispatch-and-invokers.md`. Registering a listener as a bean: the `surf-api-components`
