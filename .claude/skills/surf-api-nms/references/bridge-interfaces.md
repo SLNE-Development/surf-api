@@ -10,44 +10,52 @@ Two directories hold it:
 
 | File | Shape | Notes |
 | --- | --- | --- |
-| `nms/SurfPaperNmsBridge.kt` | companion-delegating interface | packet-listener registration; the only bridge at the `nms` package root |
+| `nms/SurfPaperNmsBridge.kt` | `INSTANCE`-carrying interface | packet-listener registration; the only bridge at the `nms` package root |
 | `nms/nms-opt-in.kt` | `@RequiresOptIn` annotation | `NmsUseWithCaution`, `Level.WARNING`, `AnnotationRetention.BINARY` |
-| `nms/bridges/SurfPaperNmsCommonBridge.kt` | companion-delegating | entity ids, block state ids, container counter, compostables, Velocity secret, online mode, `clearDialogs`, server IP |
-| `nms/bridges/SurfPaperNmsEntityBridge.kt`, `…PlayerBridge`, `…ItemBridge`, `…NbtBridge`, `…PortalBridge`, `…StatsBridge`, `…LootTableBridge`, `…GlowingBridge`, `…CommandArgumentTypesBridge` | companion-delegating | one per domain |
-| `nms/bridges/packets/SurfPaperNmsPacketBridges.kt` | companion-delegating | packet-operation factory |
+| `nms/bridges/SurfPaperNmsCommonBridge.kt` | `INSTANCE`-carrying | entity ids, block state ids, container counter, compostables, Velocity secret, online mode, `clearDialogs`, server IP |
+| `nms/bridges/SurfPaperNmsEntityBridge.kt`, `…PlayerBridge`, `…ItemBridge`, `…NbtBridge`, `…PortalBridge`, `…StatsBridge`, `…LootTableBridge`, `…GlowingBridge`, `…CommandArgumentTypesBridge` | `INSTANCE`-carrying | one per domain |
+| `nms/bridges/packets/SurfPaperNmsPacketBridges.kt` | `INSTANCE`-carrying | packet-operation factory |
 | `nms/bridges/packets/PacketOperation.kt` | interface + inline builder | `execute(player)`, `add`, `plus`; `PacketOperation { … }` builder |
-| `nms/bridges/packets/block/SurfPaperNmsBlockPackets.kt`, `entity/SurfPaperNmsSpawnPackets.kt`, `player/SurfPaperNmsPlayerPackets.kt`, `player/SurfPaperNmsPlayerChatPackets.kt`, `player/SurfPaperNmsPlayerToastPackets.kt` | companion-delegating | packet construction per area |
+| `nms/bridges/packets/block/SurfPaperNmsBlockPackets.kt`, `entity/SurfPaperNmsSpawnPackets.kt`, `player/SurfPaperNmsPlayerPackets.kt`, `player/SurfPaperNmsPlayerChatPackets.kt`, `player/SurfPaperNmsPlayerToastPackets.kt` | `INSTANCE`-carrying | packet construction per area |
 | `nms/bridges/data/chat/*.kt` | plain data classes | mirrors of NMS chat types, see below |
 | `nms/listener/packets/**` | interfaces | `NmsPacket`, `NmsServerboundPacket`, `NmsClientboundPacket` and the concrete wrappers (`SignUpdatePacket`, `RenameItemPacket`, `CommandSuggestionPacket`, `ServerboundCustomPayloadPacket`, `DisconnectPacket`, `SystemChatPacket`) |
 
-### The companion-delegation pattern, in full
+### The `INSTANCE` pattern, in full
 
 ```kotlin
+@file:OptIn(InternalSurfApi::class)
+
 @NmsUseWithCaution
 interface SurfPaperNmsCommonBridge {
     fun nextEntityId(): Int
     // …
 
-    companion object : SurfPaperNmsCommonBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsCommonBridge>()
+private val bridge by surfBean<SurfPaperNmsCommonBridge>()
 ```
 
 Three things are load-bearing:
 
-1. The private top-level `bridge` val, **outside** the interface. A companion object cannot hold the
-   `by` target it delegates to, so the service lookup has to live at file scope.
-2. `companion object : <Interface> by bridge` — this is what makes `SurfPaperNmsCommonBridge.foo()`
-   resolve. Every method you add to the interface appears on the companion for free.
-3. `val INSTANCE get() = bridge` — for callers that need the object itself, and for the
-   `InternalNmsBridge.get()` / `InternalPacketListenerApiBridge.get()` downcasts described below.
+1. The private top-level `bridge` val, **outside** the interface, delegated with
+   `by surfBean<T>()`. The delegate resolves `SurfContainer.root.bean(T::class)` the first time the
+   property is read, so the lookup happens when the bridge is used rather than when its class is
+   loaded.
+2. `val INSTANCE get() = bridge` — a **getter**, not an initialised property, and the companion does
+   **not** implement the interface. `companion object : <Interface> by bridge` would read the bean
+   inside the companion's initialiser, i.e. during class initialisation, which can land while the
+   container is still constructing that very bean; `SurfContainer` recognises that case and names
+   this shape as the fix.
+3. Callers therefore write `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()`. `INSTANCE` is also
+   what the `InternalNmsBridge.get()` / `InternalPacketListenerApiBridge.get()` downcasts described
+   below read.
 
-`SurfPaperNmsBridge.kt` writes the annotation as `@NmsUseWithCaution` on the private val rather than
-`@OptIn(NmsUseWithCaution::class)`; both appear in the tree and both compile.
+`surfBean` is `@InternalSurfApi`, so the file carries `@file:OptIn(InternalSurfApi::class)` — every
+bridge file in `platform/paper/api/.../nms/` does.
 
 ### Mirror types
 
@@ -148,17 +156,16 @@ per bridge, all the same three lines:
 
 ```kotlin
 @NmsUseWithCaution
-@AutoService(SurfPaperNmsCommonBridge::class)
+@Service
 class SurfPaperNmsCommonBridgeProxy :
-    SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge() {
-    init { checkInstantiationByServiceLoader() }
-}
+    SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()
 ```
 
-`@AutoService` writes the `META-INF/services` entry the `requiredService` lookup needs;
-`checkInstantiationByServiceLoader()` (in `common/core/api/.../util/util.kt`) asserts the caller class
-starts with `java.util.ServiceLoader`. **A new bridge needs a new proxy here** — the version module
-alone is not reachable.
+`@Service` (`dev.slne.surf.api.di`) is all the registration there is: KSP writes the proxy into
+`META-INF/surf-api/beans/`, surf-api's root container constructs it, and the `surfBean` property in
+the `-api` interface finds it. The delegate target is evaluated when the bean is constructed, which
+is what first touches `NmsProvider.current`. **A new bridge needs a new proxy here** — the version
+module alone is not reachable.
 
 ### The packet path
 
@@ -189,9 +196,10 @@ handler `isPacket`, `getPlayerFromConnection`, `getBukkitPlayer`.
 ## Adding a bridge
 
 1. Write the interface in `platform/paper/api/.../nms/bridges/`, `@NmsUseWithCaution`, Bukkit and
-   Adventure types only, with the companion-delegation block and the private `requiredService` val.
+   Adventure types only, with the `companion object { val INSTANCE get() = bridge }` block and the
+   private `by surfBean<T>()` val at file scope.
 2. Add a `createXBridge(): SurfPaperNmsXBridge` factory to `NmsProvider`.
-3. Add an `@AutoService`-annotated proxy in `platform/paper/impl/.../proxy/`.
+3. Add a `@Service`-annotated proxy in `platform/paper/impl/.../proxy/`.
 4. Implement `V<prefix>SurfPaperNmsXBridgeImpl` in **every** version module and return it from each
    `V<prefix>NmsProvider`.
 5. If it needs reflective access, add the member to that module's `V<prefix>NmsReflections`

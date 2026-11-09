@@ -20,30 +20,40 @@ because those classes are not on its compile classpath.
 
 ## How a bridge is declared
 
-A bridge is an interface whose companion object delegates to a ServiceLoader lookup. From
+A bridge is an interface with a `companion object` whose `INSTANCE` reads a private file-level
+property bound to the bean container. From
 `platform/paper/api/.../nms/bridges/SurfPaperNmsCommonBridge.kt`:
 
 ```kotlin
+@file:OptIn(InternalSurfApi::class)
+
 @NmsUseWithCaution
 interface SurfPaperNmsCommonBridge {
     fun nextEntityId(): Int
     fun getStateId(material: Material): Int
 
-    companion object : SurfPaperNmsCommonBridge by bridge {
+    companion object {
         val INSTANCE get() = bridge
     }
 }
 
 @OptIn(NmsUseWithCaution::class)
-private val bridge = requiredService<SurfPaperNmsCommonBridge>()
+private val bridge by surfBean<SurfPaperNmsCommonBridge>()
 ```
 
-A caller writes `SurfPaperNmsCommonBridge.nextEntityId()` — no instance, no provider, no version.
-The companion is the bridge, so adding a method to the interface automatically adds it to the
-static-looking call surface. `requiredService` lives in
-`common/core/api/.../util/service-util.kt` and wraps `ServiceLoader.load`, preferring any
-non-`Services.Fallback` provider and throwing `ServiceConfigurationError` when nothing is
-registered.
+A caller writes `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()` — no instance to pass, no
+provider, no version. `surfBean` lives in `foundation/di/api/.../di/SurfContainer.kt`, is
+`@InternalSurfApi` (hence the file-level `@OptIn`), and resolves `SurfContainer.root.bean(T::class)`
+on first read.
+
+Two things about that shape are load-bearing:
+
+- **`INSTANCE` is a getter, and the companion does not implement the interface.** A
+  `companion object : Foo by bridge` would have to read the bean while the companion's initialiser
+  runs, which is during class initialisation — possibly while the container is still building that
+  very bean. `SurfContainer` detects that and says so, but the fix is this shape.
+- **`by surfBean<T>()`, never an eager `= ...`.** Eager initialisation resolves when the class is
+  loaded, so whichever class happens to load first decides whether the container was ready.
 
 ## `@NmsUseWithCaution`
 
@@ -57,11 +67,11 @@ deliberately **not** annotated, and
 
 ## Runtime selection, end to end
 
-1. A consumer touches `SurfPaperNmsCommonBridge` → `requiredService` → `ServiceLoader`.
-2. `ServiceLoader` finds `SurfPaperNmsCommonBridgeProxy` in `platform/paper/impl/.../proxy/`,
-   registered by `@AutoService(SurfPaperNmsCommonBridge::class)` and declared as
+1. A consumer touches `SurfPaperNmsCommonBridge.INSTANCE` → `surfBean` → `SurfContainer.root`.
+2. The root container answers with `SurfPaperNmsCommonBridgeProxy` from
+   `platform/paper/impl/.../proxy/`, an ordinary `@Service` bean declared as
    `class SurfPaperNmsCommonBridgeProxy : SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()`.
-   Its `init` calls `checkInstantiationByServiceLoader()`, so direct construction fails.
+   There is one such proxy per bridge, all in that one package.
 3. `NmsProvider.current` (in `platform/paper/nms/api/.../common/NmsProvider.kt`) resolves the
    server version through `NmsVersionResolver` (`Bukkit.getMinecraftVersion()` matched against
    `NmsVersion.versionPrefix`), then scans the classpath for
