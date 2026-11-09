@@ -83,9 +83,10 @@ statsView.open(player)        // or open(player, data), open(players), open(play
 ```
 
 `register()` is `viewFrame.with(this)`, `open` is `viewFrame.open(javaClass, player[, data])`, and
-`viewFrame` is `ViewFrameAccessor.INSTANCE.viewFrame()` - a `requiredService<ViewFrameAccessor>()`
-lookup, implemented per platform (`@AutoService` in `platform/*/impl/.../ViewFrameAccessorImpl`).
-Register during load; opening an unregistered view fails in IF.
+`viewFrame` is `ViewFrameAccessor.INSTANCE.viewFrame()`, resolved from the bean container through a
+private `by surfBean<ViewFrameAccessor>()` and implemented per platform (`@Service` on
+`platform/*/impl/.../ViewFrameAccessorImpl`). Register during load; opening an unregistered view
+fails in IF.
 
 ## Lifecycle hooks and which context you get
 
