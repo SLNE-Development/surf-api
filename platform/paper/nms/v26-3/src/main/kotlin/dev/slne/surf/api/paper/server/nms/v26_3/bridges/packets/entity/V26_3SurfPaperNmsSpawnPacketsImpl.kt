@@ -9,8 +9,6 @@ import dev.slne.surf.api.paper.server.nms.v26_3.bridges.packets.V26_3PacketOpera
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toNms
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtOps
@@ -33,8 +31,8 @@ import kotlin.experimental.or
 class V26_3SurfPaperNmsSpawnPacketsImpl : SurfPaperNmsSpawnPackets {
     private val log = logger()
 
-    override fun despawn(entityIds: IntList) =
-        V26_3PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(IntArrayList(entityIds)) }
+    override fun despawn(entityIds: List<Int>) =
+        V26_3PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityIds.toIntArray()) }
 
     override fun despawn(vararg entityId: Int) =
         V26_3PacketOperationImpl.simple { ClientboundRemoveEntitiesPacket(*entityId) }

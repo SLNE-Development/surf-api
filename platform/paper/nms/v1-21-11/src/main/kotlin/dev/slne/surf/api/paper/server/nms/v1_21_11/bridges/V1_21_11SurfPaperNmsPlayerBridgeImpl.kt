@@ -14,7 +14,6 @@ import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import io.papermc.paper.adventure.PaperAdventure
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -143,7 +142,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             return 0
         }
 
-        val chain = ObjectLinkedOpenHashSet(root.passengersAndSelf.iterator())
+        val chain = root.passengersAndSelf.iterator().asSequence().toSet()
 
         var resynced = 0
         for (entity in chain) {

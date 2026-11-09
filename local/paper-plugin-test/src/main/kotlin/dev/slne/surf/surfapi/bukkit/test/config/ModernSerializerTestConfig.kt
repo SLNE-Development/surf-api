@@ -11,10 +11,6 @@ import dev.slne.surf.api.core.config.type.number.BelowZeroToEmpty
 import dev.slne.surf.api.core.config.type.number.DoubleOr
 import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.surfapi.bukkit.test.plugin
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -151,16 +147,16 @@ data class ModernSerializerTestConfig(
         Key.key("minecraft:stone") to 1,
     ),
 
-    // fastutil map serializer
-    val fastutilMap: Int2ObjectMap<String> = Int2ObjectOpenHashMap<String>().apply {
-        put(1, "one")
-        put(2, "two")
-    },
+    // int-keyed map serializers
+    val intKeyedMap: Map<Int, String> = mapOf(
+        1 to "one",
+        2 to "two",
+    ),
 
-    val fastUtilInt2Int: Int2IntMap = Int2IntOpenHashMap().apply {
-        put(1, 1)
-        put(2, 2)
-    },
+    val intToIntMap: Map<Int, Int> = mapOf(
+        1 to 1,
+        2 to 2,
+    ),
 
     // paper
     val stack: ItemStack = ItemType.BOOK.createItemStack(),

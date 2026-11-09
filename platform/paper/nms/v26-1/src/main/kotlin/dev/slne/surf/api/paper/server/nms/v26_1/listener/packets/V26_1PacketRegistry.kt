@@ -9,7 +9,6 @@ import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26
 import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1RenameItemPacketImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1ServerboundCustomPayloadPacketImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.listener.packets.serverbound.V26_1SignUpdatePacketImpl
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.common.ClientCommonPacketListener
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket
@@ -24,10 +23,10 @@ import kotlin.reflect.KClass
 @OptIn(NmsUseWithCaution::class)
 @Suppress("ClassName")
 object V26_1PacketRegistry {
-    private typealias PacketMap<F> = Object2ObjectOpenHashMap<Class<out Packet<*>>, F>
+    private typealias PacketMap<F> = MutableMap<Class<out Packet<*>>, F>
 
-    private val SERVERBOUND_PACKETS = PacketMap<ServerboundPacketFactory<*, *>>()
-    private val CLIENTBOUND_PACKETS = PacketMap<ClientboundPacketFactory<*, *>>()
+    private val SERVERBOUND_PACKETS: PacketMap<ServerboundPacketFactory<*, *>> = mutableMapOf()
+    private val CLIENTBOUND_PACKETS: PacketMap<ClientboundPacketFactory<*, *>> = mutableMapOf()
 
     init {
         // @formatter:off

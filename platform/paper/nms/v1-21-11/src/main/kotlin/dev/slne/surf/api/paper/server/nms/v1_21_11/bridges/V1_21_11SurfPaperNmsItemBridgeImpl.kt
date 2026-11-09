@@ -12,7 +12,6 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toIdentifier
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.unwrap
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap
 import net.minecraft.core.component.DataComponentMap
 import net.minecraft.core.component.DataComponents
@@ -91,7 +90,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          *
          * Populated lazily on first access.
          */
-        private lateinit var materialIndex: Object2IntOpenHashMap<Material>
+        private lateinit var materialIndex: MutableMap<Material, Int>
 
 
         fun init() {
@@ -127,9 +126,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
                 }
             }
 
-            this.materialIndex = Object2IntOpenHashMap<Material>(Registry.ITEM.size()).apply {
-                defaultReturnValue(Int.MAX_VALUE)
-
+            this.materialIndex = mutableMapOf<Material, Int>().apply {
                 for (itemType in Registry.ITEM) {
                     val key = itemType.key.toIdentifier()
                     val item = BuiltInRegistries.ITEM.getValue(key)
@@ -171,7 +168,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
             if (stack == null) return Int.MAX_VALUE
 
             val type = stack.type
-            val byMaterial = materialIndex.getInt(type)
+            val byMaterial = materialIndex[type] ?: Int.MAX_VALUE
 
             if (mayHaveComponentVariant(type)) {
                 val nms = stack.unwrap()

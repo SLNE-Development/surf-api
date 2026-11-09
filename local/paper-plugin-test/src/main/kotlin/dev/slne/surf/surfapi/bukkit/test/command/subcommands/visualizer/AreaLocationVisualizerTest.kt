@@ -4,7 +4,6 @@ import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.arguments.ArgumentSuggestions
 import dev.jorel.commandapi.arguments.LocationType
 import dev.jorel.commandapi.kotlindsl.*
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.util.toVector3d
 import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
@@ -17,7 +16,7 @@ import java.util.*
 
 @OptIn(ExperimentalVisualizerApi::class)
 class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
-    private val visualizers = mutableObject2ObjectMapOf<UUID, SurfVisualizerArea>()
+    private val visualizers = mutableMapOf<UUID, SurfVisualizerArea>()
 
     init {
         subcommand("create") {

@@ -2,8 +2,6 @@ package dev.slne.surf.api.paper.server.nms.v26_2.packet.listener
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.sksamuel.aedile.core.expireAfterWrite
-import dev.slne.surf.api.core.util.mutableObjectListOf
-import dev.slne.surf.api.core.util.toMutableObjectList
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
@@ -32,7 +30,7 @@ object V26_2GlowingPacketListener : PacketListener {
 
     @ClientboundListener
     fun onBundlePacket(packet: ClientboundBundlePacket, player: Player): ClientboundBundlePacket {
-        val bundles = packet.subPackets().toMutableObjectList()
+        val bundles = packet.subPackets().toMutableList()
         bundles.replaceAll { subPacket ->
             if (subPacket is ClientboundSetEntityDataPacket) {
                 updatePacketIfNeeded(subPacket, player)
@@ -66,7 +64,7 @@ object V26_2GlowingPacketListener : PacketListener {
         val incoming = packet.packedItems
         var flagsFound = false
         var edited = false
-        val newItems = mutableObjectListOf<DataValue<*>>(incoming.size + 1)
+        val newItems = ArrayList<DataValue<*>>(incoming.size + 1)
         val dataFlagsShared = V26_2NmsReflections.getEntityDataFlagsSharedId()
         val dataFlagsSharedId = dataFlagsShared.id
 

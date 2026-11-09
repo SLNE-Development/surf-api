@@ -1,7 +1,5 @@
 package dev.slne.surf.api.paper.server.nms.v26_3.bridges
 
-import dev.slne.surf.api.core.util.emptyObjectList
-import dev.slne.surf.api.core.util.mutableObjectListOf
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsLootTableBridge
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toBukkit
@@ -27,7 +25,7 @@ class V26_3SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
         causedByPlayer: Boolean,
     ): Collection<ItemStack> {
         val lootTableKey =
-            replacement.toNms().defaultLootTable.getOrNull() ?: return emptyObjectList()
+            replacement.toNms().defaultLootTable.getOrNull() ?: return emptyList()
         val lootTable =
             MinecraftServer.getServer().reloadableRegistries().getLootTable(lootTableKey)
         val nmsEntity = entity.toNms()
@@ -51,7 +49,7 @@ class V26_3SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
 
         val lootParams = lootParamsBuilder.create(LootContextParamSets.ENTITY)
         return lootTable.getRandomItems(lootParams, nmsEntity.lootTableSeed)
-            .mapTo(mutableObjectListOf()) { it.toBukkit() }
+            .mapTo(mutableListOf()) { it.toBukkit() }
     }
 
     override fun rollLootTable(
@@ -60,7 +58,7 @@ class V26_3SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
         causedByPlayer: Boolean
     ): Collection<ItemStack> {
         val nmsEntity = entity.toNms()
-        val lootTableKey = nmsEntity.lootTable.getOrNull() ?: return emptyObjectList()
+        val lootTableKey = nmsEntity.lootTable.getOrNull() ?: return emptyList()
         val lootTable = MinecraftServer.getServer().reloadableRegistries().getLootTable(lootTableKey)
         val nmsDamageSource = damageSource.toNms()
 
@@ -83,6 +81,6 @@ class V26_3SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
         val lootParams = paramBuilder.create(LootContextParamSets.ENTITY)
 
         return lootTable.getRandomItems(lootParams, nmsEntity.lootTableSeed)
-            .mapTo(mutableObjectListOf()) { it.toBukkit() }
+            .mapTo(mutableListOf()) { it.toBukkit() }
     }
 }

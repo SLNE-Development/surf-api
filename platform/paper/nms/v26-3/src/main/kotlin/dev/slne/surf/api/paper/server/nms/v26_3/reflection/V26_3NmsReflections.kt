@@ -5,7 +5,6 @@ import com.google.gson.JsonElement
 import dev.slne.surf.api.shared.api.reflection.*
 import io.netty.channel.ChannelFuture
 import io.papermc.paper.adventure.ChatProcessor
-import it.unimi.dsi.fastutil.objects.ObjectList
 import net.minecraft.network.chat.*
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.resources.ResourceKey
@@ -62,7 +61,7 @@ interface V26_3NmsReflections {
     fun getLastSeenCountFromMessageValidator(validator: LastSeenMessagesValidator): Int
 
     @ReflectedField("trackedMessages")
-    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): ObjectList<LastSeenTrackedEntry?>
+    fun getTrackedMessagesFromMessageValidator(validator: LastSeenMessagesValidator): MutableList<LastSeenTrackedEntry?>
 
     @ReflectedField("lastPendingMessage")
     fun getLastPendingMessageFromMessageValidator(validator: LastSeenMessagesValidator): MessageSignature?

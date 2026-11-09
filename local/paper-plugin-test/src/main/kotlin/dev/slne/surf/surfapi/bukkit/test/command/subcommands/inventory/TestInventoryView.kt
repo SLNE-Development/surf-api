@@ -3,7 +3,6 @@ package dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.adventure.buildText
 import dev.slne.surf.api.core.messages.adventure.text
-import dev.slne.surf.api.core.util.intSetOf
 import dev.slne.surf.api.paper.builder.buildItem
 import dev.slne.surf.api.paper.builder.displayName
 import dev.slne.surf.api.paper.dialog.noticeDialog
@@ -49,7 +48,7 @@ val testInventoryViewDsl = surfView("TestInventoryView") {
             text("1.250", Colors.GREEN)
         }
 
-        blockAllSlots(ViewRows.FIVE, intSetOf(1))
+        blockAllSlots(ViewRows.FIVE, setOf(1))
     }
 
     onFirstRender {

@@ -8,10 +8,6 @@ import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandler
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toBukkit
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toNms
 import dev.slne.surf.api.paper.util.namespacedKey
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import it.unimi.dsi.fastutil.objects.ObjectLists
 import net.kyori.adventure.text.format.TextDecoration
 import net.minecraft.core.component.DataComponents
 import net.minecraft.network.chat.HoverEvent
@@ -44,10 +40,10 @@ object V26_3PacketLoreListener : PacketListener {
         Comparator<PriorityHandler> { a, b -> a.priority.compareTo(b.priority) }
 
     private val globalHandlersByPlugin =
-        Object2ObjectLinkedOpenHashMap<Plugin, ObjectLinkedOpenHashSet<PriorityHandler>>()
+        mutableMapOf<Plugin, MutableSet<PriorityHandler>>()
 
     private val keyedHandlersByPlugin =
-        Object2ObjectLinkedOpenHashMap<Plugin, Object2ObjectLinkedOpenHashMap<NamespacedKey, PriorityHandler>>()
+        mutableMapOf<Plugin, MutableMap<NamespacedKey, PriorityHandler>>()
 
     @Volatile
     private var keyedHandlersSnapshot: Map<NamespacedKey, PriorityHandler> = emptyMap()
@@ -71,7 +67,7 @@ object V26_3PacketLoreListener : PacketListener {
         if (!hasAnyHandlers()) return event
 
         val sourceItems = event.items
-        val updatedItems = ObjectArrayList<ItemStack>(sourceItems.size)
+        val updatedItems = ArrayList<ItemStack>(sourceItems.size)
 
         var changed = false
 
@@ -232,14 +228,14 @@ object V26_3PacketLoreListener : PacketListener {
         val newStyle = transformStyle(style)
 
         val siblings = component.siblings
-        var newSiblings: ObjectArrayList<MinecraftComponent>? = null
+        var newSiblings: MutableList<MinecraftComponent>? = null
 
         for (i in siblings.indices) {
             val sibling = siblings[i]
             val transformedSibling = transformChatComponent(sibling)
 
             if (transformedSibling !== sibling && newSiblings == null) {
-                newSiblings = ObjectArrayList(siblings.size)
+                newSiblings = ArrayList(siblings.size)
                 for (j in 0 until i) {
                     newSiblings.add(siblings[j])
                 }
@@ -324,7 +320,7 @@ object V26_3PacketLoreListener : PacketListener {
                 keyedSnapshot
             )
         } else {
-            ObjectLists.emptyList()
+            emptyList()
         }
 
         if (matchingKeyedHandlers.isEmpty() && globalSnapshot.isEmpty()) {
@@ -343,7 +339,7 @@ object V26_3PacketLoreListener : PacketListener {
         val originalLines = originalLore.lines
 
         val mutableLore = originalLines.mapTo(
-            ObjectArrayList(originalLines.size)
+            ArrayList(originalLines.size)
         ) { it.toBukkit() }
 
         /*
@@ -351,7 +347,7 @@ object V26_3PacketLoreListener : PacketListener {
          * smaller priority values run earlier and larger values run later — across both
          * keyed and global handlers.
          */
-        val combined = ObjectArrayList<PriorityHandler>(matchingKeyedHandlers.size + globalSnapshot.size)
+        val combined = ArrayList<PriorityHandler>(matchingKeyedHandlers.size + globalSnapshot.size)
         combined.addAll(matchingKeyedHandlers)
         for (i in globalSnapshot.indices) {
             combined.add(globalSnapshot[i])
@@ -364,7 +360,7 @@ object V26_3PacketLoreListener : PacketListener {
             combined[i].handler.handleLore(mutableLore, pdc, bukkitStack)
         }
 
-        val updatedLines = ObjectArrayList<MinecraftComponent>(mutableLore.size)
+        val updatedLines = ArrayList<MinecraftComponent>(mutableLore.size)
         for (i in mutableLore.indices) {
             val line =
                 mutableLore[i].decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
@@ -418,12 +414,12 @@ object V26_3PacketLoreListener : PacketListener {
             return emptyList()
         }
 
-        var result: ObjectArrayList<PriorityHandler>? = null
+        var result: MutableList<PriorityHandler>? = null
         for (key in itemKeys) {
             val handler = keyedSnapshot[key] ?: continue
 
             if (result == null) {
-                result = ObjectArrayList(2)
+                result = ArrayList(2)
             }
 
             result.add(handler)
@@ -439,7 +435,7 @@ object V26_3PacketLoreListener : PacketListener {
             }
 
             val handlers =
-                keyedHandlersByPlugin.computeIfAbsent(plugin) { Object2ObjectLinkedOpenHashMap() }
+                keyedHandlersByPlugin.computeIfAbsent(plugin) { mutableMapOf() }
 
             val priorityHandler = PriorityHandler(listener, priority)
             val previous = handlers.putIfAbsent(identifier, priorityHandler)
@@ -447,7 +443,7 @@ object V26_3PacketLoreListener : PacketListener {
                 "A PacketLore handler for $identifier is already registered for plugin ${plugin.name}!"
             }
 
-            val newSnapshot = Object2ObjectLinkedOpenHashMap(keyedHandlersSnapshot)
+            val newSnapshot = keyedHandlersSnapshot.toMutableMap()
             newSnapshot[identifier] = priorityHandler
             keyedHandlersSnapshot = newSnapshot
         }
@@ -456,7 +452,7 @@ object V26_3PacketLoreListener : PacketListener {
     fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler, priority: Short) {
         synchronized(this) {
             val handlers =
-                globalHandlersByPlugin.computeIfAbsent(plugin) { ObjectLinkedOpenHashSet() }
+                globalHandlersByPlugin.computeIfAbsent(plugin) { mutableSetOf() }
 
             // duplicate-detection by handler identity, regardless of priority
             for (existing in handlers) {
@@ -491,7 +487,7 @@ object V26_3PacketLoreListener : PacketListener {
                 keyedHandlersByPlugin.remove(emptyPlugin)
             }
 
-            val newSnapshot = Object2ObjectLinkedOpenHashMap(keyedHandlersSnapshot)
+            val newSnapshot = keyedHandlersSnapshot.toMutableMap()
             newSnapshot.remove(identifier)
             keyedHandlersSnapshot = newSnapshot
         }
@@ -506,7 +502,7 @@ object V26_3PacketLoreListener : PacketListener {
 
             val removedKeyed = keyedHandlersByPlugin.remove(plugin)
             if (removedKeyed != null) {
-                val newSnapshot = Object2ObjectLinkedOpenHashMap(keyedHandlersSnapshot)
+                val newSnapshot = keyedHandlersSnapshot.toMutableMap()
                 for (identifier in removedKeyed.keys) {
                     newSnapshot.remove(identifier)
                 }
@@ -516,9 +512,9 @@ object V26_3PacketLoreListener : PacketListener {
     }
 
     private fun rebuildGlobalHandlersSnapshot() {
-        val snapshot = ObjectArrayList<PriorityHandler>()
+        val snapshot = mutableListOf<PriorityHandler>()
 
-        globalHandlersByPlugin.object2ObjectEntrySet().fastForEach { (plugin, handlers) ->
+        for ((plugin, handlers) in globalHandlersByPlugin) {
             if (plugin.isEnabled) {
                 snapshot.addAll(handlers)
             }

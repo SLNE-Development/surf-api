@@ -10,7 +10,6 @@ import dev.jorel.commandapi.kotlindsl.*
 import dev.slne.surf.api.core.messages.Colors
 import dev.slne.surf.api.core.messages.adventure.buildText
 import dev.slne.surf.api.core.random.RandomSelector
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
@@ -21,7 +20,7 @@ import org.bukkit.entity.Player
 import java.util.*
 
 class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
-    private val visualizers = mutableObject2ObjectMapOf<UUID, SurfVisualizerSingleLocation>()
+    private val visualizers = mutableMapOf<UUID, SurfVisualizerSingleLocation>()
 
     init {
         val randomBlock = RandomSelector.fromIterable(Registry.BLOCK)
