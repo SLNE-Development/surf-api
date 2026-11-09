@@ -1,3 +1,5 @@
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.api.velocity.server
 
 import com.google.inject.Inject
@@ -10,7 +12,11 @@ import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
 import dev.slne.surf.api.core.server.CoreInstance
+import dev.slne.surf.api.di.boot.SurfContainerAccess
+import dev.slne.surf.api.di.boot.SurfContainerHost
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.velocity.api.metrics.Metrics
+import dev.slne.surf.api.velocity.server.di.VelocityContainerPlatform
 import dev.slne.surf.api.velocity.server.generated.BuildConfig
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
@@ -36,12 +42,26 @@ class VelocityMain @Inject constructor(
 
     lateinit var bstats: Metrics
 
+    /**
+     * surf-api's container hierarchy for this proxy.
+     *
+     * The root holds surf-api's own beans; a plugin that wants one gets a child below it. There is
+     * one host per process, and this is it.
+     */
+    val containers = SurfContainerHost(VelocityContainerPlatform(server, dataDirectory))
+
     init {
         instance = this
 
         SuspendingEventHandler(server.eventManager).register()
 
         runBlocking {
+            // Before anything else in surf-api. A bean is resolved where it is first used rather
+            // than where it is declared, so the container has to answer from the first class that
+            // asks, and `install` is what makes it answerable through `SurfContainer`.
+            containers.startRoot(this@VelocityMain)
+            SurfContainerAccess.install(containers)
+
             bootstrap()
             onLoad()
         }
@@ -60,6 +80,11 @@ class VelocityMain @Inject constructor(
         }
 
         onDisable()
+
+        // Last, and children before the root: a plugin's bean may hold one of surf-api's, so the
+        // reverse order would close a connection while something still writes to it.
+        containers.stopAll()
+        SurfContainerAccess.uninstall(containers)
     }
 
     companion object {

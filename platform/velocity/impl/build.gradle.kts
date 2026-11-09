@@ -19,6 +19,10 @@ dependencies {
     runtimeOnly(libs.flogger.slf4j.backend)
     kapt(libs.velocity.api)
     compileOnly(libs.velocity.proxy.ctd)
+
+    // The proxy is provided at runtime, so it is compileOnly -- but a test that stands in for it
+    // has to load its interfaces, and `compileOnly` does not reach the test classpath.
+    testImplementation(libs.velocity.api)
 }
 
 tasks {
