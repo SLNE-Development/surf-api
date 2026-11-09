@@ -3,6 +3,8 @@ package dev.slne.surf.api.minestom.server.impl
 import com.github.retrooper.packetevents.PacketEvents
 import dev.slne.surf.api.core.extensions.packetEvents
 import dev.slne.surf.api.core.server.packet.NoopPacketEvents
+import dev.slne.surf.api.di.boot.SurfContainerAccess
+import dev.slne.surf.api.di.boot.SurfContainerHost
 import dev.slne.surf.api.minestom.extension.GlobalEventHandler
 import dev.slne.surf.api.minestom.extension.SchedulerManager
 import dev.slne.surf.api.minestom.permission.MinestomPermissions
@@ -15,6 +17,7 @@ import dev.slne.surf.api.minestom.server.impl.SurfMinestomRuntime.Companion.isSh
 import dev.slne.surf.api.minestom.server.impl.command.MinestomCommandAPIService
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.configuration.ConfigurationPhase
+import dev.slne.surf.api.minestom.server.impl.di.MinestomContainerPlatform
 import dev.slne.surf.api.minestom.server.impl.dialog.DialogCallbackListener
 import dev.slne.surf.api.minestom.server.impl.inventory.framework.MinestomInventoryLoader
 import dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent
@@ -22,6 +25,11 @@ import dev.slne.surf.api.minestom.server.impl.performance.EntityTickFilter
 import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.server.impl.player.PlayerFlightListener
 import dev.slne.surf.api.minestom.server.impl.player.SurfPlayerProviders
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
@@ -30,11 +38,6 @@ import net.minestom.server.event.EventNode
 import net.minestom.server.property.ServerProperties
 import net.minestom.server.thread.TickSchedulerThread
 import net.minestom.server.thread.TickThread
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 /**
  * Lifecycle of the surf api on a Minestom server; at most one runtime exists per JVM.
@@ -69,6 +72,15 @@ internal class SurfMinestomRuntime private constructor(
 
     private var packetEventsPrepared = false
 
+    /**
+     * surf-api's container hierarchy for this server.
+     *
+     * The root holds surf-api's own beans. A jar plugin that wants one gets a child below it; a
+     * plugin shaded into the server must not, because it shares the server's classpath and its
+     * beans are therefore already the root's.
+     */
+    val containers = SurfContainerHost(MinestomContainerPlatform())
+
     private val lifecycleLock = ReentrantLock()
 
     private val shutdownRequested = AtomicBoolean(false)
@@ -94,6 +106,12 @@ internal class SurfMinestomRuntime private constructor(
         if (builder.recommendedServerProperties) RecommendedServerProperties.apply()
         preparePacketEvents()
         runBlocking {
+            // Before everything else. A bean is resolved where it is first used rather than where
+            // it is declared, so the container has to be able to answer from the first class that
+            // asks, and `install` is what makes it answerable through `SurfContainer`.
+            containers.startRoot(this@SurfMinestomRuntime)
+            SurfContainerAccess.install(containers)
+
             instance.bootstrap()
             instance.onLoad()
         }
@@ -293,6 +311,11 @@ internal class SurfMinestomRuntime private constructor(
 
             step("reset the permission provider") { MinestomPermissions.installProvider(null) }
             step("reset the unsigned argument factory") { SignedCommandArguments.resetUnsignedFactory() }
+
+            // Last, and children before the root: a plugin's bean may hold one of surf-api's, so
+            // the reverse order would close a connection while something still writes to it.
+            step("stop the bean containers") { runBlocking { containers.stopAll() } }
+            step("uninstall the container access") { SurfContainerAccess.uninstall(containers) }
         } finally {
             current.compareAndSet(this, null)
         }
