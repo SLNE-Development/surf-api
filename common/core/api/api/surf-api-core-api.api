@@ -46,11 +46,11 @@ public final class dev/slne/surf/api/core/actionbar/ActionBarServiceKt {
 public final class dev/slne/surf/api/core/algorithms/ConvexHull2D {
 	public static final field INSTANCE Ldev/slne/surf/api/core/algorithms/ConvexHull2D;
 	public final fun ccw (Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;Lorg/spongepowered/math/vector/Vectord;)Z
-	public final fun compute ([Lorg/spongepowered/math/vector/Vectord;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+	public final fun compute ([Lorg/spongepowered/math/vector/Vectord;)Ljava/util/List;
 }
 
 public final class dev/slne/surf/api/core/algorithms/ConvexHull2DKt {
-	public static final fun convexHull2D ([Lorg/spongepowered/math/vector/Vectord;)Lit/unimi/dsi/fastutil/objects/ObjectList;
+	public static final fun convexHull2D ([Lorg/spongepowered/math/vector/Vectord;)Ljava/util/List;
 }
 
 public final class dev/slne/surf/api/core/algorithms/Kahn_topological_sortKt {
@@ -58,26 +58,7 @@ public final class dev/slne/surf/api/core/algorithms/Kahn_topological_sortKt {
 	public static final fun topologicalSortSafe (Ljava/util/Map;)Ljava/lang/Object;
 }
 
-public final class dev/slne/surf/api/core/api/collection/TransformingObjectSet : it/unimi/dsi/fastutil/objects/ObjectSet {
-	public fun <init> (Lit/unimi/dsi/fastutil/objects/ObjectSet;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
-	public fun add (Ljava/lang/Object;)Z
-	public fun addAll (Ljava/util/Collection;)Z
-	public fun clear ()V
-	public fun contains (Ljava/lang/Object;)Z
-	public fun containsAll (Ljava/util/Collection;)Z
-	public fun getSize ()I
-	public fun isEmpty ()Z
-	public fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
-	public synthetic fun iterator ()Ljava/util/Iterator;
-	public fun remove (Ljava/lang/Object;)Z
-	public fun removeAll (Ljava/util/Collection;)Z
-	public fun retainAll (Ljava/util/Collection;)Z
-	public final fun size ()I
-	public fun toArray ()[Ljava/lang/Object;
-	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/api/core/collection/TransformingSet2ObjectSet : it/unimi/dsi/fastutil/objects/ObjectSet {
+public final class dev/slne/surf/api/core/api/collection/TransformingObjectSet : java/util/Set, kotlin/jvm/internal/markers/KMutableSet {
 	public fun <init> (Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public fun add (Ljava/lang/Object;)Z
 	public fun addAll (Ljava/util/Collection;)Z
@@ -86,8 +67,25 @@ public final class dev/slne/surf/api/core/collection/TransformingSet2ObjectSet :
 	public fun containsAll (Ljava/util/Collection;)Z
 	public fun getSize ()I
 	public fun isEmpty ()Z
-	public fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
-	public synthetic fun iterator ()Ljava/util/Iterator;
+	public fun iterator ()Ljava/util/Iterator;
+	public fun remove (Ljava/lang/Object;)Z
+	public fun removeAll (Ljava/util/Collection;)Z
+	public fun retainAll (Ljava/util/Collection;)Z
+	public final fun size ()I
+	public fun toArray ()[Ljava/lang/Object;
+	public fun toArray ([Ljava/lang/Object;)[Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/core/collection/TransformingSet2ObjectSet : java/util/Set, kotlin/jvm/internal/markers/KMutableSet {
+	public fun <init> (Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public fun add (Ljava/lang/Object;)Z
+	public fun addAll (Ljava/util/Collection;)Z
+	public fun clear ()V
+	public fun contains (Ljava/lang/Object;)Z
+	public fun containsAll (Ljava/util/Collection;)Z
+	public fun getSize ()I
+	public fun isEmpty ()Z
+	public fun iterator ()Ljava/util/Iterator;
 	public fun remove (Ljava/lang/Object;)Z
 	public fun removeAll (Ljava/util/Collection;)Z
 	public fun retainAll (Ljava/util/Collection;)Z
@@ -488,8 +486,8 @@ public final class dev/slne/surf/api/core/config/migration/MigrationResult {
 public abstract class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializers {
 	public fun <init> ()V
 	public final fun buildSerializersModule ()Ljava/util/function/Consumer;
-	public final fun getClassSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public final fun getTypeTokenSerializers ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
+	public final fun getClassSerializers ()Ljava/util/Map;
+	public final fun getTypeTokenSerializers ()Ljava/util/Map;
 	public final fun registerClassSerializer (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
 	protected fun registerDefaults (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;)V
 	public final fun registerTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
@@ -518,31 +516,6 @@ public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializ
 
 public final class dev/slne/surf/api/core/config/serializer/SpongeConfigSerializersKt {
 	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/api/core/config/serializer/SpongeConfigSerializers;
-}
-
-public abstract class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer : org/spongepowered/configurate/serialize/TypeSerializer$Annotated {
-	public fun <init> (Lkotlin/jvm/functions/Function1;)V
-	protected abstract fun createBaseMapType (Ljava/lang/reflect/AnnotatedParameterizedType;)Ljava/lang/reflect/Type;
-	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/lang/Object;
-	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Lorg/spongepowered/configurate/ConfigurationNode;)Ljava/util/Map;
-	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Lorg/spongepowered/configurate/ConfigurationNode;)V
-	public fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/util/Map;Lorg/spongepowered/configurate/ConfigurationNode;)V
-}
-
-public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$PrimitiveToPrimitive : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
-	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/reflect/Type;Ljava/lang/reflect/Type;)V
-}
-
-public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$PrimitiveToSomething : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
-	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/reflect/Type;)V
-}
-
-public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$SomethingToPrimitive : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
-	public fun <init> (Lkotlin/jvm/functions/Function1;Ljava/lang/reflect/Type;)V
-}
-
-public final class dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer$SomethingToSomething : dev/slne/surf/api/core/config/serializer/collection/map/FastutilMapSerializer {
-	public fun <init> (Lkotlin/jvm/functions/Function1;)V
 }
 
 public abstract interface annotation class dev/slne/surf/api/core/config/serializer/collection/map/ThrowExceptions : java/lang/annotation/Annotation {
@@ -974,13 +947,13 @@ public final class dev/slne/surf/api/core/inventory/framework/internal/DefaultFo
 	public static final field DEFAULT_ADVANCE I
 	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;
 	public static final field SPACE_ADVANCE I
-	public final fun charWidth (IZLit/unimi/dsi/fastutil/ints/Int2IntMap;)I
-	public static synthetic fun charWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;IZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
-	public final fun componentWidth (Lnet/kyori/adventure/text/Component;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;)I
-	public static synthetic fun componentWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;Lnet/kyori/adventure/text/Component;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
-	public final fun getAdvances ()Lit/unimi/dsi/fastutil/ints/Int2IntMap;
-	public final fun textWidth (Ljava/lang/String;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;)I
-	public static synthetic fun textWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;Ljava/lang/String;ZLit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+	public final fun charWidth (IZLjava/util/Map;)I
+	public static synthetic fun charWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;IZLjava/util/Map;ILjava/lang/Object;)I
+	public final fun componentWidth (Lnet/kyori/adventure/text/Component;ZLjava/util/Map;)I
+	public static synthetic fun componentWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;Lnet/kyori/adventure/text/Component;ZLjava/util/Map;ILjava/lang/Object;)I
+	public final fun getAdvances ()Ljava/util/Map;
+	public final fun textWidth (Ljava/lang/String;ZLjava/util/Map;)I
+	public static synthetic fun textWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/DefaultFontWidths;Ljava/lang/String;ZLjava/util/Map;ILjava/lang/Object;)I
 }
 
 public final class dev/slne/surf/api/core/inventory/framework/internal/LaidOutViewText {
@@ -1015,12 +988,12 @@ public final class dev/slne/surf/api/core/inventory/framework/internal/ShiftGlyp
 public final class dev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath {
 	public static final field INSTANCE Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;
 	public final fun centerAlignedShift (IIII)I
-	public final fun charWidth (IILit/unimi/dsi/fastutil/ints/Int2IntMap;)I
-	public static synthetic fun charWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;IILit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+	public final fun charWidth (IILjava/util/Map;)I
+	public static synthetic fun charWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;IILjava/util/Map;ILjava/lang/Object;)I
 	public final fun leftAlignedShift (II)I
 	public final fun rightAlignedShift (IIII)I
-	public final fun textWidth (Ljava/lang/String;IILit/unimi/dsi/fastutil/ints/Int2IntMap;)I
-	public static synthetic fun textWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;Ljava/lang/String;IILit/unimi/dsi/fastutil/ints/Int2IntMap;ILjava/lang/Object;)I
+	public final fun textWidth (Ljava/lang/String;IILjava/util/Map;)I
+	public static synthetic fun textWidth$default (Ldev/slne/surf/api/core/inventory/framework/internal/TextAlignmentMath;Ljava/lang/String;IILjava/util/Map;ILjava/lang/Object;)I
 }
 
 public final class dev/slne/surf/api/core/inventory/framework/internal/ViewButtonSession {
@@ -1375,13 +1348,13 @@ public final class dev/slne/surf/api/core/messages/adventure/BossBarBuilder {
 	public final fun build ()Lnet/kyori/adventure/bossbar/BossBar;
 	public final fun flags ([Lnet/kyori/adventure/bossbar/BossBar$Flag;)V
 	public final fun getColor ()Lnet/kyori/adventure/bossbar/BossBar$Color;
-	public final fun getFlags ()Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
+	public final fun getFlags ()Ljava/util/Set;
 	public final fun getName ()Lnet/kyori/adventure/text/Component;
 	public final fun getOverlay ()Lnet/kyori/adventure/bossbar/BossBar$Overlay;
 	public final fun getProgress ()F
 	public final fun name (Lkotlin/jvm/functions/Function1;)V
 	public final fun setColor (Lnet/kyori/adventure/bossbar/BossBar$Color;)V
-	public final fun setFlags (Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;)V
+	public final fun setFlags (Ljava/util/Set;)V
 	public final fun setName (Lnet/kyori/adventure/text/Component;)V
 	public final fun setOverlay (Lnet/kyori/adventure/bossbar/BossBar$Overlay;)V
 	public final fun setProgress (F)V
@@ -1473,7 +1446,7 @@ public abstract interface annotation class dev/slne/surf/api/core/messages/adven
 public final class dev/slne/surf/api/core/messages/adventure/ResourcePackRequestInfoBuilder {
 	public fun <init> ()V
 	public final fun asyncPack (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun getInfos ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
+	public final fun getInfos ()Ljava/util/List;
 	public final fun pack (Lkotlin/jvm/functions/Function1;)V
 }
 
@@ -2961,8 +2934,8 @@ public abstract interface class dev/slne/surf/api/core/nbt/FastCompoundBinaryTag
 	public abstract fun getString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 	public static synthetic fun getString$default (Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
 	public abstract fun isEmpty ()Z
-	public abstract fun iterator ()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
-	public abstract fun keySet ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+	public abstract fun iterator ()Ljava/util/Iterator;
+	public abstract fun keySet ()Ljava/util/Set;
 	public abstract fun put (Ljava/lang/String;Lnet/kyori/adventure/nbt/BinaryTag;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
 	public abstract fun put (Ljava/util/Map;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
 	public abstract fun put (Lnet/kyori/adventure/nbt/CompoundBinaryTag;)Ldev/slne/surf/api/core/nbt/FastCompoundBinaryTag;
@@ -3243,10 +3216,10 @@ public final class dev/slne/surf/api/core/serializer/NbtOps$ByteListCollector : 
 
 public final class dev/slne/surf/api/core/serializer/NbtOps$GenericListCollector : dev/slne/surf/api/core/serializer/NbtOps$ListCollector {
 	public fun <init> ()V
-	public fun <init> (Lit/unimi/dsi/fastutil/bytes/ByteArrayList;)V
-	public fun <init> (Lit/unimi/dsi/fastutil/ints/IntArrayList;)V
-	public fun <init> (Lit/unimi/dsi/fastutil/longs/LongArrayList;)V
 	public fun <init> (Lnet/kyori/adventure/nbt/ListBinaryTag;)V
+	public fun <init> ([B)V
+	public fun <init> ([I)V
+	public fun <init> ([J)V
 	public fun accept (Lnet/kyori/adventure/nbt/BinaryTag;)Ldev/slne/surf/api/core/serializer/NbtOps$ListCollector;
 	public fun acceptAll (Ljava/lang/Iterable;)Ldev/slne/surf/api/core/serializer/NbtOps$ListCollector;
 	public synthetic fun getResult ()Lnet/kyori/adventure/nbt/BinaryTag;
@@ -3935,7 +3908,7 @@ public abstract interface class dev/slne/surf/api/core/util/ById$ByByteId {
 }
 
 public final class dev/slne/surf/api/core/util/ById$Companion {
-	public final fun build (Ljava/lang/Class;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+	public final fun build (Ljava/lang/Class;)Ljava/util/Map;
 }
 
 public final class dev/slne/surf/api/core/util/Caffeine_utilKt {
@@ -3961,1105 +3934,6 @@ public final class dev/slne/surf/api/core/util/Coroutine_utilKt {
 public final class dev/slne/surf/api/core/util/Date_utilKt {
 	public static final fun getCurrentDateTimeFormatted ()Ljava/lang/String;
 	public static final fun getDateTimeFormatter ()Ljava/time/format/DateTimeFormatter;
-}
-
-public final class dev/slne/surf/api/core/util/Fast_util_utilKt {
-	public static final fun add (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;Ljava/lang/Object;Ljava/lang/Object;)V
-	public static final fun addAll (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;Ljava/lang/Object;Ljava/lang/Iterable;)V
-	public static final fun booleanListOf ()Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun booleanListOf ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun booleanListOfNotNull (Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun booleanListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun booleanListOfNotNull ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun booleanSetOf ()Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun booleanSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun booleanSetOf ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun booleanSetOfNotNull ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun byte2BooleanMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;
-	public static final fun byte2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;
-	public static final fun byte2ByteMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;
-	public static final fun byte2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;
-	public static final fun byte2CharMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;
-	public static final fun byte2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;
-	public static final fun byte2DoubleMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;
-	public static final fun byte2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;
-	public static final fun byte2FloatMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;
-	public static final fun byte2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;
-	public static final fun byte2IntMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;
-	public static final fun byte2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;
-	public static final fun byte2LongMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;
-	public static final fun byte2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;
-	public static final fun byte2ObjectMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;
-	public static final fun byte2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;
-	public static final fun byte2ShortMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;
-	public static final fun byte2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;
-	public static final fun byteListOf ()Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun byteListOf ([B)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun byteListOfNotNull (Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun byteListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun byteListOfNotNull ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun byteSetOf ()Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun byteSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun byteSetOf ([B)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun byteSetOfNotNull ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun char2BooleanMapOf ()Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;
-	public static final fun char2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;
-	public static final fun char2ByteMapOf ()Lit/unimi/dsi/fastutil/chars/Char2ByteMap;
-	public static final fun char2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2ByteMap;
-	public static final fun char2CharMapOf ()Lit/unimi/dsi/fastutil/chars/Char2CharMap;
-	public static final fun char2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2CharMap;
-	public static final fun char2DoubleMapOf ()Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;
-	public static final fun char2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;
-	public static final fun char2FloatMapOf ()Lit/unimi/dsi/fastutil/chars/Char2FloatMap;
-	public static final fun char2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2FloatMap;
-	public static final fun char2IntMapOf ()Lit/unimi/dsi/fastutil/chars/Char2IntMap;
-	public static final fun char2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2IntMap;
-	public static final fun char2LongMapOf ()Lit/unimi/dsi/fastutil/chars/Char2LongMap;
-	public static final fun char2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2LongMap;
-	public static final fun char2ObjectMapOf ()Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;
-	public static final fun char2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;
-	public static final fun char2ShortMapOf ()Lit/unimi/dsi/fastutil/chars/Char2ShortMap;
-	public static final fun char2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2ShortMap;
-	public static final fun charListOf ()Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun charListOf ([C)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun charListOfNotNull (Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun charListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun charListOfNotNull ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun charSetOf ()Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun charSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun charSetOf ([C)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun charSetOfNotNull ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun double2BooleanMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;
-	public static final fun double2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;
-	public static final fun double2ByteMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;
-	public static final fun double2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;
-	public static final fun double2CharMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2CharMap;
-	public static final fun double2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2CharMap;
-	public static final fun double2DoubleMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;
-	public static final fun double2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;
-	public static final fun double2FloatMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;
-	public static final fun double2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;
-	public static final fun double2IntMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2IntMap;
-	public static final fun double2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2IntMap;
-	public static final fun double2LongMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2LongMap;
-	public static final fun double2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2LongMap;
-	public static final fun double2ObjectMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;
-	public static final fun double2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;
-	public static final fun double2ShortMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;
-	public static final fun double2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;
-	public static final fun doubleListOf ()Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun doubleListOf ([D)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun doubleListOfNotNull (Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun doubleListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun doubleListOfNotNull ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun doubleSetOf ()Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun doubleSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun doubleSetOf ([D)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun doubleSetOfNotNull ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun emptyBooleanList ()Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun emptyBooleanSet ()Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun emptyByte2BooleanMap ()Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;
-	public static final fun emptyByte2ByteMap ()Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;
-	public static final fun emptyByte2CharMap ()Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;
-	public static final fun emptyByte2DoubleMap ()Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;
-	public static final fun emptyByte2FloatMap ()Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;
-	public static final fun emptyByte2IntMap ()Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;
-	public static final fun emptyByte2LongMap ()Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;
-	public static final fun emptyByte2ObjectMap ()Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;
-	public static final fun emptyByte2ShortMap ()Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;
-	public static final fun emptyByteList ()Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun emptyByteSet ()Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun emptyChar2BooleanMap ()Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;
-	public static final fun emptyChar2ByteMap ()Lit/unimi/dsi/fastutil/chars/Char2ByteMap;
-	public static final fun emptyChar2CharMap ()Lit/unimi/dsi/fastutil/chars/Char2CharMap;
-	public static final fun emptyChar2DoubleMap ()Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;
-	public static final fun emptyChar2FloatMap ()Lit/unimi/dsi/fastutil/chars/Char2FloatMap;
-	public static final fun emptyChar2IntMap ()Lit/unimi/dsi/fastutil/chars/Char2IntMap;
-	public static final fun emptyChar2LongMap ()Lit/unimi/dsi/fastutil/chars/Char2LongMap;
-	public static final fun emptyChar2ObjectMap ()Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;
-	public static final fun emptyChar2ShortMap ()Lit/unimi/dsi/fastutil/chars/Char2ShortMap;
-	public static final fun emptyCharList ()Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun emptyCharSet ()Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun emptyDouble2BooleanMap ()Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;
-	public static final fun emptyDouble2ByteMap ()Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;
-	public static final fun emptyDouble2CharMap ()Lit/unimi/dsi/fastutil/doubles/Double2CharMap;
-	public static final fun emptyDouble2DoubleMap ()Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;
-	public static final fun emptyDouble2FloatMap ()Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;
-	public static final fun emptyDouble2IntMap ()Lit/unimi/dsi/fastutil/doubles/Double2IntMap;
-	public static final fun emptyDouble2LongMap ()Lit/unimi/dsi/fastutil/doubles/Double2LongMap;
-	public static final fun emptyDouble2ObjectMap ()Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;
-	public static final fun emptyDouble2ShortMap ()Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;
-	public static final fun emptyDoubleList ()Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun emptyDoubleSet ()Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun emptyFloat2BooleanMap ()Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;
-	public static final fun emptyFloat2ByteMap ()Lit/unimi/dsi/fastutil/floats/Float2ByteMap;
-	public static final fun emptyFloat2CharMap ()Lit/unimi/dsi/fastutil/floats/Float2CharMap;
-	public static final fun emptyFloat2DoubleMap ()Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;
-	public static final fun emptyFloat2FloatMap ()Lit/unimi/dsi/fastutil/floats/Float2FloatMap;
-	public static final fun emptyFloat2IntMap ()Lit/unimi/dsi/fastutil/floats/Float2IntMap;
-	public static final fun emptyFloat2LongMap ()Lit/unimi/dsi/fastutil/floats/Float2LongMap;
-	public static final fun emptyFloat2ObjectMap ()Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;
-	public static final fun emptyFloat2ShortMap ()Lit/unimi/dsi/fastutil/floats/Float2ShortMap;
-	public static final fun emptyFloatList ()Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun emptyFloatSet ()Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun emptyInt2BooleanMap ()Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;
-	public static final fun emptyInt2ByteMap ()Lit/unimi/dsi/fastutil/ints/Int2ByteMap;
-	public static final fun emptyInt2CharMap ()Lit/unimi/dsi/fastutil/ints/Int2CharMap;
-	public static final fun emptyInt2DoubleMap ()Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;
-	public static final fun emptyInt2FloatMap ()Lit/unimi/dsi/fastutil/ints/Int2FloatMap;
-	public static final fun emptyInt2IntMap ()Lit/unimi/dsi/fastutil/ints/Int2IntMap;
-	public static final fun emptyInt2LongMap ()Lit/unimi/dsi/fastutil/ints/Int2LongMap;
-	public static final fun emptyInt2ObjectMap ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun emptyInt2ShortMap ()Lit/unimi/dsi/fastutil/ints/Int2ShortMap;
-	public static final fun emptyIntList ()Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun emptyIntSet ()Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun emptyLong2BooleanMap ()Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;
-	public static final fun emptyLong2ByteMap ()Lit/unimi/dsi/fastutil/longs/Long2ByteMap;
-	public static final fun emptyLong2CharMap ()Lit/unimi/dsi/fastutil/longs/Long2CharMap;
-	public static final fun emptyLong2DoubleMap ()Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;
-	public static final fun emptyLong2FloatMap ()Lit/unimi/dsi/fastutil/longs/Long2FloatMap;
-	public static final fun emptyLong2IntMap ()Lit/unimi/dsi/fastutil/longs/Long2IntMap;
-	public static final fun emptyLong2LongMap ()Lit/unimi/dsi/fastutil/longs/Long2LongMap;
-	public static final fun emptyLong2ObjectMap ()Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-	public static final fun emptyLong2ShortMap ()Lit/unimi/dsi/fastutil/longs/Long2ShortMap;
-	public static final fun emptyLongList ()Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun emptyLongSet ()Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun emptyObject2BooleanMap ()Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;
-	public static final fun emptyObject2ByteMap ()Lit/unimi/dsi/fastutil/objects/Object2ByteMap;
-	public static final fun emptyObject2CharMap ()Lit/unimi/dsi/fastutil/objects/Object2CharMap;
-	public static final fun emptyObject2DoubleMap ()Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;
-	public static final fun emptyObject2FloatMap ()Lit/unimi/dsi/fastutil/objects/Object2FloatMap;
-	public static final fun emptyObject2IntMap ()Lit/unimi/dsi/fastutil/objects/Object2IntMap;
-	public static final fun emptyObject2LongMap ()Lit/unimi/dsi/fastutil/objects/Object2LongMap;
-	public static final fun emptyObject2MultiObjectsMap ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun emptyObject2ObjectMap ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun emptyObject2ShortMap ()Lit/unimi/dsi/fastutil/objects/Object2ShortMap;
-	public static final fun emptyObjectList ()Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun emptyObjectSet ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun emptyShort2BooleanMap ()Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;
-	public static final fun emptyShort2ByteMap ()Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;
-	public static final fun emptyShort2CharMap ()Lit/unimi/dsi/fastutil/shorts/Short2CharMap;
-	public static final fun emptyShort2DoubleMap ()Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;
-	public static final fun emptyShort2FloatMap ()Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;
-	public static final fun emptyShort2IntMap ()Lit/unimi/dsi/fastutil/shorts/Short2IntMap;
-	public static final fun emptyShort2LongMap ()Lit/unimi/dsi/fastutil/shorts/Short2LongMap;
-	public static final fun emptyShort2ObjectMap ()Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;
-	public static final fun emptyShort2ShortMap ()Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;
-	public static final fun emptyShortList ()Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun emptyShortSet ()Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun float2BooleanMapOf ()Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;
-	public static final fun float2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;
-	public static final fun float2ByteMapOf ()Lit/unimi/dsi/fastutil/floats/Float2ByteMap;
-	public static final fun float2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2ByteMap;
-	public static final fun float2CharMapOf ()Lit/unimi/dsi/fastutil/floats/Float2CharMap;
-	public static final fun float2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2CharMap;
-	public static final fun float2DoubleMapOf ()Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;
-	public static final fun float2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;
-	public static final fun float2FloatMapOf ()Lit/unimi/dsi/fastutil/floats/Float2FloatMap;
-	public static final fun float2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2FloatMap;
-	public static final fun float2IntMapOf ()Lit/unimi/dsi/fastutil/floats/Float2IntMap;
-	public static final fun float2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2IntMap;
-	public static final fun float2LongMapOf ()Lit/unimi/dsi/fastutil/floats/Float2LongMap;
-	public static final fun float2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2LongMap;
-	public static final fun float2ObjectMapOf ()Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;
-	public static final fun float2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;
-	public static final fun float2ShortMapOf ()Lit/unimi/dsi/fastutil/floats/Float2ShortMap;
-	public static final fun float2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2ShortMap;
-	public static final fun floatListOf ()Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun floatListOf ([F)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun floatListOfNotNull (Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun floatListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun floatListOfNotNull ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun floatSetOf ()Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun floatSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun floatSetOf ([F)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun floatSetOfNotNull ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/booleans/BooleanList;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/booleans/BooleanSet;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;)Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;)Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;)Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;)Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;)Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;)Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;)Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;)Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;)Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/ByteList;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/bytes/ByteSet;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;)Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2ByteMap;)Lit/unimi/dsi/fastutil/chars/Char2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2CharMap;)Lit/unimi/dsi/fastutil/chars/Char2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;)Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2FloatMap;)Lit/unimi/dsi/fastutil/chars/Char2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2IntMap;)Lit/unimi/dsi/fastutil/chars/Char2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2LongMap;)Lit/unimi/dsi/fastutil/chars/Char2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;)Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/Char2ShortMap;)Lit/unimi/dsi/fastutil/chars/Char2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/CharList;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/chars/CharSet;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;)Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;)Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2CharMap;)Lit/unimi/dsi/fastutil/doubles/Double2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;)Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;)Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2IntMap;)Lit/unimi/dsi/fastutil/doubles/Double2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2LongMap;)Lit/unimi/dsi/fastutil/doubles/Double2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;)Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;)Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/DoubleList;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/doubles/DoubleSet;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;)Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2ByteMap;)Lit/unimi/dsi/fastutil/floats/Float2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2CharMap;)Lit/unimi/dsi/fastutil/floats/Float2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;)Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2FloatMap;)Lit/unimi/dsi/fastutil/floats/Float2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2IntMap;)Lit/unimi/dsi/fastutil/floats/Float2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2LongMap;)Lit/unimi/dsi/fastutil/floats/Float2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;)Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/Float2ShortMap;)Lit/unimi/dsi/fastutil/floats/Float2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/FloatList;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/floats/FloatSet;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;)Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2ByteMap;)Lit/unimi/dsi/fastutil/ints/Int2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2CharMap;)Lit/unimi/dsi/fastutil/ints/Int2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;)Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2FloatMap;)Lit/unimi/dsi/fastutil/ints/Int2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2IntMap;)Lit/unimi/dsi/fastutil/ints/Int2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2LongMap;)Lit/unimi/dsi/fastutil/ints/Int2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/Int2ShortMap;)Lit/unimi/dsi/fastutil/ints/Int2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/IntList;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/ints/IntSet;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;)Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2ByteMap;)Lit/unimi/dsi/fastutil/longs/Long2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2CharMap;)Lit/unimi/dsi/fastutil/longs/Long2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;)Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2FloatMap;)Lit/unimi/dsi/fastutil/longs/Long2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2IntMap;)Lit/unimi/dsi/fastutil/longs/Long2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2LongMap;)Lit/unimi/dsi/fastutil/longs/Long2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;)Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/Long2ShortMap;)Lit/unimi/dsi/fastutil/longs/Long2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/LongList;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/longs/LongSet;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;)Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2ByteMap;)Lit/unimi/dsi/fastutil/objects/Object2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2CharMap;)Lit/unimi/dsi/fastutil/objects/Object2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;)Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2FloatMap;)Lit/unimi/dsi/fastutil/objects/Object2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2IntMap;)Lit/unimi/dsi/fastutil/objects/Object2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2LongMap;)Lit/unimi/dsi/fastutil/objects/Object2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;)Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/Object2ShortMap;)Lit/unimi/dsi/fastutil/objects/Object2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/ObjectList;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/objects/ObjectSet;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;)Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;)Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2CharMap;)Lit/unimi/dsi/fastutil/shorts/Short2CharMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;)Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;)Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2IntMap;)Lit/unimi/dsi/fastutil/shorts/Short2IntMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2LongMap;)Lit/unimi/dsi/fastutil/shorts/Short2LongMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;)Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;)Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/ShortList;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun freeze (Lit/unimi/dsi/fastutil/shorts/ShortSet;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun int2BooleanMapOf ()Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;
-	public static final fun int2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;
-	public static final fun int2ByteMapOf ()Lit/unimi/dsi/fastutil/ints/Int2ByteMap;
-	public static final fun int2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2ByteMap;
-	public static final fun int2CharMapOf ()Lit/unimi/dsi/fastutil/ints/Int2CharMap;
-	public static final fun int2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2CharMap;
-	public static final fun int2DoubleMapOf ()Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;
-	public static final fun int2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;
-	public static final fun int2FloatMapOf ()Lit/unimi/dsi/fastutil/ints/Int2FloatMap;
-	public static final fun int2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2FloatMap;
-	public static final fun int2IntMapOf ()Lit/unimi/dsi/fastutil/ints/Int2IntMap;
-	public static final fun int2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2IntMap;
-	public static final fun int2LongMapOf ()Lit/unimi/dsi/fastutil/ints/Int2LongMap;
-	public static final fun int2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2LongMap;
-	public static final fun int2ObjectMapOf ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun int2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun int2ShortMapOf ()Lit/unimi/dsi/fastutil/ints/Int2ShortMap;
-	public static final fun int2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2ShortMap;
-	public static final fun intListOf ()Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun intListOf ([I)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun intListOfNotNull (Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun intListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun intListOfNotNull ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun intSetOf ()Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun intSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun intSetOf ([I)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun intSetOfNotNull ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun long2BooleanMapOf ()Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;
-	public static final fun long2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;
-	public static final fun long2ByteMapOf ()Lit/unimi/dsi/fastutil/longs/Long2ByteMap;
-	public static final fun long2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2ByteMap;
-	public static final fun long2CharMapOf ()Lit/unimi/dsi/fastutil/longs/Long2CharMap;
-	public static final fun long2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2CharMap;
-	public static final fun long2DoubleMapOf ()Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;
-	public static final fun long2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;
-	public static final fun long2FloatMapOf ()Lit/unimi/dsi/fastutil/longs/Long2FloatMap;
-	public static final fun long2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2FloatMap;
-	public static final fun long2IntMapOf ()Lit/unimi/dsi/fastutil/longs/Long2IntMap;
-	public static final fun long2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2IntMap;
-	public static final fun long2LongMapOf ()Lit/unimi/dsi/fastutil/longs/Long2LongMap;
-	public static final fun long2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2LongMap;
-	public static final fun long2ObjectMapOf ()Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-	public static final fun long2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-	public static final fun long2ShortMapOf ()Lit/unimi/dsi/fastutil/longs/Long2ShortMap;
-	public static final fun long2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2ShortMap;
-	public static final fun longListOf ()Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun longListOf ([J)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun longListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun longListOfNotNull (Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun longListOfNotNull ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun longSetOf ()Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun longSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun longSetOf ([J)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun longSetOfNotNull ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun mutableBooleanListOf ()Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun mutableBooleanListOf (I)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun mutableBooleanListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun mutableBooleanListOf ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun mutableBooleanListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun mutableBooleanListOfNotNull ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun mutableBooleanSetOf ()Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun mutableBooleanSetOf (I)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun mutableBooleanSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun mutableBooleanSetOf ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun mutableBooleanSetOfNotNull ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanOpenHashSet;
-	public static final fun mutableByte2BooleanMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2BooleanOpenHashMap;
-	public static final fun mutableByte2BooleanMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2BooleanOpenHashMap;
-	public static final fun mutableByte2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2BooleanOpenHashMap;
-	public static final fun mutableByte2ByteMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2ByteOpenHashMap;
-	public static final fun mutableByte2ByteMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2ByteOpenHashMap;
-	public static final fun mutableByte2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2ByteOpenHashMap;
-	public static final fun mutableByte2CharMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2CharOpenHashMap;
-	public static final fun mutableByte2CharMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2CharOpenHashMap;
-	public static final fun mutableByte2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2CharOpenHashMap;
-	public static final fun mutableByte2DoubleMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2DoubleOpenHashMap;
-	public static final fun mutableByte2DoubleMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2DoubleOpenHashMap;
-	public static final fun mutableByte2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2DoubleOpenHashMap;
-	public static final fun mutableByte2FloatMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2FloatOpenHashMap;
-	public static final fun mutableByte2FloatMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2FloatOpenHashMap;
-	public static final fun mutableByte2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2FloatOpenHashMap;
-	public static final fun mutableByte2IntMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2IntOpenHashMap;
-	public static final fun mutableByte2IntMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2IntOpenHashMap;
-	public static final fun mutableByte2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2IntOpenHashMap;
-	public static final fun mutableByte2LongMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2LongOpenHashMap;
-	public static final fun mutableByte2LongMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2LongOpenHashMap;
-	public static final fun mutableByte2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2LongOpenHashMap;
-	public static final fun mutableByte2ObjectMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2ObjectOpenHashMap;
-	public static final fun mutableByte2ObjectMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2ObjectOpenHashMap;
-	public static final fun mutableByte2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2ObjectOpenHashMap;
-	public static final fun mutableByte2ShortMapOf ()Lit/unimi/dsi/fastutil/bytes/Byte2ShortOpenHashMap;
-	public static final fun mutableByte2ShortMapOf (I)Lit/unimi/dsi/fastutil/bytes/Byte2ShortOpenHashMap;
-	public static final fun mutableByte2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/bytes/Byte2ShortOpenHashMap;
-	public static final fun mutableByteListOf ()Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun mutableByteListOf (I)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun mutableByteListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun mutableByteListOf ([B)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun mutableByteListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun mutableByteListOfNotNull ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun mutableByteSetOf ()Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun mutableByteSetOf (I)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun mutableByteSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun mutableByteSetOf ([B)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun mutableByteSetOfNotNull ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteOpenHashSet;
-	public static final fun mutableChar2BooleanMapOf ()Lit/unimi/dsi/fastutil/chars/Char2BooleanOpenHashMap;
-	public static final fun mutableChar2BooleanMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2BooleanOpenHashMap;
-	public static final fun mutableChar2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2BooleanOpenHashMap;
-	public static final fun mutableChar2ByteMapOf ()Lit/unimi/dsi/fastutil/chars/Char2ByteOpenHashMap;
-	public static final fun mutableChar2ByteMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2ByteOpenHashMap;
-	public static final fun mutableChar2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2ByteOpenHashMap;
-	public static final fun mutableChar2CharMapOf ()Lit/unimi/dsi/fastutil/chars/Char2CharOpenHashMap;
-	public static final fun mutableChar2CharMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2CharOpenHashMap;
-	public static final fun mutableChar2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2CharOpenHashMap;
-	public static final fun mutableChar2DoubleMapOf ()Lit/unimi/dsi/fastutil/chars/Char2DoubleOpenHashMap;
-	public static final fun mutableChar2DoubleMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2DoubleOpenHashMap;
-	public static final fun mutableChar2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2DoubleOpenHashMap;
-	public static final fun mutableChar2FloatMapOf ()Lit/unimi/dsi/fastutil/chars/Char2FloatOpenHashMap;
-	public static final fun mutableChar2FloatMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2FloatOpenHashMap;
-	public static final fun mutableChar2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2FloatOpenHashMap;
-	public static final fun mutableChar2IntMapOf ()Lit/unimi/dsi/fastutil/chars/Char2IntOpenHashMap;
-	public static final fun mutableChar2IntMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2IntOpenHashMap;
-	public static final fun mutableChar2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2IntOpenHashMap;
-	public static final fun mutableChar2LongMapOf ()Lit/unimi/dsi/fastutil/chars/Char2LongOpenHashMap;
-	public static final fun mutableChar2LongMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2LongOpenHashMap;
-	public static final fun mutableChar2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2LongOpenHashMap;
-	public static final fun mutableChar2ObjectMapOf ()Lit/unimi/dsi/fastutil/chars/Char2ObjectOpenHashMap;
-	public static final fun mutableChar2ObjectMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2ObjectOpenHashMap;
-	public static final fun mutableChar2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2ObjectOpenHashMap;
-	public static final fun mutableChar2ShortMapOf ()Lit/unimi/dsi/fastutil/chars/Char2ShortOpenHashMap;
-	public static final fun mutableChar2ShortMapOf (I)Lit/unimi/dsi/fastutil/chars/Char2ShortOpenHashMap;
-	public static final fun mutableChar2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/chars/Char2ShortOpenHashMap;
-	public static final fun mutableCharListOf ()Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun mutableCharListOf (I)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun mutableCharListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun mutableCharListOf ([C)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun mutableCharListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun mutableCharListOfNotNull ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun mutableCharSetOf ()Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun mutableCharSetOf (I)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun mutableCharSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun mutableCharSetOf ([C)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun mutableCharSetOfNotNull ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharOpenHashSet;
-	public static final fun mutableDouble2BooleanMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2BooleanOpenHashMap;
-	public static final fun mutableDouble2BooleanMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2BooleanOpenHashMap;
-	public static final fun mutableDouble2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2BooleanOpenHashMap;
-	public static final fun mutableDouble2ByteMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2ByteOpenHashMap;
-	public static final fun mutableDouble2ByteMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2ByteOpenHashMap;
-	public static final fun mutableDouble2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2ByteOpenHashMap;
-	public static final fun mutableDouble2CharMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2CharOpenHashMap;
-	public static final fun mutableDouble2CharMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2CharOpenHashMap;
-	public static final fun mutableDouble2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2CharOpenHashMap;
-	public static final fun mutableDouble2DoubleMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2DoubleOpenHashMap;
-	public static final fun mutableDouble2DoubleMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2DoubleOpenHashMap;
-	public static final fun mutableDouble2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2DoubleOpenHashMap;
-	public static final fun mutableDouble2FloatMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2FloatOpenHashMap;
-	public static final fun mutableDouble2FloatMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2FloatOpenHashMap;
-	public static final fun mutableDouble2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2FloatOpenHashMap;
-	public static final fun mutableDouble2IntMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2IntOpenHashMap;
-	public static final fun mutableDouble2IntMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2IntOpenHashMap;
-	public static final fun mutableDouble2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2IntOpenHashMap;
-	public static final fun mutableDouble2LongMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2LongOpenHashMap;
-	public static final fun mutableDouble2LongMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2LongOpenHashMap;
-	public static final fun mutableDouble2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2LongOpenHashMap;
-	public static final fun mutableDouble2ObjectMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2ObjectOpenHashMap;
-	public static final fun mutableDouble2ObjectMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2ObjectOpenHashMap;
-	public static final fun mutableDouble2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2ObjectOpenHashMap;
-	public static final fun mutableDouble2ShortMapOf ()Lit/unimi/dsi/fastutil/doubles/Double2ShortOpenHashMap;
-	public static final fun mutableDouble2ShortMapOf (I)Lit/unimi/dsi/fastutil/doubles/Double2ShortOpenHashMap;
-	public static final fun mutableDouble2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/doubles/Double2ShortOpenHashMap;
-	public static final fun mutableDoubleListOf ()Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun mutableDoubleListOf (I)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun mutableDoubleListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun mutableDoubleListOf ([D)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun mutableDoubleListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun mutableDoubleListOfNotNull ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun mutableDoubleSetOf ()Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun mutableDoubleSetOf (I)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun mutableDoubleSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun mutableDoubleSetOf ([D)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun mutableDoubleSetOfNotNull ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleOpenHashSet;
-	public static final fun mutableFloat2BooleanMapOf ()Lit/unimi/dsi/fastutil/floats/Float2BooleanOpenHashMap;
-	public static final fun mutableFloat2BooleanMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2BooleanOpenHashMap;
-	public static final fun mutableFloat2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2BooleanOpenHashMap;
-	public static final fun mutableFloat2ByteMapOf ()Lit/unimi/dsi/fastutil/floats/Float2ByteOpenHashMap;
-	public static final fun mutableFloat2ByteMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2ByteOpenHashMap;
-	public static final fun mutableFloat2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2ByteOpenHashMap;
-	public static final fun mutableFloat2CharMapOf ()Lit/unimi/dsi/fastutil/floats/Float2CharOpenHashMap;
-	public static final fun mutableFloat2CharMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2CharOpenHashMap;
-	public static final fun mutableFloat2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2CharOpenHashMap;
-	public static final fun mutableFloat2DoubleMapOf ()Lit/unimi/dsi/fastutil/floats/Float2DoubleOpenHashMap;
-	public static final fun mutableFloat2DoubleMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2DoubleOpenHashMap;
-	public static final fun mutableFloat2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2DoubleOpenHashMap;
-	public static final fun mutableFloat2FloatMapOf ()Lit/unimi/dsi/fastutil/floats/Float2FloatOpenHashMap;
-	public static final fun mutableFloat2FloatMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2FloatOpenHashMap;
-	public static final fun mutableFloat2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2FloatOpenHashMap;
-	public static final fun mutableFloat2IntMapOf ()Lit/unimi/dsi/fastutil/floats/Float2IntOpenHashMap;
-	public static final fun mutableFloat2IntMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2IntOpenHashMap;
-	public static final fun mutableFloat2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2IntOpenHashMap;
-	public static final fun mutableFloat2LongMapOf ()Lit/unimi/dsi/fastutil/floats/Float2LongOpenHashMap;
-	public static final fun mutableFloat2LongMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2LongOpenHashMap;
-	public static final fun mutableFloat2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2LongOpenHashMap;
-	public static final fun mutableFloat2ObjectMapOf ()Lit/unimi/dsi/fastutil/floats/Float2ObjectOpenHashMap;
-	public static final fun mutableFloat2ObjectMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2ObjectOpenHashMap;
-	public static final fun mutableFloat2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2ObjectOpenHashMap;
-	public static final fun mutableFloat2ShortMapOf ()Lit/unimi/dsi/fastutil/floats/Float2ShortOpenHashMap;
-	public static final fun mutableFloat2ShortMapOf (I)Lit/unimi/dsi/fastutil/floats/Float2ShortOpenHashMap;
-	public static final fun mutableFloat2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/floats/Float2ShortOpenHashMap;
-	public static final fun mutableFloatListOf ()Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun mutableFloatListOf (I)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun mutableFloatListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun mutableFloatListOf ([F)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun mutableFloatListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun mutableFloatListOfNotNull ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun mutableFloatSetOf ()Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun mutableFloatSetOf (I)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun mutableFloatSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun mutableFloatSetOf ([F)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun mutableFloatSetOfNotNull ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatOpenHashSet;
-	public static final fun mutableInt2BooleanMapOf ()Lit/unimi/dsi/fastutil/ints/Int2BooleanOpenHashMap;
-	public static final fun mutableInt2BooleanMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2BooleanOpenHashMap;
-	public static final fun mutableInt2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2BooleanOpenHashMap;
-	public static final fun mutableInt2ByteMapOf ()Lit/unimi/dsi/fastutil/ints/Int2ByteOpenHashMap;
-	public static final fun mutableInt2ByteMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2ByteOpenHashMap;
-	public static final fun mutableInt2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2ByteOpenHashMap;
-	public static final fun mutableInt2CharMapOf ()Lit/unimi/dsi/fastutil/ints/Int2CharOpenHashMap;
-	public static final fun mutableInt2CharMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2CharOpenHashMap;
-	public static final fun mutableInt2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2CharOpenHashMap;
-	public static final fun mutableInt2DoubleMapOf ()Lit/unimi/dsi/fastutil/ints/Int2DoubleOpenHashMap;
-	public static final fun mutableInt2DoubleMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2DoubleOpenHashMap;
-	public static final fun mutableInt2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2DoubleOpenHashMap;
-	public static final fun mutableInt2FloatMapOf ()Lit/unimi/dsi/fastutil/ints/Int2FloatOpenHashMap;
-	public static final fun mutableInt2FloatMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2FloatOpenHashMap;
-	public static final fun mutableInt2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2FloatOpenHashMap;
-	public static final fun mutableInt2IntMapOf ()Lit/unimi/dsi/fastutil/ints/Int2IntOpenHashMap;
-	public static final fun mutableInt2IntMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2IntOpenHashMap;
-	public static final fun mutableInt2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2IntOpenHashMap;
-	public static final fun mutableInt2LongMapOf ()Lit/unimi/dsi/fastutil/ints/Int2LongOpenHashMap;
-	public static final fun mutableInt2LongMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2LongOpenHashMap;
-	public static final fun mutableInt2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2LongOpenHashMap;
-	public static final fun mutableInt2ObjectMapOf ()Lit/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap;
-	public static final fun mutableInt2ObjectMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap;
-	public static final fun mutableInt2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2ObjectOpenHashMap;
-	public static final fun mutableInt2ShortMapOf ()Lit/unimi/dsi/fastutil/ints/Int2ShortOpenHashMap;
-	public static final fun mutableInt2ShortMapOf (I)Lit/unimi/dsi/fastutil/ints/Int2ShortOpenHashMap;
-	public static final fun mutableInt2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/ints/Int2ShortOpenHashMap;
-	public static final fun mutableIntListOf ()Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun mutableIntListOf (I)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun mutableIntListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun mutableIntListOf ([I)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun mutableIntListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun mutableIntListOfNotNull ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun mutableIntSetOf ()Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun mutableIntSetOf (I)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun mutableIntSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun mutableIntSetOf ([I)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun mutableIntSetOfNotNull ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntOpenHashSet;
-	public static final fun mutableLong2BooleanMapOf ()Lit/unimi/dsi/fastutil/longs/Long2BooleanOpenHashMap;
-	public static final fun mutableLong2BooleanMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2BooleanOpenHashMap;
-	public static final fun mutableLong2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2BooleanOpenHashMap;
-	public static final fun mutableLong2ByteMapOf ()Lit/unimi/dsi/fastutil/longs/Long2ByteOpenHashMap;
-	public static final fun mutableLong2ByteMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2ByteOpenHashMap;
-	public static final fun mutableLong2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2ByteOpenHashMap;
-	public static final fun mutableLong2CharMapOf ()Lit/unimi/dsi/fastutil/longs/Long2CharOpenHashMap;
-	public static final fun mutableLong2CharMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2CharOpenHashMap;
-	public static final fun mutableLong2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2CharOpenHashMap;
-	public static final fun mutableLong2DoubleMapOf ()Lit/unimi/dsi/fastutil/longs/Long2DoubleOpenHashMap;
-	public static final fun mutableLong2DoubleMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2DoubleOpenHashMap;
-	public static final fun mutableLong2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2DoubleOpenHashMap;
-	public static final fun mutableLong2FloatMapOf ()Lit/unimi/dsi/fastutil/longs/Long2FloatOpenHashMap;
-	public static final fun mutableLong2FloatMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2FloatOpenHashMap;
-	public static final fun mutableLong2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2FloatOpenHashMap;
-	public static final fun mutableLong2IntMapOf ()Lit/unimi/dsi/fastutil/longs/Long2IntOpenHashMap;
-	public static final fun mutableLong2IntMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2IntOpenHashMap;
-	public static final fun mutableLong2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2IntOpenHashMap;
-	public static final fun mutableLong2LongMapOf ()Lit/unimi/dsi/fastutil/longs/Long2LongOpenHashMap;
-	public static final fun mutableLong2LongMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2LongOpenHashMap;
-	public static final fun mutableLong2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2LongOpenHashMap;
-	public static final fun mutableLong2ObjectMapOf ()Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;
-	public static final fun mutableLong2ObjectMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;
-	public static final fun mutableLong2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap;
-	public static final fun mutableLong2ShortMapOf ()Lit/unimi/dsi/fastutil/longs/Long2ShortOpenHashMap;
-	public static final fun mutableLong2ShortMapOf (I)Lit/unimi/dsi/fastutil/longs/Long2ShortOpenHashMap;
-	public static final fun mutableLong2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/longs/Long2ShortOpenHashMap;
-	public static final fun mutableLongListOf ()Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun mutableLongListOf (I)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun mutableLongListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun mutableLongListOf ([J)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun mutableLongListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun mutableLongListOfNotNull ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun mutableLongSetOf ()Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun mutableLongSetOf (I)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun mutableLongSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun mutableLongSetOf ([J)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun mutableLongSetOfNotNull ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongOpenHashSet;
-	public static final fun mutableObject2BooleanMapOf ()Lit/unimi/dsi/fastutil/objects/Object2BooleanOpenHashMap;
-	public static final fun mutableObject2BooleanMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2BooleanOpenHashMap;
-	public static final fun mutableObject2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2BooleanOpenHashMap;
-	public static final fun mutableObject2ByteMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ByteOpenHashMap;
-	public static final fun mutableObject2ByteMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2ByteOpenHashMap;
-	public static final fun mutableObject2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ByteOpenHashMap;
-	public static final fun mutableObject2CharMapOf ()Lit/unimi/dsi/fastutil/objects/Object2CharOpenHashMap;
-	public static final fun mutableObject2CharMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2CharOpenHashMap;
-	public static final fun mutableObject2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2CharOpenHashMap;
-	public static final fun mutableObject2DoubleMapOf ()Lit/unimi/dsi/fastutil/objects/Object2DoubleOpenHashMap;
-	public static final fun mutableObject2DoubleMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2DoubleOpenHashMap;
-	public static final fun mutableObject2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2DoubleOpenHashMap;
-	public static final fun mutableObject2FloatMapOf ()Lit/unimi/dsi/fastutil/objects/Object2FloatOpenHashMap;
-	public static final fun mutableObject2FloatMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2FloatOpenHashMap;
-	public static final fun mutableObject2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2FloatOpenHashMap;
-	public static final fun mutableObject2IntMapOf ()Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
-	public static final fun mutableObject2IntMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
-	public static final fun mutableObject2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
-	public static final fun mutableObject2LongMapOf ()Lit/unimi/dsi/fastutil/objects/Object2LongOpenHashMap;
-	public static final fun mutableObject2LongMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2LongOpenHashMap;
-	public static final fun mutableObject2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2LongOpenHashMap;
-	public static final fun mutableObject2MultiObjectsMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
-	public static final fun mutableObject2MultiObjectsMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
-	public static final fun mutableObject2ObjectMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
-	public static final fun mutableObject2ObjectMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
-	public static final fun mutableObject2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ObjectOpenHashMap;
-	public static final fun mutableObject2ShortMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ShortOpenHashMap;
-	public static final fun mutableObject2ShortMapOf (I)Lit/unimi/dsi/fastutil/objects/Object2ShortOpenHashMap;
-	public static final fun mutableObject2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ShortOpenHashMap;
-	public static final fun mutableObjectListOf ()Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun mutableObjectListOf (I)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun mutableObjectListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun mutableObjectListOf ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun mutableObjectListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun mutableObjectListOfNotNull ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun mutableObjectSetOf ()Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun mutableObjectSetOf (I)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun mutableObjectSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun mutableObjectSetOf ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun mutableObjectSetOfNotNull ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun mutableShort2BooleanMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2BooleanOpenHashMap;
-	public static final fun mutableShort2BooleanMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2BooleanOpenHashMap;
-	public static final fun mutableShort2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2BooleanOpenHashMap;
-	public static final fun mutableShort2ByteMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2ByteOpenHashMap;
-	public static final fun mutableShort2ByteMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2ByteOpenHashMap;
-	public static final fun mutableShort2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2ByteOpenHashMap;
-	public static final fun mutableShort2CharMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2CharOpenHashMap;
-	public static final fun mutableShort2CharMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2CharOpenHashMap;
-	public static final fun mutableShort2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2CharOpenHashMap;
-	public static final fun mutableShort2DoubleMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2DoubleOpenHashMap;
-	public static final fun mutableShort2DoubleMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2DoubleOpenHashMap;
-	public static final fun mutableShort2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2DoubleOpenHashMap;
-	public static final fun mutableShort2FloatMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2FloatOpenHashMap;
-	public static final fun mutableShort2FloatMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2FloatOpenHashMap;
-	public static final fun mutableShort2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2FloatOpenHashMap;
-	public static final fun mutableShort2IntMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2IntOpenHashMap;
-	public static final fun mutableShort2IntMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2IntOpenHashMap;
-	public static final fun mutableShort2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2IntOpenHashMap;
-	public static final fun mutableShort2LongMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2LongOpenHashMap;
-	public static final fun mutableShort2LongMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2LongOpenHashMap;
-	public static final fun mutableShort2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2LongOpenHashMap;
-	public static final fun mutableShort2ObjectMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2ObjectOpenHashMap;
-	public static final fun mutableShort2ObjectMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2ObjectOpenHashMap;
-	public static final fun mutableShort2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2ObjectOpenHashMap;
-	public static final fun mutableShort2ShortMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2ShortOpenHashMap;
-	public static final fun mutableShort2ShortMapOf (I)Lit/unimi/dsi/fastutil/shorts/Short2ShortOpenHashMap;
-	public static final fun mutableShort2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2ShortOpenHashMap;
-	public static final fun mutableShortListOf ()Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun mutableShortListOf (I)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun mutableShortListOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun mutableShortListOf ([S)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun mutableShortListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun mutableShortListOfNotNull ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun mutableShortSetOf ()Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun mutableShortSetOf (I)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun mutableShortSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun mutableShortSetOf ([S)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun mutableShortSetOfNotNull ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortOpenHashSet;
-	public static final fun object2BooleanMapOf ()Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;
-	public static final fun object2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;
-	public static final fun object2ByteMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ByteMap;
-	public static final fun object2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ByteMap;
-	public static final fun object2CharMapOf ()Lit/unimi/dsi/fastutil/objects/Object2CharMap;
-	public static final fun object2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2CharMap;
-	public static final fun object2DoubleMapOf ()Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;
-	public static final fun object2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;
-	public static final fun object2FloatMapOf ()Lit/unimi/dsi/fastutil/objects/Object2FloatMap;
-	public static final fun object2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2FloatMap;
-	public static final fun object2IntMapOf ()Lit/unimi/dsi/fastutil/objects/Object2IntMap;
-	public static final fun object2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2IntMap;
-	public static final fun object2LongMapOf ()Lit/unimi/dsi/fastutil/objects/Object2LongMap;
-	public static final fun object2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2LongMap;
-	public static final fun object2MultiObjectsMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun object2MultiObjectsMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun object2ObjectMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun object2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun object2ShortMapOf ()Lit/unimi/dsi/fastutil/objects/Object2ShortMap;
-	public static final fun object2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/objects/Object2ShortMap;
-	public static final fun objectListOf ()Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun objectListOf ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun objectListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun objectListOfNotNull (Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun objectListOfNotNull ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun objectSetOf ()Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun objectSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun objectSetOf ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun objectSetOfNotNull ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun remove (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;Ljava/lang/Object;Ljava/lang/Object;)V
-	public static final fun removeAll (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;Ljava/lang/Object;)V
-	public static final fun removeAll (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;Ljava/lang/Object;Ljava/lang/Iterable;)V
-	public static final fun short2BooleanMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;
-	public static final fun short2BooleanMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;
-	public static final fun short2ByteMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;
-	public static final fun short2ByteMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;
-	public static final fun short2CharMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2CharMap;
-	public static final fun short2CharMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2CharMap;
-	public static final fun short2DoubleMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;
-	public static final fun short2DoubleMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;
-	public static final fun short2FloatMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;
-	public static final fun short2FloatMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;
-	public static final fun short2IntMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2IntMap;
-	public static final fun short2IntMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2IntMap;
-	public static final fun short2LongMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2LongMap;
-	public static final fun short2LongMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2LongMap;
-	public static final fun short2ObjectMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;
-	public static final fun short2ObjectMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;
-	public static final fun short2ShortMapOf ()Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;
-	public static final fun short2ShortMapOf ([Lkotlin/Pair;)Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;
-	public static final fun shortListOf ()Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun shortListOf ([S)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun shortListOfNotNull (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun shortListOfNotNull (Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun shortListOfNotNull ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun shortSetOf ()Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun shortSetOf (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun shortSetOf ([S)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun shortSetOfNotNull ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/booleans/BooleanList;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/booleans/BooleanSet;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;)Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;)Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;)Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;)Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;)Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;)Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;)Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;)Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;)Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/ByteList;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/bytes/ByteSet;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;)Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2ByteMap;)Lit/unimi/dsi/fastutil/chars/Char2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2CharMap;)Lit/unimi/dsi/fastutil/chars/Char2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;)Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2FloatMap;)Lit/unimi/dsi/fastutil/chars/Char2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2IntMap;)Lit/unimi/dsi/fastutil/chars/Char2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2LongMap;)Lit/unimi/dsi/fastutil/chars/Char2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;)Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/Char2ShortMap;)Lit/unimi/dsi/fastutil/chars/Char2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/CharList;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/chars/CharSet;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;)Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;)Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2CharMap;)Lit/unimi/dsi/fastutil/doubles/Double2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;)Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;)Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2IntMap;)Lit/unimi/dsi/fastutil/doubles/Double2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2LongMap;)Lit/unimi/dsi/fastutil/doubles/Double2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;)Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;)Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/DoubleList;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/doubles/DoubleSet;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;)Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2ByteMap;)Lit/unimi/dsi/fastutil/floats/Float2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2CharMap;)Lit/unimi/dsi/fastutil/floats/Float2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;)Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2FloatMap;)Lit/unimi/dsi/fastutil/floats/Float2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2IntMap;)Lit/unimi/dsi/fastutil/floats/Float2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2LongMap;)Lit/unimi/dsi/fastutil/floats/Float2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;)Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/Float2ShortMap;)Lit/unimi/dsi/fastutil/floats/Float2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/FloatList;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/floats/FloatSet;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;)Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2ByteMap;)Lit/unimi/dsi/fastutil/ints/Int2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2CharMap;)Lit/unimi/dsi/fastutil/ints/Int2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;)Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2FloatMap;)Lit/unimi/dsi/fastutil/ints/Int2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2IntMap;)Lit/unimi/dsi/fastutil/ints/Int2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2LongMap;)Lit/unimi/dsi/fastutil/ints/Int2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/Int2ShortMap;)Lit/unimi/dsi/fastutil/ints/Int2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/IntList;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/ints/IntSet;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;)Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2ByteMap;)Lit/unimi/dsi/fastutil/longs/Long2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2CharMap;)Lit/unimi/dsi/fastutil/longs/Long2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;)Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2FloatMap;)Lit/unimi/dsi/fastutil/longs/Long2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2IntMap;)Lit/unimi/dsi/fastutil/longs/Long2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2LongMap;)Lit/unimi/dsi/fastutil/longs/Long2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;)Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/Long2ShortMap;)Lit/unimi/dsi/fastutil/longs/Long2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/LongList;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/longs/LongSet;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;)Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2ByteMap;)Lit/unimi/dsi/fastutil/objects/Object2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2CharMap;)Lit/unimi/dsi/fastutil/objects/Object2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;)Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2FloatMap;)Lit/unimi/dsi/fastutil/objects/Object2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2IntMap;)Lit/unimi/dsi/fastutil/objects/Object2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2LongMap;)Lit/unimi/dsi/fastutil/objects/Object2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;)Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/Object2ShortMap;)Lit/unimi/dsi/fastutil/objects/Object2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/ObjectList;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/objects/ObjectSet;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;)Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;)Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2CharMap;)Lit/unimi/dsi/fastutil/shorts/Short2CharMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;)Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;)Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2IntMap;)Lit/unimi/dsi/fastutil/shorts/Short2IntMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2LongMap;)Lit/unimi/dsi/fastutil/shorts/Short2LongMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;)Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;)Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/ShortList;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun synchronize (Lit/unimi/dsi/fastutil/shorts/ShortSet;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toBooleanList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun toBooleanList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun toBooleanList ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun toBooleanList ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanList;
-	public static final fun toBooleanSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toBooleanSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toBooleanSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toBooleanSet ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toByteList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun toByteList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun toByteList ([B)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun toByteList ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteList;
-	public static final fun toByteSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toByteSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toByteSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toByteSet ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toCharList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun toCharList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun toCharList ([C)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun toCharList ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharList;
-	public static final fun toCharSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toCharSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toCharSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toCharSet ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toDoubleList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun toDoubleList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun toDoubleList ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleList;
-	public static final fun toDoubleSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toDoubleSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toDoubleSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toDoubleSet ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toFloatList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun toFloatList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun toFloatList ([F)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun toFloatList ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatList;
-	public static final fun toFloatSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toFloatSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toFloatSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toFloatSet ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toIntList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun toIntList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun toIntList ([I)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun toIntList ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntList;
-	public static final fun toIntSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toIntSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toIntSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toIntSet ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toLongList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun toLongList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun toLongList ([J)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun toLongList ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongList;
-	public static final fun toLongSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toLongSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toLongSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toLongSet ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toMutableBooleanList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun toMutableBooleanList ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun toMutableBooleanList ([Z)Lit/unimi/dsi/fastutil/booleans/BooleanArrayList;
-	public static final fun toMutableBooleanSet (Lit/unimi/dsi/fastutil/booleans/BooleanSet;)Lit/unimi/dsi/fastutil/booleans/BooleanOpenHashSet;
-	public static final fun toMutableBooleanSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toMutableBooleanSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toMutableBooleanSet ([Ljava/lang/Boolean;)Lit/unimi/dsi/fastutil/booleans/BooleanSet;
-	public static final fun toMutableByteList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun toMutableByteList ([B)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun toMutableByteList ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteArrayList;
-	public static final fun toMutableByteSet (Lit/unimi/dsi/fastutil/bytes/ByteSet;)Lit/unimi/dsi/fastutil/bytes/ByteOpenHashSet;
-	public static final fun toMutableByteSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toMutableByteSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toMutableByteSet ([Ljava/lang/Byte;)Lit/unimi/dsi/fastutil/bytes/ByteSet;
-	public static final fun toMutableCharList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun toMutableCharList ([C)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun toMutableCharList ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharArrayList;
-	public static final fun toMutableCharSet (Lit/unimi/dsi/fastutil/chars/CharSet;)Lit/unimi/dsi/fastutil/chars/CharOpenHashSet;
-	public static final fun toMutableCharSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toMutableCharSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toMutableCharSet ([Ljava/lang/Character;)Lit/unimi/dsi/fastutil/chars/CharSet;
-	public static final fun toMutableDoubleList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun toMutableDoubleList ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleArrayList;
-	public static final fun toMutableDoubleSet (Lit/unimi/dsi/fastutil/doubles/DoubleSet;)Lit/unimi/dsi/fastutil/doubles/DoubleOpenHashSet;
-	public static final fun toMutableDoubleSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toMutableDoubleSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toMutableDoubleSet ([Ljava/lang/Double;)Lit/unimi/dsi/fastutil/doubles/DoubleSet;
-	public static final fun toMutableFloatList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun toMutableFloatList ([F)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun toMutableFloatList ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatArrayList;
-	public static final fun toMutableFloatSet (Lit/unimi/dsi/fastutil/floats/FloatSet;)Lit/unimi/dsi/fastutil/floats/FloatOpenHashSet;
-	public static final fun toMutableFloatSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toMutableFloatSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toMutableFloatSet ([Ljava/lang/Float;)Lit/unimi/dsi/fastutil/floats/FloatSet;
-	public static final fun toMutableIntList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun toMutableIntList ([I)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun toMutableIntList ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntArrayList;
-	public static final fun toMutableIntSet (Lit/unimi/dsi/fastutil/ints/IntSet;)Lit/unimi/dsi/fastutil/ints/IntOpenHashSet;
-	public static final fun toMutableIntSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toMutableIntSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toMutableIntSet ([Ljava/lang/Integer;)Lit/unimi/dsi/fastutil/ints/IntSet;
-	public static final fun toMutableLongList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun toMutableLongList ([J)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun toMutableLongList ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongArrayList;
-	public static final fun toMutableLongSet (Lit/unimi/dsi/fastutil/longs/LongSet;)Lit/unimi/dsi/fastutil/longs/LongOpenHashSet;
-	public static final fun toMutableLongSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toMutableLongSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toMutableLongSet ([Ljava/lang/Long;)Lit/unimi/dsi/fastutil/longs/LongSet;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/chars/Char2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/floats/Float2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/ints/Int2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/longs/Long2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/objects/Object2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toMutableObjectList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun toMutableObjectList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun toMutableObjectList ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
-	public static final fun toMutableObjectSet (Lit/unimi/dsi/fastutil/objects/ObjectSet;)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun toMutableObjectSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun toMutableObjectSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun toMutableObjectSet ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectOpenHashSet;
-	public static final fun toMutableShortList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun toMutableShortList ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun toMutableShortList ([S)Lit/unimi/dsi/fastutil/shorts/ShortArrayList;
-	public static final fun toMutableShortSet (Lit/unimi/dsi/fastutil/shorts/ShortSet;)Lit/unimi/dsi/fastutil/shorts/ShortOpenHashSet;
-	public static final fun toMutableShortSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toMutableShortSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toMutableShortSet ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/bytes/Byte2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/chars/Char2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/doubles/Double2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/floats/Float2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/ints/Int2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/longs/Long2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/objects/Object2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2BooleanMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2ByteMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2CharMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2DoubleMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2FloatMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2IntMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2LongMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2ObjectMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lit/unimi/dsi/fastutil/shorts/Short2ShortMap;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectList ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectList;
-	public static final fun toObjectSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun toObjectSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun toObjectSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun toObjectSet ([Ljava/lang/Object;)Lit/unimi/dsi/fastutil/objects/ObjectSet;
-	public static final fun toShortList (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun toShortList (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun toShortList ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun toShortList ([S)Lit/unimi/dsi/fastutil/shorts/ShortList;
-	public static final fun toShortSet (Ljava/lang/Iterable;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toShortSet (Ljava/util/Collection;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toShortSet (Lkotlin/sequences/Sequence;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
-	public static final fun toShortSet ([Ljava/lang/Short;)Lit/unimi/dsi/fastutil/shorts/ShortSet;
 }
 
 public final class dev/slne/surf/api/core/util/SerializableError {
@@ -5117,11 +3991,11 @@ public final class dev/slne/surf/api/core/util/SurfTypeParameterMatcher$Companio
 }
 
 public final class dev/slne/surf/api/core/util/SurfUtil {
-	public static final fun byByteIdMap ([Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/bytes/Byte2ObjectMap;
-	public static final fun byIdMap (Ljava/lang/Class;Ljava/util/function/ToIntFunction;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun byIdMap (Ljava/util/function/ToIntFunction;[Ljava/lang/Object;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun byIdMap (Lkotlin/jvm/functions/Function1;[Ljava/lang/Object;)Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
-	public static final fun byStringIdMap (Ljava/lang/Class;Lkotlin/jvm/functions/Function1;)Lit/unimi/dsi/fastutil/objects/Object2ObjectMap;
+	public static final fun byByteIdMap ([Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/util/Map;
+	public static final fun byIdMap (Ljava/lang/Class;Ljava/util/function/ToIntFunction;)Ljava/util/Map;
+	public static final fun byIdMap (Ljava/util/function/ToIntFunction;[Ljava/lang/Object;)Ljava/util/Map;
+	public static final fun byIdMap (Lkotlin/jvm/functions/Function1;[Ljava/lang/Object;)Ljava/util/Map;
+	public static final fun byStringIdMap (Ljava/lang/Class;Lkotlin/jvm/functions/Function1;)Ljava/util/Map;
 	public static final fun checkCallerClass (Ljava/lang/Class;)V
 	public static final fun checkInstantiationByServiceLoader ()V
 	public static final fun collectionSizeOrDefault (Ljava/lang/Iterable;I)I
