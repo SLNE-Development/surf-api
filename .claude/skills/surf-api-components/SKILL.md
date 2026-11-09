@@ -119,6 +119,13 @@ Resolution **walks up only**: a container answers from its own beans, then asks 
 walks down and never sideways, so an application cannot reach into another's beans. A bean crosses
 that boundary by being published into the root with `Scope.SHARED`, and only that way.
 
+**A `SHARED` bean is published when its own application's container starts**, so another
+application can inject it only if it starts afterwards. On Paper that means the consumer declares
+the publisher under `dependencies.server` with `load: BEFORE` and `join-classpath: true` - which it
+has to do regardless, because otherwise the interface is loaded by two classloaders and the instance
+it receives cannot be cast to the type it asked for, with nothing to say so. Start the consumer
+first and you get the ordinary "no bean provides" failure, which at least says what is missing.
+
 One exception to "own beans first": a collection parameter is a union - it takes this container's
 candidates *and* the parents', because a registrar wants every handler in the process.
 

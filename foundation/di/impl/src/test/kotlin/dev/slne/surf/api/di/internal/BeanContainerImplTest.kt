@@ -303,7 +303,7 @@ class BeanContainerImplTest {
     }
 
     @Test
-    fun `a shared bean joining a started root is fully up before the child's own beans load`() =
+    fun `a shared bean joining a root that has not enabled yet waits for the root's phase`() =
         runTest {
             val log = mutableListOf<String>()
             val factory = instantiator(
@@ -325,22 +325,145 @@ class BeanContainerImplTest {
             )
             child.start()
 
-            // The shared bean is the root's state from the moment it joins, so `start` brings it
-            // fully up rather than leaving it half-started until the enable phase of whichever
-            // application happened to introduce it. The child's *own* bean follows the ordinary
-            // rule and waits for that phase.
-            assertEquals(
-                listOf("load:connection", "enable:connection", "load:local"),
-                log,
-            )
+            // This is the ordinary case on a server: an application starts its container in the
+            // platform's load phase, which runs before surf-api's own enable phase. The shared
+            // bean must not be enabled here -- it is in the root's lifecycle list, so the root's
+            // own enable would run it a second time, and it would go ahead of the root beans it
+            // may depend on.
+            assertEquals(listOf("load:connection", "load:local"), log)
 
             child.enable()
 
+            assertEquals(listOf("load:connection", "load:local", "enable:local"), log)
+
+            root.enable()
+
             assertEquals(
-                listOf("load:connection", "enable:connection", "load:local", "enable:local"),
+                listOf("load:connection", "load:local", "enable:local", "enable:connection"),
                 log,
+                "the root enables the bean it owns, exactly once",
             )
         }
+
+    @Test
+    fun `a shared bean joining an already enabled root is brought up at once`() = runTest {
+        val log = mutableListOf<String>()
+        val factory = instantiator(
+            "Connection" to { Phases("connection", log) },
+            "LocalCache" to { Phases("local", log) },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+        root.enable()
+
+        val child = container(
+            listOf(
+                definition("Connection", scope = Scope.SHARED, lifecycle = true),
+                definition("LocalCache", lifecycle = true),
+            ),
+            factory,
+            parent = root,
+            owner = "child",
+        )
+        child.start()
+
+        // The root's phases are over, so nothing will come back for this bean. It is the root's
+        // state from now on and has to be brought up to the state the root is in -- and before the
+        // child's own beans load, because they may already hold it.
+        assertEquals(listOf("load:connection", "enable:connection", "load:local"), log)
+
+        child.enable()
+
+        assertEquals(
+            listOf("load:connection", "enable:connection", "load:local", "enable:local"),
+            log,
+        )
+    }
+
+    @Test
+    fun `a shared bean one application declares is injected into another`() = runTest {
+        // The whole point of SHARED, and it did not work: routing the instance to the root is not
+        // enough, because every lookup goes through a container's own definitions and those are
+        // fixed when it is built. One plugin's bean was invisible to the next plugin's resolver,
+        // so SHARED gave one instance per *declaration* rather than one bean the process reaches.
+        // A real Paper server found it; this pins it.
+        val connection = Probe("connection")
+        val factory = instantiator(
+            "Connection" to { connection },
+            "Consumer" to { args -> Probe("consumer", args) },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val provider = container(
+            listOf(
+                definition(
+                    "Connection",
+                    provides = listOf("Connection", "ConnectionApi", Probe::class.java.name),
+                    scope = Scope.SHARED,
+                ),
+            ),
+            factory,
+            parent = root,
+            owner = "provider-plugin",
+        )
+        provider.start()
+
+        val consumer = container(
+            listOf(
+                definition(
+                    "Consumer",
+                    provides = listOf("Consumer", Probe::class.java.name),
+                    needs = listOf(needs("ConnectionApi")),
+                )
+            ),
+            factory,
+            parent = root,
+            owner = "consumer-plugin",
+        )
+        consumer.start()
+
+        val injected = consumer.beansOfType(Probe::class).single { it.label == "consumer" }
+
+        assertSame(
+            connection,
+            injected.arguments.single(),
+            "the consumer was injected with the provider's own instance",
+        )
+        assertSame(
+            connection,
+            consumer.beansOfType(Probe::class).single { it.label == "connection" },
+            "and can resolve it directly, through the root",
+        )
+    }
+
+    @Test
+    fun `a shared bean is not visible to an application that started before it`() = runTest {
+        // The ordering this mechanism cannot escape, stated so nobody is surprised by it: a
+        // container resolves what has been published by the time it starts. On Paper a consumer
+        // declares the provider as a `load: BEFORE` dependency anyway -- it has to, or the
+        // interface is loaded twice and the instance is uncastable.
+        val factory = instantiator(
+            "Connection" to { Probe("connection") },
+            "Consumer" to { args -> Probe("consumer", args) },
+        )
+
+        val root = container(emptyList(), factory, owner = "root")
+        root.start()
+
+        val consumer = container(
+            listOf(definition("Consumer", needs = listOf(needs("ConnectionApi")))),
+            factory,
+            parent = root,
+            owner = "consumer-plugin",
+        )
+
+        val failure = assertFailsWith<UnsatisfiedDependencyException> { consumer.start() }
+
+        assertContains(failure.message.orEmpty(), "ConnectionApi")
+    }
 
     @Test
     fun `a shared bean needing a child-local singleton fails and names both beans`() = runTest {
@@ -549,6 +672,7 @@ class BeanContainerImplTest {
             owner = "child",
         )
         child.start()
+        root.enable()
 
         assertSame(replacement, child.bean(SurfComponent::class))
         assertEquals(listOf("load:replacement", "enable:replacement"), log)

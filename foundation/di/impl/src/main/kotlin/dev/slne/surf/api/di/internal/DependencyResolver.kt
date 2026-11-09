@@ -18,8 +18,22 @@ internal interface BeanLookup {
     /** The instance providing [type], or `null` if this container and its parents have none. */
     fun resolveByName(type: String, qualifier: String?): Any?
 
-    /** Every instance providing [type] in this container and its parents, nearest container first. */
-    fun resolveAllByName(type: String, qualifier: String?): List<Any>
+    /**
+     * Every instance providing [type] in this container and its parents, nearest container first.
+     *
+     * [seen] carries the provider ids already answered further down the chain, so a bean reachable
+     * from two places in it is returned once. That happens for a `SHARED` bean: the container that
+     * declared it answers from its own definitions, and the root answers for it again because the
+     * bean was published there for the other applications. It is one bean either way.
+     *
+     * Each container instantiates its own candidates rather than a caller doing it for the whole
+     * chain, because where a bean is cached depends on the container that creates it.
+     */
+    fun resolveAllByName(
+        type: String,
+        qualifier: String?,
+        seen: MutableSet<String> = mutableSetOf(),
+    ): List<Any>
 
     /** Whether this container or a parent can provide [type] at all. */
     fun provides(type: String): Boolean

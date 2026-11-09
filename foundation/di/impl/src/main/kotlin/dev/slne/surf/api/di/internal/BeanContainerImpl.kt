@@ -6,6 +6,7 @@ import dev.slne.surf.api.di.Scope
 import dev.slne.surf.api.di.SurfComponent
 import dev.slne.surf.api.di.definition.BeanDefinition
 import dev.slne.surf.api.di.definition.InjectionPoint
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
@@ -61,6 +62,25 @@ internal class BeanContainerImpl(
     private val adoptedShared = mutableListOf<SurfComponent>()
 
     /**
+     * Shared providers an application introduced into the root, by id. Only the root holds these.
+     *
+     * This is what makes [Scope.SHARED] mean what it says. Routing the *instance* to the root is
+     * not enough: every lookup goes through [index], and [index] is built once from the metadata of
+     * the application that owns the container. So a bean one plugin declares was invisible to the
+     * next plugin's resolver — `SHARED` gave you one instance per *declaration*, not one bean the
+     * whole process can reach.
+     *
+     * Kept beside [index] rather than inside it because the two answer different questions: the
+     * index says what this application declared, which is fixed when the container is built, and
+     * this says what others have since published into the process. A reader of either should not
+     * have to wonder which kind of entry they are looking at.
+     *
+     * Concurrent because an application registers here while another may be resolving: the root
+     * outlives every child and is read from whichever thread a plugin happens to load on.
+     */
+    private val adoptedProviders = ConcurrentHashMap<String, BeanProvider>()
+
+    /**
      * Provider ids that have already been through the post processor chain.
      *
      * A bean is created either in its own turn in the ordering or earlier, as someone else's
@@ -112,15 +132,16 @@ internal class BeanContainerImpl(
             process(provider, create(provider))
         }
 
-        // A shared bean joins a root whose phases have already run, so it gets both of them here,
-        // and before this container's own beans, which may already hold it. Both, not just `load`,
-        // because the bean is the root's state from now on: it outlives this container and serves
-        // every other application in the process, so leaving it half-started until this
-        // container's own enable phase would make the root's contents depend on the timing of
-        // whichever application happened to introduce it — and on that application remembering to
-        // enable at all.
+        // A shared bean belongs to the root from now on, so it is brought up to whatever state the
+        // root is already in, and before this container's own beans, which may already hold it.
         adoptedShared.forEach { it.load() }
-        adoptedShared.forEach { it.enable() }
+
+        // `enable` only if the root has already had its enable phase. It usually has not: on Paper
+        // an application starts its container in `onLoad`, which runs before surf-api's own
+        // `onEnable`. Enabling here in that case would do it twice, because the component is in the
+        // root's lifecycle list and the root's own `enable` walks it — and it would run the shared
+        // bean's `enable` ahead of the root beans it may depend on.
+        if (root.enabled) adoptedShared.forEach { it.enable() }
 
         lifecycle.forEach { it.load() }
     }
@@ -258,6 +279,11 @@ internal class BeanContainerImpl(
             }
         }
 
+        // Published into the root so the *next* application can resolve it. Without this a shared
+        // bean is one instance per declaration rather than one bean the process can reach. Not
+        // when the root declared it itself: the root's own definitions already answer for it.
+        if (provider.scope == Scope.SHARED && root !== this) root.adoptShared(provider)
+
         return bean
     }
 
@@ -289,14 +315,72 @@ internal class BeanContainerImpl(
 
     override fun resolveByName(type: String, qualifier: String?): Any? =
         index.resolveSingle(pointFor(type, qualifier))?.let(::instanceOf)
+            ?: adoptedSingle(type, qualifier)?.let(::instanceOf)
             ?: parentImpl?.resolveByName(type, qualifier)
 
-    override fun resolveAllByName(type: String, qualifier: String?): List<Any> =
-        index.resolveAll(pointFor(type, qualifier)).map(::instanceOf) +
-                parentImpl?.resolveAllByName(type, qualifier).orEmpty()
+    override fun resolveAllByName(
+        type: String,
+        qualifier: String?,
+        seen: MutableSet<String>,
+    ): List<Any> {
+        val here = index.resolveAll(pointFor(type, qualifier)) + adoptedOf(type, qualifier)
+
+        return here.filter { seen.add(it.id) }.map(::instanceOf) +
+                parentImpl?.resolveAllByName(type, qualifier, seen).orEmpty()
+    }
 
     override fun provides(type: String): Boolean =
-        index.providersOf(type).isNotEmpty() || parentImpl?.provides(type) == true
+        index.providersOf(type).isNotEmpty() ||
+                adoptedOf(type, qualifier = null).isNotEmpty() ||
+                parentImpl?.provides(type) == true
+
+    /**
+     * Takes [provider] on as the root's own, so every container in the process can resolve it.
+     *
+     * Called by the container that declared the shared bean, once it has an instance. Idempotent by
+     * provider id: two applications declaring the same shared bean share one instance, and the
+     * second registration is the same entry again.
+     *
+     * The instance is not passed in and does not need to be — it is already in [instances] here,
+     * because a shared bean is cached in the root. Registering the provider is what lets a lookup
+     * find its way to that entry.
+     */
+    private fun adoptShared(provider: BeanProvider) {
+        adoptedProviders.putIfAbsent(provider.id, provider)
+    }
+
+    /**
+     * The adopted providers for [type], filtered by [qualifier] when one is named.
+     *
+     * A linear scan, which is the right shape here: shared beans are the rare case — a broker
+     * connection, a database pool — and a lookup that resolves through one is almost always held in
+     * a `Lazy` by its caller, so the scan happens once per call site rather than once per use.
+     */
+    private fun adoptedOf(type: String, qualifier: String?): List<BeanProvider> =
+        adoptedProviders.values
+            .filter { type in it.provides }
+            .let { found -> qualifier?.let { name -> found.filter { it.qualifier == name } } ?: found }
+
+    /**
+     * The one adopted provider an injection point should use, or `null`.
+     *
+     * @throws AmbiguousBeanException if several applications published a shared bean of the same
+     * type and none is marked `@Primary`. Picking one would make the answer depend on which plugin
+     * the server happened to load first.
+     */
+    private fun adoptedSingle(type: String, qualifier: String?): BeanProvider? {
+        val candidates = adoptedOf(type, qualifier)
+
+        if (candidates.size <= 1) return candidates.firstOrNull()
+
+        val primary = candidates.filter { it.primary }
+
+        return when (primary.size) {
+            1 -> primary.single()
+            0 -> throw AmbiguousBeanException(pointFor(type, qualifier), candidates, hasPrimary = false)
+            else -> throw AmbiguousBeanException(pointFor(type, qualifier), primary, hasPrimary = true)
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> beanOrNull(type: KClass<T>, qualifier: String?): T? =

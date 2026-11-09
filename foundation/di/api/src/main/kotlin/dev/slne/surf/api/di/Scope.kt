@@ -19,6 +19,13 @@ enum class Scope {
      * crosses application boundaries. Use it for what genuinely exists once per process — a broker
      * connection, a platform service — and never for state that belongs to one application, since
      * every other application in the process sees it too.
+     *
+     * **It is published when the declaring application's container starts, so an application can
+     * only inject it if it starts afterwards.** That ordering is not a limitation to work around:
+     * on a platform that isolates applications the consumer has to declare the publisher as a
+     * dependency that loads first anyway, or the interface is loaded by two classloaders and the
+     * instance it receives cannot be cast to the type it asked for — with nothing to say so. On
+     * Paper that is `dependencies.server.<plugin>` with `load: BEFORE` and `join-classpath: true`.
      */
     SHARED,
 
