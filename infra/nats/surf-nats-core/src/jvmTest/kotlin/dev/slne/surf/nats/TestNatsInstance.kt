@@ -7,6 +7,13 @@ import kotlin.io.path.writeText
 class TestNatsInstance : NatsInstance() {
     override val dataPath: Path = Files.createTempDirectory("surf-nats-test").also { path ->
         path.resolve("config.yml")
-            .writeText("servers:\n  - \"${TestNatsServer.url}\"\n")
+            .writeText(
+                """
+                |servers:
+                |  - "${TestNatsServer.url}"
+                |max-concurrent-handlers-by-service:
+                |  "${LimitedService.NATS_DESCRIPTOR.protoName}": 1
+                |""".trimMargin()
+            )
     }
 }

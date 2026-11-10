@@ -19,6 +19,12 @@ internal object RpcDefaults {
 
     const val MAX_DELIVER = 5
 
+    /**
+     * Default limit of concurrently running handlers per service registration: twice the default database pool size
+     * of surf-database-r2dbc, so connection waits stay short and admission order is decided by [DeadlineLimiter].
+     */
+    const val MAX_CONCURRENT_HANDLERS = 20
+
     @Volatile
     internal var NAK_BACKOFF = listOf(1.seconds, 5.seconds, 30.seconds, 2.minutes) // var for tests
 }

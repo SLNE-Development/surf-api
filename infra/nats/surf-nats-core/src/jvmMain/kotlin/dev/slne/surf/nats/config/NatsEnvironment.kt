@@ -24,4 +24,6 @@ internal object NatsEnvironment {
     )
 
     val SURF_NATS_CONNECTION_NAME by env.optional()
+
+    val SURF_NATS_MAX_CONCURRENT_HANDLERS by env.optionalInt()
 }

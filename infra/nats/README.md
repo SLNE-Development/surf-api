@@ -98,17 +98,28 @@ auth:
   password: change-me
 reconnect-wait-millis: default
 drain-timeout-seconds: default
+max-concurrent-handlers: default
+max-concurrent-handlers-by-service:
+  "acme.profile.v1.ProfileService": 40
 ```
 
 `default` uses the default value from the table below.
 
-| Key                     | Meaning                                                            | Default                 |
-|-------------------------|--------------------------------------------------------------------|-------------------------|
-| `servers`               | NATS server URLs. At least one is required.                        | `nats://localhost:4222` |
-| `auth`                  | One of `token`, `username` with `password`, or `credentials-file`. | none                    |
-| `connection-name`       | Name of the connection shown by the NATS server.                   | `surf-nats-<random id>` |
-| `reconnect-wait-millis` | Pause between reconnect attempts.                                  | 2000                    |
-| `drain-timeout-seconds` | Time that closing a service waits for running calls.               | 10                      |
+| Key                                  | Meaning                                                                         | Default                 |
+|--------------------------------------|---------------------------------------------------------------------------------|-------------------------|
+| `servers`                            | NATS server URLs. At least one is required.                                     | `nats://localhost:4222` |
+| `auth`                               | One of `token`, `username` with `password`, or `credentials-file`.              | none                    |
+| `connection-name`                    | Name of the connection shown by the NATS server.                                | `surf-nats-<random id>` |
+| `reconnect-wait-millis`              | Pause between reconnect attempts.                                               | 2000                    |
+| `drain-timeout-seconds`              | Time that closing a service waits for running calls.                            | 10                      |
+| `max-concurrent-handlers`            | Handlers of one registered service that run at the same time.                   | 20                      |
+| `max-concurrent-handlers-by-service` | The same limit for single services, keyed by proto service name.                | none                    |
+
+Calls beyond `max-concurrent-handlers` wait for a free handler, earliest deadline first, and are dropped without
+running when their deadline passes. Persistent calls share the limit; fire calls rank last. Long calls may hold at
+most half of the handlers: fan-outs and calls with more than the 5 s core default left, which by default includes
+every persistent call. The default of 20 is twice the default connection pool of surf-database-r2dbc. Raise it for
+services whose handlers mostly wait on other calls.
 
 Environment variables override the file:
 
@@ -119,6 +130,7 @@ Environment variables override the file:
 | `SURF_NATS_USERNAME`, `SURF_NATS_PASSWORD` | `auth.username`, `auth.password` |
 | `SURF_NATS_CREDENTIALS_FILE`               | `auth.credentials-file`          |
 | `SURF_NATS_CONNECTION_NAME`                | `connection-name`                |
+| `SURF_NATS_MAX_CONCURRENT_HANDLERS`        | `max-concurrent-handlers`        |
 
 If any of `SURF_NATS_TOKEN`, `SURF_NATS_USERNAME`, `SURF_NATS_PASSWORD`, or `SURF_NATS_CREDENTIALS_FILE` is set,
 the environment replaces the whole `auth` section. A username from the environment never combines with a password

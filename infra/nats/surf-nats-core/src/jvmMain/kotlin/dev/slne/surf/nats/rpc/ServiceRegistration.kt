@@ -61,6 +61,8 @@ internal class ServiceRegistration(
 
     private val scope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
 
+    private val limiter = DeadlineLimiter(natsConfig.handlerLimit(descriptor.name))
+
     private val active = AtomicBoolean(true)
     override val isClosed get() = !active.get()
 
@@ -155,30 +157,55 @@ internal class ServiceRegistration(
     }
 
     private fun onRequest(method: MethodDescriptor, message: Message) {
-        val deadline = message.deadlineMillis()
+        val deadline = message.deadlineMillis() ?: deadlineAfter(method.timeout)
 
-        val left = remaining(deadline, method.timeout)
+        val left = remaining(deadline)
         if (!left.isPositive()) return dropExpired(message, left)
 
         val replyTo = message.replyTo
         val deletePayload = method.recipients == Recipients.ANY_INSTANCE
 
         scope.launch(coroutineNames[method.index]) {
-            val timeout = remaining(deadline, method.timeout)
-            if (!timeout.isPositive()) return@launch dropExpired(message, timeout)
+            // A fan-out runs without a timeout, so it counts as long
+            val lane = if (replyTo == null) DeadlineLimiter.Lane.LONG else laneOf(deadline)
+            val admitted = withPermit(deadline, lane) { timeout ->
+                // Nobody waits for a fan-out, so its handler runs to completion
+                val handlerTimeout = if (replyTo == null) null else timeout
+                when (val outcome = invoke(method, message, handlerTimeout, deletePayload)) {
+                    is Outcome.Finished -> if (replyTo != null) send(replyTo, replyOf(method, outcome), timeout)
 
-            if (replyTo == null) {
-                // Nobody waits for a response, so the handle may take as long as needed
-                invoke(method, message, timeout = null, deletePayload)
-                return@launch
+                    Outcome.TimedOut -> logTimedOut(method, timeout)
+                }
             }
-
-            when (val outcome = invoke(method, message, timeout, deletePayload)) {
-                is Outcome.Finished -> send(replyTo, replyOf(method, outcome), timeout)
-
-                Outcome.TimedOut -> logTimedOut(method, timeout)
-            }
+            if (!admitted) logNotAdmitted(message)
         }
+    }
+
+    /**
+     * Runs [handle] with the time left until [deadline] once [limiter] grants a permit, and returns `false` without
+     * running it when the deadline passes first.
+     */
+    private suspend inline fun withPermit(
+        deadline: Long,
+        lane: DeadlineLimiter.Lane,
+        handle: (timeout: Duration) -> Unit,
+    ): Boolean {
+        if (!limiter.acquire(deadline, lane)) return false
+        try {
+            val timeout = remaining(deadline)
+            if (!timeout.isPositive()) return false
+            handle(timeout)
+            return true
+        } finally {
+            limiter.release(lane)
+        }
+    }
+
+    /**
+     * Returns [DeadlineLimiter.Lane.LONG] when the caller waits longer than the default core timeout.
+     */
+    private fun laneOf(deadline: Long): DeadlineLimiter.Lane {
+        return if (remaining(deadline) > CORE_TIMEOUT) DeadlineLimiter.Lane.LONG else DeadlineLimiter.Lane.SHORT
     }
 
     private fun onPersistent(message: Message) {
@@ -202,6 +229,10 @@ internal class ServiceRegistration(
             dropExpired(message, left)
             return message.term()
         }
+        // Fire calls carry no deadline and rank behind every call whose caller waits
+        val admissionDeadline = deadline ?: deadlineAfter(
+            if (method.result == NatsResultKind.UNIT) RpcDefaults.FIRE_MAX_DURATION else method.timeout
+        )
 
         scope.launch(context + coroutineNames[method.index]) {
             val keepAlive = launch(Dispatchers.IO) {
@@ -218,11 +249,14 @@ internal class ServiceRegistration(
                 }
             }
             try {
-                if (method.result == NatsResultKind.UNIT) {
-                    handleFire(method, message, context)
-                } else {
-                    handlePersistentRpc(method, message, deadline)
+                val admitted = withPermit(admissionDeadline, laneOf(admissionDeadline)) {
+                    if (method.result == NatsResultKind.UNIT) {
+                        handleFire(method, message, context)
+                    } else {
+                        handlePersistentRpc(method, message, deadline)
+                    }
                 }
+                if (!admitted) rejectNotAdmitted(method, message)
             } finally {
                 keepAlive.cancel()
             }
@@ -508,7 +542,31 @@ internal class ServiceRegistration(
     }
 
     private fun remaining(deadline: Long?, fallback: Duration): Duration {
-        return deadline?.let { (it - System.currentTimeMillis()).milliseconds } ?: fallback
+        return deadline?.let(::remaining) ?: fallback
+    }
+
+    private fun remaining(deadline: Long): Duration = (deadline - System.currentTimeMillis()).milliseconds
+
+    private fun deadlineAfter(timeout: Duration): Long = System.currentTimeMillis() + timeout.inWholeMilliseconds
+
+    private fun logNotAdmitted(message: Message) {
+        client.logger.warn(
+            "Dropping request on ${message.subject}: all ${limiter.permits} handler slots of " +
+                    "${descriptor.name} stayed busy until its deadline"
+        )
+    }
+
+    /**
+     * Terminates a persistent RPC whose caller gave up while it waited for a handler slot, or schedules a fire call
+     * for redelivery.
+     */
+    private fun rejectNotAdmitted(method: MethodDescriptor, message: Message) {
+        logNotAdmitted(message)
+        if (method.result == NatsResultKind.UNIT) {
+            message.nakWithDelay(backoffAfter(message.metaData().deliveredCount()).toJavaDuration())
+        } else {
+            message.term()
+        }
     }
 
     private fun dropExpired(message: Message, remaining: Duration) {
@@ -641,5 +699,9 @@ internal class ServiceRegistration(
             val fallback = errorReply(e)
             connection.publish(replyTo, fallback.headers, fallback.body)
         }
+    }
+
+    private companion object {
+        val CORE_TIMEOUT = ProtocolDefaults.CORE_TIMEOUT_SECONDS.seconds
     }
 }

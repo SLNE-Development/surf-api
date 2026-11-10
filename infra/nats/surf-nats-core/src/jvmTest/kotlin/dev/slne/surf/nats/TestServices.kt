@@ -172,6 +172,21 @@ interface MismatchedRequestService {
     }
 }
 
+// The test config.yml (TestNatsInstance) limits it to one concurrent handler
+interface LimitedService {
+    suspend fun hold(): Text
+
+    suspend fun early(): Text
+
+    suspend fun late(): Text
+
+    companion object {
+        @JvmField
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<LimitedService> =
+            textService("LimitedService", listOf("hold", "early", "late"))
+    }
+}
+
 private fun <Req : Any> textMethod(protoName: String, kotlinName: String, request: KSerializer<Req>) =
     NatsMethodDescriptor<Req, Text>(
         protoName = protoName,

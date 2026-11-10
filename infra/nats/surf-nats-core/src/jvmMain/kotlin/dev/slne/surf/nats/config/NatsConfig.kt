@@ -5,6 +5,7 @@ import dev.slne.surf.api.core.config.constraints.ExistingFile
 import dev.slne.surf.api.core.config.type.number.IntOr
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsInstance
+import dev.slne.surf.nats.rpc.RpcDefaults
 import dev.slne.surf.nats.runtime.ConnectRules
 import dev.slne.surf.nats.runtime.RuntimeDefaults
 import io.nats.client.Options
@@ -20,11 +21,19 @@ internal data class NatsConfig(
     val auth: Auth = Auth(),
     val connectionName: String? = null,
     val reconnectWaitMillis: IntOr.Default = IntOr.Default.USE_DEFAULT,
-    val drainTimeoutSeconds: IntOr.Default = IntOr.Default.USE_DEFAULT
+    val drainTimeoutSeconds: IntOr.Default = IntOr.Default.USE_DEFAULT,
+    val maxConcurrentHandlers: IntOr.Default = IntOr.Default.USE_DEFAULT,
+    val maxConcurrentHandlersByService: Map<String, Int> = emptyMap(),
 ) {
 
     val reconnectWait = reconnectWaitMillis or Options.DEFAULT_RECONNECT_WAIT.toMillis().toInt()
     val drainTimeout = drainTimeoutSeconds or RuntimeDefaults.DRAIN_TIMEOUT_SECONDS
+    private val defaultHandlerLimit = maxConcurrentHandlers or RpcDefaults.MAX_CONCURRENT_HANDLERS
+
+    /**
+     * Returns how many handlers of the service with the proto name [serviceName] may run at the same time.
+     */
+    fun handlerLimit(serviceName: String): Int = maxConcurrentHandlersByService[serviceName] ?: defaultHandlerLimit
 
     @ConfigSerializable
     data class Auth(
@@ -64,6 +73,12 @@ internal data class NatsConfig(
         check(servers.isNotEmpty()) { "NATS servers must not be empty" }
         check(drainTimeout > 0) { "NATS drain-timeout-seconds must be positive, was $drainTimeout" }
         check(reconnectWait >= 0) { "NATS reconnect-wait-millis must not be negative, was $reconnectWait" }
+        check(defaultHandlerLimit > 0) {
+            "NATS max-concurrent-handlers must be positive, was $defaultHandlerLimit"
+        }
+        for ((service, limit) in maxConcurrentHandlersByService) {
+            check(limit > 0) { "NATS max-concurrent-handlers-by-service of $service must be positive, was $limit" }
+        }
 
         for (rawServer in servers) {
             try {
@@ -79,6 +94,8 @@ internal data class NatsConfig(
     fun overwriteFromEnv() = copy(
         servers = NatsEnvironment.SURF_NATS_SERVERS ?: servers,
         connectionName = NatsEnvironment.SURF_NATS_CONNECTION_NAME ?: connectionName,
+        maxConcurrentHandlers = NatsEnvironment.SURF_NATS_MAX_CONCURRENT_HANDLERS?.let(IntOr::Default)
+            ?: maxConcurrentHandlers,
         auth = (Auth.fromEnv() ?: auth).withoutEmptyValues()
     )
 
