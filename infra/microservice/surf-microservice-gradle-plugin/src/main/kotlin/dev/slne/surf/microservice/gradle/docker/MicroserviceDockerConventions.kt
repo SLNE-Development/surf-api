@@ -7,6 +7,22 @@ import org.gradle.kotlin.dsl.getByType
 
 private const val DEFAULT_JAVA_VERSION = 25
 private const val DEFAULT_COMMAND_CLIENT_BUILDER_IMAGE = "golang:1.26-alpine"
+private const val DEFAULT_MEMORY_BUDGET = "1g"
+
+/**
+ * JVM options measured for the microservices: G1 returns unused heap after a minute of low activity
+ * (`G1PeriodicGCInterval`) and native memory is trimmed every minute, so idle services shrink after load peaks.
+ * Two processors keep GC, JIT and coroutine pools small on hosts with many cores.
+ */
+private val DEFAULT_JVM_OPTIONS = listOf(
+    "-XX:+UseG1GC",
+    "-XX:+UseCompactObjectHeaders",
+    "-XX:MaxRAMPercentage=60.0",
+    "-XX:ActiveProcessorCount=2",
+    "-XX:G1PeriodicGCInterval=60000",
+    "-XX:TrimNativeHeapInterval=60000",
+    "-XX:+ExitOnOutOfMemoryError",
+)
 
 internal fun Project.applyDockerConventions(docker: MicroserviceDockerExtension) {
     docker.outputFile.convention(layout.projectDirectory.file("Dockerfile"))
@@ -14,6 +30,9 @@ internal fun Project.applyDockerConventions(docker: MicroserviceDockerExtension)
     docker.baseImage.convention(runtimeImage(DEFAULT_JAVA_VERSION))
     docker.builderImage.convention(builderImage(DEFAULT_JAVA_VERSION))
     docker.commandClientBuilderImage.convention(DEFAULT_COMMAND_CLIENT_BUILDER_IMAGE)
+    // set, not convention: add() then appends to the defaults instead of replacing them.
+    docker.jvmOptions.set(DEFAULT_JVM_OPTIONS)
+    docker.memoryBudget.convention(DEFAULT_MEMORY_BUDGET)
 }
 
 /**

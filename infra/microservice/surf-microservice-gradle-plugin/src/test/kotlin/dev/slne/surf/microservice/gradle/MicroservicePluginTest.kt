@@ -267,6 +267,69 @@ class MicroservicePluginTest {
     }
 
     @Test
+    fun `generated Dockerfile starts java through the entrypoint with the default JVM settings`(info: TestInfo) {
+        val build = shadowBuild(info)
+
+        build.run("generateMicroserviceDockerfile")
+
+        val dockerfile = build.dir.resolve("Dockerfile").readText()
+        assertContains(dockerfile, """ENV SURF_MICROSERVICE_MEMORY_BUDGET="1g"""")
+        assertContains(dockerfile, """ENV MALLOC_ARENA_MAX="2"""")
+        assertContains(dockerfile, "RUN printf '%s\\n' \\")
+        assertContains(dockerfile, "        > /usr/local/bin/microservice-entrypoint \\")
+        assertContains(dockerfile, "    done < /proc/self/cgroup' \\")
+        assertContains(
+            dockerfile,
+            "'exec java -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=60.0 " +
+                    "-XX:ActiveProcessorCount=2 -XX:G1PeriodicGCInterval=60000 -XX:TrimNativeHeapInterval=60000 " +
+                    "-XX:+ExitOnOutOfMemoryError \$budget \$JAVA_OPTS -jar /app/app.jar \"\$@\"'",
+        )
+        assertContains(dockerfile, """ENTRYPOINT ["/usr/local/bin/microservice-entrypoint"]""")
+    }
+
+    @Test
+    fun `adding a JVM option keeps the defaults`(info: TestInfo) {
+        val build = shadowBuild(info, "surfMicroservice { docker { jvmOptions.add('-Xlog:gc*:stdout') } }")
+
+        build.run("generateMicroserviceDockerfile")
+
+        val dockerfile = build.dir.resolve("Dockerfile").readText()
+        assertContains(dockerfile, "-XX:+ExitOnOutOfMemoryError -Xlog:gc*:stdout \$budget")
+    }
+
+    @Test
+    fun `DSL replaces the JVM options and turns the memory budget off`(info: TestInfo) {
+        val build = shadowBuild(
+            info,
+            "surfMicroservice { docker { jvmOptions = ['-XX:+UseSerialGC', '-Xss512k']; memoryBudget = '' } }",
+        )
+
+        build.run("generateMicroserviceDockerfile")
+
+        val dockerfile = build.dir.resolve("Dockerfile").readText()
+        assertContains(dockerfile, """ENV SURF_MICROSERVICE_MEMORY_BUDGET=""""")
+        assertContains(dockerfile, "exec java -XX:+UseSerialGC -Xss512k \$budget \$JAVA_OPTS -jar")
+    }
+
+    @Test
+    fun `JVM option with shell metacharacters fails the generation`(info: TestInfo) {
+        val build = shadowBuild(info, "surfMicroservice { docker { jvmOptions = ['-Dvalue=\$(id)'] } }")
+
+        val result = build.runAndFail("generateMicroserviceDockerfile")
+
+        assertContains(result.output, "surfMicroservice.docker.jvmOptions: '-Dvalue=\$(id)' must start with '-'")
+    }
+
+    @Test
+    fun `memory budget that is no size fails the generation`(info: TestInfo) {
+        val build = shadowBuild(info, "surfMicroservice { docker { memoryBudget = '1 GB' } }")
+
+        val result = build.runAndFail("generateMicroserviceDockerfile")
+
+        assertContains(result.output, "surfMicroservice.docker.memoryBudget: '1 GB' is no memory size")
+    }
+
+    @Test
     fun `generated Dockerfile is reused from the configuration cache`(info: TestInfo) {
         val build = shadowBuild(info)
         build.run("generateMicroserviceDockerfile", "--configuration-cache")

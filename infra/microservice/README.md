@@ -10,7 +10,7 @@ Run:
 ./gradlew generateMicroserviceDockerfile
 ```
 
-The typed task is registered lazily in the `distribution` group. By default it writes `Dockerfile` in the consuming project root, uses the existing `shadowJar` task in the container build stage, derives Eclipse Temurin JDK/JRE images from the configured Java toolchain, and runs the application as a non-root user. The generated artifact path is relative to the root project, which is the Docker build context; for a subproject such as `surf-clan-microservice`, the generated `COPY` source therefore includes that subproject directory. Additional JVM flags can be supplied with `JAVA_OPTS`.
+The typed task is registered lazily in the `distribution` group. By default it writes `Dockerfile` in the consuming project root, uses the existing `shadowJar` task in the container build stage, derives Eclipse Temurin JDK/JRE images from the configured Java toolchain, and runs the application as a non-root user. The generated artifact path is relative to the root project, which is the Docker build context; for a subproject such as `surf-clan-microservice`, the generated `COPY` source therefore includes that subproject directory. Additional JVM flags can be supplied with `JAVA_OPTS`; see [JVM settings](#jvm-settings).
 
 The output can be configured through the existing extension:
 
@@ -29,7 +29,50 @@ surfMicroservice {
 
 The default `overwrite = false` protects manually maintained Dockerfiles. A file carrying the generated marker can be regenerated safely; replacing any other existing file requires explicitly setting `overwrite = true`.
 
-The generated Dockerfile only sets `JAVA_OPTS` and the command socket path. Service configuration such as RabbitMQ or database settings is neither documented nor generated into it—configure those as Coolify runtime variables/secrets.
+The generated Dockerfile only sets the JVM settings below and the command socket path. Service configuration such as RabbitMQ or database settings is neither documented nor generated into it—configure those as Coolify runtime variables/secrets.
+
+### JVM settings
+
+The container starts java with these options, in this order. For options with a value, such as
+`-XX:ActiveProcessorCount=4`, the last one wins. Collector flags add up instead: `JAVA_OPTS=-XX:+UseSerialGC` alone
+stops the JVM with "multiple garbage collectors selected", so add `-XX:-UseG1GC` or replace `docker.jvmOptions`.
+
+1. `docker.jvmOptions`. The defaults target HotSpot 25: `-XX:+UseG1GC -XX:+UseCompactObjectHeaders
+   -XX:MaxRAMPercentage=60.0 -XX:ActiveProcessorCount=2 -XX:G1PeriodicGCInterval=60000
+   -XX:TrimNativeHeapInterval=60000 -XX:+ExitOnOutOfMemoryError`. `jvmOptions.add(...)` appends to them; assigning
+   a list replaces them, for example for another JVM or an older Java version, which reject unknown options at
+   startup.
+2. `-XX:MaxRAM=<budget>`, but only when cgroup v2 shows no memory limit for the container or any of its parent
+   cgroups. The budget comes from `SURF_MICROSERVICE_MEMORY_BUDGET`, default `docker.memoryBudget` (`1g`); an empty
+   value turns it off. On cgroup v1 hosts the budget is not applied, and an unlimited container sizes the JVM from the
+   host memory.
+3. `JAVA_OPTS`.
+
+The image also sets `MALLOC_ARENA_MAX=2`, which limits the native memory glibc keeps per malloc arena.
+
+Without a memory limit the JVM sizes its heap from the host memory and keeps what it once used. In a benchmark on
+2026-11-09 (12 visible cores, no container limit), a service with the previous options (`-XX:MaxRAMPercentage=75.0`)
+held 5.9–6.7 GiB after a load peak. With these defaults it peaked at 710–750 MiB and fell back to about 275 MiB when
+idle; with the spark profiler running it stayed at about 490 MiB. A service that needs more memory sets
+`SURF_MICROSERVICE_MEMORY_BUDGET=2g` or a container memory limit; one that needs more parallelism sets
+`JAVA_OPTS=-XX:ActiveProcessorCount=4`.
+
+```kotlin
+surfMicroservice {
+    docker {
+        memoryBudget = "2g"
+        jvmOptions = listOf("-XX:+UseSerialGC", "-XX:MaxRAMPercentage=60.0", "-XX:+ExitOnOutOfMemoryError")
+    }
+}
+```
+
+### spark
+
+spark's commands, such as `microservicectl spark health`, are always available. The sampling profiler keeps its call
+tree on the heap, so it does not start with the service: in the benchmark it raised the idle memory from about
+275 MiB to about 500 MiB and the idle CPU from 0.45 % to 1.5 % of a core. Start it on demand with
+`microservicectl spark profiler start`, or with the service by setting `SURF_MICROSERVICE_SPARK_PROFILER=true`; any
+value other than `true` or `false` stops the service start.
 
 ## Idempotent handlers and events after the commit
 

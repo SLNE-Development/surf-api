@@ -66,6 +66,8 @@ internal fun Project.registerMicroserviceDockerTasks(
             builderImage = docker.builderImage,
             commandClientBuilderImage = docker.commandClientBuilderImage,
             baseImage = docker.baseImage,
+            jvmOptions = docker.jvmOptions,
+            memoryBudget = docker.memoryBudget,
             runnableTaskPath = prepareArtifactPath,
             runnableArtifactPath = dockerArtifactPath,
             commandClientSourcePath = commandClientSourcePath,

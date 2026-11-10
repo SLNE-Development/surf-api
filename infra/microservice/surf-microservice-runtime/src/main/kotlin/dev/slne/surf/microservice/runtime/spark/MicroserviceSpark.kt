@@ -1,5 +1,6 @@
 package dev.slne.surf.microservice.runtime.spark
 
+import dev.slne.surf.api.core.environment.env
 import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.microservice.api.Microservice
 import dev.slne.surf.microservice.runtime.MicroserviceRuntimeBuildConfig
@@ -19,8 +20,12 @@ import java.util.stream.Stream
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Embeds the spark profiler and starts profiling as soon as it is enabled; a profiler that fails to start is logged
- * and does not fail the start.
+ * Embeds spark for its commands, such as `spark health`, and starts the sampling profiler with the service only if
+ * [PROFILER_ENVIRONMENT_VARIABLE] is `true`; `spark profiler start` starts it on demand. A profiler that fails to
+ * start is logged and does not fail the start. A value of the variable other than `true` or `false` fails the start
+ * before spark is enabled.
+ *
+ * The profiler is off by default because its call tree stays on the heap and keeps idle services large.
  *
  * Starts after surf-api because spark keeps its files in `<dataPath>/spark` of [Microservice.instance]. Commands
  * are accepted only while spark runs. spark's static log output goes through this plugin's logger; the
@@ -50,6 +55,8 @@ internal class MicroserviceSpark : SparkPlugin, RuntimeComponent {
         get() = platform != null
 
     override suspend fun start() {
+        val profileOnStart = env.boolean(PROFILER_ENVIRONMENT_VARIABLE, default = false)
+
         if (!SparkStaticLogging.redirectTo(this)) {
             log.atWarning()
                 .log("Could not route spark's static log output; it goes to the console unformatted")
@@ -59,7 +66,9 @@ internal class MicroserviceSpark : SparkPlugin, RuntimeComponent {
         platform.enable()
         this.platform = platform
 
-        startProfiler()
+        if (profileOnStart) {
+            startProfiler()
+        }
     }
 
     private suspend fun startProfiler() {
@@ -137,6 +146,11 @@ internal class MicroserviceSpark : SparkPlugin, RuntimeComponent {
     }
 
     private companion object {
+        /**
+         * Environment variable that starts the profiler with the microservice when set to `true`.
+         */
+        const val PROFILER_ENVIRONMENT_VARIABLE = "SURF_MICROSERVICE_SPARK_PROFILER"
+
         const val COMMAND_NAME = "spark"
         const val DIRECTORY_NAME = "spark"
         val PROFILER_START = listOf("profiler", "start")
