@@ -4,7 +4,6 @@ import dev.slne.surf.api.core.util.logger
 import dev.slne.surf.microservice.api.Microservice
 import dev.slne.surf.microservice.api.integration.MicroserviceIntegration
 import dev.slne.surf.microservice.api.integration.MicroserviceIntegrationContext
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
@@ -48,8 +47,8 @@ internal class MicroserviceLifecycle(
     private var commandEndpointsStarted = false
     private var microservice: Microservice? = null
     private var integrationContext: RuntimeIntegrationContext? = null
-    private val startedComponents = ObjectArrayList<RuntimeComponent>()
-    private val startedIntegrations = ObjectArrayList<MicroserviceIntegration>()
+    private val startedComponents = ArrayList<RuntimeComponent>()
+    private val startedIntegrations = ArrayList<MicroserviceIntegration>()
 
     /**
      * Starts everything in order and returns once the microservice runs.

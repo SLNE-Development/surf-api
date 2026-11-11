@@ -1,6 +1,5 @@
 package dev.slne.surf.microservice.runtime.command
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 
 /**
  * Splits a console line into a label and its arguments.
@@ -18,7 +17,7 @@ internal object CommandLineTokenizer {
      * @throws CommandLineSyntaxException if a quote is not closed or the line ends with a backslash
      */
     fun tokenize(line: String): List<String> {
-        val tokens = ObjectArrayList<String>()
+        val tokens = ArrayList<String>()
         val token = StringBuilder()
         var hasToken = false
         var quote: Char? = null

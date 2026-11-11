@@ -1,7 +1,5 @@
 package dev.slne.surf.microservice.reliability.operation
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
@@ -12,7 +10,7 @@ import kotlin.coroutines.CoroutineContext
  * after the handler returned is rejected instead of being dropped silently.
  */
 internal class ActiveOperation : AbstractCoroutineContextElement(Key) {
-    private val events = ObjectArrayList<PendingEvent>()
+    private val events = ArrayList<PendingEvent>()
     private var completed = false
 
     /**
@@ -30,7 +28,7 @@ internal class ActiveOperation : AbstractCoroutineContextElement(Key) {
      */
     fun complete(): List<PendingEvent> = synchronized(this) {
         completed = true
-        ObjectImmutableList(events)
+        events.toList()
     }
 
     companion object Key : CoroutineContext.Key<ActiveOperation>
