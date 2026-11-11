@@ -14,7 +14,6 @@ import io.nats.client.Dispatcher
 import io.nats.client.Message
 import io.nats.client.MessageHandler
 import io.nats.client.Subscription
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -41,7 +40,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     )
 
     private val lock = Any()
-    private val entries = Object2ObjectOpenHashMap<Key, Entry>()
+    private val entries = HashMap<Key, Entry>()
     private var dispatcher: Dispatcher? = null
     private var closed = false
 

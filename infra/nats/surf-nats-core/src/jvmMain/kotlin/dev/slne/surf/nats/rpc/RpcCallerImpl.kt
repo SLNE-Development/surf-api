@@ -21,7 +21,6 @@ import io.nats.client.JetStreamStatusException
 import io.nats.client.Message
 import io.nats.client.PublishOptions
 import io.nats.client.impl.Headers
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -305,7 +304,7 @@ internal class RpcCallerImpl(
     private class Completed(@JvmField val value: Any?)
 
     private class AllCall : FailureRecorder() {
-        val answered = ObjectOpenHashSet<String>()
+        val answered = HashSet<String>()
 
         fun noAnswer(): Answer.Unknown {
             throwIfAny()

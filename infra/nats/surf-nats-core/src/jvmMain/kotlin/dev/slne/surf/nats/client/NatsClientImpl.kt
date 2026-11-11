@@ -20,7 +20,6 @@ import dev.slne.surf.nats.rpc.ServiceRegistration
 import dev.slne.surf.nats.runtime.AbstractNatsClient
 import dev.slne.surf.nats.runtime.randomId
 import io.nats.client.Dispatcher
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Blocking
 import java.util.concurrent.CompletableFuture
@@ -91,7 +90,7 @@ internal class NatsClientImpl(
         val methods = ListenerMethods.findListenerMethods(listener, this)
         val entries = methods.map { it to ListenerInvokerFactory.create(listener, it.method) }
 
-        val added = ObjectArrayList<Pair<ListenerMethod, ListenerInvoker>>()
+        val added = ArrayList<Pair<ListenerMethod, ListenerInvoker>>()
         try {
             for (entry in entries) {
                 eventSubscriptions.add(entry.first, entry.second)

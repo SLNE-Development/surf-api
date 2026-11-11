@@ -6,8 +6,6 @@ import dev.slne.surf.nats.descriptor.NatsEvent
 import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.runtime.ListenerRules
 import dev.slne.surf.nats.util.isSuspend
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
@@ -28,11 +26,11 @@ internal object ListenerMethods {
     private data class Signature(val name: String, val parameterTypes: List<Class<*>>)
 
     fun findListenerMethods(listener: Any, client: NatsClientImpl): List<ListenerMethod> {
-        val methods = ObjectArrayList<ListenerMethod>()
-        val problems = ObjectArrayList<String>()
+        val methods = ArrayList<ListenerMethod>()
+        val problems = ArrayList<String>()
 
-        val seen = ObjectOpenHashSet<Signature>()
-        val unannotated = ObjectOpenHashSet<Signature>()
+        val seen = HashSet<Signature>()
+        val unannotated = HashSet<Signature>()
 
         var currentClass: Class<*>? = listener.javaClass
         while (currentClass != null) {
@@ -90,7 +88,7 @@ internal object ListenerMethods {
             currentClass = currentClass.superclass
         }
 
-        require(problems.isEmpty) {
+        require(problems.isEmpty()) {
             "Invalid @NatsListener methods in ${listener.javaClass.name}:\n" +
                     problems.joinToString("\n") { " - $it" }
         }

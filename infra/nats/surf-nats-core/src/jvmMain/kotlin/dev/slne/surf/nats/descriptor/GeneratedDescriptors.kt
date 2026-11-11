@@ -2,7 +2,6 @@ package dev.slne.surf.nats.descriptor
 
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.protocol.ProtocolDescriptors
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import java.lang.reflect.Modifier
 
 /**
@@ -44,7 +43,7 @@ internal object GeneratedDescriptors {
     }
 
     private fun notAServiceMessage(type: Class<*>): String {
-        val services = ObjectLinkedOpenHashSet<Class<*>>()
+        val services = LinkedHashSet<Class<*>>()
         fun collect(current: Class<*>) {
             for (candidate in current.interfaces) {
                 if (descriptors.get(candidate) is NatsServiceDescriptor<*>) services.add(candidate)

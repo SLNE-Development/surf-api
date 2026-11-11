@@ -1,10 +1,10 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.InternalNatsApi
-import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.TreeSet
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -32,8 +32,8 @@ internal class DeadlineLimiter(val permits: Int, val longPermits: Int = (permits
     private var available = permits
     private var longInUse = 0
     private var arrivals = 0L
-    private val shortWaiters = ObjectRBTreeSet(WAITER_ORDER)
-    private val longWaiters = ObjectRBTreeSet(WAITER_ORDER)
+    private val shortWaiters = TreeSet(WAITER_ORDER)
+    private val longWaiters = TreeSet(WAITER_ORDER)
 
     /**
      * Waits for a permit of [lane] until [deadlineMillis] (epoch milliseconds) and returns whether one was granted.
@@ -115,7 +115,7 @@ internal class DeadlineLimiter(val permits: Int, val longPermits: Int = (permits
         return next
     }
 
-    private fun ObjectRBTreeSet<Waiter>.firstOrNull(lane: Lane): Waiter? =
+    private fun TreeSet<Waiter>.firstOrNull(lane: Lane): Waiter? =
         if (isEmpty() || !isAdmissible(lane)) null else first()
 
     private class Waiter(

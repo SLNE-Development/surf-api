@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.event
 
-import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.TimeSource
@@ -35,7 +34,7 @@ public class NatsEventDeduplicator(
     private val origin = timeSource.markNow()
 
     // Event ID to the time of its first delivery in nanoseconds since origin, oldest first
-    private val firstDeliveries = Object2LongLinkedOpenHashMap<String>()
+    private val firstDeliveries = LinkedHashMap<String, Long>()
 
     /**
      * Records [eventId] and returns `true` if it was not delivered within [retention] before.
@@ -48,7 +47,7 @@ public class NatsEventDeduplicator(
             if (firstDeliveries.containsKey(eventId)) return false
 
             firstDeliveries.put(eventId, now)
-            if (firstDeliveries.size > maxEntries) firstDeliveries.removeFirstLong()
+            if (firstDeliveries.size > maxEntries) firstDeliveries.pollFirstEntry()
             return true
         }
     }
@@ -66,8 +65,8 @@ public class NatsEventDeduplicator(
 
     private fun forgetExpired(now: Long) {
         val oldestKept = now - retention.inWholeNanoseconds
-        while (firstDeliveries.isNotEmpty() && firstDeliveries.getLong(firstDeliveries.firstKey()) <= oldestKept) {
-            firstDeliveries.removeFirstLong()
+        while (firstDeliveries.isNotEmpty() && firstDeliveries.firstEntry().value <= oldestKept) {
+            firstDeliveries.pollFirstEntry()
         }
     }
 

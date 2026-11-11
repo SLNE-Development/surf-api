@@ -8,8 +8,6 @@ import dev.slne.surf.nats.protocol.ProtocolFieldRules
 import dev.slne.surf.nats.protocol.ProtocolResolution
 import dev.slne.surf.nats.protocol.ServiceNames
 import dev.slne.surf.nats.util.isSuspend
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.time.Duration.Companion.seconds
@@ -53,9 +51,9 @@ internal class ServiceDescriptor(
                 !Modifier.isStatic(m.modifiers) && !m.isSynthetic && !m.isBridge && !m.isDefault
             }
 
-            val problems = ObjectArrayList<String>()
-            val resolved = ObjectOpenHashSet<Method>()
-            val methods = ObjectArrayList<MethodDescriptor>(generated.methods.size)
+            val problems = ArrayList<String>()
+            val resolved = HashSet<Method>()
+            val methods = ArrayList<MethodDescriptor>(generated.methods.size)
 
             generated.methods.forEachIndexed { index, method ->
                 val label = "${method.kotlinName} (rpc ${method.protoName})"
@@ -96,7 +94,7 @@ internal class ServiceDescriptor(
             candidates.filter { Modifier.isAbstract(it.modifiers) && it !in resolved }
                 .forEach { problems.add("${it.name} is not described by any rpc of the descriptor") }
 
-            require(problems.isEmpty) {
+            require(problems.isEmpty()) {
                 "Invalid NATS_DESCRIPTOR of ${type.name}:\n" + problems.joinToString("\n") { " - $it" }
             }
 
