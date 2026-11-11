@@ -378,6 +378,10 @@ identifies the variable. Database types and log levels are parsed case-insensiti
 values retain the existing millisecond semantics, including `-1` where R2DBC Pool uses it to disable
 a timeout.
 
+An acquire that times out is not retried, so `max-acquire-time-millis` is the longest a statement waits for a
+connection. Keep it at or below the RPC timeout of the calls that use the pool (5 s for core surf-nats calls).
+`initial-size` is also the smallest size the pool shrinks to; `min-idle` only raises it.
+
 | Environment variable                                   | YAML option                                   | Built-in default                                   |
 |--------------------------------------------------------|-----------------------------------------------|----------------------------------------------------|
 | `SURF_DATABASE_LOG_LEVEL`                              | `log-level`                                   | `DEBUG`                                            |
@@ -391,8 +395,8 @@ a timeout.
 | `SURF_DATABASE_POOL_INITIAL_SIZE`                      | `pool.sizing.initial-size`                    | `10`                                               |
 | `SURF_DATABASE_POOL_MIN_IDLE`                          | `pool.sizing.min-idle`                        | `0`                                                |
 | `SURF_DATABASE_POOL_MAX_SIZE`                          | `pool.sizing.max-size`                        | `10`                                               |
-| `SURF_DATABASE_POOL_MAX_ACQUIRE_TIME_MILLIS`           | `pool.timeouts.max-acquire-time-millis`       | `10000`                                            |
-| `SURF_DATABASE_POOL_MAX_CREATE_CONNECTION_TIME_MILLIS` | `pool.timeouts.max-create-connection-time-millis` | `30000`                                            |
+| `SURF_DATABASE_POOL_MAX_ACQUIRE_TIME_MILLIS`           | `pool.timeouts.max-acquire-time-millis`       | `5000`                                             |
+| `SURF_DATABASE_POOL_MAX_CREATE_CONNECTION_TIME_MILLIS` | `pool.timeouts.max-create-connection-time-millis` | `5000`                                             |
 | `SURF_DATABASE_POOL_MAX_VALIDATION_TIME_MILLIS`        | `pool.timeouts.max-validation-time-millis`    | `-1`                                               |
 | `SURF_DATABASE_POOL_MAX_IDLE_TIME_MILLIS`              | `pool.timeouts.max-idle-time-millis`          | `60000`                                            |
 | `SURF_DATABASE_POOL_MAX_LIFE_TIME_MILLIS`              | `pool.timeouts.max-life-time-millis`          | `1800000`                                          |

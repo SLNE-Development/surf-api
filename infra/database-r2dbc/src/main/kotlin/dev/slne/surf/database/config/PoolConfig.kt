@@ -19,8 +19,8 @@ internal data class PoolConfig(
 
     @ConfigSerializable
     internal data class Timeouts(
-        val maxAcquireTimeMillis: Long = 10.seconds.inWholeMilliseconds,
-        val maxCreateConnectionTimeMillis: Long = 30.seconds.inWholeMilliseconds,
+        val maxAcquireTimeMillis: Long = 5.seconds.inWholeMilliseconds,
+        val maxCreateConnectionTimeMillis: Long = 5.seconds.inWholeMilliseconds,
         val maxValidationTimeMillis: Long = -1,
         val maxIdleTimeMillis: Long = 60.seconds.inWholeMilliseconds,
         val maxLifeTimeMillis: Long = 30.minutes.inWholeMilliseconds

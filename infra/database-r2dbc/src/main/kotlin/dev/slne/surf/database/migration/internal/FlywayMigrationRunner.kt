@@ -1,12 +1,9 @@
 package dev.slne.surf.database.migration.internal
 
-import dev.slne.surf.api.core.util.toMutableObjectList
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.MigrationPlan
 import dev.slne.surf.database.migration.MigrationResult
-import dev.slne.surf.database.migration.MigrationSpec
 import dev.slne.surf.database.migration.MigrationSpec.Companion.VENDOR_PLACEHOLDER
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.FlywayException
 import org.flywaydb.core.api.configuration.FluentConfiguration
@@ -97,8 +94,8 @@ internal class FlywayMigrationRunner(private val api: DatabaseApi) {
      * another package, so overlapping packages register each class once.
      */
     private fun javaMigrations(plan: MigrationPlan): List<JavaMigration> {
-        val migrations = plan.migrations.toMutableObjectList()
-        val registered = plan.migrations.mapTo(ObjectOpenHashSet()) { it.javaClass to it.version }
+        val migrations = plan.migrations.toMutableList()
+        val registered = plan.migrations.mapTo(HashSet()) { it.javaClass to it.version }
 
         for (packageName in plan.packages) {
             val found = MigrationClassScanner.scan(plan.classLoader, packageName)

@@ -87,7 +87,8 @@ class DatabaseApi internal constructor(
 
             val poolConfig = ConnectionPoolConfiguration.builder()
                 .connectionFactory(connectionFactory)
-                .acquireRetry(1)
+                // A retry would restart the acquire timeout at the end of the queue
+                .acquireRetry(0)
                 .initialSize(config.pool.sizing.initialSize)
                 .minIdle(config.pool.sizing.minIdle)
                 .maxSize(config.pool.sizing.maxSize)

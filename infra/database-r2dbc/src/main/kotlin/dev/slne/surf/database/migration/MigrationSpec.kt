@@ -1,7 +1,6 @@
 package dev.slne.surf.database.migration
 
 import dev.slne.surf.database.config.DatabaseType
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
 /**
  * Describes the migrations of one plugin.
@@ -13,9 +12,9 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
  * [baselineVersion], and the target database may already contain objects created before migrations were introduced.
  */
 class MigrationSpec internal constructor(private var loader: ClassLoader) {
-    private val sqlPaths = ObjectLinkedOpenHashSet<String>()
-    private val migrations = ObjectLinkedOpenHashSet<SurfMigration>()
-    private val packages = ObjectLinkedOpenHashSet<String>()
+    private val sqlPaths = LinkedHashSet<String>()
+    private val migrations = LinkedHashSet<SurfMigration>()
+    private val packages = LinkedHashSet<String>()
     private var baseline = "0"
 
     /**
