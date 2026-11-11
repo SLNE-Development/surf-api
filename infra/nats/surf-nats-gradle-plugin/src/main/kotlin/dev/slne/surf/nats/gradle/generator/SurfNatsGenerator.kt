@@ -7,6 +7,7 @@ import com.squareup.wire.schema.ProtoFile
 import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.gradle.codegen.ServiceEmitter
 import dev.slne.surf.nats.gradle.codegen.TypeEmitter
+import dev.slne.surf.nats.gradle.contract.ContractResolver
 import dev.slne.surf.nats.gradle.model.KotlinTypeResolver
 import dev.slne.surf.nats.gradle.model.KotlinTypes
 import dev.slne.surf.nats.gradle.model.MappedClass
@@ -62,12 +63,12 @@ class SurfNatsGenerator {
     /**
      * Loads and validates the Protobuf schema, then generates Kotlin file specifications.
      *
-     * File-level validation runs before type resolution and code generation.
-     * Generation errors are collected in [problems] without modifying output files.
+     * File rules, type registration and contract resolution report to [problems] in that order.
+     * Emission reports nothing, and no output file is modified here.
      *
      * @param input the Protobuf sources and generation settings
      * @param mappings the resolved mappings to existing Kotlin types
-     * @param problems the collector receiving validation and generation errors
+     * @param problems the collector receiving validation errors
      * @return the generated Kotlin file specifications in source order
      */
     private fun generateFileSpecs(
@@ -84,8 +85,9 @@ class SurfNatsGenerator {
         }
 
         val types = KotlinTypeResolver(loaded.schema, sourceFiles, mappings, problems)
-        val typeEmitter = TypeEmitter(types, input.visibility)
-        val serviceEmitter = ServiceEmitter(types, input.visibility)
+        val contract = ContractResolver(types).resolve(sourceFiles)
+        val typeEmitter = TypeEmitter(types, contract, input.visibility)
+        val serviceEmitter = ServiceEmitter(types, contract, input.visibility)
 
         return sourceFiles.mapNotNull {
             fileSpec(it, types, typeEmitter, serviceEmitter)

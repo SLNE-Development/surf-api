@@ -5,6 +5,7 @@ import dev.slne.surf.nats.NatsRegistration
 import dev.slne.surf.nats.bytecode.ServiceInvokerFactory
 import dev.slne.surf.nats.bytecode.call
 import dev.slne.surf.nats.client.NatsClientImpl
+import dev.slne.surf.nats.client.awaitRunningHandlers
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.deadlineMillis
 import dev.slne.surf.nats.codec.header
@@ -16,11 +17,13 @@ import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.protocol.ServiceNames
+import dev.slne.surf.nats.rpc.delivery.DeliveryCause
+import dev.slne.surf.nats.rpc.delivery.DeliveryDisposition
 import dev.slne.surf.nats.rpc.payload.PayloadStore
+import dev.slne.surf.nats.runtime.rpc.CallFlow
 import dev.slne.surf.nats.util.rethrowIfFatal
 import io.nats.client.*
 import io.nats.client.impl.Headers
-import io.nats.client.support.NatsJetStreamClientError
 import io.nats.client.support.NatsJetStreamConstants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
@@ -30,7 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlin.time.toJavaDuration
 
@@ -214,7 +216,7 @@ internal class ServiceRegistration(
             scope.launch(CoroutineName("surf-nats/${client.name}/persist/unknown")) {
                 val error =
                     IllegalStateException("No persistent method is registered for ${message.subject}")
-                failFire(message, error, permanent = false)
+                failFire(message, error, DeliveryCause.FAILED)
             }
             return
         }
@@ -256,7 +258,7 @@ internal class ServiceRegistration(
                         handlePersistentRpc(method, message, deadline)
                     }
                 }
-                if (!admitted) rejectNotAdmitted(method, message)
+                if (!admitted) rejectNotAdmitted(method, message, deadline)
             } finally {
                 keepAlive.cancel()
             }
@@ -266,52 +268,59 @@ internal class ServiceRegistration(
     private suspend fun handleFire(method: MethodDescriptor, message: Message, context: NatsPersistentContext) {
         val data = try {
             PayloadStore.resolve(message, PayloadBucket.PERSISTENT, delete = false)
-        } catch (e: CancellationException) {
-            currentCoroutineContext().ensureActive()
-            return failFire(message, e, permanent = false)
         } catch (e: Throwable) {
-            e.rethrowIfFatal()
-            return failFire(message, e, permanent = isObjectNotFound(e))
+            rethrowIfCancelledOrFatal(e)
+            return failFire(message, e, DeliveryCause.ofLoadFailure(e))
         }
 
         val request = try {
             method.decodeRequest(data, message.header(ProtocolHeaders.CONTENT_TYPE))
-        } catch (e: CancellationException) {
-            currentCoroutineContext().ensureActive()
-            return failFire(message, e, permanent = false)
         } catch (e: Throwable) {
-            e.rethrowIfFatal()
-            return failFire(message, e, permanent = true)
+            rethrowIfCancelledOrFatal(e)
+            return failFire(message, e, DeliveryCause.ofDecodeFailure(e))
         }
 
         val reply = try {
             withTimeoutOrNull(RpcDefaults.FIRE_MAX_DURATION) {
                 handle(method, context, request, data)
             }
-        } catch (e: CancellationException) {
-            currentCoroutineContext().ensureActive()
-            return failFire(message, e, permanent = false)
         } catch (e: Throwable) {
-            e.rethrowIfFatal()
-            return failFire(message, e, permanent = false)
+            rethrowIfCancelledOrFatal(e)
+            return failFire(message, e, DeliveryCause.ofFailure(e))
         }
 
         if (reply == null) {
             val error =
                 TimeoutException("Handler did not complete within ${RpcDefaults.FIRE_MAX_DURATION}")
-            return failFire(message, error, permanent = false)
+            return failFire(message, error, DeliveryCause.TIMED_OUT)
         }
 
         when (reply.kind) {
-            NatsPersistentReply.Kind.EMPTY -> ackThenDeletePayload(message, PayloadBucket.PERSISTENT)
-
-            // A stored failure repeats on every delivery
-            NatsPersistentReply.Kind.ERROR -> {
-                val error = NatsRemoteException(reply.errorType.orEmpty(), reply.errorMessage.orEmpty())
-                failFire(message, error, permanent = true)
+            NatsPersistentReply.Kind.EMPTY -> {
+                val disposition = DeliveryDisposition.of(
+                    DeliveryCause.COMPLETED, CallFlow.FIRE, context.deliveryCount, timeLeft = Duration.INFINITE
+                )
+                settle(message, disposition, PayloadBucket.PERSISTENT)
             }
 
-            else -> failFire(message, replyMismatch(method, reply), permanent = true)
+            NatsPersistentReply.Kind.ERROR -> {
+                val error = NatsRemoteException(reply.errorType.orEmpty(), reply.errorMessage.orEmpty())
+                failFire(message, error, DeliveryCause.STORED_ERROR)
+            }
+
+            else -> failFire(message, replyMismatch(method, reply), DeliveryCause.REPLY_MISMATCH)
+        }
+    }
+
+    /**
+     * Rethrows the cancellation of this coroutine and fatal errors. Any other [e], including a cancellation raised
+     * inside the handler, is left to the caller.
+     */
+    private suspend fun rethrowIfCancelledOrFatal(e: Throwable) {
+        if (e is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        } else {
+            e.rethrowIfFatal()
         }
     }
 
@@ -369,29 +378,43 @@ internal class ServiceRegistration(
         )
     }
 
-    private fun isObjectNotFound(e: Throwable): Boolean {
-        return e is IllegalArgumentException &&
-                e.message?.startsWith("[${NatsJetStreamClientError.OsObjectNotFound.id()}]") == true
-    }
-
-    private suspend fun failFire(message: Message, e: Throwable, permanent: Boolean) {
+    private suspend fun failFire(message: Message, e: Throwable, cause: DeliveryCause) {
         val delivered = message.metaData().deliveredCount()
-        val failure =
-            "Persistent call on ${message.subject} failed (delivery $delivered${if (permanent) ", permanent" else ""})"
+        val permanentSuffix = if (cause.permanent) ", permanent" else ""
+        val failure = "Persistent call on ${message.subject} failed (delivery $delivered$permanentSuffix)"
         if (e is NatsRedeliveryException) {
             client.logger.warn("$failure and requested a redelivery", e)
         } else {
             client.logger.error(failure, e)
         }
-        if ((permanent || delivered >= RpcDefaults.MAX_DELIVER) && deadLetter(message, e)) {
-            message.term()
-        } else {
-            message.nakWithDelay(backoffAfter(delivered).toJavaDuration())
-        }
+
+        val disposition = DeliveryDisposition.of(cause, CallFlow.FIRE, delivered, timeLeft = Duration.INFINITE)
+        settle(message, disposition, PayloadBucket.PERSISTENT, e)
     }
 
-    private fun backoffAfter(delivered: Long): Duration {
-        return RpcDefaults.NAK_BACKOFF[(delivered - 1).toInt().coerceIn(0, RpcDefaults.NAK_BACKOFF.lastIndex)]
+    /**
+     * Executes [disposition] on [message]. [bucket] holds the offloaded payload of the message; [failure] is recorded
+     * with a dead letter.
+     */
+    private suspend fun settle(
+        message: Message,
+        disposition: DeliveryDisposition,
+        bucket: PayloadBucket,
+        failure: Throwable? = null,
+    ) {
+        when (disposition) {
+            DeliveryDisposition.Ack -> ackThenDeletePayload(message, bucket)
+            DeliveryDisposition.Term -> message.term()
+            is DeliveryDisposition.Nak -> message.nakWithDelay(disposition.delay.toJavaDuration())
+            is DeliveryDisposition.DeadLetter -> {
+                val error = checkNotNull(failure) { "Dead letter of ${message.subject} without a failure" }
+                if (deadLetter(message, error)) {
+                    message.term()
+                } else {
+                    message.nakWithDelay(disposition.retryDelay.toJavaDuration())
+                }
+            }
+        }
     }
 
     /**
@@ -442,46 +465,49 @@ internal class ServiceRegistration(
 
         // Keep the payload for a redelivery
         val outcome = invoke(method, message, timeout, deletePayload = false)
+        val delivered = message.metaData().deliveredCount()
+        val timeLeft = remaining(deadline, method.timeout)
+        val disposition = DeliveryDisposition.of(causeOf(outcome), CallFlow.PERSISTENT_RPC, delivered, timeLeft)
+
         if (outcome !is Outcome.Finished) {
             logTimedOut(method, timeout)
-            message.term()
-            return // Caller has already given up
+            return settle(message, disposition, PayloadBucket.TRANSIENT) // Caller has already given up
         }
 
         if (outcome is Outcome.Failed && outcome.error is NatsRedeliveryException) {
-            if (redeliver(method, message, deadline, outcome.error)) return
+            logRedeliveryRequest(method, delivered, outcome.error, disposition)
         }
 
-        message.header(ProtocolHeaders.REPLY_TO)?.let { replyTo ->
-            send(replyTo, replyOf(method, outcome), timeout)
+        if (disposition == DeliveryDisposition.Ack) {
+            message.header(ProtocolHeaders.REPLY_TO)?.let { replyTo ->
+                send(replyTo, replyOf(method, outcome), timeout)
+            }
         }
-        ackThenDeletePayload(message, PayloadBucket.TRANSIENT)
+        settle(message, disposition, PayloadBucket.TRANSIENT)
     }
 
-    /**
-     * Naks a persistent RPC [message] whose handling requested a redelivery and returns `true`, or returns `false`
-     * when no redelivery can happen before the deadline, so the caller must be answered with the error.
-     */
-    private fun redeliver(
+    private fun causeOf(outcome: Outcome): DeliveryCause = when (outcome) {
+        Outcome.TimedOut -> DeliveryCause.TIMED_OUT
+        is Outcome.Failed -> DeliveryCause.ofFailure(outcome.error)
+        is Outcome.Completed, is Outcome.Prepared -> DeliveryCause.COMPLETED
+    }
+
+    private fun logRedeliveryRequest(
         method: MethodDescriptor,
-        message: Message,
-        deadline: Long?,
-        error: NatsRedeliveryException,
-    ): Boolean {
-        val delivered = message.metaData().deliveredCount()
-        val backoff = backoffAfter(delivered)
-        if (delivered >= RpcDefaults.MAX_DELIVER || backoff >= remaining(deadline, method.timeout)) {
-            client.logger.error(
-                "Service method ${method.label} requested a redelivery that cannot happen before its deadline " +
-                        "(delivery $delivered), answering with the error",
-                error
-            )
-            return false
+        delivered: Long,
+        error: Throwable,
+        disposition: DeliveryDisposition,
+    ) {
+        if (disposition is DeliveryDisposition.Nak) {
+            client.logger.warn("Service method ${method.label} requested a redelivery (delivery $delivered)", error)
+            return
         }
 
-        client.logger.warn("Service method ${method.label} requested a redelivery (delivery $delivered)", error)
-        message.nakWithDelay(backoff.toJavaDuration())
-        return true
+        client.logger.error(
+            "Service method ${method.label} requested a redelivery that cannot happen before its deadline " +
+                    "(delivery $delivered), answering with the error",
+            error
+        )
     }
 
     override fun close() {
@@ -511,14 +537,10 @@ internal class ServiceRegistration(
 
         closeConsumer(consumer)
 
-        val handlers = scope.coroutineContext.job.children.toList()
-        if (handlers.isEmpty()) return
-        val finished = runBlocking {
-            withTimeoutOrNull(deadline.timeLeft()) { handlers.joinAll() } != null
-        }
-        if (!finished) {
+        val stillActive = awaitRunningHandlers(scope, deadline)
+        if (stillActive != null) {
             client.logger.warn(
-                "${handlers.count { it.isActive }} handlers of ${descriptor.type.name} did not finish " +
+                "$stillActive handlers of ${descriptor.type.name} did not finish " +
                         "within the drain timeout of $timeout and are cancelled"
             )
         }
@@ -532,8 +554,6 @@ internal class ServiceRegistration(
             client.logger.debug("Connection gone before removing the reconnect listener", e)
         }
     }
-
-    private fun TimeMark.timeLeft(): Duration = (-elapsedNow()).coerceAtLeast(Duration.ZERO)
 
     fun discard() {
         active.set(false)
@@ -556,17 +576,15 @@ internal class ServiceRegistration(
         )
     }
 
-    /**
-     * Terminates a persistent RPC whose caller gave up while it waited for a handler slot, or schedules a fire call
-     * for redelivery.
-     */
-    private fun rejectNotAdmitted(method: MethodDescriptor, message: Message) {
+    private suspend fun rejectNotAdmitted(method: MethodDescriptor, message: Message, deadline: Long?) {
         logNotAdmitted(message)
-        if (method.result == NatsResultKind.UNIT) {
-            message.nakWithDelay(backoffAfter(message.metaData().deliveredCount()).toJavaDuration())
-        } else {
-            message.term()
-        }
+        val disposition = DeliveryDisposition.of(
+            DeliveryCause.NOT_ADMITTED,
+            method.flow,
+            message.metaData().deliveredCount(),
+            timeLeft = remaining(deadline, method.timeout),
+        )
+        settle(message, disposition, method.flow.bucket)
     }
 
     private fun dropExpired(message: Message, remaining: Duration) {
@@ -614,11 +632,8 @@ internal class ServiceRegistration(
                     call()
                 } ?: Outcome.TimedOut
             }
-        } catch (e: CancellationException) {
-            currentCoroutineContext().ensureActive()
-            Outcome.Failed(e)
         } catch (e: Throwable) {
-            e.rethrowIfFatal()
+            rethrowIfCancelledOrFatal(e)
             Outcome.Failed(e)
         }
 

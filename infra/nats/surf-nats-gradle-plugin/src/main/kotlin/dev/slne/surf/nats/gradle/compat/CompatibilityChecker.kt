@@ -7,8 +7,6 @@ import dev.slne.surf.nats.gradle.schema.containsProtos
 import dev.slne.surf.nats.gradle.schema.loadSchema
 import dev.slne.surf.nats.gradle.validate.Problems
 import dev.slne.surf.nats.gradle.validate.kotlinPackage
-import dev.slne.surf.nats.protocol.ProtocolResolution
-import dev.slne.surf.nats.protocol.ResolvedMethod
 import dev.slne.surf.nats.protocol.ResolvedService
 import java.io.File
 
@@ -613,8 +611,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             return
         }
 
-        val serviceBefore = resolve(baseline)
-        val serviceAfter = resolve(current)
+        val serviceBefore = SurfProtoOptions.service(baseline, ignoredProblems)
+        val serviceAfter = SurfProtoOptions.service(current, ignoredProblems)
         for (before in baseline.rpcs) {
             compareRpc(name, before, current, serviceBefore, serviceAfter)
         }
@@ -654,34 +652,10 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             after.responseType.toString()
         )
 
-        val methodBefore = resolve(before, serviceBefore)
-        val methodAfter = resolve(after, serviceAfter)
+        val methodBefore = SurfProtoOptions.method(before, serviceBefore, ignoredProblems)
+        val methodAfter = SurfProtoOptions.method(after, serviceAfter, ignoredProblems)
         diff(after.location, element, "persistent", methodBefore.persistent, methodAfter.persistent)
         diff(after.location, element, "recipients", methodBefore.recipients, methodAfter.recipients)
-    }
-
-    /**
-     * Resolves the NATS options of a service for compatibility comparisons.
-     *
-     * Resolution diagnostics are collected separately, since only supported option changes are compared here.
-     */
-    private fun resolve(service: Service): ResolvedService {
-        val options = SurfProtoOptions.service(service.options, service.location, ignoredProblems)
-        return ProtocolResolution.service(options, service.type.toString())
-    }
-
-    /**
-     * Resolves the effective options of an RPC using its containing service's configuration.
-     *
-     * The resulting persistence and recipients are compared; call timeouts are not.
-     */
-    private fun resolve(rpc: Rpc, service: ResolvedService): ResolvedMethod {
-        return ProtocolResolution.method(
-            SurfProtoOptions.method(rpc.options, rpc.location, ignoredProblems),
-            service,
-            emptyResponse = rpc.responseType == ProtoType.EMPTY,
-            streaming = rpc.requestStreaming || rpc.responseStreaming,
-        )
     }
 
     /**

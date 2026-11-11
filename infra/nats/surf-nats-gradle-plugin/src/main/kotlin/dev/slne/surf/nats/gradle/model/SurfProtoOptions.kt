@@ -4,10 +4,15 @@ import com.squareup.wire.schema.Location
 import com.squareup.wire.schema.Options
 import com.squareup.wire.schema.ProtoMember
 import com.squareup.wire.schema.ProtoType
+import com.squareup.wire.schema.Rpc
+import com.squareup.wire.schema.Service
 import dev.slne.surf.nats.gradle.validate.Problems
 import dev.slne.surf.nats.protocol.MethodOptions
 import dev.slne.surf.nats.protocol.ProtocolOptions
+import dev.slne.surf.nats.protocol.ProtocolResolution
 import dev.slne.surf.nats.protocol.RecipientsOption
+import dev.slne.surf.nats.protocol.ResolvedMethod
+import dev.slne.surf.nats.protocol.ResolvedService
 import dev.slne.surf.nats.protocol.ServiceOptions
 import java.math.BigInteger
 
@@ -69,7 +74,29 @@ internal object SurfProtoOptions {
     fun isEvent(options: Options): Boolean = flag(options, EVENT)
 
     /**
-     * Resolves the NATS configuration declared on a Protobuf service.
+     * Resolves the `(surf.nats.v1.service)` options of [service].
+     *
+     * Values that cannot be read are reported to [problems] and count as unset.
+     */
+    fun service(service: Service, problems: Problems): ResolvedService = ProtocolResolution.service(
+        serviceOptions(service.options, service.location, problems),
+        service.type.toString(),
+    )
+
+    /**
+     * Resolves the `(surf.nats.v1.method)` options of [rpc] against its [service].
+     *
+     * Values that cannot be read are reported to [problems] and count as unset.
+     */
+    fun method(rpc: Rpc, service: ResolvedService, problems: Problems): ResolvedMethod = ProtocolResolution.method(
+        methodOptions(rpc.options, rpc.location, problems),
+        service,
+        emptyResponse = rpc.responseType == ProtoType.EMPTY,
+        streaming = rpc.requestStreaming || rpc.responseStreaming,
+    )
+
+    /**
+     * Parses the NATS configuration declared on a Protobuf service.
      *
      * Reads `(surf.nats.v1.service)` and converts its call timeout,
      * recipients, and persistence settings into [ServiceOptions].
@@ -83,7 +110,7 @@ internal object SurfProtoOptions {
      * @param problems the collector receiving option validation errors
      * @return the parsed service configuration
      */
-    fun service(options: Options, location: Location, problems: Problems): ServiceOptions {
+    private fun serviceOptions(options: Options, location: Location, problems: Problems): ServiceOptions {
         val values = options.get(SERVICE) as? Map<*, *>? ?: return ServiceOptions()
         val reader = Reader(SERVICE_OPTIONS, values, location, problems)
 
@@ -95,7 +122,7 @@ internal object SurfProtoOptions {
     }
 
     /**
-     * Resolves the NATS configuration declared on an RPC method.
+     * Parses the NATS configuration declared on an RPC method.
      *
      * Reads `(surf.nats.v1.method)` and converts its persistence,
      * call timeout, and recipients settings into [MethodOptions].
@@ -109,7 +136,7 @@ internal object SurfProtoOptions {
      * @param problems the collector receiving option validation errors
      * @return the parsed method configuration
      */
-    fun method(options: Options, location: Location, problems: Problems): MethodOptions {
+    private fun methodOptions(options: Options, location: Location, problems: Problems): MethodOptions {
         val values = options.get(METHOD) as? Map<*, *>? ?: return MethodOptions()
         val reader = Reader(METHOD_OPTIONS, values, location, problems)
 

@@ -6,11 +6,8 @@ import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.codec.header
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.protocol.PayloadBucket
-import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import dev.slne.surf.nats.runtime.deadlineHeader
-import dev.slne.surf.nats.runtime.headerLineBytes
-import dev.slne.surf.nats.runtime.randomId
+import dev.slne.surf.nats.runtime.rpc.offloadPayload
 import io.nats.client.Connection
 import io.nats.client.JetStreamApiException
 import io.nats.client.Message
@@ -56,26 +53,23 @@ internal object PayloadStore {
         stampDeadline: Boolean = false,
     ): ByteArray {
         val connection = NatsConnectionManager.connection()
-        val deadline = if (stampDeadline) deadlineHeader(lifetime) else null
-        val headerBytes = headers.serializedLength() + headerLineBytes(ProtocolHeaders.DEADLINE, deadline)
-        if (!ProtocolDefaults.requiresOffload(body.size, headerBytes, extraHeaderBytes, connection.maxPayload)) {
-            if (deadline != null) headers.add(ProtocolHeaders.DEADLINE, deadline)
-            return body
-        }
-
-        require(lifetime <= bucket.ttl) { bucket.lifetimeExceededMessage(body.size, lifetime) }
-
-        val name = randomId()
-        val store = store(connection, bucket)
-
-        withContext(Dispatchers.IO) {
-            store.put(name, body)
-        }
-        // The upload used up part of the lifetime
-        if (stampDeadline) headers.add(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))
-        headers.add(ProtocolHeaders.PAYLOAD_REF, name)
-
-        return NatsHeaders.EMPTY_BODY
+        val offloaded = offloadPayload(
+            bodyBytes = body.size,
+            headerBytes = headers.serializedLength(),
+            extraHeaderBytes = extraHeaderBytes,
+            maxPayload = connection.maxPayload,
+            lifetime = lifetime,
+            bucket = bucket,
+            stampDeadline = stampDeadline,
+            writeHeader = headers::add,
+            upload = { name ->
+                val store = store(connection, bucket)
+                withContext(Dispatchers.IO) {
+                    store.put(name, body)
+                }
+            },
+        )
+        return if (offloaded) NatsHeaders.EMPTY_BODY else body
     }
 
     /**

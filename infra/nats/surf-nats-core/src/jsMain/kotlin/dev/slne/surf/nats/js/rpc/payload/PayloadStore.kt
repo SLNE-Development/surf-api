@@ -10,16 +10,16 @@ import dev.slne.surf.nats.js.external.nats.obj.ObjectStoreMeta
 import dev.slne.surf.nats.js.external.nats.obj.ObjectStoreOptions
 import dev.slne.surf.nats.js.external.nats.obj.Objm
 import dev.slne.surf.nats.protocol.PayloadBucket
-import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import dev.slne.surf.nats.runtime.deadlineHeader
-import dev.slne.surf.nats.runtime.headerLineBytes
-import dev.slne.surf.nats.runtime.randomId
+import dev.slne.surf.nats.runtime.rpc.offloadPayload
 import js.typedarrays.Uint8Array
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.await
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlin.time.Duration
 
 /**
@@ -50,22 +50,18 @@ internal class PayloadStore(
         extraHeaderBytes: Int = 0,
         stampDeadline: Boolean = false,
     ): Uint8Array<*> {
-        val deadline = if (stampDeadline) deadlineHeader(lifetime) else null
-        val headerBytes = NatsHeaders.serializedLength(headers) + headerLineBytes(ProtocolHeaders.DEADLINE, deadline)
-        if (!ProtocolDefaults.requiresOffload(body.length, headerBytes, extraHeaderBytes, maxPayload)) {
-            if (deadline != null) headers.set(ProtocolHeaders.DEADLINE, deadline)
-            return body
-        }
-
-        require(lifetime <= bucket.ttl) { bucket.lifetimeExceededMessage(body.length, lifetime) }
-
-        val name = randomId()
-        store(bucket).putBlob(ObjectStoreMeta(name = name), body).await()
-        // The upload used up part of the lifetime
-        if (stampDeadline) headers.set(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))
-        headers.set(ProtocolHeaders.PAYLOAD_REF, name)
-
-        return NatsHeaders.EMPTY_BODY
+        val offloaded = offloadPayload(
+            bodyBytes = body.length,
+            headerBytes = NatsHeaders.serializedLength(headers),
+            extraHeaderBytes = extraHeaderBytes,
+            maxPayload = maxPayload,
+            lifetime = lifetime,
+            bucket = bucket,
+            stampDeadline = stampDeadline,
+            writeHeader = headers::set,
+            upload = { name -> store(bucket).putBlob(ObjectStoreMeta(name = name), body).await() },
+        )
+        return if (offloaded) NatsHeaders.EMPTY_BODY else body
     }
 
     /**
@@ -89,6 +85,9 @@ internal class PayloadStore(
         try {
             store.delete(name).await()
         } catch (e: Throwable) {
+            if (e is CancellationException) {
+                currentCoroutineContext().ensureActive()
+            }
             console.warn("surf-nats: failed to delete offloaded payload $name", e)
         }
     }

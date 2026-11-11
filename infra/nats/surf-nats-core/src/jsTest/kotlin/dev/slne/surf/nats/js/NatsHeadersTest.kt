@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 
 class NatsHeadersTest {
 
-    // PayloadStore counts a header it adds after the size check with lineBytes
+    // The payload offload counts a header it adds after the size check with lineBytes
     @Test
     fun lineBytesMatchTheEncodedHeaders() {
         val headers = NatsHeaders.forOrigin("surf-panel@0b6f4c1e-0c6e-4d7b-9a51-3f0c2a7e9d10")
