@@ -1,0 +1,13 @@
+package dev.slne.surf.nats
+
+import com.google.auto.service.AutoService
+import java.nio.file.Path
+
+/**
+ * Minestom platform instance that uses the plugin data directory.
+ */
+@AutoService(NatsInstance::class)
+@InternalNatsApi
+class NatsMinestomInstance : NatsInstance() {
+    override val dataPath: Path get() = NatsMinestomPlugin.dataDirectory
+}

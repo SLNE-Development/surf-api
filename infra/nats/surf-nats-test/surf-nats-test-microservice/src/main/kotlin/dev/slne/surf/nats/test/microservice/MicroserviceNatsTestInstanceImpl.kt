@@ -1,0 +1,71 @@
+package dev.slne.surf.nats.test.microservice
+
+import com.google.auto.service.AutoService
+import dev.slne.surf.microservice.api.command.microserviceCommand
+import dev.slne.surf.nats.rpc.getOrNull
+import dev.slne.surf.nats.service
+import dev.slne.surf.nats.test.common.Benchmark
+import dev.slne.surf.nats.test.common.NatsTestInstance
+import dev.slne.surf.nats.test.common.natsClient
+import dev.slne.surf.nats.test.common.proto.v1.BroadcastRequest
+import dev.slne.surf.nats.test.common.proto.v1.EchoRequest
+import dev.slne.surf.nats.test.common.proto.v1.FindPlayerRequest
+import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
+import dev.slne.surf.nats.test.common.proto.v1.PaperTestService
+import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
+import kotlin.time.measureTimedValue
+
+@AutoService(NatsTestInstance::class)
+class MicroserviceNatsTestInstanceImpl : NatsTestInstance() {
+
+    override suspend fun load() {
+        super.load()
+
+        registerCommands()
+    }
+
+
+    private fun registerCommands() {
+        val paper = natsClient.service<PaperTestService>()
+
+        microserviceCommand("event") { args ->
+            natsClient.publish(TestChatEvent(origin = ORIGIN, message = args.joinToString(" ")))
+            sendLine("event published")
+        }
+
+        microserviceCommand("find") { args ->
+            val (answer, took) = measureTimedValue {
+                paper.findPlayer(FindPlayerRequest(args.joinToString(" ")))
+            }
+            sendLine("find -> ${answer.getOrNull()?.info ?: "none"} ($took)")
+        }
+
+        microserviceCommand("broadcast") { args ->
+            paper.broadcast(BroadcastRequest(args.joinToString(" ")))
+            sendLine("broadcast sent")
+        }
+
+        // bench <find|echo> [iterations] [warmup] [concurrency]
+        microserviceCommand("bench") { args ->
+            val kind = args.getOrNull(0) ?: "find"
+            val iterations = args.getOrNull(1)?.toIntOrNull() ?: 2_000
+            val warmup = args.getOrNull(2)?.toIntOrNull() ?: 1_000
+            val concurrency = args.getOrNull(3)?.toIntOrNull() ?: 1
+            val self = natsClient.service<MicroserviceTestService>()
+
+            val call: suspend () -> Unit = when (kind) {
+                "echo" -> EchoRequest("ping").let { request -> { self.echo(request) } }
+                else -> FindPlayerRequest("nobody").let { request -> { paper.findPlayer(request) } }
+            }
+
+            sendLine("bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...")
+            Benchmark.run("microservice -> $kind", warmup, iterations, concurrency, call)
+                .lines()
+                .forEach(::sendLine)
+        }
+    }
+
+    companion object {
+        const val ORIGIN = "microservice"
+    }
+}

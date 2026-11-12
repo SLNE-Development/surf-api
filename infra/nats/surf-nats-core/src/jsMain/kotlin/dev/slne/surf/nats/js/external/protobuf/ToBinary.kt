@@ -1,0 +1,15 @@
+@file:JsModule("@bufbuild/protobuf")
+
+package dev.slne.surf.nats.js.external.protobuf
+
+import dev.slne.surf.nats.js.api.ProtoMessage
+import js.typedarrays.Uint8Array
+
+/**
+ * Binds `toBinary`, which serializes [message] of [schema] to the protobuf binary format.
+ */
+internal external fun toBinary(
+    schema: DescMessage,
+    message: ProtoMessage,
+    options: BinaryWriteOptions = definedExternally,
+): Uint8Array<*>

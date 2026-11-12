@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/finder.proto";
+
+// ALL_INSTANCES fan-out only, no Answer method.
+service NotifierService {
+  option (surf.nats.v1.service) = { recipients: NATS_RECIPIENTS_ALL_INSTANCES };
+
+  rpc Announce(BroadcastRequest) returns (google.protobuf.Empty);
+}

@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// java.math.BigDecimal. value is required: a reader rejects a message without it.
+message BigDecimal {
+  // BigDecimal.toString(), for example "12.50" or "1E+3". Keeps the scale; parse it without going through a float.
+  required string value = 1;
+}

@@ -1,0 +1,45 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/common.proto";
+import "surf/types/v1/uuid.proto";
+
+// Service for external callers.
+service RolesService {
+  rpc Whitelist(WhitelistRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { persistent: true };
+  }
+  rpc Echo(EchoRequest) returns (Number);
+  rpc Owner(OwnerRequest) returns (OwnerReply);
+  rpc Store(StoreRequest) returns (google.protobuf.Empty) {
+    option (surf.nats.v1.method) = { persistent: true };
+  }
+  rpc Handle(StoreRequest) returns (Number);
+}
+
+message WhitelistRequest {
+  required string action = 1;
+  required int64 user_id = 2;
+}
+
+message EchoRequest {
+  required int64 id = 1;
+}
+
+message OwnerRequest {
+  required surf.types.v1.Uuid player = 1;
+}
+
+message OwnerReply {
+  required surf.types.v1.Uuid owner = 1;
+}
+
+message StoreRequest {
+  required int64 id = 1;
+  optional string payload = 2;
+}

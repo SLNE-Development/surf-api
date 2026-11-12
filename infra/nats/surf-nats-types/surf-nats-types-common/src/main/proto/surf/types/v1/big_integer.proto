@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// java.math.BigInteger. value is required: a reader rejects a message without it.
+message BigInteger {
+  // Decimal digits with an optional leading "-", BigInteger.toString().
+  required string value = 1;
+}

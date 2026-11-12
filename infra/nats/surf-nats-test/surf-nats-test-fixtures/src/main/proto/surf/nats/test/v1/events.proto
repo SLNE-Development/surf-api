@@ -1,0 +1,69 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/uuid.proto";
+
+message Created {
+  option (surf.nats.v1.event) = true;
+
+  required int64 id = 1;
+}
+
+message PlayerEvent {
+  option (surf.nats.v1.event) = true;
+
+  required surf.types.v1.Uuid player = 1;
+}
+
+message Balanced {
+  option (surf.nats.v1.event) = true;
+
+  required int32 id = 1;
+}
+
+message QueueShared {
+  option (surf.nats.v1.event) = true;
+
+  required int64 id = 1;
+}
+
+message BigEvent {
+  option (surf.nats.v1.event) = true;
+
+  required string payload = 1;
+}
+
+// Fieldless event.
+message Heartbeat {
+  option (surf.nats.v1.event) = true;
+}
+
+// Nullable fields.
+message ProfileUpdated {
+  option (surf.nats.v1.event) = true;
+
+  required surf.types.v1.Uuid player = 1;
+  optional string nickname = 2;
+  optional surf.types.v1.Uuid previous_owner = 3;
+}
+
+message PanelEvent {
+  option (surf.nats.v1.event) = true;
+
+  required int64 id = 1;
+}
+
+message OriginEvent {
+  option (surf.nats.v1.event) = true;
+
+  required int64 id = 1;
+}
+
+// Not an event: listener-signature and publish rejection tests.
+message NotAnEvent {
+  required int64 id = 1;
+}

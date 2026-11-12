@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// java.time.LocalTime. Every field defaults to 0, an empty message is midnight.
+message LocalTime {
+  // 0 to 23.
+  optional int32 hour = 1 [default = 0];
+  // 0 to 59.
+  optional int32 minute = 2 [default = 0];
+  // 0 to 59.
+  optional int32 second = 3 [default = 0];
+  // 0 to 999,999,999.
+  optional int32 nanos = 4 [default = 0];
+}

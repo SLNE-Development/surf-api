@@ -1,0 +1,38 @@
+syntax = "proto2";
+
+package surf.natsjs.test.v1;
+
+import "surf/nats/v1/options.proto";
+import "surf/types/v1/uuid.proto";
+
+message PlayerJoined {
+  option (surf.nats.v1.event) = true;
+
+  required string name = 1;
+  required surf.types.v1.Uuid id = 2;
+  optional string server = 3;
+}
+
+message ChatMessage {
+  option (surf.nats.v1.event) = true;
+
+  required string text = 1;
+}
+
+message ServerStarted {
+  option (surf.nats.v1.event) = true;
+
+  required string server = 1;
+}
+
+// Not an event: no (surf.nats.v1.event) option.
+message PlainMessage {
+  required string text = 1;
+}
+
+// Not an event: the option is false.
+message OptedOutMessage {
+  option (surf.nats.v1.event) = false;
+
+  required string text = 1;
+}

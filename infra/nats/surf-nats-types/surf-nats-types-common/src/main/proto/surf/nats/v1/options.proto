@@ -1,0 +1,39 @@
+syntax = "proto2";
+
+package surf.nats.v1;
+
+option java_package = "dev.slne.surf.nats.proto";
+
+import "google/protobuf/descriptor.proto";
+
+// Extension numbers 51000–51099 are reserved for surf-nats.
+
+enum NatsRecipients {
+  NATS_RECIPIENTS_UNSPECIFIED = 0;
+  NATS_RECIPIENTS_ANY_INSTANCE = 1;
+  NATS_RECIPIENTS_ALL_INSTANCES = 2;
+}
+
+message NatsServiceOptions {
+  optional uint32 call_timeout_seconds = 1;
+  optional NatsRecipients recipients = 2;
+  optional bool persistent = 3;
+}
+
+message NatsMethodOptions {
+  optional bool persistent = 1;
+  optional uint32 call_timeout_seconds = 2;
+  optional NatsRecipients recipients = 3;
+}
+
+extend google.protobuf.MessageOptions {
+  optional bool event = 51000;
+}
+
+extend google.protobuf.ServiceOptions {
+  optional NatsServiceOptions service = 51001;
+}
+
+extend google.protobuf.MethodOptions {
+  optional NatsMethodOptions method = 51002;
+}
