@@ -18,17 +18,13 @@ import org.jspecify.annotations.NullMarked;
  *   <li>The invoker interface the hidden class will implement</li>
  * </ul>
  *
- * <p>This replaces the per-project copy-paste of RedisEventInvokerFactory,
- * RedisRequestHandlerInvokerFactory, RabbitListenerHandlerFactory, etc.
- *
  * <h2>Usage</h2>
  * <pre>{@code
- * // In surf-redis:
  * var factory = new InvokerFactory<>(
- *     RedisEventInvokerTemplate.class,
- *     RedisEventInvoker.class
+ *     SurfSyncEventInvokerTemplate.class,
+ *     SurfSyncEventInvoker.class
  * );
- * RedisEventInvoker invoker = factory.create(listener, method, MyEvent.class);
+ * SurfSyncEventInvoker invoker = factory.create(listener, method, MyEvent.class);
  * }</pre>
  *
  * @param <I> the invoker interface type

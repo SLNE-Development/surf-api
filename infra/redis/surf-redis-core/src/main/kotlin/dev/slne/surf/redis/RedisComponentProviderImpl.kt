@@ -4,11 +4,7 @@ import com.google.auto.service.AutoService
 import dev.slne.surf.redis.cache.*
 import dev.slne.surf.redis.codec.RedisCodec
 import dev.slne.surf.redis.config.redisConfig
-import dev.slne.surf.redis.event.RedisEventBus
-import dev.slne.surf.redis.event.RedisEventBusImpl
 import dev.slne.surf.redis.internal.RedissonConfigDetails
-import dev.slne.surf.redis.request.RequestResponseBus
-import dev.slne.surf.redis.request.RequestResponseBusImpl
 import dev.slne.surf.redis.sync.BinarySyncValueCodec
 import dev.slne.surf.redis.sync.JsonSyncValueCodec
 import dev.slne.surf.redis.sync.list.SyncList
@@ -93,14 +89,6 @@ class RedisComponentProviderImpl : RedisComponentProvider {
         redisApi: RedisApi
     ): SimpleSetRedisCache<T> {
         return SimpleSetRedisCacheImpl(namespace, serializer, idOf, indexes, ttl, redisApi)
-    }
-
-    override fun createEventBus(redisApi: RedisApi): RedisEventBus {
-        return RedisEventBusImpl(redisApi)
-    }
-
-    override fun createRequestResponseBus(redisApi: RedisApi): RequestResponseBus {
-        return RequestResponseBusImpl(redisApi)
     }
 
     override fun <E : Any> createSyncList(

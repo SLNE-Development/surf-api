@@ -5,12 +5,12 @@ JVM applications.
 
 It provides:
 - a central Redis API abstraction
-- event broadcasting
-- request/response messaging
 - replicated in-memory data structures (value, list, set, map)
 - simple Redis-backed caches
 
 The library is built on top of **Redisson**, **Reactor**, and **Kotlin coroutines**.
+
+Events and request/response messaging moved to [surf-nats](../nats/README.md#migrating-from-surf-redis-and-surf-rabbitmq).
 
 ---
 
@@ -78,9 +78,8 @@ TLS/Unix-socket transport and credentials — shares **one** physical Redisson c
 pool. Ten plugins on one server therefore use a single pool instead of ten. Connections that differ in
 any of these settings stay isolated.
 
-Only the connection is shared. Each `RedisApi` keeps its own event bus, request/response bus, sync
-structures, caches, event codec registrations and coroutine scopes. Connecting or disconnecting one
-instance does not affect another:
+Only the connection is shared. Each `RedisApi` keeps its own sync structures, caches and coroutine
+scopes. Connecting or disconnecting one instance does not affect another:
 
 * the first instance to connect creates the shared client, later ones join it
 * `disconnect()` releases the instance's share; the client is shut down once the last instance using
@@ -92,7 +91,7 @@ instance does not affect another:
 
 Lifecycle:
 1. Create the API
-2. Register listeners / handlers / sync structures
+2. Create sync structures and caches
 3. Freeze the API
 4. Connect to Redis
 5. Disconnect on shutdown
@@ -100,8 +99,7 @@ Lifecycle:
 ```kotlin
 val redisApi = RedisApi.create()
 
-redisApi.subscribeToEvents(SomeListener())
-redisApi.registerRequestHandler(SomeRequestHandler())
+val counter = redisApi.createSyncValue<Int>("example-namespace:counter", defaultValue = 0)
 
 redisApi.freezeAndConnect()
 ```
@@ -114,19 +112,12 @@ In most applications, `RedisApi` is wrapped inside a service that owns its lifec
 a global access point.
 
 ```kotlin
-abstract class RedisService {
+class RedisService {
 
     val redisApi = RedisApi.create()
 
     fun connect() {
-        register()
         redisApi.freezeAndConnect()
-    }
-
-    @MustBeInvokedByOverriders
-    @ApiStatus.OverrideOnly
-    protected open fun register() {
-        // register listeners and request handlers
     }
 
     fun disconnect() {
@@ -137,23 +128,12 @@ abstract class RedisService {
         val instance = requiredService<RedisService>()
         fun get() = instance
 
-        fun publish(event: RedisEvent) =
-            instance.redisApi.publishEvent(event)
-
         fun namespaced(suffix: String) =
             "example-namespace:$suffix"
     }
 }
 
 val redisApi get() = RedisService.get().redisApi
-
-@AutoService(RedisService::class)
-class PaperRedisService : RedisService() {
-    override fun register() {
-        super.register()
-        // redisApi.subscribeToEvents(PaperListener())
-    }
-}
 ```
 
 Sync structures are typically created **where they are used**, not inside the Redis service:
@@ -167,198 +147,6 @@ object SomeOtherService {
         )
 }
 ```
-
----
-
-## Events
-
-### RedisEvent
-
-Events are broadcasted via Redis Pub/Sub.
-
-```kotlin
-@Serializable
-class PlayerJoinedEvent(val playerId: UUID) : RedisEvent()
-```
-
-Publishing an event:
-
-```kotlin
-RedisService.publish(PlayerJoinedEvent(playerId))
-```
-
-### Event handlers
-
-Handlers are discovered via `@OnRedisEvent`.
-
-```kotlin
-class PlayerListener {
-
-    @OnRedisEvent
-    fun onJoin(event: PlayerJoinedEvent) {
-        if (event.originatesFromThisClient()) return
-        println("Player joined on another node: ${event.playerId}")
-    }
-}
-```
-
-Handlers can also be `suspend` functions — they run directly in the listener coroutine:
-
-```kotlin
-class PlayerListener {
-
-    @OnRedisEvent
-    suspend fun onJoin(event: PlayerJoinedEvent) {
-        if (event.originatesFromThisClient()) return
-        val profile = fetchProfileSuspending(event.playerId)
-        println("Profile: $profile")
-    }
-}
-```
-
-* Handlers are invoked inside a coroutine on **`Dispatchers.Default`**
-* Both regular and `suspend` functions are supported
-* **Do not perform blocking work directly** — switch dispatchers for blocking I/O:
-
-```kotlin
-@OnRedisEvent
-suspend fun onJoin(event: PlayerJoinedEvent) {
-    withContext(Dispatchers.IO) {
-        loadFromDatabase(event.playerId)
-    }
-}
-```
-
-### Event wire formats and custom codecs
-
-Existing events continue to use the unchanged JSON envelope on `surf-redis:events`. An event
-uses the binary path only when a `RedisEventCodec` is registered for its concrete class.
-
-Custom-coded events are published exclusively on `surf-redis:events:binary`. Its compact envelope
-contains a protocol version, stable event ID, codec version, timestamp, origin ID, and codec payload.
-Binary payloads never appear on the JSON channel.
-
-The simplest convention is a codec implemented by the event companion object. It is discovered
-once when a listener registers the event type and then cached:
-
-```kotlin
-class PlayerLevelChanged(
-    val playerUuid: UUID,
-    val level: Int
-) : RedisEvent() {
-    companion object : RedisEventCodec<PlayerLevelChanged> {
-        override val codecId = "example:player-level" // optional
-        override val version = 1 // optional    
-        override val eventId = "example:player-level-changed" // optional
-
-        override fun encode(buffer: ByteBuf, value: PlayerLevelChanged) {
-            buffer.writeUuid(value.playerUuid)
-            buffer.writeVarInt(value.level)
-        }
-
-        override fun decode(buffer: ByteBuf) = PlayerLevelChanged(
-            playerUuid = buffer.readUuid(),
-            level = buffer.readVarInt(),
-        )
-    }
-}
-```
-
-`eventId` defaults to the event's fully qualified class name for a companion codec. Override it if
-the class may be renamed. For a publish-only type, call
-`redisApi.registerEventType<PlayerLevelChanged>()` before `freeze()` so discovery and validation
-happen during startup. Listener registration performs that step automatically.
-
-Codecs can also be registered explicitly before `freeze()`:
-
-```kotlin
-redisApi.registerEventCodec(PlayerLevelChanged::class.java, playerLevelCodec)
-// or: redisApi.registerEventCodec<PlayerLevelChanged>(playerLevelCodec)
-```
-
-Explicit registration takes precedence over an automatically discovered codec. Duplicate explicit
-registrations, invalid IDs or versions, and event-ID collisions fail immediately. IDs must be stable
-across processes; registration-order IDs are not supported.
-
-If a receiver lacks an event ID or matching codec version, it logs that combination once and ignores
-only those packets. Other JSON and binary events continue normally. Publishing before `connect()`
-and registering after `freeze()` are rejected.
-
-Codec instances may be invoked concurrently and must be thread-safe. They read and write a
-caller-owned `ByteBuf` and must never retain, release, or store it. Event timestamp and origin
-metadata are carried by the envelope and should not be duplicated by the codec.
-
----
-
-## Request / Response
-
-Requests are **broadcasted**.
-Multiple servers may respond.
-The **first response that arrives wins**.
-
-### Defining requests and responses
-
-```kotlin
-@Serializable
-class GetPlayerRequest(val playerId: UUID) : RedisRequest()
-
-@Serializable
-class PlayerResponse(val name: String) : RedisResponse()
-```
-
-### Handling requests
-
-```kotlin
-class PlayerRequestHandler {
-
-    @HandleRedisRequest
-    fun handle(ctx: RequestContext<GetPlayerRequest>) {
-        if (ctx.originatesFromThisClient()) return
-
-        val player = loadPlayer(ctx.request.playerId)
-        ctx.respond(PlayerResponse(player.name))
-    }
-}
-```
-
-Handlers can also be `suspend` functions — [RequestContext.respond] can be called at any suspension point:
-
-```kotlin
-class PlayerRequestHandler {
-
-    @HandleRedisRequest
-    suspend fun handle(ctx: RequestContext<GetPlayerRequest>) {
-        if (ctx.originatesFromThisClient()) return
-
-        val player = fetchPlayerSuspending(ctx.request.playerId)
-        ctx.respond(PlayerResponse(player.name))
-    }
-}
-```
-
-* Handlers are invoked inside a coroutine on **`Dispatchers.Default`**
-* Both regular and `suspend` functions are supported
-* **Do not perform blocking work directly** — switch to `Dispatchers.IO` for blocking calls:
-
-```kotlin
-@HandleRedisRequest
-suspend fun handle(ctx: RequestContext<GetPlayerRequest>) {
-    if (ctx.originatesFromThisClient()) return
-    val player = withContext(Dispatchers.IO) { loadFromDatabaseBlocking(ctx.request.playerId) }
-    ctx.respond(PlayerResponse(player.name))
-}
-```
-
-Each handler may respond **at most once**.
-
-### Sending requests
-
-```kotlin
-val response: PlayerResponse =
-    redisApi.sendRequest(GetPlayerRequest(playerId))
-```
-
-If no response is received within the timeout, a `RequestTimeoutException` is thrown.
 
 ---
 
@@ -480,7 +268,7 @@ val queue = redisApi.createSyncList(
 ```
 
 The same `codec = ...` overload is available for `SyncSet` and `SyncValue` (with
-`defaultValue = ...`). Create all structures and register all event codecs before `freeze()`.
+`defaultValue = ...`). Create all structures before `freeze()`.
 
 `codecId` and `version` identify a structure's wire format. Clients using the same structure ID must
 use matching identities. Surf Redis stores short-lived codec metadata beside custom-coded structures
@@ -488,8 +276,9 @@ and fails connection on a detected mismatch. It also refuses to attach a custom 
 data with no codec metadata, because that data may use the JSON representation.
 
 Codec failures identify both codec and structure context. Payload and collection sizes have safety
-limits to prevent uncontrolled allocation from malformed data. Structure codecs follow the same
-thread-safety and caller-owned buffer rules as event codecs.
+limits to prevent uncontrolled allocation from malformed data. Codec instances may be invoked
+concurrently and must be thread-safe. They read and write a caller-owned `ByteBuf` and must never
+retain, release, or store it.
 
 > [!IMPORTANT]
 > Switching an existing synchronized structure from JSON to a custom codec is a data migration, not
@@ -560,55 +349,10 @@ These APIs:
 
 ---
 
-## Handler Dispatch (Internals)
+## Concurrency tests
 
-Event handlers (`@OnRedisEvent`) and request handlers (`@HandleRedisRequest`) are dispatched
-through **JVM hidden classes** generated at registration time.
-
-Each handler method is resolved into a `MethodHandle`, which is then embedded as a
-`static final` constant in a hidden class implementing `RedisEventInvoker` or
-`RedisRequestHandlerInvoker`. This allows the JIT compiler to constant-fold and inline the
-entire dispatch path — significantly outperforming raw `MethodHandle.invoke()` polymorphic calls.
-
-Hidden classes are:
-
-* **Not discoverable** by name — no classloader pollution
-* **Garbage-collectible** when no longer referenced
-* **JIT-friendly** — the dispatch target is a compile-time constant
-
-This approach combines the flexibility of reflection-based handler discovery with
-near-direct-call performance at runtime.
-
-> [!NOTE]
-> This is an implementation detail. The public API for registering handlers
-> (`@OnRedisEvent`, `@HandleRedisRequest`) remains unchanged.
-
-### Performance benchmarks
-
-The codec benchmarks use JMH so warmup, JVM forks, dead-code elimination, and measurement timing
-are handled independently from correctness tests. They compare the complete legacy JSON event
-wire format with the custom binary event packet for 0, 32, 256, 1,024, 4,096, 16,384, and 65,536
-bytes of application payload.
-
-```bash
-# Full run: 3 warmup iterations, 5 measured iterations, and 2 JVM forks
-./gradlew :surf-redis-core:codecBenchmark
-
-# Short harness/fixture validation using every operation and payload size
-./gradlew :surf-redis-core:jmh -PbenchmarkSmoke
-
-# Exact encoded packet sizes without benchmark timing noise
-./gradlew :surf-redis-core:eventWireSizeReport
-```
-
-Separate JMH cases cover JSON and binary encode, decode, and full round trips. The GC profiler also
-reports allocation rate and bytes allocated per operation. Machine-readable results are written to
-`surf-redis-core/build/results/jmh/results.json`. Compare results only from the same machine, JDK,
-JVM flags, and system load.
-
-Selected codec-registry concurrency scenarios use JetBrains Lincheck model checking. They cover
-registration, event-ID collisions, freezing, and frozen lookups and run automatically as part of
-`check`; they can also be run directly:
+The connection-sharing registry is checked with JetBrains Lincheck model checking. These tests run
+as part of `check`; they can also be run directly:
 
 ```bash
 ./gradlew :surf-redis-core:lincheckTest
@@ -622,8 +366,6 @@ Guaranteed:
 
 * Local operations are non-blocking
 * Eventual convergence across nodes
-* At-most-once response per request handler
-* First response wins for requests
 
 Not guaranteed:
 
@@ -705,98 +447,7 @@ They are designed for coordination and shared state, not transactional consisten
 
 ---
 
-### 3. Doing blocking work in event or request handlers
-
-Event handlers (`@OnRedisEvent`) and request handlers (`@HandleRedisRequest`) are invoked
-inside a coroutine launched on **`Dispatchers.Default`**.
-
-Both regular and `suspend` handler methods are supported. However, even though handlers run
-in a coroutine, **do not perform blocking work directly**:
-
-* blocking database drivers
-* file I/O
-* blocking network calls
-* long CPU-intensive computations
-
-Blocking a `Dispatchers.Default` thread stalls the shared thread pool and degrades the entire application.
-Always switch the dispatcher for blocking operations.
-
-`RequestContext` implements `CoroutineScope` — you can `launch` additional coroutines from it.
-Pick the right dispatcher for the work being done:
-
-```kotlin
-// CPU-intensive work — Default dispatcher is already correct, no switch needed
-@HandleRedisRequest
-suspend fun handle(ctx: RequestContext<MyRequest>) {
-    val result = computeSomething()
-    ctx.respond(MyResponse(result))
-}
-
-// Blocking I/O (blocking DB drivers, file access, blocking network calls) — switch to Dispatchers.IO
-@HandleRedisRequest
-suspend fun handle(ctx: RequestContext<MyRequest>) {
-    val result = withContext(Dispatchers.IO) {
-        loadFromDatabaseBlocking()
-    }
-    ctx.respond(MyResponse(result))
-}
-
-// Non-blocking / suspending I/O (e.g. R2DBC, async clients) — no dispatcher switch needed
-@HandleRedisRequest
-suspend fun handle(ctx: RequestContext<MyRequest>) {
-    val result = loadFromDatabaseSuspending()
-    ctx.respond(MyResponse(result))
-}
-
-// From a non-suspend handler — launch a coroutine manually
-@HandleRedisRequest
-fun handle(ctx: RequestContext<MyRequest>) {
-    ctx.launch(Dispatchers.IO) {
-        val result = loadFromDatabaseBlocking()
-        ctx.respond(MyResponse(result))
-    }
-}
-```
-
-The same applies to event handlers:
-
-```kotlin
-// Suspend event handler with blocking I/O
-@OnRedisEvent
-suspend fun onJoin(event: PlayerJoinedEvent) {
-    if (event.originatesFromThisClient()) return
-    withContext(Dispatchers.IO) {
-        loadFromDatabase(event.playerId)
-    }
-}
-```
-
----
-
-### 4. Responding multiple times to a request
-
-Each `RequestContext` allows **exactly one** response.
-
-Calling `respond()` more than once will throw an exception.
-This includes responding both synchronously *and* asynchronously by mistake.
-
----
-
-### 5. Ignoring `originatesFromThisClient()`
-
-Requests and events are broadcasted.
-
-If a handler should not process self-originated messages, it must explicitly check:
-
-```kotlin
-if (event.originatesFromThisClient()) return
-```
-
-This is especially important to avoid feedback loops.
-
----
-
-### 6. Assuming sync structures survive full cluster shutdown
+### 3. Assuming sync structures survive full cluster shutdown
 
 Sync structures rely on Redis keys with TTL.
 

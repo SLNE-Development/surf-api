@@ -11,21 +11,16 @@ import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
 import dev.slne.surf.redis.codec.RedisCodec
 import dev.slne.surf.redis.credentials.RedisCredentialsProvider
-import dev.slne.surf.redis.event.RedisEvent
-import dev.slne.surf.redis.event.RedisEventCodec
-import dev.slne.surf.redis.event.RedisEventCodecRegistrar
 import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.internal.RedissonConnectionKey
 import dev.slne.surf.redis.internal.SharedRedissonClient
 import dev.slne.surf.redis.internal.SharedRedissonClientRegistry
-import dev.slne.surf.redis.request.*
 import dev.slne.surf.redis.sync.SyncStructure
 import dev.slne.surf.redis.sync.list.SyncList
 import dev.slne.surf.redis.sync.map.SyncMap
 import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.Initializable
-import dev.slne.surf.redis.util.InternalRedisAPI
 import kotlinx.coroutines.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -55,10 +50,10 @@ import kotlin.time.Duration
  * Central entry point for surf-redis.
  *
  * `RedisApi` wires up the higher-level surf-redis features on top of a Redisson client:
- * - event distribution via [eventBus]
- * - request/response messaging via [requestResponseBus]
  * - replicated in-memory data structures ([SyncList], [SyncSet], [SyncMap], [SyncValue])
  * - simple cache helpers ([SimpleRedisCache], [SimpleSetRedisCache])
+ *
+ * Messaging (events and request/response) is provided by surf-nats.
  *
  * Instances are created via [create] and manage their own lifecycle.
  *
@@ -66,14 +61,14 @@ import kotlin.time.Duration
  * Every `RedisApi` in the process whose connection configuration is equivalent (same endpoint,
  * transport and credentials, see [RedissonConnectionKey]) shares one physical Redisson client and
  * connection pool. The client is created by the first instance that connects and shut down when the
- * last instance using it disconnects. Sharing is limited to the connection: buses, sync structures,
- * caches, event codec registrations and coroutine scopes belong to the individual instance, and
+ * last instance using it disconnects. Sharing is limited to the connection: sync structures, caches
+ * and coroutine scopes belong to the individual instance, and
  * connecting or disconnecting one instance never affects another.
  *
  * ## Lifecycle
  * This API follows a two-phase setup:
  * 1. Create an instance via [create]
- * 2. Register listeners/handlers and create sync structures/caches
+ * 2. Create sync structures and caches
  * 3. Call [freeze] to lock configuration
  * 4. Call [connect] to acquire the Redis connection and start all registered features
  *
@@ -83,27 +78,15 @@ import kotlin.time.Duration
  *
  * ## Usage
  * A common setup is to provide a single, platform-owned [RedisApi] instance via a service and expose
- * it to consumers. Registrations (listeners / handlers) are done before connecting; consumers then
- * create sync structures where they are needed.
+ * it to consumers, which create sync structures where they are needed before the service connects.
  *
  * ```
  * // Service that owns the RedisApi instance
- * abstract class RedisService {
+ * class RedisService {
  *     val redisApi = RedisApi.create()
  *
  *     fun connect() {
- *         register()
  *         redisApi.freezeAndConnect()
- *     }
- *
- *     @MustBeInvokedByOverriders
- *     @ApiStatus.OverrideOnly
- *     protected open fun register() {
- *         // Register listeners / request handlers here
- *         // redisApi.subscribeToEvents(SomeListener())
- *         // redisApi.registerRequestHandler(SomeHandler())
- *         //
- *         // Can be overridden by platform implementations to register platform-specific listeners.
  *     }
  *
  *     fun disconnect() {
@@ -114,23 +97,12 @@ import kotlin.time.Duration
  *         val instance = requiredService<RedisService>()
  *         fun get() = instance
  *
- *         fun publish(event: RedisEvent) = instance.redisApi.publishEvent(event)
- *
  *         fun namespaced(suffix: String) = "example-namespace:$suffix"
  *     }
  * }
  *
  * // Convenience accessor used by consumers
  * val redisApi get() = RedisService.get().redisApi
- *
- * // Platform implementation discovered/registered via AutoService
- * @AutoService(RedisService::class)
- * class PaperRedisService : RedisService() {
- *     override fun register() {
- *         super.register()
- *         // redisApi.subscribeToEvents(SomePaperListener())
- *     }
- * }
  *
  * // Consumer creates sync structures at the call site where they are needed
  * object SomeOtherService {
@@ -170,7 +142,7 @@ class RedisApi private constructor(
     /**
      * Reactive view of [redisson], shared the same way.
      *
-     * Intended for reactive command and Pub/Sub usage in internal components.
+     * Intended for reactive command usage in internal components.
      */
     val redissonReactive: RedissonReactiveClient
         get() = sharedClient.redissonReactive
@@ -183,20 +155,6 @@ class RedisApi private constructor(
      */
     val redisOsType: BaseEventCodec.OSType?
         get() = lease?.client?.redisOsType
-
-    /**
-     * Event bus instance for publishing and subscribing to [RedisEvent]s.
-     *
-     * The bus is initialized during [connect] and closed during [disconnect].
-     */
-    val eventBus = RedisComponentProvider.createEventBus(this)
-
-    /**
-     * Request/response bus used for sending [RedisRequest]s and receiving [RedisResponse]s.
-     *
-     * The bus is initialized during [connect] and closed during [disconnect].
-     */
-    val requestResponseBus = RedisComponentProvider.createRequestResponseBus(this)
 
     /**
      * Identifier of the current client/node as provided by the component provider.
@@ -218,30 +176,6 @@ class RedisApi private constructor(
         }
     )
 
-    /**
-     * Coroutine scope for Redis listener coroutines, including [RequestContext] instances.
-     *
-     * The scope is named after the client name and plugin for easier identification in diagnostics.
-     * It is cancelled automatically during [disconnect].
-     *
-     * **Internal API** — not intended for use outside of surf-redis internals.
-     */
-    @InternalRedisAPI
-    val redisListenerScope = CoroutineScope(
-        Dispatchers.Default
-                + SupervisorJob()
-                + CoroutineName("surf-redis-listeners-$ownerName")
-                + CoroutineExceptionHandler { context, throwable ->
-            log.atSevere()
-                .withCause(throwable)
-                .log(
-                    "Uncaught exception in Redis listener coroutine (context: ${
-                        context.toString().replace("{", "[").replace("}", "]")
-                    })"
-                )
-        }
-    )
-
     private val initializables = Caffeine.newBuilder().weakKeys().build<Initializable, Unit>()
     private val disposables = Caffeine.newBuilder().weakKeys().build<Disposable, Unit>()
 
@@ -254,11 +188,6 @@ class RedisApi private constructor(
     private val lifecycleLock = ReentrantLock()
 
     private enum class ConnectionState { NEW, CONNECTED, DISCONNECTING, DISCONNECTED }
-
-    init {
-        initializables.put(eventBus, Unit)
-        initializables.put(requestResponseBus, Unit)
-    }
 
     companion object {
         private val log = logger()
@@ -386,7 +315,6 @@ class RedisApi private constructor(
      * - a lease on the shared Redisson client for this connection configuration is acquired; the
      *   client is created if no other [RedisApi] currently uses it
      * - [redisson], [redissonReactive] and [redisOsType] become available
-     * - [eventBus] and [requestResponseBus] are initialized
      * - all previously created sync structures are initialized
      *
      * If the connection cannot be acquired, nothing is retained and the instance may retry. If a
@@ -485,8 +413,6 @@ class RedisApi private constructor(
      */
     fun freeze() {
         require(!isFrozen()) { "Redis client already frozen" }
-
-        (eventBus as RedisEventCodecRegistrar).freezeEventCodecs()
         frozen = true
     }
 
@@ -503,9 +429,8 @@ class RedisApi private constructor(
      * finish first.
      *
      * On disconnect:
-     * - request/response and event buses are closed
      * - all sync structures are disposed
-     * - internal coroutine scopes (`syncStructureScope`, `redisListenerScope`) are cancelled
+     * - the internal sync structure coroutine scope is cancelled
      * - reactive disposables are disposed
      * - the shared Redisson client is released; it is shut down only if no other [RedisApi] still
      *   uses it
@@ -550,9 +475,6 @@ class RedisApi private constructor(
         disposables.clear()
 
         cleanup { syncStructureScope.cancel("RedisApi disconnected") }
-        cleanup { redisListenerScope.cancel("RedisApi disconnected") }
-        cleanup(requestResponseBus::close)
-        cleanup(eventBus::close)
 
         cleanupFailure?.let { throw it }
     }
@@ -579,98 +501,6 @@ class RedisApi private constructor(
     } catch (_: Exception) {
         false
     }
-
-    /**
-     * Publishes a [RedisEvent] via the internal event bus.
-     *
-     * @see dev.slne.surf.redis.event.RedisEventBus.publish
-     */
-    fun publishEvent(event: RedisEvent) = eventBus.publish(event)
-
-    /**
-     * Registers event handlers on the given listener instance.
-     *
-     * The listener is processed by the event bus; handler method requirements are defined
-     * by the event bus annotations/contract.
-     *
-     * @see dev.slne.surf.redis.event.RedisEventBus.registerListener
-     * @see dev.slne.surf.redis.event.OnRedisEvent
-     */
-    fun subscribeToEvents(listener: Any) = eventBus.registerListener(listener)
-
-    /**
-     * Explicitly registers [codec] for [eventType].
-     *
-     * Registration must happen before [freeze]. Explicit registration is useful when the event
-     * companion object does not implement [RedisEventCodec]. It takes precedence over a codec that
-     * was discovered from the companion object. Duplicate registrations and event-ID collisions
-     * fail immediately.
-     */
-    fun <E : RedisEvent> registerEventCodec(
-        eventType: Class<E>,
-        codec: RedisEventCodec<E>
-    ) {
-        require(!isFrozen()) { "Cannot register an event codec after RedisApi has been frozen" }
-        (eventBus as RedisEventCodecRegistrar).registerEventCodec(eventType, codec)
-    }
-
-    /**
-     * Reified convenience overload for [registerEventCodec].
-     */
-    inline fun <reified E : RedisEvent> registerEventCodec(codec: RedisEventCodec<E>) {
-        registerEventCodec(E::class.java, codec)
-    }
-
-    /**
-     * Registers an event type and discovers a companion-object codec, if present.
-     *
-     * Listener registration already performs this step automatically. Use this method for
-     * publish-only event types so discovery and validation happen during startup rather than on
-     * the first publish.
-     */
-    fun registerEventType(eventType: Class<out RedisEvent>) {
-        require(!isFrozen()) { "Cannot register an event type after RedisApi has been frozen" }
-        (eventBus as RedisEventCodecRegistrar).registerEventType(eventType)
-    }
-
-    /** Reified convenience overload for [registerEventType]. */
-    inline fun <reified E : RedisEvent> registerEventType() = registerEventType(E::class.java)
-
-    /**
-     * Sends a [RedisRequest] and awaits a [RedisResponse] of type [T].
-     *
-     * @param request Request instance to send.
-     * @param timeoutMs Timeout in milliseconds.
-     * @see dev.slne.surf.redis.request.RequestResponseBus.sendRequest
-     */
-    @Throws(RequestTimeoutException::class)
-    suspend inline fun <reified T : RedisResponse> sendRequest(
-        request: RedisRequest,
-        timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
-    ) = requestResponseBus.sendRequest<T>(request, timeoutMs)
-
-    /**
-     * Sends a [RedisRequest] and awaits a [RedisResponse] of the given [responseType].
-     *
-     * @param request Request instance to send.
-     * @param responseType Expected response type.
-     * @param timeoutMs Timeout in milliseconds.
-     * @see dev.slne.surf.redis.request.RequestResponseBus.sendRequest
-     */
-    @Throws(RequestTimeoutException::class)
-    suspend fun <T : RedisResponse> sendRequest(
-        request: RedisRequest,
-        responseType: Class<T>,
-        timeoutMs: Long = RequestResponseBus.DEFAULT_TIMEOUT_MS
-    ) = requestResponseBus.sendRequest(request, responseType, timeoutMs)
-
-    /**
-     * Registers request handlers on the given handler instance.
-     *
-     * @see dev.slne.surf.redis.request.RequestResponseBus.registerRequestHandler
-     */
-    fun registerRequestHandler(handler: Any) = requestResponseBus.registerRequestHandler(handler)
-
 
     /**
      * Creates a new [SyncList] instance identified by [id].

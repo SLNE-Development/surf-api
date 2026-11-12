@@ -273,7 +273,7 @@ What is settled:
 - A bean crosses that boundary by declaring `Scope.SHARED`, which publishes it into the root. One
   broker connection can then serve every application in the process, which is what the existing
   `ServerRabbitMQApi` / Redis / NATS integrations need.
-- Handler registration (`@RabbitHandler`, `@OnRedisEvent` and the like) is done by a
+- Handler registration (`@RabbitHandler`, `@NatsListener` and the like) is done by a
   `BeanPostProcessor` in the owning library, the same way Spring does it — not by the container
   knowing about brokers.
 - Metadata is written at compile time by KSP into `META-INF/surf-api/beans/`, so the container
@@ -471,6 +471,14 @@ collections now (`SyncList.snapshot()` returns `ArrayList`, `SyncMap.snapshot()`
 `SyncSet.snapshot()` a `HashSet`, and the `ByteBuf` list and map codecs read and write `ArrayList`,
 `List<Int>` and `HashMap`). A caller that stored a result in a fastutil-typed variable changes the
 type; the wire format is unchanged.
+
+**surf-redis without messaging.** The Pub/Sub event bus and the request/response bus are gone;
+surf-nats replaces both. Removed are the packages `dev.slne.surf.redis.event` and
+`dev.slne.surf.redis.request` and the `RedisApi` members `eventBus`, `requestResponseBus`,
+`publishEvent`, `subscribeToEvents`, `registerEventCodec`, `registerEventType`, `sendRequest` and
+`registerRequestHandler`, along with the Reactor helpers `Mono.asDeferred()` and the `Tuple2`
+destructuring operators from `dev.slne.surf.redis.util`. The surf-nats README maps each of them to its replacement under
+"Migrating from surf-redis and surf-rabbitmq". Sync structures and caches are unchanged.
 
 **Tests that use surf-api beans.** A bean such as `surfConfigApi` resolves only while surf-api's
 root container runs, which a plain JUnit test never starts. Add `surf-api-standalone-testing` to the

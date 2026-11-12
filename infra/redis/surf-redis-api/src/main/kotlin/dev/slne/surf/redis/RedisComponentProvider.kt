@@ -4,12 +4,8 @@ import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache
 import dev.slne.surf.redis.codec.RedisCodec
-import dev.slne.surf.redis.event.RedisEvent
-import dev.slne.surf.redis.event.RedisEventBus
 import dev.slne.surf.redis.internal.RedissonConfigDetails
 import dev.slne.surf.redis.internal.RedissonConnectionKey
-import dev.slne.surf.redis.request.RedisRequest
-import dev.slne.surf.redis.request.RequestResponseBus
 import dev.slne.surf.redis.sync.list.SyncList
 import dev.slne.surf.redis.sync.map.SyncMap
 import dev.slne.surf.redis.sync.set.SyncSet
@@ -53,9 +49,6 @@ interface RedisComponentProvider {
         indexes: RedisSetIndexes<T>,
         redisApi: RedisApi
     ): SimpleSetRedisCache<T>
-
-    fun createEventBus(redisApi: RedisApi): RedisEventBus
-    fun createRequestResponseBus(redisApi: RedisApi): RequestResponseBus
 
     fun <E : Any> createSyncList(
         id: String,
@@ -116,19 +109,6 @@ interface RedisComponentProvider {
         ttl: Duration,
         api: RedisApi
     ): SyncMap<K, V>
-
-    fun injectOriginId(event: RedisEvent) {
-        event.originId = clientId
-    }
-
-    fun injectEventMetadata(event: RedisEvent, timestamp: Long, originId: String?) {
-        event.timestamp = timestamp
-        event.originId = originId
-    }
-
-    fun injectOriginId(request: RedisRequest) {
-        request.originId = clientId
-    }
 
     @InternalRedisAPI
     companion object : RedisComponentProvider by provider {

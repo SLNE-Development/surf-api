@@ -25,22 +25,13 @@ public final class dev/slne/surf/redis/RedisApi {
 	public final fun freeze ()V
 	public final fun freezeAndConnect ()Ldev/slne/surf/redis/RedisApi;
 	public final fun getClientId ()Ljava/lang/String;
-	public final fun getEventBus ()Ldev/slne/surf/redis/event/RedisEventBus;
 	public final fun getJson ()Lkotlinx/serialization/json/Json;
 	public final fun getRedisOsType ()Lorg/redisson/codec/BaseEventCodec$OSType;
 	public final fun getRedisson ()Lorg/redisson/api/RedissonClient;
 	public final fun getRedissonReactive ()Lorg/redisson/api/RedissonReactiveClient;
-	public final fun getRequestResponseBus ()Ldev/slne/surf/redis/request/RequestResponseBus;
 	public final fun isAlive (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun isConnected ()Z
 	public final fun isFrozen ()Z
-	public final fun publishEvent (Ldev/slne/surf/redis/event/RedisEvent;)Lkotlinx/coroutines/Deferred;
-	public final fun registerEventCodec (Ljava/lang/Class;Ldev/slne/surf/redis/event/RedisEventCodec;)V
-	public final fun registerEventType (Ljava/lang/Class;)V
-	public final fun registerRequestHandler (Ljava/lang/Object;)V
-	public final fun sendRequest (Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun sendRequest$default (Ldev/slne/surf/redis/RedisApi;Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public final fun subscribeToEvents (Ljava/lang/Object;)V
 }
 
 public final class dev/slne/surf/redis/RedisApi$Companion {
@@ -304,98 +295,6 @@ public final class dev/slne/surf/redis/codec/default/VarLongBinaryCodec : dev/sl
 public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion : dev/slne/surf/redis/credentials/RedisCredentialsProvider {
 	public final fun getINSTANCE ()Ldev/slne/surf/redis/credentials/RedisCredentialsProvider;
 	public fun redisURI ()Lorg/redisson/misc/RedisURI;
-}
-
-public abstract interface annotation class dev/slne/surf/redis/event/OnRedisEvent : java/lang/annotation/Annotation {
-}
-
-public abstract class dev/slne/surf/redis/event/RedisEvent {
-	public static final field Companion Ldev/slne/surf/redis/event/RedisEvent$Companion;
-	public fun <init> ()V
-	public synthetic fun <init> (IJLjava/lang/String;Lkotlinx/serialization/internal/SerializationConstructorMarker;)V
-	public final fun getOriginId ()Ljava/lang/String;
-	public final fun getTimestamp ()J
-	public final fun originatesFromThisClient ()Z
-	public static final synthetic fun write$Self (Ldev/slne/surf/redis/event/RedisEvent;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
-}
-
-public final class dev/slne/surf/redis/event/RedisEvent$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public abstract interface class dev/slne/surf/redis/event/RedisEventBus : dev/slne/surf/redis/util/Initializable, java/io/Closeable {
-	public abstract fun publish (Ldev/slne/surf/redis/event/RedisEvent;)Lkotlinx/coroutines/Deferred;
-	public abstract fun registerListener (Ljava/lang/Object;)V
-}
-
-public abstract interface class dev/slne/surf/redis/event/RedisEventCodec : dev/slne/surf/redis/codec/RedisCodec {
-	public fun getEventId ()Ljava/lang/String;
-}
-
-public final class dev/slne/surf/redis/event/RedisEventCodec$DefaultImpls {
-	public static fun getCodecId (Ldev/slne/surf/redis/event/RedisEventCodec;)Ljava/lang/String;
-	public static fun getEventId (Ldev/slne/surf/redis/event/RedisEventCodec;)Ljava/lang/String;
-	public static fun getVersion (Ldev/slne/surf/redis/event/RedisEventCodec;)I
-}
-
-public abstract interface annotation class dev/slne/surf/redis/request/HandleRedisRequest : java/lang/annotation/Annotation {
-}
-
-public abstract class dev/slne/surf/redis/request/RedisRequest {
-	public static final field Companion Ldev/slne/surf/redis/request/RedisRequest$Companion;
-	public fun <init> ()V
-	public synthetic fun <init> (IJLjava/lang/String;Lkotlinx/serialization/internal/SerializationConstructorMarker;)V
-	public final fun getOriginId ()Ljava/lang/String;
-	public final fun getTimestamp ()J
-	public final fun originatesFromThisClient ()Z
-	public static final synthetic fun write$Self (Ldev/slne/surf/redis/request/RedisRequest;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
-}
-
-public final class dev/slne/surf/redis/request/RedisRequest$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public abstract class dev/slne/surf/redis/request/RedisResponse {
-	public static final field Companion Ldev/slne/surf/redis/request/RedisResponse$Companion;
-	public fun <init> ()V
-	public synthetic fun <init> (IJLkotlinx/serialization/internal/SerializationConstructorMarker;)V
-	public final fun getTimestamp ()J
-	public static final synthetic fun write$Self (Ldev/slne/surf/redis/request/RedisResponse;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V
-}
-
-public final class dev/slne/surf/redis/request/RedisResponse$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class dev/slne/surf/redis/request/RequestContext : kotlinx/coroutines/CoroutineScope {
-	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
-	public final fun getRequest ()Ldev/slne/surf/redis/request/RedisRequest;
-	public final fun originatesFromThisClient ()Z
-	public final fun respond (Ldev/slne/surf/redis/request/RedisResponse;)Lkotlinx/coroutines/Deferred;
-}
-
-public abstract interface class dev/slne/surf/redis/request/RequestResponseBus : dev/slne/surf/redis/util/Initializable, java/io/Closeable {
-	public static final field Companion Ldev/slne/surf/redis/request/RequestResponseBus$Companion;
-	public static final field DEFAULT_TIMEOUT_MS J
-	public abstract fun registerRequestHandler (Ljava/lang/Object;)V
-	public abstract fun sendRequest (Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun sendRequest$default (Ldev/slne/surf/redis/request/RequestResponseBus;Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/redis/request/RequestResponseBus$Companion {
-	public static final field DEFAULT_TIMEOUT_MS J
-}
-
-public final class dev/slne/surf/redis/request/RequestResponseBus$DefaultImpls {
-	public static synthetic fun sendRequest$default (Ldev/slne/surf/redis/request/RequestResponseBus;Ldev/slne/surf/redis/request/RedisRequest;Ljava/lang/Class;JLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-}
-
-public final class dev/slne/surf/redis/request/RequestTimeoutException : java/lang/Exception {
-	public static final field Companion Ldev/slne/surf/redis/request/RequestTimeoutException$Companion;
-	public fun <init> (Ljava/lang/String;)V
-}
-
-public final class dev/slne/surf/redis/request/RequestTimeoutException$Companion {
 }
 
 public abstract interface class dev/slne/surf/redis/sync/SyncStructure : dev/slne/surf/redis/util/Initializable, reactor/core/Disposable {
@@ -691,12 +590,5 @@ public final class dev/slne/surf/redis/sync/value/SyncValueChange$Updated : dev/
 }
 
 public abstract interface annotation class dev/slne/surf/redis/util/InternalRedisAPI : java/lang/annotation/Annotation {
-}
-
-public final class dev/slne/surf/redis/util/UtilKt {
-	public static final fun asDeferred (Lreactor/core/publisher/Mono;)Lkotlinx/coroutines/Deferred;
-	public static final fun asDeferred (Lreactor/core/publisher/Mono;Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/Deferred;
-	public static final fun component1 (Lreactor/util/function/Tuple2;)Ljava/lang/Object;
-	public static final fun component2 (Lreactor/util/function/Tuple2;)Ljava/lang/Object;
 }
 
