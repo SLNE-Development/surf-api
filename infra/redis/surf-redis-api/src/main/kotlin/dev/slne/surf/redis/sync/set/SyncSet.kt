@@ -1,0 +1,163 @@
+package dev.slne.surf.redis.sync.set
+
+import dev.slne.surf.redis.sync.SyncStructure
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlin.time.Duration.Companion.minutes
+
+/**
+ * Replicated in-memory set synchronized across Redis-connected nodes.
+ *
+ * A [SyncSet] exposes a local set-like view and propagates mutations through Redis so that other
+ * nodes can observe and apply changes.
+ *
+ * Consumers should treat this structure as eventually consistent: updates may arrive later on other
+ * nodes, and remote updates may overwrite the local state.
+ *
+ * ## Access
+ * - [snapshot] returns a copy of the current local contents.
+ * - [contains], [size], [add], [remove], [removeIf] and [clear] operate on the local view and
+ *   propagate changes via Redis.
+ *
+ * ## Remote access
+ * The `*Remote` methods bypass the eventually consistent local view and operate on the committed
+ * Redis state. Point reads leave the local view untouched.
+ * [snapshotRemote] refreshes the local view when Redis is ahead of it. Mutations are applied
+ * atomically in Redis first and report what Redis observed; the local view is updated afterward
+ * and listeners are notified as for any other change.
+ *
+ * ## Listeners
+ * Listeners registered via [SyncStructure.addListener] receive [SyncSetChange] events for changes.
+ * The thread used for listener invocation is implementation-defined.
+ */
+interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
+    companion object {
+        /**
+         * Default TTL configuration used by implementations when creating a [SyncSet].
+         */
+        val DEFAULT_TTL = 5.minutes
+    }
+
+    /**
+     * Returns a copy of the current local contents.
+     *
+     * The returned set is a snapshot and will not reflect future updates.
+     */
+    fun snapshot(): ObjectOpenHashSet<T>
+
+    /**
+     * @return the current local element count
+     */
+    fun size(): Int
+
+    /**
+     * Checks whether [element] is present in the local set view.
+     */
+    operator fun contains(element: T): Boolean
+
+    /**
+     * Adds [element] to the set and propagates the change through Redis.
+     *
+     * @return `true` if the element was added locally, `false` if it was already present
+     */
+    fun add(element: T): Boolean
+
+    /**
+     * Adds [element] locally and waits until the mutation has been committed to Redis.
+     *
+     * This does not wait for other Redis-connected nodes to apply the corresponding stream event.
+     */
+    suspend fun addAndAwait(element: T): Boolean
+
+    /**
+     * Convenience operator for [add].
+     */
+    operator fun plusAssign(element: T) {
+        add(element)
+    }
+
+    /**
+     * Removes [element] from the set and propagates the change through Redis.
+     *
+     * @return `true` if the element was removed locally, `false` if it was not present
+     */
+    fun remove(element: T): Boolean
+
+    /**
+     * Removes [element] locally and waits until the mutation has been committed to Redis.
+     *
+     * This does not wait for other Redis-connected nodes to apply the corresponding stream event.
+     */
+    suspend fun removeAndAwait(element: T): Boolean
+
+    /**
+     * Convenience operator for [remove].
+     */
+    operator fun minusAssign(element: T) {
+        remove(element)
+    }
+
+    /**
+     * Removes all elements that match [predicate] and propagates the change through Redis.
+     *
+     * The propagation strategy is implementation-defined. Callers should assume that other nodes
+     * will eventually converge to the same resulting set.
+     *
+     * @return `true` if any elements were removed locally, `false` otherwise
+     */
+    fun removeIf(predicate: (T) -> Boolean): Boolean
+
+    /**
+     * Removes all locally matching elements and waits until the batched Redis mutation has completed.
+     */
+    suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean
+
+    /**
+     * Clears the local set and propagates the change through Redis.
+     *
+     * If the local set is already empty, this method is a no-op.
+     */
+    fun clear()
+
+    /**
+     * Clears the local set and waits until the clear has been committed to Redis.
+     */
+    suspend fun clearAndAwait()
+
+    /**
+     * Checks whether [element] is present in Redis, bypassing the local view.
+     */
+    suspend fun containsRemote(element: T): Boolean
+
+    /**
+     * Returns the element count in Redis, bypassing the local view.
+     */
+    suspend fun sizeRemote(): Int
+
+    /**
+     * Returns a copy of the committed Redis contents.
+     *
+     * When the remote state is ahead of the local view, the local view is replaced by the result.
+     */
+    suspend fun snapshotRemote(): ObjectOpenHashSet<T>
+
+    /**
+     * Adds [element] to the Redis set and waits until the mutation has been committed.
+     *
+     * @return `true` if Redis did not contain [element] before, `false` otherwise
+     */
+    suspend fun addRemote(element: T): Boolean
+
+    /**
+     * Removes [element] from the Redis set and waits until the mutation has been committed.
+     *
+     * @return `true` if Redis contained [element], `false` otherwise
+     */
+    suspend fun removeRemote(element: T): Boolean
+
+    /**
+     * Clears the Redis set regardless of the local view and waits until the clear has been committed.
+     *
+     * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
+     */
+    suspend fun clearRemote()
+}
