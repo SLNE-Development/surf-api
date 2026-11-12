@@ -1,0 +1,36 @@
+public final class dev/slne/surf/microservice/reliability/MicroserviceEventsKt {
+	public static final fun getEvents (Ldev/slne/surf/microservice/api/Microservice;)Ldev/slne/surf/microservice/reliability/TransactionalEvents;
+}
+
+public final class dev/slne/surf/microservice/reliability/RegisterTransactionalServiceKt {
+	public static final fun registerTransactionalService (Ldev/slne/surf/nats/NatsClient;Lkotlin/reflect/KClass;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/microservice/reliability/ReliabilityConfig {
+	public fun <init> ()V
+	public synthetic fun <init> (Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;
+	public final fun component2-UwyO8pc ()J
+	public final fun copy-HG0u8IE (Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;J)Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
+	public static synthetic fun copy-HG0u8IE$default (Ldev/slne/surf/microservice/reliability/ReliabilityConfig;Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;JILjava/lang/Object;)Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAtomicOperations ()Ldev/slne/surf/database/reliability/operation/AtomicOperationsConfig;
+	public final fun getCleanupInterval-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/microservice/reliability/ReliabilityCustomizer {
+	public fun getReliabilityConfig ()Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
+}
+
+public final class dev/slne/surf/microservice/reliability/ReliabilityCustomizer$DefaultImpls {
+	public static fun getReliabilityConfig (Ldev/slne/surf/microservice/reliability/ReliabilityCustomizer;)Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
+}
+
+public final class dev/slne/surf/microservice/reliability/TransactionalEvents {
+	public final fun publish (Ldev/slne/surf/nats/descriptor/NatsEvent;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun publish$default (Ldev/slne/surf/microservice/reliability/TransactionalEvents;Ldev/slne/surf/nats/descriptor/NatsEvent;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
