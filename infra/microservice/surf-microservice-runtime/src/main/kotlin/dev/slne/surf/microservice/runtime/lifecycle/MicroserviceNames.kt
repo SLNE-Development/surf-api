@@ -2,6 +2,9 @@ package dev.slne.surf.microservice.runtime.lifecycle
 
 import dev.slne.surf.microservice.api.Microservice
 
+/**
+ * Validates the service name, which also names the database pool and the migration history table.
+ */
 internal object MicroserviceNames {
     private val PATTERN = Regex("[a-z0-9]+(-[a-z0-9]+)*")
 

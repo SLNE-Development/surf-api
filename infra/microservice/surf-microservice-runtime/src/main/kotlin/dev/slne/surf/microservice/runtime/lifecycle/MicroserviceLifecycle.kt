@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * only if [Microservice.onBootstrap] returned. A failing stop step is logged and the shutdown continues.
  *
  * [start] and [shutdown] are serialized, so a shutdown requested during [start] waits for it to return or fail.
- * [shutdown] runs once and is not cancellable; later and concurrent calls wait until the first one completes.
+ * [shutdown] runs once and is not cancellable. Later and concurrent calls wait until the first one completes.
  */
 internal class MicroserviceLifecycle(
     private val registerBuiltinCommands: () -> Unit,
@@ -84,18 +84,23 @@ internal class MicroserviceLifecycle(
     }
 
     /**
-     * Lets [awaitShutdownRequest] return; the shutdown itself happens in [shutdown].
+     * Lets [awaitShutdownRequest] return. The shutdown itself happens in [shutdown].
      */
     fun requestShutdown() {
         shutdownRequest.complete(Unit)
     }
 
+    /**
+     * Suspends until [requestShutdown] or [shutdown] was called, which may have happened before this call.
+     */
     suspend fun awaitShutdownRequest() {
         shutdownRequest.await()
     }
 
     /**
-     * Stops everything that started, in reverse order, and completes the shutdown request.
+     * Stops everything that started in the order described for the class and completes the shutdown request.
+     *
+     * A failing stop step is logged and does not make this function throw.
      */
     suspend fun shutdown() {
         requestShutdown()

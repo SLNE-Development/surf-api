@@ -5,7 +5,7 @@ import dev.slne.surf.microservice.api.command.MicroserviceCommandResult
 /**
  * Outcome of [MicroserviceCommandDispatcher.dispatch].
  *
- * @property shutdownRequested whether the command asked for a shutdown; the caller requests it after delivering
+ * @property shutdownRequested whether the command asked for a shutdown. The caller requests it after delivering
  * [result], so the client still receives the response
  */
 internal data class CommandDispatch(

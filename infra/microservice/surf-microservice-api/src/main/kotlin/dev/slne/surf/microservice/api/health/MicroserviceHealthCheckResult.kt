@@ -3,15 +3,21 @@ package dev.slne.surf.microservice.api.health
 /**
  * Result of one readiness check.
  *
- * @property component stable component category, such as `database` or `nats`
- * @property instance name of the concrete resource, if the component has several
- * @property message details; required when [status] is [MicroserviceHealthStatus.UNHEALTHY]
+ * The `health` command lists every unhealthy result as `component: message`, or `component[instance]: message` when
+ * [instance] is set.
+ *
+ * @property component a stable component category, such as `database` or `nats`
+ * @property instance the name of the concrete resource if the component has several, otherwise `null`
+ * @property status whether the resource is ready
+ * @property message details, or `null` for none. Required when [status] is [MicroserviceHealthStatus.UNHEALTHY]
+ * @throws IllegalArgumentException if [component], [instance] or [message] is blank, or [status] is
+ * [MicroserviceHealthStatus.UNHEALTHY] and [message] is `null`
  */
-data class MicroserviceHealthCheckResult(
-    val component: String,
-    val instance: String? = null,
-    val status: MicroserviceHealthStatus,
-    val message: String? = null,
+public data class MicroserviceHealthCheckResult(
+    public val component: String,
+    public val instance: String? = null,
+    public val status: MicroserviceHealthStatus,
+    public val message: String? = null,
 ) {
     init {
         require(component.isNotBlank()) { "Health check component must not be blank" }

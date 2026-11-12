@@ -5,7 +5,10 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 
 /**
- * Creates the [MicroserviceSymbolProcessor]; registered as a KSP service.
+ * Creates the [MicroserviceSymbolProcessor].
+ *
+ * KSP loads this provider through the `META-INF/services` entry for `SymbolProcessorProvider`. Application code does
+ * not use it.
  */
 class MicroserviceSymbolProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor =

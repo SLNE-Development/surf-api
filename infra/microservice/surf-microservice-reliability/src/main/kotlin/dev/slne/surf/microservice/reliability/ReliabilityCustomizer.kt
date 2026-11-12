@@ -1,17 +1,23 @@
 package dev.slne.surf.microservice.reliability
 
 /**
- * Customizes the idempotent handlers of a microservice; implemented by the
- * [Microservice][dev.slne.surf.microservice.api.Microservice] subclass itself.
+ * Customizes the idempotent handlers of a microservice.
  *
- * Without this interface the reliability integration uses [ReliabilityConfig]'s defaults. The property is read once,
- * when the integration starts after the database and NATS and before `onBootstrap`.
+ * Implement it on the [Microservice][dev.slne.surf.microservice.api.Microservice] subclass itself. Without this
+ * interface the reliability integration uses the defaults of [ReliabilityConfig]. The property is read once, when the
+ * integration starts after the database and NATS and before `onBootstrap`.
+ *
+ * ```kotlin
+ * object PunishMicroservice : Microservice(), ReliabilityCustomizer {
+ *     override val reliabilityConfig = ReliabilityConfig(cleanupInterval = 30.minutes)
+ * }
+ * ```
  */
-interface ReliabilityCustomizer {
+public interface ReliabilityCustomizer {
 
     /**
-     * Settings of the reliability integration.
+     * Gets the settings of the reliability integration.
      */
-    val reliabilityConfig: ReliabilityConfig
+    public val reliabilityConfig: ReliabilityConfig
         get() = ReliabilityConfig()
 }

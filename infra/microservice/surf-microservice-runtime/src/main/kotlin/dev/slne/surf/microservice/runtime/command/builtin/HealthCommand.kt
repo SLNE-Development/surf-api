@@ -7,7 +7,7 @@ import dev.slne.surf.microservice.api.health.MicroserviceHealthStatus
 import dev.slne.surf.microservice.runtime.health.MicroserviceHealthManager
 
 /**
- * Reports readiness; fails with one line per unhealthy result, which makes `microservicectl health` exit with `1`.
+ * Reports readiness. Fails with one line per unhealthy result, which makes `microservicectl health` exit with `1`.
  */
 internal class HealthCommand(
     private val healthManager: MicroserviceHealthManager,

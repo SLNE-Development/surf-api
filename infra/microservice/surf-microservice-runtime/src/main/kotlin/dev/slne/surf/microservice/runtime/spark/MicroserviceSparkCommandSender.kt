@@ -7,7 +7,7 @@ import me.lucko.spark.lib.adventure.text.serializer.ansi.ANSIComponentSerializer
 import java.util.UUID
 
 /**
- * Forwards spark messages, rendered with ANSI colors, to a command output; holds every permission.
+ * Forwards spark messages, rendered with ANSI colors, to a command output. Holds every permission.
  */
 internal class MicroserviceSparkCommandSender(
     private val output: MicroserviceCommandOutput,

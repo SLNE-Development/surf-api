@@ -9,6 +9,10 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+/**
+ * Writes the embedded Go source of `microservicectl` to [outputFile], from where the generated Dockerfile copies it
+ * into the command client build stage.
+ */
 @CacheableTask
 internal abstract class GenerateMicroserviceCommandClientSource : DefaultTask() {
     @get:Input

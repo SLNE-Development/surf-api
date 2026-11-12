@@ -28,8 +28,14 @@ private const val NORMAL_EXIT_CODE = 0
 private val COMMAND_STOP_TIMEOUT = 5.seconds
 
 /**
- * Runs the microservice named in `META-INF/surf-microservice/main` until a shutdown is requested by a command or a
- * JVM shutdown signal; see [runAndExit].
+ * Runs the microservice named in `META-INF/surf-microservice/main` until a command or a JVM shutdown signal requests
+ * a shutdown, see [runAndExit]. The command-line [args] reach [Microservice.onBootstrap].
+ *
+ * The environment variables that configure a running microservice:
+ * - `SURF_MICROSERVICE_NAME`: the service name, see [Microservice.name].
+ * - `SURF_MICROSERVICE_CONFIG_DIR`: the data directory, see [Microservice.dataPath].
+ * - `SURF_MICROSERVICE_COMMAND_SOCKET`: the path of the command socket, see [MicroserviceCommandSocket.resolvePath].
+ * - `SURF_MICROSERVICE_SPARK_PROFILER`: `true` starts the spark profiler together with the microservice.
  *
  * Nothing may log before [Slf4jProvider.selectLog4j] runs, so this file declares no logger property.
  */
@@ -41,7 +47,9 @@ fun main(args: Array<String>) {
 /**
  * Starts [lifecycle], waits for a shutdown request, shuts it down and exits the process.
  *
- * Owns the only JVM shutdown hook of the process; surf-api and log4j register none. The hook only runs
+ * Owns the only JVM shutdown hook of the process. surf-api registers none, and log4j registers none because the
+ * bundled `log4j2.xml` sets `shutdownHook="disable"`. A replacement `log4j2.xml` must set the same attribute, because
+ * the lifecycle shuts logging down itself as its last step. The hook only runs
  * [MicroserviceLifecycle.shutdown]. The lifecycle runs in [runBlocking] on the calling thread, so coroutines that the
  * hook resumes continue on that thread, and only that thread calls [exitProcess]: `Runtime.exit` from a shutdown
  * hook blocks forever.

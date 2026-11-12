@@ -1,11 +1,22 @@
 package dev.slne.surf.microservice.api.command
 
 /**
- * Registers a command that runs [block] in [MicroserviceCommands] and returns it.
+ * Creates a command that runs [block], registers it in [MicroserviceCommands] and returns it.
  *
- * @throws IllegalArgumentException if [name] or one of [aliases] is already taken
+ * ```kotlin
+ * microserviceCommand("echo", "say", description = "Repeats its arguments.") { args ->
+ *     if (args.isEmpty()) fail("Usage: echo <text>")
+ *     sendLine(args.joinToString(" "))
+ * }
+ * ```
+ *
+ * @param name the primary label of the command
+ * @param aliases further labels that select the command
+ * @param description the one-line description that the `help` command shows, or `null` for none
+ * @param block the body of the command, called with the arguments that followed the label
+ * @throws IllegalArgumentException if a label is blank or contains whitespace, or is already taken
  */
-fun microserviceCommand(
+public fun microserviceCommand(
     name: String,
     vararg aliases: String,
     description: String? = null,

@@ -14,4 +14,4 @@ import dev.slne.surf.api.shared.api.annotation.InternalAPIMarker
 @Retention(AnnotationRetention.BINARY)
 @RequiresOptIn
 @InternalAPIMarker
-annotation class InternalMicroserviceApi
+public annotation class InternalMicroserviceApi

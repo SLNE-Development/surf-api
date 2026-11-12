@@ -24,7 +24,7 @@ private const val MEMORY_BUDGET_ENVIRONMENT_VARIABLE = "SURF_MICROSERVICE_MEMORY
 private const val MALLOC_ARENA_MAX = 2
 
 /**
- * One JVM option without whitespace, quotes or characters the shell would interpret; `*` is safe because the
+ * One JVM option without whitespace, quotes or characters the shell would interpret. `*` is safe because the
  * entrypoint turns globbing off.
  */
 private val JVM_OPTION = Regex("""-[A-Za-z0-9_.:+=/,%@*-]+""")
@@ -51,7 +51,7 @@ private val HEALTHCHECK_INTERVAL = Duration.ofSeconds(30)
 private val HEALTHCHECK_TIMEOUT = Duration.ofSeconds(10)
 
 /**
- * Grace period for startup (surf-api bootstrap, database migrations, NATS connect); failed probes in this window
+ * Grace period for startup (surf-api bootstrap, database migrations, NATS connect). Failed probes in this window
  * do not count towards [HEALTHCHECK_RETRIES].
  */
 private val HEALTHCHECK_START_PERIOD = Duration.ofSeconds(60)
@@ -61,6 +61,17 @@ private val HEALTHCHECK_START_PERIOD = Duration.ofSeconds(60)
  */
 private const val HEALTHCHECK_RETRIES = 3
 
+/**
+ * Fills this Dockerfile task with the three stages of the microservice image: Gradle build, `microservicectl` build and
+ * runtime.
+ *
+ * [runnableTaskPath] is the path of the task that prepares the jar, passed as a plain string so that generating the
+ * Dockerfile does not make the task depend on building the jar. [runnableArtifactPath] and [commandClientSourcePath]
+ * are relative to the Docker build context.
+ *
+ * Before writing, the task refuses to replace a file without the generated marker unless [overwrite] is set. The
+ * options and the memory budget are validated when the file is generated.
+ */
 internal fun Dockerfile.configureMicroserviceDockerfile(
     overwrite: Provider<Boolean>,
     builderImage: Provider<String>,
@@ -249,31 +260,31 @@ private fun installEntrypoint(jvmOptions: List<String>): String {
  *
  * The budget applies only if every `memory.max` from the container's own cgroup (read from `/proc/self/cgroup`) up to
  * the cgroup root reads `max`, so a limit is respected in a private as well as in the host cgroup namespace. On
- * cgroup v1 no `memory.max` exists and the budget is not applied; an unlimited container then sizes the JVM from the
+ * cgroup v1 no `memory.max` exists and the budget is not applied. An unlimited container then sizes the JVM from the
  * host memory. Word splitting of the option lists is intended, globbing is off.
  */
 private fun entrypointScript(jvmOptions: List<String>): List<String> = listOf(
     "#!/bin/sh",
     "set -f",
     "budget=\"\"",
-    "if [ -n \"\${$MEMORY_BUDGET_ENVIRONMENT_VARIABLE:-}\" ]; then",
+    $$"if [ -n \"${$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE:-}\" ]; then",
     "    cgroup=\"\"",
     "    while IFS=: read -r id controllers path; do",
-    "        if [ \"\$id\" = 0 ]; then cgroup=\$path; fi",
+    $$"        if [ \"$id\" = 0 ]; then cgroup=$path; fi",
     "    done < /proc/self/cgroup",
-    "    dir=\"/sys/fs/cgroup\${cgroup%/}\"",
+    $$"    dir=\"/sys/fs/cgroup${cgroup%/}\"",
     "    found=\"\"",
     "    limited=\"\"",
     "    while :; do",
-    "        if [ -r \"\$dir/memory.max\" ]; then",
+    $$"        if [ -r \"$dir/memory.max\" ]; then",
     "            found=1",
-    "            if [ \"\$(cat \"\$dir/memory.max\")\" != max ]; then limited=1; fi",
+    $$"            if [ \"$(cat \"$dir/memory.max\")\" != max ]; then limited=1; fi",
     "        fi",
-    "        case \$dir in /sys/fs/cgroup/*) dir=\${dir%/*} ;; *) break ;; esac",
+    $$"        case $dir in /sys/fs/cgroup/*) dir=${dir%/*} ;; *) break ;; esac",
     "    done",
-    "    if [ -n \"\$found\" ] && [ -z \"\$limited\" ]; then budget=\"-XX:MaxRAM=\$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE\"; fi",
+    $$"    if [ -n \"$found\" ] && [ -z \"$limited\" ]; then budget=\"-XX:MaxRAM=$$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE\"; fi",
     "fi",
-    "exec java ${jvmOptions.joinToString(" ")} \$budget \$JAVA_OPTS -jar /app/$DOCKER_APPLICATION_JAR_NAME \"\$@\"",
+    $$"exec java $${jvmOptions.joinToString(" ")} $budget $JAVA_OPTS -jar /app/$$DOCKER_APPLICATION_JAR_NAME \"$@\"",
 )
 
 private fun List<String>.checkedJvmOptions(): List<String> = onEach { option ->

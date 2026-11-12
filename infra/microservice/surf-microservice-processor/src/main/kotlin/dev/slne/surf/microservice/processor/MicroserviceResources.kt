@@ -17,7 +17,7 @@ internal object MicroserviceResources {
     const val MAIN_CLASS_PATH = "META-INF/surf-microservice/main"
 
     /**
-     * Holds the sorted binary names of all concrete [SURF_MIGRATION_CLASS] subclasses; absent if there are none.
+     * Holds the sorted binary names of all concrete [SURF_MIGRATION_CLASS] subclasses. Absent if there are none.
      */
     const val MIGRATIONS_PATH = "META-INF/surf-microservice/migrations"
 }

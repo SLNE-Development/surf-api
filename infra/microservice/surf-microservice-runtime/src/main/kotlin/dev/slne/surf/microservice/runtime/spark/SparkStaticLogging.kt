@@ -14,7 +14,7 @@ internal object SparkStaticLogging {
     private const val LOGGER_FIELD = "logger"
 
     /**
-     * Makes [logger] receive spark's static log output; returns `false` if this spark version has no such field.
+     * Makes [logger] receive spark's static log output. Returns `false` if this spark version has no such field.
      */
     fun redirectTo(logger: Logger): Boolean = try {
         val loggerField = SparkStaticLogger::class.java.getDeclaredField(LOGGER_FIELD)

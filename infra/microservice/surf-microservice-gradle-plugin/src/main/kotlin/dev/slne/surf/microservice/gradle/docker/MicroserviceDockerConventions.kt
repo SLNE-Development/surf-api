@@ -24,13 +24,18 @@ private val DEFAULT_JVM_OPTIONS = listOf(
     "-XX:+ExitOnOutOfMemoryError",
 )
 
+/**
+ * Sets the defaults of [docker]. [applyJavaDockerConventions] replaces the image defaults once the `java` plugin is
+ * applied.
+ *
+ * `jvmOptions` is set instead of given a convention, so that `add` in the DSL appends to the defaults.
+ */
 internal fun Project.applyDockerConventions(docker: MicroserviceDockerExtension) {
     docker.outputFile.convention(layout.projectDirectory.file("Dockerfile"))
     docker.overwrite.convention(false)
     docker.baseImage.convention(runtimeImage(DEFAULT_JAVA_VERSION))
     docker.builderImage.convention(builderImage(DEFAULT_JAVA_VERSION))
     docker.commandClientBuilderImage.convention(DEFAULT_COMMAND_CLIENT_BUILDER_IMAGE)
-    // set, not convention: add() then appends to the defaults instead of replacing them.
     docker.jvmOptions.set(DEFAULT_JVM_OPTIONS)
     docker.memoryBudget.convention(DEFAULT_MEMORY_BUDGET)
 }

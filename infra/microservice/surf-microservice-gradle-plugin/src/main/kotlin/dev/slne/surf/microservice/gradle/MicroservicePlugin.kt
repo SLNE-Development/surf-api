@@ -14,17 +14,55 @@ import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.create
 
 /**
- * Turns a project into a surf microservice.
+ * Turns a project into a surf microservice. The plugin id is `dev.slne.surf.microservice`.
  *
- * Adds the microservice API, runtime, KSP processor and, unless disabled, the database integration and, with
- * surf-nats, the reliability integration. With Shadow applied it also configures the runnable jar and registers
- * `runMicroservice` and the Docker tasks.
+ * ```kotlin
+ * plugins {
+ *     id("dev.slne.surf.api.gradle.standalone")
+ *     id("com.gradleup.shadow")
+ *     id("dev.slne.surf.microservice")
+ * }
+ * ```
  *
- * Shadow and surf-api types are only touched once their plugins are applied, so the plugin loads without them
- * on the build classpath. Nothing is configured in `afterEvaluate`; DSL values are read lazily.
+ * What the plugin does depends on the plugins applied next to it, in any order:
+ * - `java-library`: adds `surf-microservice-api` to `api` and `surf-microservice-runtime` to `runtimeOnly`. Unless
+ *   disabled, it also adds the database integration (`surf-microservice-database` and `surf-database-r2dbc`) and,
+ *   with surf-nats, `surf-microservice-reliability` to `implementation`. The microservice modules use the major
+ *   version of the plugin, for example `3.+`.
+ * - `com.google.devtools.ksp`: adds `surf-microservice-processor` to `ksp`. The processor records the
+ *   [Microservice][dev.slne.surf.microservice.api.Microservice] subclass and the database migrations of the module,
+ *   which the runtime finds at startup.
+ * - `java`: derives the default Docker images from the Java toolchain, see [MicroserviceDockerExtension].
+ * - `com.gradleup.shadow`: makes `shadowJar` the runnable microservice. Its main class is the runtime launcher, and it
+ *   merges `META-INF/services` files so that the integrations of all modules are found. It also registers the tasks
+ *   below.
+ *
+ * These tasks exist only with the Shadow plugin:
+ * - `runMicroservice`: builds the jar and runs it with `java -jar` on the project's Java toolchain. The working
+ *   directory is `run/` in the project directory, so configuration and data survive `clean`. Standard input is
+ *   forwarded to the microservice console.
+ * - `generateMicroserviceDockerfile`: writes the Dockerfile, see [MicroserviceDockerExtension].
+ * - `prepareMicroserviceDockerArtifact`: copies the jar to `build/docker/app.jar`. The generated Dockerfile runs it
+ *   during the image build.
+ * - `generateMicroserviceCommandClientSource`: writes the `microservicectl` source to
+ *   `build/generated/microservicectl/main.go`. `prepareMicroserviceDockerArtifact` depends on it.
+ *
+ * Settings live in the [MicroserviceExtension], `surfMicroservice { ... }`. A Gradle property, for example in
+ * `gradle.properties`, sets the default of the matching setting:
+ * - [DATABASE_ENABLED_PROPERTY]: [MicroserviceDatabaseExtension.enabled], `true` without it.
+ * - [DATABASE_VERSION_PROPERTY]: [MicroserviceDatabaseExtension.version], [DEFAULT_DATABASE_VERSION] without it.
+ * - [RELIABILITY_ENABLED_PROPERTY]: [MicroserviceReliabilityExtension.enabled], derived from the database integration
+ *   and surf-nats without it.
+ *
+ * A project must not use surf-api's `withSurfDatabaseR2dbc(...)`, which this plugin replaces: resolving the
+ * dependencies fails if it was applied.
+ *
+ * DSL values are read lazily.
  */
 abstract class MicroservicePlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        // Shadow and surf-api types are only touched once their plugins are applied, so the plugin loads without them
+        // on the build classpath. Nothing is configured in afterEvaluate.
         val extension = project.extensions.create<MicroserviceExtension>(EXTENSION_NAME)
         project.applyDatabaseConventions(extension.database)
         project.applyDockerConventions(extension.docker)
@@ -60,8 +98,9 @@ abstract class MicroservicePlugin : Plugin<Project> {
     }
 
     /**
-     * Returns whether reliability was enabled or disabled explicitly, through the DSL or the Gradle property; empty if
-     * neither sets it, so that the default can be derived and only an explicit choice is validated.
+     * Returns whether reliability was enabled or disabled explicitly, through the DSL or the Gradle property. The
+     * provider is empty if neither sets it, so that the default can be derived and only an explicit choice is
+     * validated.
      */
     private fun Project.explicitReliability(reliability: MicroserviceReliabilityExtension): Provider<Boolean> {
         return reliability.enabled.orElse(
@@ -71,10 +110,29 @@ abstract class MicroservicePlugin : Plugin<Project> {
     }
 
     companion object {
+        /**
+         * Name of the [MicroserviceExtension] in a project.
+         */
         const val EXTENSION_NAME = "surfMicroservice"
+
+        /**
+         * Gradle property that sets the default of [MicroserviceDatabaseExtension.enabled]: `true` or `false`.
+         */
         const val DATABASE_ENABLED_PROPERTY = "surf.microservice.database.enabled"
+
+        /**
+         * Gradle property that sets the default of [MicroserviceReliabilityExtension.enabled]: `true` or `false`.
+         */
         const val RELIABILITY_ENABLED_PROPERTY = "surf.microservice.reliability.enabled"
+
+        /**
+         * Gradle property that sets the default of [MicroserviceDatabaseExtension.version].
+         */
         const val DATABASE_VERSION_PROPERTY = "surf.database.version"
+
+        /**
+         * Version of `surf-database-r2dbc` used when neither the DSL nor [DATABASE_VERSION_PROPERTY] sets one.
+         */
         const val DEFAULT_DATABASE_VERSION = "2.+"
     }
 }

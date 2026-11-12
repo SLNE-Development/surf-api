@@ -6,14 +6,14 @@ import java.lang.reflect.Modifier
 /**
  * Resource in which the surf-microservice processor lists the `SurfMigration` classes of a module.
  *
- * UTF-8, one JVM binary class name per line; absent if the module has none.
+ * UTF-8, one JVM binary class name per line. Absent if the module has none.
  */
 internal const val MIGRATIONS_RESOURCE = "META-INF/surf-microservice/migrations"
 
 /**
  * Loads and instantiates the migrations listed in every [MIGRATIONS_RESOURCE] visible to [classLoader].
  *
- * A Kotlin `object` contributes its `INSTANCE`; any other class is created through its public no-argument
+ * A Kotlin `object` contributes its `INSTANCE`, any other class is created through its public no-argument
  * constructor. Names listed more than once are instantiated once.
  *
  * @throws IllegalStateException if a listed class cannot be loaded, is not a [SurfMigration] or cannot be

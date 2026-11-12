@@ -22,7 +22,7 @@ private val log = logger()
  * transaction, and publishes the handler's events on [client] after the commit.
  *
  * The operation key is ([owner], `<proto service>/<rpc>`, [NatsPersistentCall.messageId]) and the fingerprint is
- * the SHA-256 of the request bytes. The handler, its database statements and its encoded reply commit together; a
+ * the SHA-256 of the request bytes. The handler, its database statements and its encoded reply commit together. A
  * redelivery, a concurrent delivery on another instance or a dead-letter replay of a committed message receives the
  * stored reply without running the handler.
  *
@@ -116,7 +116,7 @@ internal class TransactionalInterceptor(
          *
          * Relies on `execute` returning the block's own reply instance when the block's transaction committed, and a
          * new instance when it replays a reply stored by another delivery. After a transient failure of this run's
-         * commit, a retry can replay the reply of a concurrent delivery; this run's events then belong to a
+         * commit, a retry can replay the reply of a concurrent delivery, and this run's events then belong to a
          * rolled-back transaction.
          */
         fun committed(stored: StoredReply): Boolean = stored === reply

@@ -4,39 +4,69 @@ import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseC
 import dev.slne.surf.database.migration.MigrationSpec
 
 /**
- * Customizes the database of a microservice; implemented by the [Microservice][dev.slne.surf.microservice.api.Microservice]
- * subclass itself.
+ * Customizes the database of a microservice.
  *
- * Without this interface the database integration uses its defaults: the configuration from `database.yml` in the
- * data path and migrations found by convention (SQL files in `db/migration` and the `SurfMigration` classes of the
- * module). The hooks run at most once, during the start of the database integration and before `onBootstrap`.
+ * Implement it on the [Microservice][dev.slne.surf.microservice.api.Microservice] subclass itself. The database
+ * integration ignores the interface on any other class.
+ *
+ * Without this interface the database integration uses its defaults:
+ * - The connection settings come from `database.yml` in the
+ *   [data path][dev.slne.surf.microservice.api.Microservice.dataPath].
+ * - The connection pool is named after the service.
+ * - The migrations are those found by convention: the SQL files in the classpath folder `db/migration` and the
+ *   `SurfMigration` classes of the module, which the surf-microservice processor lists at compile time.
+ * - The migration history lives in the table `flyway_schema_history_<name>`, with every `-` of the service name
+ *   replaced by `_`.
+ * - If surf-nats is present, the default number of concurrent NATS handlers per service follows the pool size: twice
+ *   the pool size in total, half of it (at least one) for long-running calls. The NATS configuration overrides both.
  *
  * A module that needs different SQL per database vendor puts it in `db/migration/mariadb` and
- * `db/migration/postgresql`; then only the folder of the configured vendor runs and files directly in `db/migration`
- * are ignored. Start fails if vendor folders exist but none for the configured vendor.
+ * `db/migration/postgresql`. Then only the folder of the configured vendor runs, and files directly in `db/migration`
+ * are ignored. The start fails if vendor folders exist but none for the configured vendor.
+ *
+ * The members are read at most once, while the database integration starts and before `onBootstrap`.
+ *
+ * ```kotlin
+ * object PunishMicroservice : Microservice(), DatabaseCustomizer {
+ *     override fun R2dbcDatabaseConfig.Builder.configureDatabase() {
+ *         defaultMaxAttempts = 5
+ *     }
+ *
+ *     override fun MigrationSpec.configureMigrations() {
+ *         sql("db/legacy")
+ *         baselineVersion("1")
+ *     }
+ * }
+ * ```
  */
-interface DatabaseCustomizer {
+public interface DatabaseCustomizer {
 
     /**
-     * Adjusts the Exposed configuration after the defaults have been applied.
+     * Adjusts the Exposed configuration of the database.
+     *
+     * Runs after surf-database applied its defaults, such as READ COMMITTED as the default isolation level, so a
+     * value set here replaces the default.
      */
-    fun R2dbcDatabaseConfig.Builder.configureDatabase() {
+    public fun R2dbcDatabaseConfig.Builder.configureDatabase() {
     }
 
     /**
-     * Adds to or overrides the migrations found by convention.
+     * Adds migrations to those found by convention, or changes the baseline version or the class loader.
      *
-     * The class loader is already set to the one of the microservice class. Not called if [runMigrations] is `false`.
+     * The spec already contains the conventional migrations, and its class loader is the one of the microservice
+     * class. Not called if [runMigrations] is `false`.
      */
-    fun MigrationSpec.configureMigrations() {
+    public fun MigrationSpec.configureMigrations() {
     }
 
     /**
-     * Whether migrations run at start.
+     * Returns whether migrations run at start.
      *
-     * When `true`, they run even if no migration was found by convention, so [configureMigrations] must then declare
-     * at least one. `false` skips migrations entirely, for services that still create their schema with `SchemaUtils`.
+     * When `true` (the default), they run even if no migration was found by convention, so [configureMigrations] must
+     * then declare at least one. `false` skips the migrations of the service, both the conventional ones and those
+     * from [configureMigrations], for services that still create their schema with `SchemaUtils`. Library schemas,
+     * such as the one of surf-microservice-reliability, are still migrated.
      */
-    val runMigrations: Boolean
+    public val runMigrations: Boolean
         get() = true
 }

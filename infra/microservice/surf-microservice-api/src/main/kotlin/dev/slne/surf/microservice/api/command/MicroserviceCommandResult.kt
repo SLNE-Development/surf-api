@@ -1,16 +1,18 @@
 package dev.slne.surf.microservice.api.command
 
 /**
- * Outcome of a command invocation.
+ * Outcome of a command invocation, as reported to the caller.
  */
-sealed interface MicroserviceCommandResult {
+public sealed interface MicroserviceCommandResult {
     /**
-     * The command completed.
+     * The command completed. `microservicectl` exits with code `0`.
      */
-    data object Success : MicroserviceCommandResult
+    public data object Success : MicroserviceCommandResult
 
     /**
-     * The command failed; [message] is safe to show to the caller.
+     * The command failed. `microservicectl` exits with code `1`.
+     *
+     * @property message the failure message, safe to show to the caller
      */
-    data class Failure(val message: String) : MicroserviceCommandResult
+    public data class Failure(public val message: String) : MicroserviceCommandResult
 }

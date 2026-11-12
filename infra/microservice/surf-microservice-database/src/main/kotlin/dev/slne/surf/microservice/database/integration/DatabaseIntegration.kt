@@ -10,6 +10,7 @@ import dev.slne.surf.microservice.api.integration.MicroserviceIntegrationContext
 import dev.slne.surf.microservice.database.DatabaseCustomizer
 import dev.slne.surf.microservice.database.migration.ConventionalMigrations
 import dev.slne.surf.microservice.database.migration.migrationName
+import dev.slne.surf.microservice.database.nats.PoolSizedHandlerLimits
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -21,17 +22,22 @@ private val log = logger()
  *
  * The configuration comes from `database.yml` in the data path, the pool is named after the service, and the
  * migration history lives in `flyway_schema_history_<service>` with `-` replaced by `_`. SQL migrations come from
- * `db/migration`, or from `db/migration/<vendor>` (`mariadb`, `postgresql`) once the module has such vendor folders;
- * see [ConventionalMigrations]. A microservice class that implements [DatabaseCustomizer] adjusts these defaults. The database is published through [DatabaseHolder] only
- * after the migrations succeeded; a failed start closes it again.
+ * `db/migration`, or from `db/migration/<vendor>` (`mariadb`, `postgresql`) once the module has such vendor folders,
+ * see [ConventionalMigrations]. A microservice class that implements [DatabaseCustomizer] adjusts these defaults.
+ * The database is published through [DatabaseHolder] only after the migrations succeeded. A failed start closes it
+ * again.
+ *
+ * After the migrations, [applyHandlerLimits] sizes the default NATS handler limits to the pool, see
+ * [PoolSizedHandlerLimits]. The NATS integration starts later, so the limits apply to every service registration.
  */
 @AutoService(MicroserviceIntegration::class)
 internal class DatabaseIntegration internal constructor(
     private val openDatabase: (MicroserviceIntegrationContext, DatabaseCustomizer?) -> DatabaseApi,
+    private val applyHandlerLimits: (DatabaseApi) -> Unit,
 ) : MicroserviceIntegration {
 
     @Suppress("unused") // Used by autoservice
-    constructor() : this(::openConfiguredDatabase)
+    constructor() : this(::openConfiguredDatabase, { api -> PoolSizedHandlerLimits().apply(api.poolMaxSize) })
 
     override val name = "database"
     override val order = MicroserviceIntegration.DATABASE_ORDER
@@ -42,6 +48,7 @@ internal class DatabaseIntegration internal constructor(
 
         try {
             migrate(api, context, customizer)
+            applyHandlerLimits(api)
         } catch (exception: Throwable) {
             closeAfterFailedStart(api, exception)
             throw exception

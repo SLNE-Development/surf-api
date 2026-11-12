@@ -8,8 +8,12 @@ import java.nio.charset.StandardCharsets
  * Server side of the binary protocol spoken on the command socket.
  *
  * `microservicectl` (Go, `surf-microservice-gradle-plugin`) is the only client and hardcodes the magic number,
- * version, limits and response tags; any change here must be mirrored there. All integers are big-endian, strings
+ * version, limits and response tags, so any change here must be mirrored there. All integers are big-endian, strings
  * are length-prefixed UTF-8.
+ *
+ * A request is the magic number, the version, the argument count and the arguments, the first being the command
+ * label. A response is a sequence of output frames, each a tag (`1` standard output, `2` standard error) and one
+ * string, followed by one completion frame: the tag `3` and the exit code as an int.
  */
 internal object MicroserviceCommandProtocol {
     private const val MAGIC = 0x53555246
@@ -57,7 +61,7 @@ internal object MicroserviceCommandProtocol {
     }
 
     /**
-     * Writes the final frame of a response; the client exits with [exitCode].
+     * Writes the final frame of a response, after which the client exits with [exitCode].
      */
     fun writeCompleted(output: DataOutputStream, exitCode: Int) {
         output.writeByte(RESPONSE_COMPLETED)

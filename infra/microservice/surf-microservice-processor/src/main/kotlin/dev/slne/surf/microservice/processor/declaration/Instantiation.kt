@@ -30,7 +30,7 @@ internal fun KSClassDeclaration.instantiationProblems(): List<String> = buildLis
 
 /**
  * KSP marks Kotlin inner classes with [Modifier.INNER], but Java inner classes only by the absence of
- * [Modifier.JAVA_STATIC]; members of Java interfaces carry [Modifier.JAVA_STATIC] implicitly.
+ * [Modifier.JAVA_STATIC]. Members of Java interfaces carry [Modifier.JAVA_STATIC] implicitly.
  */
 private fun KSClassDeclaration.isInner(): Boolean =
     Modifier.INNER in modifiers ||

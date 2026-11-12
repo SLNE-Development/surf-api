@@ -21,14 +21,14 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Embeds spark for its commands, such as `spark health`, and starts the sampling profiler with the service only if
- * [PROFILER_ENVIRONMENT_VARIABLE] is `true`; `spark profiler start` starts it on demand. A profiler that fails to
+ * [PROFILER_ENVIRONMENT_VARIABLE] is `true`. `spark profiler start` starts it on demand. A profiler that fails to
  * start is logged and does not fail the start. A value of the variable other than `true` or `false` fails the start
  * before spark is enabled.
  *
  * The profiler is off by default because its call tree stays on the heap and keeps idle services large.
  *
  * Starts after surf-api because spark keeps its files in `<dataPath>/spark` of [Microservice.instance]. Commands
- * are accepted only while spark runs. spark's static log output goes through this plugin's logger; the
+ * are accepted only while spark runs. spark's static log output goes through this plugin's logger. The
  * [CancellationException]s that spark's executors report while [stop] cancels the profiler are logged at debug level.
  */
 internal class MicroserviceSpark : SparkPlugin, RuntimeComponent {

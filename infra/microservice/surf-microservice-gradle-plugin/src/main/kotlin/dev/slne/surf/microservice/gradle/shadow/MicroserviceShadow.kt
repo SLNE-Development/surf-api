@@ -20,7 +20,7 @@ private const val SHADOW_JAR_TASK_NAME = "shadowJar"
  * Makes the Shadow jar the runnable microservice and registers the tasks built on it, once Shadow has registered
  * `shadowJar`.
  *
- * Shadow registers `shadowJar` when it applies [ShadowJavaPlugin] in reaction to `java`; reacting to `java`
+ * Shadow registers `shadowJar` when it applies [ShadowJavaPlugin] in reaction to `java`. Reacting to `java`
  * directly may run before that, depending on the order in which the plugins are applied.
  *
  * Holds every reference to Shadow types. Call it only after `com.gradleup.shadow` is applied, so this class is

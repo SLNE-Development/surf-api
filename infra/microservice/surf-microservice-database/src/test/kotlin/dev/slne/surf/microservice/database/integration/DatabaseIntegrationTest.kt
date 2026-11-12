@@ -27,9 +27,11 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class DatabaseIntegrationTest {
     private val openedDatabases = mutableListOf<DatabaseApi>()
+    private val handlerLimitsAppliedTo = mutableListOf<DatabaseApi>()
 
     @AfterEach
     fun closeDatabases() {
@@ -39,7 +41,7 @@ class DatabaseIntegrationTest {
 
     @Test
     fun `publishes the database after a successful start`() = runTest {
-        val integration = DatabaseIntegration(::openUnreachableDatabase)
+        val integration = integration()
 
         integration.start(context(WithoutMigrations))
 
@@ -50,7 +52,7 @@ class DatabaseIntegrationTest {
 
     @Test
     fun `reports an unreachable database as unhealthy while running`() = runTest {
-        DatabaseIntegration(::openUnreachableDatabase).start(context(WithoutMigrations))
+        integration().start(context(WithoutMigrations))
 
         val result = DatabaseHealthContributor().check().single()
 
@@ -60,7 +62,7 @@ class DatabaseIntegrationTest {
 
     @Test
     fun `closes and withdraws the database on stop`() = runTest {
-        val integration = DatabaseIntegration(::openUnreachableDatabase)
+        val integration = integration()
         integration.start(context(WithoutMigrations))
 
         integration.stop(context(WithoutMigrations))
@@ -71,7 +73,7 @@ class DatabaseIntegrationTest {
 
     @Test
     fun `closes the database and publishes nothing when migrations fail`() = runTest {
-        val integration = DatabaseIntegration(::openUnreachableDatabase)
+        val integration = integration()
 
         val failure = assertFailsWith<IllegalStateException> { integration.start(context(FailingMigrations)) }
 
@@ -82,19 +84,48 @@ class DatabaseIntegrationTest {
 
     @Test
     fun `publishes nothing when the database cannot be opened`() = runTest {
-        val integration = DatabaseIntegration { _, _ -> error("database.yml is invalid") }
+        val integration = integration { _, _ -> error("database.yml is invalid") }
 
         assertFailsWith<IllegalStateException> { integration.start(context(WithoutMigrations)) }
 
         assertNull(DatabaseHolder.currentOrNull())
+        assertTrue(handlerLimitsAppliedTo.isEmpty())
+    }
+
+    @Test
+    fun `applies the handler limits once to the started database`() = runTest {
+        integration().start(context(WithoutMigrations))
+
+        assertSame(openedDatabases.single(), handlerLimitsAppliedTo.single())
+    }
+
+    @Test
+    fun `does not apply the handler limits when migrations fail`() = runTest {
+        assertFailsWith<IllegalStateException> { integration().start(context(FailingMigrations)) }
+
+        assertTrue(handlerLimitsAppliedTo.isEmpty())
+    }
+
+    @Test
+    fun `closes the database and publishes nothing when the handler limits cannot be applied`() = runTest {
+        val integration = DatabaseIntegration(::openUnreachableDatabase) { error("invalid handler limits") }
+
+        assertFailsWith<IllegalStateException> { integration.start(context(WithoutMigrations)) }
+
+        assertNull(DatabaseHolder.currentOrNull())
+        assertFalse(isRegistered(openedDatabases.single()))
     }
 
     @Test
     fun `stop without a running database does nothing`() = runTest {
-        DatabaseIntegration(::openUnreachableDatabase).stop(context(WithoutMigrations))
+        integration().stop(context(WithoutMigrations))
 
         assertNull(DatabaseHolder.currentOrNull())
     }
+
+    private fun integration(
+        openDatabase: (MicroserviceIntegrationContext, DatabaseCustomizer?) -> DatabaseApi = ::openUnreachableDatabase,
+    ) = DatabaseIntegration(openDatabase, handlerLimitsAppliedTo::add)
 
     @OptIn(TestOnlyDatabaseApi::class)
     private fun openUnreachableDatabase(context: MicroserviceIntegrationContext, customizer: DatabaseCustomizer?) =

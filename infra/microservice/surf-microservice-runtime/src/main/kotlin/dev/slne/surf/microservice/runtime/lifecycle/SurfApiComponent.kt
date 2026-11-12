@@ -3,7 +3,7 @@ package dev.slne.surf.microservice.runtime.lifecycle
 import dev.slne.surf.api.standalone.SurfApiStandaloneBootstrap
 
 /**
- * Boots and enables surf-api without its own shutdown hook; the launcher's hook stops it in order.
+ * Boots and enables surf-api without its own shutdown hook. The launcher's hook stops it in order.
  */
 internal object SurfApiComponent : RuntimeComponent {
     override val name = "surf-api"

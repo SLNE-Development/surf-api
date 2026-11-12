@@ -21,7 +21,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 /**
- * Serves `microservicectl` on a Unix domain socket at [socketPath].
+ * Serves `microservicectl` on a Unix domain socket at [socketPath], restricted to its owner where the file system
+ * supports POSIX permissions.
  *
  * Each connection carries one request and receives the command output followed by an exit code: `0` on success,
  * `1` on a failed command and `2` on a malformed request. A shutdown requested by a command is passed to
@@ -95,7 +96,7 @@ internal class MicroserviceCommandServer(
     }
 
     /**
-     * Serves each connection in its own child; a connection that fails does not end the loop, and its channel is
+     * Serves each connection in its own child. A connection that fails does not end the loop, and its channel is
      * closed even if the child is cancelled before it starts.
      *
      * A channel is tracked before its child is launched. [stop] cancels this loop before closing the tracked channels,
@@ -191,7 +192,7 @@ internal class MicroserviceCommandServer(
     }
 
     /**
-     * Writes response frames; after the first I/O error, for example a disconnected client, it drops all output.
+     * Writes response frames. After the first I/O error, for example a disconnected client, it drops all output.
      */
     private class SocketCommandOutput(private val output: DataOutputStream) :
         MicroserviceCommandOutput {

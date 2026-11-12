@@ -17,7 +17,7 @@ import kotlinx.coroutines.cancel
 /**
  * The running reliability components of one microservice: stored replies, their cleanup and the event publisher.
  *
- * [owner] namespaces the stored replies; instances of the same service share it, so they answer each other's
+ * [owner] namespaces the stored replies. Instances of the same service share it, so they answer each other's
  * redeliveries. The schema must be migrated before [start].
  */
 internal class ReliabilityRuntime private constructor(

@@ -22,7 +22,7 @@ internal class StoredReplyCleanup(
 ) {
 
     /**
-     * Starts the periodic cleanup in [scope]; cancel the returned job to stop it.
+     * Starts the periodic cleanup in [scope]. Cancel the returned job to stop it.
      */
     fun start(scope: CoroutineScope): Job = scope.launch {
         while (true) {

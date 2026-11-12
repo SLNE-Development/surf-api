@@ -12,7 +12,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Runs the checks of all health contributors concurrently.
  *
- * [loadContributors] runs once, on the first [checkAll]; a failure to load is reported as an unhealthy result on
+ * [loadContributors] runs once, on the first [checkAll]. A failure to load is reported as an unhealthy result on
  * every call. A contributor that throws or exceeds [contributorTimeout] yields one unhealthy result named after it.
  */
 internal class MicroserviceHealthManager(

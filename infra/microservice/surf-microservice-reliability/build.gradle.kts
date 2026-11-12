@@ -1,8 +1,24 @@
+@file:OptIn(ExperimentalAbiValidation::class)
+
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
     `java-test-fixtures`
+}
+
+kotlin {
+    explicitApi()
+
+    abiValidation {
+        filters {
+            exclude {
+                annotatedWith.add("dev.slne.surf.microservice.api.InternalMicroserviceApi")
+            }
+        }
+    }
 }
 
 val surfDatabaseR2dbc = "dev.slne.surf:surf-database-r2dbc:2.+"
@@ -65,4 +81,8 @@ tasks.test {
     useJUnitPlatform()
     classpath = sourceSets.test.get().output + sourceSets.main.get().output +
         files(testSurfRuntime) + files(testRuntimeArtifacts(surfRuntime = false))
+}
+
+tasks.named<KotlinCompile>("compileTestFixturesKotlin") {
+    compilerOptions.freeCompilerArgs.add("-Xexplicit-api=strict")
 }

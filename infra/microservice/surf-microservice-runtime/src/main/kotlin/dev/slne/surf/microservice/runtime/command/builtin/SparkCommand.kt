@@ -6,6 +6,10 @@ import dev.slne.surf.microservice.api.command.MicroserviceCommandOutput
 import dev.slne.surf.microservice.runtime.spark.MicroserviceSpark
 import dev.slne.surf.microservice.runtime.spark.MicroserviceSparkCommandSender
 
+/**
+ * Runs a spark command with the given arguments, for example `spark health`, and sends its output to the command
+ * output. Fails while spark is not running.
+ */
 internal class SparkCommand(
     private val spark: MicroserviceSpark,
 ) : MicroserviceCommand("spark") {

@@ -9,8 +9,8 @@ import kotlin.time.Duration
 /**
  * Runs [probe] with [timeout] and reports the outcome as [component].
  *
- * A timeout or any [Throwable] from [probe], [Error]s included, yields [MicroserviceHealthStatus.UNHEALTHY];
- * cancellation of the caller propagates.
+ * A timeout or any [Throwable] from [probe], [Error]s included, yields [MicroserviceHealthStatus.UNHEALTHY].
+ * Cancellation of the caller propagates.
  */
 internal suspend fun checkDatabaseHealth(
     component: String,

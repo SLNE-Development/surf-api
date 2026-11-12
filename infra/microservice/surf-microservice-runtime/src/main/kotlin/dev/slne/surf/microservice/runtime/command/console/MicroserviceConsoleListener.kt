@@ -13,7 +13,7 @@ import kotlin.time.Duration
  * Runs every non-blank line read from [input] as a command and logs its output. A command that fails with an
  * uncaught throwable does not stop the listener.
  *
- * Reading blocks a thread of [Dispatchers.IO] that cancellation cannot interrupt; it ends with the end of [input]
+ * Reading blocks a thread of [Dispatchers.IO] that cancellation cannot interrupt. It ends with the end of [input]
  * or the process. Commands therefore run outside the reader coroutine, so [stop] can wait for them without waiting
  * for the reader.
  *

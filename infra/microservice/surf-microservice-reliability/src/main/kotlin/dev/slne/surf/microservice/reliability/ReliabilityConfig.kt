@@ -8,17 +8,21 @@ import kotlin.time.Duration.Companion.hours
 /**
  * Settings of the idempotent handlers of a microservice.
  *
- * @property atomicOperations Settings of the stored replies. The default retention is
- * [NatsPersistentLimits.REDELIVERY_HORIZON], the longest time after which a message with the same identity can reach
- * a handler; a shorter retention lets a late redelivery or dead-letter replay run the handler again.
- * @property cleanupInterval How often expired stored replies of all services on the database are deleted.
+ * Provide them through [ReliabilityCustomizer].
+ *
+ * @property atomicOperations the settings of the stored replies, such as their retention and the lock timeout. The
+ * default retention is [NatsPersistentLimits.REDELIVERY_HORIZON], the longest time after which a message with the
+ * same identity can reach a handler. A shorter retention lets a late redelivery or dead-letter replay run the handler
+ * again.
+ * @property cleanupInterval how often the expired stored replies of all services on the database are deleted. The
+ * first cleanup runs one interval after the start.
  * @throws IllegalArgumentException if [cleanupInterval] is not positive
  */
-data class ReliabilityConfig(
-    val atomicOperations: AtomicOperationsConfig = AtomicOperationsConfig(
+public data class ReliabilityConfig(
+    public val atomicOperations: AtomicOperationsConfig = AtomicOperationsConfig(
         retention = NatsPersistentLimits.REDELIVERY_HORIZON,
     ),
-    val cleanupInterval: Duration = 1.hours,
+    public val cleanupInterval: Duration = 1.hours,
 ) {
     init {
         require(cleanupInterval.isPositive()) { "cleanupInterval must be positive, was $cleanupInterval" }

@@ -14,6 +14,8 @@ internal object CommandLineTokenizer {
     private const val BACKSLASH = '\\'
 
     /**
+     * Returns the tokens of [line], empty if it holds only whitespace.
+     *
      * @throws CommandLineSyntaxException if a quote is not closed or the line ends with a backslash
      */
     fun tokenize(line: String): List<String> {

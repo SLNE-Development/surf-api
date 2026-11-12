@@ -4,18 +4,27 @@ import dev.slne.surf.microservice.api.Microservice
 import java.nio.file.Path
 
 /**
- * What an integration knows about the microservice it serves.
+ * Describes the microservice that an integration serves.
+ *
+ * The runtime creates one context before the first integration starts and passes the same instance to every
+ * lifecycle call of every [MicroserviceIntegration].
  */
-interface MicroserviceIntegrationContext {
-    val microservice: Microservice
+public interface MicroserviceIntegrationContext {
+    /**
+     * Gets the running microservice.
+     *
+     * An integration can check it for an optional interface that the microservice class implements to customize the
+     * integration, such as `DatabaseCustomizer`.
+     */
+    public val microservice: Microservice
 
     /**
-     * Validated [Microservice.name].
+     * Gets the [Microservice.name], read once at start and validated.
      */
-    val name: String
+    public val name: String
 
     /**
-     * [Microservice.dataPath]; integrations keep their configuration below it.
+     * Gets the [Microservice.dataPath], read once at start. Integrations keep their configuration below it.
      */
-    val dataPath: Path
+    public val dataPath: Path
 }

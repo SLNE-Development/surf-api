@@ -1,0 +1,145 @@
+public abstract interface annotation class dev/slne/surf/microservice/api/InternalMicroserviceApi : java/lang/annotation/Annotation {
+}
+
+public abstract class dev/slne/surf/microservice/api/Microservice {
+	public static final field CONFIG_DIR_ENVIRONMENT_VARIABLE Ljava/lang/String;
+	public static final field Companion Ldev/slne/surf/microservice/api/Microservice$Companion;
+	public static final field MAX_NAME_LENGTH I
+	public static final field NAME_ENVIRONMENT_VARIABLE Ljava/lang/String;
+	public fun <init> ()V
+	public final fun getCommands ()Ldev/slne/surf/microservice/api/command/MicroserviceCommands;
+	public fun getDataPath ()Ljava/nio/file/Path;
+	public fun getName ()Ljava/lang/String;
+	public fun onBootstrap (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/microservice/api/Microservice$Companion {
+	public final fun getInstance ()Ldev/slne/surf/microservice/api/Microservice;
+}
+
+public abstract class dev/slne/surf/microservice/api/command/MicroserviceCommand {
+	public fun <init> (Ljava/lang/String;[Ljava/lang/String;)V
+	public abstract fun execute (Ldev/slne/surf/microservice/api/command/MicroserviceCommandContext;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getAliases ()[Ljava/lang/String;
+	public fun getDescription ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun matches (Ljava/lang/String;)Z
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommandContext : kotlinx/coroutines/CoroutineScope {
+	public final fun fail (Ljava/lang/String;)Ljava/lang/Void;
+	public fun getCoroutineContext ()Lkotlin/coroutines/CoroutineContext;
+	public final fun getSource ()Ldev/slne/surf/microservice/api/command/MicroserviceCommandSource;
+	public final fun requestShutdown ()V
+	public final fun sendError (Ljava/lang/String;)V
+	public final fun sendLine (Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommandException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getMessage ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommandFunctionKt {
+	public static final fun microserviceCommand (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;)Ldev/slne/surf/microservice/api/command/MicroserviceCommand;
+	public static synthetic fun microserviceCommand$default (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)Ldev/slne/surf/microservice/api/command/MicroserviceCommand;
+}
+
+public abstract interface class dev/slne/surf/microservice/api/command/MicroserviceCommandResult {
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommandResult$Failure : dev/slne/surf/microservice/api/command/MicroserviceCommandResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Ldev/slne/surf/microservice/api/command/MicroserviceCommandResult$Failure;
+	public static synthetic fun copy$default (Ldev/slne/surf/microservice/api/command/MicroserviceCommandResult$Failure;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/microservice/api/command/MicroserviceCommandResult$Failure;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommandResult$Success : dev/slne/surf/microservice/api/command/MicroserviceCommandResult {
+	public static final field INSTANCE Ldev/slne/surf/microservice/api/command/MicroserviceCommandResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommandSource : java/lang/Enum {
+	public static final field CONSOLE Ldev/slne/surf/microservice/api/command/MicroserviceCommandSource;
+	public static final field LOCAL_SOCKET Ldev/slne/surf/microservice/api/command/MicroserviceCommandSource;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/microservice/api/command/MicroserviceCommandSource;
+	public static fun values ()[Ldev/slne/surf/microservice/api/command/MicroserviceCommandSource;
+}
+
+public final class dev/slne/surf/microservice/api/command/MicroserviceCommands {
+	public static final field INSTANCE Ldev/slne/surf/microservice/api/command/MicroserviceCommands;
+	public final fun find (Ljava/lang/String;)Ldev/slne/surf/microservice/api/command/MicroserviceCommand;
+	public final fun getAll ()Ljava/util/List;
+	public final fun register (Ldev/slne/surf/microservice/api/command/MicroserviceCommand;)Ldev/slne/surf/microservice/api/command/MicroserviceCommand;
+	public final fun register (Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;)Ldev/slne/surf/microservice/api/command/MicroserviceCommand;
+	public static synthetic fun register$default (Ldev/slne/surf/microservice/api/command/MicroserviceCommands;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)Ldev/slne/surf/microservice/api/command/MicroserviceCommand;
+}
+
+public final class dev/slne/surf/microservice/api/health/MicroserviceHealthCheckResult {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;Ljava/lang/String;)Ldev/slne/surf/microservice/api/health/MicroserviceHealthCheckResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/microservice/api/health/MicroserviceHealthCheckResult;Ljava/lang/String;Ljava/lang/String;Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/microservice/api/health/MicroserviceHealthCheckResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponent ()Ljava/lang/String;
+	public final fun getInstance ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getStatus ()Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/microservice/api/health/MicroserviceHealthContributor {
+	public abstract fun check (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getName ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/microservice/api/health/MicroserviceHealthStatus : java/lang/Enum {
+	public static final field HEALTHY Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;
+	public static final field UNHEALTHY Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;
+	public static fun values ()[Ldev/slne/surf/microservice/api/health/MicroserviceHealthStatus;
+}
+
+public abstract interface class dev/slne/surf/microservice/api/integration/MicroserviceIntegration {
+	public static final field Companion Ldev/slne/surf/microservice/api/integration/MicroserviceIntegration$Companion;
+	public static final field DATABASE_ORDER I
+	public static final field MESSAGING_ORDER I
+	public static final field RELIABILITY_ORDER I
+	public abstract fun getName ()Ljava/lang/String;
+	public abstract fun getOrder ()I
+	public abstract fun start (Ldev/slne/surf/microservice/api/integration/MicroserviceIntegrationContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun stop (Ldev/slne/surf/microservice/api/integration/MicroserviceIntegrationContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun stopAccepting (Ldev/slne/surf/microservice/api/integration/MicroserviceIntegrationContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/microservice/api/integration/MicroserviceIntegration$Companion {
+	public static final field DATABASE_ORDER I
+	public static final field MESSAGING_ORDER I
+	public static final field RELIABILITY_ORDER I
+}
+
+public final class dev/slne/surf/microservice/api/integration/MicroserviceIntegration$DefaultImpls {
+	public static fun stopAccepting (Ldev/slne/surf/microservice/api/integration/MicroserviceIntegration;Ldev/slne/surf/microservice/api/integration/MicroserviceIntegrationContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/microservice/api/integration/MicroserviceIntegrationContext {
+	public abstract fun getDataPath ()Ljava/nio/file/Path;
+	public abstract fun getMicroservice ()Ldev/slne/surf/microservice/api/Microservice;
+	public abstract fun getName ()Ljava/lang/String;
+}
+

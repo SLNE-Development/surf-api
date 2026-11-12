@@ -36,11 +36,11 @@ internal class ConventionalMigrations(
          * Returns the migrations to run at start against a [databaseType] database, or `null` if migrations are
          * skipped.
          *
-         * [customizer] decides through [DatabaseCustomizer.runMigrations]; without one, migrations run only if a
+         * [customizer] decides through [DatabaseCustomizer.runMigrations]. Without one, migrations run only if a
          * convention found something. Nothing is loaded when [DatabaseCustomizer.runMigrations] is `false`.
          *
          * Once the class loader has a folder for any vendor below [SQL_LOCATION], only the folder of [databaseType]
-         * is used; SQL files directly in [SQL_LOCATION] are then ignored.
+         * is used, and SQL files directly in [SQL_LOCATION] are then ignored.
          *
          * @throws IllegalStateException if vendor folders exist but none for [databaseType], or a listed migration
          * class cannot be instantiated
