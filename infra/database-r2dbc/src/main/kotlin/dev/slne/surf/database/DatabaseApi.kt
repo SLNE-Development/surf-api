@@ -37,6 +37,11 @@ class DatabaseApi internal constructor(
     private val dialect: DatabaseDialect,
     internal val migrationDataSource: DataSource? = null,
     private val releaseResources: () -> Unit = {},
+    /**
+     * Maximum number of connections in the pool that this instance created from its config, or `null` for an
+     * instance built on a caller-supplied [ConnectionFactory].
+     */
+    val poolMaxSize: Int? = null,
 ) {
 
     /**
@@ -125,7 +130,8 @@ class DatabaseApi internal constructor(
                         loopResources.dispose()
                     }
                 },
-                configCustomizer = configCustomizer
+                configCustomizer = configCustomizer,
+                poolMaxSize = config.pool.sizing.maxSize
             )
         }
 
@@ -218,7 +224,8 @@ class DatabaseApi internal constructor(
             logLevel: Level,
             migrationDataSource: DataSource?,
             releaseResources: () -> Unit,
-            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit
+            configCustomizer: R2dbcDatabaseConfig.Builder.() -> Unit,
+            poolMaxSize: Int? = null
         ): DatabaseApi {
             val database = R2dbcDatabase.connect(
                 connectionFactory,
@@ -236,7 +243,8 @@ class DatabaseApi internal constructor(
                 database = database,
                 dialect = dialect,
                 migrationDataSource = migrationDataSource,
-                releaseResources = releaseResources
+                releaseResources = releaseResources,
+                poolMaxSize = poolMaxSize
             )
         }
 

@@ -136,6 +136,24 @@ class DatabaseApiTest {
     }
 
     @Test
+    fun configBasedApiHasTheConfiguredPoolMaxSize(@TempDir dir: Path) {
+        val api = createFromConfig(
+            dir,
+            """
+            database-type: POSTGRESQL
+            host: db.example
+            """
+        )
+
+        api.use { assertEquals(1, it.poolMaxSize) }
+    }
+
+    @Test
+    fun manualApiHasNoPoolMaxSize() {
+        assertNull(withOfflineDatabaseApi { it.poolMaxSize })
+    }
+
+    @Test
     fun manualApiDerivesTheDatabaseTypeFromTheDialect() {
         assertEquals(DatabaseType.MARIADB, withOfflineDatabaseApi { it.databaseType })
         assertEquals(
