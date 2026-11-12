@@ -18,6 +18,11 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
     /**
      * Returns the methods of [service] in rpc order and reports options, names and payload types that cannot be
      * generated.
+     *
+     * The protocol rules of each rpc come from `ResolvedMethod.problems`: streaming rpcs are rejected, persistent
+     * rpcs cannot address `ALL_INSTANCES`, and a persistent rpc without a result must not have a call timeout above
+     * the 120-second duplicate window. Streaming rpcs have no [ContractMethod]. The other violations are reported
+     * and the method is kept.
      */
     fun resolve(service: Service): List<ContractMethod> {
         val resolution = SurfProtoOptions.service(service, problems)
@@ -32,9 +37,6 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
      *
      * Checks the resolved protocol configuration, rejects services without RPCs,
      * and verifies that RPC type references do not conflict with RPC names.
-     *
-     * @param service the service to validate
-     * @param resolution the resolved service configuration
      */
     private fun validateService(service: Service, resolution: ResolvedService) {
         for (problem in resolution.problems(service.name)) {
@@ -58,8 +60,6 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
      * Wire handles these references differently, so this validation ensures
      * compatibility with protoc and buf by requiring package-qualified names
      * for conflicting references.
-     *
-     * @param service the service whose RPC type references are validated
      */
     @Suppress("DestructuringDeclaration")
     private fun validateTypeScoping(service: Service) {
@@ -85,9 +85,6 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
      * Streaming RPCs are not generated. Invalid request or response types
      * also prevent generation, with errors reported through the problem collector.
      *
-     * @param rpc the RPC declaration to process
-     * @param service the resolved configuration of the containing service
-     * @param kotlinNames previously generated Kotlin names and their source locations
      * @return the resolved method, or `null` if generation is unsupported or fails
      */
     private fun method(
@@ -125,10 +122,6 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
      *
      * The name is recorded even when a collision is detected, allowing subsequent
      * RPCs to be checked against it.
-     *
-     * @param rpc the RPC associated with the generated name
-     * @param kotlinName the generated Kotlin function name
-     * @param kotlinNames previously encountered function names and their locations
      */
     private fun validateMethodName(
         rpc: Rpc,
@@ -159,9 +152,6 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
      * Rejects custom mappings for non-empty messages and delegates generated
      * message resolution to [generatedMessage].
      *
-     * @param rpc the RPC referencing the message type
-     * @param protoType the Protobuf request or response type
-     * @param role the message role, used when reporting validation errors
      * @return the resolved message, or `null` if the type cannot be resolved
      */
     private fun rpcMessage(rpc: Rpc, protoType: ProtoType?, role: String): RpcMessage? {
@@ -193,9 +183,6 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
      * Ensures that the referenced type has a generated Kotlin class and is
      * declared as a Protobuf message rather than another schema type.
      *
-     * @param rpc the RPC referencing the message
-     * @param protoType the Protobuf type to resolve
-     * @param role the message role, used when reporting validation errors
      * @return the resolved message and serializer, or `null` if validation fails
      */
     private fun generatedMessage(rpc: Rpc, protoType: ProtoType, role: String): RpcMessage? {

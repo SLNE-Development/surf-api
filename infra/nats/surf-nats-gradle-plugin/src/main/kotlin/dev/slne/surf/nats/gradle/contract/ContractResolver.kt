@@ -95,12 +95,8 @@ internal class ContractResolver(private val types: KotlinTypeResolver) {
     /**
      * Reports nested type names that collide with the enclosing class, companion, or oneof types.
      *
-     * Non-reserved nested names are recorded even when they collide with oneofs,
-     * and the previous declaration location is reported for a collision.
-     *
-     * @param owner the enclosing message class
-     * @param nested the nested Protobuf declaration
-     * @param used locations of oneofs and previously visited nested type names
+     * [used] maps the oneof and already visited nested type names to their locations. Non-reserved nested names are
+     * recorded even when they collide with oneofs, and the previous declaration location is reported for a collision.
      */
     private fun checkNestedName(
         owner: ClassName,

@@ -16,8 +16,8 @@ import java.io.File
  * Types and services are matched by their fully qualified Protobuf names. Renaming an element or moving it to another
  * package is therefore treated as removing it.
  *
- * In addition to wire compatibility, this checker validates Kotlin package changes, removed reservations, event
- * configuration, and resolved RPC options. Changes to call timeouts are intentionally excluded.
+ * Besides wire compatibility, reports Kotlin package changes, removed reservations, event configuration changes and
+ * changed RPC options. Call timeouts are not compared.
  */
 object CompatibilityChecker {
 
@@ -73,7 +73,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     private val violations = mutableListOf<CompatibilityFinding>()
     private val warnings = mutableListOf<CompatibilityFinding>()
 
-    // The service and method option readers only report call timeouts that do not fit an Int; timeouts are not compared.
+    // The option readers only report call timeouts that do not fit an Int, and timeouts are not compared.
     private val ignoredProblems = Problems()
     private val rawDefaults = RawDefaults()
 
@@ -163,9 +163,6 @@ private class Comparison(currentFiles: List<ProtoFile>) {
      * Compares a message's fields, reservations, event opt-in, and generated constructor parameter order.
      *
      * Field and reservation violations are reported before the constructor-order warning.
-     *
-     * @param baseline the published message declaration
-     * @param current the matching current message declaration
      */
     private fun compareMessage(baseline: MessageType, current: MessageType) {
         val name = baseline.type.toString()
@@ -296,7 +293,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     /**
      * Describes the positions of existing constructor parameters that moved between [before] and [after].
      *
-     * Removed parameters are excluded; the returned descriptions follow baseline parameter order.
+     * Removed parameters are excluded. The descriptions follow the baseline parameter order.
      */
     private fun movedParameters(
         before: List<OrderedParameter>,
@@ -567,11 +564,6 @@ private class Comparison(currentFiles: List<ProtoFile>) {
 
     /**
      * Compares an enum constant with its current namesake, or verifies reservations after its removal.
-     *
-     * @param enumName the fully qualified Protobuf enum name
-     * @param before the baseline enum constant
-     * @param current the current enum declaration
-     * @param reservations names and numbers currently reserved by the enum
      */
     private fun compareEnumConstant(
         enumName: String,

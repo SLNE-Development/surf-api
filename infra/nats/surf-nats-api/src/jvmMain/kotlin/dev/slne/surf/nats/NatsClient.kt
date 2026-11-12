@@ -12,10 +12,13 @@ import kotlin.reflect.KClass
 /**
  * Provides event publishing, listener registration, and remote service calls for one logical application.
  *
- * Create one client per application [name] and close it during application shutdown.
+ * Create one client per application [name] with [create] and close it during application shutdown. A client does
+ * not survive a restart of the NATS instance: close it before the instance is disabled and create a new one after the
+ * instance is loaded again.
  *
- * `StatusChanged` is generated from a `.proto` message with the `(surf.nats.v1.event)` option,
- * `StatusService` from a `.proto` service whose `Status` rpc returns a `StatusReply`.
+ * Events and services are classes that the `dev.slne.surf.nats` Gradle plugin generates from `.proto` files. In the
+ * following example, `StatusChanged` is generated from a message with the `(surf.nats.v1.event)` option, and
+ * `StatusService` from a service whose `Status` rpc takes `google.protobuf.Empty` and returns a `StatusReply`:
  *
  * ```kotlin
  * suspend fun example() {
@@ -49,7 +52,9 @@ public interface NatsClient : AutoCloseable {
     public val name: String
 
     /**
-     * Whether this client has been closed.
+     * Whether the client is closed.
+     *
+     * Becomes `true` once [close] has drained the registrations, and remains `false` during the drain.
      */
     public val isClosed: Boolean
 
@@ -59,11 +64,14 @@ public interface NatsClient : AutoCloseable {
      * The event must be an instance of a generated event message. Returns once the message has been
      * handed to the connection. Delivery is not guaranteed. Events exceeding the server's payload
      * limit are rejected and are never offloaded. Serialization failures propagate to the caller.
-     * Each call sends a new random event ID.
+     * Each call sends a new random event ID, see [dev.slne.surf.nats.event.NatsEventContext.eventId].
+     *
+     * Listeners registered on this client can receive the event too, unless they set
+     * [dev.slne.surf.nats.event.NatsListener.ignoreFromThisClient].
      *
      * @throws IllegalArgumentException if the event class is not a generated event, its proto name is invalid, or the
      * message is too large.
-     * @throws IllegalStateException if the client is closed or no NATS connection is initialized.
+     * @throws IllegalStateException if the client is closed or NATS is not connected.
      */
     public fun publish(event: NatsEvent)
 
@@ -78,9 +86,14 @@ public interface NatsClient : AutoCloseable {
      * guarantee. Move blocking work to [kotlinx.coroutines.Dispatchers.IO] using
      * [kotlinx.coroutines.withContext]. Listener failures are logged and do not affect other listeners.
      *
+     * @param listener the object whose annotated methods receive the events. The client keeps a strong reference to
+     * it until the registration is closed.
+     * @return the registration of all listener methods of [listener].
      * @throws IllegalArgumentException if listener methods are invalid or none are found.
-     * @throws IllegalStateException if the client is closed or closing, or a subject already belongs to another
-     * event type.
+     * @throws IllegalStateException if the client is closed or closing, NATS is not connected, or a subject already
+     * belongs to another event type.
+     * @throws java.util.concurrent.TimeoutException if the server does not confirm the subscriptions within 5 seconds.
+     * The subscriptions of this call are removed again.
      */
     @IgnorableReturnValue
     public suspend fun registerListener(listener: Any): NatsRegistration
@@ -97,8 +110,20 @@ public interface NatsClient : AutoCloseable {
      * Handlers run on [kotlinx.coroutines.Dispatchers.Default] and may run concurrently. Move blocking
      * work to [kotlinx.coroutines.Dispatchers.IO] using [kotlinx.coroutines.withContext].
      *
+     * ```kotlin
+     * val registration = client.registerService(StatusService::class, object : StatusService {
+     *     override suspend fun status() = StatusReply("ready")
+     * })
+     * ```
+     *
+     * @param type the generated service interface, not the implementation class.
+     * @param implementation the object that handles the calls.
+     * @return the registration whose [NatsRegistration.close] stops serving the service.
      * @throws IllegalArgumentException if the interface, its methods, or the implementation are invalid.
-     * @throws IllegalStateException if the client is closed or closing, or the service is already registered.
+     * @throws IllegalStateException if the client is closed or closing, NATS is not connected, or the service is
+     * already registered.
+     * @throws java.util.concurrent.TimeoutException if the server does not confirm the subscriptions within 5 seconds.
+     * The registration is closed again.
      */
     @IgnorableReturnValue
     public suspend fun <S : Any> registerService(type: KClass<S>, implementation: S): NatsRegistration
@@ -111,8 +136,15 @@ public interface NatsClient : AutoCloseable {
      * RPC of this registration is handled by [NatsPersistentInterceptor.intercept]. Methods that are not persistent
      * do not use the interceptor.
      *
+     * @param type the generated service interface, not the implementation class.
+     * @param implementation the object that handles the calls.
+     * @param interceptor the interceptor that handles every persistent call of this registration.
+     * @return the registration whose [NatsRegistration.close] stops serving the service.
      * @throws IllegalArgumentException if the interface, its methods, or the implementation are invalid.
-     * @throws IllegalStateException if the client is closed or closing, or the service is already registered.
+     * @throws IllegalStateException if the client is closed or closing, NATS is not connected, or the service is
+     * already registered.
+     * @throws java.util.concurrent.TimeoutException if the server does not confirm the subscriptions within 5 seconds.
+     * The registration is closed again.
      */
     @IgnorableReturnValue
     public suspend fun <S : Any> registerService(
@@ -124,10 +156,18 @@ public interface NatsClient : AutoCloseable {
     /**
      * Returns a remote service proxy cached per interface on this client.
      *
-     * Validates [type] using the same rules as [registerService]. Proxy calls may throw subtypes
+     * Validates [type] using the same rules as [registerService]. Each method of the proxy sends a call to the
+     * instances that serve the service, which can be in this or any other client. Proxy calls may throw subtypes
      * of [dev.slne.surf.nats.rpc.NatsRpcException]. Calls started after this client is closed throw
      * [IllegalStateException].
      *
+     * ```kotlin
+     * val status = client.service(StatusService::class)
+     * val reply = status.status()
+     * ```
+     *
+     * @param type the generated service interface.
+     * @return the proxy, the same instance for repeated calls with the same [type].
      * @throws IllegalArgumentException if the service interface or its methods are invalid.
      * @throws IllegalStateException if the client is closed, or is closing and has no proxy for [type] yet.
      */
@@ -153,6 +193,8 @@ public interface NatsClient : AutoCloseable {
     public companion object Factory {
         /**
          * Creates a client with a name unique among open clients in this JVM.
+         *
+         * Creating a client opens no connection: the client uses the shared connection of the NATS instance.
          *
          * @param name lowercase alphanumeric groups separated by hyphens, as described by [NatsClient.name].
          * @throws IllegalArgumentException if [name] is invalid.

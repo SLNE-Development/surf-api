@@ -4,6 +4,12 @@ import dev.slne.surf.nats.js.api.ListenOptions
 import dev.slne.surf.nats.rpc.Recipients
 import dev.slne.surf.nats.runtime.ListenerRules
 
+/**
+ * Parsed [ListenOptions] with the shared listener rules.
+ *
+ * [problem] holds the reason why the combination is invalid, or `null`. [of] throws [IllegalArgumentException] for
+ * an unknown `recipients` value.
+ */
 internal class ListenerSettings(
     val recipients: Recipients,
     val ignoreFromThisClient: Boolean,

@@ -10,6 +10,11 @@ import org.jetbrains.annotations.Blocking
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Creates the `NatsClient`s of this process and tracks the open ones by name.
+ *
+ * A name is free again once its client is closed. Thread-safe.
+ */
 @InternalNatsApi
 internal class NatsClientFactoryImpl : NatsClientFactory {
     private val clients = ConcurrentHashMap<String, NatsClientImpl>()
@@ -17,6 +22,12 @@ internal class NatsClientFactoryImpl : NatsClientFactory {
     @Volatile
     private var accepting = true
 
+    /**
+     * Creates a client named [name].
+     *
+     * Throws [IllegalArgumentException] when [name] is not a valid client name and [IllegalStateException] when an
+     * open client already has that name.
+     */
     override fun create(name: String): NatsClient {
         ProtocolNaming.requireClientName(name)
 
@@ -45,6 +56,10 @@ internal class NatsClientFactoryImpl : NatsClientFactory {
         }
     }
 
+    /**
+     * Warns about clients that are still open, waits 10 seconds and logs the creation site of each one still open
+     * then. Closes no client.
+     */
     suspend fun ensureAllClientsClosed() {
         val open = clients.values.toList()
         if (open.isEmpty()) return

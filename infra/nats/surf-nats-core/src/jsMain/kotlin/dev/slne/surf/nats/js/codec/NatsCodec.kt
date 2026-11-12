@@ -13,12 +13,20 @@ import js.typedarrays.Uint8Array
  * Encodes and decodes protobuf-es messages under the presence and enum rules of the Kotlin codec ([MessageRules]).
  */
 internal object NatsCodec {
+    /**
+     * Encodes [value], a message, an init object or `null`, after the outgoing checks of [MessageRules.prepare].
+     *
+     * @throws IllegalArgumentException if [value] violates the rules or is a message of another type
+     */
     fun encode(schema: DescMessage, value: ProtoMessageInit?): Uint8Array<*> {
         return toBinary(schema, MessageRules.prepare(schema, value))
     }
 
     /**
-     * Decodes [data] as [schema]; [source] names the message in the error of an undecodable one.
+     * Decodes [data] as [schema] and normalizes unknown enum numbers. [source] names the message in the error of an
+     * undecodable one.
+     *
+     * @throws IllegalArgumentException if [contentType] is not protobuf or the message violates the rules
      */
     fun decode(schema: DescMessage, data: Uint8Array<*>, contentType: String?, source: String): ProtoMessage {
         ProtocolHeaders.requireProtobufContentType(contentType)

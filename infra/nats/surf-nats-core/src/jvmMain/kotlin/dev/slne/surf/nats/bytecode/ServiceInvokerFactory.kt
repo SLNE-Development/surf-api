@@ -9,6 +9,12 @@ import java.lang.invoke.MethodType
 import java.lang.reflect.Method
 import kotlin.coroutines.Continuation
 
+/**
+ * Creates a [ServiceInvoker] per service method as a hidden class that calls the method through a constant
+ * [MethodHandle].
+ *
+ * All invokers share one generated class template. Each hidden class gets its own handle as class data.
+ */
 @InternalNatsApi
 internal object ServiceInvokerFactory {
 
@@ -32,6 +38,9 @@ internal object ServiceInvokerFactory {
         )
     }
 
+    /**
+     * Creates an invoker of the suspending [method] on [implementation].
+     */
     fun create(implementation: Any, method: Method): ServiceInvoker {
         val hidden = LOOKUP.defineHiddenClassWithClassData(
             invokerClassBytes,
@@ -47,7 +56,8 @@ internal object ServiceInvokerFactory {
     /**
      * Turns [method] into a [MethodHandle] with the shape `(Object, Continuation) -> Object` bound to [impl].
      *
-     * [method] takes either the request and a [Continuation] or only a [Continuation]; the latter ignores the request.
+     * [method] takes either the request and a [Continuation] or only a [Continuation]. In the latter case the
+     * handle ignores the request.
      */
     private fun adaptHandle(impl: Any, method: Method): MethodHandle {
         // Object([request,] continuation)

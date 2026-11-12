@@ -1,5 +1,9 @@
 package dev.slne.surf.nats.protocol
 
+/**
+ * Naming rules for proto names, client names and versioned contract packages, shared by the code generator and both
+ * clients.
+ */
 internal object ProtocolNaming {
 
     /**
@@ -13,7 +17,7 @@ internal object ProtocolNaming {
      *
      * Words split between an ASCII lowercase letter or digit and an ASCII uppercase letter, and before the last
      * uppercase letter of an uppercase run that is followed by a lowercase letter. All other characters, including
-     * `_` and `-`, stay as they are; the result is lowercased.
+     * `_` and `-`, stay as they are. The result is lowercased.
      */
     fun kebabCase(name: String): String = buildString(name.length + 4) {
         for (i in name.indices) {
@@ -28,7 +32,7 @@ internal object ProtocolNaming {
      * Returns whether [name] is a proto full name: identifiers joined by single `.`, each starting with an ASCII
      * letter and containing only ASCII letters, digits and `_`.
      *
-     * Subjects and stream names embed such names unchanged; the leading letter keeps the stream name encoding of
+     * Subjects and stream names embed such names unchanged. The leading letter keeps the stream name encoding of
      * [ProtocolStreams] injective.
      */
     fun isProtoName(name: String): Boolean {
@@ -122,7 +126,8 @@ internal object ProtocolNaming {
     }
 
     /**
-     * Returns the major version like [majorVersionOrNull]; [source] names the declaration in the error message.
+     * Returns the major version like [majorVersionOrNull], or throws [IllegalArgumentException] without a version
+     * suffix. [source] names the declaration in the error message.
      */
     fun majorVersion(protoPackage: String, source: String? = null): Int {
         return majorVersionOrNull(protoPackage)
@@ -132,12 +137,15 @@ internal object ProtocolNaming {
             )
     }
 
+    /**
+     * Returns [name] when it is [isKebabName], else throws [IllegalArgumentException]. [what] names the value in the
+     * error message.
+     */
     fun requireClientName(name: String, what: String = "NATS client name"): String {
         require(isKebabName(name)) { "Invalid $what '$name': must be kebab-case ([a-z0-9] separated by '-')" }
         return name
     }
 
-    @Suppress("RedundantIf")
     private fun isWordBoundary(name: String, index: Int): Boolean {
         val previous = name[index - 1]
         val current = name[index]

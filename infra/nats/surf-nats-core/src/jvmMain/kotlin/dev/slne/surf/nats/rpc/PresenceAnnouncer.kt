@@ -10,6 +10,12 @@ import io.nats.client.Dispatcher
 import kotlinx.coroutines.*
 import java.lang.AutoCloseable
 
+/**
+ * Announces a service registration on the presence subject of its service.
+ *
+ * [start] publishes `join` and then a `beat` every [RpcDefaults.HEARTBEAT_INTERVAL] and in response to every `query`.
+ * [close] publishes `leave`. Nothing is published after [close], and failed publishes are only logged.
+ */
 @InternalNatsApi
 internal class PresenceAnnouncer(
     private val client: NatsClientImpl,

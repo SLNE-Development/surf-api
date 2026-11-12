@@ -1,4 +1,7 @@
 package dev.slne.surf.nats.js.external.protobuf.protoplugin
 
-// The union Printable of protoplugin: string, ImportSymbol, JSDoc block, export statement and other literals
+/**
+ * Binds the union `Printable` of `@bufbuild/protoplugin`: a string, an [ImportSymbol], a JSDoc block, an export
+ * statement or another literal. Use [printable] to pass a string.
+ */
 internal external interface Printable

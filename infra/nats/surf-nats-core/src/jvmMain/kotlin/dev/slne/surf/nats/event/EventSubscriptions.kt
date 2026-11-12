@@ -27,6 +27,17 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
+/**
+ * Manages the event subscriptions of one client on a dispatcher of its own.
+ *
+ * Listener methods with the same subject and queue group share one subscription. `ANY_INSTANCE` listeners subscribe
+ * in a queue group named after the client, so the instances of the same client share the load. One subject accepts
+ * listeners of a single event type per client.
+ *
+ * Every message is decoded once and each listener runs in its own coroutine. A message that cannot be decoded,
+ * including one without a `Content-Type: application/protobuf` header, is dropped with a warning. A failing listener
+ * is logged and does not affect the others. Thread-safe.
+ */
 @InternalNatsApi
 internal class EventSubscriptions(private val client: NatsClientImpl) {
 
@@ -46,6 +57,11 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
     private val handlerScope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
 
+    /**
+     * Adds [invoker] as a target of [method]'s subject and subscribes when no subscription exists yet.
+     *
+     * Throws [IllegalStateException] after [drain] or [close], or when the subject is used by another event type.
+     */
     fun add(method: ListenerMethod, invoker: ListenerInvoker): Unit = synchronized(lock) {
         check(!closed) { "NatsClient[${client.name}] is closed" }
 
@@ -84,6 +100,9 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         entries[key] = Entry(descriptor, subscription, targets)
     }
 
+    /**
+     * Removes [invoker] from [method]'s subject and unsubscribes once no target is left.
+     */
     fun remove(method: ListenerMethod, invoker: ListenerInvoker): Unit = synchronized(lock) {
         val key = keyOf(method)
         val entry = entries[key] ?: return
@@ -110,17 +129,24 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             entries.clear()
             dispatcher.also { dispatcher = null }
         }
-        draining?.let { client.drainDispatcher(it, timeout, "event dispatcher") }
-        val stillActive = awaitRunningHandlers(handlerScope, deadline)
-        if (stillActive != null) {
-            client.logger.warn(
-                "$stillActive listener handlers did not finish within the drain timeout of $timeout " +
-                        "and are cancelled"
-            )
+        try {
+            draining?.let { client.drainDispatcher(it, timeout, "event dispatcher") }
+            val stillActive = awaitRunningHandlers(handlerScope, deadline)
+            if (stillActive != null) {
+                client.logger.warn(
+                    "$stillActive listener handlers did not finish within the drain timeout of $timeout " +
+                            "and are cancelled"
+                )
+            }
+        } finally {
+            handlerScope.cancel("Listener handlers of NatsClient[${client.name}] drained")
         }
-        handlerScope.cancel("Listener handlers of NatsClient[${client.name}] drained")
     }
 
+    /**
+     * Closes the dispatcher without draining it. Running handlers keep running until [NatsClientImpl.close] cancels
+     * the client scope.
+     */
     fun close(): Unit = synchronized(lock) {
         if (closed) return
         closed = true

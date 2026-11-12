@@ -12,13 +12,24 @@ import dev.slne.surf.nats.protocol.ProtocolOptions
  * protoc-gen-es output.
  *
  * Plugin options, targets and the response come from `@bufbuild/protoplugin`. Services are validated with the rules
- * and messages of the Kotlin generator; any violation fails the whole run with an error that lists every problem, one
+ * and messages of the Kotlin generator. Any violation fails the whole run with an error that lists every problem, one
  * per line, and no files.
+ *
+ * Only the files to generate are validated and emitted, not their imports. A file that declares services yields
+ * `<file>_nats.ts`, transpiled to `.js` and `.d.ts` according to the `target` option. A file without services yields
+ * nothing. [ClientEmitter] describes the content of a generated file.
  */
 internal object ProtocPlugin {
     const val NAME = "protoc-gen-surf-nats"
+
+    /**
+     * npm package of protoplugin. It is loaded when the plugin runs, so that the client never loads it.
+     */
     const val MODULE = "@bufbuild/protoplugin"
 
+    /**
+     * Plugin version in the generated preamble and in the output of `--version`: `v` plus the surf-nats version.
+     */
     val version: String get() = "v${NatsConstants.VERSION}"
 
     /**

@@ -3,7 +3,7 @@
 package dev.slne.surf.nats.js.api
 
 /**
- * A protobuf-es message or an init object for `create()`; init objects have no `$typeName`.
+ * A protobuf-es message or an init object for `create()`. Init objects have no `$typeName`.
  */
 @JsExport
 external interface ProtoMessageInit {

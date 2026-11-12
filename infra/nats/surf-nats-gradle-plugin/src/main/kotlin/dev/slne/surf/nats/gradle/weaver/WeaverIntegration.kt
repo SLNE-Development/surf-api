@@ -41,7 +41,7 @@ internal object WeaverIntegration {
     /**
      * Applies `dev.slne.weaver` and sets the surf-nats conventions on its extension.
      *
-     * The `WEAVER_URL` and `WEAVER_TOKEN` environment variables take precedence over the default URL.
+     * The `WEAVER_URL` environment variable takes precedence over the default URL.
      */
     fun Project.applyWeaver(): WeaverExtension {
         pluginManager.apply(WeaverPlugin::class.java)
@@ -116,7 +116,8 @@ internal object WeaverIntegration {
      * Returns the weaver proto root as a lazily evaluated file-collection element.
      *
      * Resolves to `weaver.protosDir`, which carries the `fetchProtos` dependency, only while the `weaver`
-     * configuration declares dependencies; otherwise to nothing, so builds without weaver dependencies stay offline.
+     * configuration declares dependencies, and otherwise to nothing, so builds without weaver dependencies stay
+     * offline.
      */
     fun Project.weaverImportPath(weaver: WeaverExtension): Callable<Any> = Callable {
         if (configurations.getByName(CONFIGURATION).dependencies.isEmpty()) emptyList<Any>() else weaver.protosDir

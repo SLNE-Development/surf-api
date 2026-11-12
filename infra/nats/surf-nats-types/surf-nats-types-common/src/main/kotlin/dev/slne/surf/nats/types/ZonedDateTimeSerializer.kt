@@ -13,6 +13,22 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+/**
+ * Serializes a [ZonedDateTime] as the protobuf message `surf.types.v1.ZonedDateTime`.
+ *
+ * The message has the following fields:
+ * - `date_time` (1, required): instant and offset as `surf.types.v1.OffsetDateTime`, see [OffsetDateTimeSerializer].
+ * - `zone_id` (2, required): [java.time.ZoneId.getId], a region ID such as `Europe/Berlin` or an offset ID such as
+ *   `+02:00`.
+ *
+ * Decoding preserves the instant and the zone. When the written offset does not match the reader's rules for the
+ * zone, the offset is recomputed from those rules. The `dev.slne.surf.nats` Gradle plugin maps fields of this message
+ * type to [ZonedDateTime] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when a field is absent and
+ * [kotlinx.serialization.SerializationException] when the zone is unknown or the instant lies outside the range of
+ * [ZonedDateTime].
+ */
 object ZonedDateTimeSerializer : KSerializer<ZonedDateTime> {
     override val descriptor: SerialDescriptor = ZonedDateTimeProto.serializer().descriptor
 

@@ -85,7 +85,7 @@ class AwaitRunningHandlersTest {
     }
 
     @Test
-    fun `reports a missed deadline as 0 when the remaining handlers are being cancelled`() {
+    fun `counts handlers that are being cancelled as still active`() {
         val started = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
         val cancelling = handlers.launch {
@@ -101,7 +101,7 @@ class AwaitRunningHandlersTest {
             started.within(2.seconds)
             cancelling.cancel()
 
-            assertEquals(0, awaitRunningHandlers(handlers, deadlineIn(100.milliseconds)))
+            assertEquals(1, awaitRunningHandlers(handlers, deadlineIn(100.milliseconds)))
         } finally {
             release.complete(Unit)
         }

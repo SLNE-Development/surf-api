@@ -164,7 +164,6 @@ internal object DefaultValues {
      * Detects the radix from the literal's prefix and rejects empty
      * or invalid digit sequences.
      *
-     * @param literal the integer magnitude without a sign
      * @return the parsed non-negative integer, or `null` if invalid
      */
     private fun parseMagnitude(literal: String): BigInteger? {
@@ -184,11 +183,6 @@ internal object DefaultValues {
      * Recognizes infinity and NaN constants before parsing numeric values.
      * Finite values are formatted using their numeric `toString()` representation.
      *
-     * @param literal the floating-point literal
-     * @param type the Kotlin floating-point type
-     * @param format the KotlinPoet format used for finite values
-     * @param fromInteger converts an integer literal to the target numeric type
-     * @param fromDecimal parses a decimal literal into the target numeric type
      * @return the Kotlin expression, or `null` if the literal is invalid
      */
     private fun floating(
@@ -210,12 +204,9 @@ internal object DefaultValues {
      * Parses a finite floating-point value from an integer or decimal literal.
      *
      * Integer parsing takes precedence over decimal parsing. Values that
-     * convert to infinity are rejected; explicit infinity literals are
+     * convert to infinity are rejected. Explicit infinity literals are
      * handled separately by [special].
      *
-     * @param literal the numeric literal to parse
-     * @param fromInteger converts a parsed integer to the target numeric type
-     * @param fromDecimal parses a decimal literal into the target numeric type
      * @return the finite numeric value, or `null` if parsing fails or the result is infinite
      */
     private fun finiteFloatingValue(
@@ -236,7 +227,6 @@ internal object DefaultValues {
      * KotlinPoet's `%S` may generate raw strings for multiline values,
      * so escaping is performed explicitly instead.
      *
-     * @param value the string to encode
      * @return the quoted and escaped Kotlin string literal
      */
     private fun kotlinString(value: String): String = buildString {
@@ -254,8 +244,6 @@ internal object DefaultValues {
      *
      * Special characters use dedicated escape sequences. Control characters
      * and non-ASCII characters without dedicated escapes use Unicode escapes.
-     *
-     * @param char the character to append
      */
     private fun StringBuilder.appendEscaped(char: Char) {
         when (char) {
@@ -282,7 +270,6 @@ internal object DefaultValues {
      * Accepts digits, signs, decimal points, and exponent markers.
      * The numeric parser performs the remaining validation.
      *
-     * @param literal the decimal literal to validate
      * @return the unchanged literal if its characters are allowed, otherwise `null`
      */
     private fun decimal(literal: String): String? {
@@ -296,7 +283,6 @@ internal object DefaultValues {
      * Recognizes `inf`, `infinity`, `-inf`, `-infinity`, and `nan`
      * case-insensitively.
      *
-     * @param literal the literal to inspect
      * @return the corresponding Float/Double member name, or `null` if not recognized
      */
     private fun special(literal: String): String? {

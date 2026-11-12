@@ -9,7 +9,10 @@ import dev.slne.surf.nats.protocol.ProtocolSubjects
 import js.collections.WeakMap
 
 /**
- * A surf-nats event resolved from its protobuf-es schema; [subject] is `surf.evt.<message full name>`.
+ * A surf-nats event resolved from its protobuf-es schema, cached per schema object.
+ *
+ * [subject] is `surf.evt.<message full name>`. [of] throws [IllegalArgumentException] for a message without the
+ * event option, with an invalid name or outside a versioned package.
  */
 internal class EventDescriptor private constructor(
     val schema: DescMessage,

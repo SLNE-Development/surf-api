@@ -30,6 +30,17 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
+/**
+ * Sends the calls of one service proxy of a client.
+ *
+ * The timeout of a call is the one set with the coroutine context of the caller, else the timeout of the method.
+ * Core calls are NATS requests: `ANY_INSTANCE` waits for one reply, and `ALL_INSTANCES` either publishes a fan-out
+ * without waiting or collects replies until the first known answer, the end of the timeout or, with presence, until
+ * every live instance has answered. Persistent calls are published to the work-queue stream and republished with the
+ * same `Nats-Msg-Id` until the server acknowledges them.
+ *
+ * [start] runs once when the proxy is created and starts the presence tracker, if the service has one.
+ */
 @InternalNatsApi
 internal class RpcCallerImpl(
     private val client: NatsClientImpl,
@@ -161,7 +172,7 @@ internal class RpcCallerImpl(
         error("reply channel closed")
     }
 
-    // Records the responder of a reply for the presence-based early end; returns its origin.
+    // Records the responder of a reply for the presence-based early end and returns its origin
     private fun answered(call: AllCall, reply: Message): String? {
         val origin = reply.header(ProtocolHeaders.ORIGIN)
         if (origin != null) {
@@ -193,7 +204,16 @@ internal class RpcCallerImpl(
         )
     }
 
-    // FIRE and PERSISTENT_RPC
+    /**
+     * Publishes a fire or persistent RPC call and, for a persistent RPC, waits for the reply on its own inbox.
+     *
+     * A fire requires a [timeout] within the duplicate window and returns once the server acknowledged the publish.
+     * A persistent RPC republishes for at most the duplicate window and then waits for the reply until [timeout].
+     * Throws [IllegalArgumentException] for a fire timeout above the window or an invalid idempotency key,
+     * [NatsRpcException] when JetStream rejects the publish, and [NatsRemoteException] for an error reply. Throws
+     * [NatsCallTimeoutException] when the timeout passes first, or when a persistent RPC publish gets no
+     * acknowledgement within its publish phase, which can end before the timeout.
+     */
     private suspend fun callPersistent(
         method: MethodDescriptor,
         flow: CallFlow,
@@ -211,7 +231,7 @@ internal class RpcCallerImpl(
 
         val streams = checkNotNull(service.streams)
         val headers = client.headers()
-        // The responder's message identity; Nats-Msg-Id stays unique per call, so a repeat is stored again
+        // The responder's message identity. Nats-Msg-Id stays unique per call, so a repeat is stored again
         if (idempotencyKey != null) headers.put(ProtocolHeaders.MESSAGE_ID, idempotencyKey)
         val encoded = method.encodeRequest(request)
 

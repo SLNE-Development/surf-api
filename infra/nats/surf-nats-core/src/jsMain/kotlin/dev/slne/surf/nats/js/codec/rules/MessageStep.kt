@@ -3,6 +3,9 @@ package dev.slne.surf.nats.js.codec.rules
 import dev.slne.surf.nats.js.external.protobuf.DescFieldMessage
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 
+/**
+ * Checks a singular message field for presence and applies the plan of its type to the set value.
+ */
 internal class MessageStep(
     private val field: DescFieldMessage,
     private val required: Boolean,

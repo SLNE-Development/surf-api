@@ -12,6 +12,12 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Runtime model of a service interface: its wire names and its methods resolved against the generated descriptor.
+ *
+ * [methods] are in the order of the generated descriptor, and [MethodDescriptor.index] is the position in that list.
+ * Caller proxies and service registrations address methods by that index. Create instances with [of].
+ */
 @InternalNatsApi
 internal class ServiceDescriptor(
     val type: Class<*>,
@@ -19,10 +25,13 @@ internal class ServiceDescriptor(
     val methods: List<MethodDescriptor>,
 ) {
     /**
-     * Proto full name of the service; a client registers at most one implementation per name.
+     * Proto full name of the service. A client registers at most one implementation per name.
      */
     val name: String get() = names.service
 
+    /**
+     * Subject of the presence protocol, or `null` when no method is an `ALL_INSTANCES` call with an [Answer] result.
+     */
     val presenceSubject: String? = if (methods.any { it.recipients == Recipients.ALL_INSTANCES && it.result == NatsResultKind.ANSWER }) {
         names.presenceSubject
     } else {

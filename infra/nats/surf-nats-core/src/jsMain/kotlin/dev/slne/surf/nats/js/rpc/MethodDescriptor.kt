@@ -15,6 +15,10 @@ import js.typedarrays.Uint8Array
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * One unary method of a [ServiceDescriptor] with its resolved options: persistence, recipients, result kind, timeout
+ * and subject.
+ */
 internal class MethodDescriptor(
     val desc: DescMethod,
     val service: ServiceDescriptor,

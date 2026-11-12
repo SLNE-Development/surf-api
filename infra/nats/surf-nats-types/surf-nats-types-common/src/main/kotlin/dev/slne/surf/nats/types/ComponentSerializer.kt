@@ -11,6 +11,18 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 
+/**
+ * Serializes an Adventure [Component] as the protobuf message `surf.types.v1.Component`.
+ *
+ * Field `json` (1, required) holds the component in the JSON format of [GsonComponentSerializer.gson]. The component
+ * is compacted with [Component.compact] before encoding, so the decoded component renders the same but can differ
+ * structurally from the original. For example, an empty text component whose only child is `Component.text("a")`
+ * decodes as `Component.text("a")`. The `dev.slne.surf.nats` Gradle plugin maps fields
+ * of this message type to [Component] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `json` is absent and
+ * [kotlinx.serialization.SerializationException] when it is not a valid component.
+ */
 object ComponentSerializer : KSerializer<Component> {
     override val descriptor: SerialDescriptor = ComponentProto.serializer().descriptor
 

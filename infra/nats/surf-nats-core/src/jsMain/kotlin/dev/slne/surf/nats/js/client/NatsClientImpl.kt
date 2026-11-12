@@ -9,7 +9,6 @@ import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.codec.NatsCodec
 import dev.slne.surf.nats.js.codec.NatsHeaders
 import dev.slne.surf.nats.js.connection.NatsConnector
-import dev.slne.surf.nats.js.error.NatsCallTimeoutError
 import dev.slne.surf.nats.js.event.EventDescriptor
 import dev.slne.surf.nats.js.event.EventHandler
 import dev.slne.surf.nats.js.event.EventListener
@@ -23,19 +22,19 @@ import dev.slne.surf.nats.js.external.nats.jetstream.JetStreamClient
 import dev.slne.surf.nats.js.external.nats.jetstream.jetstream
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
-import dev.slne.surf.nats.js.interop.positiveTimeoutOrNull
 import dev.slne.surf.nats.js.rpc.MethodDescriptor
 import dev.slne.surf.nats.js.rpc.RpcCaller
 import dev.slne.surf.nats.js.rpc.payload.PayloadStore
-import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.runtime.AbstractNatsClient
 import dev.slne.surf.nats.runtime.randomId
 import kotlinx.coroutines.*
-import kotlin.time.Duration.Companion.seconds
 
 /**
- * One NATS connection of a surf-nats JS client, created by [NatsClientFactory].
+ * One NATS connection of a surf-nats JS client, created by [NatsClientFactory] and exposed as `SurfNatsClient`.
+ *
+ * Owns the event subscriptions, the RPC caller and the payload store of the connection. [clientScope] runs the
+ * background work and is cancelled when [close] ends.
  */
 internal class NatsClientImpl(
     name: String,
@@ -69,16 +68,17 @@ internal class NatsClientImpl(
     internal fun headers(): MsgHdrs = NatsHeaders.forOrigin(origin)
 
     /**
-     * Publishes the event under [eventId], a random UUID if null, and waits for the flush that confirms it; events
-     * are never offloaded.
+     * Publishes the event under [eventId], a random UUID if `null`, without waiting for the server.
+     *
+     * Events are never offloaded. The connection buffers the message, and [close] drains the buffer before the
+     * connection ends. Every failure is thrown before anything is sent.
      */
-    suspend fun publish(schema: DescMessage, event: ProtoMessageInit?, timeoutMs: Int?, eventId: String?) {
+    fun publish(schema: DescMessage, event: ProtoMessageInit?, eventId: String?) {
         checkOpen()
         val id = eventId ?: randomId()
         ProtocolHeaders.eventIdProblem(id)?.let { throw IllegalArgumentException(it) }
         val descriptor = EventDescriptor.of(schema)
         val subject = descriptor.subject
-        val timeout = positiveTimeoutOrNull(timeoutMs, "Timeout") ?: ProtocolDefaults.CORE_TIMEOUT_SECONDS.seconds
         val data = NatsCodec.encode(schema, event)
         val header = headers()
         header.set(ProtocolHeaders.EVENT_ID, id)
@@ -91,11 +91,13 @@ internal class NatsClientImpl(
         )
 
         connection.publish(subject, data, NatsPublishOptions(headers = header))
-        withTimeoutOrNull(timeout) { // TODO: replace with fire and forget like on the jvm?
-            connection.flush().await()
-        } ?: throw NatsCallTimeoutError(subject, timeout.inWholeMilliseconds.toInt())
     }
 
+    /**
+     * Subscribes [handler] and returns after a flush, so the server knows the subscription.
+     *
+     * A failed subscribe or flush removes the listener again before the failure is rethrown.
+     */
     suspend fun registerListener(
         schema: DescMessage,
         handler: EventHandler,
@@ -132,7 +134,7 @@ internal class NatsClientImpl(
     }
 
     /**
-     * Calls every method except `ALL_INSTANCES` methods with a result; returns `undefined` for UNIT methods.
+     * Calls every method except `ALL_INSTANCES` methods with a result and returns `undefined` for UNIT methods.
      */
     suspend fun call(method: DescMethod, request: ProtoMessageInit?, options: CallOptions?): ProtoMessage? {
         checkOpen()
@@ -160,13 +162,12 @@ internal class NatsClientImpl(
     override fun closeRegistration(registration: NatsRegistration) = registration.close()
 
     /**
-     * Drains the subscriptions and the connection; running handlers may still publish and call until the drain
+     * Drains the subscriptions, then the connection. Running handlers may still publish and call until the drain
      * ends. A second call waits for the first.
      */
     suspend fun close() {
         if (!lifecycle.beginClose()) return closed.await()
         try {
-            // Running handlers may still publish and call through this client while their subscriptions drain
             eventSubscriptions.drain()
             closeRegistrations()
             if (!connection.isClosed()) connection.drain().await()

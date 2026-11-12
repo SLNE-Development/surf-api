@@ -13,6 +13,21 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
+/**
+ * Serializes an [OffsetDateTime] as the protobuf message `surf.types.v1.OffsetDateTime`.
+ *
+ * The message has the following fields:
+ * - `seconds` (1, required): seconds of the instant since 1970-01-01T00:00:00Z.
+ * - `nanos` (2, optional, default 0): nanosecond of the second, 0 to 999,999,999.
+ * - `offset_seconds` (3, required): the UTC offset in seconds, -64,800 to 64,800.
+ *
+ * Instant and offset are preserved exactly, so the decoded value equals the original. The `dev.slne.surf.nats` Gradle
+ * plugin maps fields of this message type to [OffsetDateTime] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `seconds` or `offset_seconds` is absent and
+ * [kotlinx.serialization.SerializationException] when `nanos` or the offset is out of range or the instant lies
+ * outside the range of [OffsetDateTime].
+ */
 object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
     private const val MAX_NANOS = 999_999_999
 

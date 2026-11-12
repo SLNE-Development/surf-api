@@ -19,6 +19,7 @@ import kotlin.OptIn
 import kotlin.String
 import kotlin.collections.List
 import kotlin.collections.Map
+import kotlin.jvm.JvmStatic
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -40,6 +41,20 @@ public enum class PunishmentType(
     KICK(3),
     ;
 
+    public companion object {
+        /**
+         * Returns the entry with the Protobuf number [number], or `null` if there is none.
+         */
+        @JvmStatic
+        public fun forNumber(number: Int): PunishmentType? = when (number) {
+            0 -> PunishmentType.UNSPECIFIED
+            1 -> PunishmentType.BAN
+            2 -> PunishmentType.MUTE
+            3 -> PunishmentType.KICK
+            else -> null
+        }
+    }
+
     public object Serializer : KSerializer<PunishmentType> {
         override val descriptor: SerialDescriptor =
                 PrimitiveSerialDescriptor("surf.demo.v1.PunishmentType", PrimitiveKind.INT)
@@ -48,13 +63,7 @@ public enum class PunishmentType(
             encoder.encodeInt(value.number)
         }
 
-        override fun deserialize(decoder: Decoder): PunishmentType = when (decoder.decodeInt()) {
-            0 -> PunishmentType.UNSPECIFIED
-            1 -> PunishmentType.BAN
-            2 -> PunishmentType.MUTE
-            3 -> PunishmentType.KICK
-            else -> PunishmentType.UNSPECIFIED
-        }
+        override fun deserialize(decoder: Decoder): PunishmentType = PunishmentType.forNumber(decoder.decodeInt()) ?: PunishmentType.UNSPECIFIED
     }
 }
 

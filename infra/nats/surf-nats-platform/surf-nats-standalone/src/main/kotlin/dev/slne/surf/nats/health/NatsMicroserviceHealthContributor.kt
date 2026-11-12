@@ -6,6 +6,13 @@ import dev.slne.surf.microservice.api.health.MicroserviceHealthContributor
 import dev.slne.surf.microservice.api.health.MicroserviceHealthStatus
 import dev.slne.surf.nats.NatsInstance
 
+/**
+ * Reports the state of the shared NATS connection to the microservice `health` command.
+ *
+ * The check is passive: it reads the connection status and sends nothing to the server. While a connection exists,
+ * it returns one result for the component `nats` with the connection name as instance, healthy only while the
+ * status is `CONNECTED` (reconnecting counts as unhealthy). Before start and after shutdown it returns an empty list.
+ */
 @AutoService(MicroserviceHealthContributor::class)
 internal class NatsMicroserviceHealthContributor : MicroserviceHealthContributor {
     override val name: String = "nats"

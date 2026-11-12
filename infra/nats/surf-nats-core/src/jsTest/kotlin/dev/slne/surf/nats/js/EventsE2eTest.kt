@@ -55,7 +55,7 @@ class EventsE2eTest {
             raw.subscribe(playerJoinedSubject) { received += it }
             raw.flush()
 
-            client.publish(PlayerJoinedSchema, playerJoined("Steve")).await()
+            client.publish(PlayerJoinedSchema, playerJoined("Steve"))
 
             eventually { received.size == 1 }
             val message = received.single()
@@ -81,8 +81,8 @@ class EventsE2eTest {
             raw.flush()
             client.listen(PlayerJoinedSchema, { _, context -> contexts.add(context) }, listenOptions()).await()
 
-            client.publish(PlayerJoinedSchema, playerJoined("Steve")).await()
-            client.publish(PlayerJoinedSchema, playerJoined("Alex"), PublishOptions(eventId = "custom-event-1")).await()
+            client.publish(PlayerJoinedSchema, playerJoined("Steve"))
+            client.publish(PlayerJoinedSchema, playerJoined("Alex"), PublishOptions(eventId = "custom-event-1"))
 
             eventually { received.size == 2 && contexts.size == 2 }
             val generated = header(received[0], ProtocolHeaders.EVENT_ID)
@@ -90,7 +90,7 @@ class EventsE2eTest {
             assertEquals("custom-event-1", header(received[1], ProtocolHeaders.EVENT_ID))
             assertEquals(setOf(generated, "custom-event-1"), contexts.map { it.eventId }.toSet())
 
-            assertFails { client.publish(PlayerJoinedSchema, playerJoined("Bob"), PublishOptions(eventId = "a b")).await() }
+            assertFails { client.publish(PlayerJoinedSchema, playerJoined("Bob"), PublishOptions(eventId = "a b")) }
         } finally {
             client.close().await()
             raw.close()
@@ -108,7 +108,7 @@ class EventsE2eTest {
             raw.subscribe("surf.evt.surf.natsjs.test.v2.PlayerJoined") { v2 += it }
             raw.flush()
 
-            client.publish(PlayerJoinedV2Schema, unsafeJso<PlayerJoined> { name = "Steve" }).await()
+            client.publish(PlayerJoinedV2Schema, unsafeJso<PlayerJoined> { name = "Steve" })
 
             eventually { v2.size == 1 }
             delay(100.milliseconds)
@@ -142,7 +142,7 @@ class EventsE2eTest {
                 ).await()
             }
 
-            publisher.publish(ChatMessageSchema, chat("hello")).await()
+            publisher.publish(ChatMessageSchema, chat("hello"))
 
             eventually { any.size == 1 && all.size == 2 }
             delay(300.milliseconds)
@@ -174,7 +174,7 @@ class EventsE2eTest {
             raw.subscribe("surf.evt.surf.natsjs.test.v1.ChatMessage", queue = name) { group.add("raw") }
             raw.flush()
 
-            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it")).await() }
+            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it")) }
 
             eventually { group.size == 3 && otherClient.size == 3 }
             delay(300.milliseconds)
@@ -202,7 +202,7 @@ class EventsE2eTest {
             // Nothing was subscribed: the queue group of the client stays empty
             val received = mutableListOf<String?>()
             publisher.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, listenOptions()).await()
-            client.publish(ChatMessageSchema, chat("after")).await()
+            client.publish(ChatMessageSchema, chat("after"))
             eventually { received.size == 1 }
         } finally {
             client.close().await()
@@ -224,7 +224,7 @@ class EventsE2eTest {
                 client.listen(ChatMessageSchema, { _, _ -> received.add(client.origin) }, options).await()
             }
 
-            publisher.publish(ChatMessageSchema, chat("hello")).await()
+            publisher.publish(ChatMessageSchema, chat("hello"))
 
             eventually { received.size == 2 }
             assertEquals(setOf(first.origin, second.origin), received.toSet())
@@ -247,7 +247,7 @@ class EventsE2eTest {
             client.listen(ChatMessageSchema, { _, context -> own.add(context) }, listenOptions()).await()
             other.listen(ChatMessageSchema, { _, context -> foreign.add(context) }, listenOptions()).await()
 
-            client.publish(ChatMessageSchema, chat("self")).await()
+            client.publish(ChatMessageSchema, chat("self"))
 
             eventually { own.size == 1 && foreign.size == 1 }
             delay(200.milliseconds)
@@ -310,8 +310,8 @@ class EventsE2eTest {
             ).await()
             client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }, listenOptions()).await()
 
-            client.publish(ChatMessageSchema, chat("one")).await()
-            client.publish(ChatMessageSchema, chat("two")).await()
+            client.publish(ChatMessageSchema, chat("one"))
+            client.publish(ChatMessageSchema, chat("two"))
 
             eventually { received.size == 2 }
             assertEquals(listOf<String?>("one", "two"), received)
@@ -325,19 +325,19 @@ class EventsE2eTest {
         val client = TestNats.client(uniqueName("events-invalid"))
         try {
             val missingName = assertFailsWith<IllegalArgumentException> {
-                client.publish(PlayerJoinedSchema, unsafeJso<PlayerJoined> { }).await()
+                client.publish(PlayerJoinedSchema, unsafeJso<PlayerJoined> { })
             }
             assertTrue(missingName.message!!.contains("'name'"), missingName.message)
 
             val tooLarge = assertFails {
-                client.publish(ChatMessageSchema, chat("x".repeat(1_100_000))).await()
+                client.publish(ChatMessageSchema, chat("x".repeat(1_100_000)))
             }
             assertTrue(tooLarge.message!!.contains("exceeding the NATS max payload"), tooLarge.message)
         } finally {
             client.close().await()
         }
         assertFailsWith<IllegalStateException> {
-            client.publish(ChatMessageSchema, chat("x")).await()
+            client.publish(ChatMessageSchema, chat("x"))
         }
         assertTrue(client.isClosed)
     }
@@ -360,7 +360,7 @@ class EventsE2eTest {
                 listenOptions("ANY_INSTANCE"),
             ).await()
 
-            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it")).await() }
+            repeat(3) { publisher.publish(ChatMessageSchema, chat("hello-$it")) }
 
             // Both listeners see every event the queue group delivers to this client
             eventually { first.size == 3 && second.size == 3 }
@@ -369,7 +369,7 @@ class EventsE2eTest {
 
             // Closing one registration keeps the shared subscription for the other
             registration.close()
-            publisher.publish(ChatMessageSchema, chat("after")).await()
+            publisher.publish(ChatMessageSchema, chat("after"))
             eventually { first.size == 4 }
             delay(100.milliseconds)
             assertEquals(3, second.size)
@@ -397,8 +397,8 @@ class EventsE2eTest {
             ).await()
             client.listen(ChatMessageSchema, { event, _ -> every.add(event.fields<ChatMessage>().text) }, listenOptions()).await()
 
-            publisher.publish(ChatMessageSchema, chat("one")).await()
-            publisher.publish(ChatMessageSchema, chat("two")).await()
+            publisher.publish(ChatMessageSchema, chat("one"))
+            publisher.publish(ChatMessageSchema, chat("two"))
 
             eventually { every.size == 2 }
             delay(100.milliseconds)

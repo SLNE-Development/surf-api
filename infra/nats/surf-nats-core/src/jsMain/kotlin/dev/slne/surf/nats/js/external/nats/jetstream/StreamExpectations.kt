@@ -4,7 +4,9 @@ package dev.slne.surf.nats.js.external.nats.jetstream
 
 import kotlinx.js.JsPlainObject
 
-// Partial<StreamExpectations>
+/**
+ * Binds `Partial<StreamExpectations>`, the conditions on the stream state that a publish expects.
+ */
 @JsPlainObject
 internal external interface StreamExpectations {
     val streamName: String?

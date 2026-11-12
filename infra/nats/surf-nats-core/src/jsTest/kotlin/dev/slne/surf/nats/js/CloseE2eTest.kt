@@ -5,6 +5,7 @@ package dev.slne.surf.nats.js
 import dev.slne.surf.nats.js.api.EventContext
 import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.client.JsRuntimeDefaults
+import dev.slne.surf.nats.js.external.nats.core.NatsConnectionInternals
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.fixtures.ChatMessage
 import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
@@ -70,7 +71,7 @@ class CloseE2eTest {
         gated: GatedHandler,
     ): Promise<Unit> {
         client.listen(ChatMessageSchema, gated.handler).await()
-        publisher.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "close" }).await()
+        publisher.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "close" })
         withTimeout(5.seconds) { gated.entered.await() }
 
         val closing = client.close()
@@ -103,7 +104,7 @@ class CloseE2eTest {
                     name = "during-close"
                     id = unsafeJso<Uuid> { value = bytesOfSize(16) }
                 }
-                client.publish(PlayerJoinedSchema, joined).await()
+                client.publish(PlayerJoinedSchema, joined)
                 val request = unsafeJso<FindPlayerRequest> { name = "Steve" }
                 server = client.call(findPlayer(), request).await().fields<FindPlayerResponse>().server
             }
@@ -121,6 +122,40 @@ class CloseE2eTest {
         } finally {
             client.close().await()
             publisher.close().await()
+            raw.close()
+        }
+    }
+
+    @Test
+    fun closeSendsThePublishesTheConnectionStillBuffers() = e2eTest {
+        val raw = rawNats()
+        val impl = TestNats.clientImpl(uniqueName("close-buffered"))
+        val client = SurfNatsClient(impl)
+        val protocol = impl.connection.unsafeCast<NatsConnectionInternals>().protocol
+        try {
+            val received = mutableListOf<String?>()
+            raw.subscribe("surf.evt.surf.natsjs.test.v1.ChatMessage") { message ->
+                received += raw.decode(ChatMessageSchema, message.data).fields<ChatMessage>().text
+            }
+            raw.flush()
+
+            // While nats.js considers the connection down it keeps the publishes in its outbound buffer, and the
+            // flush it schedules for them is a no-op. Only the drain in close() can send them afterwards.
+            val expected = (0 until 200).map<Int, String?> { "buffered-$it" }
+            protocol.connected = false
+            expected.forEach { value -> client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = value }) }
+            delay(100.milliseconds)
+            assertTrue(received.isEmpty(), "the publishes left the buffer before close()")
+
+            protocol.connected = true
+            client.close().await()
+
+            assertTrue(client.isClosed)
+            eventually { received.size == expected.size }
+            assertEquals(expected, received)
+        } finally {
+            protocol.connected = true
+            client.close().await()
             raw.close()
         }
     }

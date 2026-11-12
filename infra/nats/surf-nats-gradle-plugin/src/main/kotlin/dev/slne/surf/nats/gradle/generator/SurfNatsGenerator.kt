@@ -19,29 +19,24 @@ import dev.slne.surf.nats.gradle.validate.kotlinPackage
 import java.io.File
 
 /**
- * Generates Kotlin contracts deterministically from Protobuf source files.
+ * Generates Kotlin contracts from Protobuf source files.
  *
- * Resolves type mappings, validates the loaded schema, and generates Kotlin
- * declarations for messages, enums, and services.
- *
- * All generation problems are collected before writing output files, ensuring
- * that validation failures do not modify existing generated sources.
+ * The same sources and settings always produce the same files. Every problem is collected before any file is
+ * written, so a failed run leaves the output directory unchanged. Instances hold no state and can be reused.
  */
 class SurfNatsGenerator {
 
     /**
-     * Generates Kotlin contracts from the configured Protobuf sources.
+     * Generates the contracts of [input] into [outputDir].
      *
-     * Replaces the contents of [outputDir] only after all validation and code
-     * generation steps complete without reported problems.
+     * Replaces the contents of [outputDir] only when generation reports no problem. Without `.proto` sources,
+     * [outputDir] is emptied.
      *
-     * If no Protobuf sources exist, the output directory is cleared and an
-     * empty generation result is returned.
-     *
-     * @param input the source directories, type mappings, and generation settings
-     * @param outputDir the directory receiving the generated Kotlin files
-     * @return the generated files, sorted by their normalized paths
-     * @throws SurfNatsGeneratorException if generation problems are reported
+     * @param input The sources, type mappings and visibility.
+     * @param outputDir The directory that receives one Kotlin file per `.proto` file with generated declarations.
+     * @return The generated files, sorted by path.
+     * @throws SurfNatsGeneratorException when a schema cannot be loaded, a type mapping is invalid, or the sources
+     *   violate the contract rules. It lists every problem found.
      */
     fun generate(input: GeneratorInput, outputDir: File): GenerationResult {
         val problems = Problems()
@@ -61,15 +56,10 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Loads and validates the Protobuf schema, then generates Kotlin file specifications.
+     * Loads the schema and builds the Kotlin files in source order without writing them.
      *
-     * File rules, type registration and contract resolution report to [problems] in that order.
-     * Emission reports nothing, and no output file is modified here.
-     *
-     * @param input the Protobuf sources and generation settings
-     * @param mappings the resolved mappings to existing Kotlin types
-     * @param problems the collector receiving validation errors
-     * @return the generated Kotlin file specifications in source order
+     * File rules, type registration and contract resolution report to [problems] in that order. Emission reports
+     * nothing.
      */
     private fun generateFileSpecs(
         input: GeneratorInput,
@@ -95,17 +85,10 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Resolves explicit type mappings over the platform defaults.
+     * Resolves the explicit type mappings over the platform defaults.
      *
-     * Later mappings of the same Protobuf type take precedence. Explicit
-     * mappings for `google.protobuf.Empty` are rejected because that type
-     * is always represented by Kotlin Unit.
-     *
-     * Invalid class names are reported and their mappings are omitted.
-     *
-     * @param input the configured explicit and default type mappings
-     * @param problems the collector receiving invalid mapping errors
-     * @return the successfully resolved mappings keyed by Protobuf type
+     * The last mapping of a Protobuf type wins. Explicit mappings of `google.protobuf.Empty` are reported, because
+     * that type is always `kotlin.Unit`. Mappings with invalid class names are reported and left out.
      */
     private fun mappings(input: GeneratorInput, problems: Problems): Map<ProtoType, MappedClass> {
         if (input.typeMappings.any { it.protoType == ProtoType.EMPTY }) {
@@ -130,15 +113,7 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Resolves a fully qualified Kotlin class name.
-     *
-     * Reports an invalid mapping when the supplied name cannot be interpreted
-     * as a Kotlin class name.
-     *
-     * @param name the fully qualified Kotlin class name
-     * @param protoType the Protobuf type associated with the mapping
-     * @param problems the collector receiving invalid class name errors
-     * @return the resolved class name, or `null` if the name is invalid
+     * Returns the class [name] of the mapping of [protoType], or `null` after reporting an invalid name.
      */
     private fun className(name: String, protoType: ProtoType, problems: Problems): ClassName? {
         return try {
@@ -153,17 +128,10 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Generates a Kotlin file specification for a Protobuf source file.
+     * Builds the Kotlin file of [file]: its types, then its services, with a header comment naming the source and
+     * a file-level opt-in.
      *
-     * Emits supported message, enum, and service declarations in their
-     * original order. Generated files include the required opt-in annotations
-     * and a comment identifying their Protobuf source.
-     *
-     * @param file the Protobuf source file to process
-     * @param types the resolver for generated and mapped Kotlin types
-     * @param typeEmitter the generator for message and enum declarations
-     * @param serviceEmitter the generator for service declarations
-     * @return the Kotlin file specification, or `null` if no declarations are generated
+     * @return The file, or `null` when [file] has no generated declaration.
      */
     private fun fileSpec(
         file: ProtoFile,
@@ -187,12 +155,7 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Creates the file-level opt-in annotation required by generated contracts.
-     *
-     * Enables access to the NATS generated API and experimental Kotlin
-     * serialization APIs used by the generated declarations.
-     *
-     * @return the file-targeted Kotlin OptIn annotation
+     * Returns `@file:OptIn` for `NatsGeneratedApi` and `ExperimentalSerializationApi`, which generated code uses.
      */
     private fun generatedApiOptIn(): AnnotationSpec {
         return AnnotationSpec.builder(ClassName("kotlin", "OptIn"))
@@ -203,17 +166,9 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Replaces the output directory with the generated Kotlin files.
+     * Replaces [outputDir] with [files] and returns them sorted by path.
      *
-     * Files are written in generation order and returned sorted by their
-     * platform-independent paths.
-     *
-     * This method must only be called after generation problems have been
-     * checked to avoid modifying output files when validation fails.
-     *
-     * @param files the generated Kotlin file specifications
-     * @param outputDir the destination directory to replace
-     * @return the written files sorted by normalized path
+     * Call it only after [Problems.throwIfAny], so that a failed run keeps the previous output.
      */
     private fun writeFiles(files: List<FileSpec>, outputDir: File): List<File> {
         outputDir.deleteRecursively()
@@ -222,16 +177,6 @@ class SurfNatsGenerator {
             .sortedBy { it.invariantSeparatorsPath }
     }
 
-    /**
-     * Writes a generated Kotlin file to its package directory.
-     *
-     * Creates the package directory when necessary and writes the rendered
-     * Kotlin source using UTF-8 encoding.
-     *
-     * @param spec the Kotlin file specification to write
-     * @param outputDir the root directory for generated sources
-     * @return the written Kotlin source file
-     */
     private fun writeFile(spec: FileSpec, outputDir: File): File {
         val directory = if (spec.packageName.isEmpty()) {
             outputDir

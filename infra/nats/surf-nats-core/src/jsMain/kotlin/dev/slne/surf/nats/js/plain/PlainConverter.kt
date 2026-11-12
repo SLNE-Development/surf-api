@@ -55,7 +55,7 @@ internal object PlainConverter {
     )
 
     /**
-     * Converts [message]; only a `google.protobuf.Value` can become `null`.
+     * Converts [message]. Only a `google.protobuf.Value` can become `null`.
      */
     fun message(message: ReflectMessage): JsAny? = when (message.desc.typeName) {
         TIMESTAMP_TYPE -> timestamp(message)
@@ -167,7 +167,7 @@ internal object PlainConverter {
         value: (Any) -> JsAny?
     ): Record<JsString, JsAny?> {
         val plain = recordOf<JsString, JsAny?>()
-        // Map keys are strings, numbers, booleans or bigints; their string form is the key of the plain object
+        // Map keys are strings, numbers, booleans or bigints, and their string form is the key of the plain object
         for (key in keys) plain["$key"] = value(key)
         return plain
     }

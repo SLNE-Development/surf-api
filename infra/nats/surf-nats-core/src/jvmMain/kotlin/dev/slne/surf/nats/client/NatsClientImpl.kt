@@ -31,6 +31,12 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+/**
+ * JVM implementation of `NatsClient` on the shared connection of [NatsConnectionManager].
+ *
+ * Listeners and service handlers run in [clientScope] on [Dispatchers.Default], so they must not block. An exception
+ * that escapes a coroutine of the scope is logged. [close] cancels the scope.
+ */
 @InternalNatsApi
 internal class NatsClientImpl(
     name: String,
@@ -222,7 +228,7 @@ internal class NatsClientImpl(
      * and drains the listener subscriptions. Returns once the handlers that were running have finished or were
      * cancelled after the drain timeout.
      *
-     * Publishing, service calls and new service proxies keep working until [close]; the reply and presence
+     * Publishing, service calls and new service proxies keep working until [close]. The reply and presence
      * subscriptions of service proxies stay active as well. The steps run in turn, each bounded by `drainTimeout`
      * except a dispatcher drain, which can take twice that (flush, then wait). The whole call takes at most
      * `(2 × services + 3) × drainTimeout`: one for registrations in progress, two per service registration and two for
@@ -288,8 +294,11 @@ internal class NatsClientImpl(
     }
 
     /**
-     * Drains [dispatcher], waiting up to [timeout] for the messages it already received; closes it when the drain
+     * Drains [dispatcher], waiting up to [timeout] for the messages it already received. Closes it when the drain
      * fails or times out.
+     *
+     * Waiting for the flush lock and starting the drain share [timeout], and waiting for the drain to complete gets
+     * another [timeout], so the call can take twice as long.
      */
     internal fun drainDispatcher(dispatcher: Dispatcher, timeout: Duration, what: String) {
         val drained = try {
@@ -313,6 +322,10 @@ internal class NatsClientImpl(
         }
     }
 
+    /**
+     * Waits until the server has processed everything sent so far, at most 5 seconds. Throws a
+     * [java.util.concurrent.TimeoutException] when the time runs out.
+     */
     internal suspend fun flush() {
         NatsConnectionManager.flush(5.seconds.toJavaDuration())
     }

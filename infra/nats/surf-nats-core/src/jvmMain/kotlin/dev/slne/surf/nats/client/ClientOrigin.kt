@@ -4,6 +4,11 @@ import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import java.time.Instant
 
+/**
+ * Records where a `NatsClient` was created, so clients left open at shutdown can be traced to their creator.
+ *
+ * [capture] skips the frames of the client factory and keeps at most 12 frames of the caller.
+ */
 @InternalNatsApi
 internal class ClientOrigin private constructor(
     val createdAt: Instant,

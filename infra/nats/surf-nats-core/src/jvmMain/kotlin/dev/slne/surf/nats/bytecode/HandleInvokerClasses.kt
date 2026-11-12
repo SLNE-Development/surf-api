@@ -9,10 +9,13 @@ import java.lang.constant.DynamicConstantDesc
 import java.lang.constant.MethodTypeDesc
 import java.lang.invoke.MethodHandle
 
+/**
+ * Generates the class templates of [ListenerInvokerFactory] and [ServiceInvokerFactory].
+ */
 @InternalNatsApi
 internal object HandleInvokerClasses {
 
-    // One time call of MethodHandles.classData(lookup, "_", MethodHandle.class)
+    // Resolved once per hidden class: MethodHandles.classData(lookup, "_", MethodHandle.class)
     private val CLASS_DATA_HANDLE = DynamicConstantDesc.ofNamed<MethodHandle>(
         ConstantDescs.BSM_CLASS_DATA,
         ConstantDescs.DEFAULT_NAME,
@@ -20,8 +23,10 @@ internal object HandleInvokerClasses {
     )
 
     /**
-     * Generates a class template which implements [interfaceType] by forwarding
-     * [methodName] to the [MethodHandle].
+     * Generates a class template that implements [methodName] of [interfaceType] by calling the [MethodHandle] stored
+     * as class data of the hidden class.
+     *
+     * Define the template with `Lookup.defineHiddenClassWithClassData` and a handle of exactly [type].
      */
     fun generate(
         name: ClassDesc,

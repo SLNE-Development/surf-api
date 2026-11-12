@@ -28,6 +28,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
+/**
+ * Moves message bodies that exceed the max payload of the connection to a JetStream object store and back.
+ *
+ * Each [PayloadBucket] is created on first use with its TTL and file storage. An existing bucket with a different
+ * configuration is used as it is, with a warning. Object store handles are cached per connection instance, so a new
+ * connection checks the bucket again. Thread-safe.
+ */
 @InternalNatsApi
 internal object PayloadStore {
     private val log = logger()
@@ -38,11 +45,16 @@ internal object PayloadStore {
     private val buckets = ConcurrentHashMap<PayloadBucket, Bucket>()
 
     /**
-     * Offloads [body] if larger than the supported max payload and returns the body to send.
+     * Offloads [body] to [bucket] when the message would exceed the max payload of the connection, and returns the
+     * body to send: [body] itself, or an empty body when it was offloaded.
      *
-     * [extraHeaderBytes] accounts for headers that are added after this call, such as the JetStream publish options.
-     * With [stampDeadline], `Surf-Deadline` (now + [lifetime]) is added after a possible upload and counted in the
-     * size check.
+     * Adds `Surf-Payload-Ref` to [headers] when offloading. [extraHeaderBytes] accounts for headers that are added
+     * after this call, such as the JetStream publish options. With [stampDeadline], `Surf-Deadline` (now +
+     * [lifetime]) is added after a possible upload and counted in the size check.
+     *
+     * Throws [IllegalArgumentException] when the body must be offloaded and [lifetime] exceeds the TTL of [bucket],
+     * and [IllegalStateException] when it must be offloaded and JetStream is disabled on the server. A failing
+     * upload propagates.
      */
     suspend fun offload(
         headers: Headers,
@@ -73,8 +85,10 @@ internal object PayloadStore {
     }
 
     /**
-     * Resolves the body from [message] which may be loaded from the object store.
-     * Optionally deletes the payload from the object store.
+     * Returns the body of [message], loaded from [bucket] when the message carries `Surf-Payload-Ref`.
+     *
+     * With [delete], the object is deleted after reading, and a failed delete is only logged. A failed read
+     * propagates, such as the [IllegalArgumentException] of jnats for an object that no longer exists.
      */
     suspend fun resolve(
         message: Message,
@@ -95,6 +109,12 @@ internal object PayloadStore {
         }
     }
 
+    /**
+     * Deletes the offloaded payload of [message] from [bucket], if any.
+     *
+     * Never throws except for the cancellation of the calling coroutine. Other failures are logged, and the object
+     * then expires with the TTL of the bucket.
+     */
     suspend fun delete(message: Message, bucket: PayloadBucket) {
         val name = payloadRef(message) ?: return
         try {

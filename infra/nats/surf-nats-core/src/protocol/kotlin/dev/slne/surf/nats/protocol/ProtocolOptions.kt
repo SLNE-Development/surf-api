@@ -1,7 +1,10 @@
 package dev.slne.surf.nats.protocol
 
 /**
- * Names declared by `surf/nats/v1/options.proto`; option fields are named by their proto names.
+ * Names declared by `surf/nats/v1/options.proto`.
+ *
+ * [EVENT], [SERVICE] and [METHOD] are the extension fields. The remaining field constants are the proto field names of
+ * the option messages.
  */
 internal object ProtocolOptions {
     const val PACKAGE = "surf.nats.v1"
@@ -18,5 +21,8 @@ internal object ProtocolOptions {
     const val RECIPIENTS = "recipients"
     const val PERSISTENT = "persistent"
 
+    /**
+     * Returns [name] qualified with [PACKAGE].
+     */
     fun qualified(name: String): String = "$PACKAGE.$name"
 }

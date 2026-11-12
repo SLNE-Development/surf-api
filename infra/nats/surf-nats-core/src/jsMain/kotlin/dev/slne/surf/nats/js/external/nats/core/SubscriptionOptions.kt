@@ -4,7 +4,9 @@ package dev.slne.surf.nats.js.external.nats.core
 
 import kotlinx.js.JsPlainObject
 
-// SubscriptionOptions (SubOpts<Msg>) of nats-core
+/**
+ * Binds `SubscriptionOptions` of nats-core, an alias of `SubOpts<Msg>`. `timeout` is milliseconds.
+ */
 @JsPlainObject
 internal external interface SubscriptionOptions {
     val queue: String?

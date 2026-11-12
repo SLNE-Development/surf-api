@@ -9,8 +9,8 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * Open, closing and closed state of a client.
  *
  * While closing, new registrations are rejected but running handlers may still publish and call through the
- * client; once closed, every use is rejected. A client can stop accepting registrations ([stopAccepting]) before its
- * close starts ([beginClose]); until then, outgoing work such as new service proxies stays allowed. Thread-safe.
+ * client. Once closed, every use is rejected. A client can stop accepting registrations ([stopAccepting]) before its
+ * close starts ([beginClose]). Until then, outgoing work such as new service proxies stays allowed. Thread-safe.
  */
 @InternalNatsApi
 @OptIn(ExperimentalAtomicApi::class)
@@ -23,19 +23,32 @@ internal class ClientLifecycle(name: String) {
 
     val isClosed: Boolean get() = state.load() == State.CLOSED
 
+    /**
+     * Throws [IllegalStateException] when the client is closed.
+     */
     fun requireOpen() = check(!isClosed) { "$label is closed" }
 
+    /**
+     * Throws [IllegalStateException] when the client is closing or closed.
+     */
     fun requireAccepting() = check(state.load() == State.OPEN) { rejection() }
 
+    /**
+     * Throws [IllegalStateException] when [beginClose] already ran.
+     */
     fun requireCloseNotStarted() = check(!closeStarted.load()) { rejection() }
 
     /**
-     * Moves from open to closing without starting the close; returns `false` when new work was already rejected.
+     * Moves from open to closing without starting the close.
+     *
+     * Returns `false` when new work was already rejected.
      */
     fun stopAccepting(): Boolean = state.compareAndSet(State.OPEN, State.CLOSING)
 
     /**
-     * Starts the close and stops accepting new work; returns `false` when the close already started.
+     * Starts the close and stops accepting new work.
+     *
+     * Returns `false` when the close already started.
      */
     fun beginClose(): Boolean {
         if (!closeStarted.compareAndSet(expectedValue = false, newValue = true)) return false

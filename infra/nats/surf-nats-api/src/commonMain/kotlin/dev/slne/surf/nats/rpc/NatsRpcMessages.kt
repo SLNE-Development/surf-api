@@ -4,7 +4,8 @@ import dev.slne.surf.nats.InternalNatsApi
 import kotlin.time.Duration
 
 /**
- * Messages of the RPC failures, shared by the JVM exceptions and the JS errors.
+ * Builds the messages of RPC failures, shared by the JVM exceptions and the JavaScript errors so both report the
+ * same text.
  */
 @InternalNatsApi
 public object NatsRpcMessages {

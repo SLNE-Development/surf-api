@@ -25,6 +25,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import dev.slne.surf.nats.test.proto.v1.VersionedChanged as VersionedChangedV1
 import dev.slne.surf.nats.test.proto.v2.VersionedChanged as VersionedChangedV2
 
@@ -119,6 +120,16 @@ class NatsCodecTest {
             colorsByName = mapOf("unknown" to Color.UNSPECIFIED, "known" to Color.BLUE),
         )
         assertEquals(expected, decoded)
+    }
+
+    @Test
+    fun `forNumber resolves every entry by its number and unknown numbers to null`() {
+        for (entry in Color.entries) {
+            assertEquals(entry, Color.forNumber(entry.number), "number ${entry.number}")
+        }
+        assertEquals(Color.RED, Color.forNumber(1))
+        assertNull(Color.forNumber(999))
+        assertNull(Color.forNumber(-1))
     }
 
     @Test

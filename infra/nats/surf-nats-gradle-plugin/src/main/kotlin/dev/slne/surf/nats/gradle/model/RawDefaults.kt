@@ -36,7 +36,6 @@ internal class RawDefaults {
     /**
      * Loads and caches a source file, including absent files.
      *
-     * @param file the Protobuf source file
      * @return its cached contents, or `null` if the file does not exist
      */
     private fun source(file: File): SourceText? {
@@ -78,8 +77,6 @@ internal class RawDefaults {
     /**
      * Decodes one or more adjacent quoted literals separated by whitespace.
      *
-     * @param text the Protobuf source text
-     * @param start the offset of the first opening quote
      * @return the combined literal, or `null` if no complete quoted literal can be read
      */
     private fun readStrings(text: String, start: Int): Literal? {
@@ -100,12 +97,8 @@ internal class RawDefaults {
     /**
      * Decodes one quoted literal into its protoc bytes and wire-schema string value.
      *
-     * Unescaped text is UTF-8 encoded in batches; escaped bytes are written directly.
+     * Unescaped text is UTF-8 encoded in batches, and escaped bytes are written directly.
      *
-     * @param text the Protobuf source text
-     * @param start the offset of the opening quote
-     * @param out destination for protoc-decoded bytes
-     * @param wire destination for the wire-schema-decoded value
      * @return the offset after the closing quote, or `null` for an incomplete literal
      */
     private fun decodeString(
@@ -145,9 +138,6 @@ internal class RawDefaults {
 
     /**
      * Writes pending unescaped text as UTF-8 bytes and resets the buffer.
-     *
-     * @param plain accumulated unescaped source characters
-     * @param out destination for their UTF-8 bytes
      */
     private fun flushPlain(plain: StringBuilder, out: ByteArrayOutputStream) {
         if (plain.isNotEmpty()) out.write(plain.toString().encodeToByteArray())
@@ -160,10 +150,6 @@ internal class RawDefaults {
      * Unicode escapes are handled separately because wire-schema treats their
      * hexadecimal digits as plain characters, unlike protoc.
      *
-     * @param text the Protobuf source text
-     * @param start the offset of the backslash
-     * @param out destination for protoc-decoded bytes
-     * @param wire destination for the wire-schema-decoded value
      * @return the offset after the escape, or `null` if decoding fails
      */
     private fun decodeEscape(
@@ -180,7 +166,7 @@ internal class RawDefaults {
             return decodeUnicodeEscape(text, end, escape, out, wire)
         }
 
-        // Other known escapes use the wire-schema value; unknown escapes use the character itself.
+        // Other known escapes use the wire-schema value, and unknown escapes the character itself.
         if (escape in VALUE_ESCAPES) {
             out.write(wireValue and 0xFF)
         } else {
@@ -190,16 +176,11 @@ internal class RawDefaults {
     }
 
     /**
-     * Decodes the digits following a protoc Unicode escape.
+     * Decodes the digits following a protoc Unicode escape: four for [escape] `u`, eight for `U`.
      *
      * Appends the UTF-8 representation of the code point to [out], but leaves
      * the digits visible in [wire], matching wire-schema's interpretation.
      *
-     * @param text the Protobuf source text
-     * @param start the offset of the first hexadecimal digit
-     * @param escape `u` for four digits or `U` for eight digits
-     * @param out destination for UTF-8 bytes
-     * @param wire destination for the wire-schema-decoded value
      * @return the offset after the digits, or `null` if they are invalid
      */
     private fun decodeUnicodeEscape(
@@ -219,7 +200,9 @@ internal class RawDefaults {
     }
 
     private companion object {
-        /** Escape characters interpreted as byte values rather than literal characters. */
+        /**
+         * Escape characters that denote byte values rather than literal characters.
+         */
         const val VALUE_ESCAPES = "abfnrtvxX01234567"
 
         /**

@@ -9,10 +9,16 @@ import dev.slne.surf.nats.js.external.nats.core.Msg
 import dev.slne.surf.nats.js.external.nats.core.Subscription
 import dev.slne.surf.nats.js.external.nats.core.SubscriptionOptions
 import dev.slne.surf.nats.protocol.ProtocolHeaders
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.await
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * The subscriptions of one client: one per subject and queue group, shared by every listener registered for it.
+ *
+ * A subject belongs to the first schema object registered for it. Listeners of another schema object for the same
+ * subject are rejected. After [drain] no listener can be added.
  */
 internal class EventSubscriptions(private val client: NatsClientImpl) {
 
@@ -30,6 +36,11 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     private val runningHandlers = RunningHandlers()
     private var closed = false
 
+    /**
+     * Adds [listener] to the subscription of its subject and queue group, subscribing when none is open.
+     *
+     * @throws IllegalStateException after [drain] or when another schema object already owns the subject
+     */
     fun add(listener: EventListener) {
         check(!closed) { "NatsClient[${client.name}] is closed" }
 
@@ -43,7 +54,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             }
         }
 
-        // nats.js closes a subscription it reports an error for; the next listener subscribes again
+        // nats.js closes a subscription after reporting an error for it, so the next listener subscribes again
         val existing = entries[key]
         if (existing != null && !existing.subscription.isClosed()) {
             existing.targets += listener
@@ -91,6 +102,9 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             try {
                 drain.await()
             } catch (e: Throwable) {
+                if (e is CancellationException) {
+                    currentCoroutineContext().ensureActive()
+                }
                 client.logger.warn("Failed to drain a listener subscription", e)
             }
         }
@@ -103,6 +117,11 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         }
     }
 
+    /**
+     * Decodes [message] once and calls every target of [entry], skipping own events for listeners that ignore them.
+     *
+     * Undecodable messages are dropped with a warning. Handler results are tracked so [drain] can wait for them.
+     */
     private fun dispatch(entry: Entry, error: Throwable?, message: Msg) {
         val descriptor = entry.descriptor
         if (error != null) {

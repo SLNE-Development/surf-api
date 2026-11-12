@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.gradle.contract
 
 /**
- * Names of members that generated declarations always have; proto names that map to them are rejected.
+ * Names of members that generated declarations always have. Proto names that map to them are rejected.
  */
 internal object GeneratedNames {
     /**
@@ -10,5 +10,6 @@ internal object GeneratedNames {
     const val COMPANION = "Companion"
     const val NATS_DESCRIPTOR = "natsDescriptor"
     const val ENUM_NUMBER = "number"
+    const val ENUM_FOR_NUMBER = "forNumber"
     const val ENUM_SERIALIZER = "Serializer"
 }

@@ -6,13 +6,22 @@ import kotlinx.coroutines.withContext
 import kotlin.time.Duration
 
 /**
- * Overrides the timeout of every service call made in [block].
+ * Runs [block] with [timeout] as the call timeout of every service call made in it.
  *
- * Takes precedence over the contract's call timeout without imposing a timeout on [block] itself.
- * Overrides exceeding two minutes are rejected when a persistent call without a result is made.
+ * The override takes precedence over the `call_timeout_seconds` option of the contract, which defaults to five
+ * seconds and to sixty seconds for persistent methods. It applies to calls in [block] and in coroutines that inherit
+ * its context. [block] itself runs without a time limit. What the timeout bounds depends on the method, as described
+ * in [Recipients].
  *
- * @throws IllegalArgumentException if [timeout] is not positive and finite, or a persistent call
- * without a result in [block] uses a timeout exceeding two minutes.
+ * ```kotlin
+ * val answer = withNatsCallTimeout(2.seconds) {
+ *     finder.find(FindRequest("spawn"))
+ * }
+ * ```
+ *
+ * @return the result of [block].
+ * @throws IllegalArgumentException if [timeout] is not positive and finite. Also thrown by a persistent call without
+ * a result in [block] when [timeout] exceeds the two-minute duplicate window.
  */
 public suspend fun <T> withNatsCallTimeout(
     timeout: Duration,

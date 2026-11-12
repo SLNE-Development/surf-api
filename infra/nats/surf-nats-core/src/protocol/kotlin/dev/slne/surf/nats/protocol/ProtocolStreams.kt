@@ -11,6 +11,9 @@ internal object ProtocolStreams {
     const val PERSIST_PREFIX = "SURF_PERSIST_"
     const val DLQ_PREFIX = "SURF_DLQ_"
 
+    /**
+     * Maximum length of a stream name accepted for a service, see [ServiceNames.problem].
+     */
     const val MAX_NAME_LENGTH = 255
 
     /**
@@ -18,9 +21,18 @@ internal object ProtocolStreams {
      */
     const val DURABLE = "responders"
 
+    /**
+     * Returns the stream name suffix of the service full name [serviceName].
+     */
     fun encode(serviceName: String): String = serviceName.replace("_", "__").replace('.', '_')
 
+    /**
+     * Returns the name of the work-queue stream that holds the persistent requests of [serviceName].
+     */
     fun persist(serviceName: String): String = PERSIST_PREFIX + encode(serviceName)
 
+    /**
+     * Returns the name of the dead-letter stream of [serviceName].
+     */
     fun dlq(serviceName: String): String = DLQ_PREFIX + encode(serviceName)
 }

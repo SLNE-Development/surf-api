@@ -29,11 +29,59 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 /**
- * Gradle plugin for generating Kotlin contracts from proto files.
+ * Generates Kotlin contracts from `.proto` files and wires them into a Kotlin/JVM build.
  *
- * Supports Kotlin/JVM projects. Applies `dev.slne.weaver` with surf-nats conventions: weaver dependencies are
- * import paths for code generation, published modules publish their protos to weaver with `publish`, and the
- * compatibility check compares against the previous weaver release.
+ * Apply the plugin with the id [ID] to every module that uses surf-nats or contains `.proto` contracts:
+ *
+ * ```kotlin
+ * plugins {
+ *     kotlin("jvm") version "KOTLIN_VERSION"
+ *     id("dev.slne.surf.nats") version "SURF_NATS_VERSION"
+ * }
+ *
+ * surfNats {
+ *     generatedVisibility = INTERNAL
+ * }
+ * ```
+ *
+ * Replace `KOTLIN_VERSION` with your Kotlin version and `SURF_NATS_VERSION` with the surf-nats release. Configure
+ * the plugin through [SurfNatsExtension] (`surfNats { }`).
+ *
+ * The plugin registers these tasks:
+ *
+ * - [GENERATE_TASK] ([GenerateSurfNatsKotlinTask]): writes the contracts to `build/generated/surf-nats/kotlin`.
+ * - [STAGE_TASK]: copies the `.proto` files of [SurfNatsExtension.protoSourceDirs] to
+ *   `build/surf-nats/weaver-source`, the directory weaver publishes.
+ * - [BASELINE_TASK] ([FetchSurfNatsBaselineTask]): downloads the previous weaver release of the module.
+ * - [CHECK_TASK] ([CheckSurfNatsCompatibilityTask]): compares the sources with that release.
+ *
+ * With `org.jetbrains.kotlin.jvm`, the generated directory is added to the `main` source set, the Kotlin
+ * serialization plugin is applied, and `check` depends on [CHECK_TASK]. Applying `org.jetbrains.kotlin.multiplatform`
+ * fails the build with a [GradleException].
+ *
+ * The plugin also applies `dev.slne.weaver` with these conventions, which `weaver { }` overrides:
+ *
+ * - `url`: the `WEAVER_URL` environment variable, otherwise `https://weaver.slne.dev`.
+ * - `repositories` and `publishing.repository`: `proto-releases-public`.
+ * - `publishing.group`: `project.group` when set explicitly.
+ * - `publishing.name`: `rootProject.name`, for published modules only.
+ *
+ * A *published module* applies `maven-publish` and configures at least one publishing repository. For published
+ * modules `publish` first runs weaver's `publishProtos`, after code generation and the compatibility check, and the
+ * Maven publications run after it. The plugin validates their weaver coordinates after all projects are evaluated
+ * and fails when two projects of the build publish the same `group:name`. For other modules `publish` does not run
+ * `publishProtos`, and the compatibility check runs only with [SurfNatsExtension.compatibilityBaseline] set.
+ * Dependencies in the `weaver` configuration are import paths for generation and are not generated themselves.
+ *
+ * When a surf-api Gradle plugin (`core`, `paper-plugin`, `paper-raw`, `velocity`, `minestom`, `minestom-server`
+ * or `standalone`) is applied, the plugin adds `surf-nats-api`, `surf-nats-types-common` and
+ * `kotlinx-serialization-protobuf` to `compileOnly` and `testImplementation`. The surf-nats modules are pinned
+ * strictly to the plugin version. On top of that:
+ *
+ * - `paper-plugin` and `paper-raw` also get `surf-nats-types-paper` and its default type mappings.
+ * - `paper-plugin` declares `surf-nats-paper` as a required bootstrap and server dependency in `paper-plugin.yml`.
+ * - `velocity` declares `surf-nats-velocity` as a required plugin dependency.
+ * - `standalone` applies `dev.slne.surf.microservice` and adds `surf-nats-standalone` to `implementation`.
  */
 class SurfNatsPlugin : Plugin<Project> {
 
@@ -212,11 +260,34 @@ class SurfNatsPlugin : Plugin<Project> {
     }
 
     companion object {
+        /**
+         * Plugin id.
+         */
         const val ID = "dev.slne.surf.nats"
+
+        /**
+         * Name of the [SurfNatsExtension] in the build script.
+         */
         const val EXTENSION = "surfNats"
+
+        /**
+         * Name of the [GenerateSurfNatsKotlinTask].
+         */
         const val GENERATE_TASK = "generateSurfNatsKotlin"
+
+        /**
+         * Name of the [CheckSurfNatsCompatibilityTask].
+         */
         const val CHECK_TASK = "checkSurfNatsCompatibility"
+
+        /**
+         * Name of the `Sync` task that stages the proto sources for weaver.
+         */
         const val STAGE_TASK = "stageSurfNatsWeaverSource"
+
+        /**
+         * Name of the [FetchSurfNatsBaselineTask].
+         */
         const val BASELINE_TASK = "fetchSurfNatsBaseline"
 
         private const val GROUP = "surf-nats"

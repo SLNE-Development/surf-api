@@ -3,13 +3,17 @@ package dev.slne.surf.nats.rpc
 import dev.slne.surf.nats.InternalNatsApi
 
 /**
- * The encoded reply of a persistent method, in a form that can be stored and sent again later.
+ * Holds the encoded reply of a persistent method in a form that can be stored and sent again later.
  *
- * Store [format] and [bytes] together and recreate the reply with [restore]. The format is an opaque, versioned
- * identifier of at most 64 ASCII characters; the bytes are the response as sent on the wire. Neither copies the byte
- * array, so callers must not modify it.
+ * Store [format] and [bytes] together and recreate the reply with [restore]. Replies come from
+ * [NatsPersistentCall.proceed], [error] or [restore]. A reply whose kind does not fit the result of the method, such
+ * as a stored reply of another method, is rejected: a fire call is moved to the dead-letter stream without another
+ * delivery, and the caller of a persistent RPC receives a [NatsRemoteException]. A stored reply of another method
+ * with a fitting kind is not detected, so key stored replies by method as well as by message ID.
  *
- * Replies come from [NatsPersistentCall.proceed], [error] or [restore].
+ * @property format an opaque, versioned ASCII identifier of the reply kind.
+ * @property bytes the encoded response as sent to the caller. Neither the reply nor [restore] copies the array, so do
+ * not modify it.
  */
 public class NatsPersistentReply private constructor(
     public val format: String,
@@ -78,10 +82,11 @@ public class NatsPersistentReply private constructor(
         }
 
         /**
-         * Creates an error reply that the caller receives as a
-         * [dev.slne.surf.nats.rpc.NatsRemoteException] of [error]'s class name and message.
+         * Creates an error reply that the caller receives as a [NatsRemoteException] with the class name and message
+         * of [error].
          *
-         * The message is truncated to 4096 characters.
+         * The message is truncated to 4096 characters. Returned for a fire call, it moves the message to the
+         * dead-letter stream without another delivery.
          */
         public fun error(error: Throwable): NatsPersistentReply {
             val message = error.message.orEmpty().take(MAX_ERROR_MESSAGE_LENGTH)

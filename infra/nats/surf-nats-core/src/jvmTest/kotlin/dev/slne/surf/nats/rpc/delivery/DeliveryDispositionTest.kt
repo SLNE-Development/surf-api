@@ -20,8 +20,9 @@ class DeliveryDispositionTest {
 
     private val permanentFailures = DeliveryCause.entries.filter { it.permanent }
     private val transientFailures =
-        DeliveryCause.entries - permanentFailures - setOf(DeliveryCause.COMPLETED, DeliveryCause.NOT_ADMITTED)
-    private val callerGaveUp = setOf(DeliveryCause.TIMED_OUT, DeliveryCause.NOT_ADMITTED)
+        DeliveryCause.entries - permanentFailures - setOf(DeliveryCause.COMPLETED, DeliveryCause.DRAINING)
+    private val callerGaveUp = setOf(DeliveryCause.TIMED_OUT, DeliveryCause.NOT_ADMITTED, DeliveryCause.EXPIRED)
+    private val drainDelay = RpcDefaults.DRAIN_REDELIVERY_DELAY
 
     @Test
     fun `completed fire is acknowledged`() {
@@ -55,14 +56,45 @@ class DeliveryDispositionTest {
     }
 
     @Test
-    fun `fire without a handler slot is redelivered and never dead-lettered`() {
+    fun `fire without a handler slot is dead-lettered on the last delivery`() {
         assertEquals(Nak(1.seconds), fire(DeliveryCause.NOT_ADMITTED, 1))
-        assertEquals(Nak(5.seconds), fire(DeliveryCause.NOT_ADMITTED, last))
+        assertEquals(Nak(5.seconds), fire(DeliveryCause.NOT_ADMITTED, last - 1))
+        assertEquals(DeadLetter(5.seconds), fire(DeliveryCause.NOT_ADMITTED, last))
+    }
+
+    @Test
+    fun `expired fire is dead-lettered on every delivery`() {
+        assertEquals(DeadLetter(1.seconds), fire(DeliveryCause.EXPIRED, 1))
+        assertEquals(DeadLetter(5.seconds), fire(DeliveryCause.EXPIRED, last))
+    }
+
+    @Test
+    fun `fire that met a draining registration is redelivered soon`() {
+        assertEquals(Nak(drainDelay), fire(DeliveryCause.DRAINING, 1))
+        assertEquals(Nak(drainDelay), fire(DeliveryCause.DRAINING, last - 1))
+    }
+
+    @Test
+    fun `fire that met a draining registration on the last delivery is dead-lettered`() {
+        assertEquals(DeadLetter(drainDelay), fire(DeliveryCause.DRAINING, last))
+    }
+
+    @Test
+    fun `persistent rpc that met a draining registration is redelivered soon while its caller waits`() {
+        assertEquals(Nak(drainDelay), rpc(DeliveryCause.DRAINING, 1))
+        assertEquals(Nak(drainDelay), rpc(DeliveryCause.DRAINING, last - 1, timeLeft = drainDelay + 1.milliseconds))
+    }
+
+    @Test
+    fun `persistent rpc that met a draining registration is terminated when no redelivery can happen`() {
+        assertEquals(Term, rpc(DeliveryCause.DRAINING, 1, timeLeft = drainDelay), "ends at the deadline")
+        assertEquals(Term, rpc(DeliveryCause.DRAINING, last))
     }
 
     @Test
     fun `persistent rpc is acknowledged after every reply and failure`() {
-        for (cause in DeliveryCause.entries - callerGaveUp - DeliveryCause.REDELIVERY_REQUESTED) {
+        val redelivered = setOf(DeliveryCause.REDELIVERY_REQUESTED, DeliveryCause.DRAINING)
+        for (cause in DeliveryCause.entries - callerGaveUp - redelivered) {
             assertEquals(Ack, rpc(cause, 1), "$cause")
             assertEquals(Ack, rpc(cause, last, timeLeft = Duration.ZERO), "$cause")
         }

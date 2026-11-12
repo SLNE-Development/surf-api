@@ -2,7 +2,12 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
+/**
+ * A map field of scalar values.
+ */
 internal external interface DescFieldScalarMap : DescFieldMap {
-    // ScalarType of the values
+    /**
+     * `ScalarType` of the values.
+     */
     val scalar: Int
 }

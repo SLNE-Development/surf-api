@@ -14,6 +14,16 @@ import kotlin.uuid.Uuid
 import kotlin.uuid.toJavaUuid
 import kotlin.uuid.toKotlinUuid
 
+/**
+ * Serializes a [UUID] as the protobuf message `surf.types.v1.Uuid`.
+ *
+ * Field `value` (1, required) holds exactly 16 bytes, big-endian: the most significant 64 bits, then the least
+ * significant 64 bits. The `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [UUID] with this
+ * serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `value` is absent and
+ * [kotlinx.serialization.SerializationException] when it is not 16 bytes long.
+ */
 object UuidSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor = UuidProto.serializer().descriptor
 

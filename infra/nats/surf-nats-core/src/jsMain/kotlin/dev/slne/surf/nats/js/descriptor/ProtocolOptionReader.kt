@@ -26,7 +26,7 @@ internal object ProtocolOptionReader {
     fun isEvent(schema: DescMessage): Boolean = flag(schema, schema.file, ProtocolOptions.EVENT)
 
     /**
-     * Returns the `(surf.nats.v1.service)` option of [service]; unset fields are `null`.
+     * Returns the `(surf.nats.v1.service)` option of [service], with `null` for unset fields.
      */
     fun service(service: DescService): ServiceOptions {
         val options = read(service, service.file, ProtocolOptions.SERVICE)
@@ -38,7 +38,7 @@ internal object ProtocolOptionReader {
     }
 
     /**
-     * Returns the `(surf.nats.v1.method)` option of [method]; unset fields are `null`.
+     * Returns the `(surf.nats.v1.method)` option of [method], with `null` for unset fields.
      */
     fun method(method: DescMethod): MethodOptions {
         val options = read(method, method.parent.file, ProtocolOptions.METHOD)

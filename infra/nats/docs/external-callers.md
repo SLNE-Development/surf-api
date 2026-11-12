@@ -5,7 +5,7 @@ do, for example a web panel written in TypeScript. There are two ways to connect
 
 - On Node.js, use the client `@slne/surf-nats` with [protobuf-es](https://github.com/bufbuild/protobuf-es) schemas
   (see [TypeScript client](#typescript-client)). It implements everything in this guide.
-- With any other NATS client, follow the [wire format](#wire-format) below and encode the messages with a Protocol
+- With any other NATS client, follow the [wire format](#wire-format) and encode the messages with a Protocol
   Buffers library.
 
 Read the [README](../README.md) first for the concepts: clients, contracts, events, services, and persistent
@@ -14,7 +14,7 @@ methods.
 ## Before you start
 
 - **Get the contracts.** Every contract module publishes its `.proto` files to the weaver registry. On Node.js,
-  the weaver CLI fetches them into one directory (see [Fetching the contracts](#fetching-the-contracts)); with any
+  the weaver CLI fetches them into one directory (see [Fetching the contracts](#fetching-the-contracts)). With any
   other client, download the artifact from weaver (see its REST API). The contracts import
   `surf/nats/v1/options.proto` and the `surf/types/v1` messages from the artifact `surf-nats-types-common`, and
   Paper contracts the `surf/types/paper/v1` messages from `surf-nats-types-paper`. A published contract module lists
@@ -22,7 +22,7 @@ methods.
   Protocol Buffers tooling.
 - **The contract is the address.** Subjects and streams derive from the proto full names of the event message, the
   service, and the `rpc`, for example `surf.roles.v1.RolesService`. Any application can publish and receive any event
-  and call any service; no client name is needed. Renaming a message, a service, or an `rpc`, or moving it to another
+  and call any service without a client name. Renaming a message, a service, or an `rpc`, or moving it to another
   package, changes its address.
 - **Register persistent services first.** Registration on the JVM creates the JetStream stream of a persistent
   service. External callers never create it, and their persistent calls fail until the service has been registered
@@ -75,11 +75,30 @@ enum WhitelistAction {
 
 ## TypeScript client
 
-`./gradlew :surf-nats-core:jsNodeProductionLibraryDistribution` builds the npm package `@slne/surf-nats` into
-`surf-nats-core/build/dist/js/productionLibrary`. How the package will be distributed is not decided yet. It runs
-on Node.js, depends on `@nats-io/transport-node`, `@nats-io/jetstream`, and `@nats-io/obj` 3.4.0, and needs
-`@bufbuild/protobuf` 2.16.0 as a peer dependency. It also depends on `@bufbuild/protoplugin` 2.16.0, which pulls in
-TypeScript 5.4.5; only the `protoc-gen-surf-nats` binary loads it, the client does not.
+The surf-nats build publishes the npm package `@slne/surf-nats` to the npm repository `npm-releases-public` of
+weaver. Projects read it through the anonymous group `npm-public`. Point the `@slne` scope at that group in the
+`.npmrc` of your project:
+
+```ini
+@slne:registry=https://weaver.slne.dev/npm/npm-public/
+```
+
+Then install the package and its peer dependency:
+
+```sh
+npm install @slne/surf-nats @bufbuild/protobuf@2.16.0
+```
+
+A release has the version of the surf-nats release and the dist-tag `latest`. A snapshot build has the version
+`<version>.<yyyyMMddHHmmss>`, for example `1.0.0-SNAPSHOT.20261112093000`, and the dist-tag `snapshot`, so
+`npm install @slne/surf-nats@snapshot` installs the newest snapshot. To build the package locally, run
+`./gradlew :surf-nats-core:jsNodeProductionLibraryDistribution`, which writes it to
+`surf-nats-core/build/dist/js/productionLibrary`.
+
+The package runs on Node.js and exports ES modules with TypeScript declarations. It depends on
+`@nats-io/transport-node`, `@nats-io/jetstream`, and `@nats-io/obj` 3.4.0, and needs `@bufbuild/protobuf` 2.16.0 as a
+peer dependency. It also depends on `@bufbuild/protoplugin` 2.16.0, which pulls in TypeScript 5.4.5. Only the
+`protoc-gen-surf-nats` binary loads it, the client does not.
 
 ### Fetching the contracts
 
@@ -102,7 +121,7 @@ Describe what to fetch in `weaver.json` next to `package.json`:
 
 `dependencies` lists the contract artifacts as `group:name:version`, with exact versions. The CLI also fetches their
 dependencies, including the surf-nats protos. `repositories` is the lookup order. `WEAVER_URL` overrides `url`.
-Private repositories need an API key with read access in `WEAVER_TOKEN`; the public repository needs none.
+Private repositories need an API key with read access in `WEAVER_TOKEN`. The public repository needs none.
 
 ```sh
 npx weaver fetch
@@ -115,7 +134,7 @@ as `postinstall`, so that everyone has the same files. Then generate the schemas
 
 Generate the schemas from the contracts with [buf](https://buf.build/) and `@bufbuild/protoc-gen-es` 2.16.0, and a
 typed client per service with `protoc-gen-surf-nats`, which the package `@slne/surf-nats` ships as a binary. With the
-contracts in `proto/`, the `outDir` above:
+contracts in `proto/`, the `outDir` of `weaver.json`:
 
 ```yaml
 # buf.yaml
@@ -177,7 +196,10 @@ await nats.close();
 `name` is your own client name, in lowercase letters and digits separated by hyphens. It identifies your
 application in the `Surf-Origin` header and names the connection. `servers` takes an array or a comma-separated
 string and defaults to `nats://localhost:4222`. Set at most one way to authenticate: `token`, `user` with `pass`, or
-`credsFile`. The client does not read environment variables; pass their values yourself.
+`credsFile`. Empty strings count as unset. The client does not read environment variables. Pass their values
+yourself. `connect` rejects when no server answers within `connectTimeoutMs`, 5000 by default. Once connected, the
+client reconnects indefinitely after a connection loss. `nats.origin` holds the `Surf-Origin` value of the client,
+`<name>@<instance id>`.
 
 The client addresses events and services by the proto full names of their schemas and needs no other setting to
 reach them.
@@ -187,7 +209,7 @@ reach them.
 ```ts
 import { NameChangedSchema } from "./gen/surf/profiles/v1/name_changed_pb.js";
 
-await nats.publish(NameChangedSchema, { playerId: "alice", name: "Alice" });
+nats.publish(NameChangedSchema, { playerId: "alice", name: "Alice" });
 
 const registration = await nats.listen(NameChangedSchema, (event, context) => {
     console.log(`${event.playerId} is now ${event.name}, published by ${context.origin}`);
@@ -198,11 +220,25 @@ registration.close();
 ```
 
 `publish` checks the message before it sends it: every `required` field must be set, also in nested messages.
-`publish` returns once it has flushed the connection, or rejects after `timeoutMs` (default 5000). Delivery is not guaranteed: instances that are offline miss the event.
+`publish` returns `void` and does not wait for the server, like `NatsClient.publish` on the JVM: the connection buffers
+the event, and `close()` sends the buffered events before it ends. An invalid message, an invalid `eventId`, an event
+above the NATS max payload and a closed client throw synchronously. Delivery is not guaranteed: instances that are
+offline miss the event.
+
+Every publish sends a new random event id (`Surf-Event-Id`). To repeat one event, for example after a failure of your
+own, pass the same `eventId` (1 to 128 visible ASCII characters) in the publish options:
+
+```ts
+nats.publish(NameChangedSchema, { playerId: "alice", name: "Alice" }, { eventId: "name-alice-42" });
+```
+
+Listeners that deduplicate by event id, such as Kotlin listeners with `NatsEventDeduplicator`, act once on such a
+repeat. The `context` of a handler carries `origin`, `isFromThisClient`, and the `eventId` of the publisher, which is
+`null` when the publisher sent none.
 
 `listen` delivers every event to this connection by default (`recipients: "ALL_INSTANCES"`). With
 `recipients: "ANY_INSTANCE"`, each event goes to one listener among the connections with your client name.
-`ignoreFromThisClient: true` skips the events this client published; it works only with `ALL_INSTANCES`. A handler
+`ignoreFromThisClient: true` skips the events this client published. It works only with `ALL_INSTANCES`. A handler
 may return a promise. If it throws or the promise rejects, the client logs the error. Events that cannot be decoded,
 or that lack a required field, are dropped with a warning.
 
@@ -229,19 +265,19 @@ the response message, or nothing for a response of type `google.protobuf.Empty`.
 response message returns an `Answer` instead: `{ known: true, value }` for the first known answer, or
 `{ known: false }` without one. If no instance knows an answer and some threw, it throws the first error an instance
 replied with. The TS client does not track which instances are running, so without a known answer it resolves only
-after `timeoutMs`; a Kotlin caller returns as soon as every running instance has answered. Pick a short `timeoutMs`
-for methods that often answer unknown.
+after `timeoutMs`, whereas a Kotlin caller returns as soon as every running instance has answered. Pick a short
+`timeoutMs` for methods that often answer unknown.
 
 The generated methods delegate to `nats.call` and `nats.callAnswer`, which also take the method descriptors of
 protoc-gen-es directly, for example `nats.call(RolesService.method.lookup, { userId: 42n })`. `call` handles every
 kind of method except `ALL_INSTANCES` methods with a response message, which need `callAnswer`.
 `timeoutMs` overrides the timeout of the contract (default 5 seconds, persistent 60 seconds). Like `publish`, `call`
 checks the request before it sends it. An `optional` field without a `[default]` and of a non-enum type is `null`
-in Kotlin when unset; check it with `isFieldSet`. Kotlin omits fields whose value equals their default or the enum's
+in Kotlin when unset. Check it with `isFieldSet`. Kotlin omits fields whose value equals their default or the enum's
 zero value, so presence carries no meaning for those.
 
 A persistent call without a result returns once JetStream has stored the call. The client sends it again with the
-same `Nats-Msg-Id` until JetStream confirms it or the timeout expires; the timeout can be at most two minutes. The
+same `Nats-Msg-Id` until JetStream confirms it or the timeout expires. The timeout can be at most two minutes. The
 client creates the object store buckets for [large payloads](#large-payloads) when they are missing, but never a
 stream.
 
@@ -262,7 +298,7 @@ Calls reject with these errors:
 |-------------------------|----------------------------------------------------------------------------------------------------|
 | `NatsRemoteError`       | The implementation threw. `type` is the exception class, `remoteMessage` its message.              |
 | `NatsNoRespondersError` | No instance serves the method. Only for non-persistent `ANY_INSTANCE` calls. `subject` names it.   |
-| `NatsCallTimeoutError`  | No reply, storage confirmation, or flush within `timeoutMs`. Carries `subject` and `timeoutMs`.   |
+| `NatsCallTimeoutError`  | No reply or storage confirmation within `timeoutMs`. Carries `subject` and `timeoutMs`.            |
 | `NatsRpcError`          | The base class of all three. Thrown directly when JetStream rejects a persistent call, for example because its stream does not exist. |
 
 A request that lacks a required field fails before anything is sent.
@@ -283,14 +319,15 @@ const plain = toPlain(FindPlayerResponseSchema, response); // { name: "Steve", s
 ```
 
 - `google.protobuf.Timestamp` becomes a `Date`, `surf.types.v1.Uuid` a UUID string and a 64-bit integer a `number`.
-  A 64-bit integer outside ±(2^53 − 1) throws a `RangeError`; one with `jstype = JS_STRING` stays a decimal `string`.
+  A 64-bit integer outside ±(2^53 − 1) throws a `RangeError`, and one with `jstype = JS_STRING` stays a decimal
+  `string`.
 - A `google/protobuf/wrappers.proto` type becomes its value. `google.protobuf.Struct` becomes a `JsonObject`, `Value`
-  a `JsonValue` and `ListValue` a `JsonValue[]`; a `Value` of kind `null_value` becomes `null`.
+  a `JsonValue`, and `ListValue` a `JsonValue[]`. A `Value` of kind `null_value` becomes `null`.
 - A field with explicit presence, which is every proto2 field except lists and maps, is `null` while unset instead
   of its protobuf default. Lists and maps are never `null`.
 - A oneof becomes `{ case, value }`, or `{ case: null, value: null }` while unset.
-- Nested messages, lists and maps are converted the same way; map keys become strings. Enums stay numbers, bytes stay
-  `Uint8Array`, and `$typeName` and `$unknown` are dropped.
+- Nested messages, lists, and maps are converted the same way, and map keys become strings. Enums stay numbers,
+  bytes stay `Uint8Array`, and `$typeName` and `$unknown` are dropped.
 
 ## Wire format
 
@@ -298,9 +335,10 @@ This section describes the messages for NATS clients other than `@slne/surf-nats
 
 ### Message format
 
-Every message carries the header `Content-Type: application/protobuf`. A message without it, or with another value,
-fails; what happens then depends on the kind of message (see [Errors](#errors)). Header names are case-sensitive:
-`content-type` is not `Content-Type`.
+Every message carries the header `Content-Type: application/protobuf`. The value is compared case-insensitively,
+and parameters after a `;` are ignored. A message without the header, or with another media type, fails. What
+happens then depends on the kind of message (see [Errors](#errors)). Header names are case-sensitive: `content-type`
+is not `Content-Type`.
 
 The body is the binary Protocol Buffers encoding of a message from the contract: the event message, the request
 message of the `rpc`, or its response message. There is no envelope and no type name, because the subject
@@ -329,14 +367,14 @@ The shared types have these fields, all of them `required` except `Location.worl
 | `surf.types.v1.Key`             | `value`: the key as `namespace:value`                                                  |
 | `surf.types.v1.TextColor`       | `rgb`: `0xRRGGBB`, 0 to 16,777,215                                                     |
 | `surf.types.v1.ShadowColor`     | `argb`: `0xAARRGGBB` as `fixed32`                                                      |
-| `surf.types.v1.Sound`           | `name` (a `Key`), `source` (`Sound.Source`; unset, unspecified, or unknown reads as master), `volume`, `pitch`, `seed` (`optional`) |
+| `surf.types.v1.Sound`           | `name` (a `Key`), `source` (`Sound.Source`, unset, unspecified, or unknown reads as master), `volume`, `pitch`, `seed` (`optional`) |
 | `surf.types.v1.Title`           | `title`, `subtitle` (`Component`s), `times` (`Title.Times` with `fade_in`, `stay`, `fade_out` durations, `optional`) |
 | `surf.types.v1.OffsetDateTime`  | `seconds` since the Unix epoch, `nanos` (0 to 999,999,999), `offset_seconds` from UTC  |
 | `surf.types.v1.ZonedDateTime`   | `date_time` (an `OffsetDateTime`), `zone_id` such as `Europe/Berlin`                   |
 | `surf.types.v1.LocalDate`       | `year`, `month` (1 to 12), `day` (1 to 31)                                             |
-| `surf.types.v1.LocalTime`       | `hour`, `minute`, `second`, `nanos`; the empty message is midnight                     |
+| `surf.types.v1.LocalTime`       | `hour`, `minute`, `second`, `nanos`, the empty message is midnight                     |
 | `surf.types.v1.LocalDateTime`   | `date` (a `LocalDate`), `time` (a `LocalTime`), no offset or zone                      |
-| `surf.types.v1.BigDecimal`      | `value`: Java's `BigDecimal.toString()`, e.g. `12.50` or `1E+3`; keep it a string       |
+| `surf.types.v1.BigDecimal`      | `value`: Java's `BigDecimal.toString()`, such as `12.50` or `1E+3`, kept as a string |
 | `surf.types.v1.BigInteger`      | `value`: decimal digits with an optional `-`, readable with `BigInt(value)`             |
 | `surf.types.v1.IpAddress`       | `address`: 4 bytes (IPv4) or 16 bytes (IPv6) in network byte order                     |
 | `surf.types.v1.InetSocketAddress` | `address` (an `IpAddress`, `optional`, unset when unresolved), `host`, `port`        |
@@ -453,9 +491,13 @@ A persistent call goes to JetStream, which stores it and confirms the storage wi
 it as a NATS request, because a request to a stream subject returns that acknowledgement, and add a `Nats-Msg-Id`
 header, for example `panel-whitelist-42-1718000000`.
 
-The acknowledgement looks like `{"stream":"SURF_PERSIST_surf_roles_v1_RolesService","seq":17}`. Only that acknowledgement means that the call
-is stored. If you get an error or no acknowledgement, the call may not be stored. Send it again with the same
-`Nats-Msg-Id`.
+Optionally add `Nats-Expected-Stream` with the name of the service's stream, for example
+`SURF_PERSIST_surf_roles_v1_RolesService`. JetStream then rejects the call when the subject belongs to another
+stream. surf-nats callers always send it.
+
+The acknowledgement looks like `{"stream":"SURF_PERSIST_surf_roles_v1_RolesService","seq":17}`. Only that
+acknowledgement means that the call is stored. If you get an error or no acknowledgement, the call may not be
+stored. Send it again with the same `Nats-Msg-Id`.
 
 JetStream discards a message whose `Nats-Msg-Id` it has seen within the last two minutes, so a repeated call is
 stored once. Send repeats within those two minutes. A repeat sent later is stored as a second call, so protect the
@@ -490,12 +532,19 @@ Without `Surf-Reply-To`, the call still runs, but nobody receives the result.
 
 ### Deadlines
 
-A call may carry a `Surf-Deadline` header: a point in time in milliseconds since the Unix epoch. An instance drops a
-call whose deadline has passed, without running it. Without the header, the instance gives the call the method's
-timeout (see [Timeouts](../README.md#timeouts)), counted from the moment the call arrives. Kotlin callers send no
-deadline with persistent calls without a result, because these wait in the stream until an instance runs them.
+A call may carry a `Surf-Deadline` header: a point in time in milliseconds since the Unix epoch. An instance does not
+run a call whose deadline has passed (see [Errors](#errors)). Without the header, the instance gives the call the
+method's timeout (see [Timeouts](../README.md#timeouts)):
 
-Deadlines compare the clocks of different hosts. Keep the clock of your application synchronized (NTP).
+- A non-persistent call gets it counted from the moment the call arrives.
+- A persistent call with a result gets it counted from the moment JetStream stored the call, by the clock of the
+  NATS server. The time the call waits in the stream or for a free handler counts against it, and redeliveries do not
+  restart it.
+- A persistent call without a result has no deadline. Kotlin callers send none, because these calls wait in the
+  stream until an instance runs them.
+
+Deadlines compare the clocks of different hosts. Keep the clocks of your application and of the NATS servers
+synchronized (NTP).
 
 ### Large payloads
 
@@ -521,21 +570,28 @@ after 7 days in `surf-nats-persistent-payloads`.
 |-------------------------------------------------------|------------------------------|-------------------------|------------------------------|---------------------------|
 | Missing or unknown `Content-Type`                     | dropped, logged as a warning | reply with `Surf-Error` | dead letter at once          | reply with `Surf-Error`   |
 | Body cannot be decoded or lacks a required field      | dropped, logged as a warning | reply with `Surf-Error` | dead letter at once          | reply with `Surf-Error`   |
-| Method name unknown                                   | not applicable               | no responders           | retried, then dead letter    | retried, see below        |
+| Method name unknown                                   | not applicable               | no responders           | retried, then dead letter    | retried, see the note     |
 | Method throws                                         | not applicable               | reply with `Surf-Error` | retried, then dead letter    | reply with `Surf-Error`   |
-| Deadline passed                                       | not applicable               | dropped                 | dropped                      | dropped                   |
+| Deadline passed                                       | not applicable               | dropped                 | dead letter at once          | dropped                   |
+| No free handler in time                               | not applicable               | dropped                 | retried, then dead letter    | dropped                   |
+| Instance shuts down while the call waits              | not applicable               | dropped                 | retried, then dead letter    | retried, else dropped     |
 
 A persistent call with a result to an unknown method is retried until its `Nats-TTL` ends. JetStream then removes it,
 so it reaches the dead letters only when it has no `Nats-TTL` or the retries end first (after about 2.5 minutes).
 The caller sees a timeout.
 
+A method that throws `dev.slne.surf.nats.rpc.NatsRedeliveryException` reports a temporary failure. A persistent call
+with a result is then delivered again after the backoff instead of being answered. It gets a reply with
+`Surf-Error` only on its last delivery, or when the next attempt would start after its deadline.
+
 ### Dead letters
 
-A dead letter is a persistent call that surf-nats gave up on: one that could not be decoded, or one that failed
-every retry. surf-nats publishes it to `surf.dlq.<service full name>`, which the dead-letter stream of the service
-stores, and does not touch it again. The stream is named `SURF_DLQ_` followed by the encoded service full name (see
-[Streams and dead letters](../README.md#streams-and-dead-letters)), for example `SURF_DLQ_surf_roles_v1_RolesService`.
-Inspect it with the `nats` CLI:
+A dead letter is a persistent call that surf-nats gave up on: one that could not be decoded, a call without a result
+whose deadline had passed, or one that failed every retry. A call without a result also fails a delivery when it gets
+no free handler or meets an instance that is shutting down. surf-nats publishes it to `surf.dlq.<service full name>`,
+which the dead-letter stream of the service stores, and does not touch it again. The stream is named `SURF_DLQ_`
+followed by the encoded service full name (see [Streams and dead letters](../README.md#streams-and-dead-letters)), for
+example `SURF_DLQ_surf_roles_v1_RolesService`. Inspect it with the `nats` CLI:
 
 ```sh
 nats stream view SURF_DLQ_surf_roles_v1_RolesService
@@ -549,6 +605,15 @@ the dedupe id of the dead-letter publish, and three more headers:
 | `Surf-Dead-Subject` | The subject the call was originally published to                |
 | `Surf-Error`        | The exception class that made the call fail                     |
 | `Surf-Message-Id`   | The identity of the call, its original `Nats-Msg-Id` by default |
+
+Usually the class is the exception that the method threw. surf-nats sets these classes itself:
+
+| `Surf-Error`                                                    | Cause                                                          |
+|-----------------------------------------------------------------|----------------------------------------------------------------|
+| `dev.slne.surf.nats.rpc.delivery.DeadlineExpiredException`      | The `Surf-Deadline` had passed when the call arrived.          |
+| `dev.slne.surf.nats.rpc.delivery.NoHandlerSlotException`        | The last delivery got no free handler.                         |
+| `dev.slne.surf.nats.rpc.delivery.RegistrationDrainingException` | The last delivery met an instance that was shutting down.      |
+| `java.util.concurrent.TimeoutException`                         | The method ran longer than 10 minutes and surf-nats cancelled it. |
 
 To run the call again, fix the cause and publish the body to the subject in `Surf-Dead-Subject`, as described under
 [Persistent methods without a result](#persistent-methods-without-a-result). Use the original `Content-Type` and a
@@ -564,6 +629,7 @@ original call.
 | `Content-Type`        | yes         | yes            | `application/protobuf`. Required.                                          |
 | `Nats-Msg-Id`         | yes         | no             | Id of a persistent call. JetStream discards repeats within two minutes.   |
 | `Nats-TTL`            | yes         | no             | Lifetime of a stored persistent call with a result. Optional.              |
+| `Nats-Expected-Stream` | yes        | no             | Stream that must store a persistent call. Optional.                       |
 | `Surf-Reply-To`       | yes         | no             | Reply subject for the result of a persistent call.                         |
 | `Surf-Deadline`       | yes         | no             | Deadline in milliseconds since the Unix epoch. Optional.                   |
 | `Surf-Origin`         | yes         | yes            | Identifies the publisher of an event. Optional.                            |
@@ -572,6 +638,6 @@ original call.
 | `Surf-Error`          | no          | yes            | Exception class of a failed call. The body holds the message.              |
 | `Surf-Answer`         | no          | yes            | `unknown` for `Answer.Unknown`.                                            |
 | `Surf-Dead-Subject`   | no          | yes            | Original subject of a dead letter.                                         |
-| `Surf-Message-Id`     | yes         | yes            | Identity of a persistent call (idempotency key or replayed identity); takes precedence over `Nats-Msg-Id`. |
+| `Surf-Message-Id`     | yes         | yes            | Identity of a persistent call (idempotency key or replayed identity). Takes precedence over `Nats-Msg-Id`. |
 | `Surf-Event-Id`       | yes         | yes            | Identity of an event, equal for every repeat of one event. Optional.       |
 | `Surf-Presence`       | no          | no             | `join`, `beat`, `leave` or `query` on the presence subject. Internal.      |

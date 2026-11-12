@@ -187,6 +187,96 @@ interface LimitedService {
     }
 }
 
+// The test config.yml (TestNatsInstance) limits it to one concurrent handler. block is a core method that holds the
+// slot, quick a persistent rpc with a 2 s timeout and record a persistent fire.
+interface LimitedPersistentService {
+    suspend fun block(): Text
+
+    suspend fun quick(): Text
+
+    suspend fun record()
+
+    companion object {
+        @JvmField
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<LimitedPersistentService> = NatsServiceDescriptor(
+            protoName = "surf.nats.test.v1.LimitedPersistentService",
+            methods = listOf(
+                NatsMethodDescriptor<Unit, Text>(
+                    protoName = "Block",
+                    kotlinName = "block",
+                    persistent = false,
+                    callTimeoutSeconds = 30,
+                    recipients = Recipients.ANY_INSTANCE,
+                    resultKind = NatsResultKind.VALUE,
+                    requestSerializer = EmptySerializer,
+                    responseSerializer = Text.serializer(),
+                ),
+                NatsMethodDescriptor<Unit, Text>(
+                    protoName = "Quick",
+                    kotlinName = "quick",
+                    persistent = true,
+                    callTimeoutSeconds = 2,
+                    recipients = Recipients.ANY_INSTANCE,
+                    resultKind = NatsResultKind.VALUE,
+                    requestSerializer = EmptySerializer,
+                    responseSerializer = Text.serializer(),
+                ),
+                NatsMethodDescriptor<Unit, Unit>(
+                    protoName = "Record",
+                    kotlinName = "record",
+                    persistent = true,
+                    callTimeoutSeconds = null,
+                    recipients = Recipients.ANY_INSTANCE,
+                    resultKind = NatsResultKind.UNIT,
+                    requestSerializer = EmptySerializer,
+                    responseSerializer = null,
+                ),
+            ),
+        )
+    }
+}
+
+// The test config.yml (TestNatsInstance) allows two concurrent handlers, one of them long. hold is a fire whose
+// declared 2 s timeout would make any other call short, short a core method with the core default timeout and slow a
+// core method with a 30 s timeout.
+interface LaneService {
+    suspend fun hold()
+
+    suspend fun short(): Text
+
+    suspend fun slow(): Text
+
+    companion object {
+        @JvmField
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<LaneService> = NatsServiceDescriptor(
+            protoName = "surf.nats.test.v1.LaneService",
+            methods = listOf(
+                NatsMethodDescriptor<Unit, Unit>(
+                    protoName = "Hold",
+                    kotlinName = "hold",
+                    persistent = true,
+                    callTimeoutSeconds = 2,
+                    recipients = Recipients.ANY_INSTANCE,
+                    resultKind = NatsResultKind.UNIT,
+                    requestSerializer = EmptySerializer,
+                    responseSerializer = null,
+                ),
+                textMethod("Short", "short", EmptySerializer),
+                NatsMethodDescriptor<Unit, Text>(
+                    protoName = "Slow",
+                    kotlinName = "slow",
+                    persistent = false,
+                    callTimeoutSeconds = 30,
+                    recipients = Recipients.ANY_INSTANCE,
+                    resultKind = NatsResultKind.VALUE,
+                    requestSerializer = EmptySerializer,
+                    responseSerializer = Text.serializer(),
+                ),
+            ),
+        )
+    }
+}
+
 private fun <Req : Any> textMethod(protoName: String, kotlinName: String, request: KSerializer<Req>) =
     NatsMethodDescriptor<Req, Text>(
         protoName = protoName,

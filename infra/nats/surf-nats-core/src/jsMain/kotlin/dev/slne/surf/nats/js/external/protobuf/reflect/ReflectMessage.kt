@@ -17,7 +17,11 @@ import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.DescOneof
 import dev.slne.surf.nats.js.external.protobuf.UnknownField
 
-// Reflection access to a message (reflect-types.d.ts); get is overloaded per field variant of ReflectMessageGet.
+/**
+ * Binds `ReflectMessage` of `reflect-types.d.ts`, the reflection access to a message.
+ *
+ * `get` is overloaded per field variant, as `ReflectMessageGet` is in TypeScript.
+ */
 internal external interface ReflectMessage {
     val message: ProtoMessage
     val desc: DescMessage
@@ -27,7 +31,9 @@ internal external interface ReflectMessage {
     fun clear(field: DescField)
     fun oneofCase(oneof: DescOneof): DescField?
 
-    // ScalarValue: number, bigint, string, boolean or Uint8Array by the scalar type
+    /**
+     * Returns the `ScalarValue`: number, bigint, string, boolean or `Uint8Array`, by the scalar type.
+     */
     fun get(field: DescFieldScalar): Any
     fun get(field: DescFieldEnum): Int
     fun get(field: DescFieldMessage): ReflectMessage
@@ -42,6 +48,9 @@ internal external interface ReflectMessage {
 
     fun getUnknown(): Array<UnknownField>?
 
-    // Declared as UnknownField[]; the value is assigned to $unknown as is, so undefined removes the unknown fields.
+    /**
+     * Sets the unknown fields. TypeScript declares the parameter as `UnknownField[]`, but the value is assigned to
+     * `$unknown` as is, so `undefined` removes the unknown fields.
+     */
     fun setUnknown(value: Array<UnknownField>?)
 }

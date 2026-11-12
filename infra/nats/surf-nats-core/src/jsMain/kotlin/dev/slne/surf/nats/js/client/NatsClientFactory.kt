@@ -8,7 +8,7 @@ import dev.slne.surf.nats.runtime.randomId
 
 internal object NatsClientFactory {
     /**
-     * Connects a new client; its connection name and `Surf-Origin` are `<client name>@<random instance id>`.
+     * Connects a new client whose connection name and `Surf-Origin` are `<client name>@<random instance id>`.
      */
     suspend fun create(options: ConnectOptions): NatsClientImpl {
         val settings = ConnectSettings.of(options)

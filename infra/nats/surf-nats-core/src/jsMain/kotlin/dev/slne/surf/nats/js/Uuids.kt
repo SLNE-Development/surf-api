@@ -13,6 +13,13 @@ import kotlin.uuid.Uuid
 /**
  * Formats a `surf.types.v1.Uuid` message or its raw bytes as a lowercase `8-4-4-4-12` UUID string.
  *
+ * ```ts
+ * if (event.playerId) {
+ *     const id: string = uuidToString(event.playerId);
+ * }
+ * ```
+ *
+ * @param uuid a `surf.types.v1.Uuid` message or a `Uint8Array` of 16 bytes
  * @throws RangeError if the value does not hold exactly 16 bytes
  */
 @JsExport
@@ -32,7 +39,11 @@ fun uuidToString(uuid: Any?): String {
 /**
  * Parses an `8-4-4-4-12` UUID string (any case) into a `surf.types.v1.Uuid` message.
  *
- * @throws RangeError if [value] is not an `8-4-4-4-12` hex string
+ * ```ts
+ * nats.publish(PlayerJoinedSchema, { name: "Alex", id: uuidFromString("0b6f1c2e-6d4f-4d1a-9f0e-2c3b1a7e5d90") });
+ * ```
+ *
+ * @throws RangeError if [value] is `null`, `undefined` or not an `8-4-4-4-12` hex string
  */
 @JsExport
 fun uuidFromString(value: String?): UuidMessage {

@@ -12,10 +12,25 @@ internal class ServiceNames(val service: String) {
         problem(service)?.let { throw IllegalArgumentException(it) }
     }
 
+    /**
+     * Subject prefix `surf.rpc.<service>` of the core rpcs.
+     */
     val rpcBase = ProtocolSubjects.of(ProtocolSubjects.RPC, service)
+
+    /**
+     * Subject prefix `surf.persist.<service>` of the persistent rpcs.
+     */
     val persistBase = ProtocolSubjects.of(ProtocolSubjects.PERSIST, service)
+
+    /**
+     * Subject of the presence messages of the service, see [ProtocolHeaders.PRESENCE].
+     */
     val presenceSubject = ProtocolSubjects.of(ProtocolSubjects.PRESENCE, service)
     val dlqSubject = ProtocolSubjects.of(ProtocolSubjects.DLQ, service)
+
+    /**
+     * Subject filter of [stream], matching every persistent rpc subject of the service.
+     */
     val streamFilter = "$persistBase.*"
 
     val stream = ProtocolStreams.persist(service)

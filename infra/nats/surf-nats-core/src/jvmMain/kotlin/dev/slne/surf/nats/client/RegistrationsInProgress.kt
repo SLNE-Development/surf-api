@@ -18,7 +18,9 @@ internal class RegistrationsInProgress(private val requireAccepting: () -> Unit)
     private var count = 0
 
     /**
-     * Counts a registration; throws the failure of [requireAccepting] without counting it. Pair with [exit].
+     * Counts a registration. Pair with [exit].
+     *
+     * Throws the failure of [requireAccepting] without counting the registration.
      */
     fun enter() = lock.withLock {
         requireAccepting()
@@ -30,7 +32,7 @@ internal class RegistrationsInProgress(private val requireAccepting: () -> Unit)
     }
 
     /**
-     * Waits until no registration is in progress; returns `false` when [timeout] passes first or the thread is
+     * Waits until no registration is in progress. Returns `false` when [timeout] passes first or the thread is
      * interrupted.
      */
     fun awaitNone(timeout: Duration): Boolean = lock.withLock {

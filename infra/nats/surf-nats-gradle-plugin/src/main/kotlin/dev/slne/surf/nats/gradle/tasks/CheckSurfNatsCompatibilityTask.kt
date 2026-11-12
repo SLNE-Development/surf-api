@@ -22,31 +22,47 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 /**
- * Checks whether the current proto sources are compatible with a baseline.
+ * Checks whether the current `.proto` sources are compatible with the previous release of the module.
  *
- * The baseline is the previous release of this module's weaver artifact, fetched by
- * [FetchSurfNatsBaselineTask] into [baselineDirectory].
+ * The plugin registers it as `checkSurfNatsCompatibility` and makes `check` and weaver's `publishProtos` depend on
+ * it. The baseline is the release that [FetchSurfNatsBaselineTask] downloads into [baselineDirectory].
  *
- * The task is skipped when [checkEnabled] or [active] is false, or when [baselineVersionFile]
- * is missing or records [FetchSurfNatsBaselineTask.NO_BASELINE]. Compatibility violations fail the
- * task, while warnings are logged and written to [reportFile] without causing a failure.
+ * Types and services are matched by their fully qualified proto names, so renaming or moving one counts as removing
+ * it. Violations fail the task. Warnings are wire-compatible changes that still affect Kotlin callers. They are
+ * logged and written to [reportFile] without failing the task.
+ *
+ * The task is skipped when [checkEnabled] or [active] is `false`, or when [baselineVersionFile] is missing or records
+ * [FetchSurfNatsBaselineTask.NO_BASELINE]. To turn the check off:
+ *
+ * ```kotlin
+ * surfNats {
+ *     compatibilityCheck = false
+ * }
+ * ```
  */
 @CacheableTask
 abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
 
+    /**
+     * The `.proto` files of [sourceDirectories], declared as task input.
+     */
     @get:InputFiles
     @get:IgnoreEmptyDirectories
     @get:PathSensitive(PathSensitivity.RELATIVE)
     val protoSources: FileTree
         get() = protoFiles(sourceDirectories)
 
+    /**
+     * The directories that hold the `.proto` files of the baseline release.
+     */
     @get:InputFiles
     @get:IgnoreEmptyDirectories
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val baselineDirectory: ConfigurableFileCollection
 
     /**
-     * File written by [FetchSurfNatsBaselineTask] with the baseline version or [FetchSurfNatsBaselineTask.NO_BASELINE].
+     * The file in which [FetchSurfNatsBaselineTask] records the baseline version or
+     * [FetchSurfNatsBaselineTask.NO_BASELINE].
      */
     @get:Internal
     abstract val baselineVersionFile: RegularFileProperty
@@ -57,9 +73,18 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     @get:Internal
     abstract val active: Property<Boolean>
 
+    /**
+     * The value of `surfNats.compatibilityCheck`.
+     */
     @get:Internal
     abstract val checkEnabled: Property<Boolean>
 
+    /**
+     * The report file, `build/reports/surf-nats/compatibility.txt` by default.
+     *
+     * It starts with `compatible` when there are no violations, and otherwise lists one violation per line. Each
+     * warning follows on its own line, prefixed with `warning: `.
+     */
     @get:OutputFile
     abstract val reportFile: RegularFileProperty
 
@@ -72,6 +97,12 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
         onlyIf("a released compatibility baseline exists in weaver", BaselineAvailable())
     }
 
+    /**
+     * Compares the sources with the baseline, logs the warnings and writes [reportFile].
+     *
+     * @throws GradleException when the baseline holds no `.proto` files, a schema cannot be loaded, or the check
+     *   finds violations. The violation message lists each change and suggests a new major package version.
+     */
     @TaskAction
     fun check() {
         val baselineDirectories = baselineDirectory.files.toList()
@@ -95,9 +126,6 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
         failOnViolations(result.violations)
     }
 
-    /**
-     * Ensures that the baseline contains proto files.
-     */
     private fun validateBaseline(baselineDirectories: List<File>) {
         val hasProtos = baselineDirectories.any { directory ->
             directory.walkTopDown().any { it.isFile && it.extension == "proto" }
@@ -112,12 +140,6 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     private fun baselineVersion(): String =
         FetchSurfNatsBaselineTask.readVersion(baselineVersionFile.get().asFile)
 
-    /**
-     * Writes compatibility violations and warnings to the report file.
-     *
-     * A successful check starts with `compatible`. Violations are written
-     * one per line, followed by any warnings.
-     */
     private fun writeReport(
         violations: List<CompatibilityFinding>,
         warnings: List<CompatibilityFinding>,
@@ -138,9 +160,6 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
         report.writeText(content, Charsets.UTF_8)
     }
 
-    /**
-     * Fails the task if compatibility violations were detected.
-     */
     private fun failOnViolations(violations: List<CompatibilityFinding>) {
         if (violations.isEmpty()) return
 

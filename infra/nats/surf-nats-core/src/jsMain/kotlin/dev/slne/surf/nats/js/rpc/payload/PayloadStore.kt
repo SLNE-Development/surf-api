@@ -25,7 +25,7 @@ import kotlin.time.Duration
 /**
  * Offloads bodies above the server max payload to the payload buckets and resolves `Surf-Payload-Ref` bodies.
  *
- * A missing bucket is created with the TTL and file storage of the JVM runtime; an existing one is used as is.
+ * A missing bucket is created with the TTL and file storage of the JVM runtime. An existing one is used as is.
  */
 internal class PayloadStore(
     private val connection: NatsConnection,
@@ -65,8 +65,9 @@ internal class PayloadStore(
     }
 
     /**
-     * Resolves the body from [message] which may be loaded from the object store.
-     * Optionally deletes the payload from the object store.
+     * Returns the body of [message], loaded from [bucket] when the message carries `Surf-Payload-Ref`.
+     *
+     * With [delete], removes the object afterwards. A failed deletion is only logged.
      */
     suspend fun resolve(message: Msg, bucket: PayloadBucket, delete: Boolean): Uint8Array<*> {
         val name = message.header(ProtocolHeaders.PAYLOAD_REF) ?: return message.data

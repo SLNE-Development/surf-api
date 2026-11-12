@@ -6,6 +6,9 @@ import dev.slne.surf.nats.bytecode.ListenerInvoker
 import dev.slne.surf.nats.client.NatsClientImpl
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Registration of all listener methods of one listener object. [close] removes every method and is idempotent.
+ */
 @InternalNatsApi
 internal class EventListenerRegistration(
     private val client: NatsClientImpl,

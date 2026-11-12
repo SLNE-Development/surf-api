@@ -10,6 +10,16 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.protobuf.ProtoNumber
 import net.kyori.adventure.text.format.TextColor
 
+/**
+ * Serializes an Adventure [TextColor] as the protobuf message `surf.types.v1.TextColor`.
+ *
+ * Field `rgb` (1, required) holds the color as `0xRRGGBB`, 0 to 16,777,215. A value that matches a named color decodes
+ * as the [net.kyori.adventure.text.format.NamedTextColor] constant. The `dev.slne.surf.nats` Gradle plugin maps fields
+ * of this message type to [TextColor] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `rgb` is absent and
+ * [kotlinx.serialization.SerializationException] when it is out of range.
+ */
 object TextColorSerializer : KSerializer<TextColor> {
     private const val MAX_RGB = 0xFFFFFF
 

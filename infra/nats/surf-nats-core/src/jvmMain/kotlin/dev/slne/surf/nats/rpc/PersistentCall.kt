@@ -6,6 +6,12 @@ import dev.slne.surf.nats.bytecode.ServiceInvoker
 import dev.slne.surf.nats.bytecode.call
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * One delivery of a persistent call as seen by a [NatsPersistentInterceptor].
+ *
+ * [proceed] runs the handler at most once and throws [IllegalStateException] on a second call. The request
+ * fingerprint is the SHA-256 hash of the encoded request, computed on first access.
+ */
 @InternalNatsApi
 internal class PersistentCall(
     override val serviceName: String,

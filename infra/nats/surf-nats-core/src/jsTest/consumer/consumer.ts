@@ -37,16 +37,18 @@ declare function log(...values: unknown[]): void;
 export async function consume(): Promise<void> {
     const nats: SurfNatsClient = await connect({ name: "surf-panel", servers: ["nats://localhost:4222"], token: "t" });
 
-    await nats.publish(ChatMessageSchema, { text: "hi" });
-    await nats.publish(PlayerJoinedSchema, create(PlayerJoinedSchema, { name: "Steve", id: { value: new Uint8Array(16) } }));
+    nats.publish(ChatMessageSchema, { text: "hi" });
+    nats.publish(PlayerJoinedSchema, create(PlayerJoinedSchema, { name: "Steve", id: { value: new Uint8Array(16) } }));
     const playerId: Uuid = uuidFromString("00112233-4455-6677-8899-aabbccddeeff");
     const helperId: UuidMessage = uuidFromString("00112233-4455-6677-8899-aabbccddeeff");
-    await nats.publish(PlayerJoinedSchema, { name: "Alex", id: playerId });
+    nats.publish(PlayerJoinedSchema, { name: "Alex", id: playerId });
     const joinedMessage = create(PlayerJoinedSchema, { name: "Alex" });
     joinedMessage.id = helperId;
     const playerIdText: string = uuidToString(playerId) + uuidToString(helperId.value);
-    await nats.publish(ServerStartedSchema, { server: "lobby-1" }, { timeoutMs: 1000 });
-    await nats.publish(ServerStartedSchema, { server: "lobby-1" }, { eventId: "custom-event-1" });
+    nats.publish(ServerStartedSchema, { server: "lobby-1" }, { eventId: "lobby-1-started" });
+    nats.publish(ServerStartedSchema, { server: "lobby-1" }, { eventId: "custom-event-1" });
+    const published: void = nats.publish(ChatMessageSchema, { text: "hi" });
+    log(published);
 
     const registration: NatsRegistration = await nats.listen(
         PlayerJoinedSchema,
@@ -138,9 +140,13 @@ export async function consume(): Promise<void> {
 
 export async function rejected(nats: SurfNatsClient): Promise<void> {
     // @ts-expect-error a plain object is no schema
-    await nats.publish({ nope: 1 }, {});
+    nats.publish({ nope: 1 }, {});
     // @ts-expect-error unknown field of the event
-    await nats.publish(ChatMessageSchema, { nope: 1 });
+    nats.publish(ChatMessageSchema, { nope: 1 });
+    // @ts-expect-error publish is fire and forget and has no timeout
+    nats.publish(ChatMessageSchema, { text: "x" }, { timeoutMs: 1000 });
+    // @ts-expect-error publish returns void, not a promise
+    const pending: Promise<void> = nats.publish(ChatMessageSchema, { text: "x" });
     // @ts-expect-error a request of another method
     await nats.call(PlayerService.method.locate, { action: "x" });
     // @ts-expect-error the result of a call is the response message, not an Answer

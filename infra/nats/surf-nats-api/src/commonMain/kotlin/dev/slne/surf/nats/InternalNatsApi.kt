@@ -1,7 +1,10 @@
 package dev.slne.surf.nats
 
 /**
- * Marks internal implementation API without compatibility guarantees.
+ * Marks declarations that are public only for the surf-nats modules themselves.
+ *
+ * Such declarations have no compatibility guarantees, are excluded from ABI validation and can change or disappear in
+ * any release. Application code must not opt in.
  */
 @RequiresOptIn(
     level = RequiresOptIn.Level.ERROR,

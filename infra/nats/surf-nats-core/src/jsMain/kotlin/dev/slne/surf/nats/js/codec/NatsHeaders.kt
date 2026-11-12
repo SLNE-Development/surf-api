@@ -8,10 +8,16 @@ import js.buffer.ArrayBuffer
 import js.typedarrays.Uint8Array
 import dev.slne.surf.nats.js.external.nats.core.headers as createNatsHeaders
 
+/**
+ * Creates and measures nats.js message headers.
+ */
 internal object NatsHeaders {
 
     val EMPTY_BODY: Uint8Array<*> = Uint8Array<ArrayBuffer>(0)
 
+    /**
+     * Returns new headers with the base headers every surf-nats message carries, including [origin].
+     */
     fun forOrigin(origin: String): MsgHdrs {
         val headers = createNatsHeaders()
         writeBaseNatsHeaders(origin, headers::set)

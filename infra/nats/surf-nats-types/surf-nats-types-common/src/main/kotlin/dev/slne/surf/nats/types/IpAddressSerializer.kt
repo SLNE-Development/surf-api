@@ -11,6 +11,16 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.protobuf.ProtoNumber
 import java.net.InetAddress
 
+/**
+ * Serializes an [InetAddress] as the protobuf message `surf.types.v1.IpAddress`.
+ *
+ * Field `address` (1, required) holds the raw address in network byte order: 4 bytes for IPv4, 16 bytes for IPv6.
+ * The host name and the IPv6 scope are not written, so a decoded address has no host name and no scope. The
+ * `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [InetAddress] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `address` is absent and
+ * [kotlinx.serialization.SerializationException] when it is neither 4 nor 16 bytes long.
+ */
 object IpAddressSerializer : KSerializer<InetAddress> {
     private const val IPV4_BYTES = 4
     private const val IPV6_BYTES = 16

@@ -13,6 +13,20 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 import kotlin.time.toKotlinDuration
 
+/**
+ * Serializes an Adventure [Title] as the protobuf message `surf.types.v1.Title`.
+ *
+ * The message has the following fields:
+ * - `title` (1, required) and `subtitle` (2, required): `surf.types.v1.Component`, see [ComponentSerializer].
+ * - `times` (3, optional): the message `surf.types.v1.Title.Times` with the required fields `fade_in` (1), `stay`
+ *   (2) and `fade_out` (3), each a `google.protobuf.Duration`, see [DurationSerializer]. Unset when the title has no
+ *   times, which decodes as a title that uses the client's default times.
+ *
+ * The `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [Title] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `title`, `subtitle` or a field of `times` is
+ * absent.
+ */
 object TitleSerializer : KSerializer<Title> {
     override val descriptor: SerialDescriptor = TitleProto.serializer().descriptor
 

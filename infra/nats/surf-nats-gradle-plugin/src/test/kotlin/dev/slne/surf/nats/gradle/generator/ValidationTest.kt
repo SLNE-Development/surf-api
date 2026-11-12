@@ -306,13 +306,14 @@ class ValidationTest {
     fun `enum value remainders must not clash with Kotlin enum members`() {
         val errors = errors(
             "enum Weird {\n  WEIRD_UNSPECIFIED = 0;\n  WEIRD_name = 1;\n  WEIRD_ordinal = 2;\n  WEIRD_entries = 3;\n" +
-                    "  WEIRD_Serializer = 4;\n  WEIRD_number = 5;\n}"
+                    "  WEIRD_Serializer = 4;\n  WEIRD_number = 5;\n  WEIRD_forNumber = 6;\n}"
         )
         assertLocated(errors, 6, "enum value WEIRD_name maps to the reserved Kotlin entry name name")
         assertLocated(errors, 7, "enum value WEIRD_ordinal maps to the reserved Kotlin entry name ordinal")
         assertLocated(errors, 8, "enum value WEIRD_entries maps to the reserved Kotlin entry name entries")
         assertLocated(errors, 9, "enum value WEIRD_Serializer maps to the reserved Kotlin entry name Serializer")
         assertLocated(errors, 10, "enum value WEIRD_number maps to the reserved Kotlin entry name number")
+        assertLocated(errors, 11, "enum value WEIRD_forNumber maps to the reserved Kotlin entry name forNumber")
     }
 
     @Test

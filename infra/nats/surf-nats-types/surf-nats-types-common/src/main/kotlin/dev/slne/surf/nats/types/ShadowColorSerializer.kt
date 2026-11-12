@@ -11,6 +11,15 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import kotlinx.serialization.protobuf.ProtoType
 import net.kyori.adventure.text.format.ShadowColor
 
+/**
+ * Serializes an Adventure [ShadowColor] as the protobuf message `surf.types.v1.ShadowColor`.
+ *
+ * Field `argb` (1, required, `fixed32`) holds the color as `0xAARRGGBB`. Every 32-bit value is a valid color,
+ * including fully transparent `0`. The `dev.slne.surf.nats` Gradle plugin maps fields of this message type to
+ * [ShadowColor] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `argb` is absent.
+ */
 object ShadowColorSerializer : KSerializer<ShadowColor> {
     override val descriptor: SerialDescriptor = ShadowColorProto.serializer().descriptor
 

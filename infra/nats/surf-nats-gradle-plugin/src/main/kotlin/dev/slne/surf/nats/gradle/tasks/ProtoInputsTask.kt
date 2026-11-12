@@ -13,20 +13,29 @@ import org.gradle.work.DisableCachingByDefault
 import java.io.File
 
 /**
- * Provides the proto source directories and import paths shared by surf-nats tasks.
+ * Holds the proto source directories and import paths shared by the surf-nats tasks.
  *
- * Subclasses use [protoFiles] to declare the proto files in [sourceDirectories]
- * as Gradle task inputs.
+ * Only the `.proto` files in these directories count as task inputs. Subclasses declare those of
+ * [sourceDirectories] with [protoFiles].
  */
 @DisableCachingByDefault(because = "Base class; the concrete surf-nats tasks are cacheable")
 abstract class ProtoInputsTask : DefaultTask() {
 
+    /**
+     * The directories whose `.proto` files the task processes, from `surfNats.protoSourceDirs`.
+     */
     @get:Internal
     abstract val sourceDirectories: ConfigurableFileCollection
 
+    /**
+     * The local import directories, from `surfNats.protoPath`.
+     */
     @get:Internal
     abstract val protoPathDirectories: ConfigurableFileCollection
 
+    /**
+     * The `.proto` files of [protoPathDirectories], declared as task input.
+     */
     @get:InputFiles
     @get:IgnoreEmptyDirectories
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -34,9 +43,9 @@ abstract class ProtoInputsTask : DefaultTask() {
         get() = protoFiles(protoPathDirectories)
 
     /**
-     * Proto root fetched by weaver (`weaver.protosDir`), used for imports only.
+     * The proto root that weaver's `fetchProtos` fills (`weaver.protosDir`), used for imports only.
      *
-     * Empty when the `weaver` configuration declares no dependencies.
+     * Empty when the `weaver` configuration declares no dependencies, so builds without them need no network.
      */
     @get:InputFiles
     @get:IgnoreEmptyDirectories

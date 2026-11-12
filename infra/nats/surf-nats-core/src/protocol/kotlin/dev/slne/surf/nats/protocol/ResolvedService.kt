@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.protocol
 
 /**
- * A service identified by its proto full name [protoName]; its methods inherit [options].
+ * A service identified by its proto full name [protoName]. Its methods inherit [options].
  */
 internal class ResolvedService(val protoName: String, val options: ServiceOptions) {
 

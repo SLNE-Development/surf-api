@@ -2,10 +2,17 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
+/**
+ * A field with `fieldKind` `map`.
+ */
 internal external interface DescFieldMap : DescField {
-    // scalar | enum | message
+    /**
+     * Kind of the values: `scalar`, `enum` or `message`.
+     */
     val mapKind: String
 
-    // ScalarType of the key
+    /**
+     * `ScalarType` of the key.
+     */
     val mapKey: Int
 }

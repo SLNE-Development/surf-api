@@ -4,6 +4,11 @@ import dev.slne.surf.nats.js.external.protobuf.DescEnum
 import dev.slne.surf.nats.js.interop.getOrPut
 import js.collections.WeakMap
 
+/**
+ * The known numbers of one enum and the number that replaces unknown ones, cached per [DescEnum].
+ *
+ * [zero] is `0` when the enum declares it, otherwise its first value.
+ */
 internal class EnumPlan private constructor(enum: DescEnum) {
 
     private val known: Set<Int> = enum.values.mapTo(HashSet()) { it.number }

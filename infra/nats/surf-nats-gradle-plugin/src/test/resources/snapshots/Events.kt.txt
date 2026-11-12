@@ -27,6 +27,7 @@ import kotlin.String
 import kotlin.collections.List
 import kotlin.collections.Map
 import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
 import kotlin.time.Duration
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -174,6 +175,19 @@ public data class PlayerJoined(
             SOUTH(2),
             ;
 
+            public companion object {
+                /**
+                 * Returns the entry with the Protobuf number [number], or `null` if there is none.
+                 */
+                @JvmStatic
+                public fun forNumber(number: Int): Facing? = when (number) {
+                    0 -> Facing.UNSPECIFIED
+                    1 -> Facing.NORTH
+                    2 -> Facing.SOUTH
+                    else -> null
+                }
+            }
+
             public object Serializer : KSerializer<Facing> {
                 override val descriptor: SerialDescriptor =
                         PrimitiveSerialDescriptor("surf.demo.v1.PlayerJoined.Location.Facing", PrimitiveKind.INT)
@@ -182,12 +196,7 @@ public data class PlayerJoined(
                     encoder.encodeInt(value.number)
                 }
 
-                override fun deserialize(decoder: Decoder): Facing = when (decoder.decodeInt()) {
-                    0 -> Facing.UNSPECIFIED
-                    1 -> Facing.NORTH
-                    2 -> Facing.SOUTH
-                    else -> Facing.UNSPECIFIED
-                }
+                override fun deserialize(decoder: Decoder): Facing = Facing.forNumber(decoder.decodeInt()) ?: Facing.UNSPECIFIED
             }
         }
     }

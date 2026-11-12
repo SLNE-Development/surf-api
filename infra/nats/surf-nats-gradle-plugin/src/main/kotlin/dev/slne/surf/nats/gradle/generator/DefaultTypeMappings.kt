@@ -3,10 +3,19 @@ package dev.slne.surf.nats.gradle.generator
 import com.squareup.wire.schema.ProtoType
 import dev.slne.surf.nats.protocol.ProtocolFieldRules
 
+/**
+ * The type mappings the plugin applies without `mapType`.
+ *
+ * The serializers live in `surf-nats-types-common` and `surf-nats-types-paper`. The `surf.types` protos are bundled
+ * with the plugin. Explicit `mapType` calls override these mappings.
+ */
 internal object DefaultTypeMappings {
     private const val TYPES = "dev.slne.surf.nats.types"
     private const val PAPER_TYPES = "dev.slne.surf.nats.paper.types"
 
+    /**
+     * Mappings for every project: well-known types, UUID, Adventure, `java.time`, `java.math` and `java.net`.
+     */
     val common: List<TypeMapping> = listOf(
         TypeMapping(
             ProtoType.TIMESTAMP,
@@ -105,6 +114,9 @@ internal object DefaultTypeMappings {
         ),
     )
 
+    /**
+     * Additional mappings for projects with the surf-api `paper-plugin` or `paper-raw` plugin.
+     */
     val paper: List<TypeMapping> = listOf(
         TypeMapping(
             ProtoType.get("surf.types.paper.v1.Location"),

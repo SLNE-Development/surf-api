@@ -3,6 +3,12 @@ package dev.slne.surf.nats.js.codec.rules
 import dev.slne.surf.nats.js.external.protobuf.DescFieldEnum
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 
+/**
+ * Checks a singular enum field for presence and normalizes unknown values of incoming messages.
+ *
+ * protobuf-es stores an unknown value of a closed enum in `$unknown`. The step sets the field to [EnumPlan.zero]
+ * unless another member of its oneof is set, and removes those unknown fields.
+ */
 internal class EnumStep(
     private val field: DescFieldEnum,
     private val enum: EnumPlan,

@@ -3,6 +3,9 @@ package dev.slne.surf.nats.js.codec.rules
 import dev.slne.surf.nats.js.external.protobuf.DescFieldEnumList
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 
+/**
+ * Replaces unknown values in an enum list of an incoming message with [EnumPlan.zero].
+ */
 internal class EnumListStep(
     private val field: DescFieldEnumList,
     private val enum: EnumPlan,

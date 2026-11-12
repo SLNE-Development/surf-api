@@ -44,24 +44,37 @@ pluginManagement {
 
 // build.gradle.kts
 plugins {
-    id("dev.slne.surf.nats") version "<surf-nats version>"
+    id("dev.slne.surf.nats") version "SURF_NATS_VERSION"
 }
 ```
 
-The plugin supports Kotlin/JVM modules and needs surf-api 3.47.1 or later, and surf-microservice 2.1.2 or later for
-microservices. Next to any surf-api Gradle plugin, it does the following:
+Replace `SURF_NATS_VERSION` with the surf-nats release you build against.
 
-- It adds `compileOnly` dependencies on `surf-nats-api` and the type adapters in `surf-nats-types-common`, plus
-  `surf-nats-types-paper` in Paper modules, and on `kotlinx-serialization-protobuf`. At runtime, the surf-nats
-  platform plugin provides them.
-- It declares the surf-nats platform plugin as a dependency of your plugin: on Paper as a required bootstrap and
-  server dependency in `paper-plugin.yml`, on Velocity in the plugin file.
-- It applies the Kotlin serialization compiler plugin.
+The plugin supports Kotlin/JVM modules only and fails on Kotlin Multiplatform modules. In every module, it does the
+following:
+
+- It applies the Kotlin serialization compiler plugin and adds the generated sources to the `main` source set.
 - It applies the weaver Gradle plugin `dev.slne.weaver` and configures it (see
   [Contract registry](#contract-registry)).
+- It runs `checkSurfNatsCompatibility` with `check` (see [Versioning](#versioning)).
 
-Applying the plugin is enough. Do not register the surf-nats plugin as a dependency yourself, because the build
-would declare it twice. On Minestom, register the dependency in `minestomPluginFile`, which the plugin does not do:
+Next to a surf-api Gradle plugin, it also does the following:
+
+- It adds `surf-nats-api`, the type adapters in `surf-nats-types-common`, plus `surf-nats-types-paper` in Paper
+  modules, and `kotlinx-serialization-protobuf` to `compileOnly` and `testImplementation`. The surf-nats modules use
+  the version of the plugin, `kotlinx-serialization-protobuf` the kotlinx.serialization version that surf-nats is
+  built with. At runtime, the surf-nats platform plugin provides them.
+- It declares the surf-nats platform plugin as a dependency of your plugin: with
+  `dev.slne.surf.api.gradle.paper-plugin` as a required bootstrap and server dependency in `paper-plugin.yml`,
+  loaded before your plugin, and with `dev.slne.surf.api.gradle.velocity` as a required dependency in the plugin
+  file. A `dev.slne.surf.api.gradle.paper-raw` module gets the Paper types but no dependency declaration, so declare
+  the dependency on `surf-nats-paper` in its plugin file yourself.
+- With `dev.slne.surf.api.gradle.standalone`, it applies the surf-microservice plugin `dev.slne.surf.microservice`
+  and adds the runtime `surf-nats-standalone` to `implementation` (see [Microservices](#microservices)).
+
+With `paper-plugin` and `velocity`, applying the plugin is enough. Do not register the surf-nats plugin as a
+dependency yourself there, because the build would declare it twice. On Minestom, register the dependency in
+`minestomPluginFile`, which the plugin does not do:
 
 ```kotlin
 minestomPluginFile {
@@ -74,9 +87,23 @@ minestomPluginFile {
 On Paper, Velocity, and Minestom, the surf-nats plugin opens the connection at startup and closes it at shutdown.
 Your plugin only creates and closes its own clients.
 
-In a microservice, apply the plugin next to `surfMicroservice { withMicroserviceApi() }`. The microservice runtime
-then starts surf-nats before `onBootstrap` and shuts it down after `onDisable`. Your microservice only creates and
-closes its own clients. Do not call `SurfNatsStandalone` yourself.
+### Microservices
+
+A microservice applies only the surf-api standalone plugin and `dev.slne.surf.nats`:
+
+```kotlin
+plugins {
+    id("dev.slne.surf.api.gradle.standalone")
+    id("dev.slne.surf.nats") version "SURF_NATS_VERSION"
+}
+```
+
+The surf-nats plugin applies the surf-microservice plugin and adds `surf-nats-standalone` at its own version. Do not
+add either yourself. The microservice runtime starts surf-nats before `onBootstrap` and shuts it down after
+`onDisable`. At shutdown, the clients stop receiving events and calls before `onDisable`, so `onDisable` can still
+publish events and call services. Close your clients in `onDisable`. Do not call `SurfNatsStandalone` yourself.
+
+### NATS server
 
 You need a NATS server with JetStream enabled. For local development, start one with the `docker-compose.yml` in
 this repository:
@@ -100,26 +127,42 @@ reconnect-wait-millis: default
 drain-timeout-seconds: default
 max-concurrent-handlers: default
 max-concurrent-handlers-by-service:
-  "acme.profile.v1.ProfileService": 40
+  "surf.profiles.v1.ProfileService": 40
+max-concurrent-long-handlers: default
+max-concurrent-long-handlers-by-service:
+  "surf.profiles.v1.ProfileService": 10
 ```
 
-`default` uses the default value from the table below.
+`default` uses the default value from the following table.
 
-| Key                                  | Meaning                                                                         | Default                 |
-|--------------------------------------|---------------------------------------------------------------------------------|-------------------------|
-| `servers`                            | NATS server URLs. At least one is required.                                     | `nats://localhost:4222` |
-| `auth`                               | One of `token`, `username` with `password`, or `credentials-file`.              | none                    |
-| `connection-name`                    | Name of the connection shown by the NATS server.                                | `surf-nats-<random id>` |
-| `reconnect-wait-millis`              | Pause between reconnect attempts.                                               | 2000                    |
-| `drain-timeout-seconds`              | Time that closing a service waits for running calls.                            | 10                      |
-| `max-concurrent-handlers`            | Handlers of one registered service that run at the same time.                   | 20                      |
-| `max-concurrent-handlers-by-service` | The same limit for single services, keyed by proto service name.                | none                    |
+| Key                                       | Meaning                                                                      | Default                 |
+|-------------------------------------------|------------------------------------------------------------------------------|-------------------------|
+| `servers`                                 | NATS server URLs. At least one is required.                                  | `nats://localhost:4222` |
+| `auth`                                    | One of `token`, `username` with `password`, or `credentials-file`.           | none                    |
+| `connection-name`                         | Name of the connection shown by the NATS server.                             | `surf-nats-<random id>` |
+| `reconnect-wait-millis`                   | Pause between reconnect attempts.                                            | 2000                    |
+| `drain-timeout-seconds`                   | Time that closing a service waits for running calls.                         | 10                      |
+| `max-concurrent-handlers`                 | Handlers of one registered service that run at the same time.                | 20                      |
+| `max-concurrent-handlers-by-service`      | The same limit for single services, keyed by proto service name.             | none                    |
+| `max-concurrent-long-handlers`            | Handlers of one registered service that may run long calls at the same time. | half of the handlers    |
+| `max-concurrent-long-handlers-by-service` | The same limit for single services, keyed by proto service name.             | none                    |
 
-Calls beyond `max-concurrent-handlers` wait for a free handler, earliest deadline first, and are dropped without
-running when their deadline passes. Persistent calls share the limit; fire calls rank last. Long calls may hold at
-most half of the handlers: fan-outs and calls with more than the 5 s core default left, which by default includes
-every persistent call. The default of 20 is twice the default connection pool of surf-database-r2dbc. Raise it for
-services whose handlers mostly wait on other calls.
+The handler limits apply to each service registration of an instance. Calls beyond `max-concurrent-handlers` wait
+for a free handler, earliest deadline first, and are dropped without running when their deadline passes (see
+[Deadlines](#deadlines)). Persistent calls share the limit. A persistent call without a result has no deadline and
+waits as if its deadline were 10 minutes after it arrived, so calls whose caller waits run first.
+
+Long calls may hold at most `max-concurrent-long-handlers` of the handlers, so they cannot occupy every handler.
+Long calls are persistent calls without a result, `ALL_INSTANCES` calls without a result, and calls of methods whose
+timeout exceeds the 5-second default. Persistent methods default to a 60-second timeout, so by default every
+persistent call counts as long. A configured total without a long limit gets half of that total, at least one.
+A long limit above the configured total of the same scope fails when surf-nats loads the configuration, and a long
+limit above a default total is lowered to it. The default of 20 is twice the default connection pool of
+surf-database-r2dbc. Raise it for services whose handlers mostly wait on other calls.
+
+An application that embeds surf-nats can replace the defaults of 20 and 10 with
+`NatsHandlerLimits.setDefaults(maxConcurrentHandlers, maxConcurrentLongHandlers)` before it registers services. It
+clamps the long limit to `1..maxConcurrentHandlers`. `config.yml` and the environment take precedence.
 
 Environment variables override the file:
 
@@ -131,10 +174,11 @@ Environment variables override the file:
 | `SURF_NATS_CREDENTIALS_FILE`               | `auth.credentials-file`          |
 | `SURF_NATS_CONNECTION_NAME`                | `connection-name`                |
 | `SURF_NATS_MAX_CONCURRENT_HANDLERS`        | `max-concurrent-handlers`        |
+| `SURF_NATS_MAX_CONCURRENT_LONG_HANDLERS`   | `max-concurrent-long-handlers`   |
 
 If any of `SURF_NATS_TOKEN`, `SURF_NATS_USERNAME`, `SURF_NATS_PASSWORD`, or `SURF_NATS_CREDENTIALS_FILE` is set,
 the environment replaces the whole `auth` section. A username from the environment never combines with a password
-from the file.
+from the file. Empty values count as unset.
 
 The NATS server must be reachable at startup. Once connected, surf-nats reconnects indefinitely after a connection
 loss.
@@ -180,9 +224,9 @@ Every message becomes a Kotlin `data class`, and every field a property in `lowe
 
   | Field                                  | Kotlin                                                   |
   |----------------------------------------|----------------------------------------------------------|
-  | `required T`                           | `T`, no default; a message that lacks it fails to decode |
+  | `required T`                           | `T`, no default. A message that lacks it fails to decode |
   | `optional T`                           | `T? = null`                                              |
-  | `optional T [default = …]`             | `T` with that default; scalars, strings, and bytes only  |
+  | `optional T [default = …]`             | `T` with that default, for scalars, strings, and bytes    |
   | `optional E` with `E` a generated enum | `E` with the zero value as default (see [Enums](#enums)) |
 
   This applies to scalars, strings, bytes, messages, and [mapped types](#types). An enum mapped with `mapType`
@@ -195,7 +239,7 @@ Every message becomes a Kotlin `data class`, and every field a property in `lowe
   class holds its value in `value`.
 - `int32`, `fixed32`, and `sfixed32` become `Int`. `int64`, `sint64`, `fixed64`, and `sfixed64` become `Long`.
   `uint32` and `uint64` become `Int` and `Long` in two's complement, so values of 2^31 or 2^63 and above are
-  negative in Kotlin. `sint32` is rejected; use `sint64` or `int32`.
+  negative in Kotlin. The plugin rejects `sint32`. Use `sint64` or `int32`.
 - `bytes` becomes `ByteArray`. The generated `equals` and `hashCode` compare its content.
 - Constructor parameters follow the field numbers, not the order in the file. Give new fields a number above the
   current maximum, and call generated constructors with named arguments.
@@ -262,7 +306,7 @@ surfNats {
 }
 ```
 
-Events cannot be mapped. `google.protobuf.Any` and other types without a mapping are not supported; use a `oneof`
+Events cannot be mapped. `google.protobuf.Any` and other types without a mapping are not supported. Use a `oneof`
 instead.
 
 ### Plugin options
@@ -275,7 +319,7 @@ All entries of the `surfNats { }` block are optional:
 | `protoPath.from(...)`                     | Local directories with `.proto` files that contracts may import, but that are not generated. |
 | `mapType(proto, kotlinClass, serializer)` | Maps a proto type to an existing class (see [Types](#types)).                             |
 | `generatedVisibility = INTERNAL`          | Generates `internal` classes, interfaces, and enums. Default `PUBLIC`.                    |
-| `compatibilityBaseline("<version>")`      | The released version that the compatibility check compares against, for example `"1.4.0"`. Default: the highest weaver release below `project.version`. |
+| `compatibilityBaseline("<version>")`      | The released version that the compatibility check compares against, for example `"1.4.0"`. Default: the highest weaver release lower than `project.version`. |
 | `compatibilityCheck = false`              | Turns the compatibility check off.                                                        |
 
 Contracts of other modules and artifacts are not imported through `protoPath` but declared as weaver dependencies
@@ -290,7 +334,7 @@ surf-nats distributes contracts through [weaver](https://weaver.slne.dev), the p
 | Setting                        | Default                                                       |
 |--------------------------------|---------------------------------------------------------------|
 | `weaver.url`                   | `WEAVER_URL` if set, else `https://weaver.slne.dev`           |
-| `weaver.token`                 | `WEAVER_TOKEN`; optional for reading, required for publishing |
+| `weaver.token`                 | `WEAVER_TOKEN`, optional for reading, required for publishing |
 | `weaver.repositories`          | `proto-releases-public`, searched for dependencies            |
 | `weaver.publishing.repository` | `proto-releases-public`, for releases and snapshots           |
 | `weaver.publishing.group`      | `project.group`                                               |
@@ -332,8 +376,9 @@ The surf-nats protos (`surf/nats/v1/options.proto` and `surf/types/**`) come wit
 works without network access. They are also published to weaver as `dev.slne.surf.nats:surf-nats-types-common` and
 `dev.slne.surf.nats:surf-nats-types-paper`. The plugin adds `surf-nats-types-common`, at its own version, to the
 publish manifest of every module that publishes, and `surf-nats-types-paper` as well in Paper modules
-(`dev.slne.surf.api.gradle.paper-plugin` or `paper-raw`), so the server can resolve the imports. A release of your module cannot depend on a
-snapshot of surf-nats: the server rejects that publish. Use a release of surf-nats for a release of your module.
+(`dev.slne.surf.api.gradle.paper-plugin` or `paper-raw`), so the server can resolve the imports. A release of your
+module cannot depend on a snapshot of surf-nats: the server rejects that publish. Use a release of surf-nats for a
+release of your module.
 
 ### Publishing
 
@@ -341,8 +386,8 @@ A module publishes its contracts when it applies `maven-publish` and configures 
 first runs `publishProtos`, which first runs `generateSurfNatsKotlin` and `checkSurfNatsCompatibility`. Every Maven
 publish task runs after `publishProtos`, so a contract that weaver rejects stops the release before the Maven
 upload. `publishProtos` also runs after the `publishProtos` of every `weaver(project(...))` dependency, because
-weaver rejects a dependency it does not know yet. `publishToMavenLocal` does not publish contracts. A module without a Maven repository, such as a test
-module, never publishes contracts and never needs the network.
+weaver rejects a dependency it does not know yet. `publishToMavenLocal` does not publish contracts. A module without
+a Maven repository, such as a test module, never publishes contracts and never needs the network.
 
 `publishProtos` reads `WEAVER_TOKEN` and needs a token with write access to the repository.
 
@@ -358,10 +403,11 @@ dependencies {
 }
 ```
 
-A project dependency must apply `dev.slne.weaver`; `dev.slne.surf.nats` applies it and stages `protoSourceDirs` as
+A project dependency must apply `dev.slne.weaver`. `dev.slne.surf.nats` applies it and stages `protoSourceDirs` as
 `weaver.publishing.source`. The build uses that module's `weaver.publishing.source` directly, without publishing.
-Publishing your module also needs a `weaver.publishing` group, name and version in the other module. A remote dependency needs an exact version; ranges and `+` are not supported. The dependencies
-also appear in the manifest of your published artifact.
+Publishing your module also needs a `weaver.publishing` group, name, and version in the other module. A remote
+dependency needs an exact version. Ranges and `+` are not supported. The dependencies also appear in the manifest of
+your published artifact.
 
 Imported files are import-only: the plugin does not generate Kotlin for them, and `fetchProtos` places them in
 `build/weaver/protos`. A field of such a type fails with "neither generated nor mapped" until you map the type with
@@ -496,7 +542,9 @@ suspend fun onNameChanged(event: NameChanged) {
 ```
 
 `origin` has the form `<client name>@<instance id>`, where the instance id is a random id per JVM. It is `null` for
-events from publishers that do not set it.
+events from publishers that do not set it. `eventId` identifies the event (see [Repeated events](#repeated-events))
+and is `null` when the publisher sent none. `natsEventContext()` throws an `IllegalStateException` outside a
+listener method, and `natsEventContextOrNull()` returns `null` there.
 
 ### Repeated events
 
@@ -504,7 +552,7 @@ Events travel over core NATS, which delivers each message at most once per subsc
 `NatsClient.publish` on the JVM sends every event once under a new random `eventId`, so its events never repeat.
 
 A listener receives one `eventId` twice only when a publisher sends it twice on purpose: a TypeScript client that
-passes the same `eventId` in its publish options, for example to retry a publish whose flush timed out, or an
+passes the same `eventId` in its publish options, for example to repeat a publish after a failure of your own, or an
 application outside surf-nats that sets the same `Surf-Event-Id` header. `NatsEventDeduplicator` remembers delivered
 ids so that a listener acts once on such a repeat:
 
@@ -520,8 +568,10 @@ object NameListener {
 }
 ```
 
-It remembers up to 10,000 ids for 7 days by default; both limits are constructor parameters. A repeat that arrives
-after its id was forgotten counts as new, so the limits must cover the time in which publishers repeat events.
+It remembers up to 10,000 ids for 7 days by default. Both limits are constructor parameters. A repeat that arrives
+after its id was forgotten counts as new, so the limits must cover the time in which publishers repeat events. An
+event without an id always counts as a first delivery. Outside a listener method, pass the id yourself with
+`firstDelivery(eventId)`.
 
 ### Subjects
 
@@ -579,7 +629,7 @@ interface ProfileService {
 ```
 
 A request of type `google.protobuf.Empty` gives a method without parameters, and a response of type
-`google.protobuf.Empty` a method that returns `Unit`; the file then imports `google/protobuf/empty.proto`. An empty
+`google.protobuf.Empty` a method that returns `Unit`. The file then imports `google/protobuf/empty.proto`. An empty
 request message of your own, such as `message ListRequest {}`, stays a parameter (`list(request: ListRequest)`), and
 it can gain fields later.
 
@@ -605,6 +655,11 @@ object ProfileServiceImpl : ProfileService {
 
 client.registerService<ProfileService>(ProfileServiceImpl)
 ```
+
+`registerService` checks the interface and the implementation and reports all problems at once. It returns once the
+NATS server knows the subscriptions and, for persistent methods, the stream and consumer exist. A client holds at
+most one active registration per service. Close the returned `NatsRegistration` to stop serving the service, or
+let `client.close()` close it.
 
 Call it from any instance, in this application or another one:
 
@@ -634,8 +689,12 @@ What a call does depends on three things: whether the method is persistent (`per
 to that instance only. The other instances never see it, so only that instance runs the method. With
 `ALL_INSTANCES`, every running instance receives the call and runs the method.
 
-Persistent methods cannot use `ALL_INSTANCES`; the plugin rejects that combination. Changing the response type
-changes what a call does.
+Persistent methods cannot use `ALL_INSTANCES`: the plugin rejects that combination. Changing the response type,
+`persistent`, or `recipients` changes what a call does, so the compatibility check treats it as an incompatible
+change (see [Versioning](#versioning)).
+
+A fire-and-forget call reports no errors to the caller. An instance that receives it after the call timeout has
+passed drops it, and a method that has started runs to completion without a time limit.
 
 The options live in the contract. Set them in the `(surf.nats.v1.service)` option to apply them to all methods,
 and in the `(surf.nats.v1.method)` option of an `rpc` to override them for that method:
@@ -696,7 +755,9 @@ the call throws that exception.
 
 surf-nats tracks which instances are running, so a call can end as soon as all of them have answered. For about
 one second after the first `service()` call and after a reconnect, it does not know the instances yet. A call in
-that window that gets no `Known` answer waits for its timeout.
+that window that gets no `Known` answer waits for its timeout. The call checks for missing answers only when an
+answer arrives, so if the last instance that has not answered stops during the call, the call also waits for its
+timeout.
 
 ### Timeouts
 
@@ -735,7 +796,7 @@ Calls throw `NatsRpcException` or one of its subclasses:
 A timeout does not mean that the method did not run. Design writes so that a retry is safe.
 
 Expected outcomes belong in the response, not in exceptions. Model cases such as "name already taken" as a `oneof`
-in the response message, like `RenameResponse` above, and reserve exceptions for bugs:
+in the response message, like `RenameResponse` in [Services](#services), and reserve exceptions for bugs:
 
 ```kotlin
 when (val result = profiles.rename(RenameRequest(playerId = "alice", name = "Alice")).result) {
@@ -746,7 +807,7 @@ when (val result = profiles.rename(RenameRequest(playerId = "alice", name = "Ali
 ```
 
 A service method cannot return `null`. Use a response message with an `optional` field instead, like
-`FindNameResponse` above.
+`FindNameResponse` in [Services](#services).
 
 ### Names
 
@@ -754,7 +815,7 @@ The names on the wire are the proto names from the contract: the full name of an
 service, and the name of each `rpc`, spelled exactly as written. `java_package` and the names of the generated
 Kotlin and TypeScript code play no part.
 
-Field names do not travel on the wire; field numbers do. Renaming Kotlin code changes nothing, because the Kotlin
+Field numbers travel on the wire, but field names do not. Renaming Kotlin code changes nothing, because the Kotlin
 code is generated. Renaming a message, a service, or an `rpc` in the contract, or moving it to another package,
 gives it a new address: callers that still use the old name reach nobody, and the compatibility check reports the
 rename as a removal. Rename only in a new major version (see [Versioning](#versioning)).
@@ -764,15 +825,24 @@ rename as a removal. Rename only in a new major version (see [Versioning](#versi
 The major version is part of the package (`surf.profiles.v1`) and therefore of every subject, stream, and service
 registration. Within one major version, contracts must stay compatible:
 
-- Compatible: new messages, services, and `rpc`s; new `optional` fields, with or without a `[default]`, with a
-  number above the current maximum; new enum values, which older readers decode as the zero value; removing an
-  `optional` field if its number and name go into `reserved`.
-- Incompatible: changing the number, type, or label of a field, even between wire-compatible types such as `int32`
-  and `int64`, or `required` and `optional`; a new `required` field (declare it `optional`, with a `[default]` if it
-  must not be null); removing a `required` field; adding, removing, or changing a `[default]`; removing or renaming
-  a message, enum, enum value, service, or `rpc` without reserving it; changing the zero value of an enum; changing
-  the request or response type of an `rpc`; removing `(surf.nats.v1.event) = true` from an event; changing
-  `persistent` or `recipients` of a method; moving a type to another Kotlin package; removing a reservation.
+- Compatible:
+  - new messages, services, and `rpc`s
+  - new `optional` fields, with or without a `[default]`, with a number higher than the current maximum
+  - new enum values, which older readers decode as the zero value
+  - removing an `optional` field if its number and name go into `reserved`
+- Incompatible:
+  - changing the number, type, or label of a field, even between wire-compatible types such as `int32` and
+    `int64`, or `required` and `optional`
+  - a new `required` field (declare it `optional`, with a `[default]` if it must not be null)
+  - removing a `required` field
+  - adding, removing, or changing a `[default]`
+  - removing or renaming a message, enum, enum value, service, or `rpc` without reserving it
+  - changing the zero value of an enum
+  - changing the request or response type of an `rpc`
+  - removing `(surf.nats.v1.event) = true` from an event
+  - changing `persistent` or `recipients` of a method
+  - moving a type to another Kotlin package
+  - removing a reservation
 
 For an incompatible change, create a new major version: a package `surf.profiles.v2` in `surf/profiles/v2/`, with
 `java_package` ending in `.v2`. Versions 1 and 2 have their own subjects, streams, and registrations, and one client
@@ -780,7 +850,7 @@ can register the implementations of both. Roll out in this order: let the implem
 move the callers to version 2, then remove version 1.
 
 The task `checkSurfNatsCompatibility` runs with `check` and compares the contracts against the last release of the
-module in weaver, the baseline. `fetchSurfNatsBaseline` picks the highest release below `project.version` in
+module in weaver, the baseline. `fetchSurfNatsBaseline` picks the highest release lower than `project.version` in
 `weaver.publishing.repository` and downloads its contracts into `build/surf-nats/baseline`. To compare against a
 specific release instead, set its version:
 
@@ -792,9 +862,9 @@ surfNats {
 
 The check runs for modules that publish to a Maven repository, and for modules that set a baseline. It is skipped
 when the module has no release in weaver yet, and under `--offline` with a warning. It writes its report to
-`build/reports/surf-nats/compatibility.txt`. A new field with a number below the current maximum is wire-compatible but shifts the Kotlin parameters, so the check
-reports it as a warning. The release that removes version 1 reports every element of version 1 as removed and needs
-`compatibilityCheck = false`.
+`build/reports/surf-nats/compatibility.txt`. A new field with a number lower than the current maximum is
+wire-compatible but shifts the Kotlin parameters, so the check reports it as a warning. The release that removes
+version 1 reports every element of version 1 as removed and needs `compatibilityCheck = false`.
 
 ## Persistent methods
 
@@ -833,7 +903,8 @@ While the implementation runs, surf-nats tells JetStream every 5 seconds that th
 Without these signals, JetStream would assume after 10 seconds that the instance had crashed and deliver the call
 again. The signals have a downside: a method that never returns would hold its call forever, and JetStream would
 neither retry it nor move it to the dead-letter stream. surf-nats therefore cancels the method after 10 minutes and
-counts the attempt as failed, so the call is retried or dead-lettered like any other failure.
+counts the attempt as failed with a `java.util.concurrent.TimeoutException`, so the call is retried or
+dead-lettered like any other failure.
 
 The cancellation is a coroutine cancellation, which stops the method only at its next suspension point. Blocking
 code, such as a JDBC query, does not notice it and keeps running, and the signals to JetStream continue with it.
@@ -843,6 +914,27 @@ Wrap blocking code in `runInterruptible(Dispatchers.IO)`, which interrupts the t
 
 A persistent method that returns a message stores the call and waits for the result. If the implementation throws,
 or the call cannot be decoded, the caller receives a `NatsRemoteException`, and surf-nats does not retry.
+
+### Transient failures
+
+Throw `NatsRedeliveryException` from a persistent method when the failure is temporary, such as an unavailable
+database:
+
+- A call with a result is then delivered again after the backoff instead of being answered. On its last delivery,
+  or when the next attempt would start after the caller's deadline, the caller receives the exception as a
+  `NatsRemoteException`.
+- A call without a result is retried and dead-lettered like after any other exception.
+- A non-persistent call has no redelivery. The caller receives the exception as a `NatsRemoteException`.
+
+### Intercepting persistent calls
+
+`client.registerService<T>(implementation, interceptor)` runs every persistent call of the registration through a
+`NatsPersistentInterceptor`. The interceptor runs in the coroutine of the call, after the request is decoded, and
+calls `call.proceed()` to run the method. It can install context elements, such as a database transaction, or return
+a stored `NatsPersistentReply` without running the method. Methods that are not persistent bypass it. The
+transactional services of surf-microservice-reliability are built on it. `NatsPersistentLimits` gives the retention
+times to size a store of message ids: `REDELIVERY_HORIZON` (14 days) is the latest time after the first publish at
+which one call can reach a method again, through redeliveries and one replay from the dead-letter stream.
 
 ### Running a call more than once
 
@@ -859,7 +951,8 @@ override suspend fun rename(request: RenameRequest) {
 
 `messageId` stays the same across retries of one call, and across a replay from the dead-letter stream that keeps the
 `Surf-Message-Id` header. Two calls with the same request get different ids, so by default `messageId` cannot detect
-an operation that a caller sends twice.
+an operation that a caller sends twice. `deliveryCount` starts at 1. `natsPersistentContext()` throws an
+`IllegalStateException` outside a persistent method, and `natsPersistentContextOrNull()` returns `null` there.
 
 ### Repeating a call safely
 
@@ -879,10 +972,10 @@ operation. An implementation that deduplicates by `messageId`, such as a transac
 surf-microservice-reliability, runs the action once and answers every repeat with the stored result. Each repeat is
 stored as a new message, so it reaches an instance also within the two-minute duplicate window.
 
-Use a new key for every action and send the same request with every repeat; a transactional service answers a key
+Use a new key for every action and send the same request with every repeat. A transactional service answers a key
 reused with another request with an error. Calls to the same method inside one block count as repeats of one action.
-A key has 1 to 128 visible ASCII characters; core calls ignore it. JavaScript callers pass `idempotencyKey` in the
-call options.
+A key has 1 to 128 visible ASCII characters. Non-persistent calls ignore it. JavaScript callers pass
+`idempotencyKey` in the call options.
 
 ### Deadlines
 
@@ -901,7 +994,7 @@ JVM cannot do that: its calls fail until the service has been registered once.
 The NATS server limits the size of a message with `max_payload`, 1 MB by default. When the request or the result
 of a service call exceeds that limit, surf-nats stores it in the NATS object store and sends a reference instead.
 The receiver loads it transparently. surf-nats deletes the objects after use, and objects it does not delete
-expire after the time in the table below. Your code passes ordinary messages, for example a request with a
+expire after the time in the following table. Your code passes ordinary messages, for example a request with a
 `bytes data` field:
 
 ```kotlin
@@ -951,7 +1044,7 @@ every `_` doubled and then every `.` replaced by `_`, in its original case:
 
 The stream stores the subjects `surf.persist.<service full name>.*`, the dead-letter stream the subject
 `surf.dlq.<service full name>`. All instances of the service share the durable consumer `responders` on the stream.
-A stream name may have at most 255 characters; the plugin rejects longer service names.
+A stream name may have at most 255 characters, and the plugin rejects longer service names.
 
 Both streams keep messages for 7 days. surf-nats does not process the dead-letter stream. Inspect it with the
 `nats` CLI, fix the cause, and publish the calls to the service again:
@@ -994,12 +1087,32 @@ need no client name of the application that serves a contract: the contract alon
 persistent method without a result fits commands that need no answer. Register a persistent service once before the
 external application publishes calls.
 
-A Node.js project fetches the contracts with the weaver CLI `@slne/weaver-cli` (`weaver fetch`) and generates code
-from them with `buf generate`. For Node.js and TypeScript, `surf-nats-core` builds the client `@slne/surf-nats`,
-which works with [protobuf-es](https://github.com/bufbuild/protobuf-es) schemas, and its protoc plugin
-`protoc-gen-surf-nats`, which generates a typed client per service next to the protobuf-es code.
-[External callers](docs/external-callers.md) describes the setup, with `weaver.json` and `buf.gen.yaml` examples,
-and the wire format for other NATS clients: subjects, headers, replies, and dead letters.
+### TypeScript client
+
+For Node.js and TypeScript, `surf-nats-core` builds the npm package `@slne/surf-nats`. It works with
+[protobuf-es](https://github.com/bufbuild/protobuf-es) schemas and ships the protoc plugin `protoc-gen-surf-nats`,
+which generates a typed client per service next to the protobuf-es code. A Node.js project fetches the contracts
+with the weaver CLI `@slne/weaver-cli` (`weaver fetch`) and generates code from them with `buf generate`:
+
+```ts
+import { connect } from "@slne/surf-nats";
+import { NameChangedSchema } from "./gen/surf/profiles/v1/name_changed_pb.js";
+import { createProfileServiceClient } from "./gen/surf/profiles/v1/profile_service_nats.js";
+
+const nats = await connect({ name: "panel", servers: "nats://localhost:4222" });
+nats.publish(NameChangedSchema, { playerId: "alice", name: "Alice" });
+
+const profiles = createProfileServiceClient(nats);
+const response = await profiles.findName({ playerId: "alice" });
+
+await nats.close();
+```
+
+The client follows the same rules as the JVM: `publish` does not wait for delivery, calls reject with `NatsRpcError`
+and its subclasses, and `idempotencyKey` in the call options repeats a persistent call safely.
+[External callers](docs/external-callers.md) describes the installation, the setup with `weaver.json` and
+`buf.gen.yaml`, the client API, and the wire format for other NATS clients: subjects, headers, replies, and dead
+letters.
 
 ## Migrating from surf-redis and surf-rabbitmq
 
@@ -1037,8 +1150,8 @@ Points that behave differently:
 | `surf-nats-gradle-plugin` | The Gradle plugin `dev.slne.surf.nats`: code generation, build checks, compatibility check, weaver integration |
 | `surf-nats-api`           | The public API: client, `@NatsListener`, contexts, `Answer`, exceptions, generated-code model  |
 | `surf-nats-core`          | The implementation for the JVM, and the Node.js client `@slne/surf-nats`                       |
-| `surf-nats-types-common`  | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers; the protos are also published to weaver |
-| `surf-nats-types-paper`   | The `surf.types.paper.v1` messages and their Paper serializers; the protos are also published to weaver |
+| `surf-nats-types-common`  | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers, also published to weaver as protos |
+| `surf-nats-types-paper`   | The `surf.types.paper.v1` messages and their Paper serializers, also published to weaver as protos |
 | `surf-nats-paper`         | The Paper plugin                                                                               |
 | `surf-nats-velocity`      | The Velocity plugin                                                                            |
 | `surf-nats-minestom`      | The Minestom plugin                                                                            |

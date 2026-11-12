@@ -4,6 +4,11 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 
+/**
+ * Names of the library classes and functions that generated code references.
+ *
+ * Renaming one of them in `surf-nats-api` or kotlinx-serialization requires a change here.
+ */
 internal object KotlinTypes {
     private const val SERIALIZATION = "kotlinx.serialization"
     private const val PROTOBUF = "kotlinx.serialization.protobuf"

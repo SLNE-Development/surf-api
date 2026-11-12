@@ -4,6 +4,8 @@ package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.api.ConnectOptions
+import dev.slne.surf.nats.js.client.NatsClientFactory
+import dev.slne.surf.nats.js.client.NatsClientImpl
 import dev.slne.surf.nats.js.codec.decodeToString
 import dev.slne.surf.nats.js.external.nats.core.ConnectionOptions
 import dev.slne.surf.nats.js.external.nats.core.Msg
@@ -140,10 +142,12 @@ internal object TestNats {
         throw AssertionError("NATS test server $server is not reachable", last)
     }
 
-    suspend fun client(name: String): SurfNatsClient {
+    suspend fun client(name: String): SurfNatsClient = SurfNatsClient(clientImpl(name))
+
+    suspend fun clientImpl(name: String): NatsClientImpl {
         rawConnection().close().await()
         val options = ConnectOptions(name = name, servers = arrayOf(checkNotNull(url)))
-        return connect(options).await()
+        return NatsClientFactory.create(options)
     }
 }
 

@@ -38,8 +38,9 @@ class DeliveryCauseTest {
     }
 
     @Test
-    fun `payload, decode and reply causes are permanent`() {
+    fun `expired deadline, payload, decode and reply causes are permanent`() {
         val permanent = setOf(
+            DeliveryCause.EXPIRED,
             DeliveryCause.PAYLOAD_MISSING,
             DeliveryCause.UNDECODABLE,
             DeliveryCause.STORED_ERROR,

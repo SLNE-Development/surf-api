@@ -18,7 +18,7 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
      * Returns the constructor properties of [type] in constructor order and reports fields, defaults,
      * encodings, oneofs and property names that cannot be generated.
      *
-     * A field that cannot be represented is left out; a member whose name clashes stays.
+     * A field that cannot be represented is left out, while a member whose name clashes stays.
      */
     fun resolve(type: MessageType, className: ClassName): List<MessageMember> {
         val members = orderedMembers(
@@ -48,7 +48,6 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
     /**
      * Resolves a field to a Kotlin constructor property, choosing its collection or scalar representation.
      *
-     * @param field the Protobuf field to resolve
      * @return the property, or `null` when it cannot be generated
      */
     private fun fieldProperty(field: Field): FieldMember? {
@@ -66,8 +65,6 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
      * Maps cannot declare defaults. Incompatible integer encodings prevent generation because
      * kotlinx-serialization-protobuf applies one encoding to both elements.
      *
-     * @param field the original map field
-     * @param protoType the Protobuf map type
      * @return the map property, or `null` if its types or encoding are unsupported
      */
     private fun mapProperty(field: Field, protoType: ProtoType): FieldMember? {
@@ -118,7 +115,7 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
      * Resolves a repeated Protobuf field as a Kotlin list.
      *
      * Defaults are reported as unsupported. The list is packed only for packable
-     * element types; other packed declarations report an error.
+     * element types. Other packed declarations report an error.
      *
      * @return the list property, or `null` if the element type cannot be resolved
      */
@@ -225,8 +222,6 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
      *
      * Generated messages and mapped types do not support defaults.
      *
-     * @param field the declaration containing the default literal
-     * @param element the resolved type information
      * @return the default expression, or `null` if no usable default exists
      */
     private fun defaultValue(field: Field, element: ElementType): CodeBlock? {
@@ -318,8 +313,6 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
      *
      * A null value represents an unset oneof. Cases follow their field numbers.
      *
-     * @param oneOf the Protobuf oneof declaration
-     * @param owner the enclosing message class
      * @return the oneof property and its cases
      */
     private fun oneofProperty(oneOf: OneOf, owner: ClassName): OneofMember {
@@ -352,13 +345,9 @@ internal class MemberResolver(private val types: KotlinTypeResolver) {
     /**
      * Resolves a oneof case after checking field options, resolving its type, and validating its class name.
      *
-     * Invalid names and options are reported and the case is kept; a case whose field type cannot be resolved is
-     * left out.
+     * Invalid names and options are reported and the case is kept. A case whose field type cannot be resolved is
+     * left out. [caseOwners] maps each case class name to the first field that claimed it.
      *
-     * @param oneOf the containing oneof declaration
-     * @param interfaceName the generated union interface
-     * @param field the case field
-     * @param caseOwners the first field claiming each generated case name
      * @return the case, or `null` if the field type cannot be resolved
      */
     private fun oneofCase(

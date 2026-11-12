@@ -6,6 +6,9 @@ import js.iterable.AsyncIterable
 import js.typedarrays.Uint8Array
 import kotlin.js.Promise
 
+/**
+ * Binds the members of `NatsConnection` that surf-nats uses.
+ */
 internal external interface NatsConnection {
     val info: ServerInfo?
     fun publish(

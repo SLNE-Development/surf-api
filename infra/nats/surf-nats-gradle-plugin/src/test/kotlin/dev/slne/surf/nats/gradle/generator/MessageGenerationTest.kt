@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class MessageGenerationTest {
     @TempDir
@@ -520,11 +521,83 @@ class MessageGenerationTest {
             "public object Serializer : KSerializer<PunishmentType> {",
             "PrimitiveSerialDescriptor(\"surf.test.v1.PunishmentType\", PrimitiveKind.INT)",
             "encoder.encodeInt(value.number)",
-            "0 -> PunishmentType.UNSPECIFIED\n            1 -> PunishmentType.BAN\n            5 -> PunishmentType.TEMP_BAN\n" +
-                    "            else -> PunishmentType.UNSPECIFIED",
+            "override fun deserialize(decoder: Decoder): PunishmentType = PunishmentType.forNumber(decoder.decodeInt()) ?: PunishmentType.UNSPECIFIED",
             "    UNKNOWN(0),\n    OK(200),",
-            "else -> HttpStatus.UNKNOWN",
+            "override fun deserialize(decoder: Decoder): HttpStatus = HttpStatus.forNumber(decoder.decodeInt()) ?: HttpStatus.UNKNOWN",
         )
+        assertNotContains(text, "when (decoder.decodeInt())")
+    }
+
+    @Test
+    fun `generated enums declare a forNumber lookup in their companion object`() {
+        val text = messages(
+            """
+            enum PunishmentType {
+              PUNISHMENT_TYPE_UNSPECIFIED = 0;
+              PUNISHMENT_TYPE_BAN = 1;
+              PUNISHMENT_TYPE_TEMP_BAN = 5;
+            }
+            """
+        )
+        assertInOrder(
+            text,
+            "TEMP_BAN(5),\n    ;\n\n    public companion object {",
+            "     * Returns the entry with the Protobuf number [number], or `null` if there is none.\n",
+            "@JvmStatic\n        public fun forNumber(number: Int): PunishmentType? = when (number) {",
+            "public object Serializer : KSerializer<PunishmentType> {",
+        )
+    }
+
+    @Test
+    fun `forNumber branches are Int constants and unknown numbers resolve to null`() {
+        val text = messages(
+            """
+            enum HttpStatus {
+              HTTP_STATUS_UNKNOWN = 0;
+              HTTP_STATUS_OK = 200;
+              HTTP_STATUS_NOT_FOUND = 404;
+              HTTP_STATUS_TEAPOT = 418;
+            }
+            """
+        )
+        val body = text.substringAfter("fun forNumber(number: Int): HttpStatus? = when (number) {\n")
+            .substringBefore("\n        }\n")
+        assertEquals(
+            listOf(
+                "0 -> HttpStatus.UNKNOWN",
+                "200 -> HttpStatus.OK",
+                "404 -> HttpStatus.NOT_FOUND",
+                "418 -> HttpStatus.TEAPOT",
+                "else -> null",
+            ),
+            body.lines().map { it.trim() },
+        )
+        val branches = body.lines().map { it.trim() }.dropLast(1)
+        assertTrue(branches.all { Regex("""\d+ -> HttpStatus\.\w+""").matches(it) }, "branch is not an Int constant: $branches")
+    }
+
+    @Test
+    fun `nested enums and internal visibility keep the forNumber lookup`() {
+        val nested = messages(
+            """
+            message Outer {
+              optional Kind kind = 1;
+              enum Kind { KIND_UNSPECIFIED = 0; KIND_A = 1; }
+            }
+            """
+        )
+        assertContainsAll(
+            nested,
+            "public fun forNumber(number: Int): Kind? = when (number) {\n                0 -> Kind.UNSPECIFIED\n" +
+                    "                1 -> Kind.A\n                else -> null",
+            "override fun deserialize(decoder: Decoder): Kind = Kind.forNumber(decoder.decodeInt()) ?: Kind.UNSPECIFIED",
+        )
+        val internal = messages(
+            "enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }",
+            input = { it.input(visibility = GeneratedVisibility.INTERNAL) },
+        )
+        assertContainsAll(internal, "internal enum class Color(", "public fun forNumber(number: Int): Color? = when (number) {")
+        assertNotContains(internal, "internal companion", "internal fun")
     }
 
     @Test

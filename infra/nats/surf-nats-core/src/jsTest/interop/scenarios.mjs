@@ -60,7 +60,7 @@ function assertBlob(actual, label) {
 
 export const scenarios = {
     async "publish-events"(nats) {
-        await nats.publish(InteropEventSchema, EVENT);
+        nats.publish(InteropEventSchema, EVENT);
         passed("published");
     },
 

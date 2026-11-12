@@ -2,5 +2,7 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
-// fieldKind scalar, enum or message
+/**
+ * A field with `fieldKind` `scalar`, `enum` or `message`.
+ */
 internal external interface DescFieldSingular : DescField

@@ -4,7 +4,7 @@ import dev.slne.surf.nats.protocol.ProtocolFieldRules
 import js.typedarrays.Uint8Array
 
 /**
- * Value check of the set scalar fields of one message type; returns the problem or `null`.
+ * Value check of the set scalar fields of one message type, which returns the problem or `null`.
  */
 internal fun interface ScalarRule {
     fun problem(value: Any): String?

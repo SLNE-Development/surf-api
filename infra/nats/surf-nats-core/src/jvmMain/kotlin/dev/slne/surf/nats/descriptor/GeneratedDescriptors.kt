@@ -6,6 +6,10 @@ import java.lang.reflect.Modifier
 
 /**
  * Reads the static `NATS_DESCRIPTOR` field a generated event class or service interface declares itself.
+ *
+ * Inherited fields do not count. The result is cached per class. [event] and [service] throw
+ * [IllegalArgumentException] for a class without a matching descriptor. For an implementation class, the message of
+ * [service] names the generated interfaces it implements.
  */
 @InternalNatsApi
 internal object GeneratedDescriptors {

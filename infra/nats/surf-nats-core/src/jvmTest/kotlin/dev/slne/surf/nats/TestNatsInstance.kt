@@ -13,6 +13,10 @@ class TestNatsInstance : NatsInstance() {
                 |  - "${TestNatsServer.url}"
                 |max-concurrent-handlers-by-service:
                 |  "${LimitedService.NATS_DESCRIPTOR.protoName}": 1
+                |  "${LimitedPersistentService.NATS_DESCRIPTOR.protoName}": 1
+                |  "${LaneService.NATS_DESCRIPTOR.protoName}": 2
+                |max-concurrent-long-handlers-by-service:
+                |  "${LaneService.NATS_DESCRIPTOR.protoName}": 1
                 |""".trimMargin()
             )
     }

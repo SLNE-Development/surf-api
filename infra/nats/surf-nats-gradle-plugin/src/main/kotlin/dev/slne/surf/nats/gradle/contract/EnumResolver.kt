@@ -52,7 +52,7 @@ internal class EnumResolver(private val problems: Problems) {
     /**
      * Collects valid enum entries in declaration order, retaining the first entry for each Kotlin name.
      *
-     * Duplicate names are reported; entries with invalid prefixes, identifiers, or reserved
+     * Duplicate names are reported. Entries with invalid prefixes, identifiers or reserved
      * names are omitted. Negative numeric values are reported but retained where otherwise valid.
      *
      * @return Kotlin entry names paired with their original Protobuf constants
@@ -121,6 +121,7 @@ internal class EnumResolver(private val problems: Problems) {
             "values",
             "valueOf",
             GeneratedNames.ENUM_NUMBER,
+            GeneratedNames.ENUM_FOR_NUMBER,
             GeneratedNames.ENUM_SERIALIZER,
             GeneratedNames.COMPANION,
         )

@@ -5,6 +5,9 @@ package dev.slne.surf.nats.js.external.nats.obj
 import js.typedarrays.Uint8Array
 import kotlin.js.Promise
 
+/**
+ * Binds the members of `ObjectStore` that surf-nats uses.
+ */
 internal external interface ObjectStore {
     fun getBlob(name: String): Promise<Uint8Array<*>?>
     fun putBlob(meta: ObjectStoreMeta, data: Uint8Array<*>?): Promise<ObjectInfo>

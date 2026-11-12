@@ -4,6 +4,9 @@ import dev.slne.surf.nats.js.external.protobuf.DescFieldEnumMap
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 import js.iterable.iterator
 
+/**
+ * Replaces unknown values in an enum map of an incoming message with [EnumPlan.zero].
+ */
 internal class EnumMapStep(
     private val field: DescFieldEnumMap,
     private val enum: EnumPlan,

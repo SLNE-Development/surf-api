@@ -4,17 +4,17 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
 /**
- * Retention limits of persistent messages, for sizing deduplication records keyed by
+ * Provides the retention limits of persistent messages, for sizing deduplication records keyed by
  * [NatsPersistentContext.messageId].
  */
 public object NatsPersistentLimits {
     /**
-     * How long an unacknowledged persistent message stays in its work queue and can be redelivered.
+     * The time an unacknowledged persistent message stays in the work queue of its service and can be redelivered.
      */
     public val MESSAGE_MAX_AGE: Duration = 7.days
 
     /**
-     * How long a dead-lettered message stays in the dead-letter stream and can be replayed.
+     * The time a dead-lettered message stays in the dead-letter stream of its service and can be replayed.
      */
     public val DEAD_LETTER_MAX_AGE: Duration = 7.days
 

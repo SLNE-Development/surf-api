@@ -12,6 +12,20 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Serializes a [kotlin.time.Duration] as the well-known protobuf message `google.protobuf.Duration`.
+ *
+ * Field `seconds` (1) holds the whole seconds and `nanos` (2) the remaining nanoseconds, both with the sign of the
+ * duration. Both default to 0, so an empty message is [Duration.ZERO]. Seconds are limited to ±315,576,000,000
+ * (about ±10,000 years) and nanos to ±999,999,999. The `dev.slne.surf.nats` Gradle plugin maps fields of this message
+ * type to [Duration] with this serializer.
+ *
+ * [Duration] stores values above about 146 years with millisecond precision, so nanoseconds below one millisecond
+ * are lost for such durations.
+ *
+ * Encoding throws [kotlinx.serialization.SerializationException] for an infinite duration or seconds outside the
+ * range. Decoding throws it for seconds or nanos outside the range and for seconds and nanos with different signs.
+ */
 object DurationSerializer : KSerializer<Duration> {
     private const val MAX_SECONDS = 315_576_000_000L
     private const val MAX_NANOS = 999_999_999

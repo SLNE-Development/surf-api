@@ -13,12 +13,12 @@ import kotlin.time.Duration
 /**
  * Offloads a body that does not fit into [maxPayload] and returns whether it was offloaded.
  *
- * [headerBytes] is the encoded size of the headers before this call; [extraHeaderBytes] accounts for headers the
+ * [headerBytes] is the encoded size of the headers before this call. [extraHeaderBytes] accounts for headers the
  * client library adds after it. With [stampDeadline], `Surf-Deadline` (now + [lifetime]) counts in the size check
  * and is written exactly once: before returning `false`, or after [upload], which used up part of the lifetime.
  *
- * When offloading, [upload] stores the body under the random object name it receives; [writeHeader] then receives
- * that name as `Surf-Payload-Ref` and the caller sends an empty body. Only a body that must be offloaded is checked
+ * When offloading, [upload] stores the body under the random object name it receives. [writeHeader] then receives
+ * that name as `Surf-Payload-Ref`, and the caller sends an empty body. Only a body that must be offloaded is checked
  * against the TTL of [bucket]: a [lifetime] above it throws [IllegalArgumentException] before [upload]. A failing
  * [upload] propagates and no header is written. [upload] may suspend when the caller is a suspend function.
  */

@@ -15,11 +15,19 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.locks.ReentrantLock
 
+/**
+ * Holds the single NATS connection of the process that every client shares.
+ *
+ * The connection reconnects without limit. [connect] and [disconnect] are idempotent and serialized on this object.
+ */
 @InternalNatsApi
 internal object NatsConnectionManager {
 
     private val log = logger()
 
+    /**
+     * Random identifier of this process, part of the `Surf-Origin` header and of the default connection name.
+     */
     val instanceId: String = randomId()
 
     @Volatile
@@ -30,6 +38,12 @@ internal object NatsConnectionManager {
 
     private val flushLock = ReentrantLock(true)
 
+    /**
+     * Connects with the settings of `natsConfig` unless a connection exists.
+     *
+     * Blocks until connected. The first call loads and validates the configuration. Throws when the configuration is
+     * invalid or no server is reachable.
+     */
     @Blocking
     fun connect() {
         if (connection != null) return
@@ -95,6 +109,9 @@ internal object NatsConnectionManager {
         }
     }
 
+    /**
+     * Drains the connection within the configured drain timeout and closes it when the drain fails or times out.
+     */
     @Blocking
     fun disconnect() {
         synchronized(this) {
@@ -120,6 +137,9 @@ internal object NatsConnectionManager {
         }
     }
 
+    /**
+     * Returns the connection. Throws [IllegalStateException] before [connect] and after [disconnect].
+     */
     fun connection() = checkNotNull(connection) { "NATS is not connected" }
 
     /**
@@ -156,6 +176,9 @@ internal object NatsConnectionManager {
         }
     }
 
+    /**
+     * Returns the current connection state, or `null` before [connect] and after [disconnect].
+     */
     fun health(): NatsConnectionHealth? {
         val connection = connection ?: return null
         val status = connection.status

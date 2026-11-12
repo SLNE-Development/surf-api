@@ -3,6 +3,9 @@ package dev.slne.surf.nats.js.codec.rules
 import dev.slne.surf.nats.js.external.protobuf.DescFieldMessageList
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 
+/**
+ * Applies the plan of the element type to every message of a list and reports the path with the index.
+ */
 internal class MessageListStep(
     private val field: DescFieldMessageList,
 ) : FieldStep(validatesOutgoing = true) {

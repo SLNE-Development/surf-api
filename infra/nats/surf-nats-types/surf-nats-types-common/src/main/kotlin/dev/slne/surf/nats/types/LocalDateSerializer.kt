@@ -11,6 +11,16 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import java.time.DateTimeException
 import java.time.LocalDate
 
+/**
+ * Serializes a [LocalDate] as the protobuf message `surf.types.v1.LocalDate`.
+ *
+ * The fields `year` (1, proleptic ISO year, year 0 is 1 BC), `month` (2, 1 to 12) and `day` (3, day of the month) are
+ * required. The `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [LocalDate] with this
+ * serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when a field is absent and
+ * [kotlinx.serialization.SerializationException] when the fields do not form a valid date.
+ */
 object LocalDateSerializer : KSerializer<LocalDate> {
     override val descriptor: SerialDescriptor = LocalDateProto.serializer().descriptor
 

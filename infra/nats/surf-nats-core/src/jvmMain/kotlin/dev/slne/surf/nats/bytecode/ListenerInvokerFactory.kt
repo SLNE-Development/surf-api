@@ -11,6 +11,12 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
 
+/**
+ * Creates a [ListenerInvoker] per listener method as a hidden class that calls the method through a constant
+ * [MethodHandle].
+ *
+ * All invokers share one generated class template. Each hidden class gets its own handle as class data.
+ */
 @InternalNatsApi
 internal object ListenerInvokerFactory {
 
@@ -34,6 +40,11 @@ internal object ListenerInvokerFactory {
         )
     }
 
+    /**
+     * Creates an invoker of [method] on [target]. [target] may be `null` only for a static method.
+     *
+     * A non-suspending [method] is adapted to return `Unit` and ignore the continuation.
+     */
     fun create(target: Any?, method: Method): ListenerInvoker {
         val handle = adaptHandle(target, method)
         val hidden = LOOKUP.defineHiddenClassWithClassData(invokerClassBytes, handle, true)
@@ -43,7 +54,7 @@ internal object ListenerInvokerFactory {
     }
 
     /**
-     * Turns [method] into a [MethodHandle] with the shape `(Object, Continuation) -> Object`
+     * Turns [method] into a [MethodHandle] with the shape `(Object, Continuation) -> Object`.
      */
     private fun adaptHandle(target: Any?, method: Method): MethodHandle {
         var handle = MethodHandles.privateLookupIn(method.declaringClass, LOOKUP)

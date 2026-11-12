@@ -25,46 +25,67 @@ import javax.inject.Inject
 /**
  * Downloads the `.proto` files of this module's previous weaver release into [outputDir].
  *
- * The baseline version is [requestedVersion] when set, otherwise the highest release in [repository] below
- * [projectVersion] without `-SNAPSHOT`. [versionFile] records the version, or [NO_BASELINE] when there is no earlier
- * release, the registry answers 404 for the artifact, or Gradle runs offline. [outputDir] holds only the files of
- * this artifact, not those of its dependencies.
+ * The plugin registers it as `fetchSurfNatsBaseline` for [CheckSurfNatsCompatibilityTask]. The baseline version is
+ * [requestedVersion] when set, otherwise the highest release in [repository] below [projectVersion] without its
+ * `-SNAPSHOT` suffix. The lookup ignores snapshots.
+ *
+ * [versionFile] records the version, or [NO_BASELINE] when there is no earlier release, the registry answers 404
+ * for the artifact, or Gradle runs with `--offline`. The task is never up to date, so every build sees a new
+ * release. [outputDir] holds only the files of this artifact, not those of its dependencies.
  */
 @DisableCachingByDefault(because = "Always re-checks the registry for a newer release")
 abstract class FetchSurfNatsBaselineTask : DefaultTask() {
 
+    /**
+     * The weaver base URL, from `weaver.url`.
+     */
     @get:Input
     @get:Optional
     abstract val url: Property<String>
 
+    /**
+     * The weaver token, from `weaver.token`. Public repositories need none.
+     */
     @get:Internal
     abstract val token: Property<String>
 
+    /**
+     * The weaver repository to look the release up in, from `weaver.publishing.repository`.
+     */
     @get:Input
     @get:Optional
     abstract val repository: Property<String>
 
+    /**
+     * The artifact group, from `weaver.publishing.group`.
+     */
     @get:Input
     @get:Optional
     abstract val artifactGroup: Property<String>
 
+    /**
+     * The artifact name, from `weaver.publishing.name`, or `rootProject.name` when that is unset.
+     */
     @get:Input
     @get:Optional
     abstract val artifactName: Property<String>
 
+    /**
+     * The current version, from `weaver.publishing.version`. The baseline is the highest release below it.
+     */
     @get:Input
     @get:Optional
     abstract val projectVersion: Property<String>
 
     /**
-     * Version from `surfNats.compatibilityBaseline`; replaces the version lookup.
+     * The version from `surfNats.compatibilityBaseline`. When set, it replaces the version lookup.
      */
     @get:Input
     @get:Optional
     abstract val requestedVersion: Property<String>
 
     /**
-     * Whether the compatibility check needs a baseline; the task is skipped otherwise.
+     * Whether the compatibility check needs a baseline. The task is skipped when it is `false`.
      */
     @get:Internal
     abstract val active: Property<Boolean>
@@ -75,9 +96,15 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
     @get:Input
     abstract val offline: Property<Boolean>
 
+    /**
+     * The directory that receives the baseline `.proto` files, `build/surf-nats/baseline/protos` by default.
+     */
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
+    /**
+     * The file that records the baseline version or [NO_BASELINE], `build/surf-nats/baseline/version.txt` by default.
+     */
     @get:OutputFile
     abstract val versionFile: RegularFileProperty
 
@@ -92,6 +119,13 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
         onlyIf("the compatibility check is enabled and active", Active())
     }
 
+    /**
+     * Resolves the baseline version, downloads and extracts its archive, and writes [versionFile].
+     *
+     * @throws GradleException when a required weaver setting is missing, the registry cannot be reached or answers
+     *   with an error, an explicit [requestedVersion] does not exist, the archive checksum does not match, or an
+     *   archive entry escapes [outputDir].
+     */
     @TaskAction
     fun fetch() {
         fileSystemOperations.delete { it.delete(outputDir) }

@@ -11,6 +11,15 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import java.time.DateTimeException
 import java.time.LocalTime
 
+/**
+ * Serializes a [LocalTime] as the protobuf message `surf.types.v1.LocalTime`.
+ *
+ * The optional fields `hour` (1, 0 to 23), `minute` (2, 0 to 59), `second` (3, 0 to 59) and `nanos` (4, 0 to
+ * 999,999,999) default to 0, so an empty message is midnight. Nanosecond precision is preserved. The
+ * `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [LocalTime] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.SerializationException] when a field is out of range.
+ */
 object LocalTimeSerializer : KSerializer<LocalTime> {
     override val descriptor: SerialDescriptor = LocalTimeProto.serializer().descriptor
 

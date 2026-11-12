@@ -5,6 +5,9 @@ package dev.slne.surf.nats.js.external.nats.obj
 import dev.slne.surf.nats.js.external.nats.core.NatsConnection
 import kotlin.js.Promise
 
+/**
+ * Binds the class `Objm`, the object store manager of a connection.
+ */
 internal external class Objm(nc: NatsConnection) {
     fun create(name: String, opts: ObjectStoreOptions = definedExternally): Promise<ObjectStore>
     fun open(name: String, check: Boolean = definedExternally): Promise<ObjectStore>

@@ -33,7 +33,7 @@ class AuthE2eTest {
             assertFalse(client.isClosed)
             val received = mutableListOf<String?>()
             client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }).await()
-            client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "authorized" }).await()
+            client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "authorized" })
             eventually { received.size == 1 }
             assertEquals(listOf<String?>("authorized"), received)
         } finally {

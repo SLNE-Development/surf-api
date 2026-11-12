@@ -86,6 +86,11 @@ internal class RpcCaller(private val client: NatsClientImpl) {
         return decodeReply(method, reply)
     }
 
+    /**
+     * Publishes a fan-out without a reply subject for UNIT methods. For ANSWER methods, collects the replies on an
+     * inbox until the first decodable known answer, a no-responders status or [timeout]. Without a known answer the
+     * first recorded failure is thrown, otherwise the answer is unknown.
+     */
     private suspend fun callAll(
         method: MethodDescriptor,
         headers: MsgHdrs,
@@ -184,7 +189,13 @@ internal class RpcCaller(private val client: NatsClientImpl) {
         )
     }
 
-    // FIRE and PERSISTENT_RPC
+    /**
+     * Publishes a FIRE or PERSISTENT_RPC request to the method's stream.
+     *
+     * A FIRE ends with the PubAck, and its [timeout] must fit into the duplicate window. A PERSISTENT_RPC subscribes to
+     * its `Surf-Reply-To` inbox before publishing, republishes for at most the duplicate window and waits for one
+     * reply until [timeout].
+     */
     private suspend fun callPersistent(
         method: MethodDescriptor,
         flow: CallFlow,
@@ -202,7 +213,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
         }
 
         val headers = client.headers()
-        // The responder's message identity; Nats-Msg-Id stays unique per call, so a repeat is stored again
+        // The responder's message identity. Nats-Msg-Id stays unique per call, so JetStream stores a repeat again
         if (idempotencyKey != null) headers.set(ProtocolHeaders.MESSAGE_ID, idempotencyKey)
         val encoded = method.encodeRequest(request)
 
@@ -267,7 +278,7 @@ internal class RpcCaller(private val client: NatsClientImpl) {
 
     /**
      * Publishes until a PubAck arrives, repeating timed-out attempts with the same `Nats-Msg-Id` so the stream
-     * deduplicates them; a rejection becomes [NatsRpcError].
+     * deduplicates them. A rejection becomes [NatsRpcError].
      */
     private suspend fun publishPersistent(subject: String, body: Uint8Array<*>, options: JetStreamPublishOptions) {
         while (true) {

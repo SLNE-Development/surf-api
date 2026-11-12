@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.TypeSpec
 import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
 
 /**
- * Applies `generatedVisibility` to a class, interface or enum declaration; members never get a modifier.
+ * Applies `generatedVisibility` to a class, interface or enum declaration. Members are emitted `public`.
  */
 internal fun TypeSpec.Builder.applyVisibility(
     visibility: GeneratedVisibility,

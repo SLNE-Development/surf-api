@@ -11,6 +11,22 @@ import kotlinx.serialization.protobuf.ProtoNumber
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
+/**
+ * Serializes an [InetSocketAddress] as the protobuf message `surf.types.v1.InetSocketAddress`.
+ *
+ * The message has the following fields:
+ * - `address` (1, optional): the resolved IP address as `surf.types.v1.IpAddress`, see [IpAddressSerializer]. Unset
+ *   for an unresolved socket address.
+ * - `host` (2, required): [InetSocketAddress.getHostString], a host name or an address literal.
+ * - `port` (3, required): the port, 0 to 65535.
+ *
+ * A resolved address decodes with its IP address and `host` as host name, without a DNS lookup. An address without
+ * `address` decodes as an unresolved socket address. The `dev.slne.surf.nats` Gradle plugin maps fields of this
+ * message type to [InetSocketAddress] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `host` or `port` is absent and
+ * [kotlinx.serialization.SerializationException] when the port is out of range or `address` is invalid.
+ */
 object InetSocketAddressSerializer : KSerializer<InetSocketAddress> {
     private const val MAX_PORT = 65535
 

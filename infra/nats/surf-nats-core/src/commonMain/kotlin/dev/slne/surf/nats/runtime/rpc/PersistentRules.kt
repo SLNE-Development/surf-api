@@ -4,7 +4,7 @@ import dev.slne.surf.nats.InternalNatsApi
 import kotlin.time.Duration
 
 /**
- * Call-time bounds of persistent calls; [window] is the duplicate window of the streams.
+ * Call-time bounds of persistent calls. Each `window` parameter is the duplicate window of the persist streams.
  */
 @InternalNatsApi
 internal object PersistentRules {

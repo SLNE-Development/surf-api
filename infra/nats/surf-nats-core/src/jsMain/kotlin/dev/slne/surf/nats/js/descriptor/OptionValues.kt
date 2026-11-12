@@ -6,7 +6,7 @@ import dev.slne.surf.nats.protocol.ProtocolOptions
 import dev.slne.surf.nats.protocol.RecipientsOption
 
 /**
- * The scalar and enum fields of one surf option message; every getter returns `null` for an unset field.
+ * The scalar and enum fields of one surf option message. Every getter returns `null` for an unset field.
  */
 internal class OptionValues(private val message: ReflectMessage?) {
     fun boolean(name: String): Boolean? = value(name) as Boolean?

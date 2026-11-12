@@ -2,5 +2,9 @@
 
 package dev.slne.surf.nats.js.external.nats.core
 
-// Called by nats.js with the server nonce; obtained from credsAuthenticator.
+/**
+ * Binds `Authenticator`, which nats.js calls with the server nonce during the connection handshake.
+ *
+ * Obtain one from [credsAuthenticator].
+ */
 internal external interface Authenticator

@@ -2,8 +2,14 @@
 
 package dev.slne.surf.nats.js.external.protobuf
 
-// SourceCodeInfo.Location: span is [startLine, startColumn, endLine?, endColumn], zero-based.
+/**
+ * Binds `SourceCodeInfo.Location`.
+ */
 internal external interface SourceCodeInfoLocation {
     val path: Array<Int>
+
+    /**
+     * Zero-based `[startLine, startColumn, endLine, endColumn]`. `endLine` is omitted when it equals `startLine`.
+     */
     val span: Array<Int>
 }

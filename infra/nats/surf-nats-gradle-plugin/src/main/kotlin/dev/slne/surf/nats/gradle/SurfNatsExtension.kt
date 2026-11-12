@@ -9,65 +9,95 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
- * Configures the `surfNats { }` Gradle DSL.
+ * Configures surf-nats code generation and the compatibility check in the `surfNats { }` block.
  *
- * Defines proto source directories, import paths, type mappings,
- * generated code visibility, and compatibility checking.
+ * Every setting is optional:
+ *
+ * ```kotlin
+ * surfNats {
+ *     protoSourceDirs.from("src/contracts/proto")
+ *     protoPath.from("../shared/proto")
+ *     mapType("surf.demo.v1.Tag", "dev.slne.demo.Tag", "dev.slne.demo.TagSerializer")
+ *     generatedVisibility = INTERNAL
+ *     compatibilityBaseline("1.2.0")
+ * }
+ * ```
  */
 abstract class SurfNatsExtension {
 
     /**
-     * Directories containing proto files to generate and publish to weaver.
+     * The directories whose `.proto` files are generated and published to weaver.
      *
-     * Defaults to `src/main/proto`.
-     *
-     * Use `from(...)` to add directories or `setFrom(...)` to replace them.
+     * Defaults to `src/main/proto`. `from(...)` adds directories to the default and `setFrom(...)` replaces it.
+     * Without `.proto` files, generation is skipped and the dependencies are still added.
      */
     abstract val protoSourceDirs: ConfigurableFileCollection
 
     /**
-     * Additional directories containing proto files used for imports.
+     * Additional local directories whose `.proto` files the sources may import.
      *
-     * These files are not generated. Protos of other modules and registry
-     * artifacts come from the `weaver` configuration instead.
+     * Files found here are not generated. Protos of other modules and registry artifacts come from the `weaver`
+     * configuration instead. Copies of the protos bundled with the plugin are ignored.
      */
     abstract val protoPath: ConfigurableFileCollection
 
     /**
-     * Custom mappings from proto types to existing Kotlin classes.
+     * The custom mappings from proto types to existing Kotlin classes, usually added with [mapType].
+     *
+     * Mappings here take precedence over the plugin's default mappings for the same proto type.
      */
     abstract val typeMappings: ListProperty<TypeMapping>
 
     /**
-     * Visibility of generated Kotlin declarations.
+     * The visibility of generated classes, interfaces and enums.
+     *
+     * Defaults to [PUBLIC]. Members of generated declarations are emitted `public`, which an `internal` declaration
+     * limits to the module.
      */
     abstract val generatedVisibility: Property<GeneratedVisibility>
 
     /**
-     * Weaver version of this module's artifact used as the compatibility baseline, such as `1.2.0`.
+     * The weaver release of this module's artifact to check compatibility against, such as `1.2.0`.
      *
-     * Defaults to the highest release below `project.version`. Setting it also enables the check for
-     * modules without a publishing repository.
+     * When unset, the baseline is the highest release below `project.version`, without its `-SNAPSHOT` suffix.
+     * Setting it also enables the check for modules without a publishing repository. A version that does not exist
+     * in the registry fails the `fetchSurfNatsBaseline` task.
      */
     abstract val compatibilityBaseline: Property<String>
 
     /**
-     * Whether compatibility checking is enabled.
+     * Whether `checkSurfNatsCompatibility` runs. Defaults to `true`.
      */
     abstract val compatibilityCheck: Property<Boolean>
 
+    /**
+     * Shorthand for [GeneratedVisibility.PUBLIC] in `generatedVisibility = PUBLIC`.
+     */
     val PUBLIC: GeneratedVisibility
         get() = GeneratedVisibility.PUBLIC
 
+    /**
+     * Shorthand for [GeneratedVisibility.INTERNAL] in `generatedVisibility = INTERNAL`.
+     */
     val INTERNAL: GeneratedVisibility
         get() = GeneratedVisibility.INTERNAL
 
     /**
-     * Maps a proto message or enum to an existing Kotlin class.
+     * Maps a proto message or enum to an existing Kotlin class instead of generating one.
      *
-     * @param proto Fully qualified proto type name.
-     * @param kotlinClass Fully qualified Kotlin class name.
-     * @param serializerClass Fully qualified name of the `KSerializer` class or object.
+     * Generated messages use [kotlinClass] for fields of the proto type and encode it with [serializerClass]. A
+     * mapped type cannot be an rpc request or response, and generation fails if one is. Mapping
+     * `google.protobuf.Empty` is rejected, because it always maps to `kotlin.Unit`.
+     *
+     * ```kotlin
+     * surfNats {
+     *     mapType("surf.demo.v1.Tag", "dev.slne.demo.Tag", "dev.slne.demo.TagSerializer")
+     * }
+     * ```
+     *
+     * @param proto The fully qualified proto type name, such as `surf.demo.v1.Tag`.
+     * @param kotlinClass The fully qualified name of the Kotlin class.
+     * @param serializerClass The fully qualified name of the `KSerializer` class or object for [kotlinClass].
      */
     fun mapType(proto: String, kotlinClass: String, serializerClass: String) {
         typeMappings.add(
@@ -76,7 +106,7 @@ abstract class SurfNatsExtension {
     }
 
     /**
-     * Sets the weaver version used as the compatibility baseline.
+     * Sets [compatibilityBaseline] to the weaver release [version], such as `1.2.0`.
      */
     fun compatibilityBaseline(version: String) {
         compatibilityBaseline.set(version)

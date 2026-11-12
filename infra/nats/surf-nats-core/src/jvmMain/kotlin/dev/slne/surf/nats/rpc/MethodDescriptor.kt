@@ -9,6 +9,12 @@ import kotlinx.serialization.KSerializer
 import java.lang.reflect.Method
 import kotlin.time.Duration
 
+/**
+ * Runtime model of one rpc of a service: the generated descriptor, the resolved interface method and the wire subject.
+ *
+ * [timeout] is the effective call timeout of the method, used when the caller sets none. [flow] follows from
+ * [persistent] and [result].
+ */
 @InternalNatsApi
 internal class MethodDescriptor(
     val generated: NatsMethodDescriptor<Any, *>,
@@ -34,7 +40,7 @@ internal class MethodDescriptor(
 
     fun decodeRequest(data: ByteArray, contentType: String?): Any = NatsCodec.decode(request, data, contentType)
 
-    // Only for results other than UNIT; ServiceDescriptor.of checks that they have a response serializer
+    // Only for results other than UNIT. ServiceDescriptor.of checks that they have a response serializer
     fun encodeResponse(value: Any): ByteArray = NatsCodec.encode(response!!, value)
 
     fun decodeResponse(data: ByteArray, contentType: String?): Any = NatsCodec.decode(response!!, data, contentType)

@@ -1,7 +1,10 @@
 package dev.slne.surf.nats.protocol
 
 /**
- * Subject scheme `surf.<kind>.<proto full name>`; the full name keeps the spelling of the `.proto`.
+ * Subject scheme `surf.<kind>.<proto full name>`.
+ *
+ * The full name keeps the spelling of the `.proto`, so renaming a message, a service or its package changes the
+ * subject. Service subjects are built by [ServiceNames].
  */
 internal object ProtocolSubjects {
     const val ROOT = "surf"

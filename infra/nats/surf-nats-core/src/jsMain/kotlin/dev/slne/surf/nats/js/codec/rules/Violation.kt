@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.js.codec.rules
 
 /**
- * A rule violation; [under] prefixes the path with the enclosing field while the walk returns.
+ * A rule violation. [under] prefixes the path with the enclosing field while the walk returns.
  */
 internal class Violation private constructor(
     private var path: String,

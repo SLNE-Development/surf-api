@@ -12,7 +12,30 @@ import dev.slne.surf.nats.protocol.ProtocolDescriptors
 /**
  * Generates the Kotlin types of Protobuf messages and enums from a [ResolvedContract].
  *
- * Reports nothing: [ContractResolver] has checked every declaration before emission starts.
+ * Reports nothing: [ContractResolver] has checked every declaration before emission starts. Mapped types produce
+ * nothing. Every generated class, interface and enum except oneof case classes gets the configured visibility
+ * modifier. Members and case classes are emitted `public`, which an `internal` enclosing declaration limits to the
+ * module. The runtime relies on these generated shapes:
+ *
+ * - **Message:** `@Serializable @SerialName("<proto full name>") data class` with one constructor property per
+ *   member in [ResolvedContract.members] order. A field property carries `@ProtoNumber(<tag>)`, plus `@ProtoType`
+ *   for a non-default integer encoding and `@ProtoPacked` for a packed repeated field. When a member compares by
+ *   content ([MemberComparison.CONTENT]), the class overrides `equals`, `hashCode` and `toString` (see
+ *   [contentMembers]). A message without members is a plain class whose instances are all equal.
+ * - **Oneof:** a nested `@Serializable sealed interface`, held in a nullable `@ProtoOneOf` property that defaults to
+ *   `null`. Each case is a nested `@Serializable data class` with the case field as its only property.
+ * - **Event** (message with the `(surf.nats.v1.event)` option): implements `NatsEvent`, overrides
+ *   `natsDescriptor`, and has a companion with
+ *   `@JvmField val NATS_DESCRIPTOR = NatsEventDescriptor(protoName, serializer())`.
+ * - **Enum:** `@Serializable(with = <Enum>.Serializer::class) enum class` with a `number: Int` constructor property
+ *   and one entry per [ResolvedContract.entries] item in declaration order. The companion has
+ *   `@JvmStatic fun forNumber(number: Int): <Enum>?`, a `when` over the numbers that returns `null` for unknown
+ *   ones. The nested `Serializer` object uses a primitive `INT` descriptor named after the
+ *   proto type, encodes [GeneratedNames.ENUM_NUMBER], and decodes through `forNumber`. An unknown number decodes to the
+ *   entry with number 0, or to the first entry when there is none. A valid enum always starts with its zero value.
+ *   Decoding an enum without entries throws [IllegalStateException].
+ *
+ * Nested messages and enums are nested classes of their parent message.
  */
 internal class TypeEmitter(
     private val types: KotlinTypeResolver,
@@ -30,10 +53,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates a serializable Kotlin message, including its oneofs, nested types, and event metadata.
-     *
-     * @param type the Protobuf message to generate
-     * @return the generated message, or `null` if it is mapped
+     * Generates a message class with its oneofs, nested types and event members, or `null` for a mapped message.
      */
     private fun message(type: MessageType): TypeSpec? {
         if (types.isMapped(type.type)) return null
@@ -50,12 +70,8 @@ internal class TypeEmitter(
     }
 
     /**
-     * Configures the serializable message class and its constructor or fieldless value members.
-     *
-     * @param type the original message, used for its serialized name
-     * @param className the generated Kotlin class name
-     * @param properties the properties produced from fields and oneofs
-     * @return the unfinished class builder
+     * Starts the message class with its serialization annotations and either its data properties or the members of
+     * a fieldless class.
      */
     private fun messageBuilder(
         type: MessageType,
@@ -92,20 +108,12 @@ internal class TypeEmitter(
         )
     }
 
-    /**
-     * Builds the Protobuf field-number annotation used by kotlinx serialization.
-     *
-     * @param field the field supplying the number
-     * @return a `@ProtoNumber` annotation
-     */
     private fun protoNumber(field: Field): AnnotationSpec {
         return AnnotationSpec.builder(KotlinTypes.PROTO_NUMBER).addMember("%L", field.tag).build()
     }
 
     /**
-     * Builds the `@ProtoType` annotation for a non-default Protobuf integer encoding.
-     *
-     * @return the annotation, or `null` for default or unspecified encoding
+     * Returns `@ProtoType` for a non-default integer encoding, or `null`.
      */
     private fun encodingAnnotation(encoding: IntEncoding?): AnnotationSpec? {
         if (encoding == null || encoding == IntEncoding.DEFAULT) return null
@@ -114,21 +122,13 @@ internal class TypeEmitter(
             .build()
     }
 
-    /**
-     * Builds the `@ProtoPacked` annotation of a packed repeated field.
-     *
-     * @return the annotation, or `null` for a field that is not packed
-     */
     private fun packedAnnotation(member: FieldMember): AnnotationSpec? {
         if (!member.packed) return null
         return AnnotationSpec.builder(KotlinTypes.PROTO_PACKED).build()
     }
 
     /**
-     * Generates a sealed interface for a Protobuf oneof, with one data class for each case.
-     *
-     * The interface represents the optional union property in the enclosing message.
-     * Case classes inherit the visibility of their enclosing sealed interface.
+     * Generates the sealed interface of a oneof with one data class per case.
      */
     private fun oneofType(member: OneofMember): TypeSpec {
         val interfaceBuilder = TypeSpec.interfaceBuilder(member.interfaceName)
@@ -146,7 +146,6 @@ internal class TypeEmitter(
      * Generates the data class of a oneof case, which wraps the case field as its only property.
      */
     private fun oneofCase(interfaceName: ClassName, case: OneofCase): TypeSpec {
-        // The case classes inherit the visibility of the oneof interface.
         return TypeSpec.classBuilder(case.className)
             .addAnnotation(KotlinTypes.SERIALIZABLE)
             .addSuperinterface(interfaceName)
@@ -155,11 +154,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Implements the NATS event contract on a message and adds its descriptor companion.
-     *
-     * @param builder the message class being generated
-     * @param type the event's Protobuf declaration
-     * @param className the generated event class
+     * Makes the message a `NatsEvent` with its descriptor companion.
      */
     private fun addEvent(builder: TypeSpec.Builder, type: MessageType, className: ClassName) {
         builder.addSuperinterface(KotlinTypes.NATS_EVENT)
@@ -168,7 +163,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates the overridden event descriptor getter, which delegates to the companion descriptor.
+     * Generates the `natsDescriptor` override that returns the companion descriptor.
      */
     private fun eventDescriptorProperty(): PropertySpec = PropertySpec.builder(
         GeneratedNames.NATS_DESCRIPTOR,
@@ -181,9 +176,8 @@ internal class TypeEmitter(
         .build()
 
     /**
-     * Generates an event companion with the Protobuf name and the generated serializer.
-     *
-     * The descriptor property uses `@JvmField` to expose the static metadata to Java callers.
+     * Generates the event companion with the `@JvmField` descriptor of the Protobuf name and the generated
+     * serializer.
      */
     private fun eventDescriptorCompanion(className: ClassName, protoName: String): TypeSpec {
         val descriptorType = KotlinTypes.NATS_EVENT_DESCRIPTOR.parameterizedBy(className)
@@ -203,10 +197,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates a Kotlin enum whose entries carry Protobuf numeric values, with a serializer that encodes and
-     * decodes those values.
-     *
-     * @return the generated enum, or `null` for a mapped enum
+     * Generates a numbered enum, or `null` for a mapped enum.
      */
     private fun enum(type: EnumType): TypeSpec? {
         if (types.isMapped(type.type)) return null
@@ -215,9 +206,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Builds a numbered Kotlin enum and attaches its custom serializer.
-     *
-     * Each entry's constructor receives the Protobuf numeric value, preserving declaration order.
+     * Builds the enum with one entry per item of [entries], its `forNumber` companion and its serializer.
      */
     private fun enumType(
         type: EnumType,
@@ -238,6 +227,7 @@ internal class TypeEmitter(
                 .build()
             enumBuilder.addEnumConstant(kotlinName, enumConstant)
         }
+        enumBuilder.addType(enumCompanion(className, entries))
         enumBuilder.addType(
             enumSerializer(
                 className,
@@ -249,17 +239,39 @@ internal class TypeEmitter(
         return enumBuilder.build()
     }
 
+    private fun enumCompanion(enumClass: ClassName, entries: Map<String, EnumConstant>): TypeSpec =
+        TypeSpec.companionObjectBuilder()
+            .addFunction(enumForNumberFunction(enumClass, entries))
+            .build()
+
     /**
-     * Generates an enum serializer that writes Protobuf numeric values and resolves them on decoding.
+     * Generates `forNumber`, which maps a Protobuf number to its entry or `null`.
      *
-     * Unknown values fall back to the zero-valued entry or, if none exists, the first entry.
-     * An enum without entries generates a decoding error instead of a fallback value.
+     * Every branch is an `Int` constant, so the compiler emits a `tableswitch` or `lookupswitch` without boxing or
+     * a map. `@JvmStatic` gives Java callers `Enum.forNumber(n)` as in protobuf-java.
+     */
+    private fun enumForNumberFunction(
+        enumClass: ClassName,
+        entries: Map<String, EnumConstant>,
+    ): FunSpec {
+        val number = GeneratedNames.ENUM_NUMBER
+        val function = FunSpec.builder(GeneratedNames.ENUM_FOR_NUMBER)
+            .addAnnotation(JvmStatic::class)
+            .addKdoc("Returns the entry with the Protobuf number [%N], or `null` if there is none.", number)
+            .addParameter(number, INT)
+            .returns(enumClass.copy(nullable = true))
+            .beginControlFlow("return when (%N)", number)
+        for ((kotlinName, constant) in entries) {
+            function.addCode("%L -> %T.%N\n", constant.tag, enumClass, kotlinName)
+        }
+        return function.addCode("else -> null\n").endControlFlow().build()
+    }
+
+    /**
+     * Generates the enum serializer, which encodes the Protobuf number and decodes through `forNumber`.
      *
-     * @param enumClass the generated enum class
-     * @param protoName its serialized Protobuf name
-     * @param serializerName the nested serializer object name
-     * @param entries the accepted enum constants
-     * @return the generated serializer object
+     * Unknown numbers decode to the zero-valued entry or, if none exists, the first entry. Without entries,
+     * decoding fails with `error(...)`.
      */
     private fun enumSerializer(
         enumClass: ClassName,
@@ -267,14 +279,13 @@ internal class TypeEmitter(
         serializerName: ClassName,
         entries: Map<String, EnumConstant>,
     ): TypeSpec {
-        // TODO: generate a fast lookup type
         val fallback =
             entries.entries.firstOrNull { it.value.tag == 0 } ?: entries.entries.firstOrNull()
         return TypeSpec.objectBuilder(serializerName)
             .addSuperinterface(KotlinTypes.K_SERIALIZER.parameterizedBy(enumClass))
             .addProperty(enumSerializationDescriptor(protoName))
             .addFunction(enumSerializeFunction(enumClass))
-            .addFunction(enumDeserializeFunction(enumClass, protoName, entries, fallback))
+            .addFunction(enumDeserializeFunction(enumClass, protoName, fallback))
             .build()
     }
 
@@ -292,9 +303,6 @@ internal class TypeEmitter(
             )
             .build()
 
-    /**
-     * Generates the enum serializer's `serialize` implementation using its `number` property.
-     */
     private fun enumSerializeFunction(enumClass: ClassName): FunSpec = FunSpec.builder("serialize")
         .addModifiers(KModifier.OVERRIDE)
         .addParameter("encoder", KotlinTypes.ENCODER)
@@ -302,42 +310,28 @@ internal class TypeEmitter(
         .addStatement("encoder.encodeInt(value.%N)", GeneratedNames.ENUM_NUMBER)
         .build()
 
-    /**
-     * Generates a numeric dispatch table for deserializing enum entries.
-     *
-     * Uses the selected fallback for unknown numbers, or an error when no entries exist.
-     */
     private fun enumDeserializeFunction(
         enumClass: ClassName,
         protoName: String,
-        entries: Map<String, EnumConstant>,
         fallback: Map.Entry<String, EnumConstant>?,
     ): FunSpec {
         val function = FunSpec.builder("deserialize")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter("decoder", KotlinTypes.DECODER)
             .returns(enumClass)
-            .beginControlFlow("return when (decoder.decodeInt())")
-        for ((kotlinName, constant) in entries) {
-            function.addCode("%L -> %T.%N\n", constant.tag, enumClass, kotlinName)
-        }
+        val lookup = CodeBlock.of("%T.%N(decoder.decodeInt())", enumClass, GeneratedNames.ENUM_FOR_NUMBER)
         if (fallback != null) {
-            function.addCode("else -> %T.%N\n", enumClass, fallback.key)
+            function.addStatement("return %L ?: %T.%N", lookup, enumClass, fallback.key)
         } else {
-            function.addCode("else -> error(%S)\n", "$protoName has no values")
+            function.addStatement("return %L ?: error(%S)", lookup, "$protoName has no values")
         }
-        return function.endControlFlow().build()
+        return function.build()
     }
 
     /**
-     * Adds constructor properties to a data class and generates content-aware members when needed.
+     * Makes this a data class with [properties] as constructor properties in the given order.
      *
-     * Property order is preserved. `equals`, `hashCode`, and `toString` are generated
-     * explicitly only if a property requires content-aware comparison.
-     *
-     * @param className the generated data class name
-     * @param properties the constructor properties in declaration order
-     * @return this builder
+     * Adds explicit `equals`, `hashCode` and `toString` only when a property compares by content.
      */
     private fun TypeSpec.Builder.addDataProperties(
         className: ClassName,
@@ -365,13 +359,8 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates value semantics for a message without fields.
-     *
-     * All instances of the same generated class compare equal and share a stable
-     * hash based on the class name. The string representation is `ClassName()`.
-     *
-     * @param className the fieldless message class
-     * @return its equality, hashing, and string methods
+     * Generates the members of a fieldless message: all instances are equal, the hash code is the hash of the
+     * canonical class name, and `toString` returns `ClassName()`.
      */
     private fun fieldlessMembers(className: ClassName): List<FunSpec> {
         val equalsBody = buildCodeBlock { addStatement("return other is %T", className) }
@@ -386,14 +375,12 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates content-aware `equals`, `hashCode`, and `toString` implementations.
+     * Generates `equals`, `hashCode` and `toString` with data-class semantics, except that `bytes` values compare,
+     * hash and print by content.
      *
-     * Byte arrays compare and hash by content, and floating-point values compare
-     * by `toBits()` to preserve data-class semantics for NaN and signed zero.
-     *
-     * @param className the generated data class
-     * @param properties the constructor properties and their comparison strategies
-     * @return generated equality, hashing, and string functions in that order
+     * Content members (`ByteArray` and lists or maps of it) use `natsContentEquals`, `natsContentHashCode` and
+     * `natsContentToString`. `Float` and `Double` compare by `toBits()`, as data classes do, so `NaN` equals `NaN`
+     * and `0.0` differs from `-0.0`.
      */
     private fun contentMembers(className: ClassName, properties: List<MessageMember>): List<FunSpec> {
         val equalsBody = contentEqualsBody(className, properties)
@@ -407,9 +394,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates equality checks for all properties using their configured comparison strategies.
-     *
-     * Explicit `this.` references avoid name collisions with locally declared variables.
+     * Generates the `equals` body. Explicit `this.` references avoid collisions with property names such as `other`.
      */
     private fun contentEqualsBody(className: ClassName, properties: List<MessageMember>): CodeBlock {
         val comparisons = properties.joinToCode(" && ") { property ->
@@ -439,10 +424,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates a hash-code accumulation with content hashing for byte arrays.
-     *
-     * The first property initializes the hash; each remaining property contributes
-     * through the same `31 * result + hash` sequence used by data classes.
+     * Generates the `hashCode` body with the `31 * result + hash` sequence of data classes.
      */
     private fun contentHashCodeBody(properties: List<MessageMember>): CodeBlock = buildCodeBlock {
         properties.forEachIndexed { index, property ->
@@ -460,13 +442,7 @@ internal class TypeEmitter(
     }
 
     /**
-     * Generates a data-class-style string expression with content rendering for byte arrays.
-     *
-     * The expression uses explicit `this.` references to avoid name collisions.
-     *
-     * @param className the generated class name used as the string prefix
-     * @param properties the properties to render in constructor order
-     * @return the Kotlin string concatenation expression
+     * Generates the `toString` expression in data-class form, `Name(a=..., b=...)`.
      */
     private fun toStringExpression(className: ClassName, properties: List<MessageMember>): CodeBlock =
         buildCodeBlock {
@@ -485,12 +461,6 @@ internal class TypeEmitter(
             add(" + %S", ")")
         }
 
-    /**
-     * Wraps a generated equality body in an override of `Any.equals`.
-     *
-     * @param body the Kotlin code implementing equality
-     * @return the generated `equals` function
-     */
     private fun equalsFunction(body: CodeBlock): FunSpec = FunSpec.builder("equals")
         .addModifiers(KModifier.OVERRIDE)
         .addParameter("other", ANY.copy(nullable = true))
@@ -498,24 +468,12 @@ internal class TypeEmitter(
         .addCode(body)
         .build()
 
-    /**
-     * Wraps a generated hashing body in an override of `Any.hashCode`.
-     *
-     * @param body the Kotlin code computing the hash
-     * @return the generated `hashCode` function
-     */
     private fun hashCodeFunction(body: CodeBlock): FunSpec = FunSpec.builder("hashCode")
         .addModifiers(KModifier.OVERRIDE)
         .returns(INT)
         .addCode(body)
         .build()
 
-    /**
-     * Wraps a generated string body in an override of `Any.toString`.
-     *
-     * @param body the Kotlin code producing the string representation
-     * @return the generated `toString` function
-     */
     private fun toStringFunction(body: CodeBlock): FunSpec = FunSpec.builder("toString")
         .addModifiers(KModifier.OVERRIDE)
         .returns(STRING)

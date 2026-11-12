@@ -11,6 +11,21 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import java.util.OptionalLong
 
+/**
+ * Serializes an Adventure [Sound] as the protobuf message `surf.types.v1.Sound`.
+ *
+ * The message has the following fields:
+ * - `name` (1, required): the sound event key as `surf.types.v1.Key`, see [KeySerializer].
+ * - `source` (2, optional): the [Sound.Source] as the enum `surf.types.v1.Sound.Source`, one value per constant
+ *   from `SOURCE_MASTER = 1` to `SOURCE_UI = 11`. Always written. An unset source, `SOURCE_UNSPECIFIED` (0) and
+ *   unknown numbers decode as [Sound.Source.MASTER].
+ * - `volume` (3, required) and `pitch` (4, required): 32-bit floats.
+ * - `seed` (5, optional): the seed, unset for a random seed.
+ *
+ * The `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [Sound] with this serializer.
+ *
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `name`, `volume` or `pitch` is absent.
+ */
 object SoundSerializer : KSerializer<Sound> {
     override val descriptor: SerialDescriptor = SoundProto.serializer().descriptor
 

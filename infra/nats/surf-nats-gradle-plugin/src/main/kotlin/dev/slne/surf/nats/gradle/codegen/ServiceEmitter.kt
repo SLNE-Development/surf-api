@@ -16,14 +16,19 @@ import dev.slne.surf.nats.protocol.*
 /**
  * Generates Kotlin service interfaces and their NATS descriptors from the services of a [ResolvedContract].
  *
- * Each supported RPC is represented by an abstract suspend function.
- * RPCs accepting `google.protobuf.Empty` have no parameters, while other RPCs
- * receive a single `request` parameter.
+ * Reports nothing: [ContractResolver] has checked every service before emission starts. The runtime relies on this
+ * generated shape:
  *
- * The generated companion object exposes the service's `NATS_DESCRIPTOR`,
- * containing metadata and serializers for its supported RPCs.
- *
- * Reports nothing: [ContractResolver] has checked every service before emission starts.
+ * - The service is an interface with the configured visibility and one `abstract suspend fun` per
+ *   [ResolvedContract.methods] entry, in rpc declaration order.
+ * - A function takes a single `request` parameter, or none when the rpc request is `google.protobuf.Empty`.
+ * - The return type follows the resolved result kind: none for `UNIT`, the response type for `VALUE`, and
+ *   `Answer<Response>` for `ANSWER`.
+ * - The companion has `@JvmField val NATS_DESCRIPTOR: NatsServiceDescriptor<Service>` with the proto service name
+ *   and one `NatsMethodDescriptor` per function. A method descriptor carries the proto and Kotlin names, the
+ *   resolved `persistent`, `callTimeoutSeconds` (`null` for the default), `recipients` and `resultKind`, and the
+ *   request and response serializers. The response serializer is `null` when the response is
+ *   `google.protobuf.Empty`.
  */
 internal class ServiceEmitter(
     private val types: KotlinTypeResolver,
@@ -35,12 +40,7 @@ internal class ServiceEmitter(
     }
 
     /**
-     * Generates the Kotlin interface for a Protobuf service.
-     *
-     * Generates the functions of its resolved RPCs and attaches the corresponding NATS service descriptor.
-     *
-     * @param service the Protobuf service to generate
-     * @return the generated Kotlin interface specification
+     * Generates the interface of [service] with its functions and descriptor companion.
      */
     fun emit(service: Service): TypeSpec {
         val className = checkNotNull(types.generatedClass(service.type)) {
@@ -55,17 +55,6 @@ internal class ServiceEmitter(
             .build()
     }
 
-    /**
-     * Generates the companion object containing the NATS service descriptor.
-     *
-     * The descriptor stores the Protobuf service name and the metadata
-     * of all successfully generated RPC functions.
-     *
-     * @param className the generated service interface type
-     * @param protoName the fully qualified Protobuf name of the service
-     * @param methods the generated RPC descriptor expressions
-     * @return the companion object specification
-     */
     private fun createDescriptorCompanion(
         className: ClassName,
         protoName: String,
@@ -93,12 +82,6 @@ internal class ServiceEmitter(
             .build()
     }
 
-    /**
-     * Generates a Kotlin function and its NATS descriptor for an RPC.
-     *
-     * @param method the resolved RPC
-     * @return the generated function and descriptor
-     */
     private fun createMethod(method: ContractMethod): Method {
         val resolution = method.resolution
         val resultKind = resolution.resultKind
@@ -120,16 +103,6 @@ internal class ServiceEmitter(
         )
     }
 
-    /**
-     * Determines the Kotlin return type for an RPC result kind.
-     *
-     * Unit results use Kotlin [Unit], value results use the response message
-     * type directly, and answer results wrap that type in the NATS answer type.
-     *
-     * @param kind the configured RPC result kind
-     * @param responseType the resolved Kotlin response message type
-     * @return the Kotlin return type used by the function and descriptor
-     */
     private fun resultType(
         kind: ResultKindOption,
         responseType: ClassName,
@@ -139,19 +112,6 @@ internal class ServiceEmitter(
         ResultKindOption.ANSWER -> KotlinTypes.ANSWER.parameterizedBy(responseType)
     }
 
-    /**
-     * Generates the abstract suspend function representing an RPC.
-     *
-     * Adds a request parameter unless the RPC accepts `google.protobuf.Empty`.
-     * An explicit return type is generated only for non-Unit results.
-     *
-     * @param rpc the original RPC declaration
-     * @param kotlinName the validated Kotlin function name
-     * @param request the resolved request message
-     * @param resultKind the configured result kind
-     * @param resultType the resolved Kotlin return type
-     * @return the generated function specification
-     */
     private fun methodFunction(
         rpc: Rpc,
         kotlinName: String,
@@ -174,24 +134,9 @@ internal class ServiceEmitter(
     }
 
     /**
-     * Generates the NATS method descriptor expression for an RPC.
+     * Generates the `NatsMethodDescriptor` expression of an rpc.
      *
-     * Includes protocol and Kotlin names, delivery configuration, result kind,
-     * and request and response serializers.
-     *
-     * Empty responses are represented by a null response serializer because
-     * they do not contain a response payload.
-     *
-     * @param rpcName the original Protobuf RPC name
-     * @param kotlinName the generated Kotlin function name
-     * @param request the resolved request message
-     * @param response the resolved response message
-     * @param resultType the generated Kotlin result type
-     * @param resultKind the configured RPC result kind
-     * @param persistent whether the RPC uses persistent messaging
-     * @param callTimeout the generated call timeout expression
-     * @param recipients the configured recipients enum entry name
-     * @return the generated method descriptor expression
+     * The response serializer is `null` for a `google.protobuf.Empty` response, which has no payload.
      */
     private fun methodDescriptor(
         rpcName: String,
@@ -231,13 +176,7 @@ internal class ServiceEmitter(
     }
 
     /**
-     * Appends a named list argument to this code block builder.
-     *
-     * Each element is placed on a separate line. Empty collections are emitted
-     * as `emptyList()` instead of `listOf()`.
-     *
-     * @param name the generated argument name
-     * @param items the code blocks representing the list elements
+     * Appends `name = listOf(...)` with one item per line, or `name = emptyList()`.
      */
     private fun CodeBlock.Builder.addListArgument(name: String, items: List<CodeBlock>) {
         if (items.isEmpty()) {
@@ -250,20 +189,11 @@ internal class ServiceEmitter(
         add("),\n")
     }
 
-    /**
-     * Maps a protocol result kind to its runtime NATS result kind enum entry.
-     *
-     * @param kind the protocol-level result kind
-     * @return the matching entry name in `NatsResultKind`
-     */
     private fun natsResultKind(kind: ResultKindOption): String = when (kind) {
         ResultKindOption.UNIT -> "UNIT"
         ResultKindOption.VALUE -> "VALUE"
         ResultKindOption.ANSWER -> "ANSWER"
     }
 
-    /**
-     * Holds a generated RPC function and its corresponding descriptor expression.
-     */
     private data class Method(val function: FunSpec, val descriptor: CodeBlock)
 }

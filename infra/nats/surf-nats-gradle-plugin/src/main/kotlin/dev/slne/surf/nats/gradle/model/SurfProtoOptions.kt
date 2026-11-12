@@ -29,15 +29,21 @@ import java.math.BigInteger
  */
 internal object SurfProtoOptions {
 
-    /** Extension identifying the event option on Protobuf messages. */
+    /**
+     * The `(surf.nats.v1.event)` message option.
+     */
     val EVENT: ProtoMember =
         ProtoMember.get(Options.MESSAGE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.EVENT))
 
-    /** Extension containing NATS service configuration. */
+    /**
+     * The `(surf.nats.v1.service)` service option.
+     */
     val SERVICE: ProtoMember =
         ProtoMember.get(Options.SERVICE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.SERVICE))
 
-    /** Extension containing NATS RPC method configuration. */
+    /**
+     * The `(surf.nats.v1.method)` method option.
+     */
     val METHOD: ProtoMember =
         ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))
 
@@ -105,9 +111,6 @@ internal object SurfProtoOptions {
      * Invalid call timeouts or unknown recipients are reported through
      * [problems] and treated as unset.
      *
-     * @param options the service's Protobuf options
-     * @param location the source location used when reporting errors
-     * @param problems the collector receiving option validation errors
      * @return the parsed service configuration
      */
     private fun serviceOptions(options: Options, location: Location, problems: Problems): ServiceOptions {
@@ -131,9 +134,6 @@ internal object SurfProtoOptions {
      * Invalid call timeouts or unknown recipients are reported through
      * [problems] and treated as unset.
      *
-     * @param options the method's Protobuf options
-     * @param location the source location used when reporting errors
-     * @param problems the collector receiving option validation errors
      * @return the parsed method configuration
      */
     private fun methodOptions(options: Options, location: Location, problems: Problems): MethodOptions {
@@ -153,8 +153,6 @@ internal object SurfProtoOptions {
      * Converts the parsed value using strict boolean parsing and returns
      * `false` when the option is absent.
      *
-     * @param options the Protobuf options containing the flag
-     * @param member the boolean option extension to read
      * @return the configured boolean value, or `false` if absent
      */
     private fun flag(options: Options, member: ProtoMember): Boolean =
@@ -184,7 +182,6 @@ internal object SurfProtoOptions {
         /**
          * Looks up a field in the parsed option message.
          *
-         * @param field the Protobuf field name
          * @return the raw parsed value, or `null` if absent
          */
         private fun raw(field: String): Any? =
@@ -242,7 +239,7 @@ internal object SurfProtoOptions {
         fun recipients(field: String): RecipientsOption? {
             val value = raw(field)?.toString() ?: return null
 
-            // Wire accepts exactly the constants of NatsRecipients; this only fails if RecipientsOption lags behind them.
+            // Wire accepts exactly the constants of NatsRecipients, so this fails only if RecipientsOption lags behind.
             val option = RecipientsOption.ofName(value)
 
             if (option == null) {

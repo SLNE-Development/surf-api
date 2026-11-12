@@ -7,11 +7,15 @@ internal external interface DescExtension : AnyDesc {
     val name: String
     val number: Int
 
-    // scalar | enum | message | list
+    /**
+     * One of `scalar`, `enum`, `message` and `list`.
+     */
     val fieldKind: String
     val extendee: DescMessage
     val file: DescFile
 
-    // Set for message-typed extensions
+    /**
+     * Set for message-typed extensions.
+     */
     val message: DescMessage?
 }

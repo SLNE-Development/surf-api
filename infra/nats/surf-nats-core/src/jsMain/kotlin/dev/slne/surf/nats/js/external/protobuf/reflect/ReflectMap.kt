@@ -5,7 +5,11 @@ package dev.slne.surf.nats.js.external.protobuf.reflect
 import dev.slne.surf.nats.js.external.protobuf.DescFieldMap
 import js.iterable.JsIterator
 
-// Keys are converted to the closest ECMAScript type of the key scalar: string, number, boolean or bigint.
+/**
+ * Binds `ReflectMap`, the reflection access to a map field.
+ *
+ * Keys are converted to the closest ECMAScript type of the key scalar: string, number, boolean or bigint.
+ */
 internal external interface ReflectMap<K : Any, V> {
     val size: Int
     fun field(): DescFieldMap

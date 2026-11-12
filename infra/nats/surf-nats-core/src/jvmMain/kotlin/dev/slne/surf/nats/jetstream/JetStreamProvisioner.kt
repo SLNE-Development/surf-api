@@ -22,6 +22,13 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.toJavaDuration
 
+/**
+ * Provisions the JetStream streams and consumer settings of persistent service methods.
+ *
+ * Provisioned streams are remembered per connection object, which survives reconnects, and the cache is never
+ * invalidated at runtime. A stream deleted on the server while the process runs is therefore not recreated. Restart
+ * the affected services after deleting a stream.
+ */
 @InternalNatsApi
 internal object JetStreamProvisioner {
     private const val STREAM_CONFIG_MISMATCH = 10058
@@ -104,6 +111,10 @@ internal object JetStreamProvisioner {
                 "It was created by another tool or with an older subject filter; delete it to let surf-nats recreate it."
     }
 
+    /**
+     * Returns the configuration of the durable consumer [durable]: explicit acks, the persistent ack wait and
+     * delivery limit, and at most 256 unacknowledged messages.
+     */
     fun consumerConfig(durable: String): ConsumerConfiguration = ConsumerConfiguration.builder()
         .durable(durable)
         .ackPolicy(AckPolicy.Explicit)

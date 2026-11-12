@@ -8,8 +8,8 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Why an attempt to handle a persistent delivery ended.
  *
- * A [permanent] cause repeats on every delivery of the same message. A persistent RPC never reports one: it
- * answers its caller with every failure and every reply.
+ * A [permanent] cause repeats on every delivery of the same message, so a fire with a permanent cause is
+ * dead-lettered without further redeliveries. [DeliveryDisposition.of] maps a cause to the action on the delivery.
  */
 @InternalNatsApi
 internal enum class DeliveryCause(val permanent: Boolean = false) {
@@ -40,10 +40,23 @@ internal enum class DeliveryCause(val permanent: Boolean = false) {
     NOT_ADMITTED,
 
     /**
+     * The registration started draining while the delivery waited for a handler slot.
+     */
+    DRAINING,
+
+    /**
+     * The deadline of the call had passed when the delivery arrived.
+     */
+    EXPIRED(permanent = true),
+
+    /**
      * The offloaded payload no longer exists in the object store.
      */
     PAYLOAD_MISSING(permanent = true),
 
+    /**
+     * The request could not be decoded.
+     */
     UNDECODABLE(permanent = true),
 
     /**
@@ -59,7 +72,7 @@ internal enum class DeliveryCause(val permanent: Boolean = false) {
     companion object {
 
         /**
-         * Classifies a failure to load the request payload. Only a missing object is permanent; any other load
+         * Classifies a failure to load the request payload. Only a missing object is permanent. Any other load
          * failure, such as a slow read, may not repeat.
          */
         fun ofLoadFailure(e: Throwable): DeliveryCause = if (isObjectNotFound(e)) PAYLOAD_MISSING else FAILED

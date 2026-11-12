@@ -11,14 +11,26 @@ import kotlin.time.TimeSource
  * [NatsEventContext.eventId]. An ID arrives twice only when a publisher sends it twice on purpose, such as a TypeScript
  * client that retries a publish with the same `eventId` or an external publisher that reuses a `Surf-Event-Id`.
  *
- * An ID is remembered for [retention] after its first delivery; a repeat does not extend it. At most [maxEntries] IDs
- * are remembered, and the oldest is forgotten first.
- * A repeat that arrives after its ID was forgotten counts as a first delivery again, so both limits must cover the
- * time in which a publisher repeats an event.
+ * An ID is remembered for [retention] after its first delivery, and a repeat does not extend it. At most [maxEntries]
+ * IDs are remembered, and the oldest is forgotten first. A repeat that arrives after its ID was forgotten counts as a
+ * first delivery again, so both limits must cover the time in which a publisher repeats an event. The IDs live in
+ * memory only and are lost when the process restarts.
  *
  * Thread-safe. Share one instance between the listeners that must not act twice on the same event.
  *
- * @param timeSource the clock of [retention]; tests may pass a `TestTimeSource`.
+ * ```kotlin
+ * class StatusListener(private val deduplicator: NatsEventDeduplicator = NatsEventDeduplicator()) {
+ *     @NatsListener
+ *     suspend fun onStatus(event: StatusChanged) {
+ *         if (!deduplicator.firstDelivery()) return
+ *         println(event.status)
+ *     }
+ * }
+ * ```
+ *
+ * @param maxEntries the maximum number of remembered IDs.
+ * @param retention how long an ID is remembered after its first delivery.
+ * @param timeSource the clock that measures [retention]. Tests can pass a `TestTimeSource`.
  * @throws IllegalArgumentException if [maxEntries] or [retention] is not positive.
  */
 public class NatsEventDeduplicator(
@@ -38,6 +50,8 @@ public class NatsEventDeduplicator(
 
     /**
      * Records [eventId] and returns `true` if it was not delivered within [retention] before.
+     *
+     * @return `true` for a first delivery, on which the caller acts, `false` for a repeat, which the caller skips.
      */
     public fun firstDelivery(eventId: String): Boolean {
         synchronized(firstDeliveries) {
@@ -46,7 +60,7 @@ public class NatsEventDeduplicator(
             forgetExpired(now)
             if (firstDeliveries.containsKey(eventId)) return false
 
-            firstDeliveries.put(eventId, now)
+            firstDeliveries[eventId] = now
             if (firstDeliveries.size > maxEntries) firstDeliveries.pollFirstEntry()
             return true
         }
@@ -72,12 +86,12 @@ public class NatsEventDeduplicator(
 
     public companion object {
         /**
-         * Default of `maxEntries`.
+         * The default maximum number of remembered IDs.
          */
         public const val DEFAULT_MAX_ENTRIES: Int = 10_000
 
         /**
-         * Default of `retention`.
+         * The default time an ID is remembered after its first delivery.
          */
         public val DEFAULT_RETENTION: Duration = 7.days
     }

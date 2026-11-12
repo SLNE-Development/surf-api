@@ -19,8 +19,15 @@ import dev.slne.surf.nats.protocol.ServiceNames
  * Validates the services of a proto file with the rules of the Kotlin generator and resolves their clients.
  *
  * Every violation is added to [problems] as `<position>: <message>`, with the message text of the Kotlin generator.
- * [optionExtensions] are the extensions of `surf/nats/v1/options.proto` in the request. They detect surf options in
- * files without a direct import of that file, whose options the option reader does not see.
+ * File-level violations use the file name as position. [optionExtensions] are the extensions of
+ * `surf/nats/v1/options.proto` in the request. They detect surf options in files without a direct import of that
+ * file, whose options the option reader does not see.
+ *
+ * Checked per file that declares services or events: the syntax is not `proto3`, and the package passes the contract
+ * package rule. Checked for every file: a file that uses surf options imports `surf/nats/v1/options.proto` directly.
+ * Checked per service and rpc: the option rules of the Kotlin generator, the naming rules of `ServiceNames`, no
+ * streaming, at least one rpc per service, and a `call_timeout_seconds` within `Int.MAX_VALUE`, the range the Kotlin
+ * generator accepts.
  */
 internal class ClientResolver(
     private val protoplugin: Protoplugin,
@@ -29,7 +36,9 @@ internal class ClientResolver(
 ) {
 
     /**
-     * Returns the clients of [file], or `null` when it declares no services; a file with problems yields no clients.
+     * Returns the clients of [file], or `null` when it declares no services or has problems.
+     *
+     * The file-level rules also apply to a file that declares only events, which yields no clients.
      */
     fun resolve(file: DescFile): ClientFile? {
         val source = SourceInfo(file)
@@ -76,7 +85,7 @@ internal class ClientResolver(
         problems += "${source.position(comments)}: $problem"
     }
 
-    // OptionValues.int does not check the uint32 range; the Kotlin generator rejects values beyond Int.MAX_VALUE
+    // OptionValues.int does not check the uint32 range. The Kotlin generator rejects values beyond Int.MAX_VALUE
     private fun timeoutProblem(optionType: String, seconds: Double?): String? {
         if (seconds == null || seconds <= Int.MAX_VALUE) return null
         return "option $optionType.${ProtocolOptions.CALL_TIMEOUT_SECONDS} must be between 0 and ${Int.MAX_VALUE}, " +

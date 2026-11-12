@@ -9,7 +9,8 @@ import dev.slne.surf.nats.SurfNatsStandalone
  * Connects NATS before `Microservice.onBootstrap` and disconnects after `Microservice.onDisable`.
  *
  * The configuration lives in `<dataPath>/nats/config.yml`. On shutdown, incoming events and requests stop before
- * `onDisable`, so the microservice can still publish and call services there.
+ * `onDisable`, so the microservice can still publish and call services there. Runs at
+ * [MicroserviceIntegration.MESSAGING_ORDER], after the database starts and before it stops.
  */
 @AutoService(MicroserviceIntegration::class)
 internal class NatsMicroserviceIntegration : MicroserviceIntegration {

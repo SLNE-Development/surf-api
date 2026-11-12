@@ -7,8 +7,15 @@ import dev.slne.surf.nats.InternalNatsApi
  */
 @InternalNatsApi
 internal object ConnectRules {
+    /**
+     * Server URL used when no server is configured.
+     */
     const val DEFAULT_SERVER = "nats://localhost:4222"
     const val PING_INTERVAL_SECONDS = 10
+
+    /**
+     * Reconnect attempts after a lost connection. `-1` reconnects without a limit.
+     */
     const val MAX_RECONNECTS = -1
 
     /**
@@ -24,7 +31,10 @@ internal object ConnectRules {
     fun parseServers(raw: String): List<String> = servers(raw.split(','))
 
     /**
-     * Returns why the auth settings conflict, or `null`; an empty value counts as unset.
+     * Returns why the auth settings conflict, or `null`.
+     *
+     * Username and password must be set together, and at most one of token, username and password, or credentials
+     * file may be set. An empty value counts as unset.
      */
     fun authProblem(token: String?, user: String?, pass: String?, credsFile: String?): String? = when {
         user.isNullOrEmpty() != pass.isNullOrEmpty() -> "NATS auth: username and password must be set together"

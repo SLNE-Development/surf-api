@@ -4,10 +4,16 @@ package dev.slne.surf.nats.js.external.nats.core
 
 import kotlinx.js.JsPlainObject
 
-// ConnectionOptions (NodeConnectionOptions) of the options that surf-nats sets.
+/**
+ * Binds the members of `NodeConnectionOptions` that surf-nats sets.
+ *
+ * `timeout` (connection handshake) and `pingInterval` are milliseconds.
+ */
 @JsPlainObject
 internal external interface ConnectionOptions {
-    // Array<string> | string; surf-nats always passes an array.
+    /**
+     * Server URLs. nats.js accepts an array or a string, surf-nats always passes an array.
+     */
     val servers: Array<String>?
     val name: String?
     val timeout: Int?

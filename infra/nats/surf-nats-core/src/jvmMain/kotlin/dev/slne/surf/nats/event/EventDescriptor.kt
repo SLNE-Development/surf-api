@@ -6,6 +6,9 @@ import dev.slne.surf.nats.protocol.ProtocolNaming
 import dev.slne.surf.nats.protocol.ProtocolSubjects
 import kotlinx.serialization.KSerializer
 
+/**
+ * Subject and serializer of a generated event class.
+ */
 @InternalNatsApi
 internal class EventDescriptor(
     val type: Class<*>,

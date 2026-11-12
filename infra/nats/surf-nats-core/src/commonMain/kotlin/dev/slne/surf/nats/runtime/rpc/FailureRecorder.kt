@@ -5,7 +5,7 @@ import dev.slne.surf.nats.InternalNatsApi
 /**
  * Records the failures of an `ALL_INSTANCES` call: the first one is thrown, later ones are suppressed in it.
  *
- * Not thread-safe; one call records from one coroutine.
+ * Not thread-safe. One call records from one coroutine.
  */
 @InternalNatsApi
 internal open class FailureRecorder {

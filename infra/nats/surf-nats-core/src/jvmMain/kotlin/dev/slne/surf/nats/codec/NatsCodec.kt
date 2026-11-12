@@ -8,6 +8,11 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.protobuf.ProtoBuf
 
+/**
+ * Encodes and decodes message payloads as protobuf, the only wire format.
+ *
+ * Default values are not encoded.
+ */
 @OptIn(ExperimentalSerializationApi::class)
 @InternalNatsApi
 internal object NatsCodec {
@@ -20,6 +25,12 @@ internal object NatsCodec {
         return protoBuf.encodeToByteArray(serializer, value)
     }
 
+    /**
+     * Decodes [bytes] with [deserializer].
+     *
+     * Throws [IllegalArgumentException] when [contentType] is `null` or its media type is not `application/protobuf`,
+     * ignoring case and parameters. Throws [SerializationException] when the payload is malformed.
+     */
     fun <T> decode(deserializer: DeserializationStrategy<T>, bytes: ByteArray, contentType: String?): T {
         ProtocolHeaders.requireProtobufContentType(contentType)
         return try {

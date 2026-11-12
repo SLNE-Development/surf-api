@@ -12,6 +12,9 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.WildcardType
 import kotlin.coroutines.Continuation
 
+/**
+ * A validated `@NatsListener` method with the settings of its annotation.
+ */
 @InternalNatsApi
 internal class ListenerMethod(
     val method: Method,
@@ -25,6 +28,15 @@ internal object ListenerMethods {
 
     private data class Signature(val name: String, val parameterTypes: List<Class<*>>)
 
+    /**
+     * Returns the `@NatsListener` methods of [listener], declared in its class or any superclass.
+     *
+     * A listener method takes exactly one generated event and returns `Unit`, and may suspend. An overridden method
+     * counts once, by its most specific declaration. Overriding an annotated method without the annotation is an
+     * error.
+     *
+     * Throws [IllegalArgumentException] listing every invalid method, or when [listener] has no listener method.
+     */
     fun findListenerMethods(listener: Any, client: NatsClientImpl): List<ListenerMethod> {
         val methods = ArrayList<ListenerMethod>()
         val problems = ArrayList<String>()
@@ -115,7 +127,7 @@ internal object ListenerMethods {
     }
 
     /**
-     * Checks for `Continuation<? super Unit>`; a raw `Continuation` parameter carries no return type and passes.
+     * Checks for `Continuation<? super Unit>`. A raw `Continuation` parameter carries no return type and passes.
      */
     private fun returnsUnitWhenSuspending(method: Method): Boolean {
         val continuation = method.genericParameterTypes.last() as? ParameterizedType ?: return true

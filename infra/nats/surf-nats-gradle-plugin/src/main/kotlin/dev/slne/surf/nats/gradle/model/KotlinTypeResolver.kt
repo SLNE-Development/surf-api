@@ -9,13 +9,19 @@ import dev.slne.surf.nats.gradle.validate.kotlinPackage
  * Defines the integer encoding used by kotlinx-serialization-protobuf.
  */
 internal enum class IntEncoding {
-    /** Standard Protobuf integer encoding. */
+    /**
+     * Varint encoding (`int32`, `int64`, `uint32`, `uint64`, `bool`).
+     */
     DEFAULT,
 
-    /** ZigZag encoding for signed integers. */
+    /**
+     * ZigZag varint encoding (`sint64`).
+     */
     SIGNED,
 
-    /** Fixed-width integer encoding. */
+    /**
+     * Fixed-width encoding (`fixed32`, `fixed64`, `sfixed32`, `sfixed64`).
+     */
     FIXED
 }
 
@@ -186,8 +192,6 @@ internal class KotlinTypeResolver(
      *
      * Unknown types are reported through [reportUnknown].
      *
-     * @param protoType the message or enum type to resolve
-     * @param location the source location used when reporting errors
      * @return the resolved element, or `null` if no Kotlin representation exists
      */
     private fun declaredElement(protoType: ProtoType, location: Location): ElementType? {
@@ -237,7 +241,6 @@ internal class KotlinTypeResolver(
      * Processes source files in their original order, including nested types
      * and services. Duplicate declarations are reported during registration.
      *
-     * @param sourceFiles the Protobuf files being generated
      * @return the generated Kotlin classes indexed by fully qualified Protobuf name
      */
     private fun generatedClasses(sourceFiles: List<ProtoFile>): Map<ProtoType, ClassName> {
@@ -289,8 +292,6 @@ internal class KotlinTypeResolver(
          *
          * File paths are compared case-insensitively to detect collisions on
          * file systems that do not distinguish letter case.
-         *
-         * @param file the Protobuf source file to register
          */
         private fun registerFileName(file: ProtoFile) {
             // File names may differ only in case on case-insensitive file systems.
@@ -312,9 +313,6 @@ internal class KotlinTypeResolver(
          *
          * Mapped types are not generated, and their nested declarations
          * are not traversed.
-         *
-         * @param type the Protobuf message or enum to register
-         * @param className the Kotlin class name assigned to the declaration
          */
         private fun registerType(type: Type, className: ClassName) {
             declare(
@@ -334,9 +332,6 @@ internal class KotlinTypeResolver(
 
         /**
          * Registers a Protobuf service and its generated Kotlin interface.
-         *
-         * @param service the service declaration to register
-         * @param kotlinPackage the Kotlin package of its source file
          */
         private fun registerService(service: Service, kotlinPackage: String) {
             declare("service", service.type, service.location)
@@ -353,10 +348,6 @@ internal class KotlinTypeResolver(
          *
          * Reports a collision if the name was previously declared, including
          * the source location of the previous declaration.
-         *
-         * @param kind the declaration kind used in error messages
-         * @param fullName the fully qualified Protobuf name
-         * @param location the declaration's source location
          */
         private fun declare(kind: String, fullName: ProtoType, location: Location) {
             fullNames.put(fullName, location)?.let { previous ->
@@ -372,10 +363,6 @@ internal class KotlinTypeResolver(
          *
          * Associates the Protobuf type with its Kotlin class and reports
          * when another declaration already uses the same Kotlin class name.
-         *
-         * @param protoType the Protobuf declaration being generated
-         * @param className the assigned Kotlin class name
-         * @param location the declaration's source location
          */
         private fun registerGeneratedClass(
             protoType: ProtoType,
@@ -402,8 +389,6 @@ internal class KotlinTypeResolver(
      * `sint32` is explicitly unsupported because kotlinx-serialization-protobuf
      * cannot correctly decode values greater than or equal to 2^30.
      *
-     * @param protoType the Protobuf scalar type to resolve
-     * @param location the source location used when reporting errors
      * @return the resolved scalar element, or `null` if unsupported
      */
     private fun scalar(protoType: ProtoType, location: Location): ElementType? {

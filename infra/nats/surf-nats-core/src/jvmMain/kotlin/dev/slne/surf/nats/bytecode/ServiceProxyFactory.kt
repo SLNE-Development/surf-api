@@ -14,6 +14,14 @@ import java.lang.invoke.MethodHandles
 import java.lang.reflect.Constructor
 import kotlin.coroutines.Continuation
 
+/**
+ * Creates the client-side proxies of generated service interfaces.
+ *
+ * Each interface gets one generated class, `<interface>$NatsProxy`, defined next to the interface in its class
+ * loader. Every proxy method forwards its method index, request and continuation to [RpcCaller.call]. A method
+ * without a request passes `Unit`. When the class already exists in that loader, it is reused if it implements the
+ * interface.
+ */
 @InternalNatsApi
 internal object ServiceProxyFactory {
 
@@ -64,6 +72,9 @@ internal object ServiceProxyFactory {
         }
     }
 
+    /**
+     * Creates a proxy of [ServiceDescriptor.type] that sends its calls through [caller].
+     */
     fun <S : Any> create(descriptor: ServiceDescriptor, caller: RpcCaller): S {
         serviceDescriptor.set(descriptor)
         try {
