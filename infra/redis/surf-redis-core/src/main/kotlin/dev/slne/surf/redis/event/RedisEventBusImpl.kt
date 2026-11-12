@@ -3,10 +3,9 @@
 package dev.slne.surf.redis.event
 
 import com.google.common.flogger.StackSize
-import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
-import dev.slne.surf.api.core.invoker.InvokerFactory
-import dev.slne.surf.api.core.util.emptyObject2ObjectMap
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.common.invoker.InvokerFactory
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
@@ -15,9 +14,6 @@ import dev.slne.surf.redis.invoker.RedisEventInvokerTemplate
 import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -44,21 +40,18 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
      *
      * Dispatch is exact-type only (no inheritance lookup) for maximum performance.
      */
-    private val eventHandlers =
-        Object2ObjectOpenHashMap<Class<out RedisEvent>, ObjectArrayList<RedisEventInvoker>>()
+    private val eventHandlers = HashMap<Class<out RedisEvent>, ArrayList<RedisEventInvoker>>()
 
     /**
      * Registry mapping serialized event type identifiers to event classes.
      */
-    private val eventTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisEvent>>()
+    private val eventTypeRegistry = HashMap<String, Class<out RedisEvent>>()
 
     @Volatile
-    private var handlerSnapshot: Object2ObjectMap<Class<out RedisEvent>, Array<RedisEventInvoker>> =
-        emptyObject2ObjectMap()
+    private var handlerSnapshot: Map<Class<out RedisEvent>, Array<RedisEventInvoker>> = emptyMap()
 
     @Volatile
-    private var typeSnapshot: Object2ObjectMap<String, Class<out RedisEvent>> =
-        emptyObject2ObjectMap()
+    private var typeSnapshot: Map<String, Class<out RedisEvent>> = emptyMap()
 
     /**
      * Guards mutations to [eventHandlers] and [eventTypeRegistry] during handler registration and
@@ -130,13 +123,13 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
     private fun rebuildSnapshots() {
         require(registrationLock.isWriteLockedByCurrentThread) { "Must hold registrationLock write lock" }
 
-        val handlers = Object2ObjectOpenHashMap<Class<out RedisEvent>, Array<RedisEventInvoker>>(eventHandlers.size)
+        val handlers = HashMap<Class<out RedisEvent>, Array<RedisEventInvoker>>(eventHandlers.size)
         eventHandlers.forEach { type, invokers ->
             handlers[type] = invokers.toArray(EMPTY_INVOKERS)
         }
 
         handlerSnapshot = handlers
-        typeSnapshot = Object2ObjectOpenHashMap(eventTypeRegistry)
+        typeSnapshot = HashMap(eventTypeRegistry)
     }
 
     /**
@@ -241,7 +234,7 @@ class RedisEventBusImpl(private val api: RedisApi) : RedisEventBus, RedisEventCo
 
                 registrationLock.write {
                     eventTypeRegistry[firstParamType.name] = firstParamType
-                    eventHandlers.computeIfAbsent(firstParamType) { ObjectArrayList() }
+                    eventHandlers.computeIfAbsent(firstParamType) { ArrayList() }
                         .add(invoker)
                     rebuildSnapshots()
                 }

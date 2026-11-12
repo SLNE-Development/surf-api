@@ -3,7 +3,7 @@ package dev.slne.surf.redis.cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
 import com.sksamuel.aedile.core.expireAfterWrite
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.cache.SimpleSetRedisCacheImpl.Companion.ID_FAN_OUT_CHUNK
 import dev.slne.surf.redis.util.*

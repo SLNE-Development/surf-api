@@ -1,0 +1,151 @@
+// Klib ABI Dump
+// Targets: [js]
+// Rendering settings:
+// - Signature version: 2
+// - Show manifest properties: true
+// - Show declarations: true
+
+// Library unique name: <dev.slne.surf.api:surf-api-nats-api>
+open annotation class dev.slne.surf.nats/InternalNatsApi : kotlin/Annotation { // dev.slne.surf.nats/InternalNatsApi|null[0]
+    constructor <init>() // dev.slne.surf.nats/InternalNatsApi.<init>|<init>(){}[0]
+}
+
+open annotation class dev.slne.surf.nats/NatsGeneratedApi : kotlin/Annotation { // dev.slne.surf.nats/NatsGeneratedApi|null[0]
+    constructor <init>() // dev.slne.surf.nats/NatsGeneratedApi.<init>|<init>(){}[0]
+}
+
+final enum class dev.slne.surf.nats.descriptor/NatsResultKind : kotlin/Enum<dev.slne.surf.nats.descriptor/NatsResultKind> { // dev.slne.surf.nats.descriptor/NatsResultKind|null[0]
+    enum entry ANSWER // dev.slne.surf.nats.descriptor/NatsResultKind.ANSWER|null[0]
+    enum entry UNIT // dev.slne.surf.nats.descriptor/NatsResultKind.UNIT|null[0]
+    enum entry VALUE // dev.slne.surf.nats.descriptor/NatsResultKind.VALUE|null[0]
+
+    final val entries // dev.slne.surf.nats.descriptor/NatsResultKind.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.slne.surf.nats.descriptor/NatsResultKind> // dev.slne.surf.nats.descriptor/NatsResultKind.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.slne.surf.nats.descriptor/NatsResultKind // dev.slne.surf.nats.descriptor/NatsResultKind.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.slne.surf.nats.descriptor/NatsResultKind> // dev.slne.surf.nats.descriptor/NatsResultKind.values|values#static(){}[0]
+}
+
+final enum class dev.slne.surf.nats.rpc/Recipients : kotlin/Enum<dev.slne.surf.nats.rpc/Recipients> { // dev.slne.surf.nats.rpc/Recipients|null[0]
+    enum entry ALL_INSTANCES // dev.slne.surf.nats.rpc/Recipients.ALL_INSTANCES|null[0]
+    enum entry ANY_INSTANCE // dev.slne.surf.nats.rpc/Recipients.ANY_INSTANCE|null[0]
+
+    final val entries // dev.slne.surf.nats.rpc/Recipients.entries|#static{}entries[0]
+        final fun <get-entries>(): kotlin.enums/EnumEntries<dev.slne.surf.nats.rpc/Recipients> // dev.slne.surf.nats.rpc/Recipients.entries.<get-entries>|<get-entries>#static(){}[0]
+
+    final fun valueOf(kotlin/String): dev.slne.surf.nats.rpc/Recipients // dev.slne.surf.nats.rpc/Recipients.valueOf|valueOf#static(kotlin.String){}[0]
+    final fun values(): kotlin/Array<dev.slne.surf.nats.rpc/Recipients> // dev.slne.surf.nats.rpc/Recipients.values|values#static(){}[0]
+}
+
+abstract interface dev.slne.surf.nats.descriptor/NatsEvent { // dev.slne.surf.nats.descriptor/NatsEvent|null[0]
+    abstract val natsDescriptor // dev.slne.surf.nats.descriptor/NatsEvent.natsDescriptor|{}natsDescriptor[0]
+        abstract fun <get-natsDescriptor>(): dev.slne.surf.nats.descriptor/NatsEventDescriptor<*> // dev.slne.surf.nats.descriptor/NatsEvent.natsDescriptor.<get-natsDescriptor>|<get-natsDescriptor>(){}[0]
+}
+
+sealed interface <#A: out kotlin/Any?> dev.slne.surf.nats.rpc/Answer { // dev.slne.surf.nats.rpc/Answer|null[0]
+    final class <#A1: kotlin/Any?> Known : dev.slne.surf.nats.rpc/Answer<#A1> { // dev.slne.surf.nats.rpc/Answer.Known|null[0]
+        constructor <init>(#A1) // dev.slne.surf.nats.rpc/Answer.Known.<init>|<init>(1:0){}[0]
+
+        final val value // dev.slne.surf.nats.rpc/Answer.Known.value|{}value[0]
+            final fun <get-value>(): #A1 // dev.slne.surf.nats.rpc/Answer.Known.value.<get-value>|<get-value>(){}[0]
+
+        final fun component1(): #A1 // dev.slne.surf.nats.rpc/Answer.Known.component1|component1(){}[0]
+        final fun copy(#A1 = ...): dev.slne.surf.nats.rpc/Answer.Known<#A1> // dev.slne.surf.nats.rpc/Answer.Known.copy|copy(1:0){}[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.slne.surf.nats.rpc/Answer.Known.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.slne.surf.nats.rpc/Answer.Known.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.slne.surf.nats.rpc/Answer.Known.toString|toString(){}[0]
+    }
+
+    final object Unknown : dev.slne.surf.nats.rpc/Answer<kotlin/Nothing> { // dev.slne.surf.nats.rpc/Answer.Unknown|null[0]
+        final fun equals(kotlin/Any?): kotlin/Boolean // dev.slne.surf.nats.rpc/Answer.Unknown.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // dev.slne.surf.nats.rpc/Answer.Unknown.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // dev.slne.surf.nats.rpc/Answer.Unknown.toString|toString(){}[0]
+    }
+}
+
+final class <#A: kotlin/Any, #B: kotlin/Any?> dev.slne.surf.nats.descriptor/NatsMethodDescriptor { // dev.slne.surf.nats.descriptor/NatsMethodDescriptor|null[0]
+    constructor <init>(kotlin/String, kotlin/String, kotlin/Boolean, kotlin/Int?, dev.slne.surf.nats.rpc/Recipients, dev.slne.surf.nats.descriptor/NatsResultKind, kotlinx.serialization/KSerializer<#A>, kotlinx.serialization/KSerializer<*>?) // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.<init>|<init>(kotlin.String;kotlin.String;kotlin.Boolean;kotlin.Int?;dev.slne.surf.nats.rpc.Recipients;dev.slne.surf.nats.descriptor.NatsResultKind;kotlinx.serialization.KSerializer<1:0>;kotlinx.serialization.KSerializer<*>?){}[0]
+
+    final val callTimeoutSeconds // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.callTimeoutSeconds|{}callTimeoutSeconds[0]
+        final fun <get-callTimeoutSeconds>(): kotlin/Int? // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.callTimeoutSeconds.<get-callTimeoutSeconds>|<get-callTimeoutSeconds>(){}[0]
+    final val kotlinName // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.kotlinName|{}kotlinName[0]
+        final fun <get-kotlinName>(): kotlin/String // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.kotlinName.<get-kotlinName>|<get-kotlinName>(){}[0]
+    final val persistent // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.persistent|{}persistent[0]
+        final fun <get-persistent>(): kotlin/Boolean // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.persistent.<get-persistent>|<get-persistent>(){}[0]
+    final val protoName // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.protoName|{}protoName[0]
+        final fun <get-protoName>(): kotlin/String // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.protoName.<get-protoName>|<get-protoName>(){}[0]
+    final val recipients // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.recipients|{}recipients[0]
+        final fun <get-recipients>(): dev.slne.surf.nats.rpc/Recipients // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.recipients.<get-recipients>|<get-recipients>(){}[0]
+    final val requestSerializer // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.requestSerializer|{}requestSerializer[0]
+        final fun <get-requestSerializer>(): kotlinx.serialization/KSerializer<#A> // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.requestSerializer.<get-requestSerializer>|<get-requestSerializer>(){}[0]
+    final val responseSerializer // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.responseSerializer|{}responseSerializer[0]
+        final fun <get-responseSerializer>(): kotlinx.serialization/KSerializer<*>? // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.responseSerializer.<get-responseSerializer>|<get-responseSerializer>(){}[0]
+    final val resultKind // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.resultKind|{}resultKind[0]
+        final fun <get-resultKind>(): dev.slne.surf.nats.descriptor/NatsResultKind // dev.slne.surf.nats.descriptor/NatsMethodDescriptor.resultKind.<get-resultKind>|<get-resultKind>(){}[0]
+}
+
+final class <#A: kotlin/Any> dev.slne.surf.nats.descriptor/NatsEventDescriptor { // dev.slne.surf.nats.descriptor/NatsEventDescriptor|null[0]
+    constructor <init>(kotlin/String, kotlinx.serialization/KSerializer<#A>) // dev.slne.surf.nats.descriptor/NatsEventDescriptor.<init>|<init>(kotlin.String;kotlinx.serialization.KSerializer<1:0>){}[0]
+
+    final val protoName // dev.slne.surf.nats.descriptor/NatsEventDescriptor.protoName|{}protoName[0]
+        final fun <get-protoName>(): kotlin/String // dev.slne.surf.nats.descriptor/NatsEventDescriptor.protoName.<get-protoName>|<get-protoName>(){}[0]
+    final val serializer // dev.slne.surf.nats.descriptor/NatsEventDescriptor.serializer|{}serializer[0]
+        final fun <get-serializer>(): kotlinx.serialization/KSerializer<#A> // dev.slne.surf.nats.descriptor/NatsEventDescriptor.serializer.<get-serializer>|<get-serializer>(){}[0]
+}
+
+final class <#A: kotlin/Any> dev.slne.surf.nats.descriptor/NatsServiceDescriptor { // dev.slne.surf.nats.descriptor/NatsServiceDescriptor|null[0]
+    constructor <init>(kotlin/String, kotlin.collections/List<dev.slne.surf.nats.descriptor/NatsMethodDescriptor<*, *>>) // dev.slne.surf.nats.descriptor/NatsServiceDescriptor.<init>|<init>(kotlin.String;kotlin.collections.List<dev.slne.surf.nats.descriptor.NatsMethodDescriptor<*,*>>){}[0]
+
+    final val methods // dev.slne.surf.nats.descriptor/NatsServiceDescriptor.methods|{}methods[0]
+        final fun <get-methods>(): kotlin.collections/List<dev.slne.surf.nats.descriptor/NatsMethodDescriptor<*, *>> // dev.slne.surf.nats.descriptor/NatsServiceDescriptor.methods.<get-methods>|<get-methods>(){}[0]
+    final val protoName // dev.slne.surf.nats.descriptor/NatsServiceDescriptor.protoName|{}protoName[0]
+        final fun <get-protoName>(): kotlin/String // dev.slne.surf.nats.descriptor/NatsServiceDescriptor.protoName.<get-protoName>|<get-protoName>(){}[0]
+}
+
+final class dev.slne.surf.nats.event/NatsEventContext : kotlin.coroutines/AbstractCoroutineContextElement { // dev.slne.surf.nats.event/NatsEventContext|null[0]
+    final val eventId // dev.slne.surf.nats.event/NatsEventContext.eventId|{}eventId[0]
+        final fun <get-eventId>(): kotlin/String? // dev.slne.surf.nats.event/NatsEventContext.eventId.<get-eventId>|<get-eventId>(){}[0]
+    final val isFromThisClient // dev.slne.surf.nats.event/NatsEventContext.isFromThisClient|{}isFromThisClient[0]
+        final fun <get-isFromThisClient>(): kotlin/Boolean // dev.slne.surf.nats.event/NatsEventContext.isFromThisClient.<get-isFromThisClient>|<get-isFromThisClient>(){}[0]
+    final val origin // dev.slne.surf.nats.event/NatsEventContext.origin|{}origin[0]
+        final fun <get-origin>(): kotlin/String? // dev.slne.surf.nats.event/NatsEventContext.origin.<get-origin>|<get-origin>(){}[0]
+
+    final object Key : kotlin.coroutines/CoroutineContext.Key<dev.slne.surf.nats.event/NatsEventContext> // dev.slne.surf.nats.event/NatsEventContext.Key|null[0]
+}
+
+final class dev.slne.surf.nats.rpc/NatsPersistentContext : kotlin.coroutines/AbstractCoroutineContextElement { // dev.slne.surf.nats.rpc/NatsPersistentContext|null[0]
+    final val deliveryCount // dev.slne.surf.nats.rpc/NatsPersistentContext.deliveryCount|{}deliveryCount[0]
+        final fun <get-deliveryCount>(): kotlin/Long // dev.slne.surf.nats.rpc/NatsPersistentContext.deliveryCount.<get-deliveryCount>|<get-deliveryCount>(){}[0]
+    final val messageId // dev.slne.surf.nats.rpc/NatsPersistentContext.messageId|{}messageId[0]
+        final fun <get-messageId>(): kotlin/String // dev.slne.surf.nats.rpc/NatsPersistentContext.messageId.<get-messageId>|<get-messageId>(){}[0]
+
+    final object Key : kotlin.coroutines/CoroutineContext.Key<dev.slne.surf.nats.rpc/NatsPersistentContext> // dev.slne.surf.nats.rpc/NatsPersistentContext.Key|null[0]
+}
+
+final object dev.slne.surf.nats.rpc/NatsPersistentLimits { // dev.slne.surf.nats.rpc/NatsPersistentLimits|null[0]
+    final val DEAD_LETTER_MAX_AGE // dev.slne.surf.nats.rpc/NatsPersistentLimits.DEAD_LETTER_MAX_AGE|{}DEAD_LETTER_MAX_AGE[0]
+        final fun <get-DEAD_LETTER_MAX_AGE>(): kotlin.time/Duration // dev.slne.surf.nats.rpc/NatsPersistentLimits.DEAD_LETTER_MAX_AGE.<get-DEAD_LETTER_MAX_AGE>|<get-DEAD_LETTER_MAX_AGE>(){}[0]
+    final val MESSAGE_MAX_AGE // dev.slne.surf.nats.rpc/NatsPersistentLimits.MESSAGE_MAX_AGE|{}MESSAGE_MAX_AGE[0]
+        final fun <get-MESSAGE_MAX_AGE>(): kotlin.time/Duration // dev.slne.surf.nats.rpc/NatsPersistentLimits.MESSAGE_MAX_AGE.<get-MESSAGE_MAX_AGE>|<get-MESSAGE_MAX_AGE>(){}[0]
+    final val REDELIVERY_HORIZON // dev.slne.surf.nats.rpc/NatsPersistentLimits.REDELIVERY_HORIZON|{}REDELIVERY_HORIZON[0]
+        final fun <get-REDELIVERY_HORIZON>(): kotlin.time/Duration // dev.slne.surf.nats.rpc/NatsPersistentLimits.REDELIVERY_HORIZON.<get-REDELIVERY_HORIZON>|<get-REDELIVERY_HORIZON>(){}[0]
+}
+
+final fun <#A: kotlin/Any> (#A?).dev.slne.surf.nats.rpc/toAnswer(): dev.slne.surf.nats.rpc/Answer<#A> // dev.slne.surf.nats.rpc/toAnswer|toAnswer@0:0?(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any> (dev.slne.surf.nats.rpc/Answer<#A>).dev.slne.surf.nats.rpc/getOrNull(): #A? // dev.slne.surf.nats.rpc/getOrNull|getOrNull@dev.slne.surf.nats.rpc.Answer<0:0>(){0§<kotlin.Any>}[0]
+final fun <#A: kotlin/Any?> dev.slne.surf.nats.descriptor/natsContentEquals(kotlin.collections/Map<#A, kotlin/ByteArray?>?, kotlin.collections/Map<#A, kotlin/ByteArray?>?): kotlin/Boolean // dev.slne.surf.nats.descriptor/natsContentEquals|natsContentEquals(kotlin.collections.Map<0:0,kotlin.ByteArray?>?;kotlin.collections.Map<0:0,kotlin.ByteArray?>?){0§<kotlin.Any?>}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentEquals(kotlin.collections/List<kotlin/ByteArray?>?, kotlin.collections/List<kotlin/ByteArray?>?): kotlin/Boolean // dev.slne.surf.nats.descriptor/natsContentEquals|natsContentEquals(kotlin.collections.List<kotlin.ByteArray?>?;kotlin.collections.List<kotlin.ByteArray?>?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentEquals(kotlin/ByteArray?, kotlin/ByteArray?): kotlin/Boolean // dev.slne.surf.nats.descriptor/natsContentEquals|natsContentEquals(kotlin.ByteArray?;kotlin.ByteArray?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentHashCode(kotlin.collections/List<kotlin/ByteArray?>?): kotlin/Int // dev.slne.surf.nats.descriptor/natsContentHashCode|natsContentHashCode(kotlin.collections.List<kotlin.ByteArray?>?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentHashCode(kotlin.collections/Map<*, kotlin/ByteArray?>?): kotlin/Int // dev.slne.surf.nats.descriptor/natsContentHashCode|natsContentHashCode(kotlin.collections.Map<*,kotlin.ByteArray?>?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentHashCode(kotlin/ByteArray?): kotlin/Int // dev.slne.surf.nats.descriptor/natsContentHashCode|natsContentHashCode(kotlin.ByteArray?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentToString(kotlin.collections/List<kotlin/ByteArray?>?): kotlin/String // dev.slne.surf.nats.descriptor/natsContentToString|natsContentToString(kotlin.collections.List<kotlin.ByteArray?>?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentToString(kotlin.collections/Map<*, kotlin/ByteArray?>?): kotlin/String // dev.slne.surf.nats.descriptor/natsContentToString|natsContentToString(kotlin.collections.Map<*,kotlin.ByteArray?>?){}[0]
+final fun dev.slne.surf.nats.descriptor/natsContentToString(kotlin/ByteArray?): kotlin/String // dev.slne.surf.nats.descriptor/natsContentToString|natsContentToString(kotlin.ByteArray?){}[0]
+final inline fun <#A: kotlin/Any?> (dev.slne.surf.nats.rpc/Answer<#A>).dev.slne.surf.nats.rpc/getOrElse(kotlin/Function0<#A>): #A // dev.slne.surf.nats.rpc/getOrElse|getOrElse@dev.slne.surf.nats.rpc.Answer<0:0>(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> dev.slne.surf.nats.rpc/withNatsCallTimeout(kotlin.time/Duration, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): #A // dev.slne.surf.nats.rpc/withNatsCallTimeout|withNatsCallTimeout(kotlin.time.Duration;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
+final suspend fun <#A: kotlin/Any?> dev.slne.surf.nats.rpc/withNatsIdempotencyKey(kotlin/String, kotlin.coroutines/SuspendFunction1<kotlinx.coroutines/CoroutineScope, #A>): #A // dev.slne.surf.nats.rpc/withNatsIdempotencyKey|withNatsIdempotencyKey(kotlin.String;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.CoroutineScope,0:0>){0§<kotlin.Any?>}[0]
+final suspend fun dev.slne.surf.nats.event/natsEventContext(): dev.slne.surf.nats.event/NatsEventContext // dev.slne.surf.nats.event/natsEventContext|natsEventContext(){}[0]
+final suspend fun dev.slne.surf.nats.event/natsEventContextOrNull(): dev.slne.surf.nats.event/NatsEventContext? // dev.slne.surf.nats.event/natsEventContextOrNull|natsEventContextOrNull(){}[0]
+final suspend fun dev.slne.surf.nats.rpc/natsPersistentContext(): dev.slne.surf.nats.rpc/NatsPersistentContext // dev.slne.surf.nats.rpc/natsPersistentContext|natsPersistentContext(){}[0]
+final suspend fun dev.slne.surf.nats.rpc/natsPersistentContextOrNull(): dev.slne.surf.nats.rpc/NatsPersistentContext? // dev.slne.surf.nats.rpc/natsPersistentContextOrNull|natsPersistentContextOrNull(){}[0]

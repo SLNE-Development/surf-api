@@ -1,7 +1,7 @@
 package dev.slne.surf.redis
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.reflection.JavaPluginLoaderProxy
 import dev.slne.surf.redis.reflection.SerializedPluginDescriptionProxy
 import kotlin.io.path.Path

@@ -17,7 +17,7 @@ import kotlin.js.Promise
  * `index.d.mts`.
  *
  * ```ts
- * import { connect } from "@slne/surf-nats";
+ * import { connect } from "@slne/surf-api-nats";
  *
  * const nats = await connect({ name: "panel", servers: "nats://localhost:4222", token: "change-me" });
  * // On shutdown:

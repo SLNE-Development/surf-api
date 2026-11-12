@@ -1,9 +1,9 @@
 package dev.slne.surf.redis.reflection
 
-import dev.slne.surf.api.core.reflection.Name
-import dev.slne.surf.api.core.reflection.SurfProxy
-import dev.slne.surf.api.core.reflection.SurfReflection
-import dev.slne.surf.api.core.reflection.createProxy
+import dev.slne.surf.api.reflection.Name
+import dev.slne.surf.api.reflection.SurfProxy
+import dev.slne.surf.api.reflection.SurfReflection
+import dev.slne.surf.api.reflection.createProxy
 
 @SurfProxy(qualifiedName = "com.velocitypowered.api.plugin.ap.SerializedPluginDescription")
 interface SerializedPluginDescriptionProxy {
@@ -16,4 +16,4 @@ interface SerializedPluginDescriptionProxy {
     }
 }
 
-private val proxy = SurfReflection.createProxy<SerializedPluginDescriptionProxy>()
+private val proxy = SurfReflection.INSTANCE.createProxy<SerializedPluginDescriptionProxy>()

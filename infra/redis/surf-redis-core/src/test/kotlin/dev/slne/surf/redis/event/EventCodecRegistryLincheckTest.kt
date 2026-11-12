@@ -54,7 +54,7 @@ class EventCodecRegistryLincheckTest {
             .threads(3)
             .actorsPerThread(3)
             .addGuarantee(
-                forClasses { className -> className.startsWith("it.unimi.dsi.fastutil.") }
+                forClasses { className -> className.startsWith("java.util.") }
                     .allMethods()
                     .treatAsAtomic(),
             )

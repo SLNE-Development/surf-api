@@ -1,6 +1,6 @@
 package dev.slne.surf.database.migration
 
-import dev.slne.surf.api.core.config.type.number.IntOr
+import dev.slne.surf.api.config.type.number.IntOr
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.migration.fixtures.mixedscan.V2_Default
@@ -18,14 +18,7 @@ import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.junit.jupiter.api.Test
 import java.sql.Connection
 import javax.sql.DataSource
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * Checks the Flyway configuration built for a plan. Nothing here connects to a database.

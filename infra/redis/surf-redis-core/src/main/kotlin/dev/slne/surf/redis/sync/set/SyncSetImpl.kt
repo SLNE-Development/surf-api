@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.sync.set
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
@@ -8,7 +8,6 @@ import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.reactor.awaitSingle
 import org.redisson.api.DeletedObjectListener
 import org.redisson.api.ExpiredObjectListener
@@ -58,7 +57,7 @@ class SyncSetImpl<T : Any> internal constructor(
         }
     }
 
-    private val set = ObjectOpenHashSet<T>()
+    private val set = HashSet<T>()
 
     private val remoteSet by lazy {
         api.redissonReactive.getSet<String>(
@@ -82,7 +81,7 @@ class SyncSetImpl<T : Any> internal constructor(
 
     override fun unregisterListener(id: Int): Mono<*> = remoteSet.removeListener(id)
 
-    override fun snapshot() = lock.read { ObjectOpenHashSet(set) }
+    override fun snapshot() = lock.read { HashSet(set) }
     override fun size() = lock.read { set.size }
     override fun contains(element: T) = lock.read { set.contains(element) }
 
@@ -119,7 +118,7 @@ class SyncSetImpl<T : Any> internal constructor(
 
     override fun removeIf(predicate: (T) -> Boolean): Boolean {
         val removedElements = lock.write {
-            val removed = ObjectOpenHashSet<T>()
+            val removed = HashSet<T>()
             val iterator = set.iterator()
             while (iterator.hasNext()) {
                 val element = iterator.next()
@@ -188,7 +187,7 @@ class SyncSetImpl<T : Any> internal constructor(
         predicate: (T) -> Boolean,
     ): Boolean {
         val removedElements = lock.write {
-            val removed = ObjectOpenHashSet<T>()
+            val removed = HashSet<T>()
             val iterator = set.iterator()
 
             while (iterator.hasNext()) {
@@ -249,7 +248,7 @@ class SyncSetImpl<T : Any> internal constructor(
 
     override suspend fun sizeRemote(): Int = remoteSet.size().awaitSingle()
 
-    override suspend fun snapshotRemote(): ObjectOpenHashSet<T> =
+    override suspend fun snapshotRemote(): HashSet<T> =
         decodeSnapshot(pullRemoteSnapshot().awaitSingle().value)
 
     override suspend fun addRemote(element: T): Boolean =
@@ -314,7 +313,7 @@ class SyncSetImpl<T : Any> internal constructor(
                 }
 
                 val version = raw.last().toString().toLong()
-                val values = ObjectOpenHashSet<String>(raw.size - 1)
+                val values = HashSet<String>(raw.size - 1)
 
                 for (index in 0 until raw.lastIndex) {
                     values.add(raw[index].toString())
@@ -333,8 +332,8 @@ class SyncSetImpl<T : Any> internal constructor(
         super.overrideFromRemote(raw)
     }
 
-    private fun decodeSnapshot(raw: Set<String>): ObjectOpenHashSet<T> =
-        raw.mapTo(ObjectOpenHashSet(raw.size), ::decodeValue)
+    private fun decodeSnapshot(raw: Set<String>): HashSet<T> =
+        raw.mapTo(HashSet(raw.size), ::decodeValue)
 
     private fun encodeValue(value: T) = elementCodec.encode(value)
     private fun decodeValue(value: String) = elementCodec.decode(value)

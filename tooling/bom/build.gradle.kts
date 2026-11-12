@@ -13,12 +13,11 @@ plugins {
 }
 
 /**
- * Modules that `settings.gradle.kts` only includes outside CI, plus the Gradle plugin and its KSP
- * processor, which carry versions of their own.
+ * Modules that `settings.gradle.kts` only includes outside CI, plus the KSP processor of the Gradle
+ * plugin.
  */
 val notPublished = setOf(
     "surf-api-bom",
-    "surf-api-gradle-plugin",
     "surf-api-processor",
     "surf-api-generator",
     "surf-api-paper-plugin-test",
@@ -33,7 +32,9 @@ version = findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
 
 dependencies {
     constraints {
+        // The infra repositories are project trees whose parent projects only group modules.
         rootProject.subprojects
+            .filter { it.subprojects.isEmpty() }
             .map { it.name }
             .filterNot { it in notPublished }
             .sorted()

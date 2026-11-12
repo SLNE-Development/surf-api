@@ -1,6 +1,6 @@
 package dev.slne.surf.nats.config
 
-import dev.slne.surf.api.core.config.type.number.IntOr
+import dev.slne.surf.api.config.type.number.IntOr
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

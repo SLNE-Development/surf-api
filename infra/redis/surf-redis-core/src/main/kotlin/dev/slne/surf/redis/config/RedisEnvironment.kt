@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.config
 
-import dev.slne.surf.api.core.environment.env
+import dev.slne.surf.api.config.environment.env
 
 object RedisEnvironment {
     val SURF_REDIS_HOST by env.optional()

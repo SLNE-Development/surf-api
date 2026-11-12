@@ -1,6 +1,6 @@
 plugins {
     id("dev.slne.surf.api.gradle.core")
-    id("dev.slne.surf.nats")
+    id("dev.slne.surf.api.gradle.nats")
 }
 
 kotlin {

@@ -20,8 +20,8 @@ kotlin {
 }
 
 dependencies {
-    api(projects.surfNatsTypes.surfNatsTypesCommon)
-    weaver(projects.surfNatsTypes.surfNatsTypesCommon)
+    api(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesCommon)
+    weaver(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesCommon)
 }
 
 // Published to weaver so that contracts importing these protos validate on the registry. The conventions match those
@@ -31,8 +31,8 @@ weaver {
     repositories("proto-releases-public")
     publishing {
         repository = "proto-releases-public"
-        group = "dev.slne.surf.nats"
-        name = "surf-nats-types-paper"
+        group = "dev.slne.surf.api"
+        name = "surf-api-nats-types-paper"
         source = layout.projectDirectory.dir("src/main/proto")
     }
 }
@@ -49,7 +49,7 @@ tasks.publish {
 
 // The registry rejects a manifest whose dependency it does not know yet.
 tasks.publishProtos {
-    mustRunAfter(":surf-nats-types:surf-nats-types-common:publishProtos")
+    mustRunAfter(":surf-api-nats:surf-api-nats-types:surf-api-nats-types-common:publishProtos")
 }
 
 tasks.withType<PublishToMavenRepository>().configureEach {

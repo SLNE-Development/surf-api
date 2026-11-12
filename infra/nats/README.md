@@ -1089,13 +1089,13 @@ external application publishes calls.
 
 ### TypeScript client
 
-For Node.js and TypeScript, `surf-nats-core` builds the npm package `@slne/surf-nats`. It works with
+For Node.js and TypeScript, `surf-nats-core` builds the npm package `@slne/surf-api-nats`. It works with
 [protobuf-es](https://github.com/bufbuild/protobuf-es) schemas and ships the protoc plugin `protoc-gen-surf-nats`,
 which generates a typed client per service next to the protobuf-es code. A Node.js project fetches the contracts
 with the weaver CLI `@slne/weaver-cli` (`weaver fetch`) and generates code from them with `buf generate`:
 
 ```ts
-import { connect } from "@slne/surf-nats";
+import { connect } from "@slne/surf-api-nats";
 import { NameChangedSchema } from "./gen/surf/profiles/v1/name_changed_pb.js";
 import { createProfileServiceClient } from "./gen/surf/profiles/v1/profile_service_nats.js";
 
@@ -1149,7 +1149,7 @@ Points that behave differently:
 |---------------------------|------------------------------------------------------------------------------------------------|
 | `surf-nats-gradle-plugin` | The Gradle plugin `dev.slne.surf.nats`: code generation, build checks, compatibility check, weaver integration |
 | `surf-nats-api`           | The public API: client, `@NatsListener`, contexts, `Answer`, exceptions, generated-code model  |
-| `surf-nats-core`          | The implementation for the JVM, and the Node.js client `@slne/surf-nats`                       |
+| `surf-nats-core`          | The implementation for the JVM, and the Node.js client `@slne/surf-api-nats`                       |
 | `surf-nats-types-common`  | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers, also published to weaver as protos |
 | `surf-nats-types-paper`   | The `surf.types.paper.v1` messages and their Paper serializers, also published to weaver as protos |
 | `surf-nats-paper`         | The Paper plugin                                                                               |

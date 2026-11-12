@@ -1,9 +1,9 @@
 package dev.slne.surf.redis
 
-import dev.slne.surf.api.core.util.logger
-import dev.slne.surf.api.core.util.requiredService
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.config.RedisConfig
 import dev.slne.surf.redis.internal.SharedRedissonClientRegistry
+import dev.slne.surf.redis.util.requiredService
 import io.netty.channel.MultiThreadIoEventLoopGroup
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers

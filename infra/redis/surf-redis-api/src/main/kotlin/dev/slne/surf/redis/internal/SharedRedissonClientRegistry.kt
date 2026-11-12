@@ -1,10 +1,7 @@
 package dev.slne.surf.redis.internal
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.util.InternalRedisAPI
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import org.jetbrains.annotations.Blocking
 import org.redisson.config.Config
 import java.util.concurrent.ConcurrentHashMap
@@ -53,8 +50,8 @@ class SharedRedissonClientRegistry(
 
     @Blocking
     fun shutdownAll(): Map<RedissonConnectionKey, List<String>> {
-        val leaked = Object2ObjectLinkedOpenHashMap<RedissonConnectionKey, List<String>>()
-        val clients = ObjectArrayList<SharedRedissonClient>()
+        val leaked = LinkedHashMap<RedissonConnectionKey, List<String>>()
+        val clients = ArrayList<SharedRedissonClient>()
 
         for (entry in entries.values.toList()) {
             entry.lock.withLock {

@@ -1,11 +1,10 @@
 package dev.slne.surf.redis.util
 
-import dev.slne.surf.api.core.util.mutableObject2ObjectMapOf
 import dev.slne.surf.redis.RedisInstance
 
 abstract class LuaScriptRegistry(prefix: String) {
     private val prefix = prefix.removeSuffix(".").removeSuffix("/").replace('.', '/')
-    private val scripts = mutableObject2ObjectMapOf<String, String>()
+    private val scripts = HashMap<String, String>()
 
     protected fun load(name: String) {
         val path = "/$prefix/$name.lua"

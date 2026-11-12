@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.sync.list
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
@@ -8,7 +8,6 @@ import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.redisson.api.DeletedObjectListener
@@ -72,7 +71,7 @@ class SyncListImpl<T : Any> internal constructor(
     }
 
 
-    private val list = ObjectArrayList<T>()
+    private val list = ArrayList<T>()
 
     // Counter for unique removal tombstones.
     private val tombstoneSeq = AtomicLong(0L)
@@ -98,7 +97,7 @@ class SyncListImpl<T : Any> internal constructor(
 
     override fun unregisterListener(id: Int): Mono<*> = remoteList.removeListener(id)
 
-    override fun snapshot() = lock.read { ObjectArrayList(list) }
+    override fun snapshot() = lock.read { ArrayList(list) }
     override fun size(): Int = lock.read { list.size }
     override fun get(index: Int): T = lock.read { list[index] }
     override fun contains(element: T): Boolean = lock.read { list.contains(element) }
@@ -163,7 +162,7 @@ class SyncListImpl<T : Any> internal constructor(
 
     override fun removeIf(predicate: (T) -> Boolean): Boolean {
         val removedValues = lock.write {
-            val removed = ObjectArrayList<T>()
+            val removed = ArrayList<T>()
             val iterator = list.iterator()
 
             while (iterator.hasNext()) {
@@ -178,7 +177,7 @@ class SyncListImpl<T : Any> internal constructor(
             removed
         }
 
-        if (removedValues.isEmpty) {
+        if (removedValues.isEmpty()) {
             return false
         }
 
@@ -243,7 +242,7 @@ class SyncListImpl<T : Any> internal constructor(
                 }
 
                 val version = raw.last().toString().toLong()
-                val values = ObjectArrayList<String>(raw.size - 1)
+                val values = ArrayList<String>(raw.size - 1)
 
                 for (index in 0 until raw.lastIndex) {
                     values.add(raw[index].toString())
@@ -337,7 +336,7 @@ class SyncListImpl<T : Any> internal constructor(
 
     override suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean {
         val removedValues = lock.write {
-            val removed = ObjectArrayList<T>()
+            val removed = ArrayList<T>()
             val iterator = list.iterator()
 
             while (iterator.hasNext()) {
@@ -352,7 +351,7 @@ class SyncListImpl<T : Any> internal constructor(
             removed
         }
 
-        if (removedValues.isEmpty) {
+        if (removedValues.isEmpty()) {
             return false
         }
 
@@ -382,8 +381,8 @@ class SyncListImpl<T : Any> internal constructor(
         super.overrideFromRemote(raw)
     }
 
-    private fun decodeSnapshot(raw: List<String>): ObjectArrayList<T> {
-        return raw.mapTo(ObjectArrayList(raw.size), ::decodeValue)
+    private fun decodeSnapshot(raw: List<String>): ArrayList<T> {
+        return raw.mapTo(ArrayList(raw.size), ::decodeValue)
     }
 
     override suspend fun getRemote(index: Int): T? {
@@ -399,7 +398,7 @@ class SyncListImpl<T : Any> internal constructor(
         return remoteList.size().awaitSingle()
     }
 
-    override suspend fun snapshotRemote(): ObjectArrayList<T> {
+    override suspend fun snapshotRemote(): ArrayList<T> {
         return decodeSnapshot(pullRemoteSnapshot().awaitSingle().value)
     }
 

@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.credentials
 
-import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.redis.util.InternalRedisAPI
+import dev.slne.surf.redis.util.requiredService
 import org.redisson.misc.RedisURI
 
 @InternalRedisAPI

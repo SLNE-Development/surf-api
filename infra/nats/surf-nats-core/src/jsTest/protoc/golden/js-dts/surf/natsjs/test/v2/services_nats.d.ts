@@ -2,9 +2,10 @@
 // @generated from file surf/natsjs/test/v2/services.proto (package surf.natsjs.test.v2, syntax proto2)
 /* eslint-disable */
 
-import type { MessageInitShape } from "@bufbuild/protobuf";
-import type { FindPlayerRequestSchema, FindPlayerResponse } from "./services_pb";
-import type { CallOptions, SurfNatsOperations } from "@slne/surf-nats";
+import type {MessageInitShape} from "@bufbuild/protobuf";
+import type {FindPlayerRequestSchema, FindPlayerResponse} from "./services_pb";
+import type {CallOptions, SurfNatsOperations} from "@slne/surf-api-nats";
+
 /**
  * Client of the surf-nats service `surf.natsjs.test.v2.PlayerService`.
  */

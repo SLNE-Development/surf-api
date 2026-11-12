@@ -8,7 +8,7 @@ plugins {
 
 @Suppress("RedundantSuppression", "AvoidDuplicateDependencies") // different classifiers
 dependencies {
-    api(projects.surfRedisApi)
+    api(projects.surfApiRedis.surfApiRedisApi)
     api(platform(libs.netty.bom))
 
     // transport classes
@@ -49,7 +49,6 @@ dependencies {
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0")
     testImplementation(libs.lincheck)
-    testRuntimeOnly("it.unimi.dsi:fastutil:8.5.19")
 
     add("jmhImplementation", "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0")
 }

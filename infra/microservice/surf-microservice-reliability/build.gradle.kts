@@ -21,21 +21,18 @@ kotlin {
     }
 }
 
-val surfDatabaseR2dbc = "dev.slne.surf:surf-database-r2dbc:2.+"
-val surfNatsVersion = "1.+"
-
 dependencies {
-    api(projects.surfMicroserviceDatabase)
-    compileOnly(surfDatabaseR2dbc)
-    compileOnly("dev.slne.surf.nats:surf-nats-api:$surfNatsVersion")
+    api(projects.surfApiMicroservice.surfApiMicroserviceDatabase)
+    compileOnly(shadowed(projects.surfApiDatabaseR2dbc))
+    compileOnly(projects.surfApiNats.surfApiNatsApi)
 
-    testFixturesCompileOnly("dev.slne.surf.api:surf-api-core:+")
-    testFixturesCompileOnly(surfDatabaseR2dbc)
-    testFixturesCompileOnly("dev.slne.surf.nats:surf-nats-api:$surfNatsVersion")
+    testFixturesCompileOnly(projects.surfApiCore)
+    testFixturesCompileOnly(shadowed(projects.surfApiDatabaseR2dbc))
+    testFixturesCompileOnly(projects.surfApiNats.surfApiNatsApi)
 
-    testImplementation(surfDatabaseR2dbc)
-    testImplementation("dev.slne.surf.nats:surf-nats-standalone:$surfNatsVersion")
-    testImplementation("dev.slne.surf.nats:surf-nats-test-common:$surfNatsVersion")
+    testImplementation(shadowed(projects.surfApiDatabaseR2dbc))
+    testImplementation(shadowed(projects.surfApiNats.surfApiNatsPlatform.surfApiNatsStandalone))
+    testImplementation(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestCommon)
     testImplementation(libs.jnats)
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.mariadb)
@@ -43,7 +40,8 @@ dependencies {
     testImplementation(libs.testcontainers.nats)
     testImplementation(libs.mariadb.jdbc)
     testImplementation(libs.postgresql.jdbc)
-    testRuntimeOnly("dev.slne.surf.api:surf-api-standalone:+")
+    testRuntimeOnly(projects.surfApiStandalone)
+    testRuntimeOnly(projects.surfApiStandaloneTesting)
 }
 
 /*
@@ -54,10 +52,17 @@ dependencies {
  */
 val surfRuntimeGroups = setOf("dev.slne.surf.api", "dev.slne.forks.configurate")
 
+fun Project.isInfra() = projectDir.startsWith(rootProject.file("infra"))
+
 fun testRuntimeArtifacts(surfRuntime: Boolean) = configurations.testRuntimeClasspath.map { configuration ->
     configuration.incoming.artifactView {
         componentFilter { id ->
-            val isSurfRuntime = id is ModuleComponentIdentifier && id.group in surfRuntimeGroups
+            val isSurfRuntime = when (id) {
+                is ModuleComponentIdentifier -> id.group in surfRuntimeGroups
+                // surf-api's own modules, which this build resolves to its projects
+                is ProjectComponentIdentifier -> id.build.buildPath == ":" && !project(id.projectPath).isInfra()
+                else -> false
+            }
             isSurfRuntime == surfRuntime
         }
     }.files
@@ -70,6 +75,8 @@ val testSurfRuntime = tasks.register<ShadowJar>("testSurfRuntime") {
     archiveFileName = "test-surf-runtime.jar"
     destinationDirectory = layout.buildDirectory.dir("testSurfRuntime")
     configurations.set(emptyList())
+    // Mapped to zip trees, the files lose the tasks that build the surf-api project jars.
+    dependsOn(testRuntimeArtifacts(surfRuntime = true))
     from(testRuntimeArtifacts(surfRuntime = true).map { jars -> jars.map(::zipTree) })
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "module-info.class")
     mergeServiceFiles()

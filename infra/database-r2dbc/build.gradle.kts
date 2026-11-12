@@ -1,20 +1,16 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar.Companion.shadowJar
 import dev.slne.surf.api.gradle.util.slneReleases
-import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.jetbrains.dokka.gradle.tasks.DokkaGenerateTask
 
 plugins {
-    id("dev.slne.surf.api.gradle.core") version "+"
+    id("dev.slne.surf.api.gradle.core")
     id("org.jetbrains.dokka-javadoc") version "2.2.0"
 }
 
 surfCoreApi {
     withApiValidation()
 }
-
-group = "dev.slne.surf"
-version = findProperty("version") as String
 
 dependencies {
     implementation(libs.bundles.exposed)
@@ -27,7 +23,8 @@ dependencies {
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.mariadb)
     testImplementation(libs.testcontainers.postgresql)
-    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotlinxCoroutines.test)
+    testImplementation(projects.surfApiStandaloneTesting)
 }
 
 configurations.runtimeClasspath {
@@ -251,7 +248,7 @@ dependencies {
     add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.junit)
     add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.mariadb)
     add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.postgresql)
-    add(shadowTestSourceSet.implementationConfigurationName, libs.kotlinx.coroutines.test)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.kotlinxCoroutines.test)
     add(shadowTestSourceSet.implementationConfigurationName, "org.jetbrains.kotlin:kotlin-test-junit5")
     add(shadowTestSourceSet.runtimeOnlyConfigurationName, "org.junit.platform:junit-platform-launcher")
 }
@@ -263,12 +260,19 @@ dependencies {
  * the same configurate relocation to every `ShadowJar` task.
  */
 val surfRuntimeGroups = setOf("dev.slne.surf.api", "dev.slne.forks.configurate")
+
+fun Project.isInfra() = projectDir.startsWith(rootProject.file("infra"))
 val shadowTestRuntimeClasspath = configurations.named(shadowTestSourceSet.runtimeClasspathConfigurationName)
 
 fun shadowTestRuntimeArtifacts(surfRuntime: Boolean) = shadowTestRuntimeClasspath.map { configuration ->
     configuration.incoming.artifactView {
         componentFilter { id ->
-            val isSurfRuntime = id is ModuleComponentIdentifier && id.group in surfRuntimeGroups
+            val isSurfRuntime = when (id) {
+                is ModuleComponentIdentifier -> id.group in surfRuntimeGroups
+                // surf-api's own modules, which this build resolves to its projects
+                is ProjectComponentIdentifier -> id.build.buildPath == ":" && !project(id.projectPath).isInfra()
+                else -> false
+            }
             isSurfRuntime == surfRuntime
         }
     }.files
@@ -281,6 +285,8 @@ val shadowTestSurfRuntime = tasks.register<ShadowJar>("shadowTestSurfRuntime") {
     archiveFileName = "shadow-test-surf-runtime.jar"
     destinationDirectory = layout.buildDirectory.dir("shadowTest")
     configurations.set(emptyList())
+    // Mapped to zip trees, the files lose the tasks that build the surf-api project jars.
+    dependsOn(shadowTestRuntimeArtifacts(surfRuntime = true))
     from(shadowTestRuntimeArtifacts(surfRuntime = true).map { jars -> jars.map(::zipTree) })
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "module-info.class")
     mergeAllServiceFiles()

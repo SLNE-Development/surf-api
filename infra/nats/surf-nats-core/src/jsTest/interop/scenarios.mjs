@@ -1,30 +1,52 @@
 // Flow scenarios of the interop script; each one matches a test of JsInteropTest and reports the checks it expects.
 // Calls go through the clients of protoc-gen-surf-nats (*_nats.js); subjects in the assertions are literal on purpose.
 import assert from "node:assert/strict";
-import { isFieldSet } from "@bufbuild/protobuf";
+import {isFieldSet} from "@bufbuild/protobuf";
 import {
     NatsCallTimeoutError,
     NatsNoRespondersError,
     NatsRemoteError,
     NatsRpcError,
-} from "@slne/surf-nats";
-import { createUnservedServiceClient } from "./gen/surf/nats/test/interop/v1/unserved_nats.js";
-import { createBlobServiceClient } from "./gen/surf/nats/test/v1/blobs_nats.js";
-import { createCalcServiceClient } from "./gen/surf/nats/test/v1/calc_nats.js";
-import { Color } from "./gen/surf/nats/test/v1/colors_pb.js";
-import { NumberSchema, TextSchema } from "./gen/surf/nats/test/v1/common_pb.js";
-import { createFinderServiceClient } from "./gen/surf/nats/test/v1/finder_nats.js";
-import { FindReplySchema } from "./gen/surf/nats/test/v1/finder_pb.js";
-import { InteropEventSchema } from "./gen/surf/nats/test/v1/interop_pb.js";
-import { createOrderServiceClient } from "./gen/surf/nats/test/v1/orders_nats.js";
-import { LookupReplySchema } from "./gen/surf/nats/test/v1/orders_pb.js";
-import { createRolesServiceClient } from "./gen/surf/nats/test/v1/roles_nats.js";
-import { createVersionedServiceClient as createV1VersionedClient } from "./gen/surf/nats/test/v1/versioned_nats.js";
-import { VersionedPingReplySchema as V1PingReplySchema } from "./gen/surf/nats/test/v1/versioned_pb.js";
-import { createVersionedServiceClient as createV2VersionedClient } from "./gen/surf/nats/test/v2/versioned_nats.js";
-import { VersionedPingReplySchema as V2PingReplySchema } from "./gen/surf/nats/test/v2/versioned_pb.js";
-import { assertMessage, blob, LARGE, passed, ready, SETTLE_MS, sleep, until, UUID_BYTES } from "./support.mjs";
-import { runVectors } from "./vectors.mjs";
+} from "@slne/surf-api-nats";
+import {
+    createUnservedServiceClient
+} from "./gen/surf/nats/test/interop/v1/unserved_nats.js";
+import {createBlobServiceClient} from "./gen/surf/nats/test/v1/blobs_nats.js";
+import {createCalcServiceClient} from "./gen/surf/nats/test/v1/calc_nats.js";
+import {Color} from "./gen/surf/nats/test/v1/colors_pb.js";
+import {NumberSchema, TextSchema} from "./gen/surf/nats/test/v1/common_pb.js";
+import {
+    createFinderServiceClient
+} from "./gen/surf/nats/test/v1/finder_nats.js";
+import {FindReplySchema} from "./gen/surf/nats/test/v1/finder_pb.js";
+import {InteropEventSchema} from "./gen/surf/nats/test/v1/interop_pb.js";
+import {createOrderServiceClient} from "./gen/surf/nats/test/v1/orders_nats.js";
+import {LookupReplySchema} from "./gen/surf/nats/test/v1/orders_pb.js";
+import {createRolesServiceClient} from "./gen/surf/nats/test/v1/roles_nats.js";
+import {
+    createVersionedServiceClient as createV1VersionedClient
+} from "./gen/surf/nats/test/v1/versioned_nats.js";
+import {
+    VersionedPingReplySchema as V1PingReplySchema
+} from "./gen/surf/nats/test/v1/versioned_pb.js";
+import {
+    createVersionedServiceClient as createV2VersionedClient
+} from "./gen/surf/nats/test/v2/versioned_nats.js";
+import {
+    VersionedPingReplySchema as V2PingReplySchema
+} from "./gen/surf/nats/test/v2/versioned_pb.js";
+import {
+    assertMessage,
+    blob,
+    LARGE,
+    passed,
+    ready,
+    SETTLE_MS,
+    sleep,
+    until,
+    UUID_BYTES
+} from "./support.mjs";
+import {runVectors} from "./vectors.mjs";
 
 // Mirrors JsInteropTest.EVENT
 const EVENT = {

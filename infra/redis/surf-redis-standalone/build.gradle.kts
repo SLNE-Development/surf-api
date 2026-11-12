@@ -1,12 +1,11 @@
 import dev.slne.surf.api.gradle.util.slneReleases
-import org.gradle.api.component.AdhocComponentWithVariants
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
 }
 
 dependencies {
-    api(projects.surfRedisCore)
+    api(projects.surfApiRedis.surfApiRedisCore)
 }
 
 val shadowComponent = components["shadow"] as AdhocComponentWithVariants

@@ -1,9 +1,9 @@
 package dev.slne.surf.nats
 
-import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.nats.client.NatsClientFactoryImpl
 import dev.slne.surf.nats.connection.NatsConnectionHealth
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.internal.requiredService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.MustBeInvokedByOverriders

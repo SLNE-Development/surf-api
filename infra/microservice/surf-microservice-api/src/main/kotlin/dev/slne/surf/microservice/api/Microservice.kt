@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.api
 
-import dev.slne.surf.api.core.environment.env
+import dev.slne.surf.api.config.environment.env
 import dev.slne.surf.microservice.api.command.MicroserviceCommands
 import java.nio.file.Path
 import kotlin.io.path.Path

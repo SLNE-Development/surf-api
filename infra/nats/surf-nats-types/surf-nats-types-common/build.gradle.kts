@@ -18,8 +18,8 @@ weaver {
     repositories("proto-releases-public")
     publishing {
         repository = "proto-releases-public"
-        group = "dev.slne.surf.nats"
-        name = "surf-nats-types-common"
+        group = "dev.slne.surf.api"
+        name = "surf-api-nats-types-common"
         source = layout.projectDirectory.dir("src/main/proto")
     }
 }

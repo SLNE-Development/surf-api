@@ -1,13 +1,16 @@
 // tsc --strict check of the clients protoc-gen-surf-nats generates (target=js+dts) for the JS test protos.
-import { connect, type Answer, type CallOptions, type SurfNatsOperations } from "@slne/surf-nats";
-import type { FindPlayerResponse, LocateResponse } from "./gen/surf/natsjs/test/v1/services_pb.js";
+import {type Answer, type CallOptions, connect, type SurfNatsOperations} from "@slne/surf-api-nats";
+import type {FindPlayerResponse, LocateResponse} from "./gen/surf/natsjs/test/v1/services_pb.js";
 import {
     createAuditServiceClient,
     createPlayerServiceClient,
     type PlayerServiceClient,
 } from "./gen/surf/natsjs/test/v1/services_nats.js";
-import { createLookupServiceClient } from "./gen/surf/natsjs/lookup/v1/lookup_nats.js";
-import type { FindPlayerResponse as LookupResponse, ResolveResponse } from "./gen/surf/natsjs/lookup/v1/lookup_pb.js";
+import {createLookupServiceClient} from "./gen/surf/natsjs/lookup/v1/lookup_nats.js";
+import type {
+    FindPlayerResponse as LookupResponse,
+    ResolveResponse
+} from "./gen/surf/natsjs/lookup/v1/lookup_pb.js";
 
 declare function log(...values: unknown[]): void;
 

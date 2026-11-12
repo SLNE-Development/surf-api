@@ -1,6 +1,6 @@
 package dev.slne.surf.nats.connection
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.runtime.ConnectRules

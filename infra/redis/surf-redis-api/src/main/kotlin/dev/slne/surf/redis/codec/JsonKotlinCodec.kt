@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.codec
 
-import dev.slne.surf.api.core.serializer.SurfSerializerModule
-import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDStringSerializer
+import dev.slne.surf.api.serialization.SurfSerializerModule
+import dev.slne.surf.api.serialization.java.uuid.JavaUUIDStringSerializer
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufUtil
 import kotlinx.serialization.ExperimentalSerializationApi

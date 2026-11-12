@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.util
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisInstance
 import org.redisson.api.RExpirableReactive
 import reactor.core.Disposable

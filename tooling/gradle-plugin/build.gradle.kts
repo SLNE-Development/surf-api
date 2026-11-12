@@ -6,27 +6,37 @@ val mcVersion = project.findProperty("mcVersion") as String
 val groupId = findProperty("group") as String
 val javaVersion = findProperty("javaVersion") as String
 val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
+val baseVersion = findProperty("version") as String
+val processorVersion = findProperty("processorVersion") as String
 // endregion
 
 plugins {
+    // Before kotlin-dsl: puts the Kotlin Gradle plugin of the version catalog on the classpath instead of the one
+    // embedded in Gradle.
+    alias(libs.plugins.kotlin.jvm)
     `java-library`
     `kotlin-dsl`
-    `java-toolchain-convention`
 
     id("com.gradle.plugin-publish") version "2.2.1"
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.buildconfig)
     idea
 }
 
 group = groupId
 version = buildString {
-    append("3.0.0")
+    append(baseVersion)
     if (snapshot) append("-SNAPSHOT")
+}
+
+kotlin {
+    jvmToolchain(javaVersion.toInt())
 }
 
 repositories {
     mavenCentral()
     gradlePluginPortal()
+    maven("https://reposilite.slne.dev/public/") { name = "public" }
 }
 
 val pluginDependencies = listOf(
@@ -47,13 +57,61 @@ dependencies {
     implementation("com.palantir.javapoet:javapoet:0.22.0")
     implementation(libs.bundles.kotlin.serialization)
 
+    // surf-nats: contract generation
+    implementation(libs.wire.schema) {
+        exclude(group = "com.google.guava")
+        exclude(group = "com.palantir.javapoet")
+        exclude(group = "com.squareup", module = "kotlinpoet")
+    }
+    implementation(libs.kotlinpoet)
+    // Applied by the surf-nats plugin for Kotlin/JVM projects.
+    implementation(libs.kotlin.serialization.plugin)
+    // Applied by the surf-nats plugin to every project; only the conventions and the wiring come from here.
+    implementation(libs.weaver.gradle.plugin)
+    compileOnly(libs.kotlin.gradle.api)
+
+    // surf-microservice: Docker tasks
+    implementation(libs.bmuschko.docker.remote.api)
+
     testImplementation(kotlin("test"))
+    testImplementation(gradleTestKit())
+    testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {
     useJUnitPlatform()
+
+    // The microservice tests put the surf-api plugins on the plugin classpath of their TestKit builds. They are part
+    // of this plugin, so that is its own runtime classpath.
+    val pluginClasspath = sourceSets.main.map { it.runtimeClasspath }
+    inputs.files(pluginClasspath)
+        .withNormalizer(ClasspathNormalizer::class)
+        .withPropertyName("surfApiClasspath")
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-Dsurf.microservice.test.surfApiClasspath=${pluginClasspath.get().asPath}")
+    }
+}
+
+testing {
+    suites {
+        // A Kotlin/JVM consumer that applies the surf-nats plugin without any surf-api platform plugin. Its plugin
+        // jar brings the serialization plugin to the other tests.
+        register<JvmTestSuite>("plainJvmTest") {
+            useJUnitJupiter(libs.versions.junit.asProvider())
+            dependencies {
+                implementation(project())
+                implementation(gradleApi())
+                implementation(libs.kotlin.gradle.plugin)
+                implementation("org.jetbrains.kotlin:kotlin-test-junit5")
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn(testing.suites.named("plainJvmTest"))
 }
 
 gradlePlugin {
@@ -106,6 +164,18 @@ gradlePlugin {
             implementationClass =
                 "dev.slne.surf.api.gradle.platform.minestom.MinestomRelocationsPlugin"
         }
+
+        create("nats") {
+            id = "dev.slne.surf.api.gradle.nats"
+            implementationClass = "dev.slne.surf.nats.gradle.SurfNatsPlugin"
+            displayName = "surf-nats"
+            description = "Generates surf-nats Kotlin contracts from .proto files"
+        }
+
+        create("microservice") {
+            id = "dev.slne.surf.api.gradle.microservice"
+            implementationClass = "dev.slne.surf.microservice.gradle.MicroservicePlugin"
+        }
     }
 
     publishing {
@@ -120,6 +190,8 @@ gradlePlugin {
         }
     }
 }
+
+val fullVersion = version.toString()
 
 val constantsOutputDir =
     layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
@@ -144,10 +216,9 @@ val generateConstants = tasks.register("generateConstants") {
         "libs.versions.packetevents",
         libs.versions.packetevents.plugin.get()
     )
-    inputs.property(
-        "version",
-        rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
-    )
+    inputs.property("group", groupId)
+    inputs.property("processorVersion", processorVersion)
+    inputs.property("version", fullVersion)
     inputs.property("libs.versions.junit", libs.versions.junit.asProvider().get())
     inputs.property(
         "libs.versions.junit.platform.launcher",
@@ -164,7 +235,6 @@ val generateConstants = tasks.register("generateConstants") {
     outputs.dir(constantsOutputDir)
 
     doLast {
-        val generator = project(":surf-api-processor")
         val content = """
             |package dev.slne.surf.api.gradle.generated
             |
@@ -175,7 +245,7 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
-            |    const val SURF_PROCESSOR = "${generator.group}:${generator.name}:${generator.version}"
+            |    const val SURF_PROCESSOR = "$groupId:surf-api-processor:$processorVersion${if (snapshot) "-SNAPSHOT" else ""}"
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
@@ -198,7 +268,7 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val LOG4J_VERSION = "${libs.versions.log4j.get()}"
             |    const val ASM_VERSION = "${libs.versions.asm.get()}"
             |
-            |    const val SURF_API_FULL_VERSION = "${rootProject.findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""}"
+            |    const val SURF_API_FULL_VERSION = "$fullVersion"
             |}
         """.trimMargin()
 
@@ -207,13 +277,56 @@ val generateConstants = tasks.register("generateConstants") {
     }
 }
 
-sourceSets.main {
-    kotlin.srcDir(generateConstants.map { it.outputs })
+// surf-nats: the proto files the plugin bundles are the ones of the type modules.
+val bundledProtoDirs = listOf(
+    layout.projectDirectory.dir("../../infra/nats/surf-nats-types/surf-nats-types-common/src/main/proto"),
+    layout.projectDirectory.dir("../../infra/nats/surf-nats-types/surf-nats-types-paper/src/main/proto"),
+)
+
+buildConfig {
+    useKotlinOutput {
+        internalVisibility = true
+    }
+    forClass("dev.slne.surf.nats.gradle", "SurfNatsPluginVersion") {
+        buildConfigField("GROUP", provider { project.group.toString() })
+        buildConfigField("VERSION", provider { project.version.toString() })
+        buildConfigField("KOTLINX_SERIALIZATION_VERSION", libs.versions.kotlinx.serialization)
+    }
+    forClass("dev.slne.surf.nats.gradle.schema", "BundledProtoPaths") {
+        buildConfigField("PATHS", provider {
+            bundledProtoDirs.flatMap { dir ->
+                val root = dir.asFile
+                fileTree(root) { include("**/*.proto") }.files.map { it.relativeTo(root).invariantSeparatorsPath }
+            }.sorted()
+        })
+    }
+    forClass("dev.slne.surf.microservice.gradle.generated", "Constants") {
+        buildConfigField(
+            "SURF_MICROSERVICE_VERSION",
+            provider { project.version.toString() }.map { "${it.substringBefore('.')}.+" }
+        )
+    }
+}
+
+sourceSets {
+    main {
+        kotlin.srcDir(generateConstants.map { it.outputs })
+
+        // Same protocol rules as the surf-nats-core runtime (also compiled there for JVM and JS).
+        kotlin.srcDir("../../infra/nats/surf-nats-core/src/protocol/kotlin")
+        bundledProtoDirs.forEach { resources.srcDir(it) }
+    }
+    test {
+        kotlin.srcDir("../../infra/nats/surf-nats-core/src/protocolTest/kotlin")
+    }
 }
 
 idea {
     module {
         generatedSourceDirs.add(constantsOutputDir.get().asFile)
+
+        // The KSP processor is a project of the main build.
+        excludeDirs.add(file("processor"))
     }
 }
 

@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.config
 
-import dev.slne.surf.api.core.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.SpongeYmlConfigClass
 import dev.slne.surf.redis.RedisInstance
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import java.util.*

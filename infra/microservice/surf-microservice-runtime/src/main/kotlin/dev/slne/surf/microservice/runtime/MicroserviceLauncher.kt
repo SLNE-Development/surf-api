@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.runtime
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.microservice.api.Microservice
 import dev.slne.surf.microservice.api.command.MicroserviceCommands
 import dev.slne.surf.microservice.api.integration.MicroserviceIntegration

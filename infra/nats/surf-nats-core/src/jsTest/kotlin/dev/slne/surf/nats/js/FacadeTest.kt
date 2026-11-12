@@ -10,24 +10,14 @@ import js.objects.unsafeJso
 import js.typedarrays.Uint8Array
 import js.typedarrays.toUByteArray
 import kotlinx.coroutines.await
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
-import dev.slne.surf.nats.js.fixtures.facade.uuidFromString as facadeUuidFromString
-import dev.slne.surf.nats.js.fixtures.facade.uuidToString as facadeUuidToString
+import kotlin.test.*
 import dev.slne.surf.nats.js.fixtures.facade.NatsCallTimeoutError as FacadeCallTimeoutError
 import dev.slne.surf.nats.js.fixtures.facade.NatsNoRespondersError as FacadeNoRespondersError
 import dev.slne.surf.nats.js.fixtures.facade.NatsRemoteError as FacadeRemoteError
 import dev.slne.surf.nats.js.fixtures.facade.NatsRpcError as FacadeRpcError
 import dev.slne.surf.nats.js.fixtures.facade.connect as facadeConnect
-import dev.slne.surf.nats.js.fixtures.kotlin.NatsCallTimeoutError as KotlinCallTimeoutError
-import dev.slne.surf.nats.js.fixtures.kotlin.NatsNoRespondersError as KotlinNoRespondersError
-import dev.slne.surf.nats.js.fixtures.kotlin.NatsRemoteError as KotlinRemoteError
-import dev.slne.surf.nats.js.fixtures.kotlin.NatsRpcError as KotlinRpcError
+import dev.slne.surf.nats.js.fixtures.facade.uuidFromString as facadeUuidFromString
+import dev.slne.surf.nats.js.fixtures.facade.uuidToString as facadeUuidToString
 
 class FacadeTest {
 

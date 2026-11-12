@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.runtime.command
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.microservice.api.command.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext

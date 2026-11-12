@@ -4,10 +4,14 @@
 
 // Request and response types of other files, and a response whose name another imported response shares.
 
-import type { MessageInitShape } from "@bufbuild/protobuf";
-import type { FindPlayerRequestSchema, FindPlayerResponse as FindPlayerResponse$1 } from "../../test/v1/services_pb";
-import type { CallOptions, SurfNatsOperations } from "@slne/surf-nats";
-import type { FindPlayerResponse, ResolveResponse } from "./lookup_pb";
+import type {MessageInitShape} from "@bufbuild/protobuf";
+import type {
+    FindPlayerRequestSchema,
+    FindPlayerResponse as FindPlayerResponse$1
+} from "../../test/v1/services_pb";
+import type {CallOptions, SurfNatsOperations} from "@slne/surf-api-nats";
+import type {FindPlayerResponse, ResolveResponse} from "./lookup_pb";
+
 /**
  * Client of the surf-nats service `surf.natsjs.lookup.v1.LookupService`.
  */

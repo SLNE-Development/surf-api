@@ -1,10 +1,6 @@
 package dev.slne.surf.nats.js.protoc
 
-import dev.slne.surf.nats.js.external.protobuf.protoplugin.GeneratedFile
-import dev.slne.surf.nats.js.external.protobuf.protoplugin.ImportSymbol
-import dev.slne.surf.nats.js.external.protobuf.protoplugin.Printable
-import dev.slne.surf.nats.js.external.protobuf.protoplugin.Schema
-import dev.slne.surf.nats.js.external.protobuf.protoplugin.printable
+import dev.slne.surf.nats.js.external.protobuf.protoplugin.*
 import dev.slne.surf.nats.protocol.RecipientsOption
 import dev.slne.surf.nats.protocol.ResultKindOption
 
@@ -25,7 +21,7 @@ import dev.slne.surf.nats.protocol.ResultKindOption
  * - The factory returns an object without state that delegates to `nats.call`, or `nats.callAnswer` for `Answer`
  *   results, with the method descriptor `<Service>.method.<name>` of the `<file>_pb` file.
  *
- * Besides the service descriptor of `<file>_pb`, the file imports only types: from `@slne/surf-nats`, from
+ * Besides the service descriptor of `<file>_pb`, the file imports only types: from `@slne/surf-api-nats`, from
  * `@bufbuild/protobuf` and from the `_pb` modules that declare the request and response messages, which can belong
  * to other proto files. protoplugin resolves import paths and aliases.
  */
@@ -114,6 +110,6 @@ internal class ClientEmitter(schema: Schema, private val client: ClientFile) {
 
     private companion object {
         const val PROTOBUF = "@bufbuild/protobuf"
-        const val SURF_NATS = "@slne/surf-nats"
+        const val SURF_NATS = "@slne/surf-api-nats"
     }
 }

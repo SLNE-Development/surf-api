@@ -3,11 +3,10 @@
 package dev.slne.surf.redis.request
 
 import com.google.common.flogger.StackSize
-import dev.slne.surf.api.core.invoker.HiddenInvokerUtil
-import dev.slne.surf.api.core.invoker.InvokerFactory
-import dev.slne.surf.api.core.serializer.java.uuid.SerializableUUID
-import dev.slne.surf.api.core.util.emptyObject2ObjectMap
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.common.invoker.InvokerFactory
+import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.serialization.java.uuid.SerializableUUID
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.RedisComponentProvider
@@ -15,8 +14,6 @@ import dev.slne.surf.redis.invoker.RedisInvokerLookupProvider
 import dev.slne.surf.redis.invoker.RedisRequestHandlerInvokerTemplate
 import dev.slne.surf.redis.util.KotlinSerializerCache
 import dev.slne.surf.redis.util.asDeferred
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.serialization.Serializable
@@ -44,16 +41,14 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
      *
      * Only one handler per request type is allowed; duplicate registrations are logged and ignored.
      */
-    private val requestHandlers =
-        Object2ObjectOpenHashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
+    private val requestHandlers = HashMap<Class<out RedisRequest>, RedisRequestHandlerInvoker>()
     private val pendingRequests = ConcurrentHashMap<UUID, CompletableDeferred<RedisResponse>>()
 
-    private val requestTypeRegistry = Object2ObjectOpenHashMap<String, Class<out RedisRequest>>()
+    private val requestTypeRegistry = HashMap<String, Class<out RedisRequest>>()
     private val responseTypeRegistry = ConcurrentHashMap<String, Class<out RedisResponse>>()
 
     @Volatile
-    private var handlerSnapshot: Object2ObjectMap<String, RequestRegistration> =
-        emptyObject2ObjectMap()
+    private var handlerSnapshot: Map<String, RequestRegistration> = emptyMap()
 
     /**
      * Guards mutations to [requestHandlers] / [requestTypeRegistry] and the snapshot rebuild that
@@ -458,7 +453,7 @@ class RequestResponseBusImpl(private val api: RedisApi) : RequestResponseBus {
     private fun rebuildSnapshot() {
         require(registrationLock.isWriteLockedByCurrentThread) { "rebuildSnapshot must be called from within a write lock" }
 
-        val snapshot = Object2ObjectOpenHashMap<String, RequestRegistration>(requestTypeRegistry.size)
+        val snapshot = HashMap<String, RequestRegistration>(requestTypeRegistry.size)
         requestTypeRegistry.forEach { key, type ->
             val handler = requestHandlers[type]
             if (handler != null) {

@@ -4,10 +4,10 @@
 
 // Services and messages named like the identifiers of the generated client code.
 
-import type { MessageInitShape } from "@bufbuild/protobuf";
-import type { Promise as Promise$1, PromiseSchema } from "./shadow_pb.js";
-import { nats as nats$1, options as options$1, request as request$1 } from "./shadow_pb.js";
-import type { CallOptions, SurfNatsOperations } from "@slne/surf-nats";
+import type {MessageInitShape} from "@bufbuild/protobuf";
+import type {Promise as Promise$1, PromiseSchema} from "./shadow_pb.js";
+import {nats as nats$1, options as options$1, request as request$1} from "./shadow_pb.js";
+import type {CallOptions, SurfNatsOperations} from "@slne/surf-api-nats";
 
 /**
  * Client of the surf-nats service `surf.natsjs.shadow.v1.nats`.

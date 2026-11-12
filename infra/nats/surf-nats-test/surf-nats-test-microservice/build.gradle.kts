@@ -1,10 +1,10 @@
 plugins {
     id("dev.slne.surf.api.gradle.standalone")
-    id("dev.slne.surf.nats")
+    id("dev.slne.surf.api.gradle.nats")
 }
 
 dependencies {
-    implementation(projects.surfNatsTest.surfNatsTestCommon)
+    implementation(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestCommon)
 
     testImplementation(libs.testcontainers.nats)
     testImplementation(libs.testcontainers.mariadb)

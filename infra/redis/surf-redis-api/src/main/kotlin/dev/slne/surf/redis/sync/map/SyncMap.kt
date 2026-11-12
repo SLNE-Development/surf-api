@@ -1,7 +1,6 @@
 package dev.slne.surf.redis.sync.map
 
 import dev.slne.surf.redis.sync.SyncStructure
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -43,7 +42,7 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
      *
      * The returned map is a snapshot and will not reflect future updates.
      */
-    fun snapshot(): Object2ObjectOpenHashMap<K, V>
+    fun snapshot(): HashMap<K, V>
 
     /**
      * @return the current local entry count
@@ -174,7 +173,7 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
      *
      * When the remote state is ahead of the local view, the local view is replaced by the result.
      */
-    suspend fun snapshotRemote(): Object2ObjectOpenHashMap<K, V>
+    suspend fun snapshotRemote(): HashMap<K, V>
 
     /**
      * Associates [value] with [key] in Redis and returns the value Redis held before.

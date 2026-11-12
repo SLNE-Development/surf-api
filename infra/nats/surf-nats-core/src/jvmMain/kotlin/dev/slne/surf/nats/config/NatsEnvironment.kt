@@ -1,6 +1,6 @@
 package dev.slne.surf.nats.config
 
-import dev.slne.surf.api.core.environment.env
+import dev.slne.surf.api.config.environment.env
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.runtime.ConnectRules
 import kotlin.io.path.Path

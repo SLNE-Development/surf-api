@@ -12,7 +12,7 @@ plugins {
 
 group = groupId
 version = buildString {
-    append("1.0.1")
+    append(findProperty("processorVersion") as String)
     if (snapshot) append("-SNAPSHOT")
 }
 

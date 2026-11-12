@@ -5,7 +5,7 @@ plugins {
 }
 
 dependencies {
-    api(projects.surfRedisCore)
+    api(projects.surfApiRedis.surfApiRedisCore)
 }
 
 minestomPluginFile {

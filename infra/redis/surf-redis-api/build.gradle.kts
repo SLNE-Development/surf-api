@@ -24,7 +24,7 @@ kotlin {
 }
 
 @Suppress("UNCHECKED_CAST")
-val shadedPackages = rootProject.extra["shadedPackages"] as Map<String, String>
+val shadedPackages = parent!!.extra["shadedPackages"] as Map<String, String>
 
 val redissonPackagePath = "org/redisson"
 val redissonRelocationPath = shadedPackages.getValue("org.redisson").replace('.', '/')

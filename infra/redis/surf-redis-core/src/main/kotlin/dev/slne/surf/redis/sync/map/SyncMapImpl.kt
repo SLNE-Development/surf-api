@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.sync.map
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.sync.AbstractStreamSyncStructure
 import dev.slne.surf.redis.sync.AbstractSyncStructure
@@ -8,8 +8,6 @@ import dev.slne.surf.redis.sync.AbstractSyncStructure.SimpleVersionedSnapshot
 import dev.slne.surf.redis.sync.SyncValueCodec
 import dev.slne.surf.redis.util.LuaScriptRegistry
 import dev.slne.surf.redis.util.RedisExpirableUtils
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.redisson.api.DeletedObjectListener
@@ -71,7 +69,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         }
     }
 
-    private val map = Object2ObjectOpenHashMap<K, V>()
+    private val map = HashMap<K, V>()
     private val remoteMap by lazy {
         api.redissonReactive.getMap<String, String>(
             dataKey,
@@ -94,7 +92,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
 
     override fun unregisterListener(id: Int): Mono<*> = remoteMap.removeListener(id)
 
-    override fun snapshot() = lock.read { Object2ObjectOpenHashMap(map) }
+    override fun snapshot() = lock.read { HashMap(map) }
     override fun size() = lock.read { map.size }
     override fun containsKey(key: K) = lock.read { map.containsKey(key) }
     override fun get(key: K): V? = lock.read { map[key] }
@@ -121,10 +119,10 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
     }
 
     override fun removeIf(predicate: (K, V) -> Boolean): Boolean {
-        val keysToRemove = ObjectArrayList<K>()
-        val removedLocal = ObjectArrayList<Pair<K, V>>()
+        val keysToRemove = ArrayList<K>()
+        val removedLocal = ArrayList<Pair<K, V>>()
         lock.write {
-            val it = map.object2ObjectEntrySet().fastIterator()
+            val it = map.entries.iterator()
             while (it.hasNext()) {
                 val e = it.next()
                 if (predicate(e.key, e.value)) {
@@ -134,7 +132,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
                 }
             }
         }
-        if (keysToRemove.isEmpty) return false
+        if (keysToRemove.isEmpty()) return false
 
         removeManyRemote(keysToRemove)
         removedLocal.forEach { (k, v) -> notifyListeners(SyncMapChange.Removed(k, v)) }
@@ -168,7 +166,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
                 }
 
                 val version = raw.last().toString().toLong()
-                val values = Object2ObjectOpenHashMap<String, String>(payloadSize / 2)
+                val values = HashMap<String, String>(payloadSize / 2)
 
                 var index = 0
                 while (index < payloadSize) {
@@ -226,11 +224,11 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
     override suspend fun removeIfAndAwait(
         predicate: (K, V) -> Boolean,
     ): Boolean {
-        val keysToRemove = ObjectArrayList<K>()
-        val removedLocal = ObjectArrayList<Pair<K, V>>()
+        val keysToRemove = ArrayList<K>()
+        val removedLocal = ArrayList<Pair<K, V>>()
 
         lock.write {
-            val iterator = map.object2ObjectEntrySet().fastIterator()
+            val iterator = map.entries.iterator()
 
             while (iterator.hasNext()) {
                 val entry = iterator.next()
@@ -243,7 +241,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
             }
         }
 
-        if (keysToRemove.isEmpty) {
+        if (keysToRemove.isEmpty()) {
             return false
         }
 
@@ -304,7 +302,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
 
     override suspend fun sizeRemote(): Int = remoteMap.size().awaitSingle()
 
-    override suspend fun snapshotRemote(): Object2ObjectOpenHashMap<K, V> {
+    override suspend fun snapshotRemote(): HashMap<K, V> {
         return decodeSnapshot(pullRemoteSnapshot().awaitSingle().value)
     }
 
@@ -410,8 +408,8 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         super.overrideFromRemote(raw)
     }
 
-    private fun decodeSnapshot(raw: Map<String, String>): Object2ObjectOpenHashMap<K, V> {
-        val decoded = Object2ObjectOpenHashMap<K, V>(raw.size)
+    private fun decodeSnapshot(raw: Map<String, String>): HashMap<K, V> {
+        val decoded = HashMap<K, V>(raw.size)
         for ((k, v) in raw) {
             decoded[decodeKey(k)] = decodeValue(v)
         }

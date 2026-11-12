@@ -1,6 +1,6 @@
 package dev.slne.surf.nats.client
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.internal.NatsClientFactory

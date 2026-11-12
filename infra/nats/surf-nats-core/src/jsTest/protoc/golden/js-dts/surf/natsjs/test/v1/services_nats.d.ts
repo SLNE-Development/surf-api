@@ -2,10 +2,21 @@
 // @generated from file surf/natsjs/test/v1/services.proto (package surf.natsjs.test.v1, syntax proto2)
 /* eslint-disable */
 
-import type { MessageInitShape } from "@bufbuild/protobuf";
-import type { AuditEntrySchema, AuditQuerySchema, AuditResult, BlobRequestSchema, BlobResponse, FindPlayerRequestSchema, FindPlayerResponse, LocateRequestSchema, LocateResponse } from "./services_pb";
-import type { Answer, CallOptions, SurfNatsOperations } from "@slne/surf-nats";
-import type { EmptySchema } from "@bufbuild/protobuf/wkt";
+import type {MessageInitShape} from "@bufbuild/protobuf";
+import type {
+    AuditEntrySchema,
+    AuditQuerySchema,
+    AuditResult,
+    BlobRequestSchema,
+    BlobResponse,
+    FindPlayerRequestSchema,
+    FindPlayerResponse,
+    LocateRequestSchema,
+    LocateResponse
+} from "./services_pb";
+import type {Answer, CallOptions, SurfNatsOperations} from "@slne/surf-api-nats";
+import type {EmptySchema} from "@bufbuild/protobuf/wkt";
+
 /**
  * Players on the network.
  *

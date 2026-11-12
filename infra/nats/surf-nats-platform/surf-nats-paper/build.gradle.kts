@@ -9,6 +9,6 @@ surfPaperPluginApi {
 }
 
 dependencies {
-    api(projects.surfNatsCore)
-    implementation(projects.surfNatsTypes.surfNatsTypesPaper)
+    api(projects.surfApiNats.surfApiNatsCore)
+    implementation(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesPaper)
 }

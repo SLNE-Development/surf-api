@@ -10,9 +10,9 @@ package dev.slne.surf.redis.event
  * better dispatch performance compared to raw `MethodHandle.invoke()` calls.
  *
  * Each [RedisEventInvoker] instance is bound to a specific listener object and handler method
- * at creation time by [InvokerFactory][dev.slne.surf.api.core.invoker.InvokerFactory].
+ * at creation time by [InvokerFactory][dev.slne.surf.api.common.invoker.InvokerFactory].
  *
- * @see dev.slne.surf.api.core.invoker.InvokerFactory
+ * @see dev.slne.surf.api.common.invoker.InvokerFactory
  * @see RedisEventBusImpl
  */
 fun interface RedisEventInvoker {

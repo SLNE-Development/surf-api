@@ -3,10 +3,6 @@
 package dev.slne.surf.redis.codec
 
 import io.netty.buffer.ByteBuf
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntList
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
@@ -77,7 +73,7 @@ fun <T, C : MutableCollection<T>> ByteBuf.readCollection(creator: (Int) -> C, re
     return collection
 }
 
-fun <T> ByteBuf.readList(reader: (ByteBuf) -> T): ObjectArrayList<T> = readCollection(::ObjectArrayList, reader)
+fun <T> ByteBuf.readList(reader: (ByteBuf) -> T): ArrayList<T> = readCollection(::ArrayList, reader)
 
 fun <T> ByteBuf.writeArray(array: Array<T>, writer: (ByteBuf, T) -> Unit) {
     writeVarInt(array.size)
@@ -316,8 +312,8 @@ fun <K, V, M : MutableMap<K, V>> ByteBuf.readMap(
 fun <K, V> ByteBuf.readMap(
     keyReader: (ByteBuf) -> K,
     valueReader: (ByteBuf) -> V
-): Object2ObjectOpenHashMap<K, V> {
-    return readMap(::Object2ObjectOpenHashMap, keyReader, valueReader)
+): HashMap<K, V> {
+    return readMap(::HashMap, keyReader, valueReader)
 }
 
 fun ByteBuf.writeUuid(uuid: UUID) {
@@ -415,19 +411,19 @@ fun <T> ByteBuf.readById(resolver: (Int) -> T): T {
     return resolver(readVarInt())
 }
 
-fun ByteBuf.writeVarIntList(list: IntList) {
+fun ByteBuf.writeVarIntList(list: List<Int>) {
     writeVarInt(list.size)
 
-    list.iterator().forEachRemaining { value ->
+    list.forEach { value ->
         writeVarInt(value)
     }
 }
 
-fun ByteBuf.readVarIntList(): IntArrayList {
+fun ByteBuf.readVarIntList(): ArrayList<Int> {
     val size = readVarInt()
     checkContainerSize("IntList", size)
 
-    val list = IntArrayList(size)
+    val list = ArrayList<Int>(size)
 
     repeat(size) {
         list.add(readVarInt())

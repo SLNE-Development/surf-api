@@ -1,4 +1,4 @@
-// Typed facade over the Kotlin/JS exports (./@slne/surf-nats.mjs) for protobuf-es schemas.
+// Typed facade over the Kotlin/JS exports (./@slne/surf-api-nats.mjs) for protobuf-es schemas.
 
 /**
  * Node.js client for surf-nats events and services, typed by protobuf-es schemas.
@@ -10,7 +10,7 @@
  *
  * @example
  * ```ts
- * import { connect } from "@slne/surf-nats";
+ * import { connect } from "@slne/surf-api-nats";
  * import { PlayerJoinedSchema } from "./gen/surf/game/v1/events_pb.js";
  * import { PlayerService } from "./gen/surf/game/v1/services_pb.js";
  *
@@ -55,7 +55,7 @@ export {
     NatsRemoteError,
     NatsNoRespondersError,
     NatsCallTimeoutError,
-} from "./@slne/surf-nats.mjs";
+} from "./@slne/surf-api-nats.mjs";
 
 /**
  * Settings for {@link connect}.
@@ -444,7 +444,7 @@ export interface SurfNatsClient extends SurfNatsOperations {
  *
  * @example
  * ```ts
- * import { connect } from "@slne/surf-nats";
+ * import { connect } from "@slne/surf-api-nats";
  *
  * const nats = await connect({ name: "panel", servers: "nats://localhost:4222", token: "change-me" });
  *

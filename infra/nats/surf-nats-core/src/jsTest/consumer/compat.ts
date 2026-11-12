@@ -1,9 +1,9 @@
 // The hand-written facade must describe the Kotlin/JS exports. Its generic operations, instantiated with the
 // descriptor base types, must fit the Kotlin signatures: Kotlin accepts every argument the facade accepts, and
 // every result the facade promises is one the Kotlin signature allows.
-import type { DescMessage, DescMethod } from "@bufbuild/protobuf";
-import type * as Facade from "@slne/surf-nats";
-import type * as Kotlin from "./node_modules/@slne/surf-nats/@slne/surf-nats.mjs";
+import type {DescMessage, DescMethod} from "@bufbuild/protobuf";
+import type * as Facade from "@slne/surf-api-nats";
+import type * as Kotlin from "./node_modules/@slne/surf-api-nats/@slne/surf-api-nats.mjs";
 
 type Fn = (...args: never[]) => unknown;
 

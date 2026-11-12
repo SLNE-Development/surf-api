@@ -1,7 +1,6 @@
 package dev.slne.surf.redis.sync.list
 
 import dev.slne.surf.redis.sync.SyncStructure
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -44,7 +43,7 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      *
      * The returned list is a snapshot and will not reflect future updates.
      */
-    fun snapshot(): ObjectArrayList<T>
+    fun snapshot(): ArrayList<T>
 
     /**
      * @return the current local element count
@@ -174,7 +173,7 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
      *
      * When the remote state is ahead of the local view, the local view is replaced by the result.
      */
-    suspend fun snapshotRemote(): ObjectArrayList<T>
+    suspend fun snapshotRemote(): ArrayList<T>
 
     /**
      * Appends [element] to the Redis list and waits until the mutation has been committed.

@@ -1,9 +1,9 @@
 // JVM <-> JS interop harness: `node interop.mjs <scenario>`, started by JsInteropTest (jvmInteropTest) in the staging
-// directory that prepareJsInterop fills with the npm distribution of @slne/surf-nats and the generated fixtures.
+// directory that prepareJsInterop fills with the npm distribution of @slne/surf-api-nats and the generated fixtures.
 // SURF_NATS_SERVERS names the NATS server; a failed check exits with a non-zero code.
-import { connect } from "@slne/surf-nats";
-import { scenarios } from "./scenarios.mjs";
-import { context } from "./support.mjs";
+import {connect} from "@slne/surf-api-nats";
+import {scenarios} from "./scenarios.mjs";
+import {context} from "./support.mjs";
 
 const name = process.argv[2];
 const scenario = scenarios[name];

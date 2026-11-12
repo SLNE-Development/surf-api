@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    api(projects.surfMicroserviceApi)
+    api(projects.surfApiMicroservice.surfApiMicroserviceApi)
     api(libs.spark.standalone.agent) {
         exclude("org.slf4j")
     }

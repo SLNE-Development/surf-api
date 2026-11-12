@@ -2,8 +2,13 @@ pluginManagement {
     repositories {
         mavenLocal()
         gradlePluginPortal()
+        // The surf-nats part of the Gradle plugin depends on the weaver plugin published there.
+        maven("https://reposilite.slne.dev/public/") { name = "slne-repository-public" }
     }
     includeBuild("surf-api-generator/nms-module-generator")
+    // An included build rather than a module, so the infra modules of this build can apply the surf
+    // plugins the way a downstream project does.
+    includeBuild("tooling/gradle-plugin")
 }
 
 plugins {
@@ -133,6 +138,7 @@ listOf(
 
 includePair("platform", "velocity")
 includeModule("platform/standalone/impl")
+includeModule("platform/standalone/testing")
 
 // aggregates — the coordinates downstream projects know
 listOf("core", "paper", "minestom", "minestom-server", "velocity", "standalone")
@@ -142,8 +148,75 @@ listOf("core", "paper", "minestom", "minestom-server", "velocity", "standalone")
 // carries 3,532 registry data files, so moving it would dominate every structural diff.
 // tooling
 includeModule("tooling/bom")
-includeModule("tooling/gradle-plugin")
 includeModule("tooling/gradle-plugin/processor", name = "surf-api-processor")
+
+/**
+ * Includes an imported repository under `infra/[repository]` as a project tree.
+ *
+ * Each repository keeps its directory layout and its root build script, whose `subprojects { }`
+ * configuration applies to the [modules] below it. [modules] are the repository's former Gradle
+ * paths; every segment is renamed from `surf-` to `surf-api-`, so `surf-nats-types:surf-nats-types-common`
+ * becomes `:surf-api-nats:surf-api-nats-types:surf-api-nats-types-common`.
+ */
+fun includeInfra(repository: String, vararg modules: String) {
+    val root = "infra/$repository"
+    val rootPath = ":surf-api-$repository"
+    include(rootPath)
+    project(rootPath).projectDir = file(root)
+
+    for (module in modules) {
+        val segments = module.split(':')
+        val name = infraName(segments.last())
+        require(file("$root/${segments.joinToString("/")}/build.gradle.kts").isFile) {
+            "No build.gradle.kts in $root/$module"
+        }
+        require(declared.add(name)) { "Duplicate module name '$name' (module $module)" }
+
+        segments.indices.forEach { depth ->
+            val path = segments.take(depth + 1).joinToString(":", prefix = "$rootPath:") { infraName(it) }
+            include(path)
+            project(path).projectDir = file("$root/${segments.take(depth + 1).joinToString("/")}")
+        }
+    }
+}
+
+fun infraName(name: String) = name.replaceFirst("surf-", "surf-api-")
+
+// infra — the broker and database libraries, imported with their history
+includeInfra(
+    "nats",
+    "surf-nats-api",
+    "surf-nats-core",
+    "surf-nats-types:surf-nats-types-common",
+    "surf-nats-types:surf-nats-types-paper",
+    "surf-nats-platform:surf-nats-paper",
+    "surf-nats-platform:surf-nats-velocity",
+    "surf-nats-platform:surf-nats-minestom",
+    "surf-nats-platform:surf-nats-standalone",
+    "surf-nats-test:surf-nats-test-common",
+    "surf-nats-test:surf-nats-test-fixtures",
+    "surf-nats-test:surf-nats-test-fixtures-internal",
+    "surf-nats-test:surf-nats-test-paper",
+    "surf-nats-test:surf-nats-test-microservice",
+)
+includeInfra(
+    "redis",
+    "surf-redis-api",
+    "surf-redis-core",
+    "surf-redis-paper",
+    "surf-redis-velocity",
+    "surf-redis-minestom",
+    "surf-redis-standalone",
+)
+includeInfra(
+    "microservice",
+    "surf-microservice-api",
+    "surf-microservice-runtime",
+    "surf-microservice-database",
+    "surf-microservice-reliability",
+    "surf-microservice-processor",
+)
+includeModule("infra/database-r2dbc", name = "surf-api-database-r2dbc")
 
 includeBuild("vendor/spark-minestom") {
     dependencySubstitution {

@@ -286,7 +286,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 }
             } else {
                 dependencies {
-                    val notation = "dev.slne.surf.redis:surf-redis-api:+"
+                    val notation = "dev.slne.surf.api:surf-api-redis-api:${Constants.SURF_API_VERSION}"
                     add(COMPILE_ONLY, notation)
                     if (testingEnabled) {
                         add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
@@ -299,7 +299,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 add(
                     API,
-                    "dev.slne.surf:surf-database-r2dbc:+"
+                    "dev.slne.surf.api:surf-api-database-r2dbc:${Constants.SURF_API_VERSION}"
                 )
             }
 

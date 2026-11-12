@@ -1,14 +1,13 @@
 import dev.slne.surf.api.gradle.util.slneReleases
-import org.gradle.api.component.AdhocComponentWithVariants
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
 }
 
 dependencies {
-    api(projects.surfNatsCore)
+    api(projects.surfApiNats.surfApiNatsCore)
 
-    compileOnly(libs.surf.microservice)
+    compileOnly(projects.surfApiMicroservice.surfApiMicroserviceApi)
 }
 
 gradlePlugin {

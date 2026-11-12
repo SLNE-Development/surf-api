@@ -1,7 +1,7 @@
 package dev.slne.surf.microservice.reliability.integration
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.reliability.migrateReliabilitySchema
 import dev.slne.surf.microservice.api.Microservice

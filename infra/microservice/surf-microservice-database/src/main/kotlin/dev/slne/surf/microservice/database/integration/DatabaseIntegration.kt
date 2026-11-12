@@ -1,7 +1,7 @@
 package dev.slne.surf.microservice.database.integration
 
 import com.google.auto.service.AutoService
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.MigrationResult
 import dev.slne.surf.database.migration.migrate

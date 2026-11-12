@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.cache
 
 import dev.slne.surf.redis.util.InternalRedisAPI
-import it.unimi.dsi.fastutil.objects.*
+import java.util.*
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -30,10 +30,10 @@ class RedisSetIndex<T : Any, V : Any> internal constructor(
 }
 
 abstract class RedisSetIndexes<T : Any> {
-    private val _indices = Object2ObjectLinkedOpenHashMap<String, RedisSetIndex<T, *>>()
+    private val _indices = LinkedHashMap<String, RedisSetIndex<T, *>>()
 
     @Volatile
-    private var indexByName: Object2ObjectMap<String, RedisSetIndex<T, *>> = Object2ObjectMaps.emptyMap()
+    private var indexByName: Map<String, RedisSetIndex<T, *>> = emptyMap()
 
     @Volatile
     var all: List<RedisSetIndex<T, *>> = emptyList()
@@ -86,9 +86,9 @@ abstract class RedisSetIndexes<T : Any> {
             )
 
             _indices[resolvedName] = idx
-            indexByName = Object2ObjectLinkedOpenHashMap(_indices)
-            all = ObjectImmutableList(_indices.values)
-            names = ObjectLinkedOpenHashSet(_indices.keys)
+            indexByName = LinkedHashMap(_indices)
+            all = Collections.unmodifiableList(ArrayList(_indices.values))
+            names = LinkedHashSet(_indices.keys)
 
             return ReadOnlyProperty { _, _ -> idx }
         }

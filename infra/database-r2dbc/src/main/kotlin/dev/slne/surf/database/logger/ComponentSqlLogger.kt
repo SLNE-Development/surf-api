@@ -1,6 +1,6 @@
 package dev.slne.surf.database.logger
 
-import dev.slne.surf.api.core.util.getCallerClass
+import dev.slne.surf.api.common.util.getCallerClass
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.jetbrains.exposed.v1.core.SqlLogger
 import org.jetbrains.exposed.v1.core.Transaction

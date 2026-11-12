@@ -1,6 +1,6 @@
 package dev.slne.surf.database.config
 
-import dev.slne.surf.api.core.config.type.number.IntOr
+import dev.slne.surf.api.config.type.number.IntOr
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 

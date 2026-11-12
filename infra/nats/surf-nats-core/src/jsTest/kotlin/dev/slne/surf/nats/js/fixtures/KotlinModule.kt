@@ -1,6 +1,6 @@
-@file:JsModule("./surf-nats.mjs")
+@file:JsModule("./surf-api-nats.mjs")
 
-package dev.slne.surf.nats.js.fixtures.kotlin
+package dev.slne.surf.nats.js.fixtures
 
 internal external val NatsRpcError: Any
 internal external val NatsRemoteError: Any

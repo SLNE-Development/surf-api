@@ -14,6 +14,6 @@ surfPaperPluginApi {
 }
 
 dependencies {
-    api(projects.surfRedisCore)
+    api(projects.surfApiRedis.surfApiRedisCore)
 }
 

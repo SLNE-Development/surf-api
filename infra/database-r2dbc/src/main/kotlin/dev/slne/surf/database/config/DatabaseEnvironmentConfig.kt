@@ -1,8 +1,8 @@
 package dev.slne.surf.database.config
 
-import dev.slne.surf.api.core.config.type.number.IntOr
-import dev.slne.surf.api.core.environment.EnvironmentVariableValidation
-import dev.slne.surf.api.core.environment.env
+import dev.slne.surf.api.config.environment.EnvironmentVariableValidation
+import dev.slne.surf.api.config.environment.env
+import dev.slne.surf.api.config.type.number.IntOr
 import org.slf4j.event.Level
 
 internal object DatabaseEnvironmentVariables {

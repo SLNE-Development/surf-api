@@ -1,7 +1,6 @@
 package dev.slne.surf.redis.sync.set
 
 import dev.slne.surf.redis.sync.SyncStructure
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -42,7 +41,7 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
      *
      * The returned set is a snapshot and will not reflect future updates.
      */
-    fun snapshot(): ObjectOpenHashSet<T>
+    fun snapshot(): HashSet<T>
 
     /**
      * @return the current local element count
@@ -138,7 +137,7 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
      *
      * When the remote state is ahead of the local view, the local view is replaced by the result.
      */
-    suspend fun snapshotRemote(): ObjectOpenHashSet<T>
+    suspend fun snapshotRemote(): HashSet<T>
 
     /**
      * Adds [element] to the Redis set and waits until the mutation has been committed.

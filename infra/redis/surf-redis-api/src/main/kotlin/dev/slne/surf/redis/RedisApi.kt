@@ -2,10 +2,10 @@ package dev.slne.surf.redis
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.flogger.StackSize
-import dev.slne.surf.api.core.serializer.SurfSerializerModule
-import dev.slne.surf.api.core.serializer.java.uuid.JavaUUIDStringSerializer
-import dev.slne.surf.api.core.util.getCallerClass
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.getCallerClass
+import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.serialization.SurfSerializerModule
+import dev.slne.surf.api.serialization.java.uuid.JavaUUIDStringSerializer
 import dev.slne.surf.redis.cache.RedisSetIndexes
 import dev.slne.surf.redis.cache.SimpleRedisCache
 import dev.slne.surf.redis.cache.SimpleSetRedisCache

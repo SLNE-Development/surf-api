@@ -1,5 +1,4 @@
 import dev.slne.surf.api.gradle.util.slneReleases
-import org.gradle.api.component.AdhocComponentWithVariants
 
 plugins {
     id("dev.slne.surf.api.gradle.minestom")
@@ -10,7 +9,7 @@ minestomPluginFile {
 }
 
 dependencies {
-    api(projects.surfNatsCore)
+    api(projects.surfApiNats.surfApiNatsCore)
 }
 
 gradlePlugin {

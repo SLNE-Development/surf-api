@@ -1,11 +1,11 @@
 package dev.slne.surf.nats.config
 
-import dev.slne.surf.api.core.config.SpongeYmlConfigClass
-import dev.slne.surf.api.core.config.constraints.ExistingFile
-import dev.slne.surf.api.core.config.type.number.IntOr
+import dev.slne.surf.api.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.constraints.ExistingFile
+import dev.slne.surf.api.config.type.number.IntOr
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.NatsHandlerLimits
+import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.runtime.ConnectRules
 import dev.slne.surf.nats.runtime.RuntimeDefaults
 import io.nats.client.Options

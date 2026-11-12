@@ -1,26 +1,22 @@
 package dev.slne.surf.redis.event
 
-import dev.slne.surf.api.core.util.emptyObject2ObjectMap
-import dev.slne.surf.api.core.util.freeze
 import dev.slne.surf.redis.codec.RedisCodec
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import java.nio.charset.StandardCharsets
+import java.util.*
 import kotlin.reflect.full.companionObject
 
 internal class EventCodecRegistry {
-    typealias ByClass = Object2ObjectMap<Class<out RedisEvent>, EventCodecRegistration>
-    typealias ById = Object2ObjectMap<String, EventCodecRegistration>
+    typealias ByClass = Map<Class<out RedisEvent>, EventCodecRegistration>
+    typealias ById = Map<String, EventCodecRegistration>
 
-    private val registrationsByClass: ByClass = Object2ObjectOpenHashMap()
-    private val registrationsById: ById = Object2ObjectOpenHashMap()
-
-    @Volatile
-    private var frozenByClass: ByClass = emptyObject2ObjectMap()
+    private val registrationsByClass = HashMap<Class<out RedisEvent>, EventCodecRegistration>()
+    private val registrationsById = HashMap<String, EventCodecRegistration>()
 
     @Volatile
-    private var frozenById: ById = emptyObject2ObjectMap()
+    private var frozenByClass: ByClass = emptyMap()
+
+    @Volatile
+    private var frozenById: ById = emptyMap()
 
     @Volatile
     private var frozen = false
@@ -82,8 +78,8 @@ internal class EventCodecRegistry {
     @Synchronized
     fun freeze() {
         check(!frozen) { "Event codec registry is already frozen" }
-        frozenByClass = Object2ObjectOpenHashMap(registrationsByClass).freeze()
-        frozenById = Object2ObjectOpenHashMap(registrationsById).freeze()
+        frozenByClass = Collections.unmodifiableMap(HashMap(registrationsByClass))
+        frozenById = Collections.unmodifiableMap(HashMap(registrationsById))
         frozen = true
     }
 
@@ -150,8 +146,8 @@ internal class EventCodecRegistry {
         }
         registrationsByClass.clear()
         registrationsById.clear()
-        frozenByClass = emptyObject2ObjectMap()
-        frozenById = emptyObject2ObjectMap()
+        frozenByClass = emptyMap()
+        frozenById = emptyMap()
     }
 
     private fun <E : RedisEvent> registration(
@@ -207,7 +203,7 @@ internal class EventCodecRegistry {
         if (companion is RedisEventCodec<*>) return companion
         check(companion !is RedisCodec<*>) { "Companion object for event '${type.name}' implements RedisCodec but not RedisEventCodec" }
 
-        val candidates = ObjectArrayList<RedisEventCodec<out RedisEvent>>(2)
+        val candidates = ArrayList<RedisEventCodec<out RedisEvent>>(2)
         for (method in companion.javaClass.methods) {
             if (method.parameterCount != 0 || method.name !in CODEC_PROVIDER_METHODS ||
                 !RedisEventCodec::class.java.isAssignableFrom(method.returnType)

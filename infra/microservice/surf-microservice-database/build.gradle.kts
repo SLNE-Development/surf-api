@@ -18,14 +18,11 @@ kotlin {
     }
 }
 
-val surfDatabaseR2dbc = "dev.slne.surf:surf-database-r2dbc:2.+"
-val surfNatsVersion = "1.+"
-
 dependencies {
-    api(projects.surfMicroserviceApi)
-    compileOnly(surfDatabaseR2dbc)
+    api(projects.surfApiMicroservice.surfApiMicroserviceApi)
+    compileOnly(shadowed(projects.surfApiDatabaseR2dbc))
     // Optional at runtime: the pool-sized NATS handler limits apply only when a microservice ships surf-nats.
-    compileOnly("dev.slne.surf.nats:surf-nats-core:$surfNatsVersion")
+    compileOnly(projects.surfApiNats.surfApiNatsCore)
 
-    testImplementation(surfDatabaseR2dbc)
+    testImplementation(shadowed(projects.surfApiDatabaseR2dbc))
 }

@@ -6,56 +6,16 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        maven("https://reposilite.slne.dev/public/") { name = "public" }
-    }
-    dependencies {
-        classpath("dev.slne.surf.api:surf-api-gradle-plugin:+")
-    }
+plugins {
+    // Puts the surf plugin classes on this script's classpath for the imports above.
+    id("dev.slne.surf.api.gradle.core") apply false
+    // The surf plugin brings weaver along; declared here, the modules can request it by version.
+    alias(libs.plugins.weaver) apply false
 }
-
-allprojects {
-    group = "dev.slne.surf.nats"
-    version = findProperty("version") as String
-}
-
-// The Gradle plugin dev.slne.surf.nats is an included build: `publish` and `publishToMavenLocal` publish it along with
-// the modules of this build.
-for (publishTask in listOf("publish", "publishToMavenLocal")) {
-    tasks.register(publishTask) {
-        group = PublishingPlugin.PUBLISH_TASK_GROUP
-        description = "Publishes the included build surf-nats-gradle-plugin (plugin artifact and marker)."
-        dependsOn(gradle.includedBuild("surf-nats-gradle-plugin").task(":$publishTask"))
-    }
-}
-
-val surfNatsModules = subprojects.filter { it.subprojects.isEmpty() }
 
 subprojects {
-    // TODO(surf-microservice v3 release): remove once surf-microservice 3.0.0 and
-    // surf-database-r2dbc 2.4.0 are published.
-    repositories {
-        mavenLocal {
-            content {
-                includeGroup("dev.slne.surf.microservice")
-                includeVersion("dev.slne.surf", "surf-database-r2dbc", "2.4.0")
-            }
-        }
-    }
-
     tasks.withType<ShadowJar>().configureEach {
         relocate("io.nats", "dev.slne.surf.nats.libs.io.nats")
-    }
-
-    configurations.matching { !it.name.startsWith("surfNats") }.configureEach {
-        resolutionStrategy.dependencySubstitution {
-            surfNatsModules.forEach { surfNatsModule ->
-                substitute(module("dev.slne.surf.nats:${surfNatsModule.name}"))
-                    .using(project(surfNatsModule.path))
-            }
-        }
     }
 
     // Kotlin Multiplatform modules (api, core): shared toolchain, compiler options, dependency pattern (spec 12.2)
@@ -88,12 +48,12 @@ subprojects {
                 commonMain.dependencies {
                     compileOnly(kotlin("stdlib"))
                     compileOnly(libs.kotlinx.serialization.core)
-                    compileOnly(libs.kotlinx.coroutines.core)
+                    compileOnly(libs.kotlinxCoroutines.core)
                 }
                 jsMain.dependencies {
                     api(kotlin("stdlib"))
                     api(libs.kotlinx.serialization.core)
-                    api(libs.kotlinx.coroutines.core)
+                    api(libs.kotlinxCoroutines.core)
                 }
             }
         }
@@ -110,8 +70,8 @@ subprojects {
             addShadowVariantIntoJavaComponent = false
         }
 
-        val optInInternalApi = !project.path.startsWith(":surf-nats-test") &&
-                !project.path.startsWith(":surf-nats-types")
+        val optInInternalApi = !project.path.startsWith(":surf-api-nats:surf-api-nats-test") &&
+                !project.path.startsWith(":surf-api-nats:surf-api-nats-types")
 
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {

@@ -429,7 +429,58 @@ buttons, `ViewIcon`, the state helpers, the container and its DSL, and the three
 builders. Those keep their `…paper.inventory…` and `…minestom.inventory…` packages, so an import
 of `AbstractSurfView` or `surfView` does not change.
 
-## 13. Checklist for a downstream repository
+## 13. surf-nats, surf-redis, surf-database-r2dbc and surf-microservice moved into this repository
+
+The four libraries now live under `infra/`, with their history, and release with surf-api: one
+group, one version, one BOM. Their Kotlin packages did not change, so no `import` line does. What
+changed are the names a build file or a server sees.
+
+**Coordinates.** Every artifact moved to the group `dev.slne.surf.api`, and its name gained the
+`surf-api-` prefix. None of the old coordinates is aliased.
+
+| Old coordinate | New coordinate |
+|---|---|
+| `dev.slne.surf.nats:surf-nats-<module>` | `dev.slne.surf.api:surf-api-nats-<module>` |
+| `dev.slne.surf.redis:surf-redis-<module>` | `dev.slne.surf.api:surf-api-redis-<module>` |
+| `dev.slne.surf.microservice:surf-microservice-<module>` | `dev.slne.surf.api:surf-api-microservice-<module>` |
+| `dev.slne.surf:surf-database-r2dbc` | `dev.slne.surf.api:surf-api-database-r2dbc` |
+| npm `@slne/surf-nats` | npm `@slne/surf-api-nats` |
+
+`withSurfRedis()` and `withSurfDatabaseR2dbc(…)` add the new coordinates for you.
+
+**Gradle plugins.** The surf-nats and surf-microservice plugins are part of
+`surf-api-gradle-plugin` now and carry its version.
+
+| Old plugin id | New plugin id |
+|---|---|
+| `dev.slne.surf.nats` | `dev.slne.surf.api.gradle.nats` |
+| `dev.slne.surf.microservice` | `dev.slne.surf.api.gradle.microservice` |
+
+**Plugin names on the server.** A Paper, Velocity or Minestom plugin is named after its module, so
+`surf-redis-paper` is `surf-api-redis-paper` now, and likewise for every other platform module.
+This changes two things on a running server:
+
+- A plugin that lists one of them in `depend`, `softdepend` or its `paper-plugin.yml` dependencies
+  has to use the new name. The surf-nats Gradle plugin writes the new names itself.
+- The data folder follows the name. Move `plugins/surf-redis-paper/` to
+  `plugins/surf-api-redis-paper/` (and the same for the others) before the first start, or the
+  plugin starts with a fresh configuration.
+
+**surf-redis without fastutil.** surf-redis follows section 7: its public signatures return JDK
+collections now (`SyncList.snapshot()` returns `ArrayList`, `SyncMap.snapshot()` a `HashMap`,
+`SyncSet.snapshot()` a `HashSet`, and the `ByteBuf` list and map codecs read and write `ArrayList`,
+`List<Int>` and `HashMap`). A caller that stored a result in a fastutil-typed variable changes the
+type; the wire format is unchanged.
+
+**Tests that use surf-api beans.** A bean such as `surfConfigApi` resolves only while surf-api's
+root container runs, which a plain JUnit test never starts. Add `surf-api-standalone-testing` to the
+test runtime, and the container starts once per test JVM:
+
+```kotlin
+testRuntimeOnly("dev.slne.surf.api:surf-api-standalone-testing:<version>")
+```
+
+## 14. Checklist for a downstream repository
 
 1. Replace any coordinate from table 3; the others keep working.
 2. Rewrite the moved package prefixes (section 6) — `core.util` → `common.util` and the rest. This
@@ -447,3 +498,5 @@ of `AbstractSurfView` or `surfView` does not change.
    surf-api to find it (section 8).
 9. Rewrite every `SurfComponent` as a bean and start your own container from the plugin's three
    phases (section 9). This is the largest item on the list.
+10. Replace every surf-nats, surf-redis, surf-database-r2dbc and surf-microservice coordinate and
+    plugin id, and rename plugin dependencies and data folders on the servers (section 13).

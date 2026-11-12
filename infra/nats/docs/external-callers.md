@@ -3,7 +3,7 @@
 This guide is for applications that do not run surf-nats on the JVM but exchange messages with applications that
 do, for example a web panel written in TypeScript. There are two ways to connect:
 
-- On Node.js, use the client `@slne/surf-nats` with [protobuf-es](https://github.com/bufbuild/protobuf-es) schemas
+- On Node.js, use the client `@slne/surf-api-nats` with [protobuf-es](https://github.com/bufbuild/protobuf-es) schemas
   (see [TypeScript client](#typescript-client)). It implements everything in this guide.
 - With any other NATS client, follow the [wire format](#wire-format) and encode the messages with a Protocol
   Buffers library.
@@ -75,7 +75,7 @@ enum WhitelistAction {
 
 ## TypeScript client
 
-The surf-nats build publishes the npm package `@slne/surf-nats` to the npm repository `npm-releases-public` of
+The surf-nats build publishes the npm package `@slne/surf-api-nats` to the npm repository `npm-releases-public` of
 weaver. Projects read it through the anonymous group `npm-public`. Point the `@slne` scope at that group in the
 `.npmrc` of your project:
 
@@ -86,12 +86,12 @@ weaver. Projects read it through the anonymous group `npm-public`. Point the `@s
 Then install the package and its peer dependency:
 
 ```sh
-npm install @slne/surf-nats @bufbuild/protobuf@2.16.0
+npm install @slne/surf-api-nats @bufbuild/protobuf@2.16.0
 ```
 
 A release has the version of the surf-nats release and the dist-tag `latest`. A snapshot build has the version
 `<version>.<yyyyMMddHHmmss>`, for example `1.0.0-SNAPSHOT.20261112093000`, and the dist-tag `snapshot`, so
-`npm install @slne/surf-nats@snapshot` installs the newest snapshot. To build the package locally, run
+`npm install @slne/surf-api-nats@snapshot` installs the newest snapshot. To build the package locally, run
 `./gradlew :surf-nats-core:jsNodeProductionLibraryDistribution`, which writes it to
 `surf-nats-core/build/dist/js/productionLibrary`.
 
@@ -133,7 +133,7 @@ as `postinstall`, so that everyone has the same files. Then generate the schemas
 ### Schemas and clients
 
 Generate the schemas from the contracts with [buf](https://buf.build/) and `@bufbuild/protoc-gen-es` 2.16.0, and a
-typed client per service with `protoc-gen-surf-nats`, which the package `@slne/surf-nats` ships as a binary. With the
+typed client per service with `protoc-gen-surf-nats`, which the package `@slne/surf-api-nats` ships as a binary. With the
 contracts in `proto/`, the `outDir` of `weaver.json`:
 
 ```yaml
@@ -178,14 +178,14 @@ options as protoc-gen-es, for example:
 | `import_extension` | `none`, `js`, `ts`                     | `none`   |
 
 If `protoc-gen-surf-nats` is not on the `PATH`, run the script of the package:
-`local: ["node", "node_modules/@slne/surf-nats/bin/protoc-gen-surf-nats.mjs"]`. The plugin applies the contract rules
+`local: ["node", "node_modules/@slne/surf-api-nats/bin/protoc-gen-surf-nats.mjs"]`. The plugin applies the contract rules
 of the Gradle plugin and fails on contracts that the JVM side rejects, such as a package without a `.v<N>` suffix or
 a streaming `rpc`.
 
 ### Connecting
 
 ```ts
-import { connect } from "@slne/surf-nats";
+import { connect } from "@slne/surf-api-nats";
 
 const nats = await connect({ name: "panel", servers: "nats://localhost:4222", token: "change-me" });
 
@@ -331,7 +331,7 @@ const plain = toPlain(FindPlayerResponseSchema, response); // { name: "Steve", s
 
 ## Wire format
 
-This section describes the messages for NATS clients other than `@slne/surf-nats`.
+This section describes the messages for NATS clients other than `@slne/surf-api-nats`.
 
 ### Message format
 

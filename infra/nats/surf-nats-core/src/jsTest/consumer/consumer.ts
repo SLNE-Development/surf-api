@@ -1,35 +1,39 @@
-// tsc --strict check of a consumer of the @slne/surf-nats npm distribution (checkJsConsumerTypes).
+// tsc --strict check of a consumer of the @slne/surf-api-nats npm distribution (checkJsConsumerTypes).
 import {
+    type Answer,
     connect,
+    type EventContext,
     NatsCallTimeoutError,
     NatsNoRespondersError,
+    type NatsRegistration,
     NatsRemoteError,
     NatsRpcError,
-    type Answer,
-    type EventContext,
-    type NatsRegistration,
     type Plain,
     type SurfNatsClient,
     toPlain,
-    type UuidMessage,
     uuidFromString,
+    type UuidMessage,
     uuidToString,
-} from "@slne/surf-nats";
-import type { Uuid } from "./gen/surf/types/v1/uuid_pb.js";
-import { create, type JsonObject, type JsonValue } from "@bufbuild/protobuf";
-import { ValueSchema } from "@bufbuild/protobuf/wkt";
-import { ChatMessageSchema, PlayerJoinedSchema, ServerStartedSchema } from "./gen/surf/natsjs/test/v1/events_pb.js";
+} from "@slne/surf-api-nats";
+import type {Uuid} from "./gen/surf/types/v1/uuid_pb.js";
+import {create, type JsonObject, type JsonValue} from "@bufbuild/protobuf";
+import {ValueSchema} from "@bufbuild/protobuf/wkt";
 import {
-    PlainSampleSchema,
-    PlainWellKnownSchema,
+    ChatMessageSchema,
+    PlayerJoinedSchema,
+    ServerStartedSchema
+} from "./gen/surf/natsjs/test/v1/events_pb.js";
+import {
     type PlainSample,
+    PlainSampleSchema,
     type PlainWellKnown,
+    PlainWellKnownSchema,
 } from "./gen/surf/natsjs/test/v1/plain_pb.js";
 import {
     AuditService,
-    PlayerService,
     type FindPlayerResponse,
     type LocateResponse,
+    PlayerService,
 } from "./gen/surf/natsjs/test/v1/services_pb.js";
 
 declare function log(...values: unknown[]): void;

@@ -1,19 +1,8 @@
 package dev.slne.surf.nats.test.microservice.rpc
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.nats.rpc.natsPersistentContext
-import dev.slne.surf.nats.test.common.proto.v1.EchoRequest
-import dev.slne.surf.nats.test.common.proto.v1.EchoResponse
-import dev.slne.surf.nats.test.common.proto.v1.FailRequest
-import dev.slne.surf.nats.test.common.proto.v1.FailResponse
-import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
-import dev.slne.surf.nats.test.common.proto.v1.SizeRequest
-import dev.slne.surf.nats.test.common.proto.v1.SizeResponse
-import dev.slne.surf.nats.test.common.proto.v1.StoreRequest
-import dev.slne.surf.nats.test.common.proto.v1.StoredCountRequest
-import dev.slne.surf.nats.test.common.proto.v1.StoredCountResponse
-import dev.slne.surf.nats.test.common.proto.v1.StoredRequest
-import dev.slne.surf.nats.test.common.proto.v1.StoredResponse
+import dev.slne.surf.nats.test.common.proto.v1.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 private val log = logger()

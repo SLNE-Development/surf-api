@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.reliability.operation
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.database.reliability.operation.AtomicOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

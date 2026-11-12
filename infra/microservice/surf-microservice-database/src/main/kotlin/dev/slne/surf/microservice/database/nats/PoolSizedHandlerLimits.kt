@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.database.nats
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 
 private val log = logger()
 

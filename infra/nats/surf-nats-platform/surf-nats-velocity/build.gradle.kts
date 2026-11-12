@@ -8,5 +8,5 @@ velocityPluginFile {
 }
 
 dependencies {
-    api(projects.surfNatsCore)
+    api(projects.surfApiNats.surfApiNatsCore)
 }

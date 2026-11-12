@@ -2,20 +2,14 @@ import dev.petuska.npm.publish.task.NodeExecTask
 import dev.petuska.npm.publish.task.NpmPublishTask
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
-import org.gradle.api.services.BuildService
-import org.gradle.api.services.BuildServiceParameters
-import org.gradle.process.ExecOperations
 import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import javax.inject.Inject
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -67,9 +61,9 @@ val prepareFixtureEsProtos = tasks.register<Sync>("prepareFixtureEsProtos") {
         }
     }
     into("proto") {
-        from(rootDir.resolve("surf-nats-types/surf-nats-types-common/src/main/proto"))
-        from(rootDir.resolve("surf-nats-types/surf-nats-types-paper/src/main/proto"))
-        from(rootDir.resolve("surf-nats-test/surf-nats-test-fixtures/src/main/proto"))
+        from(parent!!.projectDir.resolve("surf-nats-types/surf-nats-types-common/src/main/proto"))
+        from(parent!!.projectDir.resolve("surf-nats-types/surf-nats-types-paper/src/main/proto"))
+        from(parent!!.projectDir.resolve("surf-nats-test/surf-nats-test-fixtures/src/main/proto"))
         from("src/jsTest/proto")
     }
 }
@@ -244,7 +238,7 @@ kotlin {
         useEsModules()
         binaries.library()
         generateTypeScriptDefinitions()
-        outputModuleName = "@slne/surf-nats"
+        outputModuleName = "@slne/surf-api-nats"
 
         // The hand-written facade (src/jsMain/resources) adds protobuf-es generics on top of the Kotlin exports;
         // bin/protoc-gen-surf-nats.mjs runs the protoc plugin.
@@ -269,7 +263,7 @@ kotlin {
             // Pure-stdlib protocol rules, also compiled into the surf-nats-gradle-plugin build.
             kotlin.srcDir("src/protocol/kotlin")
             dependencies {
-                api(projects.surfNatsApi)
+                api(projects.surfApiNats.surfApiNatsApi)
             }
         }
         commonTest {
@@ -301,24 +295,25 @@ kotlin {
             }
         }
         jvmMain.dependencies {
-            api(projects.surfNatsTypes.surfNatsTypesCommon)
+            api(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesCommon)
             implementation(libs.jnats)
 
-            compileOnly(libs.surf.api.core)
+            compileOnly(projects.surfApiCore)
             compileOnly(libs.kotlinx.serialization.protobuf)
         }
         jvmTest.dependencies {
-            implementation(projects.surfNatsTest.surfNatsTestFixtures)
-            implementation(libs.surf.api.core)
+            implementation(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestFixtures)
+            implementation(projects.surfApiCore)
             implementation(libs.testcontainers.nats)
             implementation(libs.junit.jupiter)
             implementation(kotlin("test-junit5"))
-            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotlinxCoroutines.test)
             implementation(libs.mockk)
             implementation(libs.lincheck)
 
             runtimeOnly(libs.junit.platform.launcher)
-            runtimeOnly(libs.surf.api.standalone)
+            runtimeOnly(projects.surfApiStandalone)
+            runtimeOnly(projects.surfApiStandaloneTesting)
             runtimeOnly(libs.bundles.log4j)
         }
     }
@@ -363,7 +358,7 @@ tasks.named<KotlinJsTest>("jsNodeTest") {
 // npm distribution and generated fixtures, staged next to the consumer sample and the interop script.
 val jsDistributionWithFixtures = copySpec {
     from(tasks.named("jsNodeProductionLibraryDistribution")) {
-        into("node_modules/@slne/surf-nats")
+        into("node_modules/@slne/surf-api-nats")
     }
     from(generateFixtureEs)
     from("src/jsTest/resources/gen") {
@@ -395,18 +390,19 @@ val prepareJsConsumerCheck = tasks.register<Sync>("prepareJsConsumerCheck") {
 
 val checkJsConsumerTypes = tasks.register<Exec>("checkJsConsumerTypes") {
     group = "verification"
-    description = "Runs tsc --strict on a consumer of the @slne/surf-nats npm distribution."
-    dependsOn(prepareJsConsumerCheck)
+    description = "Runs tsc --strict on a consumer of the @slne/surf-api-nats npm distribution."
+    dependsOn(prepareJsConsumerCheck, ":kotlinNpmInstall")
 
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
     // The TypeScript version KGP pins for the package; the hoisted root copy may be an older transitive one.
     val jsPackages = rootProject.layout.buildDirectory.dir("js/packages/@slne")
+    // Falls back to the root copy while npm is not installed yet: the task graph reads this before kotlinNpmInstall runs.
     val tsc = jsPackages.map { packages ->
-        listOf("surf-nats-test", "surf-nats")
+        val rootTsc = rootNodeModules.get().file("typescript/bin/tsc").asFile
+        val packageTsc = listOf("surf-api-nats-test", "surf-api-nats")
             .map { packages.file("$it/node_modules/typescript/bin/tsc").asFile }
-            .plus(rootNodeModules.get().file("typescript/bin/tsc").asFile)
-            .first { it.isFile }
-            .absolutePath
+            .firstOrNull { it.isFile }
+        (packageTsc ?: rootTsc).absolutePath
     }
     // Written after a successful run: UP-TO-DATE until the staged consumer or the TypeScript version changes
     val passedMarker = layout.buildDirectory.file("js-consumer-check.passed")
@@ -478,7 +474,7 @@ tasks.named("check") {
     dependsOn(checkJsConsumerTypes, jvmInteropTest)
 }
 
-// npm package @slne/surf-nats in the weaver registry (npm-releases-public). The package is
+// npm package @slne/surf-api-nats in the weaver registry (npm-releases-public). The package is
 // jsNodeProductionLibraryDistribution with another version: weaver npm versions are immutable, so a snapshot publishes
 // as <base>-SNAPSHOT.<yyyyMMddHHmmss UTC> under the dist-tag snapshot, a release unchanged under latest. The plugin
 // wires the upload into publish; publishToMavenLocal stays npm-free. The timestamp is taken once per configuration;
@@ -509,7 +505,7 @@ npmPublish {
     packages.named("js") {
         files.setFrom(npmDistribution)
         packageJsonTemplateFile = layout.file(npmDistribution.map { it.destinationDir.resolve("package.json") })
-        // Set explicitly: the plugin derives both from @slne/surf-nats.mjs, and assembling then fails
+        // Set explicitly: the plugin derives both from @slne/surf-api-nats.mjs, and assembling then fails
         main = "index.mjs"
         types = "index.d.mts"
         packageJson {

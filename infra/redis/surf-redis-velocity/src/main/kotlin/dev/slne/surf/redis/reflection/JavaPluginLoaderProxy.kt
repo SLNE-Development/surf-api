@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.reflection
 
 import com.velocitypowered.api.proxy.ProxyServer
-import dev.slne.surf.api.core.reflection.*
+import dev.slne.surf.api.reflection.*
 import java.nio.file.Path
 import java.util.*
 
@@ -19,4 +19,4 @@ interface JavaPluginLoaderProxy {
     }
 }
 
-private val proxy = SurfReflection.createProxy<JavaPluginLoaderProxy>()
+private val proxy = SurfReflection.INSTANCE.createProxy<JavaPluginLoaderProxy>()

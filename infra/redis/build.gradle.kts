@@ -5,21 +5,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-buildscript {
-    repositories {
-        gradlePluginPortal()
-        maven("https://reposilite.slne.dev/public/") { name = "public" }
-    }
-    dependencies {
-        classpath("dev.slne.surf.api:surf-api-gradle-plugin:+")
-    }
-}
-
-allprojects {
-    group = "dev.slne.surf.redis"
-    version = findProperty("version") as String
-}
-
 val nettyRelocationBase = "dev.slne.surf.redis.shaded."
 val libsRelocationBase = "dev.slne.surf.redis.libs."
 val mangledPrefix: String = nettyRelocationBase

@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.invoker;
 
-import dev.slne.surf.api.core.invoker.HiddenInvokerUtil;
-import dev.slne.surf.api.core.invoker.InvokerClassData;
+import dev.slne.surf.api.common.invoker.HiddenInvokerUtil;
+import dev.slne.surf.api.common.invoker.InvokerClassData;
 import dev.slne.surf.redis.event.RedisEvent;
 import dev.slne.surf.redis.event.RedisEventInvoker;
 import java.lang.invoke.MethodHandle;
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Hidden class template for Redis event invocation.
  */
-@SuppressWarnings("UnstableApiUsage")
 public final class RedisEventInvokerTemplate implements RedisEventInvoker {
 
     private static final Method METHOD;

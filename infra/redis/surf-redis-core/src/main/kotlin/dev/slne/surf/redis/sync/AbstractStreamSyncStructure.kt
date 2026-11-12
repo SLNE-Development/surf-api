@@ -1,6 +1,6 @@
 package dev.slne.surf.redis.sync
 
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisApi
 import dev.slne.surf.redis.util.*
 import kotlinx.coroutines.reactor.awaitSingle

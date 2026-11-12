@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.internal
 
-import dev.slne.surf.api.core.util.requiredService
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 

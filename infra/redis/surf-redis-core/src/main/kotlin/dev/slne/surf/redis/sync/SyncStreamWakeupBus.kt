@@ -1,7 +1,7 @@
 package dev.slne.surf.redis.sync
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import dev.slne.surf.api.core.util.logger
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.redis.RedisApi
 import org.redisson.client.codec.StringCodec
 import reactor.core.publisher.Mono

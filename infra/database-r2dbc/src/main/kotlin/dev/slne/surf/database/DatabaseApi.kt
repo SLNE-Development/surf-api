@@ -1,6 +1,6 @@
 package dev.slne.surf.database
 
-import dev.slne.surf.api.core.util.getCallerClass
+import dev.slne.surf.api.common.util.getCallerClass
 import dev.slne.surf.database.columns.time.internal.UtcSessionTypeMapper
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.DatabaseType
