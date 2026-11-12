@@ -1,0 +1,25 @@
+public final class dev/slne/surf/api/standalone/SurfApiStandaloneBootstrap {
+	public static final field INSTANCE Ldev/slne/surf/api/standalone/SurfApiStandaloneBootstrap;
+	public final fun bootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun enable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun enable (ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun enable$default (Ldev/slne/surf/api/standalone/SurfApiStandaloneBootstrap;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun shutdown (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/standalone/impl/StandaloneSpongeConfigSerializers : dev/slne/surf/api/config/serializer/SpongeConfigSerializers {
+	public fun <init> ()V
+}
+
+public final class dev/slne/surf/api/standalone/impl/SurfStandaloneApiImpl : dev/slne/surf/api/core/server/impl/SurfApiCoreImpl {
+	public fun <init> ()V
+	public final fun getDataFolder ()Ljava/nio/file/Path;
+	public fun getPlayer (Ljava/util/UUID;)Ljava/lang/Object;
+	public fun isPlayer (Lnet/kyori/adventure/audience/Audience;)Z
+	public fun sendPlayerToServer (Ljava/util/UUID;Ljava/lang/String;)V
+}
+
+public final class dev/slne/surf/api/standalone/impl/SurfStandaloneInstance : dev/slne/surf/api/core/server/CoreInstance {
+	public static final field INSTANCE Ldev/slne/surf/api/standalone/impl/SurfStandaloneInstance;
+}
+

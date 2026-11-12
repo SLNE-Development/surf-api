@@ -1,0 +1,23 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+import "google/protobuf/duration.proto";
+import "surf/types/v1/component.proto";
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// Adventure title. title and subtitle are required: a reader rejects a message without them.
+message Title {
+  // Adventure Title.Times. fade_in, stay and fade_out are required.
+  message Times {
+    required google.protobuf.Duration fade_in = 1;
+    required google.protobuf.Duration stay = 2;
+    required google.protobuf.Duration fade_out = 3;
+  }
+
+  required Component title = 1;
+  required Component subtitle = 2;
+  // Unset for the client's default times.
+  optional Times times = 3;
+}

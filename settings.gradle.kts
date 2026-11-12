@@ -2,8 +2,13 @@ pluginManagement {
     repositories {
         mavenLocal()
         gradlePluginPortal()
+        // The surf-nats part of the Gradle plugin depends on the weaver plugin published there.
+        maven("https://reposilite.slne.dev/public/") { name = "slne-repository-public" }
     }
-    includeBuild("surf-api-generator/gradle-nms-module-generator")
+    includeBuild("surf-api-generator/nms-module-generator")
+    // An included build rather than a module, so the infra modules of this build can apply the surf
+    // plugins the way a downstream project does.
+    includeBuild("tooling/gradle-plugin")
 }
 
 plugins {
@@ -14,37 +19,204 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "surf-api"
 
-include(":surf-api-core:surf-api-core")
-include(":surf-api-core:surf-api-core-server")
+val ci = System.getenv("CI")?.toBoolean() ?: false
 
-include(":surf-api-paper:surf-api-paper")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-common")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v1-21-11")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-1")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-2")
-include(":surf-api-paper:surf-api-paper-nms:surf-api-paper-nms-v26-3")
-include(":surf-api-paper:surf-api-paper-server")
+/**
+ * Derives a module's published name from its directory.
+ *
+ * The first path segment only groups modules and is dropped; the rest is joined with `-` and
+ * prefixed with `surf-api-`:
+ *
+ * ```
+ * common/core/api         ->  surf-api-core-api
+ * platform/paper/nms/v26-3 -> surf-api-paper-nms-v26-3
+ * aggregate/paper         ->  surf-api-paper
+ * ```
+ */
+fun artifactName(path: String): String {
+    val segments = path.split('/')
 
-include(":surf-api-velocity:surf-api-velocity")
-include(":surf-api-velocity:surf-api-velocity-server")
+    // A module kept at the repository root already carries its published name as its directory.
+    if (segments.size == 1) return segments.single()
 
-include("surf-api-standalone")
-include("surf-api-gradle-plugin")
-include("surf-api-gradle-plugin:surf-api-processor")
+    return segments.drop(1).joinToString("-", prefix = "surf-api-")
+}
 
-include("surf-api-shared")
-include("surf-api-shared:surf-api-shared-public")
-include("surf-api-shared:surf-api-shared-internal")
+val declared = mutableSetOf<String>()
 
-include(":surf-api-minestom:surf-api-minestom")
-include(":surf-api-minestom:surf-api-minestom-server")
-include(":surf-api-minestom:surf-api-minestom-server-bootstrap")
-include(":surf-api-minestom:surf-api-minestom-server-signed-chat")
-include(":surf-api-minestom:surf-api-minestom-server-npc")
-include(":surf-api-minestom:surf-api-minestom-server-player-visibility")
-include(":surf-api-minestom:surf-api-minestom-server-console")
-include(":surf-api-minestom:surf-api-minestom-server-spark")
-include(":surf-api-minestom:surf-api-minestom-server-plugins")
+/**
+ * Includes the module at [path] under its published [name].
+ *
+ * The Gradle path stays flat and the directory is attached as `projectDir`, so the typesafe
+ * accessor reads `projects.surfApiCoreApi` rather than `projects.common.core.api` — an `api`
+ * accessor sitting next to the `api()` configuration in the same dependencies block would be a
+ * trap. It also means the published name needs no `archivesName` override.
+ */
+fun includeModule(path: String, name: String = artifactName(path)) {
+    val dir = file(path)
+    require(dir.resolve("build.gradle.kts").isFile) { "No build.gradle.kts in $path" }
+    require(declared.add(name)) { "Duplicate module name '$name' (path $path)" }
+
+    include(name)
+    project(":$name").projectDir = dir
+}
+
+/** Includes the `api` and `impl` modules of one domain. */
+fun includePair(group: String, domain: String) {
+    includeModule("$group/$domain/api")
+    includeModule("$group/$domain/impl")
+}
+
+// foundation
+includeModule("foundation/annotations")
+includeModule("foundation/internal")
+includeModule("foundation/registry-keys")
+includePair("foundation", "di")
+
+// common
+// Only the api half exists: the shared base -- `logger` and the rest of `util`, the transforming
+// set views, the voxel line tracer, the weighted random selector and the small caps table -- is
+// declarations with no runtime wiring. It is declared first because it is the one module every
+// other domain of the repository compiles against.
+includeModule("common/common/api")
+// Only the api half exists: the palette, the builder DSL, the Adventure extensions, the pagination
+// contracts, the configured MiniMessage instance and the `ActionBarService` contract are
+// declarations. Their implementations stay in `surf-api-core-impl`, because `ActionBarServiceImpl`
+// resolves players through `SurfApiCore`.
+includeModule("common/messages/api")
+// Only the api half exists: the `SurfEvent` hierarchy, the `@SurfEventHandler` annotation, the
+// priorities and the `SurfEventBus` contract are declarations. `SurfEventBusImpl` and its
+// hidden-class invoker templates stay in `surf-api-core-impl`; nothing compiles against them, so a
+// module of their own would buy no boundary.
+includeModule("common/event/api")
+// Only the api half exists: the binary-tag views, the `FastCompoundBinaryTag` contract, the
+// `InternalNbtBridge` and `NbtOps` are declarations. `InternalNbtBridgeImpl` stays in
+// `surf-api-core-impl`.
+includeModule("common/nbt/api")
+// Only the api half exists: the `SurfReflection` contract and the `@SurfProxy` annotation family
+// are declarations, and `SurfReflectionImpl` stays in `surf-api-core-impl`. It is its own module
+// rather than part of the nbt one it was planned with, because the two domains share nothing: tags
+// on one side, dynamic proxies for the NMS bridges on the other.
+includeModule("common/reflection/api")
+// Only the api half exists: `SurfCommandUtil`, the exception builder, the component-carrying
+// Brigadier exception and the suspending-argument helpers are declarations. It is its own module
+// rather than part of the messages one it was planned with: it only borrows text to render an
+// error, and the rest of it is CommandAPI and Brigadier.
+includeModule("common/command/api")
+// Only the api half exists: `LuckPermsAccess` and the `User`/`Audience` extensions are
+// declarations. It is its own module rather than part of the messages one it was planned with,
+// because its only text dependency is reading a viewer's UUID.
+includeModule("common/luckperms/api")
+includePair("common", "core")
+// Only the api half exists: the shared inventory framework is contracts, settings and components
+// that both platforms compile against, with no runtime wiring of its own.
+includeModule("common/inventory/api")
+// Only the api half exists: the serializers, the serializer modules and the codec extensions are
+// declarations with no runtime wiring, so there is nothing for an impl module to hold.
+includeModule("common/serialization/api")
+// Both halves exist: the contracts, the constraint annotations and the helper types are compiled
+// against, and `SurfConfigApi` is a bean whose implementation has to ship somewhere.
+includePair("common", "config")
+
+// platform
+includePair("platform", "paper")
+includeModule("platform/paper/nms/api")
+// NmsVersion lives in the included build and is not on the settings classpath, so the versions
+// stay literal here, as they did before.
+listOf("v1-21-11", "v26-1", "v26-2", "v26-3").forEach { includeModule("platform/paper/nms/$it") }
+
+includePair("platform", "minestom")
+listOf(
+    "bootstrap-impl",
+    "console-impl",
+    "npc-impl",
+    "player-visibility-impl",
+    "plugins-impl",
+    "signed-chat-impl",
+    "spark-impl",
+).forEach { includeModule("platform/minestom/$it") }
+
+includePair("platform", "velocity")
+includeModule("platform/standalone/impl")
+includeModule("platform/standalone/testing")
+
+// aggregates — the coordinates downstream projects know
+listOf("core", "paper", "minestom", "minestom-server", "velocity", "standalone")
+    .forEach { includeModule("aggregate/$it") }
+
+// tooling — surf-api-generator stays at the repository root: it is local-only, never published, and
+// carries 3,532 registry data files, so moving it would dominate every structural diff.
+// tooling
+includeModule("tooling/bom")
+includeModule("tooling/gradle-plugin/processor", name = "surf-api-processor")
+
+/**
+ * Includes an imported repository under `infra/[repository]` as a project tree.
+ *
+ * Each repository keeps its directory layout and its root build script, whose `subprojects { }`
+ * configuration applies to the [modules] below it. [modules] are the repository's former Gradle
+ * paths; every segment is renamed from `surf-` to `surf-api-`, so `surf-nats-types:surf-nats-types-common`
+ * becomes `:surf-api-nats:surf-api-nats-types:surf-api-nats-types-common`.
+ */
+fun includeInfra(repository: String, vararg modules: String) {
+    val root = "infra/$repository"
+    val rootPath = ":surf-api-$repository"
+    include(rootPath)
+    project(rootPath).projectDir = file(root)
+
+    for (module in modules) {
+        val segments = module.split(':')
+        val name = infraName(segments.last())
+        require(file("$root/${segments.joinToString("/")}/build.gradle.kts").isFile) {
+            "No build.gradle.kts in $root/$module"
+        }
+        require(declared.add(name)) { "Duplicate module name '$name' (module $module)" }
+
+        segments.indices.forEach { depth ->
+            val path = segments.take(depth + 1).joinToString(":", prefix = "$rootPath:") { infraName(it) }
+            include(path)
+            project(path).projectDir = file("$root/${segments.take(depth + 1).joinToString("/")}")
+        }
+    }
+}
+
+fun infraName(name: String) = name.replaceFirst("surf-", "surf-api-")
+
+// infra — the broker and database libraries, imported with their history
+includeInfra(
+    "nats",
+    "surf-nats-api",
+    "surf-nats-core",
+    "surf-nats-types:surf-nats-types-common",
+    "surf-nats-types:surf-nats-types-paper",
+    "surf-nats-platform:surf-nats-paper",
+    "surf-nats-platform:surf-nats-velocity",
+    "surf-nats-platform:surf-nats-minestom",
+    "surf-nats-platform:surf-nats-standalone",
+    "surf-nats-test:surf-nats-test-common",
+    "surf-nats-test:surf-nats-test-fixtures",
+    "surf-nats-test:surf-nats-test-fixtures-internal",
+    "surf-nats-test:surf-nats-test-paper",
+    "surf-nats-test:surf-nats-test-microservice",
+)
+includeInfra(
+    "redis",
+    "surf-redis-api",
+    "surf-redis-core",
+    "surf-redis-paper",
+    "surf-redis-velocity",
+    "surf-redis-minestom",
+    "surf-redis-standalone",
+)
+includeInfra(
+    "microservice",
+    "surf-microservice-api",
+    "surf-microservice-runtime",
+    "surf-microservice-database",
+    "surf-microservice-reliability",
+    "surf-microservice-processor",
+)
+includeModule("infra/database-r2dbc", name = "surf-api-database-r2dbc")
 
 includeBuild("vendor/spark-minestom") {
     dependencySubstitution {
@@ -52,13 +224,11 @@ includeBuild("vendor/spark-minestom") {
     }
 }
 
-val ci = System.getenv("CI")?.toBoolean() ?: false
-
 // vendor/LuckPerms is generated from the LuckPerms-Upstream submodule and the patches next to it,
 // so the LuckPerms feature is only built once it has been created; CI builds require it
 val luckPermsDir = file("vendor/LuckPerms")
 if (luckPermsDir.resolve("settings.gradle").isFile) {
-    include(":surf-api-minestom:surf-api-minestom-server-luckperms")
+    includeModule("platform/minestom/luckperms-impl")
 
     includeBuild(luckPermsDir) {
         dependencySubstitution {
@@ -67,7 +237,7 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
     }
 } else {
     val message = """
-        vendor/LuckPerms is missing, so surf-api-minestom-server-luckperms is not built. Create it with:
+        vendor/LuckPerms is missing, so surf-api-minestom-luckperms-impl is not built. Create it with:
           git submodule update --init --recursive
           cd vendor && ./gradlew applyPatches
         """.trimIndent()
@@ -77,8 +247,13 @@ if (luckPermsDir.resolve("settings.gradle").isFile) {
 }
 
 if (!ci) {
-    include(":surf-api-paper:surf-api-paper-plugin-test")
-    include(":surf-api-minestom:surf-api-minestom-example")
-    include(":surf-api-minestom:surf-api-minestom-example-plugin")
-    include("surf-api-generator")
+    includeModule("local/paper-plugin-test")
+    // The two plugins and the harness of the shared-bean boot test. Local-only on purpose: the
+    // harness downloads a Paper server and boots it, which has no place in a pull request.
+    includeModule("local/paper-shared-bean-provider")
+    includeModule("local/paper-shared-bean-consumer")
+    includeModule("local/paper-shared-bean-test")
+    includeModule("local/minestom-example")
+    includeModule("local/minestom-example-plugin")
+    includeModule("surf-api-generator")
 }

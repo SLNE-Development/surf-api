@@ -23,7 +23,7 @@ dependencies {
     implementation("org.jetbrains:annotations:26.1.0")
     implementation(libs.paper.api)
 
-    implementation(projects.surfApiCore.surfApiCore)
+    implementation(projects.surfApiCoreApi)
 }
 
 val mcManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"

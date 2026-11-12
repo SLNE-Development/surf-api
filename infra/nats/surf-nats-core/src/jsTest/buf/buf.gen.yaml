@@ -1,0 +1,14 @@
+version: v2
+plugins:
+  - local: ["${node}", "${protocGenEs}"]
+    out: gen
+    opt:
+      - target=js+dts
+      - import_extension=js
+  - local: ["${node}", "${protocGenSurfNats}"]
+    out: gen
+    opt:
+      - target=js+dts
+      - import_extension=js
+    exclude_types:
+      - surf.natsjs.invalid.**

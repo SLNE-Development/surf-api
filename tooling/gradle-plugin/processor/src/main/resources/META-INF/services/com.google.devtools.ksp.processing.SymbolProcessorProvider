@@ -1,0 +1,3 @@
+dev.slne.surf.api.processor.nms.NmsProvidersCollectorProvider
+dev.slne.surf.api.processor.reflection.ReflectionSymbolProcessorProvider
+dev.slne.surf.api.processor.bean.BeanSymbolProcessorProvider

@@ -1,0 +1,33 @@
+public final class dev/slne/surf/api/command/SurfCommandUtil {
+	public static final field INSTANCE Ldev/slne/surf/api/command/SurfCommandUtil;
+	public static final fun createException (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/api/command/exception/WrapperCommandExceptionComponent;
+	public static final fun failWithBuilder (Ldev/slne/surf/api/command/builder/CommandExceptionBuilder;)V
+	public static final fun failWithMessage (Lnet/kyori/adventure/text/ComponentLike;)V
+}
+
+public final class dev/slne/surf/api/command/args/SuspendArgumentHelperKt {
+	public static final fun awaiting (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun awaitingOrNull (Ldev/jorel/commandapi/executors/CommandArguments;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public class dev/slne/surf/api/command/builder/CommandExceptionBuilder {
+	public static final field CONTEXT_AMOUNT I
+	public static final field Companion Ldev/slne/surf/api/command/builder/CommandExceptionBuilder$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;I)V
+	public fun build ()Lnet/kyori/adventure/text/Component;
+	public fun build (Lnet/kyori/adventure/text/Component;)Lnet/kyori/adventure/text/Component;
+	protected fun getContext ()Lnet/kyori/adventure/text/Component;
+}
+
+public final class dev/slne/surf/api/command/builder/CommandExceptionBuilder$Companion {
+}
+
+public final class dev/slne/surf/api/command/exception/WrapperCommandExceptionComponent : dev/jorel/commandapi/exceptions/WrapperCommandSyntaxException {
+	public static final field Companion Ldev/slne/surf/api/command/exception/WrapperCommandExceptionComponent$Companion;
+	public fun <init> (Lnet/kyori/adventure/text/Component;)V
+	public fun getMessage ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/command/exception/WrapperCommandExceptionComponent$Companion {
+}
+

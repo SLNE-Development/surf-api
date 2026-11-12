@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// java.net.InetAddress without host name or IPv6 scope. address is required: a reader rejects a message without it.
+message IpAddress {
+  // Network byte order, 4 bytes for IPv4 or 16 bytes for IPv6.
+  required bytes address = 1;
+}

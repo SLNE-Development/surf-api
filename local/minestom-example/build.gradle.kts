@@ -1,0 +1,94 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
+
+plugins {
+    `core-convention`
+    id("xyz.jpenilla.gremlin-gradle")
+}
+
+description = "surf-api-minestom-example"
+
+val luckPerms = findProject(":surf-api-minestom-luckperms-impl")
+
+dependencies {
+    implementation(projects.surfApiMinestomBootstrapImpl)
+    implementation(projects.surfApiMinestomImpl)
+    implementation(projects.surfApiMinestomSignedChatImpl)
+    implementation(projects.surfApiMinestomSparkImpl)
+    implementation(projects.surfApiMinestomNpcImpl)
+    implementation(projects.surfApiMinestomPlayerVisibilityImpl)
+    implementation(projects.surfApiMinestomConsoleImpl)
+    implementation(projects.surfApiMinestomPluginsImpl)
+
+    // Shaded into the server, where the plugin feature finds it on the class path
+    implementation(projects.surfApiMinestomExamplePlugin)
+    if (luckPerms != null) implementation(luckPerms)
+
+    implementation(libs.minestom.server)
+    runtimeOnly(libs.log4j.slf4j2.impl)
+}
+
+// The example decides at runtime whether LuckPerms is on the class path
+sourceSets.main {
+    kotlin.srcDir(if (luckPerms != null) "src/luckperms/kotlin" else "src/noLuckperms/kotlin")
+}
+
+val mainClassName = "dev.slne.surf.api.minestom.example.ExampleServerKt"
+
+// Like a server built with dev.slne.surf.api.gradle.minestom-server: the jar contains the project
+// modules and the bootstrap, which downloads every other library into run/libraries/ on startup
+gremlin {
+    defaultGremlinRuntimeDependency = false
+    // gremlin's default ASM cannot read the class files of current Java versions
+    defaultJarRelocatorDependencies = false
+}
+
+dependencies {
+    jarRelocatorRuntime("me.lucko:jar-relocator:1.7")
+    jarRelocatorRuntime(libs.asm)
+    jarRelocatorRuntime("org.ow2.asm:asm-commons:${libs.versions.asm.get()}")
+}
+
+configurations.runtimeDownload {
+    extendsFrom(configurations.implementation.get(), configurations.runtimeOnly.get())
+    shouldResolveConsistentlyWith(configurations.runtimeClasspath.get())
+    exclude(group = "xyz.jpenilla", module = "gremlin-runtime")
+    exclude(group = "org.jspecify", module = "jspecify")
+}
+
+tasks {
+    writeDependencies {
+        // The relocations core-convention applies to the shadow jar
+        val relocationPrefix = project.findProperty("relocationPrefix") as String
+        relocate("net.kyori.adventure.nbt", "$relocationPrefix.kyori.nbt") {
+            excludes.add("net.kyori.adventure.nbt.api.**")
+        }
+        relocate("org.spongepowered.configurate", "$relocationPrefix.configurate")
+    }
+
+    shadowJar {
+        archiveClassifier = "all"
+        dependencies {
+            exclude { dependency ->
+                dependency.moduleGroup != "xyz.jpenilla" && dependency.moduleGroup != "org.jspecify" &&
+                        dependency.moduleArtifacts.none { it.id.componentIdentifier is ProjectComponentIdentifier }
+            }
+        }
+        // log4j-core and the terminal console appender each ship a plugin cache, which have to be
+        // merged; duplicates have to reach the transformer for that instead of being dropped
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        transform<Log4j2PluginsCacheFileTransformer>()
+        manifest {
+            attributes["Main-Class"] = mainClassName
+            attributes["Launcher-Agent-Class"] = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
+            // Mixin goes first, so its transformer is installed before another agent loads a Minestom
+            // class; LuckPerms adds the libraries it downloads to the class path through its agent
+            attributes["Surf-Delegate-Agent-Classes"] = listOfNotNull(
+                "dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent",
+                "me.lucko.luckperms.minestom.dependencies.LuckPermsAgent".takeIf { luckPerms != null },
+            ).joinToString(",")
+            attributes["Surf-Mixin-Configs"] =
+                "mixins.surf-api-minestom-server.json,mixins.surf-api-minestom-server-npc.json"
+            attributes["Multi-Release"] = "true"
+        }
+    }
+}

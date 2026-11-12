@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+package surf.natsjs.test.v2;
+
+import "surf/nats/v1/options.proto";
+
+message FindPlayerRequest {
+  required string name = 1;
+}
+
+message FindPlayerResponse {
+  required string name = 1;
+  required int32 version = 2;
+}
+
+service PlayerService {
+  rpc FindPlayer(FindPlayerRequest) returns (FindPlayerResponse);
+}
+
+message PlayerJoined {
+  option (surf.nats.v1.event) = true;
+
+  required string name = 1;
+}

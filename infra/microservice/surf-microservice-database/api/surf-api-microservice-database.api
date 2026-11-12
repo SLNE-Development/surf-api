@@ -1,0 +1,17 @@
+public abstract interface class dev/slne/surf/microservice/database/DatabaseCustomizer {
+	public fun configureDatabase (Ldev/slne/surf/database/libs/org/jetbrains/exposed/v1/r2dbc/R2dbcDatabaseConfig$Builder;)V
+	public fun configureMigrations (Ldev/slne/surf/database/migration/MigrationSpec;)V
+	public fun getRunMigrations ()Z
+}
+
+public final class dev/slne/surf/microservice/database/DatabaseCustomizer$DefaultImpls {
+	public static fun configureDatabase (Ldev/slne/surf/microservice/database/DatabaseCustomizer;Ldev/slne/surf/database/libs/org/jetbrains/exposed/v1/r2dbc/R2dbcDatabaseConfig$Builder;)V
+	public static fun configureMigrations (Ldev/slne/surf/microservice/database/DatabaseCustomizer;Ldev/slne/surf/database/migration/MigrationSpec;)V
+	public static fun getRunMigrations (Ldev/slne/surf/microservice/database/DatabaseCustomizer;)Z
+}
+
+public final class dev/slne/surf/microservice/database/MicroserviceDatabaseKt {
+	public static final fun getDatabase (Ldev/slne/surf/microservice/api/Microservice;)Ldev/slne/surf/database/libs/org/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;
+	public static final fun getDatabaseApi (Ldev/slne/surf/microservice/api/Microservice;)Ldev/slne/surf/database/DatabaseApi;
+}
+

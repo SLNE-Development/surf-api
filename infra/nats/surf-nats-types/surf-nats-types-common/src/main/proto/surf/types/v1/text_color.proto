@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package surf.types.v1;
+
+option java_package = "dev.slne.surf.nats.types.proto";
+
+// Adventure text color. rgb is required: a reader rejects a message without it.
+message TextColor {
+  // 0xRRGGBB, 0 to 16,777,215. Named colors are restored from their value.
+  required int32 rgb = 1;
+}

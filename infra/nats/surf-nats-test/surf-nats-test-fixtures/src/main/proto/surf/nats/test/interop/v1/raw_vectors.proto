@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package surf.nats.test.interop.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.interop.v1";
+
+import "surf/nats/test/v1/colors.proto";
+import "surf/nats/test/v1/interop.proto";
+
+// Serves the raw wire vectors of the JVM <-> JS interop test: Kotlin messages of another type than the response, which
+// a generated responder cannot produce. Its own package keeps its subjects apart from InteropVectorService.
+service RawVectorService {
+  rpc Colors(surf.nats.test.v1.InteropVectorRequest) returns (surf.nats.test.v1.ColorHolder);
+  rpc Required(surf.nats.test.v1.InteropVectorRequest) returns (surf.nats.test.v1.InteropRequired);
+  rpc Evolved(surf.nats.test.v1.InteropVectorRequest) returns (surf.nats.test.v1.InteropEvolved);
+  rpc EvolvedV2(surf.nats.test.v1.InteropVectorRequest) returns (surf.nats.test.v1.InteropEvolvedV2);
+}

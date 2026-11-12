@@ -1,0 +1,62 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "surf/nats/v1/options.proto";
+import "surf/nats/test/v1/colors.proto";
+import "surf/nats/test/v1/common.proto";
+import "surf/types/v1/component.proto";
+import "surf/types/v1/key.proto";
+import "surf/types/v1/uuid.proto";
+
+// Every field kind the generator supports, as an event and as an rpc request and response.
+message Everything {
+  option (surf.nats.v1.event) = true;
+
+  required int32 small = 1;
+  required int64 large = 2;
+  required uint32 unsigned_small = 3;
+  required uint64 unsigned_large = 4;
+  required sint64 signed_large = 5;
+  required fixed32 fixed_small = 6;
+  required fixed64 fixed_large = 7;
+  required sfixed32 signed_fixed_small = 8;
+  required sfixed64 signed_fixed_large = 9;
+  required bool flag = 10;
+  required double ratio = 11;
+  required float scale = 12;
+  required string label = 13;
+  required bytes payload = 14;
+  repeated string names = 15;
+  map<string, int32> counts = 16;
+  required Nested nested = 17;
+  optional Color color = 18;
+  oneof choice {
+    string text = 19;
+    int64 number = 20;
+  }
+  required google.protobuf.Timestamp created_at = 21;
+  required google.protobuf.Duration duration = 22;
+  required surf.types.v1.Uuid uuid = 23;
+  required surf.types.v1.Component component = 24;
+  required surf.types.v1.Key key = 25;
+  optional string nullable_label = 26;
+  optional int32 defaulted = 27 [default = 7];
+  required Tag tag = 28;
+  optional Tag nullable_tag = 29;
+  repeated Nested nested_list = 30;
+  map<int64, Nested> nested_by_id = 31;
+
+  message Nested {
+    required string name = 1;
+    repeated int32 values = 2 [packed = true];
+  }
+}
+
+service TypesService {
+  rpc Roundtrip(Everything) returns (Everything);
+}

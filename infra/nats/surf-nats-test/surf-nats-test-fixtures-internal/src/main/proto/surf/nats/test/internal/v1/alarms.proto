@@ -1,0 +1,42 @@
+syntax = "proto2";
+
+package surf.nats.test.internal.v1;
+
+option java_package = "dev.slne.surf.nats.test.internal.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// Generated with generatedVisibility = INTERNAL: proves that internal contracts compile.
+
+enum AlarmLevel {
+  ALARM_LEVEL_UNSPECIFIED = 0;
+  ALARM_LEVEL_LOW = 1;
+  ALARM_LEVEL_HIGH = 2;
+}
+
+message AlarmRaised {
+  option (surf.nats.v1.event) = true;
+
+  optional AlarmLevel level = 1;
+  optional string message = 2;
+  oneof source {
+    string server = 3;
+    int64 player_id = 4;
+  }
+  optional bytes evidence = 5;
+}
+
+service AlarmService {
+  rpc Raise(RaiseRequest) returns (RaiseReply);
+  rpc Clear(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message RaiseRequest {
+  optional AlarmLevel level = 1;
+  required string message = 2;
+}
+
+message RaiseReply {
+  required int64 id = 1;
+}

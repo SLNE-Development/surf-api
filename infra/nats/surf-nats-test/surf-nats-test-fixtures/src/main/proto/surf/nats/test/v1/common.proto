@@ -1,0 +1,32 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+// Shared replies of the fixture services.
+
+message Text {
+  required string value = 1;
+}
+
+message Number {
+  required int64 value = 1;
+}
+
+message Count {
+  required int32 value = 1;
+}
+
+message Blob {
+  required bytes data = 1;
+}
+
+message Health {
+  required double value = 1;
+}
+
+// Mapped to the value class dev.slne.surf.nats.test.fixtures.Tag (mapType in build.gradle.kts).
+message Tag {
+  required string value = 1;
+}

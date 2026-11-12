@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package surf.nats.test.v1;
+
+option java_package = "dev.slne.surf.nats.test.proto.v1";
+
+import "google/protobuf/empty.proto";
+import "surf/nats/v1/options.proto";
+
+// Persistent services for stream provisioning tests.
+
+// Its stream must not exist before the first registration.
+service LateService {
+  option (surf.nats.v1.service) = { persistent: true };
+
+  rpc Put(PutRequest) returns (google.protobuf.Empty);
+}
+
+message PutRequest {
+  required int64 id = 1;
+}

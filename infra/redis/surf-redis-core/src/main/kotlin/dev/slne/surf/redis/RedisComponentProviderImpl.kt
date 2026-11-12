@@ -1,0 +1,181 @@
+package dev.slne.surf.redis
+
+import com.google.auto.service.AutoService
+import dev.slne.surf.redis.cache.*
+import dev.slne.surf.redis.codec.RedisCodec
+import dev.slne.surf.redis.config.redisConfig
+import dev.slne.surf.redis.internal.RedissonConfigDetails
+import dev.slne.surf.redis.sync.BinarySyncValueCodec
+import dev.slne.surf.redis.sync.JsonSyncValueCodec
+import dev.slne.surf.redis.sync.list.SyncList
+import dev.slne.surf.redis.sync.list.SyncListImpl
+import dev.slne.surf.redis.sync.map.SyncMap
+import dev.slne.surf.redis.sync.map.SyncMapImpl
+import dev.slne.surf.redis.sync.set.SyncSet
+import dev.slne.surf.redis.sync.set.SyncSetImpl
+import dev.slne.surf.redis.sync.value.SyncValue
+import dev.slne.surf.redis.sync.value.SyncValueImpl
+import kotlinx.serialization.KSerializer
+import org.redisson.config.Config
+import org.redisson.config.EqualJitterDelay
+import org.redisson.config.Protocol
+import java.util.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
+
+@AutoService(RedisComponentProvider::class)
+class RedisComponentProviderImpl : RedisComponentProvider {
+
+    override val eventLoopGroup get() = RedisInstance.instance.eventLoopGroup
+    override val redissonExecutorService get() = RedisInstance.instance.redissonExecutorService
+    override val clientId = UUID.randomUUID().toString()
+        .split("-")
+        .take(2)
+        .joinToString("")
+
+    override fun createRedissonConfig(details: RedissonConfigDetails): Config {
+        val redisURI = details.redisURI
+
+        val config = Config()
+            .setPassword(redisURI.password)
+            .setExecutor(redissonExecutorService)
+            .setTransportMode(TransportInfo.instance.redissonTransportMode)
+            .setEventLoopGroup(eventLoopGroup)
+            .setTcpKeepAlive(true)
+            .setTcpUserTimeout(10.seconds.inWholeMilliseconds.toInt())
+            .setTcpKeepAliveCount(3)
+            .setTcpKeepAliveInterval(10)
+            .setTcpKeepAliveIdle(60)
+            .setTcpNoDelay(true)
+            .setKeepPubSubOrder(false)
+            .setProtocol(Protocol.RESP3)
+            .apply {
+                useSingleServer()
+                    .setConnectionMinimumIdleSize(2)
+                    .setConnectionPoolSize(8)
+                    .setClientName(redisConfig.clientName)
+                    .setPingConnectionInterval(10.seconds.inWholeMilliseconds.toInt())
+                    .setConnectTimeout(5.seconds.inWholeMilliseconds.toInt())
+                    .setRetryAttempts(10)
+                    .setRetryDelay(EqualJitterDelay(200.milliseconds.toJavaDuration(), 1.seconds.toJavaDuration()))
+                    .setAddress(redisURI.scheme + "://" + redisURI.host + ":" + redisURI.port)
+            }
+
+        return config
+    }
+
+    override fun tryExtractPluginNameFromClass(clazz: Class<*>): String {
+        return RedisInstance.get().tryExtractPluginNameFromClass(clazz)
+    }
+
+    override fun <K : Any, V : Any> createSimpleCache(
+        namespace: String,
+        serializer: KSerializer<V>,
+        ttl: Duration,
+        keyToString: (K) -> String,
+        redisApi: RedisApi
+    ): SimpleRedisCache<K, V> {
+        return SimpleRedisCacheImpl(namespace, serializer, keyToString, ttl, redisApi)
+    }
+
+    override fun <T : Any> createSimpleSetRedisCache(
+        namespace: String,
+        serializer: KSerializer<T>,
+        ttl: Duration,
+        idOf: (T) -> String,
+        indexes: RedisSetIndexes<T>,
+        redisApi: RedisApi
+    ): SimpleSetRedisCache<T> {
+        return SimpleSetRedisCacheImpl(namespace, serializer, idOf, indexes, ttl, redisApi)
+    }
+
+    override fun <E : Any> createSyncList(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncList<E> {
+        return SyncListImpl(api, id, ttl, JsonSyncValueCodec(api, elementSerializer))
+    }
+
+    override fun <E : Any> createSyncList(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncList<E> {
+        return SyncListImpl(api, id, ttl, BinarySyncValueCodec(codec, "SyncList '$id' element"))
+    }
+
+    override fun <E : Any> createSyncSet(
+        id: String,
+        elementSerializer: KSerializer<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncSet<E> {
+        return SyncSetImpl(api, id, ttl, JsonSyncValueCodec(api, elementSerializer))
+    }
+
+    override fun <E : Any> createSyncSet(
+        id: String,
+        codec: RedisCodec<E>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncSet<E> {
+        return SyncSetImpl(api, id, ttl, BinarySyncValueCodec(codec, "SyncSet '$id' element"))
+    }
+
+    override fun <T : Any> createSyncValue(
+        id: String,
+        serializer: KSerializer<T>,
+        defaultValue: T,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncValue<T> {
+        return SyncValueImpl(api, id, JsonSyncValueCodec(api, serializer), defaultValue, ttl)
+    }
+
+    override fun <T : Any> createSyncValue(
+        id: String,
+        codec: RedisCodec<T>,
+        defaultValue: T,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncValue<T> {
+        return SyncValueImpl(api, id, BinarySyncValueCodec(codec, "SyncValue '$id' value"), defaultValue, ttl)
+    }
+
+    override fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keySerializer: KSerializer<K>,
+        valueSerializer: KSerializer<V>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncMap<K, V> {
+        return SyncMapImpl(
+            api,
+            id,
+            ttl,
+            JsonSyncValueCodec(api, keySerializer),
+            JsonSyncValueCodec(api, valueSerializer)
+        )
+    }
+
+    override fun <K : Any, V : Any> createSyncMap(
+        id: String,
+        keyCodec: RedisCodec<K>,
+        valueCodec: RedisCodec<V>,
+        ttl: Duration,
+        api: RedisApi
+    ): SyncMap<K, V> {
+        return SyncMapImpl(
+            api,
+            id,
+            ttl,
+            BinarySyncValueCodec(keyCodec, "SyncMap '$id' key"),
+            BinarySyncValueCodec(valueCodec, "SyncMap '$id' value")
+        )
+    }
+}

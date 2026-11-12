@@ -1,0 +1,30 @@
+// region properties
+val groupId = findProperty("group") as String
+val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
+// endregion
+
+plugins {
+    kotlin("jvm")
+    kotlin("plugin.serialization")
+    `publish-convention`
+    `java-toolchain-convention`
+}
+
+group = groupId
+version = buildString {
+    append(findProperty("processorVersion") as String)
+    if (snapshot) append("-SNAPSHOT")
+}
+
+dependencies {
+    implementation(libs.ksp.api)
+    api(projects.surfApiInternal)
+
+    // The container's annotations and the bean metadata schema the bean processor writes.
+    api(projects.surfApiDiApi)
+
+    // https://mvnrepository.com/artifact/com.squareup/kotlinpoet
+    implementation("com.squareup:kotlinpoet:2.4.0")
+    implementation("com.palantir.javapoet:javapoet:0.22.0")
+    implementation(libs.kotlin.compiler)
+}

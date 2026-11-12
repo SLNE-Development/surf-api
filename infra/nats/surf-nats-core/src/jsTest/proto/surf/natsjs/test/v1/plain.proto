@@ -1,0 +1,72 @@
+syntax = "proto2";
+
+package surf.natsjs.test.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "surf/types/v1/uuid.proto";
+
+// Covers every field shape that toPlain converts.
+message PlainSample {
+  required string name = 1;
+  optional string nickname = 2;
+  optional int32 level = 3 [default = 5];
+  optional int64 balance = 4;
+  optional uint64 total = 5;
+  optional sint64 delta = 6;
+  repeated int64 history = 7;
+  map<int64, string> labels = 8;
+  map<string, int64> scores = 9;
+  optional bytes data = 10;
+  optional bool active = 11;
+  optional google.protobuf.Timestamp created_at = 12;
+  optional surf.types.v1.Uuid id = 13;
+  repeated google.protobuf.Timestamp visits = 14;
+  map<string, surf.types.v1.Uuid> owners = 15;
+  optional PlainNested nested = 16;
+  repeated PlainNested children = 17;
+  optional PlainColor color = 18;
+  repeated PlainColor colors = 19;
+  oneof target {
+    string server = 20;
+    PlainNested group = 21;
+    int64 ticket = 22;
+  }
+}
+
+message PlainNested {
+  optional string note = 1;
+  optional PlainNested parent = 2;
+}
+
+enum PlainColor {
+  PLAIN_COLOR_UNSPECIFIED = 0;
+  PLAIN_COLOR_RED = 1;
+}
+
+// Covers the well-known types that toPlain unwraps and the 64-bit integers it keeps as strings.
+message PlainWellKnown {
+  optional google.protobuf.StringValue label = 1;
+  optional google.protobuf.Int64Value count = 2;
+  optional google.protobuf.UInt64Value total = 3;
+  optional google.protobuf.Int32Value level = 4;
+  optional google.protobuf.UInt32Value rank = 5;
+  optional google.protobuf.DoubleValue ratio = 6;
+  optional google.protobuf.FloatValue scale = 7;
+  optional google.protobuf.BoolValue flag = 8;
+  optional google.protobuf.BytesValue blob = 9;
+  repeated google.protobuf.StringValue tags = 10;
+  map<string, google.protobuf.Int64Value> limits = 11;
+  optional google.protobuf.Struct attributes = 12;
+  optional google.protobuf.Value setting = 13;
+  optional google.protobuf.ListValue entries = 14;
+  repeated google.protobuf.Struct documents = 15;
+  map<string, google.protobuf.Value> options = 16;
+  optional int64 big_id = 17 [jstype = JS_STRING];
+  repeated uint64 big_ids = 18 [jstype = JS_STRING];
+  oneof choice {
+    google.protobuf.StringValue wrapped = 19;
+    google.protobuf.Struct document = 20;
+  }
+}

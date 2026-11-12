@@ -1,0 +1,56 @@
+@file:JsModule("@bufbuild/protobuf/reflect")
+
+package dev.slne.surf.nats.js.external.protobuf.reflect
+
+import dev.slne.surf.nats.js.api.ProtoMessage
+import dev.slne.surf.nats.js.external.protobuf.DescField
+import dev.slne.surf.nats.js.external.protobuf.DescFieldEnum
+import dev.slne.surf.nats.js.external.protobuf.DescFieldEnumList
+import dev.slne.surf.nats.js.external.protobuf.DescFieldEnumMap
+import dev.slne.surf.nats.js.external.protobuf.DescFieldMessage
+import dev.slne.surf.nats.js.external.protobuf.DescFieldMessageList
+import dev.slne.surf.nats.js.external.protobuf.DescFieldMessageMap
+import dev.slne.surf.nats.js.external.protobuf.DescFieldScalar
+import dev.slne.surf.nats.js.external.protobuf.DescFieldScalarList
+import dev.slne.surf.nats.js.external.protobuf.DescFieldScalarMap
+import dev.slne.surf.nats.js.external.protobuf.DescMessage
+import dev.slne.surf.nats.js.external.protobuf.DescOneof
+import dev.slne.surf.nats.js.external.protobuf.UnknownField
+
+/**
+ * Binds `ReflectMessage` of `reflect-types.d.ts`, the reflection access to a message.
+ *
+ * `get` is overloaded per field variant, as `ReflectMessageGet` is in TypeScript.
+ */
+internal external interface ReflectMessage {
+    val message: ProtoMessage
+    val desc: DescMessage
+    val fields: Array<DescField>
+
+    fun isSet(field: DescField): Boolean
+    fun clear(field: DescField)
+    fun oneofCase(oneof: DescOneof): DescField?
+
+    /**
+     * Returns the `ScalarValue`: number, bigint, string, boolean or `Uint8Array`, by the scalar type.
+     */
+    fun get(field: DescFieldScalar): Any
+    fun get(field: DescFieldEnum): Int
+    fun get(field: DescFieldMessage): ReflectMessage
+    fun get(field: DescFieldEnumList): ReflectList<Int>
+    fun get(field: DescFieldScalarList): ReflectList<Any>
+    fun get(field: DescFieldMessageList): ReflectList<ReflectMessage>
+    fun get(field: DescFieldEnumMap): ReflectMap<Any, Int>
+    fun get(field: DescFieldScalarMap): ReflectMap<Any, Any>
+    fun get(field: DescFieldMessageMap): ReflectMap<Any, ReflectMessage>
+
+    fun set(field: DescFieldEnum, value: Int)
+
+    fun getUnknown(): Array<UnknownField>?
+
+    /**
+     * Sets the unknown fields. TypeScript declares the parameter as `UnknownField[]`, but the value is assigned to
+     * `$unknown` as is, so `undefined` removes the unknown fields.
+     */
+    fun setUnknown(value: Array<UnknownField>?)
+}

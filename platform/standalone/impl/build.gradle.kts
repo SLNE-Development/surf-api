@@ -1,0 +1,39 @@
+// This module boots the standalone runtime and re-exports the whole platform surface through
+// `api`, which the surf-api-standalone aggregate passes on to consumers. That exported surface is
+// what downstream compiles against, so ABI validation stays on even though the module is an
+// implementation -- and it is not a loose end: see the comment in aggregate/standalone for why the
+// bootstrap cannot be split off into an api module.
+plugins {
+    id("surf.module-impl")
+    `api-validation`
+}
+
+dependencies {
+    api(projects.surfApiCoreImpl) {
+        exclude(libs.commandapi.core)
+        exclude(libs.brigadier)
+    }
+
+    api(libs.adventure.api)
+    api(libs.adventure.text.logger.slf4j)
+    api(libs.adventure.text.minimessage)
+    api(libs.adventure.serializer.gson)
+    api(libs.adventure.serializer.legacy)
+    api(libs.adventure.serializer.plain)
+    api(libs.adventure.serializer.ansi)
+
+    api(libs.guava)
+    api(libs.dazzleconf)
+    api(libs.spongepowered.math)
+    api(libs.commons.lang3)
+    api(libs.commons.text)
+    api(libs.okhttp)
+    api(libs.flogger)
+    api(libs.commons.math4.core)
+    api(libs.commons.math3)
+    implementation(libs.packetevents.netty.common)
+    runtimeOnly(libs.flogger.slf4j.backend)
+}
+
+private fun <T : ModuleDependency> T.exclude(provider: Provider<MinimalExternalModuleDependency>) =
+    provider.get().module.apply { exclude(group, name) }

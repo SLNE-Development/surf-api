@@ -1,7 +1,7 @@
 # surf-api
 
-**Multi-platform plugin API framework** for Minecraft servers — providing modular service
-discovery, lifecycle-managed components, NMS bridge abstractions, and rich DSLs across Paper,
+**Multi-platform plugin API framework** for Minecraft servers — providing a dependency-injection
+container, lifecycle-managed beans, NMS bridge abstractions, and rich DSLs across Paper, Minestom,
 Velocity, and Standalone platforms.
 
 [![Latest Release](https://img.shields.io/github/v/release/SLNE-Development/surf-api?label=release)](https://github.com/SLNE-Development/surf-api/releases/latest)
@@ -16,10 +16,11 @@ Velocity, and Standalone platforms.
 
 surf-api is the shared foundation for SLNE's server plugin ecosystem. It provides:
 
-- **Platform-abstracted APIs** for Paper (Bukkit/NMS), Velocity, and Standalone environments
-- **Service discovery** via `ServiceLoader` (`requiredService<T>()`) for singleton bridges
-- **Component system** with compile-time KSP discovery, topological lifecycle ordering, and
-  conditional activation
+- **Platform-abstracted APIs** for Paper (Bukkit/NMS), Minestom, Velocity, and Standalone
+  environments
+- **Bean container** with compile-time KSP discovery, constructor injection, a container per
+  application below a process-wide root, and conditional activation
+- **Opt-in bean lifecycle** (`load` → `enable` → `disable`) driven in dependency order
 - **NMS bridge pattern** to safely abstract version-specific internals behind stable interfaces
 - **Inventory framework DSLs**, command helpers, scoreboard utilities, and extension-rich APIs
 - **Gradle plugin** (`surf-api-gradle-plugin`) that configures downstream projects, handles
@@ -29,44 +30,106 @@ surf-api is the shared foundation for SLNE's server plugin ecosystem. It provide
 
 ## Module Structure
 
+Directories group the modules; the published name is derived from the directory path by dropping the
+first segment, joining the rest with `-`, and prefixing `surf-api-`. So `common/core/api` publishes
+as `surf-api-core-api` and `aggregate/paper` publishes as `surf-api-paper`. Gradle project paths
+stay flat (`:surf-api-core-api`), which is why the typesafe accessor reads `projects.surfApiCoreApi`.
+
 ```
 surf-api
-├── surf-api-core                  # Platform-agnostic core API & implementation
-│   ├── surf-api-core              # Core API interfaces
-│   └── surf-api-core-server       # Core implementations
+├── foundation/                       # Bottom layer — depends on no other surf-api module
+│   ├── annotations                   # surf-api-annotations: @InternalSurfApi, @GenerateReflection & co.
+│   ├── di
+│   │   ├── api                       # surf-api-di-api: bean annotations, BeanContainer, SurfContainer
+│   │   └── impl                      # surf-api-di-impl: the container itself — graph, conditions, lifecycle
+│   ├── registry-keys                 # surf-api-registry-keys: generated vanilla registry key constants
+│   └── internal                      # surf-api-internal: internal utilities, never a public dependency
 │
-├── surf-api-paper                 # Paper/Bukkit platform
-│   ├── surf-api-paper             # Public API (extensions, bridges, DSLs)
-│   ├── surf-api-paper-server      # Implementations (shaded into final JAR)
-│   ├── surf-api-paper-nms
-│   │   ├── surf-api-paper-nms-common     # Shared NMS bridge interfaces
-│   │   ├── surf-api-paper-nms-v1-21-11   # NMS impl for 1.21.11
-│   │   └── surf-api-paper-nms-v26-1      # NMS impl for 26.1
-│   └── surf-api-paper-plugin-test # Local test server (excluded from CI)
+├── common/                           # Platform-agnostic, cut by domain
+│   ├── common
+│   │   └── api                       # surf-api-common-api: the shared base — util, logger, collections, math, random, font
+│   ├── serialization
+│   │   └── api                       # surf-api-serialization-api: kotlinx-serialization serializers and codecs
+│   ├── messages
+│   │   └── api                       # surf-api-messages-api: text — Colors, builders, MiniMessage, pagination, action bar
+│   ├── config
+│   │   ├── api                       # surf-api-config-api: config classes, constraints, managers, migrations
+│   │   └── impl                      # surf-api-config-impl: the config service
+│   ├── event
+│   │   └── api                       # surf-api-event-api: SurfEventBus and the event contracts
+│   ├── nbt
+│   │   └── api                       # surf-api-nbt-api: Adventure binary tags and NbtOps
+│   ├── reflection
+│   │   └── api                       # surf-api-reflection-api: SurfReflection and the @SurfProxy annotations
+│   ├── command
+│   │   └── api                       # surf-api-command-api: what the three platforms' command layers share
+│   ├── luckperms
+│   │   └── api                       # surf-api-luckperms-api: the LuckPerms lookup helpers
+│   ├── inventory
+│   │   └── api                       # surf-api-inventory-api: the platform-neutral half of the inventory framework
+│   └── core
+│       ├── api                       # surf-api-core-api: SurfApiCore itself, and the coordinate re-exporting the domains above (3 files)
+│       └── impl                      # surf-api-core-impl: core implementations
 │
-├── surf-api-velocity              # Velocity proxy platform
-│   ├── surf-api-velocity          # Public API
-│   └── surf-api-velocity-server   # Implementations
+├── platform/                         # One group per runtime
+│   ├── paper
+│   │   ├── api                       # surf-api-paper-api: Paper/Bukkit contracts (extensions, bridges, DSLs)
+│   │   ├── impl                      # surf-api-paper-impl: Paper implementations
+│   │   └── nms
+│   │       ├── api                   # surf-api-paper-nms-api: version-independent NMS bridge interfaces
+│   │       ├── v1-21-11              # surf-api-paper-nms-v1-21-11: NMS bridge for 1.21.11
+│   │       ├── v26-1                 # surf-api-paper-nms-v26-1: NMS bridge for 26.1
+│   │       ├── v26-2                 # surf-api-paper-nms-v26-2: NMS bridge for 26.2
+│   │       └── v26-3                 # surf-api-paper-nms-v26-3: NMS bridge for 26.3
+│   ├── minestom
+│   │   ├── api                       # surf-api-minestom-api: Minestom contracts
+│   │   ├── impl                      # surf-api-minestom-impl: Minestom implementations
+│   │   ├── bootstrap-impl            # Server bootstrap
+│   │   ├── console-impl              # Console & command input
+│   │   ├── npc-impl                  # NPCs
+│   │   ├── player-visibility-impl    # Per-player entity visibility
+│   │   ├── plugins-impl              # Plugin loading
+│   │   ├── signed-chat-impl          # Signed chat handling
+│   │   ├── spark-impl                # Spark profiler integration
+│   │   └── luckperms-impl            # LuckPerms integration (needs vendor/LuckPerms)
+│   ├── velocity
+│   │   ├── api                       # surf-api-velocity-api: Velocity proxy contracts
+│   │   └── impl                      # surf-api-velocity-impl: Velocity implementations
+│   └── standalone
+│       └── impl                      # surf-api-standalone-impl: standalone (non-server) runtime
 │
-├── surf-api-standalone            # Standalone (non-server) platform
+├── aggregate/                        # The coordinates downstream projects depend on — no code of their own
+│   ├── core                          # surf-api-core
+│   ├── paper                         # surf-api-paper
+│   ├── minestom                      # surf-api-minestom
+│   ├── minestom-server               # surf-api-minestom-server: for building a runnable Minestom server
+│   ├── velocity                      # surf-api-velocity
+│   └── standalone                    # surf-api-standalone
 │
-├── surf-api-shared                # Cross-platform annotations & component system
-│   ├── surf-api-shared-public     # Public shared annotations (@ComponentMeta, etc.)
-│   └── surf-api-shared-internal   # Internal shared utilities
+├── tooling/
+│   ├── bom                           # surf-api-bom: one version for every module
+│   ├── gradle-plugin                 # surf-api-gradle-plugin: configures downstream projects, shading, KSP
+│   │   └── processor                 # surf-api-processor: KSP processor — discovers beans and @GenerateReflection
+│   └── generator                     # surf-api-generator: NMS module scaffolding (local only)
 │
-├── surf-api-gradle-plugin         # Gradle convention plugins & KSP processor
-│   └── surf-api-processor         # KSP processor — discovers @ComponentMeta at compile time
-│
-└── surf-api-generator             # NMS module scaffolding generator (local only)
+└── local/                            # Never published, excluded from CI
+    ├── paper-plugin-test             # surf-api-paper-plugin-test: Paper test server
+    ├── minestom-example              # surf-api-minestom-example: runnable Minestom example server
+    └── minestom-example-plugin       # surf-api-minestom-example-plugin: example Minestom plugin
 ```
 
-> **API/Implementation split:** `-api` modules define public interfaces consumed by downstream
-> projects. `-server` modules contain implementations that are shaded into the final JAR and never
-> exposed as a public API dependency.
+> **API/implementation split:** `-api` modules declare the contracts downstream projects compile
+> against. They carry ABI validation, and the build fails if one of them depends on an
+> implementation module. `-impl` modules carry the implementations; they are wired in at runtime and
+> shaded into the final JAR, and never reach a consumer's compile classpath. Downstream projects do
+> not name either directly — they depend on the `aggregate/` coordinates (`surf-api-paper` and
+> friends), which hold no code and let the contracts reach the consumer transitively. Importing
+> `surf-api-bom` pins one version for every module, so no transitive path can pull a second version
+> of a sibling module into the graph.
 
 ## Environment Variables
 
-`surf-api-core` provides small, type-safe environment-variable access without a separate schema or
+`surf-api-core-api` provides small, type-safe environment-variable access without a separate schema or
 lookup phase. Direct reads resolve immediately:
 
 ```kotlin
@@ -104,59 +167,73 @@ durations. Custom converters can be passed directly, for example
 
 ## Key Concepts
 
-### Service Discovery
+### The bean container
 
-Two mechanisms are available depending on the use case:
-
-#### 1. `requiredService<T>()` — Singleton bridges
-
-For singleton platform bridges and NMS abstractions. Backed by Java `ServiceLoader`; implementations
-register themselves with `@AutoService`.
-
-```kotlin
-// In -api: declare the bridge interface with companion delegation
-@NmsUseWithCaution
-interface SurfBukkitNmsCommonBridge {
-    fun nextEntityId(): Int
-
-    companion object : SurfBukkitNmsCommonBridge by requiredService()
-}
-
-// In -server: provide the implementation
-@AutoService(SurfBukkitNmsCommonBridge::class)
-class SurfBukkitNmsCommonBridgeImpl : SurfBukkitNmsCommonBridge {
-    init { checkInstantiationByServiceLoader() }
-
-    override fun nextEntityId(): Int = TODO()
-}
-
-// Usage — callers go through the companion, unaware of the implementation
-val id = SurfBukkitNmsCommonBridge.nextEntityId()
-```
-
-#### 2. Component System — Lifecycle-managed components
-
-Classes annotated with `@ComponentMeta` (or the meta-annotations `@Service` / `@Repository`) are
-discovered at compile-time by the KSP processor, which writes JSON metadata to
-`META-INF/surfapi/components/`. At runtime, `ComponentService`:
-
-1. Loads all component metadata
-2. Topologically sorts by `@Priority` and `@DependsOnComponent`
-3. Checks conditions (`@ConditionalOnProperty`, `@DependsOnPlugin`, `@DependsOnClass`, …)
-4. Calls `suspend fun load()` → `enable()` → `disable()` in order
+A class becomes a bean by carrying a stereotype — `@Service`, `@Repository`, or an annotation of
+your own meta-annotated with `@BeanMeta`, all from `dev.slne.surf.api.di`. The KSP processor writes
+the metadata to `META-INF/surf-api/beans/` at compile time, and the container builds the graph from
+it without loading a class first. A bean needs no supertype; dependencies are constructor
+parameters.
 
 ```kotlin
 @Service
-class MyFeatureService : SurfComponent {
-    override suspend fun enable() {
-        // runs after all dependencies are enabled
-    }
+class ShopService(
+    private val transactions: TransactionApi,
+    private val handlers: List<PriceHandler>,
+)
+```
 
-    override suspend fun disable() {
-        // runs in reverse order on shutdown
-    }
+Containers form a hierarchy: surf-api owns the root, and every application — a plugin, a
+microservice — gets a child of it holding its own beans. Resolution walks upwards only, so an
+application sees surf-api's beans and never another application's. `Scope.SHARED` is the one way a
+bean crosses that boundary.
+
+A bean that owns something to open and close implements `SurfComponent` and gets `load`, `enable`
+and `disable`, each run as its own pass over all beans in dependency order (`disable` in reverse).
+`@ConditionalOnProperty`, `@ConditionalOnPlugin`, `@ConditionalOnClass` and the rest of
+`dev.slne.surf.api.di.condition` decide whether a bean is created at all.
+
+A plugin starts its own container from the published api, one call per platform phase:
+
+```kotlin
+class MyPlugin : SuspendingJavaPlugin() {
+    override suspend fun onLoadAsync() { SurfContainer.startChild(this) }
+    override suspend fun onEnableAsync() { SurfContainer.enableFor(this) }
+    override suspend fun onDisableAsync() { SurfContainer.stopFor(this) }
 }
 ```
+
+### Reaching a bean where there is no constructor
+
+An api module publishes its own service through `surfBean<T>()`, a property that resolves on first
+access. This is the pattern behind every `Companion.INSTANCE` in the api modules: the contract lives
+in `-api`, the `@Service` implementation in `-impl`, and the caller never names either.
+
+```kotlin
+// In -api: the contract, plus the accessor the rest of the api module uses
+@NmsUseWithCaution
+interface SurfPaperNmsCommonBridge {
+    fun nextEntityId(): Int
+
+    companion object {
+        val INSTANCE get() = bridge
+    }
+}
+
+private val bridge by surfBean<SurfPaperNmsCommonBridge>()
+
+// In -impl: an ordinary bean
+@NmsUseWithCaution
+@Service
+class SurfPaperNmsCommonBridgeProxy :
+    SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()
+
+// Usage — callers go through INSTANCE, unaware of the implementation
+val id = SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()
+```
+
+`surfBean` and `SurfContainer` are `@InternalSurfApi`: they exist for the edges where there is no
+constructor to inject into. Inside a bean, write what you need into the constructor instead.
 
 ---
 
@@ -173,14 +250,11 @@ class MyFeatureService : SurfComponent {
 # Full build (produces shadow JARs with relocated dependencies)
 ./gradlew build shadowJar
 
-# Build a single module
-./gradlew :surf-api-paper:surf-api-paper-server:build
+# Build a single module (project paths are flat, whatever the directory)
+./gradlew :surf-api-paper-impl:build
 
 # Publish to local Maven repository
 ./gradlew publishToMavenLocal
-
-# Run the Paper test server (local only, not available in CI)
-./gradlew :surf-api-paper:surf-api-paper-plugin-test:runServer
 ```
 
 ---
@@ -193,7 +267,7 @@ class MyFeatureService : SurfComponent {
 |---|---|
 | **Context parameters** | Enabled globally (`-Xcontext-parameters`). Used in inventory DSLs and other scoped builders. |
 | **`@InternalSurfApi`** | `@RequiresOptIn` — mark new internal APIs with this annotation. All subprojects opt-in via compiler args. |
-| **Coroutines** | All async work uses Kotlin coroutines. Component lifecycle methods are `suspend`. Bukkit uses MCCoroutine (Folia-aware). |
+| **Coroutines** | All async work uses Kotlin coroutines. Bean lifecycle methods are `suspend`. Bukkit uses MCCoroutine (Folia-aware). |
 | **Extension functions** | Primary API enrichment pattern; organized in files named `*-extension.kt` or `*-extensions.kt`. |
 | **DSL markers** | `@InventoryFrameworkDSL`, `@ItemDsl`, `@PaneMarker` restrict scope in builder DSLs. |
 
@@ -205,20 +279,35 @@ Use Google Flogger via the `logger()` helper:
 private val log = logger() // FluentLogger.forEnclosingClass()
 
 log.atInfo().log("Server started")
-log.atWarning().withCause(e).log("Failed to load component %s", name)
+log.atWarning().withCause(e).log("Failed to load bean %s", name)
 ```
 
 ### Package Layout
 
 ```
 dev.slne.surf.api                      # Root
-dev.slne.surf.api.core.api             # Core API interfaces
+dev.slne.surf.api.common               # The shared base: util, logger, collections, math, random, font, algorithms
+dev.slne.surf.api.serialization        # kotlinx-serialization serializers and codecs
+dev.slne.surf.api.messages             # Text: Colors, builders, MiniMessage, pagination, action bar, Rarity
+dev.slne.surf.api.config               # Config classes, constraints, managers, migrations
+dev.slne.surf.api.config.impl          # The config service
+dev.slne.surf.api.event                # SurfEventBus and the event contracts
+dev.slne.surf.api.nbt                  # Adventure binary tags and NbtOps
+dev.slne.surf.api.reflection           # SurfReflection and the @SurfProxy annotations
+dev.slne.surf.api.command              # What the three platforms' command layers share
+dev.slne.surf.api.luckperms            # The LuckPerms lookup helpers
+dev.slne.surf.api.inventory            # The platform-neutral half of the inventory framework
+dev.slne.surf.api.core                 # SurfApiCore itself; the coordinate re-exporting the domains above
 dev.slne.surf.api.core.server          # Core implementations
-dev.slne.surf.api.paper.api            # Paper API (extensions, bridges, DSLs)
+dev.slne.surf.api.paper                # Paper API (extensions, bridges, DSLs)
 dev.slne.surf.api.paper.server         # Paper implementations
-dev.slne.surf.api.velocity.api         # Velocity API
+dev.slne.surf.api.minestom             # Minestom API
+dev.slne.surf.api.minestom.server      # Minestom implementations
+dev.slne.surf.api.velocity             # Velocity API
 dev.slne.surf.api.velocity.server      # Velocity implementations
-dev.slne.surf.api.shared.api           # Shared annotations & component system
+dev.slne.surf.api.standalone           # The standalone bootstrap
+dev.slne.surf.api.di                   # Bean annotations, BeanContainer, SurfContainer
+dev.slne.surf.api.shared.api           # Shared annotations (@InternalSurfApi & co.)
 dev.slne.surf.api.libs.*               # Relocation target for all shaded dependencies
 ```
 
@@ -249,8 +338,7 @@ All non-platform dependencies are shaded via Shadow and relocated to `dev.slne.s
 | [Flogger](https://google.github.io/flogger/) | Fluent logging |
 | [Ktor](https://ktor.io/) | HTTP client |
 | [Configurate](https://github.com/SpongePowered/Configurate) | Configuration loading |
-| [KSP](https://github.com/google/ksp) | Compile-time component discovery |
-| [AutoService](https://github.com/google/auto/tree/main/service) | `ServiceLoader` registration |
+| [KSP](https://github.com/google/ksp) | Compile-time bean discovery |
 
 ---
 
@@ -258,12 +346,14 @@ All non-platform dependencies are shaded via Shadow and relocated to `dev.slne.s
 
 When making changes:
 
-- **API changes** go in `-api` modules. **Never** expose `-server` types in the public API.
-- **Implementations** go in `-server` modules.
-- **New components**: annotate with `@ComponentMeta` / `@Service` / `@Repository` and implement the
-  appropriate lifecycle methods.
-- **New NMS bridges**: declare the interface in `-api`, implement in `-server`, register via
-  `@AutoService`, and call `checkInstantiationByServiceLoader()` in the `init` block.
+- **API changes** go in `-api` modules. **Never** expose `-impl` types in the public API —
+  `checkApiBoundary` fails the build if an `-api` module depends on an implementation module.
+- **Implementations** go in `-impl` modules.
+- **New beans**: annotate with `@Service` / `@Repository` / an own `@BeanMeta` stereotype, take
+  dependencies as constructor parameters, and implement `SurfComponent` only if the bean has
+  something to open and close.
+- **New NMS bridges**: declare the interface in `-api` with a `companion object` whose `INSTANCE`
+  reads a private `by surfBean<T>()`, and annotate the `-impl` proxy with `@Service`.
 - Publishing is automated — push to a `version/*` branch to trigger a release.
 
 ---
