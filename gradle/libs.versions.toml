@@ -86,7 +86,7 @@ gremlin = "0.0.9"
 # Testing
 junit = "6.1.3"
 junit-platform-launcher = "6.1.3"
-mockk = "1.14.11"
+mockk = "1.14.12"
 lincheck = "3.7"
 mockbukkit = "4.119.0"
 minestom-testing = "26_3-SNAPSHOT"
