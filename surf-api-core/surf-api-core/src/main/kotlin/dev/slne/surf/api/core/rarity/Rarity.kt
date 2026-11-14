@@ -39,7 +39,7 @@ enum class Rarity(
     ),
     MYTHIC(
         displayName = "Mythisch",
-        color = TextColor.color(0xAA00AA)
+        color = TextColor.color(0xFA0536)
     );
 
     val displayName = text(displayName, color)
