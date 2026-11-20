@@ -1,14 +1,12 @@
-@file:OptIn(ExperimentalVisualizerApi::class)
-
 package dev.slne.surf.api.paper.server.impl.visualizer.visualizer
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.api.common.algorithms.convexHull2D
 import dev.slne.surf.api.common.math.VoxelLineTracer
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
+import dev.slne.surf.api.paper.server.coroutine.surfDispatchers
+import dev.slne.surf.api.paper.server.coroutine.surfScope
 import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImpl
-import dev.slne.surf.api.paper.server.plugin
 import dev.slne.surf.api.paper.util.getHighestBlockYAtBlockCoordinates
 import dev.slne.surf.api.paper.util.getXFromChunkKey
 import dev.slne.surf.api.paper.util.getZFromChunkKey
@@ -45,9 +43,9 @@ class SurfVisualizerAreaImpl(
     override val cornerLocations: Set<Vector3d> get() = corners.toSet()
     private val computationChannel = Channel<Unit>(Channel.CONFLATED)
 
-    private val scope = CoroutineScope(
-        plugin.scope.coroutineContext + SupervisorJob(plugin.scope.coroutineContext[Job])
-    )
+    private val scope = surfScope.let { root ->
+        CoroutineScope(root.coroutineContext + SupervisorJob(root.coroutineContext[Job]) + surfDispatchers.main)
+    }
 
     private var workerJob: Job? = null
 

@@ -2,10 +2,10 @@ package dev.slne.surf.api.velocity.server.impl
 
 import com.velocitypowered.api.proxy.Player
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.velocity.SurfApiVelocity
 import dev.slne.surf.api.velocity.server.plugin
 import net.kyori.adventure.audience.Audience
+import org.springframework.stereotype.Service
 import java.util.*
 
 @Service

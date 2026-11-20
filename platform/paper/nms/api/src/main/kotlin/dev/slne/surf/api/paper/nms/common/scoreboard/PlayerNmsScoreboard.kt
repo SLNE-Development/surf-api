@@ -76,7 +76,9 @@ abstract class PlayerNmsScoreboard(protected val player: Player) {
         send(operation)
     }
 
-    /** Removes the objective from the client if it was shown. */
+    /**
+     * Removes the objective from the client if it was shown.
+     */
     fun delete() {
         if (deleted) return
 

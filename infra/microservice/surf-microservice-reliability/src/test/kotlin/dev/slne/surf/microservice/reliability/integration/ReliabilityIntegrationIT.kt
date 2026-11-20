@@ -1,99 +1,135 @@
 package dev.slne.surf.microservice.reliability.integration
 
-import dev.slne.surf.microservice.api.Microservice
-import dev.slne.surf.microservice.api.integration.MicroserviceIntegration
-import dev.slne.surf.microservice.api.integration.MicroserviceIntegrationContext
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
+import dev.slne.surf.database.reliability.operation.AtomicOperations
+import dev.slne.surf.microservice.api.MicroserviceInfo
+import dev.slne.surf.microservice.reliability.MicroserviceReliabilityAutoConfiguration
 import dev.slne.surf.microservice.reliability.ReliabilityConfig
-import dev.slne.surf.microservice.reliability.ReliabilityCustomizer
-import dev.slne.surf.microservice.reliability.events
-import dev.slne.surf.microservice.reliability.registerTransactionalService
-import dev.slne.surf.microservice.reliability.support.ReceivedEvents
-import dev.slne.surf.microservice.reliability.support.RecordingTestService
-import dev.slne.surf.microservice.reliability.support.TestClients
-import dev.slne.surf.microservice.reliability.support.TestNats
+import dev.slne.surf.microservice.reliability.TransactionalEvents
+import dev.slne.surf.microservice.reliability.operation.StoredReplyCleanup
+import dev.slne.surf.microservice.reliability.operation.TransactionalInterceptor
+import dev.slne.surf.microservice.reliability.support.OpenedDatabase
 import dev.slne.surf.microservice.reliability.support.TestVendor
-import dev.slne.surf.microservice.reliability.support.eventually
-import dev.slne.surf.nats.service
-import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
-import dev.slne.surf.nats.test.common.proto.v1.StoreRequest
-import kotlinx.coroutines.Dispatchers
+import dev.slne.surf.nats.NatsClient
+import dev.slne.surf.nats.NatsServiceInterceptorProvider
+import dev.slne.surf.nats.NatsTransactional
+import io.mockk.mockk
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.springframework.beans.factory.getBean
+import org.springframework.beans.factory.getBeansOfType
+import org.springframework.context.annotation.AnnotationConfigApplicationContext
+import org.springframework.context.support.registerBean
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.test.assertFailsWith
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 /**
- * The reliability integration as the microservice runtime drives it: migrate and start after the database and NATS,
- * serve transactional handlers from `onBootstrap`, stop after `onDisable`.
+ * [MicroserviceReliabilityAutoConfiguration] in a context with a microservice identity and a database, on both
+ * supported vendors.
  */
 @Testcontainers(disabledWithoutDocker = true)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ReliabilityIntegrationIT {
 
-    private class ReliableMicroservice : Microservice(), ReliabilityCustomizer {
-        override val name = SERVICE_NAME
-        override val reliabilityConfig = ReliabilityConfig(cleanupInterval = 1.hours)
-    }
-
-    private class Context(override val microservice: Microservice) : MicroserviceIntegrationContext {
-        override val name = microservice.name
-        override val dataPath: Path = Path("unused")
-    }
-
-    @BeforeAll
-    fun connect() = runBlocking { TestNats.start() }
-
-    @AfterAll
-    fun disconnect() = runBlocking { TestNats.stop() }
-
-    @Test
-    fun `starts after the database and messaging integrations and stops before them`() {
-        val integration = ReliabilityIntegration()
-
-        assertTrue(integration.order > MicroserviceIntegration.MESSAGING_ORDER)
-        assertTrue(MicroserviceIntegration.MESSAGING_ORDER > MicroserviceIntegration.DATABASE_ORDER)
+    @ParameterizedTest
+    @EnumSource(TestVendor::class)
+    fun `creates the stored reply table and the beans of the handlers`(vendor: TestVendor) {
+        reliable(vendor).use { opened ->
+            assertEquals(0L, runBlocking { storedReplyCount(opened.database) })
+            assertNotNull(opened.context.getBean<AtomicOperations>())
+            assertNotNull(opened.context.getBean<TransactionalEvents>())
+            assertEquals(ReliabilityConfig(), opened.context.getBean<ReliabilityConfig>())
+        }
     }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `migrates, serves transactional handlers and stops`(vendor: TestVendor) = runBlocking<Unit> {
-        vendor.freshDatabase(migrateReliability = false).open("integration").use { api ->
-            val microservice = ReliableMicroservice()
-            val context = Context(microservice)
-            val integration = ReliabilityIntegration { api }
-            val serviceClient = TestClients.create("service")
-            val caller = TestClients.create("caller")
-            val received = ReceivedEvents()
+    fun `the provider wraps only the beans of a transactional service`(vendor: TestVendor) {
+        reliable(vendor).use { opened ->
+            val provider = opened.context.getBean<NatsServiceInterceptorProvider>()
+            val client = mockk<NatsClient>()
 
-            integration.start(context)
-            try {
-                caller.registerListener(received)
-                serviceClient.registerTransactionalService<MicroserviceTestService>(
-                    RecordingTestService(api, microservice.events)
-                )
-
-                caller.service<MicroserviceTestService>().store(StoreRequest("integration-entry"))
-
-                eventually("the event must arrive") { received.messages == listOf("integration-entry") }
-            } finally {
-                withContext(Dispatchers.IO) { serviceClient.close() }
-                integration.stop(context)
-                withContext(Dispatchers.IO) { caller.close() }
-            }
-
-            assertFailsWith<IllegalStateException> { microservice.events }
+            assertIs<TransactionalInterceptor>(
+                provider.interceptorFor(TransactionalService(), TransactionalService::class.java, client)
+            )
+            assertIs<TransactionalInterceptor>(
+                provider.interceptorFor(InheritingService(), InheritingService::class.java, client)
+            )
+            assertNull(provider.interceptorFor(PlainService(), PlainService::class.java, client))
         }
     }
+
+    @ParameterizedTest
+    @EnumSource(TestVendor::class)
+    fun `the cleanup runs while the context runs`(vendor: TestVendor) {
+        val opened = reliable(vendor)
+        val cleanup = opened.context.getBean<StoredReplyCleanup>()
+        try {
+            assertTrue(cleanup.isRunning, "the cleanup must start with the context")
+
+            opened.context.stop()
+            assertFalse(cleanup.isRunning, "the cleanup must stop with the context")
+
+            opened.context.start()
+            assertTrue(cleanup.isRunning, "the cleanup must start again with the context")
+        } finally {
+            opened.close()
+        }
+        assertFalse(cleanup.isRunning, "the cleanup must not outlive the closed context")
+    }
+
+    @ParameterizedTest
+    @EnumSource(TestVendor::class)
+    fun `an application config bean replaces the default`(vendor: TestVendor) {
+        val applicationConfig = ReliabilityConfig(cleanupInterval = 5.minutes)
+
+        reliable(vendor) { registerBean<ReliabilityConfig> { applicationConfig } }.use { opened ->
+            assertEquals(1, opened.context.getBeansOfType<ReliabilityConfig>().size)
+            assertSame(applicationConfig, opened.context.getBean<ReliabilityConfig>())
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(TestVendor::class)
+    fun `backs off without a microservice identity`(vendor: TestVendor) {
+        vendor.freshDatabase().open("no-identity") {
+            register(MicroserviceReliabilityAutoConfiguration::class.java)
+        }.use { opened ->
+            assertTrue(opened.context.getBeansOfType<AtomicOperations>().isEmpty())
+            assertTrue(opened.context.getBeansOfType<TransactionalEvents>().isEmpty())
+            assertTrue(opened.context.getBeansOfType<NatsServiceInterceptorProvider>().isEmpty())
+        }
+    }
+
+    private fun reliable(
+        vendor: TestVendor,
+        configure: AnnotationConfigApplicationContext.() -> Unit = {},
+    ): OpenedDatabase = vendor.freshDatabase().open("reliability-integration") {
+        beanFactory.registerSingleton("microserviceInfo", MicroserviceInfo(SERVICE_NAME, Path.of("unused")))
+        configure()
+        register(MicroserviceReliabilityAutoConfiguration::class.java)
+    }
+
+    private suspend fun storedReplyCount(database: R2dbcDatabase): Long = suspendTransaction(db = database) {
+        exec("SELECT COUNT(*) FROM surf_atomic_operations") { row -> (row.get(0) as Number).toLong() }!!.single()!!
+    }
+
+    @NatsTransactional
+    private open class TransactionalService
+
+    private class InheritingService : TransactionalService()
+
+    private class PlainService
 
     private companion object {
         const val SERVICE_NAME = "reliability-integration"

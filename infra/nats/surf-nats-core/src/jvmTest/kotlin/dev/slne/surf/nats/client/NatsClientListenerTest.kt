@@ -216,6 +216,27 @@ class NatsClientListenerTest {
         override fun on(event: Created) = Unit
     }
 
+    /**
+     * Stands in for the CGLIB subclass a Spring proxy makes of [BaseListener]: it overrides the annotated method
+     * without repeating the annotation.
+     */
+    class ProxyOfBaseListener : BaseListener() {
+        var intercepted = 0
+
+        override fun on(event: Created) {
+            intercepted++
+            super.on(event)
+        }
+    }
+
+    @Suppress("unused")
+    open class FinalMethodListener {
+        @NatsListener
+        fun on(event: Created) = Unit
+    }
+
+    class ProxyOfFinalMethodListener : FinalMethodListener()
+
     class ConflictingListener {
         val recorder = Recorder<Created>()
 
@@ -512,6 +533,36 @@ class NatsClientListenerTest {
 
         assertEquals(Created(1), listener.recorder.receiveWithin())
         listener.recorder.assertNothingWithin()
+    }
+
+    @Test
+    fun `listener of a proxy subclass is registered through the scan type and invoked through the proxy`() =
+        withClient("listen-proxy-scan-type") { client ->
+            val proxy = ProxyOfBaseListener()
+            client.registerListener(proxy, BaseListener::class.java)
+
+            client.publish(Created(3))
+
+            assertEquals(Created(3), proxy.recorder.receiveWithin())
+            assertEquals(1, proxy.intercepted)
+        }
+
+    @Test
+    fun `final listener method of a proxied bean is rejected`() = withClient("listen-proxy-final") { client ->
+        val exception = assertFailsWith<IllegalArgumentException> {
+            client.registerListener(ProxyOfFinalMethodListener(), FinalMethodListener::class.java)
+        }
+
+        assertContains(exception.message.orEmpty(), "must not be final on a proxied bean")
+    }
+
+    @Test
+    fun `scan type that the listener is not an instance of is rejected`() = withClient("listen-scan-type") { client ->
+        val exception = assertFailsWith<IllegalArgumentException> {
+            client.registerListener(CreatedListener(), BaseListener::class.java)
+        }
+
+        assertContains(exception.message.orEmpty(), "is not an instance of")
     }
 
     @Test

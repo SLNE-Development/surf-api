@@ -53,7 +53,9 @@ class AllInstancesRecipientsTest {
         data class Fail(val type: String, val message: String) : Behaviour
         data object Hang : Behaviour
 
-        /** A reply without `Surf-Error` and `Surf-Answer: unknown` whose body cannot be decoded. */
+        /**
+         * A reply without `Surf-Error` and `Surf-Answer: unknown` whose body cannot be decoded.
+         */
         data class Garbage(val withContentType: Boolean = true) : Behaviour
     }
 

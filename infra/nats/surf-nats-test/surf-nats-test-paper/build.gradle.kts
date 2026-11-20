@@ -4,7 +4,6 @@ plugins {
 }
 
 surfPaperPluginApi {
-    mainClass("dev.slne.surf.nats.test.paper.PaperMain")
     authors.addAll("twisti")
 }
 

@@ -141,8 +141,5 @@ The name itself is validated on every read: empty, or containing `=` or a NUL ch
 
 ## What this is not
 
-`env` reads the process environment only. The `.env` file loader in
-`common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/environment/EnvironmentAccessor.kt`
-is a separate, impl-side object used by `EnvironmentConfig` to resolve `SURF_ENVIRONMENT` for
-`@ConditionalOnEnvironment` (see the `surf-api-components` skill). It also treats a blank value as
-absent, which `env` does not. A variable set only in `.env` is invisible to `env`.
+`env` reads the process environment only, never a `.env` file: a variable must be set in the
+environment of the JVM process to be visible.

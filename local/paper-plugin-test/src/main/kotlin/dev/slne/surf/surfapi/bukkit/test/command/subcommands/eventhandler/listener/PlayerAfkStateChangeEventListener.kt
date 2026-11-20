@@ -1,8 +1,12 @@
+// The test commands register and unregister these listeners at runtime, which needs the bus itself.
+@file:OptIn(InternalSurfApi::class)
+
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.listener
 
 import dev.slne.surf.api.event.SurfEventBus
 import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.paper.event.common.PlayerAfkStateChangeEvent
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 
 object PlayerAfkStateChangeEventListener {
     private var lastEvent: PlayerAfkStateChangeEvent? = null
@@ -22,7 +26,7 @@ object PlayerAfkStateChangeEventListener {
     }
 
     @SurfEventHandler
-   private fun onPlayerAfkStateChange(event: PlayerAfkStateChangeEvent) {
+    private fun onPlayerAfkStateChange(event: PlayerAfkStateChangeEvent) {
         lastEvent = event
     }
 }

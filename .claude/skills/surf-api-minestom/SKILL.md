@@ -21,7 +21,7 @@ them.
 | Gradle plugin | `dev.slne.surf.api.gradle.minestom` | `dev.slne.surf.api.gradle.minestom-server` |
 | Extension | `surfMinestomApi { }` plus `minestomPluginFile { }` | `surfMinestomServerApi { }` |
 | Coordinate pulled in | `surf-api-minestom` (`compileOnly`) | `surf-api-minestom-server` (`implementation`) |
-| Entry point | a `SurfMinestomPlugin` subclass named in `minestom-plugin.json` | a `main` function calling `surfMinestomServer { }` |
+| Entry point | a `SurfMinestomPlugin` subclass, generated or named, plus Spring beans that carry the logic | a `main` function calling `surfMinestomServer { }` |
 | Owns the server config | no | yes - features, configuration phase, max players, shutdown |
 | Reference | **`references/plugin.md`** | **`references/server.md`** |
 
@@ -47,36 +47,58 @@ The LuckPerms feature (`platform/minestom/luckperms-impl`) is only in the build 
 
 ## Writing a plugin
 
+The plugin class carries no logic and has no lifecycle methods. The Gradle plugin generates it
+(`GeneratedSurfPlugin` in the plugin's base package) unless `minestomPluginFile { main = ... }`
+names one. surf-api builds a Spring context for every plugin, and the logic lives in its beans. From
+`local/minestom-example-plugin/`:
+
 ```kotlin
-class ExamplePlugin : SurfMinestomPlugin() {
+class ExamplePlugin : SurfMinestomPlugin()
+
+@Service
+class Greeting(private val plugin: ExamplePlugin) : SurfLifecycle {
+
+    lateinit var text: String
+        private set
+
     override suspend fun onLoad() {
-        val file = dataDirectory.createDirectories().resolve("greeting.txt")
-        logger.info("Loaded the greeting from {}", file)
+        val file = plugin.dataDirectory.createDirectories().resolve("greeting.txt")
+        if (!file.exists()) file.writeText("Welcome!")
+        text = file.readText().trim()
     }
+}
 
-    override suspend fun onEnable() {
-        eventNode.addListener<PlayerJoinEvent> { event ->
-            event.player.sendMessage(Component.text("Hello!", NamedTextColor.GREEN))
+@Configuration(proxyBeanMethods = false)
+class ExampleEvents {
+
+    @Bean
+    fun greetOnJoin(greeting: Greeting): EventNode<Event> =
+        EventNode.all("example-greeting").addListener(PlayerJoinEvent::class.java) { event ->
+            event.player.sendMessage(Component.text(greeting.text, NamedTextColor.GREEN))
         }
-        scope.launch { /* ... */ }
-    }
-
-    override suspend fun onDisable() = Unit
 }
 ```
 
-The class needs a no-argument constructor or has to be an `object`, and is named as `main` in
-`minestom-plugin.json`. `meta`, `eventNode`, `dataDirectory` (`plugins/<id>`), `logger` and `scope`
-come from the base class. Listeners on `eventNode`, coroutines in `scope` and commands registered
-during a lifecycle function or from `scope` are removed, cancelled or unregistered when the plugin
-is disabled.
+`meta`, `eventNode`, `dataDirectory` (`plugins/<id>`), `logger` and `scope` come from the base
+class, and the plugin instance is a bean of its own context: a bean injects it by its concrete type,
+or as `SurfMinestomPlugin` when the main class is the generated one.
+`SurfLifecycle` beans get `onLoad`, `onEnable` and `onDisable`. In the enable phase, before the
+`onEnable` hooks, surf-api attaches every `EventNode` bean to the plugin's `eventNode` and
+registers the plugin's commands (`CommandAPICommand` and `CommandTree` beans, `CommandRegistrar`
+beans) and `@SurfEventHandler` beans. Listeners on `eventNode`, coroutines in `scope` and commands
+registered while a hook runs are removed, cancelled or unregistered when the plugin is disabled.
 
-The lifecycle functions run **blocking** while the server starts and stops, so they must not wait
-for work dispatched to `MinestomDispatchers.Main` or an entity scheduler - the server does not tick
-yet while starting and no longer ticks while stopping. Launch that work in `scope` instead.
+The plugin's package must lie outside `dev.slne.surf.api`: a plugin shaded into the server shares
+surf-api's class loader, and surf-api's root context scans that package. The Gradle plugin fails the
+build on such a package, and the server rejects the plugin.
 
-Details, including the Gradle plugin, the generated `minestom-plugin.json` and the class-path index:
-**`references/plugin.md`**.
+The hooks run **blocking** while the server starts and stops, so they must not wait for work
+dispatched to `MinestomDispatchers.Main` or an entity scheduler - the server does not tick yet while
+starting and no longer ticks while stopping. Launch that work in `scope` instead.
+
+Details, including the Gradle plugin, the generated `minestom-plugin.json`, the class-path index
+and the plugin's coroutine scope: **`references/plugin.md`**. Beans, `@PluginApi` exports between
+plugins and `@ConditionalOnPlugin`: **`surf-api-components`**.
 
 ## Building a server
 
@@ -102,10 +124,12 @@ fun main() {
 ```
 
 `surfMinestomServer { }` (`platform/minestom/impl/.../server/SurfMinestomServer.kt`) is called
-**once**, after `MinecraftServer.init()` and before `MinecraftServer#start`. It loads and enables
-every feature and every plugin before it returns, so the server is ready for players - and the
-CommandAPI is ready, so commands can be registered right after it. It throws when the server is not
-initialised, when the api is already running, or when Mixin is not installed (tests excepted).
+**once**, after `MinecraftServer.init()` and before `MinecraftServer#start`. It builds surf-api's
+root Spring context, in which the running server is a bean of type `SurfMinestomServer`, and loads
+and enables every feature and every plugin before it returns, so the server is ready for players -
+and the CommandAPI is ready, so commands can be registered right after it. It throws when the
+server is not initialised, when the api is already running, or when Mixin is not installed (tests
+excepted).
 
 Features are loaded in `loadPriority` order (ties in installation order), enabled in the same order
 and disabled in reverse. A feature throwing in `load` or `enable` fails the whole call and disables
@@ -145,7 +169,7 @@ Platform-independent, or with a skill of their own:
 - messages, `Colors`, MiniMessage → **`surf-api-messages`**
 - Configurate config classes and serializers → **`surf-api-config`**
 - the surf event bus → **`surf-api-events`**
-- beans and the bean container → **`surf-api-components`**
+- Spring beans, `SurfLifecycle`, `@PluginApi` → **`surf-api-components`**
 - module layout, Gradle paths and coordinates → **`surf-api-build`**
 
 Minestom has no NMS layer - `surf-api-nms` is Paper only.

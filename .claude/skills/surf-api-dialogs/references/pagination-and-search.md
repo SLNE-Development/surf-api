@@ -46,20 +46,30 @@ A caller needs a `DialogQuery<PageState, T>` doing its own filtering, slicing an
 arithmetic; `PageResult.totalItems` is optional and `paginatedDialog` never reads it. A worked
 query, including wildcard search handling, lives in
 `local/paper-plugin-test/src/main/kotlin/dev/slne/surf/surfapi/bukkit/test/command/dialog/subcommands/PaginatedDialogTest.kt`
-(that module still uses the old `dev.slne.surf.surfapi.bukkit` package names — read it for the
-dialog usage, not for package conventions). Its call site:
+(that module uses the `dev.slne.surf.surfapi.bukkit` package names — read it for the query, not
+for package conventions or for how it obtains its scope). From a bean, launch in the plugin's
+injected `CoroutineScope` and hand the same scope over, so the dialog's state updates are cancelled
+with the plugin:
 
 ```kotlin
-plugin.launch {
-    paginatedDialog(
-        player = player,
-        query = PaginatedDialogTest.PaginatedEntryQuery,
-        searchable = true,
-        itemBuilder = { entry -> buildText { text(entry.name) } to entry.dialog },
-        scope = plugin.scope,
-    )
+@Service
+class EntryBrowser(private val scope: CoroutineScope) {
+    fun open(player: Player) {
+        scope.launch {
+            paginatedDialog(
+                player = player,
+                query = EntryQuery,
+                searchable = true,
+                itemBuilder = { entry -> buildText { text(entry.name) } to entry.dialog },
+                scope = scope,
+            )
+        }
+    }
 }
 ```
+
+`EntryQuery` stands for your own `DialogQuery<PageState, Entry>`, such as the test plugin's
+`PaginatedEntryQuery`.
 
 ## `searchDialog` — both platforms, same shape
 

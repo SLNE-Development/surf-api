@@ -101,7 +101,9 @@ fun layoutViewText(
     return LaidOutViewText(result, width)
 }
 
-/** One component part after transformation, with the pixels it advances the cursor by. */
+/**
+ * One component part after transformation, with the pixels it advances the cursor by.
+ */
 private data class LaidOutRun(val text: String, val width: Int)
 
 /**

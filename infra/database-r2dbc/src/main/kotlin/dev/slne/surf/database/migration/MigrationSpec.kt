@@ -5,8 +5,8 @@ import dev.slne.surf.database.config.DatabaseType
 /**
  * Describes the migrations of one plugin.
  *
- * Every entry is optional, but at least one of [sql], [classes] or [classPackage] must be given. Each may be called
- * more than once; repeated entries are registered once.
+ * Every entry is optional, but at least one of [sql], [classes], [classNames] or [classPackage] must be given. Each
+ * may be called more than once; repeated entries are registered once.
  *
  * All migrations must be idempotent (for example `CREATE TABLE IF NOT EXISTS`): the history of a plugin starts at its
  * [baselineVersion], and the target database may already contain objects created before migrations were introduced.
@@ -14,7 +14,9 @@ import dev.slne.surf.database.config.DatabaseType
 class MigrationSpec internal constructor(private var loader: ClassLoader) {
     private val sqlPaths = LinkedHashSet<String>()
     private val migrations = LinkedHashSet<SurfMigration>()
+    private val names = LinkedHashSet<String>()
     private val packages = LinkedHashSet<String>()
+    private val optionalPackages = LinkedHashSet<String>()
     private var baseline = "0"
 
     /**
@@ -40,12 +42,31 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
     }
 
     /**
-     * Adds a package that is scanned, including subpackages and named nested classes, for [SurfMigration] objects and
-     * subclasses with a public no-argument constructor. `migrate()` fails if the package contains none.
+     * Adds code migrations by binary class name, such as `com.acme.db.V2_Seed` or `com.acme.Migrations$V3_Backfill` for
+     * a nested class. Exactly the named classes are loaded through the [classLoader], when `migrate()` runs; no other
+     * class is touched, unlike [classPackage].
+     *
+     * Each class must be a concrete [SurfMigration]: a Kotlin `object`, or a class with a public no-argument
+     * constructor. `migrate()` fails if a class cannot be loaded, is no concrete migration or cannot be instantiated.
+     *
+     * @throws IllegalArgumentException if a name is blank
      */
-    fun classPackage(packageName: String) {
+    fun classNames(vararg binaryNames: String) {
+        for (binaryName in binaryNames) {
+            require(binaryName.isNotBlank()) { "Class name must not be blank" }
+            names += binaryName.trim()
+        }
+    }
+
+    /**
+     * Adds a package that is scanned, including subpackages and named nested classes, for [SurfMigration] objects and
+     * subclasses with a public no-argument constructor. `migrate()` fails if the package contains none, unless
+     * [required] is `false`.
+     */
+    @OptIn(ExperimentalVersionOverloading::class)
+    fun classPackage(packageName: String, @IntroducedAt("4.0.0") required: Boolean = true) {
         require(packageName.isNotBlank()) { "Package name must not be blank" }
-        packages += packageName
+        if (required) packages += packageName else optionalPackages += packageName
     }
 
     /**
@@ -77,8 +98,11 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
     internal fun build(name: String): MigrationPlan {
         val normalizedName = name.lowercase()
         require(NAME_REGEX.matches(normalizedName)) { "Migration name '$name' must match [a-z0-9_]{1,40}" }
-        require(sqlPaths.isNotEmpty() || migrations.isNotEmpty() || packages.isNotEmpty()) {
-            "Migration '$name' needs at least one of sql(), classes() or classPackage()"
+        require(
+            sqlPaths.isNotEmpty() || migrations.isNotEmpty() || names.isNotEmpty() ||
+                packages.isNotEmpty() || optionalPackages.isNotEmpty()
+        ) {
+            "Migration '$name' needs at least one of sql(), classes(), classNames() or classPackage()"
         }
 
         return MigrationPlan(
@@ -86,7 +110,9 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
             historyTable = "flyway_schema_history_$normalizedName",
             sqlPaths = sqlPaths.toList(),
             migrations = migrations.toList(),
+            classNames = names.toList(),
             packages = packages.toList(),
+            optionalPackages = optionalPackages.toList(),
             baselineVersion = baseline,
             classLoader = loader
         )
@@ -110,13 +136,18 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
  * @property name Migration name as passed to `migrate()`, used in error messages.
  * @property sqlPaths Classpath paths of the SQL locations, without `classpath:` prefix and surrounding slashes. They
  * may still contain [MigrationSpec.VENDOR_PLACEHOLDER].
+ * @property classNames binary names of the migration classes to load, without any other class of their package
+ * @property packages scanned packages that must contain a migration class
+ * @property optionalPackages scanned packages that may contain none
  */
 internal data class MigrationPlan(
     val name: String,
     val historyTable: String,
     val sqlPaths: List<String>,
     val migrations: List<SurfMigration>,
+    val classNames: List<String>,
     val packages: List<String>,
+    val optionalPackages: List<String>,
     val baselineVersion: String,
     val classLoader: ClassLoader
 )

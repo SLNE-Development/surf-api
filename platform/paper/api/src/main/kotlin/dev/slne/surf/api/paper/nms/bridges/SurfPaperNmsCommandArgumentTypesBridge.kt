@@ -4,14 +4,16 @@ package dev.slne.surf.api.paper.nms.bridges
 
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.context.CommandContext
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import kotlinx.coroutines.Deferred
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.nbt.CompoundBinaryTag
+import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
+@SurfApiBean
 interface SurfPaperNmsCommandArgumentTypesBridge {
 
     fun compoundTag(): ArgumentType<*>
@@ -21,7 +23,7 @@ interface SurfPaperNmsCommandArgumentTypesBridge {
     fun getSignedMessage(ctx: CommandContext<*>, key: String): Deferred<SignedMessage>
 
     companion object {
-        val INSTANCE get() = bridge
+        internal val INSTANCE get() = bridge
     }
 }
 

@@ -62,8 +62,18 @@ then maps it onto an IF `PaginationStateBuilder`:
 | `suspendSource(scope \| plugin) { }` | `suspend CoroutineScope.(Context) -> Iterable<T>` | `ComputedAsync` | computed async | on every page load |
 | `lazySuspendSource(scope \| plugin) { }` | `suspend CoroutineScope.(Context) -> Iterable<T>` | `LazyAsync` | lazy async | once per viewer session |
 
-The suspend variants wrap the block in `scope.future { }` (`kotlinx-coroutines-jdk8`); the `plugin`
-overloads use `plugin.scope` from mccoroutine-folia and exist on Paper only.
+The suspend variants wrap the block in `scope.future { }` (`kotlinx-coroutines-jdk8`). The `plugin`
+overloads exist on Paper only and use the plugin's coroutine scope with its main dispatcher, because
+IF renders a page on the thread that completes the page's source. They resolve that scope when
+the `pagination { }` block runs, so the plugin's context must exist by then; otherwise build the
+view later, or pass a scope yourself. A bean has its plugin's `CoroutineScope` and
+`PaperDispatchers` injected:
+
+```kotlin
+pagination<Warp> {
+    suspendSource(scope + dispatchers.main) { warps.loadAll() }
+}
+```
 
 Why "once per registered view" for a static source: `PaginationDsl` calls
 `sourceType.provider()` *inside* the factory it stores on the context, and that factory is invoked
@@ -129,7 +139,7 @@ not items - they are a glyph in the header.
 `PaginationButtonGlyphComponent` (internal, sealed) draws the bar: `Disabled`, `DisabledLeft`
 (only next available), `DisabledRight` (only previous available), `Enabled`, chosen by
 `getByPaginationState(row, pagination, geometry)`. Glyph characters come from the shared
-`PaginationButtonGlyphs` table in core, one per row 1-6. Constants worth knowing:
+`PaginationButtonGlyphs` table (shared, `common/inventory/api` internal), one per row 1-6. Constants worth knowing:
 `TEXTURE_WIDTH = 89`, `GLYPH_INSET = 0`, `COUNTER_AREA_OFFSET = 15`, `COUNTER_AREA_WIDTH = 58`, and
 `counterAreaShift(geometry) = geometry.columnShift(2) + GLYPH_INSET + 15`. The texture
 (`menu/pagination/buttons.png`, 88x48 as four 88x12 bands) cannot line up with both slot centres at
@@ -160,7 +170,7 @@ on the slot grid, using `settings.rowFont(buttonRow)` for the vertical position 
 `updatePaginationOverlay(context)` reads the pagination, swaps the button glyph and the page counter
 in the container, and lets `modifyContainer` push the new title. It runs:
 
-- from `onPageSwitch`, prepended to whatever handler the DSL registered (`prepend` from core util),
+- from `onPageSwitch`, prepended to whatever handler the DSL registered (`prepend` from common util, `surf-api-common-api`),
   so the overlay updates before user code;
 - once after the initial render - for a static pagination immediately, scheduled a tick later
   (`player.scheduler.run(...)` on Paper, `nextTick { }` on Minestom); for a dynamic one through

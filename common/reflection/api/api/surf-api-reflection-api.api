@@ -35,7 +35,6 @@ public abstract interface class dev/slne/surf/api/reflection/SurfReflection {
 }
 
 public final class dev/slne/surf/api/reflection/SurfReflection$Companion {
-	public final fun getINSTANCE ()Ldev/slne/surf/api/reflection/SurfReflection;
 }
 
 public final class dev/slne/surf/api/reflection/SurfReflection$DefaultImpls {

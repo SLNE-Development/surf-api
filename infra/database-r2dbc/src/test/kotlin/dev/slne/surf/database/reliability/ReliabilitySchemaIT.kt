@@ -1,12 +1,12 @@
 package dev.slne.surf.database.reliability
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.reliability.operation.AtomicOperations
 import dev.slne.surf.database.reliability.operation.OperationKey
 import dev.slne.surf.database.reliability.operation.StoredReply
 import dev.slne.surf.database.testing.DatabaseContainers
+import dev.slne.surf.database.testing.TestDatabase
 import dev.slne.surf.database.testing.connectionDetails
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.toTestDatabase
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -23,7 +23,7 @@ class ReliabilitySchemaIT {
     @EnumSource(ReliabilityVendor::class)
     fun migrationKeepsItsOwnHistoryAndIsRepeatable(vendor: ReliabilityVendor) = vendor.withTwoProcesses { first, second ->
         // withTwoProcesses already migrated through the first process.
-        val again = second.migrateReliabilitySchema()
+        val again = second.migrationRunner.migrate(ReliabilityMigrationSet())
 
         assertEquals(0, again.migrationsExecuted)
         assertEquals(
@@ -37,12 +37,12 @@ class ReliabilitySchemaIT {
     fun postgresSchemasOfOneDatabaseEachGetTheirOwnTablesAndHistory() = runBlocking {
         val container = DatabaseContainers.postgres()
         val schemas = List(2) { container.connectionDetails(fresh = true) }
-        val apis = schemas.map { it.toDatabaseApi() }
+        val testDbs = schemas.map { it.toTestDatabase() }
         try {
-            for (api in apis) {
-                assertEquals(1, api.migrateReliabilitySchema().migrationsExecuted)
+            for (testDb in testDbs) {
+                assertEquals(1, testDb.migrationRunner.migrate(ReliabilityMigrationSet()).migrationsExecuted)
             }
-            AtomicOperations(apis[0]).execute(OperationKey("billing", "invoices.Create", "message-1"), byteArrayOf(1)) {
+            AtomicOperations(testDbs[0].database).execute(OperationKey("billing", "invoices.Create", "message-1"), byteArrayOf(1)) {
                 StoredReply("text/plain", ByteArray(0))
             }
 
@@ -51,7 +51,7 @@ class ReliabilitySchemaIT {
                 assertEquals(
                     RELIABILITY_TABLES.size.toLong(),
                     ReliabilityVendor.POSTGRESQL.queryLong(
-                        apis[0],
+                        testDbs[0],
                         "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$schema' " +
                                 "AND table_name IN (${RELIABILITY_TABLES.joinToString { "'$it'" }})"
                     ),
@@ -60,37 +60,37 @@ class ReliabilitySchemaIT {
                 assertEquals(
                     1,
                     ReliabilityVendor.POSTGRESQL.queryLong(
-                        apis[0],
+                        testDbs[0],
                         "SELECT COUNT(*) FROM \"$schema\".flyway_schema_history_surf_reliability WHERE version = '1'"
                     )
                 )
             }
             val (owning, other) = schemas.map { it.schema }
-            assertEquals(1, operationRows(apis[0], owning))
-            assertEquals(0, operationRows(apis[0], other))
+            assertEquals(1, operationRows(testDbs[0], owning))
+            assertEquals(0, operationRows(testDbs[0], other))
         } finally {
-            apis.forEach { it.shutdown() }
+            testDbs.forEach { it.close() }
         }
     }
 
-    private fun operationRows(api: DatabaseApi, schema: String): Long =
-        ReliabilityVendor.POSTGRESQL.queryLong(api, "SELECT COUNT(*) FROM \"$schema\".surf_atomic_operations")
+    private fun operationRows(testDb: TestDatabase, schema: String): Long =
+        ReliabilityVendor.POSTGRESQL.queryLong(testDb, "SELECT COUNT(*) FROM \"$schema\".surf_atomic_operations")
 
     @Test
     fun mariaDbTablesOnAnotherEngineFailClearly() = runBlocking {
-        val api = DatabaseContainers.mariadb().toDatabaseApi(fresh = true)
+        val testDb = DatabaseContainers.mariadb().toTestDatabase(fresh = true)
         try {
             ReliabilityVendor.MARIADB.execute(
-                api,
+                testDb,
                 "CREATE TABLE surf_atomic_operations (owner VARCHAR(64), operation VARCHAR(255), " +
                         "idempotency_key VARCHAR(255), expires_at DATETIME(6)) ENGINE = MyISAM"
             )
 
-            val failure = assertFailsWith<IllegalStateException> { api.migrateReliabilitySchema() }
+            val failure = assertFailsWith<IllegalStateException> { testDb.migrationRunner.migrate(ReliabilityMigrationSet()) }
 
             assertContains(failure.message.orEmpty(), "surf_atomic_operations: MyISAM")
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 

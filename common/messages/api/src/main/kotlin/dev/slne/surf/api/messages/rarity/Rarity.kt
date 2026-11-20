@@ -1,8 +1,10 @@
 package dev.slne.surf.api.messages.rarity
 
 import dev.slne.surf.api.messages.adventure.text
+import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.TextColor.color
 
 /**
  * Represents the rarity of an item or entity within the system.
@@ -15,33 +17,35 @@ import net.kyori.adventure.text.format.TextColor
  */
 enum class Rarity(
     displayName: String,
-    val color: TextColor
+    val color: TextColor,
 ) : ComponentLike {
     COMMON(
         displayName = "Gewöhnlich",
-        color = TextColor.color(0xAAAAAA),
+        color = color(0xAAAAAA),
     ),
     UNCOMMON(
         displayName = "Ungewöhnlich",
-        color = TextColor.color(0x55FF55)
+        color = color(0x55FF55)
     ),
     RARE(
         displayName = "Selten",
-        color = TextColor.color(0x55FFFF)
+        color = color(0x55FFFF)
     ),
     EPIC(
         displayName = "Episch",
-        color = TextColor.color(0xFF55FF)
+        color = color(0xFF55FF)
     ),
     LEGENDARY(
         displayName = "Legendär",
-        color = TextColor.color(0xFFAA00)
+        color = color(0xFFAA00)
     ),
     MYTHIC(
         displayName = "Mythisch",
-        color = TextColor.color(0xAA00AA)
-    );
+        color = color(0xAA00AA)
+    ),
+    ;
 
-    val displayName = text(displayName, color)
-    override fun asComponent() = displayName
+    val displayName: Component = text(displayName, color)
+
+    override fun asComponent(): Component = displayName
 }

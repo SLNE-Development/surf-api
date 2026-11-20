@@ -84,21 +84,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<String>.() -> Unit = {}
     ): String = defaultedConverted(name, default, "String", sensitive, { it }, validation)
 
-    /** Resolves a required [Int]. */
+    /**
+     * Resolves a required [Int].
+     */
     fun int(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
     ): Int = requiredConverted(name, "Int", sensitive, String::toInt, validation)
 
-    /** Resolves an optional [Int]. */
+    /**
+     * Resolves an optional [Int].
+     */
     fun optionalInt(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
     ): Int? = optionalConverted(name, "Int", sensitive, String::toInt, validation)
 
-    /** Resolves an [Int] or returns [default] when it is missing. */
+    /**
+     * Resolves an [Int] or returns [default] when it is missing.
+     */
     fun int(
         name: String,
         default: Int,
@@ -106,21 +112,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
     ): Int = defaultedConverted(name, default, "Int", sensitive, String::toInt, validation)
 
-    /** Resolves a required [Long]. */
+    /**
+     * Resolves a required [Long].
+     */
     fun long(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
     ): Long = requiredConverted(name, "Long", sensitive, String::toLong, validation)
 
-    /** Resolves an optional [Long]. */
+    /**
+     * Resolves an optional [Long].
+     */
     fun optionalLong(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
     ): Long? = optionalConverted(name, "Long", sensitive, String::toLong, validation)
 
-    /** Resolves a [Long] or returns [default] when it is missing. */
+    /**
+     * Resolves a [Long] or returns [default] when it is missing.
+     */
     fun long(
         name: String,
         default: Long,
@@ -128,21 +140,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
     ): Long = defaultedConverted(name, default, "Long", sensitive, String::toLong, validation)
 
-    /** Resolves a required [Double]. */
+    /**
+     * Resolves a required [Double].
+     */
     fun double(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
     ): Double = requiredConverted(name, "Double", sensitive, String::toDouble, validation)
 
-    /** Resolves an optional [Double]. */
+    /**
+     * Resolves an optional [Double].
+     */
     fun optionalDouble(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
     ): Double? = optionalConverted(name, "Double", sensitive, String::toDouble, validation)
 
-    /** Resolves a [Double] or returns [default] when it is missing. */
+    /**
+     * Resolves a [Double] or returns [default] when it is missing.
+     */
     fun double(
         name: String,
         default: Double,
@@ -150,21 +168,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
     ): Double = defaultedConverted(name, default, "Double", sensitive, String::toDouble, validation)
 
-    /** Resolves a required [Float]. */
+    /**
+     * Resolves a required [Float].
+     */
     fun float(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
     ): Float = requiredConverted(name, "Float", sensitive, String::toFloat, validation)
 
-    /** Resolves an optional [Float]. */
+    /**
+     * Resolves an optional [Float].
+     */
     fun optionalFloat(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
     ): Float? = optionalConverted(name, "Float", sensitive, String::toFloat, validation)
 
-    /** Resolves a [Float] or returns [default] when it is missing. */
+    /**
+     * Resolves a [Float] or returns [default] when it is missing.
+     */
     fun float(
         name: String,
         default: Float,
@@ -183,14 +207,18 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
     ): Boolean = requiredConverted(name, "Boolean", sensitive, ::parseBoolean, validation)
 
-    /** Resolves an optional strict boolean. */
+    /**
+     * Resolves an optional strict boolean.
+     */
     fun optionalBoolean(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
     ): Boolean? = optionalConverted(name, "Boolean", sensitive, ::parseBoolean, validation)
 
-    /** Resolves a strict boolean or returns [default] when it is missing. */
+    /**
+     * Resolves a strict boolean or returns [default] when it is missing.
+     */
     fun boolean(
         name: String,
         default: Boolean,
@@ -198,21 +226,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
     ): Boolean = defaultedConverted(name, default, "Boolean", sensitive, ::parseBoolean, validation)
 
-    /** Resolves a required [UUID]. */
+    /**
+     * Resolves a required [UUID].
+     */
     fun uuid(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
     ): UUID = requiredConverted(name, "UUID", sensitive, UUID::fromString, validation)
 
-    /** Resolves an optional [UUID]. */
+    /**
+     * Resolves an optional [UUID].
+     */
     fun optionalUuid(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
     ): UUID? = optionalConverted(name, "UUID", sensitive, UUID::fromString, validation)
 
-    /** Resolves a [UUID] or returns [default] when it is missing. */
+    /**
+     * Resolves a [UUID] or returns [default] when it is missing.
+     */
     fun uuid(
         name: String,
         default: UUID,
@@ -220,21 +254,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
     ): UUID = defaultedConverted(name, default, "UUID", sensitive, UUID::fromString, validation)
 
-    /** Resolves a required Kotlin [Duration]. */
+    /**
+     * Resolves a required Kotlin [Duration].
+     */
     fun duration(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
     ): Duration = requiredConverted(name, "Duration", sensitive, Duration::parse, validation)
 
-    /** Resolves an optional Kotlin [Duration]. */
+    /**
+     * Resolves an optional Kotlin [Duration].
+     */
     fun optionalDuration(
         name: String,
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
     ): Duration? = optionalConverted(name, "Duration", sensitive, Duration::parse, validation)
 
-    /** Resolves a Kotlin [Duration] or returns [default] when it is missing. */
+    /**
+     * Resolves a Kotlin [Duration] or returns [default] when it is missing.
+     */
     fun duration(
         name: String,
         default: Duration,
@@ -242,21 +282,27 @@ class EnvironmentVariables private constructor(
         validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
     ): Duration = defaultedConverted(name, default, "Duration", sensitive, Duration::parse, validation)
 
-    /** Resolves a required enum constant by its exact constant name. */
+    /**
+     * Resolves a required enum constant by its exact constant name.
+     */
     inline fun <reified T : Enum<T>> enum(
         name: String,
         sensitive: Boolean = false,
         noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
     ): T = required(name, { enumValueOf<T>(it) }, sensitive, validation)
 
-    /** Resolves an optional enum constant by its exact constant name. */
+    /**
+     * Resolves an optional enum constant by its exact constant name.
+     */
     inline fun <reified T : Enum<T>> optionalEnum(
         name: String,
         sensitive: Boolean = false,
         noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
     ): T? = optional(name, { enumValueOf<T>(it) }, sensitive, validation)
 
-    /** Resolves an enum constant or returns [default] when it is missing. */
+    /**
+     * Resolves an enum constant or returns [default] when it is missing.
+     */
     inline fun <reified T : Enum<T>> enum(
         name: String,
         default: T,
@@ -313,7 +359,9 @@ class EnvironmentVariables private constructor(
         optional(name, converter, sensitive, validation)
     }
 
-    /** Creates a required non-blank string delegate. */
+    /**
+     * Creates a required non-blank string delegate.
+     */
     fun requiredNonBlank(
         sensitive: Boolean = false,
         validation: EnvironmentVariableValidation<String>.() -> Unit = {}
@@ -321,12 +369,16 @@ class EnvironmentVariables private constructor(
         requiredNonBlank(name, sensitive, validation)
     }
 
-    /** Creates a required sensitive string delegate. */
+    /**
+     * Creates a required sensitive string delegate.
+     */
     fun requiredSecret(
         validation: EnvironmentVariableValidation<String>.() -> Unit = {}
     ): EnvironmentVariableDelegate<String> = required(sensitive = true, validation)
 
-    /** Creates a defaulted string delegate. */
+    /**
+     * Creates a defaulted string delegate.
+     */
     fun string(
         default: String,
         sensitive: Boolean = false,
@@ -335,37 +387,49 @@ class EnvironmentVariables private constructor(
         string(name, default, sensitive, validation)
     }
 
-    /** Creates a required [Int] delegate. */
+    /**
+     * Creates a required [Int] delegate.
+     */
     fun int(
         validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Int> = delegate { name -> int(name, validation = validation) }
 
-    /** Creates an optional [Int] delegate. */
+    /**
+     * Creates an optional [Int] delegate.
+     */
     fun optionalInt(
         validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Int?> = delegate { name ->
         optionalInt(name, validation = validation)
     }
 
-    /** Creates a defaulted [Int] delegate. */
+    /**
+     * Creates a defaulted [Int] delegate.
+     */
     fun int(
         default: Int,
         validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Int> = delegate { name -> int(name, default, validation = validation) }
 
-    /** Creates a required [Long] delegate. */
+    /**
+     * Creates a required [Long] delegate.
+     */
     fun long(
         validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Long> = delegate { name -> long(name, validation = validation) }
 
-    /** Creates an optional [Long] delegate. */
+    /**
+     * Creates an optional [Long] delegate.
+     */
     fun optionalLong(
         validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Long?> = delegate { name ->
         optionalLong(name, validation = validation)
     }
 
-    /** Creates a defaulted [Long] delegate. */
+    /**
+     * Creates a defaulted [Long] delegate.
+     */
     fun long(
         default: Long,
         validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
@@ -373,19 +437,25 @@ class EnvironmentVariables private constructor(
         long(name, default, validation = validation)
     }
 
-    /** Creates a required [Double] delegate. */
+    /**
+     * Creates a required [Double] delegate.
+     */
     fun double(
         validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Double> = delegate { name -> double(name, validation = validation) }
 
-    /** Creates an optional [Double] delegate. */
+    /**
+     * Creates an optional [Double] delegate.
+     */
     fun optionalDouble(
         validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Double?> = delegate { name ->
         optionalDouble(name, validation = validation)
     }
 
-    /** Creates a defaulted [Double] delegate. */
+    /**
+     * Creates a defaulted [Double] delegate.
+     */
     fun double(
         default: Double,
         validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
@@ -393,19 +463,25 @@ class EnvironmentVariables private constructor(
         double(name, default, validation = validation)
     }
 
-    /** Creates a required [Float] delegate. */
+    /**
+     * Creates a required [Float] delegate.
+     */
     fun float(
         validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Float> = delegate { name -> float(name, validation = validation) }
 
-    /** Creates an optional [Float] delegate. */
+    /**
+     * Creates an optional [Float] delegate.
+     */
     fun optionalFloat(
         validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Float?> = delegate { name ->
         optionalFloat(name, validation = validation)
     }
 
-    /** Creates a defaulted [Float] delegate. */
+    /**
+     * Creates a defaulted [Float] delegate.
+     */
     fun float(
         default: Float,
         validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
@@ -413,21 +489,27 @@ class EnvironmentVariables private constructor(
         float(name, default, validation = validation)
     }
 
-    /** Creates a required strict-boolean delegate. */
+    /**
+     * Creates a required strict-boolean delegate.
+     */
     fun boolean(
         validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Boolean> = delegate { name ->
         boolean(name, validation = validation)
     }
 
-    /** Creates an optional strict-boolean delegate. */
+    /**
+     * Creates an optional strict-boolean delegate.
+     */
     fun optionalBoolean(
         validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Boolean?> = delegate { name ->
         optionalBoolean(name, validation = validation)
     }
 
-    /** Creates a defaulted strict-boolean delegate. */
+    /**
+     * Creates a defaulted strict-boolean delegate.
+     */
     fun boolean(
         default: Boolean,
         validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
@@ -435,19 +517,25 @@ class EnvironmentVariables private constructor(
         boolean(name, default, validation = validation)
     }
 
-    /** Creates a required [UUID] delegate. */
+    /**
+     * Creates a required [UUID] delegate.
+     */
     fun uuid(
         validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
     ): EnvironmentVariableDelegate<UUID> = delegate { name -> uuid(name, validation = validation) }
 
-    /** Creates an optional [UUID] delegate. */
+    /**
+     * Creates an optional [UUID] delegate.
+     */
     fun optionalUuid(
         validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
     ): EnvironmentVariableDelegate<UUID?> = delegate { name ->
         optionalUuid(name, validation = validation)
     }
 
-    /** Creates a defaulted [UUID] delegate. */
+    /**
+     * Creates a defaulted [UUID] delegate.
+     */
     fun uuid(
         default: UUID,
         validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
@@ -455,21 +543,27 @@ class EnvironmentVariables private constructor(
         uuid(name, default, validation = validation)
     }
 
-    /** Creates a required Kotlin [Duration] delegate. */
+    /**
+     * Creates a required Kotlin [Duration] delegate.
+     */
     fun duration(
         validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Duration> = delegate { name ->
         duration(name, validation = validation)
     }
 
-    /** Creates an optional Kotlin [Duration] delegate. */
+    /**
+     * Creates an optional Kotlin [Duration] delegate.
+     */
     fun optionalDuration(
         validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
     ): EnvironmentVariableDelegate<Duration?> = delegate { name ->
         optionalDuration(name, validation = validation)
     }
 
-    /** Creates a defaulted Kotlin [Duration] delegate. */
+    /**
+     * Creates a defaulted Kotlin [Duration] delegate.
+     */
     fun duration(
         default: Duration,
         validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
@@ -477,19 +571,25 @@ class EnvironmentVariables private constructor(
         duration(name, default, validation = validation)
     }
 
-    /** Creates a required exact-name enum delegate. */
+    /**
+     * Creates a required exact-name enum delegate.
+     */
     inline fun <reified T : Enum<T>> enum(
         noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
     ): EnvironmentVariableDelegate<T> = delegate { name -> enum<T>(name, validation = validation) }
 
-    /** Creates an optional exact-name enum delegate. */
+    /**
+     * Creates an optional exact-name enum delegate.
+     */
     inline fun <reified T : Enum<T>> optionalEnum(
         noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
     ): EnvironmentVariableDelegate<T?> = delegate { name ->
         optionalEnum<T>(name, validation = validation)
     }
 
-    /** Creates a defaulted exact-name enum delegate. */
+    /**
+     * Creates a defaulted exact-name enum delegate.
+     */
     inline fun <reified T : Enum<T>> enum(
         default: T,
         noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}

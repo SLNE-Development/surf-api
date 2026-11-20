@@ -84,7 +84,9 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         paginationEmptyRows(PaginationEmptyRows.byRows(emptyRows))
     }
 
-    /** Shorthand for `paginationEmptyRows(PaginationEmptyRows.NONE)`. */
+    /**
+     * Shorthand for `paginationEmptyRows(PaginationEmptyRows.NONE)`.
+     */
     fun noPaginationEmptyRows() {
         paginationEmptyRows(PaginationEmptyRows.NONE)
     }
@@ -130,7 +132,9 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         this.paginationPageIndicator = indicator
     }
 
-    /** Renders no page counter between the navigation buttons. */
+    /**
+     * Renders no page counter between the navigation buttons.
+     */
     fun noPaginationPageIndicator() {
         paginationPageIndicator(null)
     }
@@ -153,17 +157,23 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
         this.paginationSwitchSound = sound
     }
 
-    /** Plays no sound when a navigation button switches to another page. */
+    /**
+     * Plays no sound when a navigation button switches to another page.
+     */
     fun noPaginationSwitchSound() {
         paginationSwitchSound(null)
     }
 
-    /** Shorthand for `paginationButtonPosition(PaginationButtonPosition.BOTTOM)`. */
+    /**
+     * Shorthand for `paginationButtonPosition(PaginationButtonPosition.BOTTOM)`.
+     */
     fun paginationButtonsAtBottom() {
         paginationButtonPosition(PaginationButtonPosition.BOTTOM)
     }
 
-    /** Shorthand for `paginationButtonPosition(PaginationButtonPosition.TOP)`. */
+    /**
+     * Shorthand for `paginationButtonPosition(PaginationButtonPosition.TOP)`.
+     */
     fun paginationButtonsAtTop() {
         paginationButtonPosition(PaginationButtonPosition.TOP)
     }

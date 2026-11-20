@@ -1,8 +1,7 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.velocity.server
 
 import com.google.inject.Inject
+import com.velocitypowered.api.event.PostOrder
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent
@@ -12,12 +11,16 @@ import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
 import dev.slne.surf.api.core.server.CoreInstance
-import dev.slne.surf.api.di.boot.SurfContainerAccess
-import dev.slne.surf.api.di.boot.SurfContainerHost
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.nats.NatsPlatform
+import dev.slne.surf.api.redis.RedisPlatform
+import dev.slne.surf.api.spring.SurfContexts
+import dev.slne.surf.api.spring.context.SurfRootContext
+import dev.slne.surf.api.spring.context.surfCoroutineScope
 import dev.slne.surf.api.velocity.api.metrics.Metrics
-import dev.slne.surf.api.velocity.server.di.VelocityContainerPlatform
+import dev.slne.surf.api.velocity.plugin.SurfVelocityPluginRuntime
 import dev.slne.surf.api.velocity.server.generated.BuildConfig
+import dev.slne.surf.api.velocity.server.spring.VelocitySpringRuntime
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import java.nio.file.Path
@@ -43,56 +46,106 @@ class VelocityMain @Inject constructor(
     lateinit var bstats: Metrics
 
     /**
-     * surf-api's container hierarchy for this proxy.
-     *
-     * The root holds surf-api's own beans; a plugin that wants one gets a child below it. There is
-     * one host per process, and this is it.
+     * surf-api's root Spring context on this proxy, holding surf-api's own beans.
      */
-    val containers = SurfContainerHost(VelocityContainerPlatform(server, dataDirectory))
+    var root: SurfRootContext
+        private set
+
+    private var springRuntime: VelocitySpringRuntime
 
     init {
         instance = this
 
         SuspendingEventHandler(server.eventManager).register()
 
+        NatsPlatform.install(dataDirectory)
+        RedisPlatform.install(
+            dataDirectory,
+            VelocityPluginNames { server.pluginManager.plugins }::nameOf
+        )
+
         runBlocking {
-            // Before anything else in surf-api. A bean is resolved where it is first used rather
-            // than where it is declared, so the container has to answer from the first class that
-            // asks, and `install` is what makes it answerable through `SurfContainer`.
-            containers.startRoot(this@VelocityMain)
-            SurfContainerAccess.install(containers)
+            val classLoader = VelocityMain::class.java.classLoader
+            root = SurfRootContext.create(
+                classLoader,
+                surfCoroutineScope("surf-api", classLoader, Dispatchers.Default),
+            )
+            SurfContexts.install(root.context)
+            root.load()
+
+            springRuntime = VelocitySpringRuntime(server, root.context, dataDirectory.parent)
+            SurfVelocityPluginRuntime.install(springRuntime)
 
             bootstrap()
             onLoad()
         }
     }
 
-    @Subscribe
+    /**
+     * Enables surf-api, then the surf plugins in the order Velocity constructed them.
+     *
+     * Runs before every other handler of the event, including the [PostOrder.FIRST] ones, so that a
+     * plugin's own `ProxyInitializeEvent` handler finds its beans enabled. Velocity fires the event
+     * after every plugin is constructed, so every surf plugin has loaded by now.
+     */
+    @Subscribe(priority = Short.MAX_VALUE)
     suspend fun onProxyInitialization(unused: ProxyInitializeEvent) {
-        bstats = metricsFactory.make(this, 29466)
-
-        // The proxy's own enable phase, and so the container's: a bean's `enable` is the first
-        // point at which the rest of the proxy is there to talk to.
-        containers.enable(this)
+        root.enable()
 
         onEnable()
+
+        springRuntime.enablePlugins()
+
+        runCatching { bstats = metricsFactory.make(this, BSTATS_PLUGIN_ID) }
+            .onFailure { logger.warn("Failed to start bStats", it) }
     }
 
-    @Subscribe
+    /**
+     * Disables the surf plugins in reverse order, then surf-api.
+     *
+     * Runs after every other handler of the event, including the [PostOrder.LAST] ones, so that a
+     * plugin's own `ProxyShutdownEvent` handler still finds its beans. The root context closes even
+     * when an earlier step fails.
+     */
+    @Subscribe(priority = Short.MIN_VALUE)
     suspend fun onProxyShutdown(unused: ProxyShutdownEvent) {
         if (::bstats.isInitialized) {
-            bstats.shutdown()
+            runCatching { bstats.shutdown() }.onFailure { logger.warn("Failed to stop bStats", it) }
         }
 
-        onDisable()
+        try {
+            try {
+                springRuntime.disablePlugins()
+            } finally {
+                springRuntime.closePlugins()
+                SurfVelocityPluginRuntime.uninstall()
+            }
 
-        // Last, and children before the root: a plugin's bean may hold one of surf-api's, so the
-        // reverse order would close a connection while something still writes to it.
-        containers.stopAll()
-        SurfContainerAccess.uninstall(containers)
+            onDisable()
+        } finally {
+            closeRoot()
+        }
+    }
+
+    /**
+     * Disables and closes the root context, then uninstalls it; each step runs even when the one
+     * before it fails.
+     */
+    private suspend fun closeRoot() {
+        try {
+            root.disable()
+        } finally {
+            try {
+                root.close()
+            } finally {
+                SurfContexts.uninstall()
+            }
+        }
     }
 
     companion object {
+        private const val BSTATS_PLUGIN_ID = 29466
+
         lateinit var instance: VelocityMain
     }
 }

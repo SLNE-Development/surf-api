@@ -121,7 +121,9 @@ class NmsVersionTest {
         }
     }
 
-    /** Whether [left] is a later version than [right], component by component. */
+    /**
+     * Whether [left] is a later version than [right], component by component.
+     */
     private fun isAbove(left: List<Int>, right: List<Int>): Boolean {
         for (index in 0 until minOf(left.size, right.size)) {
             if (left[index] != right[index]) return left[index] > right[index]

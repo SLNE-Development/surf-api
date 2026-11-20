@@ -15,6 +15,7 @@ import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.shared.api.util.PublishedSurfApi
 import kotlinx.coroutines.*
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 
@@ -41,7 +42,7 @@ private val defaultScopeExceptionHandler = CoroutineExceptionHandler { _, t ->
  * This is intended as a safe default when no plugin-managed scope is available.
  */
 @PublishedApi
-@InternalSurfApi
+@PublishedSurfApi
 internal val defaultScope = CoroutineScope(
     Dispatchers.IO.limitedParallelism(16) // We are not planning to do blocking work but preparing in case a developer messes up
             + SupervisorJob()
@@ -156,7 +157,7 @@ internal inline fun handleCommandFailure(sender: CommandSource, t: Throwable) {
  * @param t The originating exception.
  */
 @PublishedApi
-@InternalSurfApi
+@PublishedSurfApi
 internal fun CommandSource.sendSyntaxMessageOrRethrow(message: String?, t: Throwable) {
     val msg = message ?: throw t
     sendMessage(text(msg, Colors.ERROR))

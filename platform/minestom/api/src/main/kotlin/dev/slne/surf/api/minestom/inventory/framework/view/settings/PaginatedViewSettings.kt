@@ -90,7 +90,9 @@ data class PaginatedViewSettings(
             2..(rows.rows - paginationEmptyRows.rows)
         }
 
-    /** How many rows the pagination engine actually fills with content. */
+    /**
+     * How many rows the pagination engine actually fills with content.
+     */
     val paginationContentRowCount: Int = rows.rows - 1 - paginationEmptyRows.rows
 
     init {

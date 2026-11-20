@@ -8,16 +8,26 @@ argument base class, `CommandArguments`, `CustomArgument`, `ArgumentSuggestions`
 upstream's documentation for those. surf only adds the pieces below.
 
 `platform/paper/api/build.gradle.kts` has `compileOnlyApi(libs.commandapi.paper)` and
-`api(libs.commandapi.bukkit.kotlin)`; the Velocity module the equivalent pair.
+`api(libs.commandapi.bukkit.kotlin)`; the Velocity module the equivalent pair. On Paper the
+`dev.slne.surf.api.gradle.paper-plugin` Gradle plugin adds `CommandAPI` to the generated
+`paper-plugin.yml` as a required server dependency with join-classpath, loaded before the plugin:
+Paper does not pass CommandAPI's classes on through surf-api, so without it the plugin cannot load
+its command classes.
+
+Command beans - classes extending `CommandAPICommand` or `CommandTree`, and `CommandRegistrar`
+beans - are registered in the plugin's enable phase by `CommandApiCommandBeans`
+(`common/core/impl/.../core/server/spring/`). See the main skill's "Registering a command".
 
 ## Shared, in `surf-api-command-api`
 
 `common/command/api/src/main/kotlin/dev/slne/surf/api/command/` — its own module, built against
 `compileOnlyApi(libs.commandapi.core)`, so it is for Paper and Velocity. **Minestom's module
-explicitly excludes `commandapi-core`, so none of this is reachable from Minestom code.**
+explicitly excludes `commandapi-core`, so none of this except `CommandRegistrar` is usable from
+Minestom code.**
 
 | File | Holds |
 | --- | --- |
+| `CommandRegistrar.kt` | `fun interface CommandRegistrar { fun register() }` - a bean that registers commands in the enable phase; names no CommandAPI type, so Minestom uses it too |
 | `SurfCommandUtil.kt` | `createException(message: ComponentLike)`, `failWithMessage(message)`, `failWithBuilder(builder)` — all `@JvmStatic` on an `object` |
 | `exception/WrapperCommandExceptionComponent.kt` | a `WrapperCommandSyntaxException` whose Brigadier message is a `ComponentMessage`, so a `Component` survives to the client |
 | `builder/CommandExceptionBuilder.kt` | formats a parse failure: optional detail message, then `At position <cursor>: ` plus the last `CONTEXT_AMOUNT = 10` characters underlined and a `command.context.here` marker. `build()` uses `Colors.ERROR_PREFIX`; `build(prefix)` takes another |
@@ -36,7 +46,7 @@ explicitly excludes `commandapi-core`, so none of this is reachable from Minesto
 | `MiniMessageArgument(nodeName, greedy = false)` | `CustomArgument<Component, String>` over a `GreedyStringArgument` or `TextArgument`; a `ParsingException` becomes a `CustomArgumentException.fromAdventureComponent(CommandExceptionBuilder(…).build())`. `greedy` is annotated `@IntroducedAt("3.32.0")`, so the file opts into `ExperimentalVersionOverloading`. DSL: `CommandAPICommand.miniMessageArgument(nodeName, optional, greedy) { }` and the `CommandTree` form |
 | `AdventureCompoundBinaryTagArgument(nodeName)` | `SafeOverrideableArgument<CompoundBinaryTag, CompoundBinaryTag>`, `CommandAPIArgumentType.NBT_COMPOUND`, parsed through `SurfPaperNmsCommandArgumentTypesBridge` (`@NmsUseWithCaution`). DSL on `CommandAPICommand`, `CommandTree` and `Argument<*>` |
 | `AsyncSignedMessageArgument(nodeName)` | `Argument<Deferred<SignedMessage>>`, `CommandAPIArgumentType.CHAT`, NMS-backed. Read it as `args.awaiting<SignedMessage>(nodeName)` inside a suspending executor — that is the whole point of the `Deferred` |
-| `SuspendCustomArgument<T, B>(base, scope = <calling plugin's scope>)` | abstract `CustomArgument<Deferred<T>, B>`. Override `suspend fun CoroutineScope.parse(info: CustomArgumentInfo<B>): T`; `parseArgument` returns `scope.async { … }` and turns a `CustomArgumentException` into a Brigadier exception. The default scope comes from `getCallingPlugin(2)`, which must be a `SuspendingPlugin` |
+| `SuspendCustomArgument<T, B>(base, scope: CoroutineScope? = null)` | abstract `CustomArgument<Deferred<T>, B>`. Override `suspend fun CoroutineScope.parse(info: CustomArgumentInfo<B>): T`; `parseArgument` returns `scope.async { … }` and turns a `CustomArgumentException` into a Brigadier exception. `null` means the declaring plugin's scope on the server thread, as for the suspending executors |
 
 The documented usage of `AsyncSignedMessageArgument`, from its own KDoc:
 
@@ -50,7 +60,7 @@ playerExecutorSuspend { sender, args ->
 
 ### Suspending executors (`executors/SuspendCommandExecutors.kt`)
 
-`typealias CoroutineScopeProvider = () -> CoroutineScope`. Nine extensions on
+`typealias CoroutineScopeProvider = () -> CoroutineScope`. Eight extensions on
 `BukkitExecutable<*>`, each wrapping the upstream non-suspending executor of the same name:
 
 ```
@@ -58,14 +68,20 @@ anyExecutorSuspend  playerExecutorSuspend  entityExecutorSuspend  consoleExecuto
 commandBlockExecutorSuspend  proxyExecutorSuspend  nativeExecutorSuspend  remoteConsoleExecutorSuspend
 ```
 
-Each takes `scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow()` and a
-`suspend CoroutineScope.(S, CommandArguments) -> Unit`.
+Each takes `scope: CoroutineScopeProvider = callingPluginCommandScope()` and a
+`suspend CoroutineScope.(S, CommandArguments) -> Unit`. `callingPluginCommandScope()` is
+`@InternalSurfApi`; you only meet it as the default. The default scope is the **declaring
+plugin's** coroutine scope with its main dispatcher, so an executor starts on the server thread (on
+Folia the global region) and is cancelled with the plugin. The declaring plugin is the one that provides the first class on the stack outside
+`dev.slne.surf.api.paper.command.` and outside CommandAPI, determined when the command is declared;
+the scope itself is resolved on first execution. No plugin class on the stack fails the
+declaration with *"No plugin declares this command: no plugin class is on the stack"*. To run
+elsewhere, pass a scope, for example an injected `CoroutineScope`, which starts on
+`Dispatchers.Default`:
 
-`extractCallingPluginScopeOrThrow()` walks the stack with `StackWalker`, finds the first frame whose
-providing plugin is not the CommandAPI plugin, and requires it to be a
-`com.github.shynixn.mccoroutine.folia.SuspendingPlugin` — otherwise
-*"Failed to extract CoroutineScope: plugin '…' does not implement SuspendingPlugin."* Pass a scope
-explicitly from anything that is not a `SuspendingPlugin`.
+```kotlin
+playerExecutorSuspend(scope = { scope }) { player, args -> … }
+```
 
 `launchCommandExecutor` rethrows `CancellationException` and routes everything else to
 `handleCommandFailure`, which sends a `WrapperCommandSyntaxException`'s or `CommandSyntaxException`'s
@@ -76,19 +92,19 @@ message to the sender (rethrowing when it has none) and otherwise logs
 
 ```kotlin
 fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, CommandSender>.withSuspendPlayerRequirement(
-    scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    scope: CoroutineScopeProvider = callingPluginCommandScope(),
     allowIfNonPlayer: Boolean = false,
     requirement: suspend CoroutineScope.(Player) -> Boolean,
 )
 ```
 
-Delegates to the `SuspendRequirementService` (`@InternalSurfApi`, whose
-`companion object { val instance by surfBean<SuspendRequirementService>() }` resolves the
-`@Service` implementation in `platform/paper/impl/.../command/`).
-Read its KDoc before using it: the suspending predicate is refreshed **asynchronously when the
-command tree is sent to the player**, and the *cached* result is what the CommandAPI requirement
-checks at execution time. `Player.updateCommands()` forces a refresh. So treat it as command
-*visibility*, and re-check anything that must be enforced inside the executor as well.
+The default scope is the same as for the executors. The function delegates to the
+`@InternalSurfApi` `SuspendRequirementService`, a bean of surf-api's root context implemented in
+`platform/paper/impl/.../command/`. Read the KDoc of `withSuspendPlayerRequirement` before using
+it: the suspending predicate is refreshed **asynchronously when the command tree is sent to the
+player**, and the *cached* result is what the CommandAPI requirement checks at execution time.
+`Player.updateCommands()` forces a refresh. So treat it as command *visibility*, and re-check
+anything that must be enforced inside the executor as well.
 
 ### Other helpers (`util/`)
 
@@ -101,11 +117,11 @@ checks at execution time. `Player.updateCommands()` forces a refresh. So treat i
 `platform/velocity/api/src/main/kotlin/dev/slne/surf/api/velocity/command/` — two files.
 
 - `args/MiniMessageArgument(nodeName)`: a plain `Argument<Component>` over
-  `StringArgumentType::string` with `CommandAPIArgumentType.PRIMITIVE_TEXT`, parsing with
-  `MiniMessage.miniMessage()` directly and reporting a `ParsingException` through
+  `StringArgumentType::string` with `CommandAPIArgumentType.PRIMITIVE_TEXT`, parsing with the
+  configured `miniMessage` instance and reporting a `ParsingException` through
   `VelocityBrigadierMessage.tooltip(CommandExceptionBuilder(…).build())`. **No `greedy` parameter**
   and only a `CommandAPICommand.miniMessageArgument` DSL function — Paper's version is a
-  `CustomArgument`, uses the configured `miniMessage` instance and also has a `CommandTree` overload.
+  `CustomArgument` and also has a `CommandTree` overload.
 - `args/SuspendCustomArgument<T, B>`: same idea as Paper's but built on
   `Argument<Deferred<T>>(base.nodeName) { base.rawType }`, with its own nested
   `CustomArgumentInfo(sender: CommandSource, previousArgs, input, currentInput: B)` record (note:

@@ -1,6 +1,5 @@
 package dev.slne.surf.api.paper.server.impl.packet
 
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.PacketLoreRegistry
@@ -8,6 +7,7 @@ import dev.slne.surf.api.paper.packet.SurfPaperPacketApi
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandler
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
+import org.springframework.stereotype.Service
 
 @NmsUseWithCaution
 @Service

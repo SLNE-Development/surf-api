@@ -1,8 +1,3 @@
-// This module boots the standalone runtime and re-exports the whole platform surface through
-// `api`, which the surf-api-standalone aggregate passes on to consumers. That exported surface is
-// what downstream compiles against, so ABI validation stays on even though the module is an
-// implementation -- and it is not a loose end: see the comment in aggregate/standalone for why the
-// bootstrap cannot be split off into an api module.
 plugins {
     id("surf.module-impl")
     `api-validation`
@@ -27,11 +22,13 @@ dependencies {
     api(libs.spongepowered.math)
     api(libs.commons.lang3)
     api(libs.commons.text)
-    api(libs.okhttp)
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.commons.math3)
     implementation(libs.packetevents.netty.common)
+    runtimeOnly(platform(libs.netty.bom))
+    runtimeOnly(libs.netty.buffer)
+    runtimeOnly(libs.netty.common)
     runtimeOnly(libs.flogger.slf4j.backend)
 }
 

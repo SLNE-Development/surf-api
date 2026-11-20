@@ -1,6 +1,7 @@
 # Module layout and settings.gradle.kts
 
-Source: `settings.gradle.kts`, `tooling/bom/build.gradle.kts`, the six `aggregate/*/build.gradle.kts`.
+Source: `settings.gradle.kts`, the root `build.gradle.kts`, `tooling/bom/build.gradle.kts` and the
+six `aggregate/*/build.gradle.kts`.
 
 ## Naming
 
@@ -26,24 +27,38 @@ fun includeModule(path: String, name: String = artifactName(path)) {
 }
 ```
 
-Two guards: a directory without a `build.gradle.kts` and a name already taken both fail the build at
-settings time. `include(name)` with a flat name plus an explicit `projectDir` is what keeps the
-Gradle path flat.
+Two guards: a directory without a `build.gradle.kts` and a name already taken both fail at settings
+time. `include(name)` with a flat name plus an explicit `projectDir` keeps the Gradle path flat, so
+the typesafe accessor reads `projects.surfApiCoreApi` rather than `projects.common.core.api`.
 
 `includePair(group, domain)` calls `includeModule("$group/$domain/api")` and
 `includeModule("$group/$domain/impl")`.
 
-## Every included module
+The `name` argument is passed twice: `tooling/gradle-plugin/processor` becomes
+`surf-api-processor`, and `infra/database-r2dbc` becomes `surf-api-database-r2dbc`.
+
+## Every module included with includeModule
 
 | Directory | Gradle path / published name |
 | --- | --- |
 | `foundation/annotations` | `surf-api-annotations` |
 | `foundation/internal` | `surf-api-internal` |
 | `foundation/registry-keys` | `surf-api-registry-keys` |
-| `foundation/di/api` | `surf-api-di-api` |
-| `foundation/di/impl` | `surf-api-di-impl` |
+| `foundation/spring/api` | `surf-api-spring-api` |
+| `foundation/spring/impl` | `surf-api-spring-impl` |
+| `common/common/api` | `surf-api-common-api` |
+| `common/messages/api` | `surf-api-messages-api` |
+| `common/event/api` | `surf-api-event-api` |
+| `common/nbt/api` | `surf-api-nbt-api` |
+| `common/reflection/api` | `surf-api-reflection-api` |
+| `common/command/api` | `surf-api-command-api` |
+| `common/luckperms/api` | `surf-api-luckperms-api` |
 | `common/core/api` | `surf-api-core-api` |
 | `common/core/impl` | `surf-api-core-impl` |
+| `common/inventory/api` | `surf-api-inventory-api` |
+| `common/serialization/api` | `surf-api-serialization-api` |
+| `common/config/api` | `surf-api-config-api` |
+| `common/config/impl` | `surf-api-config-impl` |
 | `platform/paper/api` | `surf-api-paper-api` |
 | `platform/paper/impl` | `surf-api-paper-impl` |
 | `platform/paper/nms/api` | `surf-api-paper-nms-api` |
@@ -64,6 +79,7 @@ Gradle path flat.
 | `platform/velocity/api` | `surf-api-velocity-api` |
 | `platform/velocity/impl` | `surf-api-velocity-impl` |
 | `platform/standalone/impl` | `surf-api-standalone-impl` |
+| `platform/standalone/testing` | `surf-api-standalone-testing` |
 | `aggregate/core` | `surf-api-core` |
 | `aggregate/paper` | `surf-api-paper` |
 | `aggregate/minestom` | `surf-api-minestom` |
@@ -71,57 +87,103 @@ Gradle path flat.
 | `aggregate/velocity` | `surf-api-velocity` |
 | `aggregate/standalone` | `surf-api-standalone` |
 | `tooling/bom` | `surf-api-bom` |
-| `tooling/gradle-plugin` | `surf-api-gradle-plugin` |
-| `tooling/gradle-plugin/processor` | `surf-api-processor` (explicit `name` override) |
+| `tooling/gradle-plugin/processor` | `surf-api-processor` (explicit `name`) |
+| `infra/database-r2dbc` | `surf-api-database-r2dbc` (explicit `name`) |
 | `local/paper-plugin-test` | `surf-api-paper-plugin-test` (non-CI only) |
+| `local/paper-shared-bean-provider` | `surf-api-paper-shared-bean-provider` (non-CI only) |
+| `local/paper-shared-bean-consumer` | `surf-api-paper-shared-bean-consumer` (non-CI only) |
+| `local/paper-shared-bean-test` | `surf-api-paper-shared-bean-test` (non-CI only) |
+| `local/velocity-shared-bean-provider` | `surf-api-velocity-shared-bean-provider` (non-CI only) |
+| `local/velocity-shared-bean-consumer` | `surf-api-velocity-shared-bean-consumer` (non-CI only) |
+| `local/velocity-shared-bean-test` | `surf-api-velocity-shared-bean-test` (non-CI only) |
 | `local/minestom-example` | `surf-api-minestom-example` (non-CI only) |
 | `local/minestom-example-plugin` | `surf-api-minestom-example-plugin` (non-CI only) |
 | `surf-api-generator` | `surf-api-generator` (non-CI only) |
 
-`tooling/gradle-plugin/processor` is the only place the `name` parameter is used; the derived name
-would be `surf-api-gradle-plugin-processor`, and `surf-api-processor` is the coordinate that is
-actually published and the one `core-convention` wires in as the KSP processor.
+The common api-only domains carry a comment in `settings.gradle.kts` saying why no impl half
+exists. The NMS versions are listed literally (`"v1-21-11", "v26-1", "v26-2", "v26-3"`), because
+`NmsVersion` lives in the included build `surf-api-generator/nms-module-generator` and is not on the
+settings classpath.
 
-The NMS versions are listed literally in `settings.gradle.kts` (`"v1-21-11", "v26-1", "v26-2",
-"v26-3"`) because `NmsVersion` lives in the included build `surf-api-generator/nms-module-generator`
-and is not on the settings classpath.
+The `local/*-shared-bean-*` modules are two test plugins and a harness per platform that boot a
+real Paper server or Velocity proxy; they stay local because the harness downloads the server.
+
+## The infra trees
+
+```kotlin
+fun includeInfra(repository: String, vararg modules: String)
+fun infraName(name: String) = name.replaceFirst("surf-", "surf-api-")
+```
+
+`includeInfra` includes `infra/<repository>` as `:surf-api-<repository>` and every module below it
+under its former Gradle path, each segment renamed by `infraName`. Each segment becomes a project,
+so the parents only group:
+
+| Repository | Modules (Gradle path below `:surf-api-<repository>`) |
+| --- | --- |
+| `nats` | `surf-api-nats-api`, `surf-api-nats-core`, `surf-api-nats-types:surf-api-nats-types-common`, `surf-api-nats-types:surf-api-nats-types-paper`, `surf-api-nats-platform:surf-api-nats-standalone`, `surf-api-nats-spring`, and five `surf-api-nats-test:*` modules |
+| `redis` | `surf-api-redis-api`, `surf-api-redis-core`, `surf-api-redis-spring`, `surf-api-redis-standalone` |
+| `microservice` | `surf-api-microservice-api`, `surf-api-microservice-runtime`, `surf-api-microservice-database`, `surf-api-microservice-reliability` |
+
+The accessor follows the nesting: `projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesPaper`.
+The duplicate-name guard covers the leaf names together with the `includeModule` names.
+
+Each repository keeps its own root `build.gradle.kts`, whose `subprojects { }` block configures its
+modules. `infra/redis/build.gradle.kts`, for example, relocates Redisson, Netty and their
+dependencies in every shadow jar and excludes Redisson's `META-INF/spring.handlers`,
+`spring.schemas` and `spring.tooling`, which name an unrelocated handler class absent from the jar.
+Most modules apply the surf Gradle plugin rather than the buildSrc roles; `surf-nats-api` and
+`surf-nats-core` are Kotlin Multiplatform modules configured by `infra/nats/build.gradle.kts`. The
+root build gives
+every project under `infra/` the surf-api group and version, and adds `@AutoService` with its KSP
+processor wherever KSP is applied.
 
 ## Conditional and excluded modules
 
-- `val ci = System.getenv("CI")?.toBoolean() ?: false`. When `ci` is false, the three `local/`
-  modules and `surf-api-generator` are included; in CI they are not.
-- `platform/minestom/luckperms-impl` is included only when `vendor/LuckPerms/settings.gradle` exists.
-  That directory is generated from the `LuckPerms-Upstream` submodule plus the patches next to it:
-  `git submodule update --init --recursive`, then `./gradlew applyPatches` from `vendor/`. Outside CI
-  the build logs a warning and continues; in CI the missing directory is a hard error.
+- `val ci = System.getenv("CI")?.toBoolean() ?: false`. When `ci` is false, the `local/` modules
+  and `surf-api-generator` are included; in CI they are not.
+- `platform/minestom/luckperms-impl` is included only when `vendor/LuckPerms/settings.gradle`
+  exists. That directory is generated from the `LuckPerms-Upstream` submodule plus the patches next
+  to it: `git submodule update --init --recursive`, then `./gradlew applyPatches` from `vendor/`.
+  Outside CI the build logs a warning and continues; in CI the missing directory is a hard error.
 
 ## Included builds
 
-- `pluginManagement { includeBuild("surf-api-generator/nms-module-generator") }` - supplies the
+- `pluginManagement { includeBuild("surf-api-generator/nms-module-generator") }` supplies the
   `dev.slne.surf.api.generator.nms-module-generator` plugin applied in the root `build.gradle.kts`.
+- `pluginManagement { includeBuild("tooling/gradle-plugin") }` supplies the surf Gradle plugins,
+  so the infra modules apply them the way a downstream project does. The root build registers
+  `publish` and `publishToMavenLocal` tasks that delegate to it, and makes `check` depend on its
+  `check`.
 - `includeBuild("vendor/spark-minestom")` with `substitute(module("me.lucko:spark-minestom"))`.
-- `includeBuild(vendor/LuckPerms)` with `substitute(module("me.lucko.luckperms:minestom"))`, when it
-  exists.
+- `includeBuild(vendor/LuckPerms)` with `substitute(module("me.lucko.luckperms:minestom"))`, when
+  it exists.
 
 The vendor artifacts are built from source and published nowhere, which is why
 `vendor-bundle-convention` exists - see `conventions.md`.
 
-## Aggregates
+## Coordinate substitution
 
-All six are three-line build files. The full set:
+The root `build.gradle.kts` substitutes every request for `dev.slne.surf.api:<name>` in every
+configuration with the project of that name, so the surf Gradle plugins and the infra builds can
+request modules by coordinate the way a downstream build does. A module that publishes a `shadow`
+publication (the shaded infra jars) is substituted with its `SHADOWED` variant, because outside
+this build its coordinate resolves to that jar.
+
+## Aggregates
 
 | Aggregate | Exports |
 | --- | --- |
-| `surf-api-core` | `projects.surfApiCoreApi` |
+| `surf-api-core` | `projects.surfApiCoreApi`, `projects.surfApiConfigApi` |
 | `surf-api-paper` | `projects.surfApiPaperApi` |
 | `surf-api-minestom` | `projects.surfApiMinestomApi` |
 | `surf-api-minestom-server` | `projects.surfApiMinestomImpl` - this coordinate builds a runnable server |
 | `surf-api-velocity` | `projects.surfApiVelocityApi` |
-| `surf-api-standalone` | `projects.surfApiStandaloneImpl` - still re-exports the whole standalone surface; splitting it is a later step |
+| `surf-api-standalone` | `projects.surfApiStandaloneImpl` - the whole standalone surface; `SurfApiStandaloneBootstrap` creates the root context and cannot be split off |
 
 Each sets `description` to its own published name. `surf.aggregate` registers the `surfRuntime`
-configuration for embedding implementations, but no aggregate uses it yet - today they all reach
-their dependency through plain `api(...)`.
+configuration for embedding implementations; every aggregate reaches its dependencies through
+plain `api(...)`.
 
 ## The BOM
 
@@ -131,19 +193,21 @@ their dependency through plain `api(...)`.
 ```kotlin
 val notPublished = setOf(
     "surf-api-bom",
-    "surf-api-gradle-plugin",
     "surf-api-processor",
     "surf-api-generator",
     "surf-api-paper-plugin-test",
     "surf-api-minestom-example",
     "surf-api-minestom-example-plugin",
+    "surf-api-paper-shared-bean-provider",
+    "surf-api-paper-shared-bean-consumer",
+    "surf-api-paper-shared-bean-test",
+    "surf-api-velocity-shared-bean-provider",
+    "surf-api-velocity-shared-bean-consumer",
+    "surf-api-velocity-shared-bean-test",
 )
 ```
 
-Constraints are `api("$group:$it:$version")` for every subproject name not in that set, sorted. The
-reasons, from the file's own comment: modules `settings.gradle.kts` only includes outside CI, plus
-the Gradle plugin and its KSP processor, which carry versions of their own. `surf-api-bom` excludes
-itself.
-
-Because the set is matched against subproject *names*, a module added outside CI that is not in the
-set would appear as a BOM constraint only on a local build and never in a CI-built BOM - add it.
+Constraints are `api("$group:$it:$version")` for every leaf subproject name not in that set,
+sorted; the infra parents only group modules and are skipped. The set is matched against
+subproject *names*, so a module included only outside CI that is missing from it appears as a
+constraint in a locally built BOM and never in a CI-built one.

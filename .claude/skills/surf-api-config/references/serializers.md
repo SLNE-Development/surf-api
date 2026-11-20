@@ -1,12 +1,12 @@
 # The config serializer registry
 
 Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/serializer/`,
-`platform/*/impl/.../config/serializers/`.
+`platform/*/impl/` (one subclass per platform, see the table).
 
 ## How the registry is assembled
 
-`surfSpongeConfigSerializers` is a `SpongeConfigSerializers`, a top-level
-`by surfBean<SpongeConfigSerializers>()` property - exactly one `@Service` subclass per platform:
+`SpongeConfigSerializers` is a bean of surf-api's root context - exactly one `@Service` subclass
+per platform:
 
 | Platform | Class |
 | --- | --- |
@@ -22,11 +22,10 @@ matters: **Configurate picks the first registered serializer that matches a type
 1. everything added through `registerClassSerializer`
 2. everything added through `registerTypeTokenSerializer` (seeded with `LinkedList<Any>`)
 3. surf's own built-ins (table below)
-4. specialized primitive-key map serializers
-5. the generic `Map<*, *>` serializer (`MapSerializer(clearInvalids = false)`)
-6. `registerAnnotatedObjects(...)` - the `ObjectMapper` factory carrying the Kotlin data-class
+4. the generic `Map<*, *>` serializer (`MapSerializer(clearInvalids = false)`)
+5. `registerAnnotatedObjects(...)` - the `ObjectMapper` factory carrying the Kotlin data-class
    field discoverer and every constraint from `config/constraints/`
-7. `registerDefaults(builder)` - the platform subclass's override
+6. `registerDefaults(builder)` - the platform subclass's override
 
 So your own registrations beat surf's, and surf's beat the platform's.
 
@@ -92,9 +91,20 @@ internal object MyTypeSerializer : ScalarSerializer.Annotated<MyType>(MyType::cl
     ): Any = item.toString()
 }
 
-// before the first config is loaded
-surfSpongeConfigSerializers.registerClassSerializer(MyTypeSerializer)
+@Component
+class MySerializers : ConfigSerializerRegistrar {
+    override fun register(serializers: SpongeConfigSerializers) {
+        serializers.registerClassSerializer(MyTypeSerializer)
+    }
+}
 ```
+
+surf-api calls every `ConfigSerializerRegistrar` bean of the plugin's context once while the
+context starts, at the latest before the plugin's first `ConfigHandle` opens its file. The
+registrars also run when the plugin declares no `@SurfConfig` class. A companion config read before
+the plugin's context has started does not see the plugin's serializers yet. The registry is shared
+by every plugin on the server: a registration also applies to the configs of other plugins loaded
+afterwards.
 
 `registerClassSerializer` has a reified form (`registerClassSerializer<MyType>(serializer)`) and an
 explicit one (`registerClassSerializer(MyType::class.java, serializer)`). Remove one again with
@@ -108,22 +118,21 @@ value is a map or list node.
 A `Class` is not enough for `Foo<Bar>`; use a `TypeToken`:
 
 ```kotlin
-surfSpongeConfigSerializers.registerTypeTokenSerializer(
-    object : TypeToken<MyBox<String>>() {},
-    MyBoxSerializer
-)
+override fun register(serializers: SpongeConfigSerializers) {
+    serializers.registerTypeTokenSerializer(object : TypeToken<MyBox<String>>() {}, MyBoxSerializer)
+}
 ```
 
-Counterpart: `unregisterTypeTokenSerializer(typeToken)`. Both registries are readable as frozen
-views through `classSerializers` and `typeTokenSerializers`.
+Counterpart: `unregisterTypeTokenSerializer(typeToken)`. Both registries are readable as read-only
+`Map`s through `classSerializers` and `typeTokenSerializers`.
 
 ### Inside surf-api, platform-wide
 
 Subclass `SpongeConfigSerializers`, override `registerDefaults` (it is
 `@MustBeInvokedByOverriders` - call `super.registerDefaults(builder)` first) and annotate the
-subclass `@Service`. Only one implementation can win per platform, so this is for the platform
-module, not for a feature - a second `SpongeConfigSerializers` bean in the same container fails
-resolution with "is provided by several beans".
+subclass `@Service`. This is for the platform module, not for a feature: the root context needs
+exactly one `SpongeConfigSerializers`, and a second one makes every lookup by type fail with
+Spring's `NoUniqueBeanDefinitionException`.
 
 ## Map type annotations
 

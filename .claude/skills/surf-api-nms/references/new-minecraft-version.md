@@ -34,7 +34,7 @@ They are different types with different jobs, and both need the new entry.
 | --- | --- | --- |
 | Package | `dev.slne.surf.api.generator.nms` | `dev.slne.surf.api.shared.internal.nms` |
 | Used by | the Gradle task, at generation time | the running server, for matching and discovery |
-| Members | `versionId`, `classPrefix`, `paperDevBundle`, derived `slug` / `modulePath` / `gradlePath` | `versionPrefix` only |
+| Members | `versionId`, `classPrefix`, `paperDevBundle`, derived `slug` / `modulePath` / `gradlePath` | `versionPrefix`, its numeric `components`, `matches(...)`; companion `matching(...)`, `NEWEST_FIRST`, `NEWEST` |
 | Entry | `V26_3(versionId = "v26_3", classPrefix = "V26_3", paperDevBundle = "26.3.build.+")` | `V26_3("26.3")` |
 
 The generator's enum derives everything else:
@@ -109,14 +109,11 @@ else it:
    file rewrites the relative path with `transformPath` (`versionId` then `classPrefix` replaced) and
    the content with `transformContent` (same two replacements, then every transformation). Returns the
    count.
-4. `generateServiceFile()` — creates `<target>/src/main/resources/META-INF/services/` and writes
-   `dev.slne.surf.api.paper.nms.common.NmsProvider` containing
-   `dev.slne.surf.api.paper.server.nms.<versionId>.<classPrefix>NmsProvider`. **This file is not read
-   at runtime** (`NmsProvider.current` uses `META-INF/surf-api/nms-providers/*.json` written by KSP
-   from `@NmsProviderMarker`). It is harmless, and `v26-1`/`v1-21-11` prove nothing needs it.
-5. `generateBuildFile()` — writes `build.gradle.kts` from an inline template with the target's
+4. `generateBuildFile()` — writes `build.gradle.kts` from an inline template with the target's
    `paperDevBundle` substituted, **only when the file does not already exist**; otherwise logs
-   *"build.gradle.kts already exists, skipping"*.
+   *"build.gradle.kts already exists, skipping"*. The template applies `surf.module-impl`,
+   `surf.ksp-processor` and paperweight and declares `compileOnly(libs.fastutil)`, like the
+   existing modules.
 
 The blanket `classPrefix` replacement is what makes `@NmsProviderMarker(NmsVersion.V26_2)` become
 `@NmsProviderMarker(NmsVersion.V26_3)` and `override val version: NmsVersion = NmsVersion.V26_3` —
@@ -153,7 +150,7 @@ Its lifecycle log prints three next steps:
 [ ] 1. generator NmsVersion entry: versionId, classPrefix, paperDevBundle
 [ ] 2. root build.gradle.kts: referenceVersion / targetVersion (+ transformations)
 [ ] 3. ./gradlew generateNmsModule [-PforceOverwrite]
-[ ] 4. foundation/internal NmsVersion entry: V26_4("26.4")   <- declaration order matters
+[ ] 4. foundation/internal NmsVersion entry: V26_4("26.4")
 [ ] 5. settings.gradle.kts: add "v26-4" to the version list
 [ ] 6. platform/paper/impl/build.gradle.kts: runtimeOnly(projects.surfApiPaperNmsV264)
 [ ] 7. platform/paper/impl/build.gradle.kts: paper { apiVersion = "26.4" } if it is now the target
@@ -166,21 +163,16 @@ Its lifecycle log prints three next steps:
 first.
 
 - **`No NmsProvider implementations found`** — no `META-INF/surf-api/nms-providers/*.json` on the
-  classpath. Either KSP did not run (the module must apply `surf.module-impl`/`core-convention`, which
-  adds `ksp(project(":surf-api-processor"))`), or the provider class lost its `@NmsProviderMarker`, or
-  the module is missing from `runtimeOnly` in `platform/paper/impl`.
-- **`No exact match for NmsProvider version …, using fallback`** — the server's
-  `Bukkit.getMinecraftVersion()` did not `startsWith` any `versionPrefix`. Check the new
-  `NmsVersion` entry's prefix string.
-- **A wrong but plausible version is selected** — two string hazards, both in
-  `NmsVersionResolver`/`NmsProvider`:
-  - matching is `entries.firstOrNull { mcVersion.startsWith(it.versionPrefix) }`, so a `26.11`
-    server matches `V26_1` ("26.1") when `V26_1` comes first in the enum;
-  - the fallback is `maxByOrNull { it.versionPrefix }` over **strings**, so `"26.10" < "26.3"` and
-    `"1.21.11"` sorts below everything `26.*`.
-
-  Declaration order in `foundation/internal/.../NmsVersion.kt` is therefore load-bearing. Put the
-  more specific prefix first.
+  classpath, and surf-api's load phase fails. Either KSP did not run (the module must apply
+  `surf.ksp-processor`, which adds `ksp(project(":surf-api-processor"))`), or the provider class lost
+  its `@NmsProviderMarker`, or the module is missing from `runtimeOnly` in `platform/paper/impl`.
+- **`No NMS bindings for Minecraft …, falling back to the newest surf-api has`** (from
+  `NmsVersionResolver`) or **`No exact match for NmsProvider version …, using fallback`** (from
+  `NmsProvider`) — no `NmsVersion` entry matched the server's `Bukkit.getMinecraftVersion()`, or no
+  provider was found for the matched entry. Check the new entry's `versionPrefix` and that its module
+  ships. `NmsVersion.matches` compares version components as numbers, and the fallback takes the
+  newest version by number (`NmsVersion.NEWEST_FIRST`), so the enum's declaration order does not
+  matter.
 - **`Failed to load NmsProvider implementation. Implementation must have a constructor with a single
   argument of type JavaPlugin`** — the generated provider lost its `(plugin: JavaPlugin)` primary
   constructor.

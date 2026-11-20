@@ -1,9 +1,5 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.command.executors
 
-import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
-import com.github.shynixn.mccoroutine.folia.scope
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.jorel.commandapi.BukkitExecutable
 import dev.jorel.commandapi.CommandAPI
@@ -14,6 +10,7 @@ import dev.jorel.commandapi.wrappers.NativeProxyCommandSender
 import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.shared.api.util.PublishedSurfApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -21,7 +18,6 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.bukkit.command.*
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import org.bukkit.plugin.java.JavaPlugin
 
 typealias CoroutineScopeProvider = () -> CoroutineScope
 
@@ -31,11 +27,11 @@ typealias CoroutineScopeProvider = () -> CoroutineScope
  * The executor is launched in the provided [CoroutineScope]. Any thrown exceptions are handled
  * consistently and reported back to the sender if applicable.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.anyExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(CommandSender, CommandArguments) -> Unit
 ) = anyExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -46,11 +42,11 @@ inline fun BukkitExecutable<*>.anyExecutorSuspend(
 /**
  * Registers an executor that can only be run by a [Player] and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.playerExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(Player, CommandArguments) -> Unit
 ) = playerExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -61,11 +57,11 @@ inline fun BukkitExecutable<*>.playerExecutorSuspend(
 /**
  * Registers an executor that can only be run by an [Entity] and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.entityExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(Entity, CommandArguments) -> Unit
 ) = entityExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -76,11 +72,11 @@ inline fun BukkitExecutable<*>.entityExecutorSuspend(
 /**
  * Registers an executor that can only be run by the console and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.consoleExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(ConsoleCommandSender, CommandArguments) -> Unit
 ) = consoleExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -91,11 +87,11 @@ inline fun BukkitExecutable<*>.consoleExecutorSuspend(
 /**
  * Registers an executor that can only be run by a command block and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.commandBlockExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(BlockCommandSender, CommandArguments) -> Unit
 ) = commandBlockExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -106,11 +102,11 @@ inline fun BukkitExecutable<*>.commandBlockExecutorSuspend(
 /**
  * Registers an executor that can only be run by a [ProxiedCommandSender] and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.proxyExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(ProxiedCommandSender, CommandArguments) -> Unit
 ) = proxyExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -121,11 +117,11 @@ inline fun BukkitExecutable<*>.proxyExecutorSuspend(
 /**
  * Registers an executor that can only be run by a [NativeProxyCommandSender] and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.nativeExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(NativeProxyCommandSender, CommandArguments) -> Unit
 ) = nativeExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -136,11 +132,11 @@ inline fun BukkitExecutable<*>.nativeExecutorSuspend(
 /**
  * Registers an executor that can only be run by a remote console and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.remoteConsoleExecutorSuspend(
-    noinline scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
     crossinline executor: suspend CoroutineScope.(RemoteConsoleCommandSender, CommandArguments) -> Unit
 ) = remoteConsoleExecutor { sender, arguments ->
     scope().launchCommandExecutor(sender) {
@@ -207,43 +203,8 @@ internal inline fun handleCommandFailure(sender: CommandSender, t: Throwable) {
  * @param t The originating exception.
  */
 @PublishedApi
-@InternalSurfApi
+@PublishedSurfApi
 internal fun CommandSender.sendSyntaxMessageOrRethrow(message: String?, t: Throwable) {
     val msg = message ?: throw t
     sendMessage(text(msg, Colors.ERROR))
-}
-
-/**
- * Extracts the [CoroutineScope] of the calling plugin.
- *
- * The calling plugin must implement [SuspendingPlugin]. Otherwise, an exception is thrown.
- *
- * @return The plugin's coroutine scope.
- * @throws IllegalArgumentException If the plugin does not implement [SuspendingPlugin].
- */
-@Suppress("NOTHING_TO_INLINE")
-@PublishedApi
-@InternalSurfApi
-internal inline fun Any.extractCallingPluginScopeOrThrow(): CoroutineScopeProvider {
-    val commandApiPlugin = JavaPlugin.getProvidingPlugin(CommandAPI::class.java)
-    val callerClass = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
-        .walk { frames ->
-            frames
-                .map { it.declaringClass }
-                .filter { declaringClass ->
-                    val plugin =
-                        runCatching { JavaPlugin.getProvidingPlugin(declaringClass) }.getOrNull()
-                    plugin != null && plugin != commandApiPlugin
-                }
-                .findFirst()
-                .orElseThrow { IllegalStateException("No calling plugin frame found (non-CommandAPI).") }
-        }
-
-    val plugin = JavaPlugin.getProvidingPlugin(callerClass)
-    require(plugin is SuspendingPlugin) {
-        "Failed to extract CoroutineScope: plugin '${plugin.name}' does not implement SuspendingPlugin. " +
-                "Provide a CoroutineScope explicitly or use a SuspendingPlugin."
-    }
-
-    return { plugin.scope }
 }

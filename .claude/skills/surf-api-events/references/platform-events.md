@@ -10,19 +10,37 @@ The surf bus does not replace or wrap the platform's event system. They are inde
 `Listener`. The surf bus exists for signals that surf-api and surf plugins define themselves, and
 that must work the same on Paper, Minestom, Velocity and standalone.
 
-## Paper
+## Listener beans
 
-### Registering Bukkit listeners
+surf-api registers a plugin's listener beans with the platform in the plugin's enable phase, before
+the `onEnable` hooks run, and removes them when the plugin is disabled. Only beans of the plugin's
+own contexts count:
 
-`event/listener-extension.kt` is sugar over `PluginManager`, nothing more - cancellation, priority
-and threading stay Bukkit's.
+| Platform | Registered automatically |
+| --- | --- |
+| Paper | beans implementing `org.bukkit.event.Listener`, through `PluginManager.registerEvents`; Paper unregisters them when it disables the plugin |
+| Velocity | beans with `@Subscribe` methods. They are registered while Velocity fires `ProxyInitializeEvent`, so their handlers for that event never run; act on startup in `SurfLifecycle.onEnable` instead |
+| Minestom | beans of type `EventNode`, attached as children of the plugin's event node |
+| every platform, including standalone and microservices | beans with `@SurfEventHandler` methods, on the surf bus |
 
 ```kotlin
+@Component
 class JoinListener : Listener {
     @EventHandler
     fun onJoin(event: PlayerJoinEvent) { … }
 }
+```
 
+A listener bean needs no `register()` call of its own.
+
+## Paper
+
+### Registering Bukkit listeners by hand
+
+`event/listener-extension.kt` is sugar over `PluginManager`, nothing more - cancellation, priority
+and threading stay Bukkit's. Use it for listeners that are not beans.
+
+```kotlin
 JoinListener().register()            // JavaPlugin.getProvidingPlugin(this::class.java)
 JoinListener().register(plugin)      // explicit plugin
 listener.unregister()                // HandlerList.unregisterAll(this)
@@ -53,7 +71,7 @@ All in `event/common/`, all `SurfSyncEvent`:
 | `PlayerDeathMessageEvent` | `player: Player`, `var message: Component`, `lastDamageCause: EntityDamageEvent.DamageCause` | yes |
 
 The three message events follow one pattern: mutate `message` to rewrite the broadcast, cancel to
-suppress it. Listen with `@SurfEventHandler` or `SurfEventBus.on<…>`, not with a Bukkit `Listener`.
+suppress it. Listen with `@SurfEventHandler` or `eventBus.on<…>`, not with a Bukkit `Listener`.
 
 These are declarations only - **nothing in this repository fires them**. The publishers live in the
 downstream plugins that own join/quit/death messaging and AFK tracking, so a change to their shape
@@ -63,7 +81,9 @@ is a breaking change outside this repo.
 
 ### EventRegistrar
 
-Minestom has its own `EventNode` tree. surf-api creates one node, named by
+`EventRegistrar` serves the server built with `surfMinestomServer { }`; a Minestom plugin declares
+`EventNode` beans instead (see [Listener beans](#listener-beans)). Minestom has its own `EventNode`
+tree. surf-api creates one node, named by
 `SurfMinestomServerBuilder.eventNodeName` (default `"surf-api-minestom"`), as a child of the global
 handler, and hands it to every registered `EventRegistrar`:
 
@@ -83,11 +103,9 @@ The reified `addListener<T> { }` used above is surf's own extension on `EventNod
 `platform/minestom/api/.../minestom/extension/events.kt`; it wraps `EventListener.of`.
 
 `EventRegistrar` is a `fun interface`, so a lambda works too. The api's own features use it -
-`MinestomInventoryLoader`, `DialogCallbackListener`, `MinestomSuggestionListener` are all
-`EventRegistrar`s.
+`DialogCallbackListener` and `MinestomSuggestionListener` are both `EventRegistrar`s.
 
-The KDoc on `EventRegistrar` shows `surfMinestomApi { … }`; the actual entry point is
-`surfMinestomServer { … }` in `platform/minestom/impl/.../server/SurfMinestomServer.kt`.
+`surfMinestomServer { … }` is defined in `platform/minestom/impl/.../server/SurfMinestomServer.kt`.
 
 ### SuspendingEventNode
 

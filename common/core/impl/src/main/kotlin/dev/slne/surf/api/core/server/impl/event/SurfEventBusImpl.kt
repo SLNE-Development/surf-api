@@ -1,13 +1,13 @@
 package dev.slne.surf.api.core.server.impl.event
 
-import dev.slne.surf.api.event.*
 import dev.slne.surf.api.common.invoker.HiddenInvokerUtil
-import dev.slne.surf.api.core.server.impl.event.invoker.SurfEventInvokerFactory
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.di.Service
+import dev.slne.surf.api.core.server.impl.event.invoker.SurfEventInvokerFactory
+import dev.slne.surf.api.event.*
 import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import org.springframework.stereotype.Service
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap

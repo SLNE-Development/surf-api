@@ -292,11 +292,6 @@ public final class dev/slne/surf/redis/codec/default/VarLongBinaryCodec : dev/sl
 	public synthetic fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/Object;)V
 }
 
-public final class dev/slne/surf/redis/credentials/RedisCredentialsProvider$Companion : dev/slne/surf/redis/credentials/RedisCredentialsProvider {
-	public final fun getINSTANCE ()Ldev/slne/surf/redis/credentials/RedisCredentialsProvider;
-	public fun redisURI ()Lorg/redisson/misc/RedisURI;
-}
-
 public abstract interface class dev/slne/surf/redis/sync/SyncStructure : dev/slne/surf/redis/util/Initializable, reactor/core/Disposable {
 	public abstract fun addListener (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun getId ()Ljava/lang/String;

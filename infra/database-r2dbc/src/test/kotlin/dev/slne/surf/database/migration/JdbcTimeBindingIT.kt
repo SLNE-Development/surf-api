@@ -1,7 +1,7 @@
 package dev.slne.surf.database.migration
 
 import dev.slne.surf.database.testing.OutsideUtcVendor
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.toTestDatabase
 import dev.slne.surf.database.testing.withJvmZone
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -13,7 +13,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 /**
  * Pins the README's `JdbcMigration` guidance: how the JDBC drivers bind instants on the migration data source while
@@ -43,9 +42,9 @@ class JdbcTimeBindingIT {
     private fun storedShifts(vendor: OutsideUtcVendor): Map<String, Duration> {
         val shifts = linkedMapOf<String, Duration>()
         withJvmZone(JVM_ZONE) {
-            val api = vendor.container().toDatabaseApi(fresh = true)
+            val testDb = vendor.container().toTestDatabase(fresh = true)
             try {
-                assertNotNull(api.migrationDataSource).connection.use { connection ->
+                testDb.migrationDataSource.connection.use { connection ->
                     connection.createStatement().use { it.execute(vendor.createTable()) }
                     bindings().entries.forEachIndexed { id, (name, bind) ->
                         connection.prepareStatement("INSERT INTO bound (id, plain, with_zone) VALUES (?, ?, ?)").use {
@@ -55,13 +54,13 @@ class JdbcTimeBindingIT {
                             it.executeUpdate()
                         }
                         for (column in listOf("plain", "with_zone")) {
-                            val stored = vendor.epochMicrosInstant(api, "bound", column, id)
+                            val stored = vendor.epochMicrosInstant(testDb, "bound", column, id)
                             shifts["$name/$column"] = Duration.between(instant, stored)
                         }
                     }
                 }
             } finally {
-                api.shutdown()
+                testDb.close()
             }
         }
         return shifts

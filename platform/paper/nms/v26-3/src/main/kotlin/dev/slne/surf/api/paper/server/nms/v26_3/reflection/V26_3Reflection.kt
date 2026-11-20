@@ -19,6 +19,8 @@ package dev.slne.surf.api.paper.server.nms.v26_3.reflection
 @Suppress("ClassName")
 object V26_3Reflection {
 
-    /** Nothing to do; see the class documentation before adding something. */
+    /**
+     * Nothing to do; see the class documentation before adding something.
+     */
     fun initialize() = Unit
 }

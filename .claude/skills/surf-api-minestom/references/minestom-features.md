@@ -144,7 +144,8 @@ it removed, and the latter is what a player leaving calls for.
 ## `plugin/` - the plugin model
 
 `SurfMinestomPlugin`, `PluginMeta` and `PluginManager` - see `references/plugin.md`.
-`PluginManager.instance` throws when the plugins feature is not installed.
+`PluginManager.instance` throws when the plugins feature is not installed. A plugin's logic lives in
+Spring beans, not in the plugin class.
 
 ## `coroutine/` - dispatchers and scopes
 
@@ -158,7 +159,8 @@ it removed, and the latter is what a player leaving calls for.
 Ready-made scopes, each a `SupervisorJob` under a shared `CoroutineExceptionHandler` that logs
 through `MinecraftServer.LOGGER`: `minestomScope` (on `Main`), `minestomAsyncScope` (on
 `Dispatchers.Default`) and `minestomBlockingScope` (on `Blocking`). A plugin should prefer its own
-`scope`, which is cancelled on disable.
+scope - `plugin.scope`, or the `CoroutineScope` bean its beans inject - which is cancelled on
+disable.
 
 `entity-scheduler.kt` bridges to an entity's own scheduler:
 
@@ -166,7 +168,9 @@ through `MinecraftServer.LOGGER`: `minestomScope` (on `Main`), `minestomAsyncSco
 val y = entity.withEntity { it.position.blockY() }   // runs next tick on the entity's scheduler
 ```
 
-`withEntity` throws `IllegalStateException` when the entity is removed or has no instance.
+`withEntity` throws `IllegalStateException` when the entity is already removed or in no instance
+when called, and fails with a `CancellationException` when the entity is removed before the block
+ran; the block then never runs.
 `Collection<T>.withEntities(block)` runs the block for every entity on its own scheduler and
 collects the results in the order of the entities.
 
@@ -198,6 +202,3 @@ surfMinestomServer {
     listeners(WelcomeListener())
 }
 ```
-
-(The doc comment on `EventRegistrar` writes `surfMinestomApi { listeners(...) }`; that name belongs
-to the *Gradle* extension of a plugin project. The runtime function is `surfMinestomServer { }`.)

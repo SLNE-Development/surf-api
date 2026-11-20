@@ -2,7 +2,6 @@ package dev.slne.surf.microservice.runtime.spark
 
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.config.environment.env
-import dev.slne.surf.microservice.api.Microservice
 import dev.slne.surf.microservice.runtime.MicroserviceRuntimeBuildConfig
 import dev.slne.surf.microservice.runtime.command.LoggingCommandOutput
 import dev.slne.surf.microservice.runtime.lifecycle.RuntimeComponent
@@ -27,11 +26,11 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * The profiler is off by default because its call tree stays on the heap and keeps idle services large.
  *
- * Starts after surf-api because spark keeps its files in `<dataPath>/spark` of [Microservice.instance]. Commands
+ * spark keeps its files in `<dataPath>/spark` of the microservice. Commands
  * are accepted only while spark runs. spark's static log output goes through this plugin's logger. The
  * [CancellationException]s that spark's executors report while [stop] cancels the profiler are logged at debug level.
  */
-internal class MicroserviceSpark : SparkPlugin, RuntimeComponent {
+internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, RuntimeComponent {
     override val name = "spark"
 
     private val log = logger()
@@ -110,7 +109,7 @@ internal class MicroserviceSpark : SparkPlugin, RuntimeComponent {
 
     override fun getVersion(): String = MicroserviceRuntimeBuildConfig.VERSION
 
-    override fun getPluginDirectory(): Path = Microservice.instance.dataPath.resolve(DIRECTORY_NAME)
+    override fun getPluginDirectory(): Path = dataPath.resolve(DIRECTORY_NAME)
 
     override fun getCommandName(): String = COMMAND_NAME
 

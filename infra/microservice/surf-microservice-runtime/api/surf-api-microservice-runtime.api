@@ -1,0 +1,8 @@
+public final class dev/slne/surf/microservice/runtime/RunMicroserviceKt {
+	public static final fun runMicroservice (Ljava/lang/Class;[Ljava/lang/String;)Ljava/lang/Void;
+}
+
+public class dev/slne/surf/microservice/runtime/boot/MicroserviceAutoConfiguration {
+	public fun <init> ()V
+}
+

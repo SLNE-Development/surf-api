@@ -112,7 +112,9 @@ class DialogTypeBuilder {
      * Collects the dialogs a dialog list offers and how they are laid out.
      */
     class DialogListTypeBuilder {
-        /** Keeps the order the dialogs were added in, which is the order the client shows them in. */
+        /**
+         * Keeps the order the dialogs were added in, which is the order the client shows them in.
+         */
         private val dialogs = mutableSetOf<Dialog>()
         var exitAction: DialogActionButton? = null
         var columns: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int = DEFAULT_COLUMNS

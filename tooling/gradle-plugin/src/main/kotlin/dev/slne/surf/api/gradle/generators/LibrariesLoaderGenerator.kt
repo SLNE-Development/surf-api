@@ -5,6 +5,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.register
 import java.io.IOException
@@ -30,8 +31,6 @@ abstract class GenerateLibrariesLoaderTask : DefaultTask() {
         val loader = LibrariesLoaderGenerator.generate(packageName.get())
         loader.writeTo(outputDirectory.get().asFile)
     }
-
-    fun loaderLocation(): String = "${packageName.get()}.$PaperLibraryLoaderClassName"
 }
 
 
@@ -46,7 +45,7 @@ object LibrariesLoaderGenerator {
     val Gson = "com.google.gson.Gson".className()
     val Stream: ClassName = ClassName.get(java.util.stream.Stream::class.java)
 
-    fun Project.generateLibrariesLoaderTask(pkg: String): TaskProvider<GenerateLibrariesLoaderTask> {
+    fun Project.generateLibrariesLoaderTask(pkg: Provider<String>): TaskProvider<GenerateLibrariesLoaderTask> {
         val generatedResourcesDirectory = layout.buildDirectory.dir("generated/surf-api/loader")
 
         return tasks.register<GenerateLibrariesLoaderTask>("generateLibrariesLoader") {

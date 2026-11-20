@@ -3,6 +3,9 @@ package dev.slne.surf.api.gradle.platform.common
 import dev.slne.surf.api.gradle.generators.GeneratePluginFile
 import dev.slne.surf.api.gradle.generators.pluginfiles.CommonPluginFile
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
+import dev.slne.surf.api.gradle.platform.core.CoreSurfExtension
+import dev.slne.surf.api.gradle.pluginclass.GeneratedPluginClass
+import dev.slne.surf.api.gradle.pluginclass.SurfPluginClassTasks
 import kotlinx.serialization.SerializationStrategy
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -13,10 +16,16 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.gradle.kotlin.dsl.withType
 
-abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : CommonPluginFile, D>(
+/**
+ * Base of the platform plugins that describe the plugin in a file of their own and generate the main
+ * class [generatedClass] unless the build script names one in that file.
+ */
+abstract class CommonSurfPluginWithPluginFile<E : CoreSurfExtension, F : CommonPluginFile, D>(
     platformName: String,
-    platform: SurfApiPlatform,
+    private val platform: SurfApiPlatform,
     private val pluginFileName: String,
+    private val generatedClass: GeneratedPluginClass,
+    private val generatedClassDirectory: String,
 ) : CommonSurfPlugin<E>(platformName, platform) {
 
     protected abstract val dtoSerializer: SerializationStrategy<D>
@@ -31,7 +40,9 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
             val generatedResourcesDirectory =
                 layout.buildDirectory.dir("generated/surf-api/$platformName")
 
+            val pluginClasses = SurfPluginClassTasks(this, extensions.getByType(extensionClass), platform)
             val createdPluginFile = createPluginFile(this)
+            registerPluginClasses(pluginClasses, createdPluginFile)
 
             val generateTask =
                 tasks.register<GeneratePluginFile>("generate${platformName.uppercaseFirstChar()}PluginFile") {
@@ -39,18 +50,10 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
 
                     fileName.set(pluginFileName)
                     outputDir.set(generatedResourcesDirectory)
-                    pluginFileJson.set(provider {
-                        if (createdPluginFile.isApplied()) {
-                            createdPluginFile.validate()
-                            val dto = createPluginFileDto(createdPluginFile)
-                            GeneratePluginFile.json.encodeToString(dtoSerializer, dto)
-                        } else {
-                            logger.warn(
-                                "Plugin file generation is skipped because the plugin file is not applied. " +
-                                        "Please check if the plugin file is applied in the build.gradle.kts file."
-                            )
-                            ""
-                        }
+                    pluginFileJson.set(createdPluginFile.effectiveMain().map {
+                        createdPluginFile.validate()
+                        val dto = createPluginFileDto(createdPluginFile)
+                        GeneratePluginFile.json.encodeToString(dtoSerializer, dto)
                     })
                 }
 
@@ -60,5 +63,25 @@ abstract class CommonSurfPluginWithPluginFile<E : CommonSurfExtension, F : Commo
                 }
             }
         }
+    }
+
+    private fun Project.registerPluginClasses(pluginClasses: SurfPluginClassTasks, pluginFile: F) {
+        pluginFile.generatedMain.convention(pluginClasses.generatedClassName(generatedClass))
+        pluginClasses.scanFrom(pluginFile.configuredMain())
+
+        pluginClasses.generateClasses(
+            generatedClassDirectory,
+            provider {
+                if (pluginFile.configuredMain().isPresent) emptyList() else listOf(generatedClass)
+            },
+        )
+        pluginClasses.verifySuperclasses(
+            provider {
+                pluginFile.configuredMain().orNull
+                    ?.let { mapOf(it to generatedClass.superclass) }
+                    .orEmpty()
+            }
+        )
+        pluginClasses.forbidBundledSpring()
     }
 }

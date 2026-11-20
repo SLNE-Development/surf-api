@@ -1,9 +1,11 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
-import com.github.shynixn.mccoroutine.folia.scope
 import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.plus
 import me.devnatan.inventoryframework.component.BukkitItemComponentBuilder
 import me.devnatan.inventoryframework.component.Pagination
 import me.devnatan.inventoryframework.component.PaginationStateBuilder
@@ -143,7 +145,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     fun suspendSource(
         plugin: Plugin,
         provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
-    ) = suspendSource(scope = plugin.scope, provider = provider)
+    ) = suspendSource(scope = serverThreadScope(plugin), provider = provider)
 
     /**
      * Sets a lazy suspend-based pagination source. The [provider] is evaluated only once
@@ -170,7 +172,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     fun lazySuspendSource(
         plugin: Plugin,
         provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
-    ) = lazySuspendSource(scope = plugin.scope, provider = provider)
+    ) = lazySuspendSource(scope = serverThreadScope(plugin), provider = provider)
 
     /**
      * Configures a simple item factory that receives a [BukkitItemComponentBuilder] and the
@@ -259,4 +261,14 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
         pageSwitchHandler?.let { stateBuilder.onPageSwitch(it) }
         orientation?.let { stateBuilder.orientation(it) }
     }
+}
+
+/**
+ * The scope of [plugin] on its main dispatcher: the inventory framework renders a page on the thread
+ * that completes the page's source.
+ */
+@OptIn(InternalSurfApi::class)
+private fun serverThreadScope(plugin: Plugin): CoroutineScope {
+    val runtime = SurfPaperPluginRuntime.get()
+    return runtime.coroutineScope(plugin) + runtime.dispatchers(plugin).main
 }

@@ -24,7 +24,7 @@ data class MinestomPluginFileDto(
     companion object {
         fun fromFile(file: MinestomPluginFile) = MinestomPluginFileDto(
             id = file.id.orNull,
-            main = file.main.orNull,
+            main = file.effectiveMain().orNull,
             name = file.name.orNull,
             version = file.version.orNull,
             description = file.description.orNull,

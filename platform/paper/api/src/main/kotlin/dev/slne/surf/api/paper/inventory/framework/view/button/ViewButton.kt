@@ -1,8 +1,6 @@
 package dev.slne.surf.api.paper.inventory.framework.view.button
 
 import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
-import dev.slne.surf.api.inventory.framework.view.icon.ViewIconColor
-import dev.slne.surf.api.inventory.framework.view.icon.ViewIconType
 import dev.slne.surf.api.paper.builder.ItemDsl
 import dev.slne.surf.api.paper.builder.buildItem
 import me.devnatan.inventoryframework.context.CloseContext
@@ -112,14 +110,18 @@ class ViewButtonStateScope<T> internal constructor(val value: T) {
     }
 }
 
-/** Immutable per-state configuration produced by [ViewButtonStateScope]. */
+/**
+ * Immutable per-state configuration produced by [ViewButtonStateScope].
+ */
 internal class ViewButtonStateSpec<T>(
     val value: T,
     val itemFactory: SlotRenderContext.() -> ItemStack,
     val enterHandler: (SlotClickContext.(from: T) -> Unit)?,
 )
 
-/** Immutable button configuration produced by [ViewButtonBuilder]. */
+/**
+ * Immutable button configuration produced by [ViewButtonBuilder].
+ */
 internal class ViewButtonSpec<T>(
     val states: List<ViewButtonStateSpec<T>>,
     val values: List<T>,

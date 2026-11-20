@@ -37,7 +37,7 @@ abstract class MicroserviceReliabilityExtension {
      * 2. the Gradle property `surf.microservice.reliability.enabled` (`true` or `false`, any other value fails the
      *    build),
      * 3. enabled if the database integration is enabled and surf-nats is present, otherwise disabled. surf-nats is
-     *    present if the `dev.slne.surf.api.gradle.nats` plugin is applied or `surf-api-nats-standalone` is declared in
+     *    present if the `dev.slne.surf.api.gradle.nats` plugin is applied or `surf-api-nats-spring` is declared in
      *    `api`, `implementation` or `runtimeOnly`.
      *
      * Enabling it explicitly, with the value or the property, while the database integration is disabled or surf-nats

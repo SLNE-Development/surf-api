@@ -7,5 +7,6 @@ enum class ViewIconColor(
     BLUE("blue"),
     WHITE("white"),
     GREEN("green"),
-    YELLOW("yellow"), ;
+    YELLOW("yellow"),
+    ;
 }

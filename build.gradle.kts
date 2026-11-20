@@ -110,10 +110,26 @@ subprojects.filter { it.projectDir.startsWith(infraDir) }.forEach { infraProject
 }
 
 subprojects {
+    // Every module with an ABI dump, whichever way it enables validation, checks its dump for
+    // nested classes of excluded internal classes.
+    val dumps = layout.projectDirectory.dir("api")
+    if (dumps.asFile.isDirectory) {
+        val checkAbiDumpNesting = tasks.register<CheckAbiDumpNesting>("checkAbiDumpNesting") {
+            group = LifecycleBasePlugin.VERIFICATION_GROUP
+            description = "Fails when an ABI dump lists a nested class of an excluded internal class."
+            this.dumps.from(fileTree(dumps) {
+                include("*.api")
+                exclude("*.klib.api")
+            })
+        }
+        plugins.withType<LifecycleBasePlugin> { tasks.named("check") { dependsOn(checkAbiDumpNesting) } }
+    }
+
     afterEvaluate {
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
                 optIn.add("dev.slne.surf.api.shared.api.util.InternalSurfApi")
+                optIn.add("dev.slne.surf.api.shared.api.util.PublishedSurfApi")
                 freeCompilerArgs.add("-Xcontext-parameters")
             }
         }

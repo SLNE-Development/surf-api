@@ -1,9 +1,9 @@
-public final class dev/slne/surf/microservice/reliability/MicroserviceEventsKt {
-	public static final fun getEvents (Ldev/slne/surf/microservice/api/Microservice;)Ldev/slne/surf/microservice/reliability/TransactionalEvents;
-}
-
-public final class dev/slne/surf/microservice/reliability/RegisterTransactionalServiceKt {
-	public static final fun registerTransactionalService (Ldev/slne/surf/nats/NatsClient;Lkotlin/reflect/KClass;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+public class dev/slne/surf/microservice/reliability/MicroserviceReliabilityAutoConfiguration {
+	public fun <init> ()V
+	public fun atomicOperations (Ldev/slne/surf/database/libs/org/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;Ldev/slne/surf/microservice/reliability/ReliabilityConfig;)Ldev/slne/surf/database/reliability/operation/AtomicOperations;
+	public fun reliabilityConfig ()Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
+	public fun reliabilityMigrationSet ()Ldev/slne/surf/database/reliability/ReliabilityMigrationSet;
+	public fun transactionalEvents ()Ldev/slne/surf/microservice/reliability/TransactionalEvents;
 }
 
 public final class dev/slne/surf/microservice/reliability/ReliabilityConfig {
@@ -19,14 +19,6 @@ public final class dev/slne/surf/microservice/reliability/ReliabilityConfig {
 	public final fun getCleanupInterval-UwyO8pc ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public abstract interface class dev/slne/surf/microservice/reliability/ReliabilityCustomizer {
-	public fun getReliabilityConfig ()Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
-}
-
-public final class dev/slne/surf/microservice/reliability/ReliabilityCustomizer$DefaultImpls {
-	public static fun getReliabilityConfig (Ldev/slne/surf/microservice/reliability/ReliabilityCustomizer;)Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
 }
 
 public final class dev/slne/surf/microservice/reliability/TransactionalEvents {

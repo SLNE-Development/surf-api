@@ -228,7 +228,6 @@ class SpongeConfigManager<C> private constructor(
             migrations
         )
 
-
         private fun <C, T : AbstractConfigurationLoader.Builder<T, L>, L : AbstractConfigurationLoader<*>> buildConfigManager(
             verifyToolUrl: String,
             builder: AbstractConfigurationLoader.Builder<T, L>,

@@ -42,7 +42,6 @@ Implement it for a new header visual; see `references/header-and-alignment.md` f
 | `ViewBlockCellComponent` | public | `geometry.slotGlyphShift(column)` / `slotSize + 1` | `column` 0-8 and `row` 1-6, both validated; glyph per row from the internal `BlockRow` enum; `forSlot(slot, geometry)`; equality on column + row only (geometry is not part of it) |
 | `PaginationButtonGlyphComponent` | internal | `geometry.columnShift(2) + 0` / `89` | sealed, four states |
 | `PaginationPageIndicatorComponent` | internal | centred in the 58px gap between the arrows / laid-out width | `hasExactWidth = false` |
-| `ViewContainerBackHintComponent` | deprecated, hidden | `0` / `0` | renders nothing; the back arrow is part of the inventory texture now |
 
 Blocking a cell is **cosmetic**: it draws a texture over the cell and changes neither its contents
 nor its click handling. Whether a blocked slot can be interacted with is decided purely by the
@@ -138,10 +137,6 @@ containerDefaults {
     blockAllSlots(ViewRows.FIVE, setOf(1))
 }
 ```
-
-The file ends with a block of `DeprecationLevel.HIDDEN` binary-compatibility shims for the
-signatures that existed before `geometry` (and `blockColumn`'s `rows`) were added, plus a no-op
-`backHint()`. They are invisible to Kotlin callers; never write them in new code.
 
 ## Navigation history
 

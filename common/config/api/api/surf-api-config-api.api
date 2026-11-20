@@ -1,3 +1,11 @@
+public abstract interface class dev/slne/surf/api/config/ConfigHandle {
+	public abstract fun edit (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getValue ()Ljava/lang/Object;
+	public abstract fun reload ()Ljava/lang/Object;
+	public abstract fun save ()V
+	public abstract fun update (Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+}
+
 public abstract interface annotation class dev/slne/surf/api/config/JsonConfigFileNamePattern : java/lang/annotation/Annotation {
 }
 
@@ -25,6 +33,11 @@ public abstract class dev/slne/surf/api/config/SpongeYmlConfigClass : dev/slne/s
 	public final fun isInitialized ()Z
 }
 
+public abstract interface annotation class dev/slne/surf/api/config/SurfConfig : java/lang/annotation/Annotation {
+	public abstract fun migrations ()[Ljava/lang/Class;
+	public abstract fun path ()Ljava/lang/String;
+}
+
 public abstract interface class dev/slne/surf/api/config/SurfConfigApi {
 	public static final field Companion Ldev/slne/surf/api/config/SurfConfigApi$Companion;
 	public abstract fun createSpongeJsonConfig (Ljava/lang/Class;Ljava/nio/file/Path;Ljava/lang/String;)Ljava/lang/Object;
@@ -39,7 +52,6 @@ public abstract interface class dev/slne/surf/api/config/SurfConfigApi {
 }
 
 public final class dev/slne/surf/api/config/SurfConfigApi$Companion {
-	public final fun getInstance ()Ldev/slne/surf/api/config/SurfConfigApi;
 }
 
 public final class dev/slne/surf/api/config/SurfConfigApi$DefaultImpls {
@@ -50,7 +62,6 @@ public final class dev/slne/surf/api/config/SurfConfigApi$DefaultImpls {
 public final class dev/slne/surf/api/config/SurfConfigApiKt {
 	public static final synthetic fun createSpongeJsonConfigManager (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
 	public static final synthetic fun createSpongeYmlConfigManager (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/api/config/manager/SpongeConfigManager;
-	public static final fun getSurfConfigApi ()Ldev/slne/surf/api/config/SurfConfigApi;
 }
 
 public abstract interface annotation class dev/slne/surf/api/config/YamlConfigFileNamePattern : java/lang/annotation/Annotation {
@@ -468,6 +479,10 @@ public final class dev/slne/surf/api/config/migration/MigrationResult {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class dev/slne/surf/api/config/serializer/ConfigSerializerRegistrar {
+	public abstract fun register (Ldev/slne/surf/api/config/serializer/SpongeConfigSerializers;)V
+}
+
 public abstract class dev/slne/surf/api/config/serializer/SpongeConfigSerializers {
 	public fun <init> ()V
 	public final fun buildSerializersModule ()Ljava/util/function/Consumer;
@@ -497,10 +512,6 @@ public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializers$L
 
 public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializers$LinkedListSerializer$Companion {
 	public final fun getTYPE ()Lio/leangen/geantyref/TypeToken;
-}
-
-public final class dev/slne/surf/api/config/serializer/SpongeConfigSerializersKt {
-	public static final fun getSurfSpongeConfigSerializers ()Ldev/slne/surf/api/config/serializer/SpongeConfigSerializers;
 }
 
 public abstract interface annotation class dev/slne/surf/api/config/serializer/collection/map/ThrowExceptions : java/lang/annotation/Annotation {

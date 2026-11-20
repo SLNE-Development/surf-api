@@ -3,8 +3,6 @@ package dev.slne.surf.api.minestom.server.impl
 import com.github.retrooper.packetevents.PacketEvents
 import dev.slne.surf.api.core.extensions.packetEvents
 import dev.slne.surf.api.core.server.packet.NoopPacketEvents
-import dev.slne.surf.api.di.boot.SurfContainerAccess
-import dev.slne.surf.api.di.boot.SurfContainerHost
 import dev.slne.surf.api.minestom.extension.GlobalEventHandler
 import dev.slne.surf.api.minestom.extension.SchedulerManager
 import dev.slne.surf.api.minestom.permission.MinestomPermissions
@@ -17,19 +15,20 @@ import dev.slne.surf.api.minestom.server.impl.SurfMinestomRuntime.Companion.isSh
 import dev.slne.surf.api.minestom.server.impl.command.MinestomCommandAPIService
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
 import dev.slne.surf.api.minestom.server.impl.configuration.ConfigurationPhase
-import dev.slne.surf.api.minestom.server.impl.di.MinestomContainerPlatform
 import dev.slne.surf.api.minestom.server.impl.dialog.DialogCallbackListener
-import dev.slne.surf.api.minestom.server.impl.inventory.framework.MinestomInventoryLoader
 import dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent
 import dev.slne.surf.api.minestom.server.impl.performance.EntityTickFilter
 import dev.slne.surf.api.minestom.server.impl.player.PlayerEvents
 import dev.slne.surf.api.minestom.server.impl.player.PlayerFlightListener
 import dev.slne.surf.api.minestom.server.impl.player.SurfPlayerProviders
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import dev.slne.surf.api.nats.NatsPlatform
+import dev.slne.surf.api.redis.RedisPlatform
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfContexts
+import dev.slne.surf.api.spring.context.SurfRootContext
+import dev.slne.surf.api.spring.context.surfCoroutineScope
+import dev.slne.surf.api.spring.util.FailureCollector
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.minestom.server.MinecraftServer
@@ -38,6 +37,12 @@ import net.minestom.server.event.EventNode
 import net.minestom.server.property.ServerProperties
 import net.minestom.server.thread.TickSchedulerThread
 import net.minestom.server.thread.TickThread
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * Lifecycle of the surf api on a Minestom server; at most one runtime exists per JVM.
@@ -62,8 +67,7 @@ internal class SurfMinestomRuntime private constructor(
     override val features: Collection<SurfMinestomFeature> =
         builder.features.values.sortedBy(SurfMinestomFeature::loadPriority)
 
-    private val inventoryLoader = MinestomInventoryLoader()
-    private val instance = SurfMinestomInstance(inventoryLoader)
+    private val instance = SurfMinestomInstance()
     private val commandApi = MinestomCommandAPIService()
 
     private val loaded = mutableListOf<SurfMinestomFeature>()
@@ -73,13 +77,10 @@ internal class SurfMinestomRuntime private constructor(
     private var packetEventsPrepared = false
 
     /**
-     * surf-api's container hierarchy for this server.
-     *
-     * The root holds surf-api's own beans. A jar plugin that wants one gets a child below it; a
-     * plugin shaded into the server must not, because it shares the server's classpath and its
-     * beans are therefore already the root's.
+     * surf-api's root Spring context on this server, holding surf-api's own beans; set in [load].
      */
-    val containers = SurfContainerHost(MinestomContainerPlatform())
+    @Volatile
+    private var root: SurfRootContext? = null
 
     private val lifecycleLock = ReentrantLock()
 
@@ -105,12 +106,20 @@ internal class SurfMinestomRuntime private constructor(
 
         if (builder.recommendedServerProperties) RecommendedServerProperties.apply()
         preparePacketEvents()
+        NatsPlatform.install(SURF_API_DATA_DIRECTORY)
+        RedisPlatform.install(SURF_API_DATA_DIRECTORY)
+
         runBlocking {
-            // Before everything else. A bean is resolved where it is first used rather than where
-            // it is declared, so the container has to be able to answer from the first class that
-            // asks, and `install` is what makes it answerable through `SurfContainer`.
-            containers.startRoot(this@SurfMinestomRuntime)
-            SurfContainerAccess.install(containers)
+            val classLoader = SurfMinestomRuntime::class.java.classLoader
+            val root = SurfRootContext.create(
+                classLoader,
+                surfCoroutineScope("surf-api", classLoader, Dispatchers.Default),
+            ) { context ->
+                context.beanFactory.registerSingleton(SERVER_BEAN, this@SurfMinestomRuntime)
+            }
+            this@SurfMinestomRuntime.root = root
+            SurfContexts.install(root.context)
+            root.load()
 
             instance.bootstrap()
             instance.onLoad()
@@ -118,7 +127,6 @@ internal class SurfMinestomRuntime private constructor(
 
         GlobalEventHandler.addChild(eventNode)
 
-        inventoryLoader.register(eventNode)
         DialogCallbackListener.register(eventNode)
         PlayerFlightListener.install()
         PlayerLimit.maxPlayers = builder.maxPlayers
@@ -151,11 +159,10 @@ internal class SurfMinestomRuntime private constructor(
     }
 
     private fun enable() {
-        // The server's own enable phase, and so the container's: a bean's `enable` is the first
-        // point at which the features and the rest of the server are there to talk to.
-        runBlocking { containers.enable(this@SurfMinestomRuntime) }
-
-        runBlocking { instance.onEnable() }
+        runBlocking {
+            checkNotNull(root) { "surf-api's root context is not loaded" }.enable()
+            instance.onEnable()
+        }
         reportFailedMixins()
 
         for (feature in features) {
@@ -280,14 +287,13 @@ internal class SurfMinestomRuntime private constructor(
     private fun teardown(): Throwable? {
         running.set(false)
 
-        var failure: Throwable? = null
+        val failures = FailureCollector()
         fun step(name: String, action: () -> Unit) {
             try {
                 action()
             } catch (stepFailure: Throwable) {
                 LOGGER.error("Failed to {} while shutting down the surf api", name, stepFailure)
-                val first = failure
-                if (first == null) failure = stepFailure else first.addSuppressed(stepFailure)
+                failures.add(stepFailure)
             }
         }
 
@@ -316,14 +322,16 @@ internal class SurfMinestomRuntime private constructor(
             step("reset the permission provider") { MinestomPermissions.installProvider(null) }
             step("reset the unsigned argument factory") { SignedCommandArguments.resetUnsignedFactory() }
 
-            // Last, and children before the root: a plugin's bean may hold one of surf-api's, so
-            // the reverse order would close a connection while something still writes to it.
-            step("stop the bean containers") { runBlocking { containers.stopAll() } }
-            step("uninstall the container access") { SurfContainerAccess.uninstall(containers) }
+            root?.let { root ->
+                step("disable the root context") { runBlocking { root.disable() } }
+                step("close the root context") { root.close() }
+            }
+            root = null
+            step("uninstall the root context") { SurfContexts.uninstall() }
         } finally {
             current.compareAndSet(this, null)
         }
-        return failure
+        return failures.first
     }
 
     private fun preparePacketEvents() {
@@ -344,6 +352,15 @@ internal class SurfMinestomRuntime private constructor(
 
     companion object {
         private val LOGGER = ComponentLogger.logger()
+
+        /**
+         * surf-api's own data folder on a Minestom server, `surf-api` inside the plugins directory next to the
+         * plugins' folders.
+         */
+        @OptIn(InternalSurfApi::class)
+        private val SURF_API_DATA_DIRECTORY: Path = PluginsDirectory.fromSystemProperty().resolve("surf-api")
+
+        private const val SERVER_BEAN = "surfMinestomServer"
 
         /**
          * Fails startup when Mixin is not installed or a class failed to transform, since the

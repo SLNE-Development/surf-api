@@ -22,17 +22,26 @@ package dev.slne.surf.api.inventory.framework.view.settings
  * @see PaginationViewRows
  */
 enum class PaginationEmptyRows(val rows: Int) {
-    /** No empty row; the pagination content starts right at the inventory edge. */
+    /**
+     * No empty row; the pagination content starts right at the inventory edge.
+     */
     NONE(0),
 
-    /** 1 empty row between the pagination content and the inventory edge. */
+    /**
+     * 1 empty row between the pagination content and the inventory edge.
+     */
     ONE(1),
 
-    /** 2 empty rows between the pagination content and the inventory edge. */
+    /**
+     * 2 empty rows between the pagination content and the inventory edge.
+     */
     TWO(2),
 
-    /** 3 empty rows between the pagination content and the inventory edge. */
-    THREE(3);
+    /**
+     * 3 empty rows between the pagination content and the inventory edge.
+     */
+    THREE(3),
+    ;
 
     companion object {
         /**

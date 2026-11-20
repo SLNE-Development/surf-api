@@ -14,7 +14,9 @@ import dev.slne.surf.api.shared.api.util.InternalSurfApi
 @InternalSurfApi
 enum class PaginationButtonGlyphs {
 
-    /** Both navigation buttons are disabled (no previous and no next page). */
+    /**
+     * Both navigation buttons are disabled (no previous and no next page).
+     */
     DISABLED {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐕ'
@@ -27,7 +29,9 @@ enum class PaginationButtonGlyphs {
         }
     },
 
-    /** The right (next) button is disabled; only the left (previous) button is active. */
+    /**
+     * The right (next) button is disabled; only the left (previous) button is active.
+     */
     DISABLED_RIGHT {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐖ'
@@ -40,7 +44,9 @@ enum class PaginationButtonGlyphs {
         }
     },
 
-    /** The left (previous) button is disabled; only the right (next) button is active. */
+    /**
+     * The left (previous) button is disabled; only the right (next) button is active.
+     */
     DISABLED_LEFT {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐗ'
@@ -53,7 +59,9 @@ enum class PaginationButtonGlyphs {
         }
     },
 
-    /** Both navigation buttons are active (there are previous and next pages). */
+    /**
+     * Both navigation buttons are active (there are previous and next pages).
+     */
     ENABLED {
         override fun glyph(rows: Int): Char = when (rows) {
             1 -> 'ꐘ'

@@ -1,11 +1,11 @@
 package dev.slne.surf.database.query
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.columns.time.CurrentOffsetDateTime
 import dev.slne.surf.database.columns.time.offsetDateTime
 import dev.slne.surf.database.columns.time.zonedDateTime
 import dev.slne.surf.database.testing.OutsideUtcVendor
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import dev.slne.surf.database.testing.withJvmZone
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
@@ -84,7 +84,7 @@ class TemporalShiftIT {
     }
 
     @Test
-    fun shiftsTimestampWithTimeZoneOnPostgres() = withApi(OutsideUtcVendor.POSTGRESQL) {
+    fun shiftsTimestampWithTimeZoneOnPostgres() = withTestDatabase(OutsideUtcVendor.POSTGRESQL) {
         val rows = OffsetRows()
         SchemaUtils.create(rows)
         rows.insert {
@@ -173,7 +173,7 @@ class TemporalShiftIT {
     }
 
     @Test
-    fun dropsTheSubMicrosecondPart() = withApi(OutsideUtcVendor.POSTGRESQL) {
+    fun dropsTheSubMicrosecondPart() = withTestDatabase(OutsideUtcVendor.POSTGRESQL) {
         val rows = TimeRows()
         SchemaUtils.create(rows)
         rows.insertRow(id = 1, instant = LATE_EVENING)
@@ -199,7 +199,7 @@ class TemporalShiftIT {
     }
 
     private fun withRows(vendor: OutsideUtcVendor, block: suspend R2dbcTransaction.(TimeRows) -> Unit) =
-        withApi(vendor) {
+        withTestDatabase(vendor) {
             val rows = TimeRows()
             SchemaUtils.create(rows)
             rows.insertRow(id = 1, instant = LATE_EVENING)
@@ -217,13 +217,13 @@ class TemporalShiftIT {
         }
     }
 
-    private fun withApi(vendor: OutsideUtcVendor, block: suspend R2dbcTransaction.() -> Unit) =
+    private fun withTestDatabase(vendor: OutsideUtcVendor, block: suspend R2dbcTransaction.() -> Unit) =
         withJvmZone(JVM_ZONE) {
-            val api: DatabaseApi = vendor.container().toDatabaseApi(fresh = true)
+            val testDb: TestDatabase = vendor.container().toTestDatabase(fresh = true)
             try {
-                suspendTransaction(api.database) { block() }
+                suspendTransaction(testDb.database) { block() }
             } finally {
-                api.shutdown()
+                testDb.close()
             }
         }
 

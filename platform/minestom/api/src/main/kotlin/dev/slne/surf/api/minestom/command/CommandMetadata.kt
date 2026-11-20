@@ -9,6 +9,7 @@ data class CommandMetadata(
     val usage: List<String> = emptyList(),
     val help: String? = null,
 ) {
+    @InternalSurfApi
     companion object {
         @InternalSurfApi
         fun snapshot(

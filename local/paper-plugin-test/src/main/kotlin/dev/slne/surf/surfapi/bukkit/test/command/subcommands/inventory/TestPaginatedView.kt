@@ -13,7 +13,9 @@ import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
 import org.bukkit.inventory.ItemType
 
-/** Genug Einträge für mehrere Seiten, damit die Navigations-Buttons beide Zustände zeigen. */
+/**
+ * Genug Einträge für mehrere Seiten, damit die Navigations-Buttons beide Zustände zeigen.
+ */
 private val testPaginationEntries = List(40) { index -> "Eintrag ${index + 1}" }
 
 val testPaginatedViewDsl = paginatedSurfView("Test Pagination") {

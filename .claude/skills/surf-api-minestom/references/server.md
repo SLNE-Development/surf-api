@@ -10,7 +10,7 @@ Sources:
 
 ```kotlin
 plugins {
-    id("dev.slne.surf.api.gradle.minestom-server") version "3.0.0"
+    id("dev.slne.surf.api.gradle.minestom-server") version "4.0.0"
 }
 
 surfMinestomServerApi {
@@ -37,11 +37,21 @@ On top of the common `CommonSurfPlugin` setup (see
 `org.gradle.application` and `xyz.jpenilla.gremlin-gradle`, adds the Minestom snapshot repository,
 and adds `net.minestom:minestom` at `implementation` plus `log4j-core` and `log4j-slf4j2-impl` at
 `runtimeOnly`. The surf dependency is `surf-api-minestom-server` at **`implementation`** (not
-`compileOnly` as for a plugin), and `surf-api-minestom-bootstrap-impl` is added too.
+`compileOnly` as for a plugin), and `surf-api-minestom-bootstrap-impl` is added too. The server jar
+therefore carries Spring, so this plugin generates no plugin class and runs neither
+`checkSurfPluginClasses` nor `checkNoBundledSpring`. Of Netty, `surf-api-minestom-impl` ships only
+`netty-buffer` and `netty-common` at runtime; a server that needs another Netty module declares it.
 
-The shadow jar gets `duplicatesStrategy = INCLUDE`, `mergeServiceFiles()`, Log4j's
-`Log4j2PluginsCacheFileTransformer` and `Multi-Release: true` - log4j-core and its add-ons each
-ship a plugin cache which has to reach the transformer to be merged instead of dropped.
+The shadow jar gets `duplicatesStrategy = INCLUDE`, `Multi-Release: true` and the registry merge
+(`dev.slne.surf.api.gradle.util.mergeRegistryFiles`, shared with the microservice plugin):
+
+- `META-INF/services/**` and `META-INF/spring/*.imports` are merged line by line
+- `META-INF/spring.factories` and `META-INF/spring/aot.factories` are merged per key, values joined
+  with `,`
+- `META-INF/spring.handlers` and `META-INF/spring.schemas` keep the first value of each key
+- the Log4j plugin caches (`Log4j2Plugins.dat`) of log4j-core and its add-ons are combined by
+  `Log4j2PluginsCacheFileTransformer`; with only one of them, log4j finds no configuration and logs
+  nothing
 
 ## Features
 
@@ -78,10 +88,13 @@ surfMinestomServer {
 }
 ```
 
-`PluginsFeatureBuilder` has `directory` (default `plugins`), `loadClassPathPlugins` (default `true`,
-so plugin modules shaded into the same jar are loaded as well) and `requireAll` (default `false`).
-When the server declares `pluginDependencies` and `directory` is changed, start it with
-`-Dsurf.minestom.plugins=<dir>` too, so the bootstrap reads the same directory.
+`PluginsFeatureBuilder` has `directory` (default: the `surf.minestom.plugins` system property, else
+`plugins`), `loadClassPathPlugins` (default `true`, so plugin modules shaded into the same jar are
+loaded as well) and `requireAll` (default `false`). surf-api keeps its own data folder, `surf-api`,
+in the directory named by the system property, and reads its Redis and NATS configuration from
+there. When the server declares `pluginDependencies` or runs the Redis or NATS integration and
+`directory` is changed in code, also start it with `-Dsurf.minestom.plugins=<dir>`, so the
+bootstrap, surf-api and the feature use the same directory.
 
 Writing a feature of your own: implement `SurfMinestomFeature` (`id`, `loadPriority`, `load`,
 `enable`, `disable`) and `install(...)` it. Features load by ascending `loadPriority` (ties in
@@ -104,8 +117,8 @@ installation order), enable in that order, disable in reverse.
 | `onShutdown { }` | runs after Minestom stopped and features and plugins are disabled |
 | `install(feature)` / `isInstalled(id)` | the raw feature calls |
 
-The returned `SurfMinestomServer` (also `SurfMinestomServer.instance`) has `eventNode`, `features`,
-`feature(id)` and three ways to stop:
+The returned `SurfMinestomServer` (also `SurfMinestomServer.instance`, and a bean of surf-api's root
+Spring context) has `eventNode`, `features`, `feature(id)` and three ways to stop:
 
 - `shutdown()` - disables features and the api only. Runs automatically when Minestom stops.
 - `stop()` - stops Minestom, which shuts the api down, then runs the `onShutdown` actions. Blocks,
@@ -127,7 +140,7 @@ vanilla runs them: `PLAYER_COUNT`, `BRAND`, `CONFIGURATION_EVENT`, `SPAWN_LOCATI
 ```kotlin
 withConfigurationPhase {
     codeOfConduct { player -> "Hello ${player.username}! Please be nice." }
-    replace(ConfigurationTasks.RESOURCE_PACK) { context -> myPacks.await(context.player) }
+    replace(ConfigurationTasks.RESOURCE_PACK) { context -> myPacks.sendAndWait(context.player) }
     after(ConfigurationTasks.AWAIT_SETTINGS, ConfigurationTaskId("load_profile")) { context ->
         profiles.load(context.player.uuid)
     }
@@ -136,23 +149,24 @@ withConfigurationPhase {
 
 `replace(id, task)` and `remove(id)` require the step to exist; `before`/`after` take an anchor plus
 a new `ConfigurationTaskId`. Steps run on the player's virtual configuration thread, so they may
-suspend or block. `ids` is the current order.
+block. `ConfigurationTask.run` is a `@Blocking`, non-suspending function: a step cannot call a
+`suspend` function directly. `ids` is the current order.
 
 ## The bootstrap agent
 
 `SurfMinestomBootstrap` (`platform/minestom/bootstrap-impl/.../SurfMinestomBootstrap.java`) is the
 jar's `Launcher-Agent-Class`. In order it:
 
-1. reads `dependencies.txt` from the jar root - the gremlin dependency set - downloads those
-   libraries into `libraries/` on the first start and appends them to the system class path before
-   `main` runs. `-Dsurf.minestom.libraries=<dir>` overrides the directory.
-2. appends the plugins named in `Surf-Plugin-Dependencies` to the system class path
-   (`ServerPlugins`).
-3. makes `minestom.keep-alive-delay` writable at runtime, and turns Minestom's own
+1. makes `minestom.keep-alive-delay` writable at runtime, and turns Minestom's own
    `minestom.shutdown-on-signal` hook off unless it was set with `-D` - the surf api stops the
    server from its own hook, which also runs the shutdown actions.
-4. sets `surf.minestom.server-jar` to the jar path, so an agent loaded from a downloaded library
+2. sets `surf.minestom.server-jar` to the jar path, so an agent loaded from a downloaded library
    still finds the server jar's manifest.
+3. reads `dependencies.txt` from the jar root - the gremlin dependency set - downloads those
+   libraries into `libraries/` on the first start and appends them to the system class path before
+   `main` runs. `-Dsurf.minestom.libraries=<dir>` overrides the directory.
+4. appends the plugins named in `Surf-Plugin-Dependencies` to the system class path
+   (`ServerPlugins`).
 5. calls the delegate agents listed in `Surf-Delegate-Agent-Classes`, in order.
 
 Manifest attributes the Gradle plugin writes:
@@ -180,7 +194,7 @@ The NPC feature ships `mixins.surf-api-minestom-server-npc.json`.
 
 `SurfMixinAgent` (`platform/minestom/impl/src/main/java/.../impl/mixin/SurfMixinAgent.java`) reads
 the configurations out of `Surf-Mixin-Configs` and additionally applies surf's *compatibility*
-configurations - today `mixins.surf-api-minestom-server-miniplaceholders.json` - on its own, for
+configurations - such as `mixins.surf-api-minestom-server-miniplaceholders.json` - on its own, for
 every library whose marker class is on the system class path. Those need no manifest entry, and
 their injections are not required, so a library version that no longer needs the fix is simply left
 untransformed. A manifest listing no configuration at all fails the installation, as does a
@@ -238,14 +252,14 @@ current class files), with `me.lucko:jar-relocator:1.7`, `asm` and `asm-commons`
 
 ## Starting a server
 
-The plugin registers **no** run task, and `surfMinestomServer { }` has no `runDirectory`. A
-`runServer` task existed until 4.0.0 and was removed because it did not work reliably.
-
-Build the jar and start it yourself:
+surf adds no run task of its own, and `surfMinestomServer { }` has no `runDirectory`. The plugin
+applies Gradle's `application` plugin, but its `run` task starts the main class off the class path,
+skips the manifest agents and fails with `Mixin is not installed`. Build the jar and start it
+yourself:
 
 ```
 ./gradlew shadowJar
-java -jar build/libs/<name>-all.jar
+java -jar build/libs/<name>-<version>-all.jar
 ```
 
 It has to be `java -jar` on the shaded jar. The server's agents are declared in the jar manifest

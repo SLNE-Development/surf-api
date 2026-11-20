@@ -5,6 +5,7 @@ import dev.slne.surf.api.gradle.generators.pluginfiles.VelocityPluginFile
 import dev.slne.surf.api.gradle.generators.pluginfiles.dto.VelocityPluginFileDto
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.CommonSurfPluginWithPluginFile
+import dev.slne.surf.api.gradle.pluginclass.GeneratedPluginClass
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.dependencies
@@ -15,7 +16,9 @@ internal class VelocitySurfPlugin :
     CommonSurfPluginWithPluginFile<VelocitySurfExtension, VelocityPluginFile, VelocityPluginFileDto>(
         "velocity",
         SurfApiPlatform.VELOCITY,
-        "velocity-plugin.json"
+        "velocity-plugin.json",
+        GeneratedPluginClass.VELOCITY_PLUGIN,
+        "velocity-plugin",
     ) {
 
     override val extensionClass = VelocitySurfExtension::class.java
@@ -39,11 +42,6 @@ internal class VelocitySurfPlugin :
 
         val ext = project.extensions.getByType(VelocitySurfExtension::class.java)
         val coreEnabled = ext.coreModule.map { true }.orElse(false)
-        val surfRedisRelocationPresent = ext.surfRedisRelocation.map { true }.orElse(false)
-        val redisEnabled =
-            ext.withSurfRedis.zip(surfRedisRelocationPresent) { withRedis, relocPresent ->
-                withRedis && !relocPresent
-            }
 
         pluginDependencies {
             register("surf-api-velocity") {
@@ -54,11 +52,6 @@ internal class VelocitySurfPlugin :
             register("surf-core-velocity") {
                 optional.convention(false)
                 enabled.convention(coreEnabled)
-            }
-
-            register("surf-redis-velocity") {
-                optional.convention(false)
-                enabled.convention(redisEnabled)
             }
         }
     }

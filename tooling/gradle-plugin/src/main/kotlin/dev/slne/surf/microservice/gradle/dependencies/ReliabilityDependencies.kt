@@ -12,7 +12,7 @@ import org.gradle.api.provider.Provider
 private const val RELIABILITY_MODULE = "dev.slne.surf.api:surf-api-microservice-reliability"
 private const val NATS_PLUGIN = "dev.slne.surf.api.gradle.nats"
 private const val NATS_GROUP = "dev.slne.surf.api"
-private const val NATS_STANDALONE = "surf-api-nats-standalone"
+private const val NATS_SPRING = "surf-api-nats-spring"
 private val NATS_CONFIGURATIONS = listOf(
     API_CONFIGURATION_NAME,
     IMPLEMENTATION_CONFIGURATION_NAME,
@@ -63,7 +63,7 @@ private fun Project.reliabilityEnabled(
     }
     if (choice && !natsPresent) {
         throw reliabilityRequirementMissing(
-            "surf-nats is missing. Apply the '$NATS_PLUGIN' plugin or add $NATS_GROUP:$NATS_STANDALONE"
+            "surf-nats is missing. Apply the '$NATS_PLUGIN' plugin or add $NATS_GROUP:$NATS_SPRING"
         )
     }
     return choice
@@ -77,7 +77,7 @@ private fun Project.reliabilityRequirementMissing(reason: String) = GradleExcept
 
 private fun Project.hasSurfNats(): Boolean =
     pluginManager.hasPlugin(NATS_PLUGIN) || NATS_CONFIGURATIONS.any { name ->
-        configurations.findByName(name)?.dependencies.orEmpty().any { it.isSurfNatsStandalone() }
+        configurations.findByName(name)?.dependencies.orEmpty().any { it.isSurfNatsSpring() }
     }
 
-private fun Dependency.isSurfNatsStandalone(): Boolean = group == NATS_GROUP && name == NATS_STANDALONE
+private fun Dependency.isSurfNatsSpring(): Boolean = group == NATS_GROUP && name == NATS_SPRING

@@ -22,7 +22,6 @@ public abstract interface annotation class dev/slne/surf/api/minestom/builder/It
 
 public final class dev/slne/surf/api/minestom/chat/AsyncPlayerChatEvent {
 	public static final field Companion Ldev/slne/surf/api/minestom/chat/AsyncPlayerChatEvent$Companion;
-	public fun <init> (Lnet/minestom/server/entity/Player;Ljava/util/Set;Ldev/slne/surf/api/minestom/chat/ChatRenderer;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/chat/SignedMessage;)V
 	public final fun getMessage ()Lnet/kyori/adventure/text/Component;
 	public final fun getOriginalMessage ()Lnet/kyori/adventure/text/Component;
 	public final fun getPlayer ()Lnet/minestom/server/entity/Player;
@@ -38,7 +37,6 @@ public final class dev/slne/surf/api/minestom/chat/AsyncPlayerChatEvent {
 public final class dev/slne/surf/api/minestom/chat/AsyncPlayerChatEvent$Companion {
 	public final fun addListener (ILkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/minestom/event/SuspendingEventNode$Registration;
 	public static synthetic fun addListener$default (Ldev/slne/surf/api/minestom/chat/AsyncPlayerChatEvent$Companion;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/event/SuspendingEventNode$Registration;
-	public final fun getNode ()Ldev/slne/surf/api/minestom/event/SuspendingEventNode;
 }
 
 public abstract interface class dev/slne/surf/api/minestom/chat/ChatRenderer {
@@ -49,9 +47,6 @@ public abstract interface class dev/slne/surf/api/minestom/chat/ChatRenderer {
 public final class dev/slne/surf/api/minestom/chat/ChatRenderer$Companion {
 	public final fun defaultRenderer ()Ldev/slne/surf/api/minestom/chat/ChatRenderer;
 	public final fun viewerUnaware (Ldev/slne/surf/api/minestom/chat/ChatRenderer$ViewerUnaware;)Ldev/slne/surf/api/minestom/chat/ChatRenderer;
-}
-
-public abstract interface class dev/slne/surf/api/minestom/chat/ChatRenderer$Default : dev/slne/surf/api/minestom/chat/ChatRenderer, dev/slne/surf/api/minestom/chat/ChatRenderer$ViewerUnaware {
 }
 
 public abstract interface class dev/slne/surf/api/minestom/chat/ChatRenderer$ViewerUnaware {
@@ -73,18 +68,11 @@ public abstract interface class dev/slne/surf/api/minestom/chat/ChatSessionHolde
 public final class dev/slne/surf/api/minestom/chat/ChatSessionHolder$Companion {
 	public final fun fromPlayer (Lnet/minestom/server/entity/Player;)Ldev/slne/surf/api/minestom/chat/ChatSessionHolder;
 	public final fun fromUuid (Ljava/util/UUID;)Ldev/slne/surf/api/minestom/chat/ChatSessionHolder;
-	public final fun installProvider (Ldev/slne/surf/api/minestom/chat/ChatSessionHolder$Provider;)V
 }
 
 public final class dev/slne/surf/api/minestom/chat/ChatSessionHolder$DefaultImpls {
 	public static synthetic fun captureSignedMessage$default (Ldev/slne/surf/api/minestom/chat/ChatSessionHolder;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/chat/RemoteSignedMessage;
 	public static synthetic fun sendSignedMessage$default (Ldev/slne/surf/api/minestom/chat/ChatSessionHolder;Lnet/kyori/adventure/chat/SignedMessage;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)V
-}
-
-public abstract interface class dev/slne/surf/api/minestom/chat/ChatSessionHolder$Provider {
-	public abstract fun deleteMessage (Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/chat/SignedMessage$Signature;)V
-	public abstract fun fromPlayer (Lnet/minestom/server/entity/Player;)Ldev/slne/surf/api/minestom/chat/ChatSessionHolder;
-	public abstract fun fromUuid (Ljava/util/UUID;)Ldev/slne/surf/api/minestom/chat/ChatSessionHolder;
 }
 
 public final class dev/slne/surf/api/minestom/chat/ChatSessionHolderKt {
@@ -145,9 +133,6 @@ public final class dev/slne/surf/api/minestom/command/CommandAPI {
 	public final fun execute (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)I
 	public final fun failWithMessage (Lnet/kyori/adventure/text/Component;)Ljava/lang/Void;
 	public final fun failWithString (Ljava/lang/String;)Ljava/lang/Void;
-	public final fun installPlatform (Ldev/slne/surf/api/minestom/command/internal/CommandAPIPlatform;)V
-	public final fun register (Ldev/slne/surf/api/minestom/command/CommandDefinition;Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/RegisteredCommand;
-	public final fun uninstallPlatform (Ldev/slne/surf/api/minestom/command/internal/CommandAPIPlatform;)V
 	public final fun unregister (Ljava/lang/String;)Z
 }
 
@@ -164,7 +149,6 @@ public final class dev/slne/surf/api/minestom/command/CommandAPICommand : dev/sl
 	public final fun getName ()Ljava/lang/String;
 	public final fun register (Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/RegisteredCommand;
 	public static synthetic fun register$default (Ldev/slne/surf/api/minestom/command/CommandAPICommand;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/RegisteredCommand;
-	public final fun toDefinition ()Ldev/slne/surf/api/minestom/command/CommandDefinition;
 	public final fun withAliases ([Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
 	public final fun withArguments ([Ldev/slne/surf/api/minestom/command/argument/Argument;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
 	public final fun withFullDescription ([Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
@@ -176,64 +160,6 @@ public final class dev/slne/surf/api/minestom/command/CommandAPICommand : dev/sl
 	public final fun withSubcommand (Ldev/slne/surf/api/minestom/command/CommandAPICommand;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
 	public final fun withSubcommands ([Ldev/slne/surf/api/minestom/command/CommandAPICommand;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
 	public final fun withUsage ([Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
-}
-
-public final class dev/slne/surf/api/minestom/command/CommandDefinition {
-	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ldev/slne/surf/api/minestom/command/CommandMetadata;Ljava/util/List;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/util/Set;
-	public final fun component3 ()Ldev/slne/surf/api/minestom/command/CommandMetadata;
-	public final fun component4 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ldev/slne/surf/api/minestom/command/CommandMetadata;Ljava/util/List;)Ldev/slne/surf/api/minestom/command/CommandDefinition;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/command/CommandDefinition;Ljava/lang/String;Ljava/util/Set;Ldev/slne/surf/api/minestom/command/CommandMetadata;Ljava/util/List;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/CommandDefinition;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAliases ()Ljava/util/Set;
-	public final fun getMetadata ()Ldev/slne/surf/api/minestom/command/CommandMetadata;
-	public final fun getName ()Ljava/lang/String;
-	public final fun getPaths ()Ljava/util/List;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class dev/slne/surf/api/minestom/command/CommandMetadata {
-	public static final field Companion Ldev/slne/surf/api/minestom/command/CommandMetadata$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Ljava/util/List;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandMetadata;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/command/CommandMetadata;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/CommandMetadata;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFullDescription ()Ljava/util/List;
-	public final fun getHelp ()Ljava/lang/String;
-	public final fun getShortDescription ()Ljava/lang/String;
-	public final fun getUsage ()Ljava/util/List;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class dev/slne/surf/api/minestom/command/CommandMetadata$Companion {
-	public final fun snapshot (Ljava/lang/String;Ljava/util/Collection;Ljava/util/Collection;Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandMetadata;
-}
-
-public final class dev/slne/surf/api/minestom/command/CommandPath {
-	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/Set;Ljava/util/List;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Ljava/util/Set;
-	public final fun component4 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/Set;Ljava/util/List;)Ldev/slne/surf/api/minestom/command/CommandPath;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/command/CommandPath;Ljava/util/List;Ljava/util/List;Ljava/util/Set;Ljava/util/List;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/CommandPath;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getArguments ()Ljava/util/List;
-	public final fun getExecutors ()Ljava/util/List;
-	public final fun getPermissions ()Ljava/util/Set;
-	public final fun getRequirements ()Ljava/util/List;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/slne/surf/api/minestom/command/CommandTree : dev/slne/surf/api/minestom/command/executor/CommandExecutable {
@@ -250,7 +176,6 @@ public final class dev/slne/surf/api/minestom/command/CommandTree : dev/slne/sur
 	public final fun register (Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/RegisteredCommand;
 	public static synthetic fun register$default (Ldev/slne/surf/api/minestom/command/CommandTree;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/RegisteredCommand;
 	public final fun then (Ldev/slne/surf/api/minestom/command/argument/Argument;)Ldev/slne/surf/api/minestom/command/CommandTree;
-	public final fun toDefinition ()Ldev/slne/surf/api/minestom/command/CommandDefinition;
 	public final fun withAliases ([Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandTree;
 	public final fun withFullDescription ([Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandTree;
 	public final fun withHelp (Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/CommandTree;
@@ -315,7 +240,6 @@ public abstract class dev/slne/surf/api/minestom/command/argument/Argument : dev
 	public final fun setOptional (Z)Ldev/slne/surf/api/minestom/command/argument/Argument;
 	protected abstract fun stringify (Ljava/lang/Object;)Ljava/lang/String;
 	public final fun then (Ldev/slne/surf/api/minestom/command/argument/Argument;)Ldev/slne/surf/api/minestom/command/argument/Argument;
-	public final fun toDefinition ()Ldev/slne/surf/api/minestom/command/argument/ArgumentDefinition;
 	public final fun withPermission (Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/argument/Argument;
 	public final fun withRequirement (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/command/argument/Argument;
 }
@@ -1047,11 +971,6 @@ public final class dev/slne/surf/api/minestom/command/argument/UUIDArgument : de
 	public synthetic fun stringify (Ljava/lang/Object;)Ljava/lang/String;
 }
 
-public final class dev/slne/surf/api/minestom/command/argument/UnsupportedArgumentType : com/mojang/brigadier/arguments/ArgumentType {
-	public fun <init> (Ljava/lang/String;)V
-	public fun parse (Lcom/mojang/brigadier/StringReader;)Ljava/lang/Object;
-}
-
 public final class dev/slne/surf/api/minestom/command/dsl/ArgumentDslKt {
 	public static final fun angleArgument (Ldev/slne/surf/api/minestom/command/CommandAPICommand;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/command/CommandAPICommand;
 	public static final fun angleArgument (Ldev/slne/surf/api/minestom/command/CommandTree;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/minestom/command/CommandTree;
@@ -1425,7 +1344,6 @@ public final class dev/slne/surf/api/minestom/command/executor/CommandArguments 
 
 public final class dev/slne/surf/api/minestom/command/executor/CommandArguments$Companion {
 	public final fun empty ()Ldev/slne/surf/api/minestom/command/executor/CommandArguments;
-	public final fun of (Ljava/util/List;)Ldev/slne/surf/api/minestom/command/executor/CommandArguments;
 }
 
 public abstract interface class dev/slne/surf/api/minestom/command/executor/CommandExecutable {
@@ -1525,18 +1443,6 @@ public final class dev/slne/surf/api/minestom/command/executor/ParsedArgument {
 	public final fun getValue ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class dev/slne/surf/api/minestom/command/executor/SuspendExecutorsKt {
-	public static final fun getGENERIC_COMMAND_FAILURE ()Lnet/kyori/adventure/text/Component;
-	public static final fun handleCommandExecutorFailure (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;Ljava/lang/Throwable;)V
-	public static final fun launchCommandExecutor (Ldev/slne/surf/api/minestom/command/executor/ExecutorDefinition$Suspending;Lnet/minestom/server/command/CommandSender;Ldev/slne/surf/api/minestom/command/executor/CommandArguments;Ljava/lang/String;)Lkotlinx/coroutines/Job;
-}
-
-public abstract interface class dev/slne/surf/api/minestom/command/internal/CommandAPIPlatform {
-	public abstract fun execute (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)I
-	public abstract fun register (Ldev/slne/surf/api/minestom/command/CommandDefinition;Ljava/lang/String;)Ldev/slne/surf/api/minestom/command/RegisteredCommand;
-	public abstract fun unregister (Ljava/lang/String;)Z
 }
 
 public abstract interface class dev/slne/surf/api/minestom/command/suggestion/ArgumentSuggestions {
@@ -2048,7 +1954,6 @@ public final class dev/slne/surf/api/minestom/dialog/callback/DialogCallbacks {
 	public static final field INSTANCE Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;
 	public final fun action (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogAction;
 	public static synthetic fun action$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/dialog/DialogAction;
-	public final fun dispatch (Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/key/Key;Lnet/kyori/adventure/nbt/BinaryTag;)Z
 	public final fun dynamicAction (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function1;)Lnet/minestom/server/dialog/DialogAction;
 	public static synthetic fun dynamicAction$default (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbacks;Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lnet/kyori/adventure/nbt/CompoundBinaryTag;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lnet/minestom/server/dialog/DialogAction;
 	public final fun register (Ldev/slne/surf/api/minestom/dialog/callback/DialogCallbackOptions;Lkotlin/jvm/functions/Function1;)Lnet/kyori/adventure/key/Key;
@@ -2131,7 +2036,6 @@ public final class dev/slne/surf/api/minestom/event/SuspendingEventNode {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun addListener (ILkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/minestom/event/SuspendingEventNode$Registration;
 	public static synthetic fun addListener$default (Ldev/slne/surf/api/minestom/event/SuspendingEventNode;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/event/SuspendingEventNode$Registration;
-	public final fun call (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class dev/slne/surf/api/minestom/event/SuspendingEventNode$Companion {
@@ -2214,16 +2118,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/InventoryFrame
 }
 
 public abstract interface class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor {
-	public static final field Companion Ldev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor$Companion;
 	public abstract fun viewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
-}
-
-public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor$Companion {
-	public final fun getINSTANCE ()Ldev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessor;
-}
-
-public final class dev/slne/surf/api/minestom/inventory/framework/ViewFrameAccessorKt {
-	public static final fun getViewFrame ()Lme/devnatan/inventoryframework/ViewFrame;
 }
 
 public final class dev/slne/surf/api/minestom/inventory/framework/dsl/MinestomItemComponentBuilderDSLKt {
@@ -2376,10 +2271,6 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewR
 public final class dev/slne/surf/api/minestom/inventory/framework/view/SurfViewRefKt {
 	public static final fun getView (Ldev/slne/surf/api/minestom/inventory/framework/view/PaginatedSurfViewRef;)Ldev/slne/surf/api/minestom/inventory/framework/view/pagination/AbstractPaginatedSurfView;
 	public static final fun getView (Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewRef;)Ldev/slne/surf/api/minestom/inventory/framework/view/SurfViewDSLImpl;
-}
-
-public final class dev/slne/surf/api/minestom/inventory/framework/view/ViewNavigationHistoryKt {
-	public static final fun clearViewNavigationHistory (Lnet/minestom/server/entity/Player;)V
 }
 
 public final class dev/slne/surf/api/minestom/inventory/framework/view/button/ViewButtonBuilder {
@@ -2940,9 +2831,7 @@ public final class dev/slne/surf/api/minestom/npc/MannequinNpc : codes/bed/mines
 	public fun getEquipment (Lnet/minestom/server/entity/EquipmentSlot;)Lnet/minestom/server/item/ItemStack;
 	public fun getKind ()Lcodes/bed/minestom/npc/api/NpcKind;
 	public fun setEquipment (Lnet/minestom/server/entity/EquipmentSlot;Lnet/minestom/server/item/ItemStack;)V
-	public fun spawn ()V
 	public final fun updateDisplayName (Lnet/kyori/adventure/text/Component;)V
-	public fun updateNewViewer (Lnet/minestom/server/entity/Player;)V
 }
 
 public final class dev/slne/surf/api/minestom/npc/MannequinNpc$Companion {
@@ -2973,7 +2862,6 @@ public final class dev/slne/surf/api/minestom/permission/MinestomPermissions {
 	public static final field INSTANCE Ldev/slne/surf/api/minestom/permission/MinestomPermissions;
 	public final fun getProvider ()Ldev/slne/surf/api/minestom/permission/PermissionProvider;
 	public final fun hasPermission (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Z
-	public final fun installProvider (Ldev/slne/surf/api/minestom/permission/PermissionProvider;)V
 	public final fun permissionValue (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Lnet/kyori/adventure/util/TriState;
 }
 
@@ -2999,12 +2887,10 @@ public class dev/slne/surf/api/minestom/player/SurfMinestomPlayer : net/minestom
 	public fun deleteMessage (Lnet/kyori/adventure/chat/SignedMessage$Signature;)V
 	protected fun getAddPlayerToList ()Lnet/minestom/server/network/packet/server/play/PlayerInfoUpdatePacket;
 	public fun pointers ()Lnet/kyori/adventure/pointer/Pointers;
-	public final fun refreshViewableRule ()V
 	public fun setGameMode (Lnet/minestom/server/entity/GameMode;)Z
 }
 
 public final class dev/slne/surf/api/minestom/player/event/AsyncPlayerCountEvent : net/minestom/server/event/trait/AsyncEvent, net/minestom/server/event/trait/PlayerEvent {
-	public fun <init> (Lnet/minestom/server/entity/Player;ILjava/lang/Integer;Ldev/slne/surf/api/minestom/player/event/AsyncPlayerCountEvent$Result;Lnet/kyori/adventure/text/Component;)V
 	public final fun allow ()V
 	public final fun disallow (Ldev/slne/surf/api/minestom/player/event/AsyncPlayerCountEvent$Result;Lnet/kyori/adventure/text/Component;)V
 	public final fun getKickMessage ()Lnet/kyori/adventure/text/Component;
@@ -3027,7 +2913,6 @@ public final class dev/slne/surf/api/minestom/player/event/AsyncPlayerCountEvent
 }
 
 public final class dev/slne/surf/api/minestom/player/event/AsyncPlayerSpawnLocationEvent : net/minestom/server/event/trait/AsyncEvent, net/minestom/server/event/trait/PlayerEvent {
-	public fun <init> (Lnet/minestom/server/entity/Player;Lnet/minestom/server/instance/Instance;Lnet/minestom/server/coordinate/Pos;)V
 	public final fun getInstance ()Lnet/minestom/server/instance/Instance;
 	public fun getPlayer ()Lnet/minestom/server/entity/Player;
 	public final fun getPosition ()Lnet/minestom/server/coordinate/Pos;
@@ -3036,21 +2921,18 @@ public final class dev/slne/surf/api/minestom/player/event/AsyncPlayerSpawnLocat
 }
 
 public final class dev/slne/surf/api/minestom/player/event/PlayerJoinEvent : net/minestom/server/event/trait/PlayerInstanceEvent {
-	public fun <init> (Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/text/Component;)V
 	public final fun getJoinMessage ()Lnet/kyori/adventure/text/Component;
 	public fun getPlayer ()Lnet/minestom/server/entity/Player;
 	public final fun setJoinMessage (Lnet/kyori/adventure/text/Component;)V
 }
 
 public final class dev/slne/surf/api/minestom/player/event/PlayerQuitEvent : net/minestom/server/event/trait/PlayerEvent {
-	public fun <init> (Lnet/minestom/server/entity/Player;Lnet/kyori/adventure/text/Component;)V
 	public fun getPlayer ()Lnet/minestom/server/entity/Player;
 	public final fun getQuitMessage ()Lnet/kyori/adventure/text/Component;
 	public final fun setQuitMessage (Lnet/kyori/adventure/text/Component;)V
 }
 
 public final class dev/slne/surf/api/minestom/player/event/PlayerToggleFlightEvent : net/minestom/server/event/trait/CancellableEvent, net/minestom/server/event/trait/PlayerInstanceEvent {
-	public fun <init> (Lnet/minestom/server/entity/Player;Z)V
 	public fun getPlayer ()Lnet/minestom/server/entity/Player;
 	public fun isCancelled ()Z
 	public final fun isFlying ()Z
@@ -3096,7 +2978,6 @@ public abstract interface class dev/slne/surf/api/minestom/plugin/PluginManager 
 
 public final class dev/slne/surf/api/minestom/plugin/PluginManager$Companion {
 	public final fun getInstance ()Ldev/slne/surf/api/minestom/plugin/PluginManager;
-	public final fun install (Ldev/slne/surf/api/minestom/plugin/PluginManager;)V
 }
 
 public final class dev/slne/surf/api/minestom/plugin/PluginManager$DefaultImpls {
@@ -3157,40 +3038,17 @@ public abstract class dev/slne/surf/api/minestom/plugin/SurfMinestomPlugin {
 	public final fun getLogger ()Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;
 	public final fun getMeta ()Ldev/slne/surf/api/minestom/plugin/PluginMeta;
 	public final fun getScope ()Lkotlinx/coroutines/CoroutineScope;
-	public fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun onEnable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun onLoad (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/slne/surf/api/minestom/plugin/SurfMinestomPlugin$Companion {
-	public final fun constructing (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public final fun contextElement (Ldev/slne/surf/api/minestom/plugin/SurfMinestomPlugin;)Lkotlinx/coroutines/ThreadContextElement;
-	public final fun current ()Ldev/slne/surf/api/minestom/plugin/SurfMinestomPlugin;
-}
-
-public final class dev/slne/surf/api/minestom/plugin/SurfMinestomPlugin$Context {
-	public fun <init> (Ldev/slne/surf/api/minestom/plugin/PluginMeta;Lnet/minestom/server/event/EventNode;Ljava/nio/file/Path;Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lkotlinx/coroutines/CoroutineScope;)V
-	public final fun getDataDirectory ()Ljava/nio/file/Path;
-	public final fun getEventNode ()Lnet/minestom/server/event/EventNode;
-	public final fun getLogger ()Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;
-	public final fun getMeta ()Ldev/slne/surf/api/minestom/plugin/PluginMeta;
-	public final fun getScope ()Lkotlinx/coroutines/CoroutineScope;
 }
 
 public final class dev/slne/surf/api/minestom/visibility/PlayerVisibility {
 	public static final field INSTANCE Ldev/slne/surf/api/minestom/visibility/PlayerVisibility;
-	public final fun installProvider (Ldev/slne/surf/api/minestom/visibility/PlayerVisibility$Provider;)V
 	public final fun isLimited (Lnet/minestom/server/entity/Player;)Z
 	public final fun isManaged (Lnet/minestom/server/entity/Player;)Z
 	public final fun updateViewerRule (Lnet/minestom/server/entity/Player;)V
 	public final fun updateViewerRule (Lnet/minestom/server/entity/Player;Ljava/util/function/Predicate;)V
-}
-
-public abstract interface class dev/slne/surf/api/minestom/visibility/PlayerVisibility$Provider {
-	public abstract fun isLimited (Lnet/minestom/server/entity/Player;)Z
-	public abstract fun manages (Lnet/minestom/server/entity/Player;)Z
-	public abstract fun refreshViewerRule (Lnet/minestom/server/entity/Player;)Z
-	public abstract fun updateViewerRule (Lnet/minestom/server/entity/Player;Ljava/util/function/Predicate;)Z
 }
 

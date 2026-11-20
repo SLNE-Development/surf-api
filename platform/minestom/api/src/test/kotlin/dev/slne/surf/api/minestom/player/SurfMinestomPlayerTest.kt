@@ -179,7 +179,9 @@ class SurfMinestomPlayerTest {
         }
     }
 
-    /** Waits for the spawn, which the harness completes off the test thread. */
+    /**
+     * Waits for the spawn, which the harness completes off the test thread.
+     */
     private fun awaitSpawn(env: Env, vararg players: Player) {
         repeat(SPAWN_ATTEMPTS) {
             if (players.all { player -> player.instance != null }) return
@@ -200,7 +202,11 @@ class SurfMinestomPlayerTest {
         return player to connection
     }
 
-    /** Logging a player in asserts that it runs on a virtual thread. */
+    /**
+     * Runs [block] on a virtual thread and returns its result.
+     *
+     * Logging a player in asserts that it runs on a virtual thread.
+     */
     private fun <T> onVirtualThread(block: () -> T): T {
         val result = CompletableFuture<T>()
 

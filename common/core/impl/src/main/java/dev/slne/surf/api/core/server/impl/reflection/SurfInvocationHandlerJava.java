@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import sun.misc.Unsafe;
 
 @NullMarked
 public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
@@ -544,12 +545,18 @@ public final class SurfInvocationHandlerJava<T> implements InvocationHandler {
 
     private record ReflectionSetterInvokable(Field field, boolean isStatic) implements Invokable {
 
+        @SuppressWarnings("removal")
         @Override
         public @Nullable Object invoke(Object[] args) throws Throwable {
+            final Unsafe unsafe = SurfUtil.getUnsafe();
+
             if (isStatic) {
-                SurfUtil.setStaticFinalField(field, args[0]);
+                final Object fieldBase = unsafe.staticFieldBase(field);
+                final long fieldOffset = unsafe.staticFieldOffset(field);
+                unsafe.putObject(fieldBase, fieldOffset, args[0]);
             } else {
-                SurfUtil.setFinalField(field, args[0], args[1]);
+                final long fieldOffset = unsafe.objectFieldOffset(field);
+                unsafe.putObject(args[0], fieldOffset, args[1]);
             }
             return null;
         }

@@ -1,20 +1,17 @@
 package dev.slne.surf.nats.test.microservice
 
-import dev.slne.surf.microservice.api.Microservice
-import dev.slne.surf.nats.test.common.NatsTestInstance
-import java.nio.file.Path
-import kotlin.io.path.Path
+import dev.slne.surf.microservice.runtime.runMicroservice
+import org.springframework.boot.autoconfigure.SpringBootApplication
 
-@Suppress("unused")
-class NatsTestMicroservice : Microservice() {
-    override val dataPath: Path = Path("data")
+/**
+ * The test microservice of surf-nats: serves `MicroserviceTestService`, logs the test chat events and offers console
+ * commands that call the test Paper servers.
+ *
+ * The service is named `nats-test`, after the class name without the `Microservice` suffix.
+ */
+@SpringBootApplication
+class NatsTestMicroservice
 
-    override suspend fun onBootstrap(args: List<String>) {
-        NatsTestInstance.get().load()
-        NatsTestInstance.get().enable()
-    }
-
-    override suspend fun onDisable() {
-        NatsTestInstance.get().disable()
-    }
+fun main(args: Array<String>) {
+    runMicroservice<NatsTestMicroservice>(args)
 }

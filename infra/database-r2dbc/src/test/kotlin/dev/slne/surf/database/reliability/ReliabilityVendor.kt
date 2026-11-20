@@ -1,10 +1,10 @@
 package dev.slne.surf.database.reliability
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.reliability.operation.OperationKey
 import dev.slne.surf.database.testing.DatabaseContainers
+import dev.slne.surf.database.testing.TestDatabase
 import dev.slne.surf.database.testing.connectionDetails
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.toTestDatabase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.runBlocking
@@ -55,7 +55,7 @@ enum class ReliabilityVendor(
     );
 
     /**
-     * Runs [block] with two [DatabaseApi]s on the same fresh, migrated schema, standing in for two processes with
+     * Runs [block] with two [TestDatabase]s on the same fresh, migrated schema, standing in for two processes with
      * separate connection pools.
      *
      * With [sessionLockTimeout] set, every R2DBC connection of both processes starts with a session lock timeout of
@@ -63,18 +63,18 @@ enum class ReliabilityVendor(
      */
     fun withTwoProcesses(
         sessionLockTimeout: Boolean = false,
-        block: suspend (first: DatabaseApi, second: DatabaseApi) -> Unit,
+        block: suspend (first: TestDatabase, second: TestDatabase) -> Unit,
     ) = runBlocking {
         val details = container().connectionDetails(fresh = true)
         val sessionSetupSql = setSessionLockTimeoutSql.takeIf { sessionLockTimeout }
-        val first = details.toDatabaseApi(sessionSetupSql)
-        val second = details.toDatabaseApi(sessionSetupSql)
+        val first = details.toTestDatabase(sessionSetupSql)
+        val second = details.toTestDatabase(sessionSetupSql)
         try {
-            first.migrateReliabilitySchema()
+            first.migrationRunner.migrate(ReliabilityMigrationSet())
             block(first, second)
         } finally {
-            first.shutdown()
-            second.shutdown()
+            first.close()
+            second.close()
         }
     }
 
@@ -93,16 +93,16 @@ enum class ReliabilityVendor(
     /**
      * Terminates connection [id] on the server, which rolls back its open transaction like a crashed process.
      */
-    fun kill(api: DatabaseApi, id: Long) {
-        admin(api) { it.execute(killSql.format(id)) }
+    fun kill(testDb: TestDatabase, id: Long) {
+        admin(testDb) { it.execute(killSql.format(id)) }
     }
 
     /**
      * Waits until at least [count] statements wait for a row lock.
      */
-    suspend fun awaitLockWaiters(api: DatabaseApi, count: Int) {
+    suspend fun awaitLockWaiters(testDb: TestDatabase, count: Int) {
         repeat(LOCK_POLL_ATTEMPTS) {
-            val waiters = admin(api) { statement ->
+            val waiters = admin(testDb) { statement ->
                 statement.executeQuery(lockWaitersSql).use { rows -> rows.next(); rows.getInt(1) }
             }
             if (waiters >= count) return
@@ -116,8 +116,8 @@ enum class ReliabilityVendor(
      *
      * The lock blocks deletes of the row but not the duplicate-key check of an insert with the same key.
      */
-    fun holdShareLock(api: DatabaseApi, key: OperationKey): AutoCloseable {
-        val connection = assertNotNull(api.migrationDataSource).connection
+    fun holdShareLock(testDb: TestDatabase, key: OperationKey): AutoCloseable {
+        val connection = testDb.migrationDataSource.connection
         try {
             connection.autoCommit = false
             connection.prepareStatement(
@@ -139,21 +139,21 @@ enum class ReliabilityVendor(
     }
 
     /**
-     * Runs [sql] over the JDBC data source of [api], outside any R2DBC transaction.
+     * Runs [sql] over the JDBC data source of [testDb], outside any R2DBC transaction.
      */
-    fun execute(api: DatabaseApi, sql: String) {
-        admin(api) { it.execute(sql) }
+    fun execute(testDb: TestDatabase, sql: String) {
+        admin(testDb) { it.execute(sql) }
     }
 
     /**
      * Single number returned by [sql].
      */
-    fun queryLong(api: DatabaseApi, sql: String): Long = admin(api) { statement ->
+    fun queryLong(testDb: TestDatabase, sql: String): Long = admin(testDb) { statement ->
         statement.executeQuery(sql).use { rows -> rows.next(); rows.getLong(1) }
     }
 
-    private fun <T> admin(api: DatabaseApi, block: (java.sql.Statement) -> T): T =
-        assertNotNull(api.migrationDataSource).connection.use { connection ->
+    private fun <T> admin(testDb: TestDatabase, block: (java.sql.Statement) -> T): T =
+        testDb.migrationDataSource.connection.use { connection ->
             connection.createStatement().use(block)
         }
 

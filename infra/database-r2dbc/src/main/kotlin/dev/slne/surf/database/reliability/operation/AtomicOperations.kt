@@ -1,12 +1,13 @@
 package dev.slne.surf.database.reliability.operation
 
-import dev.slne.surf.database.DatabaseApi
+import dev.slne.surf.database.config.databaseType
 import dev.slne.surf.database.query.allOf
 import dev.slne.surf.database.reliability.internal.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
@@ -24,15 +25,15 @@ import kotlin.time.toJavaDuration
  * runs the block again.
  *
  * Several processes may share the tables, each with its own instance. Requires the schema of
- * [migrateReliabilitySchema][dev.slne.surf.database.reliability.migrateReliabilitySchema].
+ * [ReliabilityMigrationSet][dev.slne.surf.database.reliability.ReliabilityMigrationSet].
  *
- * @throws IllegalStateException if [databaseApi] is neither MariaDB nor PostgreSQL
+ * @throws IllegalStateException if [database] is neither MariaDB nor PostgreSQL
  */
 class AtomicOperations(
-    private val databaseApi: DatabaseApi,
+    private val database: R2dbcDatabase,
     private val config: AtomicOperationsConfig = AtomicOperationsConfig(),
 ) {
-    private val claim = OperationClaim(databaseApi.databaseType, config.lockTimeout)
+    private val claim = OperationClaim(database.databaseType, config.lockTimeout)
 
     /**
      * Executes [block] once for [key] and returns its reply, or returns the reply stored by an earlier execution.
@@ -41,7 +42,7 @@ class AtomicOperations(
      * reply after it commits, or one of them runs [block] if it rolls back. A wait longer than
      * [AtomicOperationsConfig.lockTimeout] fails without running [block].
      *
-     * [block] runs inside the operation's transaction: its statements on [DatabaseApi.database] and the stored reply
+     * [block] runs inside the operation's transaction: its statements on [database] and the stored reply
      * commit or roll back together. Statements on other databases and other side effects are not covered. If [block] throws, the transaction rolls back, nothing is
      * stored and the exception propagates. After a deadlock or serialization failure the whole transaction is
      * retried, up to [AtomicOperationsConfig.maxAttempts] times, so [block] can run more than once per call; only
@@ -96,7 +97,7 @@ class AtomicOperations(
     suspend fun deleteExpired(limit: Int = DEFAULT_CLEANUP_BATCH_SIZE): Int {
         require(limit > 0) { "limit must be positive, was $limit" }
 
-        return databaseApi.readCommittedTransaction {
+        return database.readCommittedTransaction {
             val expired = AtomicOperationTable.select(
                 AtomicOperationTable.owner,
                 AtomicOperationTable.operation,
@@ -105,7 +106,7 @@ class AtomicOperations(
                 .where { AtomicOperationTable.expiresAt lessEq config.clock.instant() }
                 .orderBy(AtomicOperationTable.expiresAt)
                 .limit(limit)
-                .forUpdate(databaseApi.databaseType.forUpdateSkipLocked())
+                .forUpdate(database.databaseType.forUpdateSkipLocked())
                 .map { row ->
                     Triple(
                         row[AtomicOperationTable.owner],
@@ -165,7 +166,7 @@ class AtomicOperations(
         key: OperationKey,
         requestFingerprint: ByteArray,
         block: suspend AtomicOperationScope.() -> StoredReply,
-    ): StoredReply = databaseApi.readCommittedTransaction {
+    ): StoredReply = database.readCommittedTransaction {
         val now = config.clock.instant()
         claim.insert(
             transaction = this,
@@ -194,7 +195,7 @@ class AtomicOperations(
      */
     private suspend fun replayStored(key: OperationKey, requestFingerprint: ByteArray): Attempt? {
         val now = config.clock.instant()
-        val stored = databaseApi.readCommittedTransaction {
+        val stored = database.readCommittedTransaction {
             AtomicOperationTable.selectAll()
                 .where(key.matches())
                 .map(::StoredOperation)
@@ -203,7 +204,7 @@ class AtomicOperations(
 
         return when {
             !stored.expiresAt.isAfter(now) -> {
-                databaseApi.readCommittedTransaction {
+                database.readCommittedTransaction {
                     claim.deleteIfExpired(transaction = this, key = key, now = now)
                 }
                 null

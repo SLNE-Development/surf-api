@@ -1,8 +1,6 @@
 package dev.slne.surf.api.core.server
 
-import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.core.server.listener.CoreListenerManager
-import dev.slne.surf.api.core.server.util.PlayerSkinFetcher
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -11,7 +9,6 @@ abstract class CoreInstance {
 
     @MustBeInvokedByOverriders
     open suspend fun bootstrap() {
-        initObjects()
     }
 
     @MustBeInvokedByOverriders
@@ -27,11 +24,6 @@ abstract class CoreInstance {
     @MustBeInvokedByOverriders
     open suspend fun onDisable() {
         CoreListenerManager.unregisterListeners()
-    }
-
-    private fun initObjects() {
-        PlayerSkinFetcher
-        Colors
     }
 
     fun isBootstrapping(): Boolean = bootstrapping.get()

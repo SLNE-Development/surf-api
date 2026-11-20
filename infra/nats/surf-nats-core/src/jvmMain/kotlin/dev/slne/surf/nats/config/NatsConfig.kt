@@ -5,7 +5,6 @@ import dev.slne.surf.api.config.constraints.ExistingFile
 import dev.slne.surf.api.config.type.number.IntOr
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsHandlerLimits
-import dev.slne.surf.nats.NatsInstance
 import dev.slne.surf.nats.runtime.ConnectRules
 import dev.slne.surf.nats.runtime.RuntimeDefaults
 import io.nats.client.Options
@@ -15,7 +14,7 @@ import java.net.URISyntaxException
 import java.nio.file.Path
 
 /**
- * Settings of the shared NATS connection, read from `config.yml` in [NatsInstance.dataPath].
+ * Settings of the shared NATS connection, read from `config.yml` in the directory of [NatsConfigLocation].
  *
  * Keys are the kebab-case property names, such as `drain-timeout-seconds`. Unset numeric values fall back to the
  * jnats reconnect wait, a drain timeout of 10 seconds and the handler limits of [NatsHandlerLimits]. The
@@ -151,7 +150,7 @@ internal data class NatsConfig(
 
     companion object : SpongeYmlConfigClass<NatsConfig>(
         NatsConfig::class.java,
-        NatsInstance.get().dataPath,
+        NatsConfigLocation.resolve(),
         "config.yml"
     )
 }

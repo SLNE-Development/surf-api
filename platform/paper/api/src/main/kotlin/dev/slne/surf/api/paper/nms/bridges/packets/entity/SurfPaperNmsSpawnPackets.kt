@@ -3,14 +3,16 @@
 
 package dev.slne.surf.api.paper.nms.bridges.packets.entity
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.FinePosition
+import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
+@SurfApiBean
 interface SurfPaperNmsSpawnPackets {
 
     fun despawn(entityIds: List<Int>): PacketOperation
@@ -84,6 +86,7 @@ interface SurfPaperNmsSpawnPackets {
     ): PacketOperation
 
     companion object {
+        @InternalSurfApi
         val INSTANCE get() = bridge
     }
 }

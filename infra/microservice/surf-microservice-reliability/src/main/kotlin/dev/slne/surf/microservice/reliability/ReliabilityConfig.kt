@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.hours
 /**
  * Settings of the idempotent handlers of a microservice.
  *
- * Provide them through [ReliabilityCustomizer].
+ * The defaults apply unless the application defines a bean of this type.
  *
  * @property atomicOperations the settings of the stored replies, such as their retention and the lock timeout. The
  * default retention is [NatsPersistentLimits.REDELIVERY_HORIZON], the longest time after which a message with the

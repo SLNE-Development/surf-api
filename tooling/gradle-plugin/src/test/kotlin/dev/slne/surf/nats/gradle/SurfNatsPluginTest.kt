@@ -177,33 +177,30 @@ class SurfNatsPluginTest {
     }
 
     @Test
-    fun `paper plugins require surf-api-nats-paper at bootstrap and server`() {
+    fun `paper plugins do not depend on a separate NATS plugin`() {
         val orders = listOf(arrayOf(SURF_API_PAPER_PLUGIN, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_PAPER_PLUGIN))
         orders.forEachIndexed { index, order ->
             val project = project(*order, dir = projectDir.resolve(index.toString()))
             val description = project.extensions.getByType(PaperPluginDescription::class.java)
             for (dependencies in listOf(description.bootstrapDependencies, description.serverDependencies)) {
-                val dependency = assertNotNull(dependencies.findByName("surf-api-nats-paper"), order.joinToString())
-                assertTrue(dependency.required)
-                assertTrue(dependency.joinClasspath)
-                assertEquals(PaperPluginDescription.RelativeLoadOrder.BEFORE, dependency.load)
+                assertNull(dependencies.findByName("surf-api-nats-paper"), order.joinToString())
             }
         }
     }
 
     @Test
-    fun `velocity plugins require surf-api-nats-velocity`() {
+    fun `velocity plugins do not depend on a separate NATS plugin`() {
         val orders = listOf(arrayOf(SURF_API_VELOCITY, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_VELOCITY))
         orders.forEachIndexed { index, order ->
             val project = project(*order, dir = projectDir.resolve(index.toString()))
             val dependency = project.extensions.getByType(VelocityPluginFile::class.java)
                 .pluginDependencies.findByName("surf-api-nats-velocity")
-            assertFalse(assertNotNull(dependency, order.joinToString()).optional.get())
+            assertNull(dependency, order.joinToString())
         }
     }
 
     @Test
-    fun `standalone projects become microservices with the NATS runtime`() {
+    fun `standalone projects become microservices with the Spring NATS module`() {
         val orders = listOf(
             arrayOf(SURF_API_STANDALONE, SurfNatsPlugin.ID),
             arrayOf(SurfNatsPlugin.ID, SURF_API_STANDALONE),
@@ -214,7 +211,7 @@ class SurfNatsPluginTest {
 
             val runtime = project.configurations.getByName("implementation").dependencies
                 .filterIsInstance<ExternalModuleDependency>()
-                .single { it.group == "dev.slne.surf.api" && it.name == "surf-api-nats-standalone" }
+                .single { it.group == "dev.slne.surf.api" && it.name == "surf-api-nats-spring" }
             assertEquals(SurfNatsPluginVersion.VERSION, runtime.versionConstraint.strictVersion)
         }
     }
@@ -225,7 +222,7 @@ class SurfNatsPluginTest {
 
         assertFalse(project.pluginManager.hasPlugin(MICROSERVICE))
         val runtime = project.configurations.getByName("implementation").dependencies
-            .find { it.group == "dev.slne.surf.api" && it.name == "surf-api-nats-standalone" }
+            .find { it.group == "dev.slne.surf.api" && it.name == "surf-api-nats-spring" }
         assertNull(runtime)
     }
 

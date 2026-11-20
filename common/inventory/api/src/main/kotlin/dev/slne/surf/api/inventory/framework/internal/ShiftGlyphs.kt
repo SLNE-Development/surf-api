@@ -90,10 +90,11 @@ object ShiftGlyphs {
         }
 
         companion object {
-            /** The largest absolute pixel shift a single glyph can represent. */
+            /**
+             * The largest absolute pixel shift a single glyph can represent.
+             */
             const val MAX_GLYPH_AMOUNT = 512
 
-            /** lookup table mapping from [amount] to [ShiftGlyph]. */
             private val index = entries.associateBy { it.amount }
 
             /**

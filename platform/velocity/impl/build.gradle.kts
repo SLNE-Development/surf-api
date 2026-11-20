@@ -7,11 +7,13 @@ plugins {
 dependencies {
     api(projects.surfApiCoreImpl)
     api(projects.surfApiVelocityApi)
+    implementation(shadowed(projects.surfApiRedis.surfApiRedisSpring))
+    implementation(projects.surfApiNats.surfApiNatsCore)
+    implementation(projects.surfApiNats.surfApiNatsSpring)
     api(libs.dazzleconf)
     api(libs.spongepowered.math)
     api(libs.commons.lang3)
     api(libs.commons.text)
-    api(libs.okhttp)
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.commons.math3)
@@ -20,16 +22,29 @@ dependencies {
     kapt(libs.velocity.api)
     compileOnly(libs.velocity.proxy.ctd)
 
-    // The proxy is provided at runtime, so it is compileOnly -- but a test that stands in for it
-    // has to load its interfaces, and `compileOnly` does not reach the test classpath.
     testImplementation(libs.velocity.api)
 }
 
 tasks {
     shadowJar {
-        val relocationPrefix = project.findProperty("relocationPrefix") as String
+        mergeSpringRegistries()
+        relocateNats()
     }
 }
+
+val checkContextContributors by tasks.registering(CheckShadowServiceFile::class) {
+    group = "verification"
+    description = "Checks that the shadow jar lists the config, NATS and Redis ContextContributors."
+    jar.set(tasks.shadowJar.flatMap { it.archiveFile })
+    service.set("dev.slne.surf.api.spring.context.ContextContributor")
+    expectedProviders.addAll(
+        "dev.slne.surf.api.config.impl.handle.SurfConfigContributor",
+        "dev.slne.surf.api.nats.NatsContextContributor",
+        "dev.slne.surf.api.redis.RedisContextContributor",
+    )
+}
+
+tasks.check { dependsOn(checkContextContributors) }
 
 description = "surf-api-velocity-impl"
 

@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.server.config.serializers
 
 import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.server.PaperInstance
 import dev.slne.surf.api.paper.server.config.serializers.registry.RegistryValueSerializer
 import io.leangen.geantyref.TypeToken
@@ -27,9 +26,9 @@ import org.bukkit.inventory.meta.trim.TrimPattern
 import org.bukkit.map.MapCursor
 import org.bukkit.potion.PotionEffectType
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
+import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
-@Suppress("UnstableApiUsage")
 @Service
 class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
 
@@ -88,7 +87,11 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
 
         // register last to let other serializer override this
         builder.register(
-            { type -> type is Class<*> && ConfigurationSerializable::class.java.isAssignableFrom(type) },
+            { type ->
+                type is Class<*> && ConfigurationSerializable::class.java.isAssignableFrom(
+                    type
+                )
+            },
             BukkitConfigurationSerializableSerializer
         )
     }

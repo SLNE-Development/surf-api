@@ -6,9 +6,8 @@ description: Use when producing player-facing text in surf-api - building a chat
 # surf-api messages and text
 
 Every claim below comes from `common/messages/api/src/main/kotlin/dev/slne/surf/api/messages/`
-(`adventure/`, `builder/`, `bundle/`, `pagination/`, `minimessage/`, `actionbar/`),
-`common/common/api/.../common/font/`, `common/core/api/.../core/rarity/` and the implementations
-under `common/core/impl`. Read those files when in doubt; they are the only source of truth.
+(`adventure/`, `builder/`, `bundle/`, `pagination/`, `minimessage/`, `actionbar/`, `rarity/`),
+`common/common/api/.../common/font/` and the implementations under `common/core/impl`. Read those files when in doubt; they are the only source of truth.
 
 Text is its own module, `surf-api-messages-api`. You do not name it: every published coordinate
 that carried these types re-exports it, so a build file depending on `surf-api-core`,
@@ -19,11 +18,11 @@ unchanged.
 
 - **Adventure's `net.kyori.adventure.text.Component`** - an immutable text object. That is what this
   skill is about. When this file says *text component*, it means this.
-- **`dev.slne.surf.api.di.SurfComponent`** - the bean **lifecycle** interface
-  (`load`/`enable`/`disable`) a bean implements when it has to start and stop. Nothing to do with
-  text. The `surf-api-components` skill covers it; do not explain it from here.
+- **Spring's `org.springframework.stereotype.Component`** - the annotation that makes a class a
+  bean. Nothing to do with text. The `surf-api-components` skill covers beans; do not explain them
+  from here.
 
-The package `foundation/di/` is the lifecycle one. Text lives in `surf-api-messages-api`.
+Text lives in `surf-api-messages-api`.
 
 ## Build text with `buildText`, send it with `sendText`
 
@@ -121,9 +120,8 @@ text *into* a template, pass it as a component placeholder
 (`miniMessage.deserialize(template, Placeholder.component("name", Component.text(raw)))`) or build the
 whole thing with `buildText` and skip MiniMessage entirely.
 
-Watch which instance you have: parts of the Paper sidebar and scoreboard impl call
-`MiniMessage.miniMessage()` - the vanilla instance, where the Surf tags do not exist. Detail and the
-full tag list: `references/minimessage-and-fonts.md`.
+Watch which instance you have: `MiniMessage.miniMessage()` is the vanilla instance, where the Surf
+tags do not exist. Detail and the full tag list: `references/minimessage-and-fonts.md`.
 
 ## Pagination
 
@@ -172,15 +170,20 @@ pitfalls: `references/pagination.md`.
 `interval` (default `1.seconds`):
 
 ```kotlin
-val job = player.sendActionBar(scope = plugin.scope, duration = 10.seconds) {
-    info("Teleport in ")
-    variableValue(secondsLeft)
-    info("s")
+@Service
+class TeleportCountdown(private val scope: CoroutineScope) {
+    fun start(player: Player, secondsLeft: Int): Job =
+        player.sendActionBar(scope = scope, duration = 10.seconds) {
+            info("Teleport in ")
+            variableValue(secondsLeft)
+            info("s")
+        }
 }
 ```
 
-`scope` is the owning plugin's scope - on Paper, MCCoroutine's `SuspendingPlugin.scope`. The returned
-`Job` is the only handle you get.
+`scope` is the owning plugin's scope: inject `CoroutineScope` into the bean, and the plugin context
+hands it its own scope, which is cancelled after the plugin's disable hooks. The returned `Job` is
+the only handle you get.
 
 It **guarantees nothing about overlapping sends.** There is no per-audience registry: a second call
 for the same audience starts a second job, both write to the same single action bar slot, and the
@@ -195,8 +198,8 @@ logged at most every 900 ms and that tick is skipped, the loop continues; with
 `AUTO_CANCELLED`, `CANCELLED` or `FAILED`; a cancelled job does **not** clear the bar.
 
 For a single frame use `Audience.sendActionBar { }` from `messages/adventure/` - no scope, no
-repetition. `references/actionbar-and-sidebar.md` has the full contract plus the sidebar and
-scoreboard consumers of this layer.
+repetition. `references/actionbar-and-sidebar.md` has the full contract plus the sidebar, the
+Paper consumer of this layer.
 
 ## Small caps, glyphs and fonts
 
@@ -219,10 +222,10 @@ scoreboard consumers of this layer.
 
 ## Rarity
 
-`core/rarity/Rarity` is presentation only: six entries (`COMMON` … `MYTHIC`), each a German
+`messages/rarity/Rarity` is presentation only: six entries (`COMMON` … `MYTHIC`), each a German
 `displayName` already coloured, and the enum implements `ComponentLike`, so
 `buildText { append(rarity) }` works and `rarity.color` is there when you need the raw colour. It
-carries no weight and does not implement `Weighted` - it is unused in the repository today, and the
+carries no weight and does not implement `Weighted` - it is unused in the repository, and the
 `Rarity` enums in the `RandomSelector` and `Weighted` doc comments are unrelated examples.
 
 ## Traps
@@ -230,7 +233,7 @@ carries no weight and does not implement `Weighted` - it is unused in the reposi
 | Trap | What actually happens |
 | --- | --- |
 | `error("...")` inside a builder block | resolves to the ERROR-coloured text helper, **not** `kotlin.error`. It appends text and returns normally. Use `throw IllegalStateException(...)` to fail inside a builder |
-| building text off the main thread | safe - Adventure components are immutable and the builder is local. **Reading game state** while building is not. `SuspendPagination` renders on `Dispatchers.Default`, sidebar renderers run on a background dispatcher: switch with `withContext(plugin.entityDispatcher(viewer))` before touching the world |
+| building text off the main thread | safe - Adventure components are immutable and the builder is local. **Reading game state** while building is not. `SuspendPagination` renders on `Dispatchers.Default`, sidebar renderers run on a background dispatcher: switch with `withContext(dispatchers.entity(viewer))`, using the plugin's injected `PaperDispatchers`, before touching the world |
 | `miniMessage.deserialize(playerInput)` | gives that player `<click:run_command>` and `<hover>`. Permission-gate it or pass the text as a `Placeholder.component` |
 | the wrong MiniMessage instance | `MiniMessage.miniMessage()` has no `<primary>`, `<prefix>` or `<small>`; `dev.slne.surf.api.messages.minimessage.miniMessage` has them |
 | platform-specific serialization | `GsonComponentSerializer.gson()` (used by `ComponentMessage` and the kotlinx `AdventureComponentSerializer`) is portable. `Component.toNms()` is `PaperAdventure.asVanilla` and only exists inside a Paper NMS version module - see `surf-api-nms`. `PlainTextComponentSerializer` via `Component.plain()` loses all styling, so never round-trip through it |
@@ -249,5 +252,5 @@ Read on demand, not up front:
   click-provider interfaces, how to override one part of the frame, and the suspend variant in full.
 - `references/minimessage-and-fonts.md` - the tag table with exact names, writing a new tag,
   untrusted input, small caps, and the two pixel-width tables.
-- `references/actionbar-and-sidebar.md` - `ActionBarService` contract and finish reasons, and how the
-  Paper sidebar and the deprecated scoreboard consume this layer.
+- `references/actionbar-and-sidebar.md` - `ActionBarService` contract and finish reasons, and how
+  the Paper sidebar consumes this layer.

@@ -5,6 +5,7 @@ import dev.slne.surf.api.gradle.generators.pluginfiles.MinestomPluginFile
 import dev.slne.surf.api.gradle.generators.pluginfiles.dto.MinestomPluginFileDto
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.CommonSurfPluginWithPluginFile
+import dev.slne.surf.api.gradle.pluginclass.GeneratedPluginClass
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.util.minestomSnapshots
 import org.gradle.api.Project
@@ -30,6 +31,8 @@ internal class MinestomSurfPlugin :
         "minestom",
         SurfApiPlatform.MINESTOM,
         PLUGIN_FILE_NAME,
+        GeneratedPluginClass.MINESTOM_PLUGIN,
+        "minestom-plugin",
     ) {
 
     init {
@@ -81,22 +84,22 @@ internal class MinestomSurfPlugin :
         val pluginFile = extensions.getByType(MinestomPluginFile::class.java)
         val outputDirectory = layout.buildDirectory.dir("generated/surf-api/minestom-classpath")
 
-        val applied = provider { pluginFile.isApplied() }
-        val mainClass = pluginFile.main.orElse("")
+        // Effective main class: the one the build script names, else the generated one. Without
+        // either, the tasks below write nothing.
+        val mainClass = pluginFile.effectiveMain()
 
         val generateIndex = tasks.register<GeneratePluginFile>("generateMinestomPluginIndex") {
             group = "surf-api"
             fileName.set(CLASSPATH_INDEX)
             outputDir.set(outputDirectory.map { it.dir("index") })
-            pluginFileJson.set(applied.zip(mainClass) { isApplied, main -> if (isApplied) main else "" })
+            pluginFileJson.set(mainClass)
         }
 
         val generateCopy = tasks.register<GeneratePluginFile>("generateMinestomPluginClassPathFile") {
             group = "surf-api"
             fileName.set(mainClass.map { main -> "$CLASSPATH_DIRECTORY$main.json" })
             outputDir.set(outputDirectory.map { it.dir("descriptor") })
-            pluginFileJson.set(provider {
-                if (!pluginFile.isApplied()) return@provider ""
+            pluginFileJson.set(mainClass.map {
                 pluginFile.validate()
                 GeneratePluginFile.json.encodeToString(
                     MinestomPluginFileDto.serializer(),
@@ -136,8 +139,6 @@ internal class MinestomSurfPlugin :
  * bytecode refers to the same packages as the server it runs in.
  */
 internal fun dev.slne.surf.api.gradle.platform.common.CommonSurfPlugin<*>.applyMinestomRelocations() {
-    applyRelocation("com.mojang.serialization", "mojang.serialization")
-    applyRelocation("com.mojang.datafixers", "mojang.datafixers")
     applyRelocation("net.kyori.adventure.nbt", "kyori.nbt", listOf("net.kyori.adventure.nbt.api.**"))
     applyRelocation("me.devnatan.inventoryframework", "devnatan.inventoryframework")
 }

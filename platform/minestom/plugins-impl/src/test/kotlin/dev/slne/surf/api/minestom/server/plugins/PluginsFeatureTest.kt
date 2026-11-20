@@ -1,5 +1,9 @@
 package dev.slne.surf.api.minestom.server.plugins
 
+import dev.slne.minestom.fixtures.FixtureEvent
+import dev.slne.minestom.fixtures.test.BEAN_COMMAND
+import dev.slne.minestom.fixtures.test.REGISTRAR_COMMAND
+import dev.slne.minestom.fixtures.test.TestPlugin
 import dev.slne.surf.api.minestom.plugin.PluginManager
 import dev.slne.surf.api.minestom.plugin.PluginMeta
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginDiscovery
@@ -23,6 +27,8 @@ class PluginsFeatureTest {
         @TempDir directory: Path,
     ) {
         TestPlugin.calls.clear()
+        TestPlugin.seenAtEnable = null
+        TestPlugin.surfEventsHandled = 0
         val commands = env.process().command()
 
         val server = surfMinestomServer {
@@ -36,15 +42,25 @@ class PluginsFeatureTest {
             assertEquals("TestPlugin", plugin!!.meta.name)
             assertEquals(directory.resolve("test-plugin"), plugin.dataDirectory)
             assertEquals(listOf("load", "enable"), TestPlugin.calls, "the plugin was not enabled before the start returned")
-            assertTrue(commands.commandExists("test-plugin-command"))
+            assertEquals(
+                TestPlugin.SeenAtEnable(eventNodeAttached = true, registrarCommand = true, beanCommand = true),
+                TestPlugin.seenAtEnable,
+                "listeners and commands are registered before the enable hooks run",
+            )
+            assertTrue(commands.commandExists(REGISTRAR_COMMAND))
+            assertTrue(commands.commandExists(BEAN_COMMAND))
             assertTrue(plugin.eventNode.parent != null)
+
+            FixtureEvent().call()
+            assertEquals(1, TestPlugin.surfEventsHandled, "the @SurfEventHandler bean is registered")
             plugin
         } finally {
             server.shutdown()
         }
 
         assertEquals(listOf("load", "enable", "disable"), TestPlugin.calls)
-        assertFalse(commands.commandExists("test-plugin-command"), "the plugin's command is unregistered")
+        assertFalse(commands.commandExists(REGISTRAR_COMMAND), "the plugin's registrar command is unregistered")
+        assertFalse(commands.commandExists(BEAN_COMMAND), "the plugin's bean command is unregistered")
         assertNull(plugin.eventNode.parent, "the plugin's event node is removed")
     }
 

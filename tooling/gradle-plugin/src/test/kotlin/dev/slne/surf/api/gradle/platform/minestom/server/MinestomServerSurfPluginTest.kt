@@ -1,6 +1,10 @@
 package dev.slne.surf.api.gradle.platform.minestom.server
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
+import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer
 import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.named
 import org.gradle.testfixtures.ProjectBuilder
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -35,5 +39,16 @@ class MinestomServerSurfPluginTest {
 
         assertFalse(extension.downloadSurfModules.get())
         assertTrue(extension.downloadLibraries.get())
+    }
+
+    @Test
+    fun `server jar merges the Spring registries and the Log4j plugin cache`() {
+        val transformers = project.tasks.named<ShadowJar>("shadowJar").get().transformers.get()
+        val mergedProperties = transformers.filterIsInstance<PropertiesFileTransformer>()
+            .flatMap { it.paths.get() }
+
+        assertTrue(mergedProperties.any { "META-INF/spring.factories" in it })
+        assertTrue(mergedProperties.any { "META-INF/spring.handlers" in it })
+        assertTrue(transformers.any { it is Log4j2PluginsCacheFileTransformer })
     }
 }

@@ -24,7 +24,7 @@ data class VelocityPluginFileDto(
     companion object {
         fun fromFile(file: VelocityPluginFile) = VelocityPluginFileDto(
             id = file.id.orNull,
-            main = file.main.orNull,
+            main = file.effectiveMain().orNull,
             name = file.name.orNull,
             version = file.version.orNull,
             description = file.description.orNull,

@@ -17,7 +17,9 @@ plugins {
     id("core-convention")
 }
 
-/** Dependency declarations that reach a consumer's compile or runtime classpath. */
+/**
+ * Dependency declarations that reach a consumer's compile or runtime classpath.
+ */
 val checkedConfigurations = listOf(
     "api",
     "implementation",

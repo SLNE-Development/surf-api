@@ -15,7 +15,11 @@ internal object UuidSerializer : ScalarSerializer.Annotated<UUID>(UUID::class.ja
         }
     }
 
-    override fun serialize(type: AnnotatedType, item: UUID, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: UUID,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.toString()
     }
 }

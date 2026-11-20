@@ -1,6 +1,6 @@
 ---
 name: surf-api-commands
-description: Use when working on surf-api commands - choosing between `CommandAPICommand` and `CommandTree`, adding or changing an argument under `command/argument/` or a `*Argument` DSL function, writing a parser or a suggestion provider (`ArgumentSuggestions`, `SafeSuggestions`, `SuggestionsBranch`), reading values out of `CommandArguments` in an executor, picking an executor or a suspending executor, declaring permissions or requirements, registering or unregistering a command on Minestom, Paper or Velocity, or tracking down a `CommandValidationException`, a "no executable paths" or "conflicting arguments" failure or a command that does not appear for a player.
+description: Use when working on surf-api commands - choosing between `CommandAPICommand` and `CommandTree`, adding or changing an argument under `command/argument/` or a `*Argument` DSL function, writing a parser or a suggestion provider (`ArgumentSuggestions`, `SafeSuggestions`, `SuggestionsBranch`), reading values out of `CommandArguments` in an executor, picking an executor or a suspending executor, declaring permissions or requirements, registering a command as a bean or through a CommandRegistrar, unregistering a command on Minestom, Paper or Velocity, or tracking down a `CommandValidationException`, a "no executable paths" or "conflicting arguments" failure or a command that does not appear for a player.
 ---
 
 # surf-api commands
@@ -19,11 +19,11 @@ The Minestom files carry the header *"Substantially translated from CommandAPI 1
 License, Copyright (c) 2020 - 2022 Jorel Ali"* — so the shape is familiar on purpose, but the types
 are not the same types, and `platform/minestom/api/build.gradle.kts` deliberately
 `exclude`s `libs.commandapi.core` and `libs.brigadier` from its `surfApiCoreApi` dependency.
-`common/core/api/.../command/` (`SurfCommandUtil`, `CommandExceptionBuilder`,
+`common/command/api/.../command/` (`SurfCommandUtil`, `CommandExceptionBuilder`,
 `WrapperCommandExceptionComponent`, `SuspendArgumentHelper`) is built against **upstream**
 CommandAPI (`compileOnlyApi(libs.commandapi.core)`) and is therefore for Paper/Velocity, not for
-Minestom — the one exception is `CommandExceptionBuilder`, which both Paper's and Velocity's
-`MiniMessageArgument` use to format a parse failure.
+Minestom. The exception is `CommandRegistrar`, which names no CommandAPI type and works on all three
+platforms.
 
 Everything below is Minestom unless it says otherwise; `references/paper-and-velocity.md` covers the
 other two.
@@ -71,7 +71,7 @@ A namespace must match `[a-z0-9_.-]+`; with one, the name and every alias are al
 namespaced as well. `subcommand(name) { }` builds a `CommandAPICommand` *without* registering, for
 `withSubcommand`.
 
-Adapted from `local/minestom-example/src/main/kotlin/dev/slne/surf/api/minestom/example/ExampleCommands.kt`:
+Adapted from `local/minestom-example/src/main/kotlin/dev/slne/minestom/example/ExampleCommands.kt`:
 
 ```kotlin
 commandAPICommand("example") {
@@ -196,10 +196,40 @@ is what hides the literal rather than only refusing it.
 
 ## Registering a command
 
-| Platform | How |
+A plugin's commands are beans. In the plugin's enable phase, before its `onEnable` hooks run,
+surf-api registers:
+
+- every bean that **is** a command: a class extending `CommandAPICommand` or `CommandTree` (on
+  Paper and Velocity CommandAPI's, on Minestom surf's own), whose `register()` surf-api calls;
+- every `CommandRegistrar` bean (`common/command/api/.../command/CommandRegistrar.kt`), whose
+  `register()` surf-api calls once. It fits the DSL, which registers while it builds:
+
+```kotlin
+@Component
+class WarpCommands(private val warps: WarpService) : CommandRegistrar {
+    override fun register() {
+        commandTree("warp") {
+            stringArgument("name") {
+                playerExecutorSuspend { player, args -> warps.teleport(player, args.get<String>("name")) }
+            }
+        }
+    }
+}
+```
+
+Keep DSL calls inside `register()`. Called from a constructor, a property initializer or a `@Bean`
+method, the DSL registers the command while the context is still being built, before the enable
+phase.
+
+Only beans of the plugin's own contexts count. Paper and Velocity register them through
+`CommandApiCommandBeans` in `surf-api-core-impl` and never unregister them, because plugins are not
+reloaded. Minestom registers them through the plugin manager's `PluginRegistrations` and removes
+them with the plugin's other commands when it unloads.
+
+| Platform | Underneath |
 | --- | --- |
 | Minestom | `commandAPICommand("x") { … }` / `commandTree("x") { … }`, or `CommandAPICommand("x").…register(namespace)`. `CommandAPI.unregister(name)` removes a label with its aliases and namespaced forms. The platform must be installed (it is, after server startup) or every call throws `IllegalStateException`. A command registered while a `SurfMinestomPlugin` lifecycle function runs, or from within its `scope`, is tracked by `PluginCommands` against that plugin and unregistered when it unloads. A label already used by a native Minestom command is rejected, not shadowed. |
-| Paper | upstream CommandAPI through `dev.jorel.commandapi.kotlindsl.commandAPICommand` / `commandTree`; the `commandapi-paper-plugin` artifact is `compileOnlyApi` and provides the runtime |
+| Paper | upstream CommandAPI through `dev.jorel.commandapi.kotlindsl.commandAPICommand` / `commandTree`; the `commandapi-paper-plugin` artifact is `compileOnlyApi` and provides the runtime. The `dev.slne.surf.api.gradle.paper-plugin` Gradle plugin declares `CommandAPI` as a required server dependency with join-classpath, loaded before the plugin, because Paper does not pass CommandAPI's classes on through surf-api; a `CommandAPI` entry of the build script's own wins |
 | Velocity | upstream CommandAPI through `commandapi-velocity-core` + `commandapi-kotlin-velocity` |
 
 `CommandAPI.execute(sender, input)` runs an input (no leading slash) and returns the Brigadier
@@ -234,7 +264,7 @@ when you change how arguments are *declared* to the client.
 
 Read the sibling skill instead of inferring its rules from here: `surf-api-dialogs` for dialogs,
 `surf-api-messages` for `Component` building and `Colors`, `surf-api-inventory` for menus,
-`surf-api-components` for the DI container, `surf-api-events` for the event bus, `surf-api-nms` for
+`surf-api-components` for beans and the plugin context, `surf-api-events` for the event bus, `surf-api-nms` for
 the Paper NMS bridges, `surf-api-paper` and `surf-api-minestom` for the plugin/server scaffolding a
 command is registered from, and `surf-api-build` for the Gradle side. Paper's
 `AdventureCompoundBinaryTagArgument` and `AsyncSignedMessageArgument` go through NMS bridges whose
@@ -253,6 +283,6 @@ Read on demand, not up front:
   reject them.
 - `references/paper-and-velocity.md` — what surf adds on top of upstream CommandAPI: extra
   arguments, suspending executors and requirements, `CommandArguments` await helpers, the shared
-  `common/core` exception types.
+  `common/command` exception types (`surf-api-command-api`).
 - `references/minestom-brigadier-bridge.md` — file-by-file walk of the bridge, for when you change
   argument declaration or dispatch.

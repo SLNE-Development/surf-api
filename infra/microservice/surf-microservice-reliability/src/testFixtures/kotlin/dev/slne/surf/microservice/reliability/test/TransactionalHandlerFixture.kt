@@ -1,7 +1,8 @@
 package dev.slne.surf.microservice.reliability.test
 
-import dev.slne.surf.database.DatabaseApi
-import dev.slne.surf.database.reliability.migrateReliabilitySchema
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import dev.slne.surf.database.migration.SurfMigrationRunner
+import dev.slne.surf.database.reliability.ReliabilityMigrationSet
 import dev.slne.surf.database.reliability.operation.AtomicOperations
 import dev.slne.surf.database.reliability.operation.OperationKey
 import dev.slne.surf.database.reliability.operation.StoredReply
@@ -9,23 +10,22 @@ import dev.slne.surf.microservice.reliability.TransactionalEvents
 import dev.slne.surf.microservice.reliability.operation.ActiveOperation
 import dev.slne.surf.microservice.reliability.operation.PendingEvent
 import dev.slne.surf.nats.descriptor.NatsEvent
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Runs code as a handler of a transactional service, so that services can be tested with the [TransactionalEvents]
  * they receive in production.
  *
- * [runInHandler] runs its block like `registerTransactionalService` runs a persistent handler: in one READ COMMITTED
+ * [runInHandler] runs its block like a `@NatsTransactional` service runs a persistent handler: in one READ COMMITTED
  * transaction on the test database, which `suspendTransaction` on that database joins. Nothing is sent to NATS.
  * [published] lists the events each committed block would publish. A block that throws rolls back and adds nothing.
  *
  * Thread-safe. Blocks may run concurrently.
  *
  * ```kotlin
- * val fixture = TransactionalHandlerFixture.create(databaseApi)
+ * val fixture = TransactionalHandlerFixture.create(database, migrationRunner)
  * val service = PunishServiceImpl(fixture.events)
  *
  * fixture.runInHandler { service.ban(BanRequest(player = "steve")) }
@@ -100,16 +100,21 @@ public class TransactionalHandlerFixture private constructor(
         private val EMPTY_REPLY = StoredReply("none", ByteArray(0))
 
         /**
-         * Creates a fixture on [databaseApi] after migrating the reliability schema there.
+         * Creates a fixture on [database] after migrating the reliability schema there with [migrationRunner].
          *
          * surf-nats must be on the test classpath, but NATS need not be started.
          *
-         * @param databaseApi the test database, which must be MariaDB or PostgreSQL
+         * @param database the test database, which must be MariaDB or PostgreSQL
+         * @param migrationRunner the migration runner of [database]
          * @param owner the owner under which the fixture stores its operations, in production the microservice name
          */
-        public suspend fun create(databaseApi: DatabaseApi, owner: String = DEFAULT_OWNER): TransactionalHandlerFixture {
-            withContext(Dispatchers.IO) { databaseApi.migrateReliabilitySchema() }
-            return TransactionalHandlerFixture(AtomicOperations(databaseApi), owner)
+        public suspend fun create(
+            database: R2dbcDatabase,
+            migrationRunner: SurfMigrationRunner,
+            owner: String = DEFAULT_OWNER,
+        ): TransactionalHandlerFixture {
+            migrationRunner.migrate(ReliabilityMigrationSet())
+            return TransactionalHandlerFixture(AtomicOperations(database), owner)
         }
     }
 }

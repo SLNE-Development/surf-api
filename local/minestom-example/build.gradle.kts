@@ -32,7 +32,7 @@ sourceSets.main {
     kotlin.srcDir(if (luckPerms != null) "src/luckperms/kotlin" else "src/noLuckperms/kotlin")
 }
 
-val mainClassName = "dev.slne.surf.api.minestom.example.ExampleServerKt"
+val mainClassName = "dev.slne.minestom.example.ExampleServerKt"
 
 // Like a server built with dev.slne.surf.api.gradle.minestom-server: the jar contains the project
 // modules and the bootstrap, which downloads every other library into run/libraries/ on startup

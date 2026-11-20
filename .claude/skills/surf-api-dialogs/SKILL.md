@@ -152,8 +152,9 @@ German default labels. See `references/pagination-and-search.md`.
 Read the sibling skill instead of inferring its rules from here: `surf-api-commands` for the command
 a dialog is usually opened from, `surf-api-messages` for `SurfComponentBuilder`, `Colors` and the
 `primary`/`info`/`success`/`error` helpers every `title { }` and `label { }` block uses,
-`surf-api-inventory` for inventory menus, `surf-api-components` for the DI container,
-`surf-api-nms` for the Paper NMS bridges and `surf-api-build` for the Gradle side.
+`surf-api-inventory` for inventory menus, `surf-api-components` for beans and the injected
+`CoroutineScope`, `surf-api-nms` for the Paper NMS bridges and `surf-api-build` for the Gradle
+side.
 `Player.clearDialogs` is a Paper NMS bridge call; its mechanics belong to `surf-api-nms`.
 
 ## Known rough edges

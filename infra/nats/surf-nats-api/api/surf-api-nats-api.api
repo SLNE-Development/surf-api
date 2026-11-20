@@ -25,6 +25,26 @@ public abstract interface class dev/slne/surf/nats/NatsRegistration : java/lang/
 	public abstract fun isClosed ()Z
 }
 
+public abstract interface annotation class dev/slne/surf/nats/NatsService : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/Class;
+}
+
+public abstract interface class dev/slne/surf/nats/NatsServiceInterceptorProvider {
+	public fun getHandlesTransactional ()Z
+	public abstract fun interceptorFor (Ljava/lang/Object;Ljava/lang/Class;Ldev/slne/surf/nats/NatsClient;)Ldev/slne/surf/nats/rpc/NatsPersistentInterceptor;
+}
+
+public final class dev/slne/surf/nats/NatsServiceInterceptorProvider$DefaultImpls {
+	public static fun getHandlesTransactional (Ldev/slne/surf/nats/NatsServiceInterceptorProvider;)Z
+}
+
+public abstract interface annotation class dev/slne/surf/nats/NatsTransactional : java/lang/annotation/Annotation {
+}
+
+public final class dev/slne/surf/nats/NatsTransactionalKt {
+	public static final fun isNatsTransactional (Ljava/lang/Class;)Z
+}
+
 public final class dev/slne/surf/nats/descriptor/ByteArrayContentKt {
 	public static final fun natsContentEquals (Ljava/util/List;Ljava/util/List;)Z
 	public static final fun natsContentEquals (Ljava/util/Map;Ljava/util/Map;)Z
@@ -106,16 +126,6 @@ public final class dev/slne/surf/nats/event/NatsEventDeduplicator$Companion {
 public abstract interface annotation class dev/slne/surf/nats/event/NatsListener : java/lang/annotation/Annotation {
 	public abstract fun ignoreFromThisClient ()Z
 	public abstract fun recipients ()Ldev/slne/surf/nats/rpc/Recipients;
-}
-
-public final class dev/slne/surf/nats/internal/NatsClientFactory$Companion {
-	public final fun getInstance ()Ldev/slne/surf/nats/internal/NatsClientFactory;
-}
-
-public final class dev/slne/surf/nats/internal/NatsIdempotencyKeyElement$Key : kotlin/coroutines/CoroutineContext$Key {
-}
-
-public final class dev/slne/surf/nats/internal/NatsTimeoutElement$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 
 public abstract interface class dev/slne/surf/nats/rpc/Answer {

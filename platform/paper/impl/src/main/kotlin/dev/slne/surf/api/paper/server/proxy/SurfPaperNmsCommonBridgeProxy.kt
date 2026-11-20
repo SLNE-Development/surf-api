@@ -1,14 +1,14 @@
 package dev.slne.surf.api.paper.server.proxy
 
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
 import dev.slne.surf.api.paper.nms.common.NmsProvider
+import org.springframework.stereotype.Service
 
 /**
  * Version-aware proxy for [SurfPaperNmsCommonBridge].
  *
- * Published as a bean in the DI container, delegates to the NMS provider for the current server version.
+ * Delegates to the bridge of the NMS provider for the running server version.
  */
 @NmsUseWithCaution
 @Service

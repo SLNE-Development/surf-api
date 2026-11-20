@@ -12,7 +12,7 @@ import org.spongepowered.math.vector.Vectord
 object ConvexHull2D {
     fun <V : Vectord> compute(points: Array<V>): List<V> {
         if (points.isEmpty()) return emptyList()
-        val points = points.sortedWith(Comparator<V> { a, b ->
+        val points = points.sortedWith(Comparator { a, b ->
             val x = a.x().compareTo(b.x())
             if (x == 0) {
                 a.z().compareTo(b.z())

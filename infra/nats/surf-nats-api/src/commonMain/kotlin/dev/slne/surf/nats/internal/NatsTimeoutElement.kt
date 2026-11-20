@@ -14,5 +14,6 @@ import kotlin.time.Duration
 public class NatsTimeoutElement(
     public val timeout: Duration,
 ) : AbstractCoroutineContextElement(Key) {
+    @InternalNatsApi
     public companion object Key : CoroutineContext.Key<NatsTimeoutElement>
 }

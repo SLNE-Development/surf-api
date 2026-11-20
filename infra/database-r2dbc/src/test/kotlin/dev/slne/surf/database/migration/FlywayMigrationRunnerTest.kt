@@ -8,7 +8,7 @@ import dev.slne.surf.database.migration.fixtures.scan.V2_Object
 import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import dev.slne.surf.database.migration.internal.JdbcDataSources
 import dev.slne.surf.database.migration.internal.MigrationClassLoader
-import dev.slne.surf.database.testing.withOfflineDatabaseApi
+import dev.slne.surf.database.testing.withOfflineDatabase
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.jetbrains.exposed.v1.core.vendors.DatabaseDialect
@@ -44,7 +44,7 @@ class FlywayMigrationRunnerTest {
         block: MigrationSpec.() -> Unit
     ): FluentConfiguration {
         val plan = MigrationSpec(javaClass.classLoader).apply(block).build(name)
-        return withOfflineDatabaseApi(dataSource, dialect) { api -> FlywayMigrationRunner(api).configure(plan) }
+        return withOfflineDatabase(dialect) { database -> FlywayMigrationRunner(database, dataSource).configure(plan) }
     }
 
     @Test
@@ -172,6 +172,33 @@ class FlywayMigrationRunnerTest {
     }
 
     @Test
+    fun registersOnlyTheNamedClassesOfAPackage() {
+        val configuration = configure { classNames(V2_Object::class.java.name) }
+
+        assertEquals(listOf("2"), configuration.javaMigrations.map { it.version.version })
+    }
+
+    @Test
+    fun namedClassIsRegisteredOnceAlongsideListedAndScannedOnes() {
+        val configuration = configure {
+            classes(V2_Object)
+            classNames(V2_Object::class.java.name, "dev.slne.surf.database.migration.fixtures.scan.V3_Class")
+            classPackage("dev.slne.surf.database.migration.fixtures.scan")
+        }
+
+        assertEquals(listOf("2", "3", "5"), configuration.javaMigrations.map { it.version.version }.sorted())
+    }
+
+    @Test
+    fun failsWhenANamedClassIsNoMigration() {
+        val error = assertFailsWith<IllegalStateException> {
+            configure { classNames("dev.slne.surf.database.migration.fixtures.scan.NotAMigration") }
+        }
+
+        assertContains(assertNotNull(error.message), "NotAMigration")
+    }
+
+    @Test
     fun classFoundByNestedPackagesIsRegisteredOnce() {
         val configuration = configure {
             classPackage("dev.slne.surf.database.migration.fixtures.scan")
@@ -244,17 +271,6 @@ class FlywayMigrationRunnerTest {
     @Test
     fun mariaDbKeepsTheDefaultSchema() {
         assertNull(configure(mariadb) { sql("db") }.defaultSchema)
-    }
-
-    @Test
-    fun failsWithoutMigrationDataSource() {
-        val plan = MigrationSpec(javaClass.classLoader).apply { sql("db") }.build("plugin_a")
-
-        val error = withOfflineDatabaseApi { api ->
-            assertFailsWith<IllegalStateException> { FlywayMigrationRunner(api).configure(plan) }
-        }
-
-        assertContains(assertNotNull(error.message), "migrationDataSource")
     }
 
     @Test

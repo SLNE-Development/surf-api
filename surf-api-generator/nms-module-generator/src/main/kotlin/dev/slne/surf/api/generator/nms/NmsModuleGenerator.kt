@@ -14,9 +14,7 @@ import kotlin.io.path.writeText
  * 1. Replace [reference] version-id and class-prefix with [target] equivalents.
  * 2. Apply each [NmsTransformation] from [transformations] in declaration order.
  *
- * Additionally generates:
- * - `META-INF/services/dev.slne.surf.api.paper.nms.common.NmsProvider` for ServiceLoader
- * - `build.gradle.kts` (only when absent)
+ * Also writes `build.gradle.kts` when the target module has none.
  */
 class NmsModuleGenerator(
     private val reference: NmsVersion,
@@ -47,7 +45,6 @@ class NmsModuleGenerator(
 
         prepareTargetDirectory()
         val generated = copyAndTransformSources()
-        generateServiceFile()
         generateBuildFile()
 
         logger.lifecycle(
@@ -103,12 +100,16 @@ class NmsModuleGenerator(
     //  Transformations                                                    //
     // ------------------------------------------------------------------ //
 
-    /** Rewrites directory segments and file names for the target version. */
+    /**
+     * Rewrites directory segments and file names for the target version.
+     */
     private fun transformPath(relativeKey: String): String = relativeKey
         .replace(reference.versionId, target.versionId)
         .replace(reference.classPrefix, target.classPrefix)
 
-    /** Applies all transformations to a single file's content. */
+    /**
+     * Applies all transformations to a single file's content.
+     */
     private fun transformContent(content: String, relativeKey: String): String {
         // Always replace version-id and class-prefix first
         var result = content
@@ -167,18 +168,6 @@ class NmsModuleGenerator(
     //  Scaffold generation                                                //
     // ------------------------------------------------------------------ //
 
-    private fun generateServiceFile() {
-        val serviceDir = repoRoot
-            .resolve(target.modulePath)
-            .resolve("src/main/resources/META-INF/services")
-        serviceDir.createDirectories()
-
-        val providerFqn = "$PROVIDER_PACKAGE_PREFIX${target.versionId}.${target.classPrefix}NmsProvider"
-        serviceDir.resolve(NMS_PROVIDER_SERVICE).writeText("$providerFqn\n")
-
-        logger.lifecycle("Generated service file: {}", providerFqn)
-    }
-
     private fun generateBuildFile() {
         val buildFile = repoRoot.resolve(target.modulePath).resolve("build.gradle.kts")
         if (buildFile.exists()) {
@@ -194,6 +183,7 @@ class NmsModuleGenerator(
     private fun buildGradleTemplate(): String = """
         |plugins {
         |    id("surf.module-impl")
+        |    id("surf.ksp-processor")
         |    id("io.papermc.paperweight.userdev") apply true
         |}
         |
@@ -209,10 +199,10 @@ class NmsModuleGenerator(
         |
         |    paperweight.paperDevBundle("${target.paperDevBundle}")
         |
+        |    compileOnly(libs.fastutil)
+        |
         |    compileOnly(libs.placeholder.api)
         |    compileOnly(libs.reflection.remapper)
-        |    compileOnly(libs.mccoroutine.folia.api)
-        |    compileOnly(libs.scoreboard.library.api)
         |
         |    implementation(libs.bytebuddy)
         |}
@@ -224,8 +214,6 @@ class NmsModuleGenerator(
 
     private companion object {
         const val KOTLIN_SOURCE_PATH = "src/main/kotlin"
-        const val PROVIDER_PACKAGE_PREFIX = "dev.slne.surf.api.paper.server.nms."
-        const val NMS_PROVIDER_SERVICE = "dev.slne.surf.api.paper.nms.common.NmsProvider"
     }
 }
 

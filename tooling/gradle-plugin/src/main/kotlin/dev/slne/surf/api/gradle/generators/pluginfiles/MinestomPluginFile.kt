@@ -5,6 +5,7 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.kotlin.dsl.domainObjectContainer
@@ -18,7 +19,7 @@ private val idRegex = ID_REGEX.toRegex()
 
 abstract class MinestomPluginFile @Inject constructor(
     objects: ObjectFactory
-) : CommonPluginFile() {
+) : CommonPluginFile(objects) {
     @get:Pattern(ID_REGEX)
     @get:Input
     abstract val id: Property<String>
@@ -60,16 +61,14 @@ abstract class MinestomPluginFile @Inject constructor(
         }
     }
 
-    override fun isApplied(): Boolean {
-        return main.isPresent
-    }
+    override fun configuredMain(): Provider<String> = main
 
     override fun validate() {
         val id = id.orNull ?: invalidPluginFile("Plugin id not set")
         if (!(idRegex.matches(id))) invalidPluginFile("Invalid plugin id! Should match $idRegex")
 
         if (version.orNull.isNullOrBlank()) invalidPluginFile("Plugin version not set")
-        if (main.orNull.isNullOrBlank()) invalidPluginFile("Main class not set")
+        if (effectiveMain().orNull.isNullOrBlank()) invalidPluginFile("Main class not set")
 
         for (dependency in pluginDependencies) {
             if (dependency.name.isBlank()) invalidPluginFile("Dependency id not set")

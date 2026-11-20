@@ -92,10 +92,14 @@ data class ViewFontMetrics(
             charWidths = mapOf(' '.code to MENU_SPACE_SIZE)
         )
 
-        /** Pixel advance of one glyph cell in the resource-pack menu font. */
+        /**
+         * Pixel advance of one glyph cell in the resource-pack menu font.
+         */
         const val MENU_CHAR_SIZE = 9
 
-        /** Spacing that tightens the menu font to 8 pixels per glyph. */
+        /**
+         * Spacing that tightens the menu font to 8 pixels per glyph.
+         */
         const val MENU_CHAR_SPACING = -1
 
         /**

@@ -2,7 +2,7 @@ package dev.slne.surf.api.core.server.impl.reflection
 
 import dev.slne.surf.api.reflection.SurfProxy
 import dev.slne.surf.api.reflection.SurfReflection
-import dev.slne.surf.api.di.Service
+import org.springframework.stereotype.Service
 import java.lang.reflect.Proxy.newProxyInstance
 
 @Service

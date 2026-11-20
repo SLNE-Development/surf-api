@@ -4,8 +4,11 @@ Every path is relative to `platform/paper/api/src/main/kotlin/dev/slne/surf/api/
 implementations to `platform/paper/impl/src/main/kotlin/dev/slne/surf/api/paper/server/impl/`.
 Working examples live in `local/paper-plugin-test/src/main/kotlin/.../command/subcommands/`.
 
-All of these resolve out of surf-api's root bean container through a `by surfBean<T>()` property,
-so they only work inside a running server with the `surf-paper-api` plugin enabled.
+Every service here is an interface whose implementation is a bean of surf-api's root Spring
+context. A plugin bean gets it by constructor injection, as `TestPluginLifecycle` in the test plugin
+does with `SurfPaperPacketListenerApi`. The extension functions (`Block.pdc()`, the sidebar DSL)
+read the same beans. Either way they only work inside a running server with the `surf-paper-api`
+plugin enabled.
 
 ## `sidebar/` - packet sidebars
 
@@ -19,15 +22,18 @@ Three entry points in `sidebar/sidebar-dsl.kt`, each taking the owning `Plugin`:
 
 The contract, from the doc comments on `SurfSidebar`:
 
-- Titles and lines render **asynchronously per viewer** on a background dispatcher, and renderers
-  may suspend. To touch state that needs the viewer's region thread, switch with
-  `withContext(plugin.entityDispatcher(viewer))`.
+- Titles and lines render **asynchronously per viewer** on a background dispatcher, not on the
+  viewer's thread, and renderers may suspend. To touch state that needs the viewer's region thread,
+  switch with `withContext(dispatchers.entity(viewer))`, using the plugin's injected
+  `PaperDispatchers`.
 - Rendering never overlaps for the same viewer; extra update requests are coalesced into one
   follow-up render, and only changed content is sent.
 - A failing renderer is logged and that viewer keeps its previous content.
-- The sidebar closes itself when the plugin is disabled, and drops viewers when they leave.
-- One player should view one sidebar at a time, including a legacy `SurfScoreboard` - they share
-  the single sidebar display slot.
+- The sidebar is active once created. It closes itself when the plugin is disabled, and drops
+  viewers when they leave. `close()` is final: a closed sidebar (`isClosed`) cannot be shown again,
+  so create a new one.
+- One player should view one sidebar at a time - all sidebars share the single sidebar display
+  slot.
 
 `SidebarBuilder` (`sidebar/SidebarBuilder.kt`) distinguishes three kinds of content:
 
@@ -39,39 +45,46 @@ The contract, from the doc comments on `SurfSidebar`:
 
 plus `animatedLine(frames)` which advances one frame per update, and gradient lines. `maxLines` is
 a `@Range(from = 1, to = 15) Int`; extra lines are discarded. `SidebarLine(text, score = null)` is
-the line data class. The `build*` variants (`buildTitle`, `buildLine`, `buildSharedLine`,
-`buildViewerLine`, `buildViewerLines`, `buildScoredLine`, `buildGradientLine`) take a
+the line data class; a score is a fixed `Component`. The DSL is Kotlin-only: there are no Java
+overloads. The `build*` variants `buildTitle`, `buildViewerTitle`, `buildSharedTitle`,
+`buildLine`, `buildViewerLine`, `buildSharedLine` and `buildGradientLine` take a
 `SurfComponentBuilder` block instead of a `Component` - see `surf-api-messages`.
+`buildViewerLines` and `buildSharedLines` open a `SidebarLinesBuilder` instead, which offers
+`line`, `buildLine`, `buildScoredLine` and `emptyLine`.
 
 Adapted from `local/paper-plugin-test/.../subcommands/SidebarTest.kt`:
 
 ```kotlin
-val bar = autoUpdatingSidebar(plugin) {
-    updateInterval = Tick.of(20).toKotlinDuration()
-    maxLines = 12
+@Service
+class LobbySidebar(private val plugin: Plugin, private val dispatchers: PaperDispatchers) {
 
-    buildViewerTitle { viewer -> primary("Lobby "); variableValue(viewer.name) }
-    buildViewerLines { viewer ->
-        val state = withContext(plugin.entityDispatcher(viewer)) { viewer.location.blockY }
-        buildScoredLine({ info("Height") }, { variableValue(state) })
+    fun create(): SurfAutoUpdatingSidebar = autoUpdatingSidebar(plugin) {
+        updateInterval = Tick.of(20).toKotlinDuration()
+        maxLines = 12
+
+        buildViewerTitle { viewer -> primary("Lobby "); variableValue(viewer.name) }
+        buildViewerLines { viewer ->
+            val height = withContext(dispatchers.entity(viewer)) { viewer.location.blockY }
+            buildScoredLine({ info("Height") }, { variableValue(height) })
+        }
+        buildSharedLine { info("Online: "); variableValue(Bukkit.getOnlinePlayers().size) }
+        separator()
     }
-    buildSharedLine { info("Online: "); variableValue(Bukkit.getOnlinePlayers().size) }
-    separator()
 }
 
+val bar = lobbySidebar.create()
 bar.addViewer(player)
 // ...
 bar.close()
 ```
 
-## `scoreboard/` - the previous api
+Pass your own plugin: the sidebar belongs to it and closes with it.
 
-`SurfScoreboardApi` is `@Deprecated`, with
-`ReplaceWith("SurfSidebar", "dev.slne.surf.api.paper.sidebar.SurfSidebar")`. Its deprecation message
-is explicit about the difference: the sidebar api sends its own packets and exposes no
-`ScoreboardLibrary` instance, while `SurfScoreboardApi.scoreboardLibrary()` does. It is still
-created and enabled by `PaperMain`, so existing callers keep working - but write new code against
-`sidebar/`.
+There is no `scoreboard/` package and no scoreboard-library (`net.megavex`) on the classpath; use
+`sidebar/`. The sidebar sends its own packets and exposes no `ScoreboardLibrary`, so custom teams
+and objectives are out of its scope. To port 3.x scoreboard code, follow section 18 of
+`MIGRATION-4.0.md` in the repository root, which maps each scoreboard type to its sidebar
+counterpart.
 
 ## `pdc/` - block persistent data
 
@@ -108,28 +121,44 @@ public class ChatListener implements PacketListener {
 }
 ```
 
-Register in `onLoadAsync` with `SurfPaperPacketListenerApi.registerListeners(ChatListener())`.
+Register it in a `SurfLifecycle.onLoad` hook through the injected `SurfPaperPacketListenerApi`, as
+`TestPluginLifecycle` does; `unregisterListeners(listener)` takes it back:
+
+```kotlin
+@Service
+@OptIn(NmsUseWithCaution::class)
+class ChatBlocker(private val packetListeners: SurfPaperPacketListenerApi) : SurfLifecycle {
+
+    override suspend fun onLoad() {
+        packetListeners.registerListeners(ChatListener())
+    }
+}
+```
+
 See the `surf-api-nms` skill before touching anything here.
 
 **Packet lore** (`packet/lore/`) rewrites the lore a client is shown without changing the item.
 `SurfPaperPacketLoreHandler` is a `fun interface` whose `handleLore(loreToDisplay, pdc, itemStack)`
 receives a *mutable* list that already holds the item's real lore plus whatever earlier handlers
-added; inserting at index 0 puts your lines on top. Register through `SurfPaperPacketApi`:
+added; inserting at index 0 puts your lines on top. Register through the injected
+`SurfPaperPacketApi`:
 
 ```kotlin
-SurfPaperPacketApi.registerPacketLoreListener(plugin, key, handler, SurfPaperPacketLorePriority.LATE)
+packetApi.registerPacketLoreListener(plugin, key, handler, SurfPaperPacketLorePriority.LATE)
 ```
 
 Handlers run in **ascending** priority order. `SurfPaperPacketLorePriority` provides `FIRST`
 (`Short.MIN_VALUE`), `EARLY` (`-16384`), `NORMAL` (`0`), `LATE` (`16384`) and `LAST`
 (`Short.MAX_VALUE`); a handler may carry its own default in `priority`, and the value passed at
-registration wins. Always use the overloads that take an explicit `Plugin` - the doc comment says
-the caller detection used by the deprecated ones is unreliable - because
-`unregisterPacketLoreListener(plugin)` cleans up by that reference.
+registration wins. Every registration takes the owning `Plugin`, and
+`unregisterPacketLoreListener(plugin)` removes all of that plugin's handlers;
+`registerPacketLoreListenerGlobal(plugin, handler)` applies a handler to every item.
 
 ## `visualizer/` - block-display outlines
 
-`SurfPaperVisualizerApi` is `@ExperimentalVisualizerApi`; a caller has to opt in
+`SurfPaperVisualizerApi`, injected like the other services, is `@ExperimentalVisualizerApi`, a
+warning-level `@RequiresOptIn`. A caller that does not opt in still compiles, with a warning; opt
+in to silence it
 (`@file:OptIn(ExperimentalVisualizerApi::class)`, as the tests do, or
 `optIn.add("dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi")` in the
 Kotlin compiler options, as `platform/paper/impl/build.gradle.kts` does).
@@ -151,8 +180,13 @@ Kotlin compiler options, as `platform/paper/impl/build.gradle.kts` does).
 `SurfGlowingApi` makes a target glow for one viewer only:
 
 ```kotlin
-SurfGlowingApi.makeGlowing(entity, viewer, NamedTextColor.RED)
-SurfGlowingApi.removeGlowing(entity, viewer)
+@Service
+class Highlighter(private val glowing: SurfGlowingApi) {
+
+    fun mark(entity: Entity, viewer: Player) = glowing.makeGlowing(entity, viewer, NamedTextColor.RED)
+
+    fun unmark(entity: Entity, viewer: Player) = glowing.removeGlowing(entity, viewer)
+}
 ```
 
 Overloads take an `Entity` (colour optional), a raw entity id with a team id and extra metadata
@@ -162,12 +196,12 @@ makes something glow is responsible for removing it.
 ## `region/` - tick-thread assertions
 
 `TickThreadGuard` fails fast when code runs on the wrong thread, which is what makes Folia bugs
-findable:
+findable. With an injected `guard: TickThreadGuard`:
 
 ```kotlin
-TickThreadGuard.ensureTickThread(entity, "updating the shop display")
-TickThreadGuard.ensureTickThread(world, position, blockRadius = 2, "placing blocks")
-TickThreadGuard.ensureGlobalTickThread("changing world time")
+guard.ensureTickThread(entity, "updating the shop display")
+guard.ensureTickThread(world, position, 2, "placing blocks")
+guard.ensureGlobalTickThread("changing world time")
 ```
 
 Overloads cover a position, a position with a block radius, a chunk by coordinates, an entity, a
@@ -183,13 +217,21 @@ class CoinsPlaceholder : PapiPlaceholder("coins") {
     override fun parse(player: OfflinePlayer, args: List<String>) = coins(player).toString()
 }
 
-SurfPaperPAPIHook.register(PapiExpansion("example", listOf(CoinsPlaceholder())))
+@Service
+class CoinsExpansion(private val papiHook: SurfPaperPAPIHook) : SurfLifecycle {
+
+    private val expansion = PapiExpansion("example", listOf(CoinsPlaceholder()))
+
+    override suspend fun onEnable() = papiHook.register(expansion)
+
+    override suspend fun onDisable() = papiHook.unregister(expansion)
+}
 ```
 
 `PapiExpansion(identifier, placeholder, author, version, name)` defaults `author` and `version`
 from the calling plugin's `pluginMeta` and `name` to `identifier`. Both the expansion identifier and
 every placeholder reject `%`, `{` and `_` in their constructor. `parseWithNoParams(player)` handles
-the bare `%example%` form. Unregister with `SurfPaperPAPIHook.unregister(expansion)`.
+the bare `%example%` form.
 
 ## `permission/` - permission nodes
 
@@ -208,12 +250,12 @@ The registration happens when the object is initialised, so touch it during enab
 
 ## `time/` - smooth time skipping
 
-`SurfApiPaper.skipTimeSmoothly(...)` has six suspending overloads: world + ticks, world + ticks +
+`SurfApiPaper.skipTimeSmoothly(...)`, on the injected `SurfApiPaper`, has six suspending overloads: world + ticks, world + ticks +
 duration, world + `SkipOperation`, and the same three for every world, which return
 `Map<World, TimeSkipResult>`. `SkipOperations` holds the ready-made operations - `NEXT_SUNRISE`,
 `NEXT_SUNSET`, `NEXT_DAY`, `NEXT_NOON`, `NEXT_NIGHT`, `NEXT_MIDNIGHT` - and
 `SkipOperations.SkipOperation` is the functional interface for your own.
 
 ```kotlin
-val result = SurfApiPaper.skipTimeSmoothly(world, SkipOperations.NEXT_SUNRISE)
+val result = api.skipTimeSmoothly(world, SkipOperations.NEXT_SUNRISE)
 ```

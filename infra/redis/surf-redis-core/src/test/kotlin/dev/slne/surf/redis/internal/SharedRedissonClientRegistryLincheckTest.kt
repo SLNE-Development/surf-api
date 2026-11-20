@@ -137,7 +137,9 @@ class SharedRedissonClientRegistryLincheckTest {
         }
     }
 
-    /** One simulated `RedisApi`: at most one lease, lifecycle serialized by [lock]. */
+    /**
+     * One simulated `RedisApi`: at most one lease, lifecycle serialized by [lock].
+     */
     private class Owner(val key: RedissonConnectionKey) {
         val lock = ReentrantLock()
 
@@ -197,7 +199,9 @@ class SharedRedissonClientRegistryLincheckTest {
     }
 
     private companion object {
-        /** Upper bound on clients one scenario can create: every actor may connect to a fresh client. */
+        /**
+         * Upper bound on clients one scenario can create: every actor may connect to a fresh client.
+         */
         const val POOL_SIZE = 16
 
         val KEY_A = RedissonConnectionKey(false, false, "redis-a", 6379, null, null)

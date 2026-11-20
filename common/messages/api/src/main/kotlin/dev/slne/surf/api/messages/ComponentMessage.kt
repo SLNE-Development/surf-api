@@ -1,10 +1,10 @@
 package dev.slne.surf.api.messages
 
 import com.mojang.brigadier.Message
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 class ComponentMessage(private val message: ComponentLike) : Message, ComponentLike {
@@ -18,7 +18,7 @@ class ComponentMessage(private val message: ComponentLike) : Message, ComponentL
     }
 
     companion object {
-        @ApiStatus.Internal
+        @InternalSurfApi
         val COMPONENT_MESSAGE_PREFIX: String = "[ComponentMessage " + UUID.randomUUID() + "] "
     }
 }

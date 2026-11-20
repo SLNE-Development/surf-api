@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.command.requirement
 
 import dev.jorel.commandapi.ExecutableCommand
 import dev.slne.surf.api.paper.command.executors.CoroutineScopeProvider
-import dev.slne.surf.api.paper.command.executors.extractCallingPluginScopeOrThrow
+import dev.slne.surf.api.paper.command.executors.callingPluginCommandScope
 import kotlinx.coroutines.CoroutineScope
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -31,7 +31,7 @@ import org.bukkit.entity.Player
  * result for a player
  */
 fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, CommandSender>.withSuspendPlayerRequirement(
-    scope: CoroutineScopeProvider = extractCallingPluginScopeOrThrow(),
+    scope: CoroutineScopeProvider = callingPluginCommandScope(),
     allowIfNonPlayer: Boolean = false,
     requirement: suspend CoroutineScope.(Player) -> Boolean
 ) {

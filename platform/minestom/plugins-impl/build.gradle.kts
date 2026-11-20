@@ -4,11 +4,14 @@ plugins {
 
 dependencies {
     api(projects.surfApiMinestomImpl)
+    implementation(projects.surfApiCoreImpl)
     compileOnlyApi(libs.minestom.server)
 
     testImplementation(libs.minestom.server)
     testImplementation(libs.minestom.testing)
     testImplementation(testFixtures(projects.surfApiMinestomImpl))
+    testImplementation(libs.log4j.core)
+    testRuntimeOnly(libs.log4j.slf4j2.impl)
 }
 
 description = "surf-api-minestom-plugins-impl"
@@ -18,6 +21,4 @@ tasks.test {
     systemProperty("junit.jupiter.execution.timeout.default", "2m")
 }
 
-// Consumers of the Gradle plugin may still resolve the name this module had before the
-// restructure, so the old coordinate keeps resolving and points here.
 publishRelocationFrom("surf-api-minestom-server-plugins")

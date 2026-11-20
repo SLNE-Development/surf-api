@@ -26,7 +26,7 @@ import kotlin.time.Duration
  */
 @PublishedApi
 internal inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextComponent {
-    return Component.text().apply(block).asComponent() as TextComponent // Adventure 4 backwards compatibility
+    return Component.text().apply(block).asComponent() as TextComponent
 }
 
 /**
@@ -58,9 +58,11 @@ object CommonComponents {
     @JvmField
     val EM_DASH = text("—", SPACER)
 
-    @Suppress("FunctionName")
-    @Deprecated("Binary compatibility", ReplaceWith("EM_DASH"), DeprecationLevel.HIDDEN)
-    fun getEM_DASH() = EM_DASH
+    /**
+     * An en dash component (`–`) used as a visual separator.
+     */
+    @JvmField
+    val EN_DASH = text("–", SPACER)
 
     /**
      * A clickable Discord link component (`discord.gg/castcrafter`).

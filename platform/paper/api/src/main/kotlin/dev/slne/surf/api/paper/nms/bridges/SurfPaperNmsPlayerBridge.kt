@@ -3,7 +3,6 @@
 package dev.slne.surf.api.paper.nms.bridges
 
 import com.destroystokyo.paper.profile.PlayerProfile
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
@@ -19,9 +18,11 @@ import org.bukkit.inventory.ItemStack
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
+import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
 @ApiStatus.NonExtendable
+@SurfApiBean
 interface SurfPaperNmsPlayerBridge {
 
     fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean = true)
@@ -110,11 +111,4 @@ interface SurfPaperNmsPlayerBridge {
      * @return a [Path] object representing the location where statistical data is stored
      */
     fun getStatsDataPath(): Path
-
-    companion object {
-        val INSTANCE get() = playerBridge
-    }
 }
-
-@NmsUseWithCaution
-private val playerBridge by surfBean<SurfPaperNmsPlayerBridge>()

@@ -6,8 +6,8 @@ import java.util.*
 /**
  * Loads the first [ServiceLoader] implementation of [T] from the class loader of [T].
  *
- * Stands in for the `requiredService` lookup that surf-api 4 removed, until surf-nats moves to
- * dependency injection.
+ * surf-nats finds its internal implementations through this seam instead of a Spring context,
+ * so the lookup also works in standalone processes that run without one.
  *
  * @throws ServiceConfigurationError if no implementation of [T] is registered
  */

@@ -1,13 +1,13 @@
 package dev.slne.surf.database.columns.time
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.table.AuditableTable
 import dev.slne.surf.database.testing.DatabaseContainers
 import dev.slne.surf.database.testing.OutsideUtcVendor
+import dev.slne.surf.database.testing.TestDatabase
 import dev.slne.surf.database.testing.connectionDetails
-import dev.slne.surf.database.testing.toDatabaseApi
-import dev.slne.surf.database.testing.toLegacyDatabaseApi
+import dev.slne.surf.database.testing.toLegacyTestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import dev.slne.surf.database.testing.withJvmZone
 import kotlinx.coroutines.flow.single
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -25,12 +25,12 @@ import org.jetbrains.exposed.v1.r2dbc.update
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.testcontainers.junit.jupiter.Testcontainers
-import kotlin.test.Test
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -39,7 +39,7 @@ import kotlin.test.assertTrue
  * Rows written by version 2.3 of the library read as the README's upgrade notes describe, and the README's fix
  * statements restore them.
  *
- * Version 2.3 is emulated by [toLegacyDatabaseApi] on the same database. The fix statements are the README's
+ * Version 2.3 is emulated by [toLegacyTestDatabase] on the same database. The fix statements are the README's
  * templates with only `t`, `c`, `'J'` and `'S'` substituted, run over the migration data source in a UTC session.
  */
 @Testcontainers(disabledWithoutDocker = true)
@@ -114,19 +114,19 @@ class TimeZoneUpgradeIT {
             exec("INSERT INTO $TABLE (id) VALUES ($DEFAULT_ROW)")
         }
 
-        val api = details.toDatabaseApi()
+        val testDb = details.toTestDatabase()
         try {
             val expectations = expectations(vendor)
-            assertRows(api, table, expectations, writtenAt, afterFix = false)
+            assertRows(testDb, table, expectations, writtenAt, afterFix = false)
 
             for (expectation in expectations) {
                 val fix = expectation.fix ?: continue
                 val statement = vendor.substitute(fix, TABLE, expectation.column)
-                executeInUtcSession(api, "$statement WHERE id = ${expectation.row}")
+                executeInUtcSession(testDb, "$statement WHERE id = ${expectation.row}")
             }
-            assertRows(api, table, expectations, writtenAt, afterFix = true)
+            assertRows(testDb, table, expectations, writtenAt, afterFix = true)
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
@@ -142,12 +142,12 @@ class TimeZoneUpgradeIT {
             }
         }
 
-        val api = details.toDatabaseApi()
+        val testDb = details.toTestDatabase()
         try {
-            val row = suspendTransaction(api.database) { table.selectAll().single() }
+            val row = suspendTransaction(testDb.database) { table.selectAll().single() }
             assertEquals(REGULAR, row[table.value].toInstant())
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
@@ -157,27 +157,27 @@ class TimeZoneUpgradeIT {
         val details = vendor.container().connectionDetails(fresh = true)
         val table = writeLegacyAuditedRow(details, vendor)
 
-        val api = details.toDatabaseApi()
+        val testDb = details.toTestDatabase()
         try {
             if (vendor == OutsideUtcVendor.POSTGRESQL) {
-                executeInUtcSession(api, POSTGRESQL_CREATE_TRIGGER.replace("<table>", AUDITED_TABLE))
+                executeInUtcSession(testDb, POSTGRESQL_CREATE_TRIGGER.replace("<table>", AUDITED_TABLE))
             }
             val fix = when (vendor) {
                 OutsideUtcVendor.POSTGRESQL -> POSTGRESQL_AUDITABLE_FIX
                 OutsideUtcVendor.MARIADB -> MARIADB_AUDITABLE_FIX
             }
-            val updatedAtBefore = vendor.epochMicros(api, AUDITED_TABLE, "updated_at", APP_ROW)
+            val updatedAtBefore = vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW)
 
             val statements = vendor.substitute(fix, AUDITED_TABLE, "expires_at").split(";\n")
-            executeInUtcSession(api, *statements.toTypedArray())
+            executeInUtcSession(testDb, *statements.toTypedArray())
 
-            assertFixedAndUpdatedAtKept(api, vendor, table, updatedAtBefore)
-            suspendTransaction(api.database) {
+            assertFixedAndUpdatedAtKept(testDb, vendor, table, updatedAtBefore)
+            suspendTransaction(testDb.database) {
                 table.update({ table.id eq APP_ROW }) { it[expiresAt] = REGULAR.plusSeconds(1) }
             }
-            assertTrue(vendor.epochMicros(api, AUDITED_TABLE, "updated_at", APP_ROW) > updatedAtBefore)
+            assertTrue(vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW) > updatedAtBefore)
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
@@ -187,15 +187,15 @@ class TimeZoneUpgradeIT {
         val details = vendor.container().connectionDetails(fresh = true)
         val table = writeLegacyAuditedRow(details, vendor)
 
-        val api = details.toDatabaseApi()
+        val testDb = details.toTestDatabase()
         try {
-            val updatedAtBefore = vendor.epochMicros(api, AUDITED_TABLE, "updated_at", APP_ROW)
+            val updatedAtBefore = vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW)
 
-            executeInUtcSession(api, vendor.substitute(POSTGRESQL_FIX, AUDITED_TABLE, "expires_at"))
+            executeInUtcSession(testDb, vendor.substitute(POSTGRESQL_FIX, AUDITED_TABLE, "expires_at"))
 
-            assertFixedAndUpdatedAtKept(api, vendor, table, updatedAtBefore)
+            assertFixedAndUpdatedAtKept(testDb, vendor, table, updatedAtBefore)
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
@@ -219,35 +219,35 @@ class TimeZoneUpgradeIT {
     }
 
     private suspend fun assertFixedAndUpdatedAtKept(
-        api: DatabaseApi,
+        testDb: TestDatabase,
         vendor: OutsideUtcVendor,
         table: LegacyAuditedRows,
         updatedAtBefore: Long,
     ) {
-        assertEquals(updatedAtBefore, vendor.epochMicros(api, AUDITED_TABLE, "updated_at", APP_ROW))
-        val fixed = suspendTransaction(api.database) {
+        assertEquals(updatedAtBefore, vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW))
+        val fixed = suspendTransaction(testDb.database) {
             table.selectAll().where { table.id eq APP_ROW }.single()
         }
         assertEquals(REGULAR, fixed[table.expiresAt])
     }
 
     private suspend fun writeAsLegacy(details: ConnectionDetails, block: suspend R2dbcTransaction.() -> Unit) {
-        val legacy = details.toLegacyDatabaseApi()
+        val legacy = details.toLegacyTestDatabase()
         try {
             suspendTransaction(legacy.database) { block() }
         } finally {
-            legacy.shutdown()
+            legacy.close()
         }
     }
 
     private suspend fun assertRows(
-        api: DatabaseApi,
+        testDb: TestDatabase,
         table: LegacyTimes,
         expectations: List<Expectation>,
         writtenAt: Instant,
         afterFix: Boolean,
     ) {
-        val rows = suspendTransaction(api.database) {
+        val rows = suspendTransaction(testDb.database) {
             listOf(APP_ROW, DEFAULT_ROW).associateWith { id ->
                 table.instants(table.selectAll().where { table.id eq id }.single())
             }
@@ -268,8 +268,8 @@ class TimeZoneUpgradeIT {
         }
     }
 
-    private fun executeInUtcSession(api: DatabaseApi, vararg statements: String) {
-        assertNotNull(api.migrationDataSource).connection.use { connection ->
+    private fun executeInUtcSession(testDb: TestDatabase, vararg statements: String) {
+        testDb.migrationDataSource.connection.use { connection ->
             connection.autoCommit = false
             connection.createStatement().use { statement ->
                 statements.forEach(statement::execute)

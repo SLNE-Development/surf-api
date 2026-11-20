@@ -21,8 +21,13 @@ kotlin {
 dependencies {
     api(projects.surfApiMicroservice.surfApiMicroserviceApi)
     compileOnly(shadowed(projects.surfApiDatabaseR2dbc))
-    // Optional at runtime: the pool-sized NATS handler limits apply only when a microservice ships surf-nats.
+    compileOnly(libs.spring.context)
+    compileOnly(libs.spring.boot.autoconfigure)
+    compileOnly(libs.spring.boot.health)
     compileOnly(projects.surfApiNats.surfApiNatsCore)
 
     testImplementation(shadowed(projects.surfApiDatabaseR2dbc))
+    testImplementation(libs.spring.context)
+    testImplementation(libs.spring.boot.autoconfigure)
+    testImplementation(libs.spring.boot.health)
 }

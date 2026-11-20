@@ -1,6 +1,10 @@
 # Flyway Plugin Migrations Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Historical, superseded.** This plan is kept as a record and is not to be executed. `DatabaseApi`, its
+> `migrate` function and the `@TestOnlyDatabaseApi` overload no longer exist. In surf-api 4.0, `MigrationSet`
+> beans, `SurfMigrationRunner` and the `R2dbcDatabase` bean of `SurfDatabaseAutoConfiguration` replace them, and
+> the library serves microservices only. See [the surf-database-r2dbc README](../../../README.md#migrations) for
+> the shipped behaviour.
 
 **Goal:** Let plugins that use `DatabaseApi` version their own schema with Flyway: SQL files, plain JDBC code migrations and Exposed (R2DBC) code migrations, each plugin with its own history table, through a small surf API that keeps Flyway hidden.
 

@@ -375,7 +375,11 @@ class SimpleSetRedisCacheImpl<T : Any>(
         }
     }
 
-    /** @return `true` if [action] ran, `false` if the refresh gate suppressed it */
+    /**
+     * Runs [action] unless the refresh gate already holds [gateKey].
+     *
+     * @return `true` if [action] ran, `false` if the refresh gate suppressed it
+     */
     private fun refreshTtl(gateKey: String, action: () -> Unit): Boolean {
         val inserted = refreshGate.asMap().putIfAbsent(gateKey, Unit) == null
         if (!inserted) return false

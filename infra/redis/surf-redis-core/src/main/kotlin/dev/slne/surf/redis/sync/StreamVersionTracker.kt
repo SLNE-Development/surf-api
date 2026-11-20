@@ -55,13 +55,19 @@ class StreamVersionTracker {
     }
 
     enum class Outcome {
-        /** The caller advanced the version and owns the corresponding change. */
+        /**
+         * The caller advanced the version and owns the corresponding change.
+         */
         APPLIED,
 
-        /** The version was already covered; the caller should do nothing. */
+        /**
+         * The version was already covered; the caller should do nothing.
+         */
         SKIPPED,
 
-        /** A gap or an un-bootstrapped tracker was observed; the caller should resynchronize. */
+        /**
+         * A gap or an un-bootstrapped tracker was observed; the caller should resynchronize.
+         */
         RESYNC
     }
 }

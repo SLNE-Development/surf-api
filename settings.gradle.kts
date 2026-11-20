@@ -61,7 +61,9 @@ fun includeModule(path: String, name: String = artifactName(path)) {
     project(":$name").projectDir = dir
 }
 
-/** Includes the `api` and `impl` modules of one domain. */
+/**
+ * Includes the `api` and `impl` modules of one domain.
+ */
 fun includePair(group: String, domain: String) {
     includeModule("$group/$domain/api")
     includeModule("$group/$domain/impl")
@@ -71,7 +73,7 @@ fun includePair(group: String, domain: String) {
 includeModule("foundation/annotations")
 includeModule("foundation/internal")
 includeModule("foundation/registry-keys")
-includePair("foundation", "di")
+includePair("foundation", "spring")
 
 // common
 // Only the api half exists: the shared base -- `logger` and the rest of `util`, the transforming
@@ -89,8 +91,8 @@ includeModule("common/messages/api")
 // hidden-class invoker templates stay in `surf-api-core-impl`; nothing compiles against them, so a
 // module of their own would buy no boundary.
 includeModule("common/event/api")
-// Only the api half exists: the binary-tag views, the `FastCompoundBinaryTag` contract, the
-// `InternalNbtBridge` and `NbtOps` are declarations. `InternalNbtBridgeImpl` stays in
+// Only the api half exists: the binary-tag views, the `FastCompoundBinaryTag` contract and the
+// `InternalNbtBridge` are declarations. `InternalNbtBridgeImpl` stays in
 // `surf-api-core-impl`.
 includeModule("common/nbt/api")
 // Only the api half exists: the `SurfReflection` contract and the `@SurfProxy` annotation family
@@ -111,7 +113,7 @@ includePair("common", "core")
 // Only the api half exists: the shared inventory framework is contracts, settings and components
 // that both platforms compile against, with no runtime wiring of its own.
 includeModule("common/inventory/api")
-// Only the api half exists: the serializers, the serializer modules and the codec extensions are
+// Only the api half exists: the serializers and the serializer module are
 // declarations with no runtime wiring, so there is nothing for an impl module to hold.
 includeModule("common/serialization/api")
 // Both halves exist: the contracts, the constraint annotations and the helper types are compiled
@@ -189,10 +191,8 @@ includeInfra(
     "surf-nats-core",
     "surf-nats-types:surf-nats-types-common",
     "surf-nats-types:surf-nats-types-paper",
-    "surf-nats-platform:surf-nats-paper",
-    "surf-nats-platform:surf-nats-velocity",
-    "surf-nats-platform:surf-nats-minestom",
     "surf-nats-platform:surf-nats-standalone",
+    "surf-nats-spring",
     "surf-nats-test:surf-nats-test-common",
     "surf-nats-test:surf-nats-test-fixtures",
     "surf-nats-test:surf-nats-test-fixtures-internal",
@@ -203,9 +203,7 @@ includeInfra(
     "redis",
     "surf-redis-api",
     "surf-redis-core",
-    "surf-redis-paper",
-    "surf-redis-velocity",
-    "surf-redis-minestom",
+    "surf-redis-spring",
     "surf-redis-standalone",
 )
 includeInfra(
@@ -214,7 +212,6 @@ includeInfra(
     "surf-microservice-runtime",
     "surf-microservice-database",
     "surf-microservice-reliability",
-    "surf-microservice-processor",
 )
 includeModule("infra/database-r2dbc", name = "surf-api-database-r2dbc")
 
@@ -253,6 +250,10 @@ if (!ci) {
     includeModule("local/paper-shared-bean-provider")
     includeModule("local/paper-shared-bean-consumer")
     includeModule("local/paper-shared-bean-test")
+    // The same harness for Velocity: a proxy instead of a Paper server.
+    includeModule("local/velocity-shared-bean-provider")
+    includeModule("local/velocity-shared-bean-consumer")
+    includeModule("local/velocity-shared-bean-test")
     includeModule("local/minestom-example")
     includeModule("local/minestom-example-plugin")
     includeModule("surf-api-generator")

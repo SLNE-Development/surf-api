@@ -1,8 +1,8 @@
 package dev.slne.surf.database.migration
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.testing.DatabaseContainers
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.junit.jupiter.api.io.TempDir
@@ -36,19 +36,19 @@ class GenerateMigrationScriptIT {
         }
     }
 
-    private fun withApi(db: String, block: suspend (DatabaseApi) -> Unit) = runBlocking {
-        val api = container(db).toDatabaseApi(fresh = true)
+    private fun withTestDatabase(db: String, block: suspend (TestDatabase) -> Unit) = runBlocking {
+        val testDb = container(db).toTestDatabase(fresh = true)
         try {
-            block(api)
+            block(testDb)
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
     @ParameterizedTest
     @MethodSource("databases")
-    fun generatesCreateStatementForMissingTable(db: String, @TempDir dir: Path) = withApi(db) { api ->
-        val file = api.generateMigrationScript(Items, scriptDirectory = dir, scriptName = "V2__items")
+    fun generatesCreateStatementForMissingTable(db: String, @TempDir dir: Path) = withTestDatabase(db) { testDb ->
+        val file = testDb.database.generateMigrationScript(Items, scriptDirectory = dir, scriptName = "V2__items")
 
         assertEquals("V2__items.sql", file.name)
         assertTrue(file.exists())

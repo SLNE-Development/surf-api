@@ -22,14 +22,13 @@ internal class SurfComponentBuilderImpl(private val delegate: TextComponent.Buil
     override fun content() = delegate.content()
     override fun children(): List<Component> = delegate.children()
     override fun build(): TextComponent {
-        // Adventure 4 backward compatibility. #build() would return BuildableComponent instead of TextComponent in adventure 4
         return delegate.asComponent() as TextComponent
     }
 
     override fun append(builder: ComponentBuilder<*, *>) = withDelegate { append(builder) }
     override fun append(component: Component) = withDelegate { append(component) }
     override fun append(component: ComponentLike) = withDelegate { append(component) }
-    override fun append(components: Iterable<out ComponentLike>) = withDelegate { append(components) }
+    override fun append(components: Iterable<ComponentLike>) = withDelegate { append(components) }
     override fun append(vararg components: Component) = withDelegate { append(*components) }
     override fun append(vararg components: ComponentLike) = withDelegate { append(*components) }
     override fun appendNewline() = withDelegate { appendNewline() }

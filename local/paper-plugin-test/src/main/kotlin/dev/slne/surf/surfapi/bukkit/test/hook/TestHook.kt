@@ -1,40 +1,43 @@
 package dev.slne.surf.surfapi.bukkit.test.hook
 
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.di.Service
-import dev.slne.surf.api.di.SurfComponent
-import dev.slne.surf.api.di.condition.ConditionalOnEnvironment
-import dev.slne.surf.api.di.condition.ConditionalOnProperty
+import dev.slne.surf.api.spring.SurfLifecycle
+import dev.slne.surf.surfapi.bukkit.test.hook.condition.TestPropertyCondition
+import org.springframework.context.annotation.Conditional
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Service
 
-/** A stereotype of this plugin's own, to check that `@BeanMeta` is found through one. */
+/**
+ * A stereotype meta-annotated with `@Service`.
+ */
 @Service
 annotation class TestHookMeta
 
-/** A stereotype built on another one, to check that the chain is followed further than one step. */
+/**
+ * A stereotype two levels removed from `@Service`.
+ */
 @TestHookMeta
 annotation class TestHookMeta2
 
 /**
- * A bean that only exists on a production server with `test.property=true` in its `properties.yml`.
- *
- * Carries both halves of what the test plugin is here to exercise: the stereotype chain above, and
- * two independent conditions that both have to hold.
+ * A hook behind a two-level stereotype, a profile and a property condition.
  */
 @TestHookMeta2
-@ConditionalOnEnvironment(environments = ["production"])
-@ConditionalOnProperty(key = ["test", "property"], havingValue = "true")
-class TestHook : SurfComponent {
+@Profile("production")
+@Conditional(TestPropertyCondition::class)
+class TestHook : SurfLifecycle {
+
     private val log = logger()
 
-    override suspend fun load() {
+    override suspend fun onLoad() {
         log.atInfo().log("TestHook loaded")
     }
 
-    override suspend fun enable() {
+    override suspend fun onEnable() {
         log.atInfo().log("TestHook enabled")
     }
 
-    override suspend fun disable() {
+    override suspend fun onDisable() {
         log.atInfo().log("TestHook disabled")
     }
 }

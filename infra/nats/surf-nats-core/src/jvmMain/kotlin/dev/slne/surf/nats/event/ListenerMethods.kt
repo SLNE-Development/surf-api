@@ -29,22 +29,35 @@ internal object ListenerMethods {
     private data class Signature(val name: String, val parameterTypes: List<Class<*>>)
 
     /**
-     * Returns the `@NatsListener` methods of [listener], declared in its class or any superclass.
+     * Returns the `@NatsListener` methods that [scanType] and its superclasses declare.
      *
      * A listener method takes exactly one generated event and returns `Unit`, and may suspend. An overridden method
      * counts once, by its most specific declaration. Overriding an annotated method without the annotation is an
      * error.
      *
-     * Throws [IllegalArgumentException] listing every invalid method, or when [listener] has no listener method.
+     * [scanType] defaults to the class of [listener]. A proxied bean passes the class behind its proxy: the methods
+     * are then invoked on the proxy, so private and final methods, which a proxy cannot intercept, are rejected.
+     *
+     * Throws [IllegalArgumentException] listing every invalid method, when [listener] is not an instance of
+     * [scanType], or when [scanType] has no listener method.
      */
-    fun findListenerMethods(listener: Any, client: NatsClientImpl): List<ListenerMethod> {
+    fun findListenerMethods(
+        listener: Any,
+        client: NatsClientImpl,
+        scanType: Class<*> = listener.javaClass,
+    ): List<ListenerMethod> {
+        require(scanType.isInstance(listener)) {
+            "${listener.javaClass.name} is not an instance of ${scanType.name}"
+        }
+        val proxied = scanType !== listener.javaClass
+
         val methods = ArrayList<ListenerMethod>()
         val problems = ArrayList<String>()
 
         val seen = HashSet<Signature>()
         val unannotated = HashSet<Signature>()
 
-        var currentClass: Class<*>? = listener.javaClass
+        var currentClass: Class<*>? = scanType
         while (currentClass != null) {
             for (method in currentClass.declaredMethods) {
                 if (method.isBridge || method.isSynthetic) continue
@@ -68,7 +81,7 @@ internal object ListenerMethods {
 
                 if (annotation == null) continue
 
-                val problem = validate(method)
+                val problem = validate(method) ?: if (proxied) proxyProblem(method) else null
                 if (problem != null) {
                     problems.add("${method.name}: $problem")
                     continue
@@ -101,15 +114,25 @@ internal object ListenerMethods {
         }
 
         require(problems.isEmpty()) {
-            "Invalid @NatsListener methods in ${listener.javaClass.name}:\n" +
+            "Invalid @NatsListener methods in ${scanType.name}:\n" +
                     problems.joinToString("\n") { " - $it" }
         }
 
         require(methods.isNotEmpty()) {
-            "${listener.javaClass.name} has no @NatsListener methods"
+            "${scanType.name} has no @NatsListener methods"
         }
 
         return methods
+    }
+
+    private fun proxyProblem(method: Method): String? {
+        val modifiers = method.modifiers
+        return when {
+            Modifier.isStatic(modifiers) -> null
+            Modifier.isPrivate(modifiers) -> "must not be private on a proxied bean"
+            Modifier.isFinal(modifiers) -> "must not be final on a proxied bean"
+            else -> null
+        }
     }
 
     private fun validate(method: Method): String? {

@@ -1,6 +1,20 @@
+@file:OptIn(ExperimentalAbiValidation::class)
+
+import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+
 plugins {
     id("dev.slne.surf.api.gradle.standalone")
     id("com.github.gmazzo.buildconfig") version "6.0.9"
+}
+
+kotlin {
+    abiValidation {
+        filters {
+            exclude {
+                annotatedWith.add("dev.slne.surf.microservice.api.InternalMicroserviceApi")
+            }
+        }
+    }
 }
 
 repositories {
@@ -12,6 +26,9 @@ dependencies {
     api(libs.spark.standalone.agent) {
         exclude("org.slf4j")
     }
+    api(libs.spring.boot)
+    api(libs.spring.boot.autoconfigure)
+    api(libs.spring.boot.health)
     implementation(libs.log4j.api)
     runtimeOnly(libs.bundles.log4j)
 }

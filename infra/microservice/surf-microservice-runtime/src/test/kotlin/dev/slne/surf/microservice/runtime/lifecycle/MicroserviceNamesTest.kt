@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.runtime.lifecycle
 
-import dev.slne.surf.microservice.api.Microservice
+import dev.slne.surf.microservice.api.MicroserviceInfo
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.Test
@@ -23,7 +23,7 @@ class MicroserviceNamesTest {
 
     @Test
     fun `accepts names up to the maximum length`() {
-        val name = "a".repeat(Microservice.MAX_NAME_LENGTH)
+        val name = "a".repeat(MicroserviceInfo.MAX_NAME_LENGTH)
 
         assertEquals(name, MicroserviceNames.requireValid(name))
     }
@@ -31,7 +31,7 @@ class MicroserviceNamesTest {
     @Test
     fun `rejects names above the maximum length`() {
         assertFailsWith<IllegalStateException> {
-            MicroserviceNames.requireValid("a".repeat(Microservice.MAX_NAME_LENGTH + 1))
+            MicroserviceNames.requireValid("a".repeat(MicroserviceInfo.MAX_NAME_LENGTH + 1))
         }
     }
 }

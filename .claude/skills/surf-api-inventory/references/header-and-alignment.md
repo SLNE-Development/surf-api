@@ -2,7 +2,7 @@
 
 Sources: `view/settings/ViewFontMetrics.kt`, `view/settings/ViewHeaderGeometry.kt`,
 `view/settings/align/` and `view/settings/SurfViewSettingsDefaults.kt`, over the shared math in
-`common/core/api/.../inventory/framework/internal/` (`ViewSlotGeometry`, `TextAlignmentMath`,
+`common/inventory/api/.../inventory/framework/internal/` (`ViewSlotGeometry`, `TextAlignmentMath`,
 `DefaultFontWidths`, `ShiftGlyphs`, `ViewTextLayout`, `ViewContainerRendering`).
 
 ## The model in four sentences
@@ -18,7 +18,7 @@ values to its left.
 
 ## Measuring text
 
-`layoutViewText(component, charSpacing, uppercase, spaceShift, advance)` (core) walks the component
+`layoutViewText(component, charSpacing, uppercase, spaceShift, advance)` (shared, `common/inventory/api` internal) walks the component
 tree per part and per Unicode code point, applies the transformations, and returns a
 `LaidOutViewText(component, width)` - the component to emit and its exact pixel advance. It asks
 `advance(codePoint, bold)` for every glyph, which is how the same code serves the proportional
@@ -84,7 +84,7 @@ settings {
 }
 ```
 
-`ViewSlotGeometry` (core) holds the grid constants - `COLUMNS = 9`, `MAX_ROWS = 6`,
+`ViewSlotGeometry` (shared, `common/inventory/api` internal) holds the grid constants - `COLUMNS = 9`, `MAX_ROWS = 6`,
 `SLOT_SIZE = 18` - and `columnShift`, `spanWidth`, `columnOf(slot)`, `rowOf(slot)` (**one-based**),
 `slotOf(column, row)`.
 

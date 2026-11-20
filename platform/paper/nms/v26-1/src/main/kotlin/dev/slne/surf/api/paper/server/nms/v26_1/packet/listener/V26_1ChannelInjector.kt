@@ -1,12 +1,12 @@
 package dev.slne.surf.api.paper.server.nms.v26_1.packet.listener
 
+import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
+import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.reflection.Field
 import dev.slne.surf.api.reflection.SurfProxy
 import dev.slne.surf.api.reflection.SurfReflection
 import dev.slne.surf.api.reflection.createProxy
-import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
-import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import io.netty.channel.Channel
 import io.papermc.paper.connection.PaperPlayerLoginConnection
 import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
@@ -92,7 +92,7 @@ object V26_1ChannelInjector : AbstractChannelInjector<V26_1ChannelInjector.Packe
         fun getConnection(instance: ReadablePlayerCookieConnectionImpl): Connection
 
         companion object {
-            val instance = SurfReflection.INSTANCE.createProxy<ReadablePlayerCookieConnectionImplProxy>()
+            val instance = SurfReflection.instance.createProxy<ReadablePlayerCookieConnectionImplProxy>()
         }
     }
 }

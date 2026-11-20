@@ -2,53 +2,29 @@
 
 package dev.slne.surf.api.paper.inventory.framework
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import me.devnatan.inventoryframework.ViewFrame
 import org.jetbrains.annotations.ApiStatus
+import dev.slne.surf.api.spring.SurfApiBean
 
 /**
- * Service accessor for the inventory-framework [ViewFrame].
+ * Provides the server's inventory framework [ViewFrame].
  *
- * The implementation of this interface is published as a bean and resolved from the DI
- * container (`surfBean<ViewFrameAccessor>()`). The single instance is available through
- * [ViewFrameAccessor.INSTANCE] or the top-level [viewFrame] property.
- *
- * This interface is not intended to be implemented outside the framework itself.
- *
- * @see viewFrame
+ * The [ViewFrame] is also a Spring bean of surf-api's root context, so consumers can inject it
+ * directly instead of this accessor. Only surf-api implements this interface.
  */
 @ApiStatus.NonExtendable
+@SurfApiBean
 interface ViewFrameAccessor {
+
     /**
-     * Returns the active [ViewFrame] managed by the inventory framework.
-     *
-     * The [ViewFrame] is the central registry for all registered views and is used
-     * to open, close, and manage inventory views.
-     *
-     * @return the active [ViewFrame]
+     * Returns the server's [ViewFrame], the registry of all inventory views.
      */
     fun viewFrame(): ViewFrame
-
-    companion object {
-        /**
-         * The singleton [ViewFrameAccessor] instance resolved from the DI container.
-         */
-        val INSTANCE get() = accessor
-    }
 }
 
-private val accessor by surfBean<ViewFrameAccessor>()
-
 /**
- * Top-level shortcut to the active [ViewFrame].
- *
- * Delegates to [ViewFrameAccessor.INSTANCE] on every access.
- *
- * ```kotlin
- * viewFrame.open(MyView::class.java, player)
- * ```
- *
- * @see ViewFrameAccessor
+ * The server's [ViewFrame], for the extension functions of this package.
  */
-val viewFrame: ViewFrame get() = ViewFrameAccessor.INSTANCE.viewFrame()
+internal val viewFrame: ViewFrame by surfBean<ViewFrame>()

@@ -27,9 +27,6 @@ class NmsProvidersCollector(environment: SymbolProcessorEnvironment) : SymbolPro
         val metas = AnnotationUtils.findAnnotatedClasses(
             resolver = resolver,
             annotationFqName = ClassNames.NMS_PROVIDER,
-            includeMetaAnnotations = false,
-            excludeAnnotationClasses = false,
-            logger = logger
         ).mapNotNull(fun(nmsProviderClass): NmsProviderMeta? {
             val annotation = nmsProviderClass.findNmsProviderAnnotation() ?: return null
             val rawVersion = annotation.getArgumentValueAs<KSClassDeclaration>("version") ?: return null

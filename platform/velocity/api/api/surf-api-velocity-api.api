@@ -1,10 +1,5 @@
 public abstract interface class dev/slne/surf/api/velocity/SurfApiVelocity : dev/slne/surf/api/core/SurfApiCore {
-	public static final field Companion Ldev/slne/surf/api/velocity/SurfApiVelocity$Companion;
 	public abstract fun getExecutorService ()Ljava/util/concurrent/ExecutorService;
-}
-
-public final class dev/slne/surf/api/velocity/SurfApiVelocity$Companion {
-	public final fun getINSTANCE ()Ldev/slne/surf/api/velocity/SurfApiVelocity;
 }
 
 public class dev/slne/surf/api/velocity/api/metrics/Metrics {
@@ -150,11 +145,13 @@ public final class dev/slne/surf/api/velocity/command/executors/SuspendCommandEx
 	public static final fun consoleExecutorSuspend (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/VelocityExecutable;
 	public static synthetic fun consoleExecutorSuspend$default (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/VelocityExecutable;
 	public static final fun getDefaultScope ()Lkotlinx/coroutines/CoroutineScope;
-	public static final fun handleCommandFailure (Lcom/velocitypowered/api/command/CommandSource;Ljava/lang/Throwable;)V
-	public static final fun launchCommandExecutor (Lkotlinx/coroutines/CoroutineScope;Lcom/velocitypowered/api/command/CommandSource;Lkotlin/jvm/functions/Function2;)V
 	public static final fun playerExecutorSuspend (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;)Ldev/jorel/commandapi/VelocityExecutable;
 	public static synthetic fun playerExecutorSuspend$default (Ldev/jorel/commandapi/VelocityExecutable;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function4;ILjava/lang/Object;)Ldev/jorel/commandapi/VelocityExecutable;
 	public static final fun sendSyntaxMessageOrRethrow (Lcom/velocitypowered/api/command/CommandSource;Ljava/lang/String;Ljava/lang/Throwable;)V
+}
+
+public abstract class dev/slne/surf/api/velocity/plugin/SurfVelocityPlugin {
+	public fun <init> (Lcom/velocitypowered/api/plugin/PluginContainer;)V
 }
 
 public final class dev/slne/surf/api/velocity/util/Velocity_utilKt {

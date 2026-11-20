@@ -1,8 +1,8 @@
-# Action bar, sidebar and scoreboard
+# Action bar and sidebar
 
 `actionbar/` plus `common/core/impl/.../impl/actionbar/ActionBarServiceImpl.kt`, and the Paper
-consumers under `platform/paper/api/.../sidebar/` and `.../scoreboard/`. Every `Component` here is
-Adventure's text component.
+consumer under `platform/paper/api/.../sidebar/`. Every `Component` here is Adventure's text
+component.
 
 ## `ActionBarService`
 
@@ -38,9 +38,9 @@ player.sendActionBar(
 ```
 
 `textComputation` is a `SurfComponentBuilder.() -> Unit`; the service-level `computation` is a plain
-`() -> Component`. The service itself is a bean: `ActionBarService.instance` reads a private
-`by surfBean<ActionBarService>()`, satisfied by the `@Service` `ActionBarServiceImpl` in
-`surf-api-core-impl`, so it is reachable from common code on every platform.
+`() -> Component`. The service is the `@Service` `ActionBarServiceImpl` in surf-api's root context,
+so the extensions work from common code on every platform; a bean can also inject
+`ActionBarService` directly.
 
 ### What it guarantees
 
@@ -51,7 +51,7 @@ player.sendActionBar(
 - A `computation` that throws is logged at `WARNING` with the cause, at most every 900 ms, and that
   tick sends nothing. The loop keeps going. Same for `afterTick`.
 - `autoCancelPlayer = true` (default): if the audience has a UUID pointer and the core says it is a
-  player, the job ends as soon as `SurfApiCore.getPlayer(uuid)` returns `null`.
+  player, the job ends as soon as `SurfApiCore.instance.getPlayer(uuid)` returns `null`.
 - `onFinish` runs exactly once from `Job.invokeOnCompletion`, with
   `COMPLETED` (duration elapsed), `AUTO_CANCELLED` (player left), `CANCELLED` (the job was
   cancelled) or `FAILED` (anything else threw). A throwing `onFinish` is logged, not propagated.
@@ -112,33 +112,25 @@ plus `maxLines` (1..15, extra lines discarded), `emptyLine()`, `separator()` (a 
 gradient rule) and `animatedLine(frames)`. `SidebarLine(text, score = null)` is the line type;
 `score` is the content shown on the right.
 
-**The threading contract**, verbatim from `SurfSidebar`: titles and lines are rendered
-asynchronously on a background dispatcher for each viewer on every update, renderers may suspend, and
-code that needs the viewer's region thread must switch with
-`withContext(plugin.entityDispatcher(viewer))`. Rendering for one viewer never overlaps - extra
-update requests while a render is in flight are coalesced into one follow-up - and only changed
-content is sent. A failing renderer is logged and that viewer keeps its previous content. The sidebar
-closes itself when the plugin disables and drops viewers when they leave.
+**The threading contract**, from `SurfSidebar`: titles and lines are rendered asynchronously on a
+background dispatcher for each viewer on every update, renderers may suspend, and code that needs
+the viewer's region thread must switch with `withContext(dispatchers.entity(viewer))`, using the
+plugin's `PaperDispatchers` bean. Rendering for one viewer never overlaps - extra update requests
+while a render is in flight are coalesced into one follow-up - and only changed content is sent.
+A failing renderer is logged and that viewer keeps its previous content. The sidebar closes itself
+when the plugin disables and drops viewers when they leave.
 
 Building a component off the main thread is fine: components are immutable and the builder is local
 to the lambda. Reading `player.location`, inventory contents or any world state is not - that is what
 the `withContext` is for.
 
-A player must only ever see one sidebar at a time, including the legacy scoreboard below: they share
-the single sidebar display slot.
+The renderers run in the sidebar's own scope, not in the plugin's, so `withEntity { }` fails there;
+use the `withContext` form. A `line { viewer -> }` that reads world state without switching reads
+it off-thread.
 
-## The deprecated scoreboard
+A player must only ever see one sidebar at a time: all sidebars share the single sidebar display
+slot.
 
-`platform/paper/api/.../scoreboard/SurfScoreboardBuilder` and friends are `@Deprecated` in favour of
-the sidebar, with the mapping spelled out in the deprecation message: `addLine` → `line(text)`,
-`addUpdatableLine` → `sharedLine { }`, `addViewerLine` → `line { viewer -> }`,
-`addViewerComponent` → `buildViewerLines { viewer -> }`, `addAnimatedLine` → `animatedLine(frames)`,
-`addGradientLine` → `gradientLine(text, start, end)`, `addLineSeparator` → `separator()`.
-
-The behavioural difference that matters when porting: the old `addViewerLine` ran on the *viewer's
-entity scheduler thread*, so it could read game state directly. The new `line { viewer -> }` runs on
-a background dispatcher and must switch threads itself. Code moved across without adding the
-`withContext` will read world state off-thread.
-
-Both builders accept `SurfComponentBuilder` blocks (`buildLine`, `buildUpdatableLine`), so the text
-side of a port is mechanical.
+`close()` is terminal: a closed sidebar ignores `update()` and cannot be shown again, so build a new
+one instead. A line's `score` is a fixed `Component` or `null`. The sidebar DSL is Kotlin-only; it
+has no Java overloads.

@@ -18,13 +18,19 @@ import dev.slne.surf.api.shared.api.util.InternalSurfApi
 @InternalSurfApi
 object ViewSlotGeometry {
 
-    /** Number of slot columns in a chest-type inventory. */
+    /**
+     * Number of slot columns in a chest-type inventory.
+     */
     const val COLUMNS = 9
 
-    /** Maximum number of slot rows in a chest-type inventory. */
+    /**
+     * Maximum number of slot rows in a chest-type inventory.
+     */
     const val MAX_ROWS = 6
 
-    /** Horizontal pitch of the slot grid in pixels: one slot plus its one-pixel border. */
+    /**
+     * Horizontal pitch of the slot grid in pixels: one slot plus its one-pixel border.
+     */
     const val SLOT_SIZE = 18
 
     /**

@@ -1,22 +1,26 @@
 # Adding, renaming or moving a module
 
+This checklist covers modules included with `includeModule`. A module inside an imported `infra/`
+repository is added to that repository's `includeInfra(...)` call and applies the surf Gradle plugin
+instead of a buildSrc role; see `module-layout.md`.
+
 ## 1. Pick the directory
 
 The directory decides the published name - see `module-layout.md`. Match the existing grouping:
 
-- a platform-independent contract or its implementation -> `common/<domain>/{api,impl}`
+- a platform-independent contract or its implementation -> `common/<domain>/{api,impl}`; a domain
+  whose implementation is wired in elsewhere has only `common/<domain>/api`
 - something below the platforms that both `common/` and `platform/` need -> `foundation/<name>` or
   `foundation/<domain>/{api,impl}`
 - platform-specific -> `platform/<platform>/{api,impl}`, or `platform/<platform>/<feature>-impl` for
   an optional feature module (the Minestom pattern)
 - a downstream coordinate -> `aggregate/<name>`
 - build tooling -> `tooling/<name>`
-- a sample or manual test -> `local/<name>` (then also add it to `notPublished`)
+- a sample, manual test or boot harness -> `local/<name>`
 
-Check what the derived name will be before creating the directory. `platform/paper/foo/impl` becomes
+Check the derived name before creating the directory. `platform/paper/foo/impl` becomes
 `surf-api-paper-foo-impl`, which is `IMPL` by the `-impl` suffix. `platform/paper/foo-api` becomes
-`surf-api-paper-foo-api`, which is `API`. Avoid a name containing `-server` unless you mean it to
-classify as an implementation.
+`surf-api-paper-foo-api`, which is `API`.
 
 ## 2. Write the build file
 
@@ -44,7 +48,7 @@ plugins {
 
 dependencies {
     api(projects.surfApiFooApi)
-    implementation(libs.guava)
+    implementation(projects.surfApiSpringImpl)
 }
 
 description = "surf-api-<name>-impl"
@@ -60,14 +64,23 @@ Rules that bite:
 - An API module exposes a dependency with `api`/`compileOnlyApi`, never `implementation`, when a
   consumer compiles against its types. `compileOnlyApi` also lands on the test classpath
   (`test-convention` makes `testImplementation` extend it).
-- `description` is set to the published name in most modules; keep that habit.
+- A module that declares beans or Spring contracts depends on `projects.surfApiSpringApi`; one that
+  contributes to every plugin context through a `ContextContributor` depends on
+  `projects.surfApiSpringImpl`.
+- A module that declares `@GenerateReflection` or `@NmsProviderMarker` adds
+  `id("surf.ksp-processor")` next to its role.
+- Set `description` to the published name, as most modules do.
 - Extra Shadow relocations go in the module's own `tasks { shadowJar { ... } }` block on top of the
-  two `core-convention` already does.
+  two `core-convention` applies.
+- A module that a platform impl bundles and that registers a `ContextContributor` in
+  `META-INF/services` must reach that jar's merged service file. Add its provider to the
+  `checkContextContributors` list of `platform/paper/impl`, `platform/velocity/impl` and
+  `platform/minestom/impl`.
 
 ## 3. Register it in settings.gradle.kts
 
 Add the call in the right section, keeping the existing order (`foundation`, `common`, `platform`,
-aggregates, `tooling`, then the non-CI block):
+aggregates, `tooling`, `infra`, then the non-CI block):
 
 ```kotlin
 includeModule("platform/paper/foo-impl")
@@ -79,19 +92,20 @@ or, for a matching `api`/`impl` pair:
 includePair("common", "foo")
 ```
 
-Only pass the `name` argument when the derived name is wrong - the one precedent is
-`includeModule("tooling/gradle-plugin/processor", name = "surf-api-processor")`.
+An api-only domain gets a comment above its `includeModule` saying why no impl half exists, like
+the other `common/*/api` entries. Pass the `name` argument only when the derived name is wrong; see
+`module-layout.md` for the two precedents.
 
 A `local/`-style module goes inside the `if (!ci)` block.
 
 ## 4. Decide on ABI validation
 
 Add `` `api-validation` `` next to the role only if the module's surface is worth reviewing in a
-diff and is stable enough that every PR will not churn the dump:
+diff:
 
 - yes, if consumers outside this repository compile against it, or an aggregate re-exports it
-- no, if the surface is generated (`foundation/registry-keys`) or still being shaped
-  (`foundation/di/api`) - both files say so in a comment, follow that practice
+- no, if the surface is generated, like `foundation/registry-keys`; say so in a comment in the
+  build file, as that module does
 
 After adding it, run `./gradlew :<module>:updateKotlinAbi` and commit the generated
 `<moduleDir>/api/<published-name>.api`.
@@ -101,17 +115,17 @@ After adding it, run `./gradlew :<module>:updateKotlinAbi` and commit the genera
 | Situation | Plugin |
 | --- | --- |
 | consumers compile against these types | `surf.module-api` |
-| wired in at runtime, shaded into the final jar | `surf.module-impl` |
+| wired in at runtime, shaded into a platform jar | `surf.module-impl` |
 | no code, only a coordinate that groups others | `surf.aggregate` |
-| build tooling or a sample with no role | bare `` `core-convention` `` |
+| a sample, harness or test-support module with no role | bare `` `core-convention` `` |
 
-`surf.module-impl` rejects a name that does not mark the module as an implementation. `surf.aggregate`
-rejects any source file. `surf.module-api` adds `checkApiBoundary`.
+`surf.module-impl` rejects a name that does not mark the module as an implementation.
+`surf.aggregate` rejects any source file. `surf.module-api` adds `checkApiBoundary`.
 
 ## 6. Reach it from downstream
 
-If downstream projects should see the module, add it to the matching aggregate rather than telling
-them a new coordinate:
+If downstream projects should see the module, export it from an API module the matching aggregate
+already exports, or add it to the aggregate, rather than telling them a new coordinate:
 
 ```kotlin
 // aggregate/paper/build.gradle.kts
@@ -121,14 +135,17 @@ dependencies {
 }
 ```
 
-Published modules need no BOM edit - `tooling/bom` derives its constraints from the subproject names.
-A local-only or independently versioned module must be added to `notPublished` in
-`tooling/bom/build.gradle.kts`.
+`common/core/api` re-exports most api-only common domains this way, so `surf-api-core` keeps
+resolving them.
+
+Published modules need no BOM edit - `tooling/bom` derives its constraints from the subproject
+names. A module included only outside CI, or one with a version of its own, belongs in
+`notPublished` in `tooling/bom/build.gradle.kts`.
 
 ## 7. Verify
 
 ```bash
-./gradlew projects                              # the new flat path is listed
+./gradlew projects                              # the new path is listed
 ./gradlew :surf-api-<name>:build
 ./gradlew :surf-api-<name>:checkApiBoundary     # api modules only
 ./gradlew checkKotlinAbi                        # if api-validation is applied
@@ -137,21 +154,23 @@ A local-only or independently versioned module must be added to `notPublished` i
 
 ## Renaming or moving an existing module
 
-1. Move the directory. The published name follows the path automatically; no `archivesName` anywhere.
+1. Move the directory. The published name follows the path; no `archivesName` anywhere.
 2. Update the `includeModule`/`includePair` call.
 3. Rename the ABI dump: `<moduleDir>/api/<old-name>.api` -> `<moduleDir>/api/<new-name>.api`. The
    dump is named after the project, so a rename without this strands the old file and
    `checkKotlinAbi` reports the entire surface as new.
-4. Update every `projects.<accessor>` reference. The accessor is the camel-cased published name, so a
-   rename changes it: `surf-api-minestom-server-npc` was `projects.surfApiMinestomServerNpc` and is
-   now `projects.surfApiMinestomNpcImpl`.
+4. Update every `projects.<accessor>` reference. The accessor is the camel-cased published name,
+   so a rename changes it: `surf-api-minestom-server-npc` was `projects.surfApiMinestomServerNpc`
+   and is `projects.surfApiMinestomNpcImpl`.
 5. If consumers resolve the old coordinate directly, add
    `publishRelocationFrom("surf-api-<old-name>")`. Skip it when the module is only ever pulled in
    transitively through an aggregate.
-6. If the new name changes its `surfModuleRole` classification - for instance gaining or losing the
-   `-impl` suffix - re-check its role plugin and the `checkApiBoundary` result in every module that
-   depends on it.
+6. If the new name changes its `surfModuleRole` classification - gaining or losing the `-impl`
+   suffix - re-check its role plugin and the `checkApiBoundary` result in every module that depends
+   on it.
 7. If it was in `notPublished`, rename it there too.
+8. If the module's classes are named in a build file, such as a `checkContextContributors`
+   provider list, update those names when the package moves.
 
-Keep the change LF-only; `.gitattributes` pins `* text=auto eol=lf` so a pattern-based edit behaves
-the same for everyone, and `*.patch` is excluded from normalisation on purpose.
+Keep the change LF-only; `.gitattributes` pins `* text=auto eol=lf`, and `*.patch` is excluded
+from normalisation on purpose.

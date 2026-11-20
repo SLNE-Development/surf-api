@@ -28,6 +28,9 @@ extra["shadedPackages"] = shadedPackages
 subprojects {
     tasks.withType<ShadowJar>().configureEach {
         shadedPackages.forEach { (from, to) -> relocate(from, to) }
+        // Redisson's XML namespace registration names its unrelocated handler class and schemas, which the
+        // shaded jar does not contain.
+        exclude("META-INF/spring.handlers", "META-INF/spring.schemas", "META-INF/spring.tooling")
     }
 
     tasks.withType<ShadowJar>().configureEach {

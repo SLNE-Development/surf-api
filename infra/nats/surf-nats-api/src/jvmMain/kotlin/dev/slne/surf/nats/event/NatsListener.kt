@@ -1,6 +1,8 @@
 package dev.slne.surf.nats.event
 
 import dev.slne.surf.nats.rpc.Recipients
+import org.springframework.aot.hint.annotation.Reflective
+import org.springframework.context.annotation.ReflectiveScan
 
 /**
  * Marks an event listener method with a single parameter whose type is a generated event message

@@ -8,10 +8,10 @@ import kotlinx.coroutines.currentCoroutineContext
 /**
  * Publishes the events of transactional handlers after their transaction commits.
  *
- * Get the publisher of the running microservice with [Microservice.events][events], or from
- * `TransactionalHandlerFixture.events` in tests, and pass it to the service implementation.
+ * The publisher is a bean of the microservice; inject it into the service implementation. Tests get one from
+ * `TransactionalHandlerFixture.events`.
  *
- * [publish] works only in a handler of a service registered with [registerTransactionalService], including child
+ * [publish] works only in a handler of a `@NatsTransactional` service, including child
  * coroutines the handler starts. The events are held in memory and, once the handler's transaction has committed,
  * published in publish order with [NatsClient.publish][dev.slne.surf.nats.NatsClient.publish] on the client the
  * service is registered on. If the handler fails or its transaction rolls back, they are discarded. A redelivered
@@ -37,8 +37,8 @@ public class TransactionalEvents internal constructor() {
      */
     public suspend fun publish(event: NatsEvent, aggregateId: String? = null) {
         val operation = checkNotNull(currentCoroutineContext()[ActiveOperation]) {
-            "Transactional events can only be published in a handler of a service registered with " +
-                "registerTransactionalService; use NatsClient.publish outside of it"
+            "Transactional events can only be published in a handler of a @NatsTransactional service; " +
+                "use NatsClient.publish outside of it"
         }
         operation.add(PendingEvent(event, aggregateId))
     }

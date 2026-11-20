@@ -4,19 +4,15 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.api.gradle.generated.Constants
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
-import dev.slne.surf.api.gradle.platform.core.CoreSurfExtension
 import dev.slne.surf.api.gradle.util.slnePublic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
-import org.jetbrains.kotlin.gradle.utils.API
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
 abstract class CommonSurfPlugin<E : CommonSurfExtension>(
@@ -36,7 +32,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     )
 
     private val relocations = mutableListOf<Relocation>()
-    private val dependencyDependentRelocations = mutableMapOf<String, MutableMap<String, String>>()
 
     init {
         "org.spongepowered.configurate" relocatesTo "configurate"
@@ -96,13 +91,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         relocations.forEach { action(it.from, "${Constants.RELOCATION_PREFIX}.${it.to}", it.excludes) }
     }
 
-    fun addRelocationsForDependency(
-        dependency: String,
-        vararg relocations: Pair<String, String>,
-    ) {
-        dependencyDependentRelocations.getOrPut(dependency) { mutableMapOf() }.putAll(relocations)
-    }
-
     private fun Project.applyPlugins() {
         commonPlugins.forEach { pluginId ->
             applyPlugin(pluginId)
@@ -149,57 +137,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
-        tasks.withType<ShadowJar>().configureEach {
-            val depsProvider = project.provider {
-                val deps = project.configurations
-                    .asSequence()
-                    .filter { it.isCanBeResolved && !it.name.startsWith("test") }
-                    .flatMap { cfg -> cfg.incoming.resolutionResult.allDependencies.asSequence() }
-                    .toList()
-
-                val artifactNames = deps.map { it.requested.displayName }.toSet()
-
-                val projectPaths = deps.mapNotNull { dep ->
-                    (dep as? ResolvedDependencyResult)?.selected?.id
-                        ?.let { id -> if (id is ProjectComponentIdentifier) id.projectPath else null }
-                }.toSet()
-
-                Pair(artifactNames, projectPaths)
-            }
-
-            doFirst {
-                val (artifactNames, projectPaths) = depsProvider.get()
-                dependencyDependentRelocations.forEach { (needle, relos) ->
-                    if (artifactNames.any { it.contains(needle) }) {
-                        logger.lifecycle("Dependency $needle found — applying relocations.")
-                        relos.forEach { (from, to) ->
-                            logger.lifecycle("Relocating $from to $to")
-                            relocate(from, to)
-                        }
-                    }
-                }
-
-                projectPaths.forEach { projPath ->
-                    val depProject = rootProject.findProject(projPath) ?: return@forEach
-                    val coreExt = depProject.extensions.findByType(CoreSurfExtension::class.java)
-                    if (coreExt != null) {
-                        if (coreExt.withSurfDatabaseR2dbc.orNull == true) {
-                            coreExt.surfDatabaseR2dbcRelocation.orNull?.let { relocation ->
-                                logger.lifecycle("Project dependency $projPath requests DB R2DBC relocation -> $relocation")
-                                relocate("dev.slne.surf.database", relocation)
-                            }
-                        }
-                        if (coreExt.withSurfRedis.orNull == true) {
-                            coreExt.surfRedisRelocation.orNull?.let { relocation ->
-                                logger.lifecycle("Project dependency $projPath requests Redis relocation -> $relocation")
-                                relocate("dev.slne.surf.redis", relocation)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         configure<JavaPluginExtension> {
             withSourcesJar()
             withJavadocJar()
@@ -239,10 +176,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     /**
-     * Runs surf-api's KSP processor on the project, which is what writes its bean metadata.
+     * Runs surf-api's KSP processor on the project.
      *
-     * Without it a `@Service` in a downstream plugin compiles and is then absent at runtime, since
-     * the container builds its graph from the generated metadata and never scans classes.
+     * The processor generates the NMS provider index and the code behind `@GenerateReflection`.
+     * Without it a plugin that declares either compiles and then misses the generated classes at
+     * runtime. It collects no bean metadata: Spring finds the beans by scanning the plugin.
      */
     private fun Project.configureSurfProcessor() = dependencies {
         add("ksp", Constants.SURF_PROCESSOR)
@@ -275,37 +213,11 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         }
 
         if (extension.withSurfRedis.get()) {
-            if (extension.surfRedisRelocation.isPresent) {
-                dependencies {
-                    add(API, "dev.slne.surf.redis:surf-redis:+")
-                }
-                tasks.withType<ShadowJar>().configureEach {
-                    doFirst {
-                        relocate("dev.slne.surf.redis", extension.surfRedisRelocation.get())
-                    }
-                }
-            } else {
-                dependencies {
-                    val notation = "dev.slne.surf.api:surf-api-redis-api:${Constants.SURF_API_VERSION}"
-                    add(COMPILE_ONLY, notation)
-                    if (testingEnabled) {
-                        add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
-                    }
-                }
-            }
-        }
-
-        if (extension.withSurfDatabaseR2dbc.get()) {
             dependencies {
-                add(
-                    API,
-                    "dev.slne.surf.api:surf-api-database-r2dbc:${Constants.SURF_API_VERSION}"
-                )
-            }
-
-            tasks.withType<ShadowJar>().configureEach {
-                doFirst {
-                    relocate("dev.slne.surf.database", extension.surfDatabaseR2dbcRelocation.get())
+                val notation = "dev.slne.surf.api:surf-api-redis-api:${Constants.SURF_API_VERSION}"
+                add(COMPILE_ONLY, notation)
+                if (testingEnabled) {
+                    add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                 }
             }
         }
@@ -313,7 +225,13 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         if (extension.withApiValidation.get()) {
             configure<KotlinJvmProjectExtension> {
                 @OptIn(ExperimentalAbiValidation::class)
-                abiValidation()
+                abiValidation {
+                    filters {
+                        exclude {
+                            annotatedWith.add("dev.slne.surf.api.shared.api.util.InternalSurfApi")
+                        }
+                    }
+                }
             }
         }
 

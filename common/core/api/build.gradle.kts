@@ -21,7 +21,7 @@ dependencies {
     // already used.
     api(projects.surfApiEventApi)
     // The nbt domain -- the binary-tag views, the FastCompoundBinaryTag contract, the
-    // InternalNbtBridge, the tag extensions and NbtOps -- and the reflection domain -- the
+    // InternalNbtBridge and the tag extensions -- and the reflection domain -- the
     // SurfReflection contract and the @SurfProxy annotations -- were cut out of this module. Both
     // are re-exported so that everything compiling against surf-api-core keeps resolving the
     // declarations it already used.
@@ -36,11 +36,9 @@ dependencies {
     api(projects.surfApiLuckpermsApi)
     api(projects.surfApiRegistryKeys)
     api(projects.surfApiAnnotations)
-    // The DI contracts travel with the api, not with the container: a downstream plugin writes
-    // @Service and takes a BeanContainer at its entry point, and it compiles against surf-api-core
-    // like everything else. Which module exports these IS the sharing decision — one exporter, so
-    // the interface a SHARED bean crosses the application boundary as is loaded exactly once.
-    api(projects.surfApiDiApi)
+    // Spring and surf-api's Spring contracts travel with the api: a downstream plugin writes its
+    // beans against them and compiles against surf-api-core like everything else.
+    api(projects.surfApiSpringApi)
     // The serialization surface was cut out of this module; it is re-exported so that
     // everything compiling against surf-api-core keeps resolving the serializers it already
     // used.
@@ -53,8 +51,6 @@ dependencies {
     compileOnlyApi(libs.packetevents.api)
     compileOnlyApi(libs.dazzleconf)
     compileOnlyApi(libs.spongepowered.math)
-    compileOnlyApi(libs.okhttp)
-    api(libs.okhttp.kotlin)
     compileOnlyApi(libs.commandapi.core)
     compileOnlyApi(libs.brigadier)
     api(libs.configurate.yaml)
@@ -68,25 +64,12 @@ dependencies {
 
     api(libs.caffeine.courotines)
     api(libs.bundles.kotlin.coroutines)
-    api(libs.bundles.reactor.netty)
 
     compileOnlyApi(libs.guava)
     compileOnlyApi(libs.caffeine)
     compileOnlyApi(libs.gson)
     compileOnlyApi(libs.commons.lang3)
     compileOnlyApi(libs.commons.text)
-
-    api(libs.bundles.ktor.client)
-
-    api(libs.datafixerupper) { isTransitive = false }
-}
-
-tasks {
-    shadowJar {
-        val relocationPrefix = project.findProperty("relocationPrefix") as String
-        relocate("com.mojang.serialization", "$relocationPrefix.mojang.serialization")
-        relocate("com.mojang.datafixers", "$relocationPrefix.mojang.datafixers")
-    }
 }
 
 description = "surf-api-core-api"

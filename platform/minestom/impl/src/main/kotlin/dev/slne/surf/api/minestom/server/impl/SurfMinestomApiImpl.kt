@@ -1,11 +1,11 @@
 package dev.slne.surf.api.minestom.server.impl
 
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.di.Service
 import net.kyori.adventure.audience.Audience
 import net.minestom.server.MinecraftServer
 import net.minestom.server.entity.Player
 import net.minestom.server.network.NetworkBuffer
+import org.springframework.stereotype.Service
 import java.util.*
 
 

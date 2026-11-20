@@ -8,7 +8,7 @@ services:
 
   # Database of surf-nats-test-microservice; matches the defaults of database.yml.
   mariadb:
-    image: mariadb:11
+    image: mariadb:12.3
     environment:
       MARIADB_ROOT_PASSWORD: "1234"
       MARIADB_DATABASE: database

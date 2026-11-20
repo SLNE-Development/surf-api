@@ -53,7 +53,9 @@ enum class NmsVersion(val versionPrefix: String) {
         val NEWEST_FIRST: List<NmsVersion> =
             entries.sortedWith(compareByDescending(COMPONENT_ORDER) { it.components })
 
-        /** The newest version surf-api has bindings for. */
+        /**
+         * The newest version surf-api has bindings for.
+         */
         val NEWEST: NmsVersion get() = NEWEST_FIRST.first()
 
         /**

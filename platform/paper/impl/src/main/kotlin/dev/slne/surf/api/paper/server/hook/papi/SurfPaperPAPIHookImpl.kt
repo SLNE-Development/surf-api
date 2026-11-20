@@ -1,11 +1,11 @@
 package dev.slne.surf.api.paper.server.hook.papi
 
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.hook.papi.SurfPaperPAPIHook
 import dev.slne.surf.api.paper.hook.papi.expansion.PapiExpansion
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolder
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolderImpl
 import dev.slne.surf.api.paper.server.hook.papi.holder.PAPIPlaceholderHolderNOOP
+import org.springframework.stereotype.Service
 
 @Service
 class SurfPaperPAPIHookImpl : SurfPaperPAPIHook {

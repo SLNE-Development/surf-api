@@ -9,6 +9,7 @@ interface RedisCredentialsProvider {
 
     fun redisURI(): RedisURI
 
+    @InternalRedisAPI
     companion object : RedisCredentialsProvider by provider {
         val INSTANCE get() = provider
     }

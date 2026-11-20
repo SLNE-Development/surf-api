@@ -1,138 +1,174 @@
-# Lifecycle and post processors
+# Lifecycle, scopes and shutdown
 
-Sources: `foundation/di/api/.../SurfComponent.kt`, `BeanPostProcessor.kt`, `Scope.kt`.
+Sources: `foundation/spring/api/.../spring/SurfLifecycle.kt` (`SurfLifecycle`,
+`SurfBootstrapLifecycle`), `BootstrapComponent.kt`, and in `foundation/spring/impl/.../spring/context/`
+`LifecycleHookRunner.kt`, `PluginContext.kt`, `ContextPhaseListener.kt`, `ContextCoroutines.kt`,
+`SurfContextManager.kt`. The platform runtimes are `PaperSpringRuntime`, `VelocitySpringRuntime`,
+Minestom's `PluginManagerImpl` and `SurfApiStandaloneBootstrap`.
 
-## The phases
-
-The container runs each phase as a separate pass over all beans, each pass in dependency order:
-
-1. **construct** - every bean is created and injected
-2. **post-process** - every bean passes through the `BeanPostProcessor` chain
-3. **`load()`** on every bean
-4. **`enable()`** on every bean
-5. **`disable()`** on every bean, in reverse
-
-Separate passes, not per-bean. Every bean's `load` has run before the first `enable`, and every bean
-exists before the first `load`.
-
-Steps 1-3 happen in `SurfContainer.startChild(owner)` and step 4 in `SurfContainer.enableFor(owner)`
-— two calls, because the platform has two phases and a bean's `enable` belongs in the server's,
-where the rest of the server exists. The container never chains them: asking for `enable` does not
-run `load` first.
-
-**A `Scope.SHARED` bean is the exception.** It is published into the root, where it outlives the
-container that declared it and serves every other application in the process, so it runs *both*
-phases at the moment it joins — inside `startChild`, before the declaring application's own beans
-load. Otherwise the root's contents would depend on which application happened to introduce it, and
-on that application reaching its enable phase at all.
+## The hooks
 
 ```kotlin
-interface SurfComponent {
-    suspend fun load() = Unit
-    suspend fun enable() = Unit
-    suspend fun disable() = Unit
+interface SurfLifecycle {
+    suspend fun onLoad() {}
+    suspend fun onEnable() {}
+    suspend fun onDisable() {}
+}
+
+interface SurfBootstrapLifecycle {
+    suspend fun onBootstrap()
 }
 ```
 
-All three suspend, all three default to doing nothing, and all three are
-`@ApiStatus.OverrideOnly` - override what you need and never call them yourself. They run in the
-container's scope.
+A bean implements the interface and overrides what it needs. `SurfBootstrapLifecycle` is an
+interface of its own because implementing it decides which context the bean lives in on Paper.
 
-## Why `load` and `enable` are two phases
+## When each phase runs
 
-Because a resource that others register against cannot be opened and frozen at the same moment.
+| Platform | Context refresh | `onLoad` | `onEnable` | `onDisable`, then close |
+| --- | --- | --- | --- | --- |
+| Paper | plugin bootstrapper, followed by `onBootstrap` | plugin `onLoad` | plugin `onEnable` | plugin `onDisable` |
+| Velocity | plugin constructor | plugin constructor | `ProxyInitializeEvent` | `ProxyShutdownEvent` |
+| Minestom | plugin manager load | plugin manager load | plugin manager enable | teardown |
+| Standalone | `bootstrap` (root only) | `bootstrap` | `enable` | `shutdown` |
 
-- `load` - create or open the thing. Beans that will register against it may not have loaded yet, so
-  it has to tolerate registrations arriving after this returns.
-- `enable` - every `load` has run, so nothing more will register: freeze, connect, go live.
+On Paper the full plugin context refreshes in the load phase, below its import context, which also
+references the plugin's bootstrap beans; see [Paper's bootstrap context](#papers-bootstrap-context).
 
-A command registry fills during `load` and is published in `enable`. A connection is constructed in
-`load` and dials out in `enable`. If you put both halves into one method, either the registrations
-arrive after the freeze or the connection is live before the handlers exist.
+Before the `onEnable` hooks run, surf-api registers the plugin's listener and command beans:
+Bukkit `Listener` beans on Paper, `@Subscribe` beans on Velocity, `EventNode` beans on Minestom,
+`@SurfEventHandler` beans everywhere, and `CommandAPICommand`, `CommandTree` and `CommandRegistrar`
+beans. A hook can therefore rely on them. On Velocity, listener beans are registered while
+`ProxyInitializeEvent` fires, so their own handlers for that event never run; use `onEnable`.
 
-`disable` in reverse means a bean is torn down before what it depends on: a client closes before its
-connection, a handler unregisters before the broker goes away.
+## Order within a context
 
-A phase that throws stops that phase, and the container reports which bean failed. During shutdown
-it is the other way round: a failing `disable` is reported and the remaining beans are still
-disabled, because a half-shut-down process is worse than a logged failure.
+- `onBootstrap`, `onLoad` and `onEnable` run in the order in which the beans finished
+  initializing. A bean finishes after its dependencies, so dependencies run first.
+- `@Order` or `Ordered` moves a bean ahead of the beans that declare none. The hooks read the order
+  from the bean's class only: `@Order` on a `@Bean` method sorts collection injection, not the
+  hooks. To order a `@Bean`'s hooks, annotate its class or implement `Ordered`.
+- `onDisable` runs in exactly the reverse order.
+- The hooks of one phase run one after another, never concurrently.
+- A throwing `onBootstrap`, `onLoad` or `onEnable` aborts the phase and fails the plugin; a Paper
+  plugin whose load failed is never enabled. A throwing `onDisable` is logged and the remaining
+  hooks still run.
 
-## What `PROTOTYPE` opts out of
+Only singletons that exist when a phase starts take part. A `@Lazy` bean created later misses the
+phases that already ran, and a prototype bean never takes part.
 
-A `PROTOTYPE` bean is created fresh for every injection point and never cached, so the container does
-not hold it long enough to shut it down. It therefore takes **no part in the lifecycle** - `load`,
-`enable` and `disable` are never called on it - and it is not among the beans the container creates
-at startup, so it does not pass through the post processor chain either. Anything that has to be
-opened, closed, registered or post-processed must not be a `PROTOTYPE`.
+The hooks block the thread that calls the phase; on Paper that is the main thread for load, enable
+and disable. Paper runs each of these phases inside `PluginDispatchers.lifecycle`, which routes the
+`PaperDispatchers.main` work of every plugin into the blocked phase, so a hook may wait for work on
+`main`. On a server without regionized ticking the same holds for `region(...)` and `entity(...)`;
+on Folia that work goes to Paper, and a hook must not wait for it. A hook must not wait for a task
+handed to the Bukkit scheduler directly; launch such work without waiting.
+
+Hooks run with the elements of the plugin's coroutine scope except its job, dispatcher and
+exception handler, so the plugin's class loader is the thread context class loader on every thread
+they resume on.
+
+## Phase listeners
+
+`ContextPhaseListener` (`surf-api-spring-impl`) has `afterEnable()` and `beforeDisable()`. Beans of
+a plugin's full context that implement it run after every `onEnable` hook and before the first
+`onDisable` hook. surf-api modules contribute them through a `ContextContributor`; NATS uses one to
+serve a plugin's endpoints only while its beans are alive. A failing `afterEnable` fails the enable
+phase; a failing `beforeDisable` is logged.
+
+## Paper's bootstrap context
+
+Paper builds a plugin's first context in the bootstrap phase, when the plugin sees only the classes
+of its bootstrap dependencies and Paper has not created the plugin instance. Refreshing the whole
+context then would fail, because Spring inspects every bean class during a refresh. A Paper plugin
+therefore has two contexts:
+
+| Context | Built in | Holds |
+| --- | --- | --- |
+| bootstrap context | bootstrap phase, below surf-api's root bootstrap context | the components that implement `SurfBootstrapLifecycle` or carry `@BootstrapComponent`, found from bytecode without loading other classes |
+| full plugin context | load phase, below the import context | every other component; injects the bootstrap beans |
+
+```kotlin
+import dev.slne.surf.api.spring.BootstrapComponent
+import dev.slne.surf.api.spring.SurfBootstrapLifecycle
+import org.springframework.stereotype.Service
+
+@Service
+class ChannelRegistrar(private val names: ChannelNames) : SurfBootstrapLifecycle {
+    val registered = mutableListOf<String>()
+
+    override suspend fun onBootstrap() {
+        registered += names.all()
+    }
+}
+
+@BootstrapComponent
+class ChannelNames {
+    fun all() = listOf("shop", "trade")
+}
+```
+
+A bootstrap bean depends only on surf-api's bootstrap beans and other bootstrap components. It
+must not touch a non-bootstrap plugin's API (LuckPerms, PlaceholderAPI), the Bukkit server API or
+the concrete plugin class, and must not dispatch to the main or a region thread, which do not tick
+yet. It may hold the plugin as `org.bukkit.plugin.Plugin`: a proxy that forwards to the instance
+from the load phase on and compares equal to it. Paper's `BootstrapContext` is injectable there.
+The bootstrap beans' hooks run before those of the full context, and `onDisable` in reverse.
+
+On Velocity, Minestom and the standalone runtime `@BootstrapComponent` is an ordinary component of
+the single context, and `onBootstrap` runs when that context loads, right before its `onLoad` hooks.
+The Paper restrictions above do not apply there.
+
+## The plugin instance
+
+The plugin's main object is the primary bean `surfPluginInstance` of its full context, under its
+concrete type and every supertype. Spring manages it like any singleton: it injects `@Autowired`
+fields and setters, runs the `Aware` callbacks, `@PostConstruct` and every `BeanPostProcessor`, and
+calls `@PreDestroy` and `DisposableBean.destroy()` when the context closes. Only an inferred
+`close()` or `shutdown()` call is suppressed. Cleanup written into both a disable path and
+`@PreDestroy` runs twice.
+
+## Coroutine scopes
+
+Every full plugin context and every root holds a `CoroutineScope` bean named `surfCoroutineScope`,
+built by `surfCoroutineScope(owner, classLoader, dispatcher, elements)`:
+
+- a `SupervisorJob`, `Dispatchers.Default`, `CoroutineName("surf-<owner>")` and the plugin's class
+  loader as thread context class loader
+- a handler that logs an uncaught failure through the commons-logging logger `surf-coroutines` as
+  `Unhandled exception in a coroutine of '<owner>'`
+
+The owner is the plugin's name on Paper and its id on Velocity and Minestom. On Minestom the plugin
+manager creates the scope before the plugin's constructor runs, and `SurfMinestomPlugin.scope`
+returns it. A Minestom plugin without a jar of its own, such as one shaded into the server, runs its
+scope's coroutines and its lifecycle hooks with the server's class loader as thread context class
+loader. On Paper the scope also carries the plugin's `PaperDispatchers`.
+
+The plugin's scope is primary, so a plugin bean that injects `CoroutineScope` gets its own scope,
+not the root's. The plugin context owns it: it cancels the scope after the disable hooks ran, when
+the contexts close without them, or when the context cannot be built. Paper's bootstrap contexts
+have no scope.
+
+## Shutdown
+
+`onDisable` hooks run, the scope is cancelled, then the plugin's contexts close: the full context,
+its import context, then its bootstrap context. Closing destroys the plugin's own beans, exports
+included, through Spring's `@PreDestroy`, `DisposableBean` and inferred destroy methods. The import
+context only drops its references.
+
+A provider whose exports are still imported by an open plugin keeps its contexts open until the
+last importer closes, so no consumer ever holds a destroyed bean. At server shutdown the contexts
+close last-started first, so consumers close before their providers, and the root closes last. No
+context registers a JVM shutdown hook, and there is no hot reload. The standalone runtime's
+`enable()` registers a JVM shutdown hook of its own that calls `shutdown()`, unless it is called
+with `registerShutdownHook = false`.
 
 ## `BeanPostProcessor`
 
-```kotlin
-interface BeanPostProcessor {
-    suspend fun afterInitialization(bean: Any, name: String): Any = bean
-    suspend fun beforeDestruction(bean: Any, name: String) = Unit
-}
-```
-
-`afterInitialization` runs for every bean after construction and injection, before any lifecycle
-phase. `beforeDestruction` runs for every bean during shutdown, before its `disable`, in reverse
-creation order - undo there what `afterInitialization` registered.
-
-`name` is the bean's id, for messages. The return value is the bean to use from then on.
-
-### What it is for
-
-Acting on beans that nothing collected, where the thing identifying them is not a type. If handlers
-were identified by implementing an interface, a `List<Handler>` parameter would do the job and no
-processor would be needed. A processor earns its place when the marker sits on a **method**, on an
-annotation, or on a supertype that the registering side must not depend on.
-
-### Worked example: registering message handlers
-
-`MessageBroker` and `@MessageHandler` here are the project's own types.
-
-```kotlin
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.hasAnnotation
-
-@Service
-@Priority(-100)
-class MessageHandlerRegistrar(private val broker: Lazy<MessageBroker>) : BeanPostProcessor {
-
-    override suspend fun afterInitialization(bean: Any, name: String): Any {
-        if (bean.handlesMessages()) broker.value.registerHandler(bean)
-        return bean
-    }
-
-    override suspend fun beforeDestruction(bean: Any, name: String) {
-        if (bean.handlesMessages()) broker.value.unregisterHandler(bean)
-    }
-
-    private fun Any.handlesMessages() =
-        this::class.declaredMemberFunctions.any { it.hasAnnotation<MessageHandler>() }
-}
-```
-
-### The two rules
-
-**The dependency runs one way only.** The handler beans know the broker; the broker knows nothing
-about them; the registrar sits beside both and is the only place that knows both. Collecting the
-handlers into the broker's constructor instead inverts that: the broker would wait for every
-handler, and the first handler that needs the broker closes a cycle.
-
-**Take the registration target as `Lazy<T>`.** A processor is created before the beans it processes.
-Demanding the broker eagerly would force it to be created before the processor can run, which the
-container cannot promise for every ordering; `Lazy` postpones it to the first bean that actually
-needs registering.
-
-### Rules the container enforces
-
-- A processor is an ordinary bean: annotate it, give it constructor parameters, scope it.
-- A processor never sees itself or another processor. Processors are created first and separately,
-  precisely so they exist before the first bean passes through the chain.
-- `@Priority` on a processor orders the chain, lower first: every bean passes through the processors
-  in that order.
-- Returning a different object from `afterInitialization` replaces the bean from then on - the
-  instance cache and the lifecycle list both follow the replacement. Only do this when wrapping is
-  the point. Returning something that does not satisfy the injection points expecting the bean fails
-  at the first use, not here.
+Plugins use Spring's `org.springframework.beans.factory.config.BeanPostProcessor` unchanged. A
+post-processor is scoped to the context that declares it: one in a plugin context sees only that
+plugin's beans, and the root's post-processors never see plugin beans. surf-api installs its
+per-plugin processing, such as the lifecycle hook runner and the NATS registration, in each plugin
+context for that reason. Spring creates post-processors before the other beans, and a bean a
+post-processor injects is created too early to be processed itself; take such a dependency as
+`ObjectProvider<T>`.

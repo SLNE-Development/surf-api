@@ -23,7 +23,9 @@ dependencies {
     implementation(libs.shadow.gradle.plugin)
     implementation(libs.ksp.gradle.plugin)
     implementation(libs.kotlin.serialization)
+    implementation(libs.kotlin.all.open)
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
     implementation(libs.asm)
+    implementation(libs.kotlin.metadata.jvm)
     implementation(libs.gremlin.gradle.plugin)
 }

@@ -1,7 +1,7 @@
 package dev.slne.surf.database.migration
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.internal.MigrationClassLoader
+import dev.slne.surf.database.testing.TestDatabase
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import java.net.URI
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 
 class MigrationClassLoaderTest {
 
-    private val library: ClassLoader = DatabaseApi::class.java.classLoader
+    private val library: ClassLoader = TestDatabase::class.java.classLoader
 
     /**
      * A plugin class loader without parent that only knows [resources] and [classes].

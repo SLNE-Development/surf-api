@@ -1,33 +1,25 @@
-import net.minecrell.pluginyml.paper.PaperPluginDescription
-
 plugins {
     `core-convention`
 
-    alias(libs.plugins.plugin.yml.paper)
+    id("dev.slne.surf.api.gradle.paper-plugin")
 }
 
 description = "surf-api-paper-shared-bean-provider"
 
 dependencies {
-    // Only compiled against. At runtime surf-api's own paper plugin supplies these classes, and it
-    // is reachable exactly because `SurfPaperAPI` is declared below with `joinClasspath = true` --
-    // surf-api ships `has-open-classloader: false`, so declaring it is the only way in.
+    // The plugin supplies `surf-api-paper` and Paper itself as compile-only dependencies. The
+    // project dependency is declared as `compileOnlyApi` so the consumer module, which compiles
+    // against this one, sees surf-api as well.
     compileOnlyApi(projects.surfApiPaperApi)
-    compileOnly(libs.paper.api)
+}
+
+// The generated bootstrapper and main class sit in this module's package, which is therefore the
+// root of the plugin's component scan.
+surfPaperPluginApi {
+    authors.addAll("SLNE Development Team")
 }
 
 paper {
     name = "SurfSharedBeanProvider"
-    main = "dev.slne.surf.api.paper.sharedbean.provider.SharedBeanProviderPlugin"
-    description = "Publishes a Scope.SHARED bean for surf-api's shared-bean boot test"
-    authors = listOf("SLNE Development Team")
-    apiVersion = project.findProperty("mcVersion") as String
-
-    serverDependencies {
-        register("SurfPaperAPI") {
-            required = true
-            load = PaperPluginDescription.RelativeLoadOrder.BEFORE
-            joinClasspath = true
-        }
-    }
+    description = "Exports a @PluginApi bean for surf-api's Spring boot test"
 }

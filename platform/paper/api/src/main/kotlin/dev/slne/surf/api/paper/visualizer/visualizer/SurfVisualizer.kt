@@ -53,9 +53,6 @@ interface SurfVisualizer : AutoCloseable {
      */
     val viewerUuids: @UnmodifiableView Set<UUID>
 
-    @Deprecated("Use viewerUuids instead", ReplaceWith("viewerUuids"))
-    val viewers: @UnmodifiableView Set<Player>
-
     /**
      * Adds a specified player to the list of viewers for this visualizer.
      *

@@ -2,13 +2,14 @@
 
 package dev.slne.surf.api.paper.nms.bridges
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
+import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
+@SurfApiBean
 interface SurfPaperNmsNbtBridge {
 
     fun makeItemStackEntityInvisible(
@@ -25,11 +26,4 @@ interface SurfPaperNmsNbtBridge {
      */
     @Deprecated("Now only uses the nbt in the custom data components (item stacks now use data components, and nbt should not be avoided)")
     fun getNbtString(itemStack: ItemStack, key: String): String
-
-    companion object {
-        val INSTANCE get() = bridge
-    }
 }
-
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsNbtBridge>()

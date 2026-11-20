@@ -11,5 +11,6 @@ import kotlin.coroutines.CoroutineContext
 public class NatsIdempotencyKeyElement(
     public val value: String,
 ) : AbstractCoroutineContextElement(Key) {
+    @InternalNatsApi
     public companion object Key : CoroutineContext.Key<NatsIdempotencyKeyElement>
 }

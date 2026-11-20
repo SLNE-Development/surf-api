@@ -56,9 +56,9 @@ private fun dateTimeWithFractionFormat(fraction: Int): DateTimeFormatter {
  *
  * The column is created as `timestamp` (PostgreSQL) or `TIMESTAMP(6)` (MariaDB) and also works on `timestamptz` and
  * `DATETIME(6)` columns. Values are bound as UTC `LocalDateTime`, which the database interprets in the session time
- * zone, so the connection must run with the session time zone UTC, as every connection of
- * [DatabaseApi][dev.slne.surf.database.DatabaseApi] does. The JVM default zone only determines the zone or offset of
- * the values read back, never the instant.
+ * zone, so the connection must run with the session time zone UTC, as every connection of the pool built by
+ * [SurfDatabaseAutoConfiguration][dev.slne.surf.database.spring.SurfDatabaseAutoConfiguration] does. The JVM default
+ * zone only determines the zone or offset of the values read back, never the instant.
  */
 abstract class UtcInstantDateTimeColumnType<T : Any> :
     ColumnType<T>(),

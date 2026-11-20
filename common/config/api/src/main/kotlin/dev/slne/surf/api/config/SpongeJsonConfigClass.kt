@@ -6,7 +6,7 @@ import java.nio.file.Path
  * Convenience base class for JSON-backed Sponge configuration classes.
  *
  * This class wires the common configuration metadata ([configFolder], [fileName])
- * to a JSON-based [SpongeConfigManager][dev.slne.surf.api.core.api.config.manager.SpongeConfigManager] instance created by [surfConfigApi].
+ * to a JSON-based [SpongeConfigManager][dev.slne.surf.api.config.manager.SpongeConfigManager] instance created by [surfConfigApi].
  *
  * Typical usage is via a companion object on a `@ConfigSerializable` data class:
  * ```kotlin

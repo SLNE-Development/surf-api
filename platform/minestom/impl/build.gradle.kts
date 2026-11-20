@@ -7,12 +7,17 @@ plugins {
 dependencies {
     api(projects.surfApiMinestomApi)
     implementation(projects.surfApiCoreImpl)
+    implementation(shadowed(projects.surfApiRedis.surfApiRedisSpring))
+    implementation(projects.surfApiNats.surfApiNatsCore)
+    implementation(projects.surfApiNats.surfApiNatsSpring)
     compileOnlyApi(libs.minestom.server)
 
     implementation(libs.packetevents.netty.common)
+    runtimeOnly(platform(libs.netty.bom))
+    runtimeOnly(libs.netty.buffer)
+    runtimeOnly(libs.netty.common)
     implementation(libs.sponge.mixin)
     implementation(libs.mixinextras)
-    // EntityTrackerMixin shadows a field of this type; Minestom brings it at runtime
     compileOnly(libs.flare.fastutil)
     runtimeOnly(libs.flogger.slf4j.backend)
 
@@ -26,6 +31,24 @@ dependencies {
     testFixturesImplementation(libs.bytebuddy.agent)
     testFixturesImplementation(libs.junit.platform.launcher)
 }
+
+tasks.shadowJar {
+    mergeSpringRegistries()
+}
+
+val checkContextContributors by tasks.registering(CheckShadowServiceFile::class) {
+    group = "verification"
+    description = "Checks that the shadow jar lists the config, NATS and Redis ContextContributors."
+    jar.set(tasks.shadowJar.flatMap { it.archiveFile })
+    service.set("dev.slne.surf.api.spring.context.ContextContributor")
+    expectedProviders.addAll(
+        "dev.slne.surf.api.config.impl.handle.SurfConfigContributor",
+        "dev.slne.surf.api.nats.NatsContextContributor",
+        "dev.slne.surf.api.redis.RedisContextContributor",
+    )
+}
+
+tasks.check { dependsOn(checkContextContributors) }
 
 description = "surf-api-minestom-impl"
 

@@ -1,10 +1,11 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.*
 import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.sidebar.*
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import io.papermc.paper.util.Tick
 import kotlinx.coroutines.withContext
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 
+@OptIn(InternalSurfApi::class)
 class SidebarTest(name: String) : CommandAPICommand(name) {
     private var manual: SurfViewerSidebar? = null
     private var auto: SurfAutoUpdatingSidebar? = null
@@ -121,7 +123,7 @@ class SidebarTest(name: String) : CommandAPICommand(name) {
 
         buildViewerTitle { viewer -> primary("Auto "); variableValue(viewer.name) }
         buildViewerLines { viewer ->
-            val state = withContext(plugin.entityDispatcher(viewer)) {
+            val state = withContext(SurfPaperPluginRuntime.get().dispatchers(plugin).entity(viewer)) {
                 val location = viewer.location
                 ViewerState(viewer.health, location.blockX, location.blockY, location.blockZ, viewer.isSneaking)
             }

@@ -1,10 +1,11 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.event
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfContexts
 import org.jetbrains.annotations.ApiStatus
+import org.springframework.beans.factory.getBean
+import org.springframework.context.ApplicationContext
+import dev.slne.surf.api.spring.SurfApiBean
 
 /**
  * Central event bus for cross-plugin event dispatching.
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
  * When `BaseEvent` is dispatched only `onBase` is invoked.
  */
 @ApiStatus.NonExtendable
+@SurfApiBean
 interface SurfEventBus {
 
     /**
@@ -121,12 +123,42 @@ interface SurfEventBus {
     ): Any
 
     companion object {
-        /** The singleton [SurfEventBus] instance. */
-        val INSTANCE get() = bus
+        /**
+         * The [SurfEventBus] bean of surf-api's installed root context.
+         *
+         * Resolved again after the platform installs a new root context, so that it is the bus the
+         * root's beans inject. While no root context is installed, the last resolved bus stays in
+         * use.
+         *
+         * @throws IllegalStateException if no root context is installed and no bus was resolved
+         *   before
+         */
+        @InternalSurfApi
+        val INSTANCE: SurfEventBus get() = RootEventBus.current()
     }
 }
 
-private val bus by surfBean<SurfEventBus>()
+/**
+ * Caches the [SurfEventBus] bean per installed root context.
+ */
+private object RootEventBus {
+
+    private class Resolved(val root: ApplicationContext, val bus: SurfEventBus)
+
+    @Volatile
+    private var resolved: Resolved? = null
+
+    fun current(): SurfEventBus {
+        val cached = resolved
+        val installed = SurfContexts.rootOrNull
+        if (cached != null && (installed == null || installed === cached.root)) {
+            return cached.bus
+        }
+
+        val root = SurfContexts.root
+        return Resolved(root, root.getBean<SurfEventBus>()).also { resolved = it }.bus
+    }
+}
 
 /**
  * Registers an inline handler for [SurfSyncEvent]s of type [T] without
@@ -137,9 +169,10 @@ private val bus by surfBean<SurfEventBus>()
  *
  * Example:
  * ```
- * val token = SurfEventBus.on<MySyncEvent> { event -> ... }
+ * // eventBus is an injected SurfEventBus
+ * val token = eventBus.on<MySyncEvent> { event -> ... }
  * // later
- * SurfEventBus.unregisterListeners(token)
+ * eventBus.unregisterListeners(token)
  * ```
  * If [ignoreCancelled] is `true`, the handler is skipped once a
  * [SurfCancellableEvent] has been cancelled. Handlers with

@@ -1,6 +1,7 @@
 package dev.slne.surf.api.minestom.plugin
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.asContextElement
@@ -12,31 +13,40 @@ import java.nio.file.Path
 /**
  * The main class of a plugin the server loads from its `plugins` directory.
  *
+ * The class itself carries no logic: surf-api builds a Spring context for the plugin and runs the
+ * [SurfLifecycle] hooks of its beans. The plugin instance is a bean of that context and can be
+ * injected by its concrete type.
+ *
  * ```
- * class ExamplePlugin : SurfMinestomPlugin() {
+ * class ExamplePlugin : SurfMinestomPlugin()
+ *
+ * @Service
+ * class Greeter(private val plugin: ExamplePlugin) : SurfLifecycle {
  *     override suspend fun onEnable() {
- *         eventNode.addListener<PlayerJoinEvent> { it.player.sendMessage(text("Hello!")) }
- *         commandAPICommand("hello") { playerExecutor { player, _ -> player.sendMessage(text("Hi")) } }
+ *         plugin.eventNode.addListener<PlayerJoinEvent> { it.player.sendMessage(text("Hello!")) }
  *     }
  * }
  * ```
  *
  * The class needs a constructor without parameters, or has to be an `object`. It is named as
- * `main` in the plugin's `minestom-plugin.json`.
+ * `main` in the plugin's `minestom-plugin.json`. Component scanning starts at its package and reads
+ * only the plugin's own jar, or, for a plugin shaded into the server, every class under that
+ * package.
  *
- * Listeners registered on [eventNode], coroutines launched in [scope] and commands registered while
- * one of the lifecycle functions runs, or from within [scope], belong to the plugin. They are
- * removed or, for coroutines, cancelled once the plugin is disabled.
+ * In the plugin's enable phase, before the `onEnable` hooks run, beans of type [EventNode] are added
+ * as children of [eventNode], and the plugin's commands are registered: beans of type
+ * `CommandAPICommand` or `CommandTree`, and `CommandRegistrar` beans. Listeners registered on [eventNode],
+ * coroutines launched in [scope] and commands registered while a hook runs, or from within
+ * [scope], belong to the plugin. They are removed or, for coroutines, cancelled once the plugin is
+ * disabled.
  *
- * The lifecycle functions run blocking: `onLoad` and then `onEnable` while the server starts,
- * before it accepts players, and `onDisable` during shutdown. They must not wait for work
- * dispatched to `MinestomDispatchers.Main` or to an entity scheduler, because that work only runs
- * on a tick: the server does not tick yet while it starts and no longer ticks while it stops. Such
- * work is launched in [scope] instead.
+ * The hooks run blocking: `onLoad` and then `onEnable` while the server starts, before it accepts
+ * players, and `onDisable` during shutdown. They must not wait for work dispatched to
+ * `MinestomDispatchers.Main` or to an entity scheduler, because that work only runs on a tick: the
+ * server does not tick yet while it starts and no longer ticks while it stops. Such work is launched
+ * in [scope] instead.
  */
 abstract class SurfMinestomPlugin {
-    // Taken in the constructor so that property initializers of the plugin, including those of an
-    // `object` that run in its static initializer, can already use the context.
     private val context: Context? = pendingContext.get()?.invoke(this)
 
     private val requireContext: Context
@@ -63,21 +73,6 @@ abstract class SurfMinestomPlugin {
      * A scope for the plugin's coroutines; cancelled when the plugin is disabled.
      */
     val scope: CoroutineScope get() = requireContext.scope
-
-    /**
-     * Called while the server starts, before it accepts players.
-     */
-    open suspend fun onLoad() = Unit
-
-    /**
-     * Called once every plugin is loaded, while the server starts, before it accepts players.
-     */
-    open suspend fun onEnable() = Unit
-
-    /**
-     * Called when the plugin is disabled, at the latest when the server shuts down.
-     */
-    open suspend fun onDisable() = Unit
 
     override fun toString(): String = context?.let { "${it.meta.name} ${it.meta.version}" } ?: javaClass.name
 

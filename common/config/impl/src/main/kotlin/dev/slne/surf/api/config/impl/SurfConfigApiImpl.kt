@@ -5,7 +5,7 @@ import dev.slne.surf.api.config.SurfConfigApi
 import dev.slne.surf.api.config.YamlConfigFileNamePattern
 import dev.slne.surf.api.config.manager.SpongeConfigManager
 import dev.slne.surf.api.config.migration.ConfigMigrationBuilder
-import dev.slne.surf.api.di.Service
+import org.springframework.stereotype.Service
 import java.nio.file.Path
 
 @Service

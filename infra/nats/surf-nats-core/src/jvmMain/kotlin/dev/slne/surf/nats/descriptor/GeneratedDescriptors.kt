@@ -35,6 +35,23 @@ internal object GeneratedDescriptors {
         return descriptor
     }
 
+    /**
+     * Whether [type] declares a static `NATS_DESCRIPTOR` field of a service descriptor itself.
+     *
+     * Reads the field declaration only, so [type] is not initialized and the descriptor is not created.
+     */
+    fun isService(type: Class<*>): Boolean {
+        if (!type.isInterface) return false
+        val field = try {
+            type.getField(FIELD)
+        } catch (_: NoSuchFieldException) {
+            return false
+        }
+        return field.declaringClass === type &&
+                Modifier.isStatic(field.modifiers) &&
+                NatsServiceDescriptor::class.java.isAssignableFrom(field.type)
+    }
+
     private fun read(type: Class<*>): Any? {
         val field = try {
             type.getField(FIELD)

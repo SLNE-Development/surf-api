@@ -15,7 +15,11 @@ plugins {
 
 subprojects {
     tasks.withType<ShadowJar>().configureEach {
-        relocate("io.nats", "dev.slne.surf.nats.libs.io.nats")
+        relocateNats()
+        // Rewrites the BouncyCastle provider names in META-INF/services/java.security.Provider to the relocated
+        // classes. Duplicates must reach the transformer instead of being dropped by Shadow's EXCLUDE default.
+        mergeServiceFiles()
+        filesMatching("META-INF/services/**") { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
     }
 
     // Kotlin Multiplatform modules (api, core): shared toolchain, compiler options, dependency pattern (spec 12.2)

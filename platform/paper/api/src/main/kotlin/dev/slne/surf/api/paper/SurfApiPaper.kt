@@ -3,6 +3,8 @@ package dev.slne.surf.api.paper
 import dev.slne.surf.api.core.SurfApiCore
 import dev.slne.surf.api.paper.time.SkipOperations
 import dev.slne.surf.api.paper.time.TimeSkipResult
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * Represents the API for SurfBukkit.
  */
 @ApiStatus.NonExtendable
+@SurfApiBean
 interface SurfApiPaper : SurfApiCore {
     val isFolia: Boolean
     val isCanvasMc: Boolean
@@ -94,6 +97,7 @@ interface SurfApiPaper : SurfApiCore {
     suspend fun skipTimeSmoothly(skipOperation: SkipOperations.SkipOperation): Map<World, TimeSkipResult>
 
     companion object {
+        @InternalSurfApi
         val INSTANCE get() = SurfApiCore.instance as SurfApiPaper
     }
 }

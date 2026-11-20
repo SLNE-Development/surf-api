@@ -9,8 +9,6 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
     platformName: String, platform: SurfApiPlatform,
 ) : CommonSurfPlugin<E>(platformName, platform) {
     init {
-        "com.mojang.serialization" relocatesTo "mojang.serialization"
-        "com.mojang.datafixers" relocatesTo "mojang.datafixers"
         relocatePackage(
             from = "net.kyori.adventure.nbt",
             to = "kyori.nbt",

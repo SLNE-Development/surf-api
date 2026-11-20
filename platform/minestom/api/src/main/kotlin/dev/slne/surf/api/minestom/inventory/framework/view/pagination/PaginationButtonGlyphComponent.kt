@@ -61,7 +61,9 @@ internal sealed class PaginationButtonGlyphComponent(
         return row
     }
 
-    /** Both navigation buttons are disabled (no previous and no next page). */
+    /**
+     * Both navigation buttons are disabled (no previous and no next page).
+     */
     class Disabled(
         row: Int,
         geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
@@ -69,7 +71,9 @@ internal sealed class PaginationButtonGlyphComponent(
         override fun glyph(rows: Int): Char = PaginationButtonGlyphs.DISABLED.glyph(rows)
     }
 
-    /** The right (next) button is disabled; only the left (previous) button is active. */
+    /**
+     * The right (next) button is disabled; only the left (previous) button is active.
+     */
     class DisabledRight(
         row: Int,
         geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
@@ -77,7 +81,9 @@ internal sealed class PaginationButtonGlyphComponent(
         override fun glyph(rows: Int): Char = PaginationButtonGlyphs.DISABLED_RIGHT.glyph(rows)
     }
 
-    /** The left (previous) button is disabled; only the right (next) button is active. */
+    /**
+     * The left (previous) button is disabled; only the right (next) button is active.
+     */
     class DisabledLeft(
         row: Int,
         geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
@@ -85,7 +91,9 @@ internal sealed class PaginationButtonGlyphComponent(
         override fun glyph(rows: Int): Char = PaginationButtonGlyphs.DISABLED_LEFT.glyph(rows)
     }
 
-    /** Both navigation buttons are active (there are previous and next pages). */
+    /**
+     * Both navigation buttons are active (there are previous and next pages).
+     */
     class Enabled(
         row: Int,
         geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
@@ -124,7 +132,9 @@ internal sealed class PaginationButtonGlyphComponent(
          */
         const val COUNTER_AREA_OFFSET = 15
 
-        /** Width in pixels of the free area between the two arrows. */
+        /**
+         * Width in pixels of the free area between the two arrows.
+         */
         const val COUNTER_AREA_WIDTH = 58
 
         /**

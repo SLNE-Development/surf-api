@@ -9,10 +9,14 @@ package dev.slne.surf.api.paper.inventory.framework.view.pagination
  * @property column the zero-based column index of the button (0–8)
  */
 internal enum class PaginationButton(val column: Int) {
-    /** The "previous page" (back) button, located in column 2. */
+    /**
+     * The "previous page" (back) button, located in column 2.
+     */
     LEFT(2),
 
-    /** The "next page" (forward) button, located in column 6. */
+    /**
+     * The "next page" (forward) button, located in column 6.
+     */
     RIGHT(6);
 
     /**

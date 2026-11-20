@@ -14,15 +14,21 @@ import org.gradle.api.tasks.TaskAction
  */
 abstract class CheckApiBoundary : DefaultTask() {
 
-    /** Path of the module being checked, used in the report. */
+    /**
+     * Path of the module being checked, used in the report.
+     */
     @get:Input
     abstract val modulePath: Property<String>
 
-    /** One entry per offending dependency, formatted as `configuration -> module`. */
+    /**
+     * One entry per offending dependency, formatted as `configuration -> module`.
+     */
     @get:Input
     abstract val violations: SetProperty<String>
 
-    /** Whether a violation fails the build instead of only logging a warning. */
+    /**
+     * Whether a violation fails the build instead of only logging a warning.
+     */
     @get:Input
     abstract val strict: Property<Boolean>
 

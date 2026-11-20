@@ -1,26 +1,3 @@
-public final class dev/slne/surf/api/serialization/Codec_extensionsKt {
-	public static final fun component1 (Lcom/mojang/datafixers/util/Pair;)Ljava/lang/Object;
-	public static final fun component2 (Lcom/mojang/datafixers/util/Pair;)Ljava/lang/Object;
-	public static final fun fixedSize (Lcom/mojang/serialization/codecs/PrimitiveCodec;I)Lcom/mojang/serialization/Codec;
-	public static final fun positive (Lcom/mojang/serialization/Codec;ZLjava/lang/Object;Lkotlin/jvm/functions/Function2;)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positive$default (Lcom/mojang/serialization/Codec;ZLjava/lang/Object;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun positiveByte (Lcom/mojang/serialization/Codec;Z)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positiveByte$default (Lcom/mojang/serialization/Codec;ZILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun positiveDouble (Lcom/mojang/serialization/Codec;Z)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positiveDouble$default (Lcom/mojang/serialization/Codec;ZILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun positiveFloat (Lcom/mojang/serialization/Codec;Z)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positiveFloat$default (Lcom/mojang/serialization/Codec;ZILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun positiveInt (Lcom/mojang/serialization/Codec;Z)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positiveInt$default (Lcom/mojang/serialization/Codec;ZILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun positiveLong (Lcom/mojang/serialization/Codec;Z)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positiveLong$default (Lcom/mojang/serialization/Codec;ZILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun positiveShort (Lcom/mojang/serialization/Codec;Z)Lcom/mojang/serialization/Codec;
-	public static synthetic fun positiveShort$default (Lcom/mojang/serialization/Codec;ZILjava/lang/Object;)Lcom/mojang/serialization/Codec;
-	public static final fun ranged (Lcom/mojang/serialization/Codec;Ljava/lang/Number;Ljava/lang/Number;)Lcom/mojang/serialization/Codec;
-	public static final fun toDataFixerPair (Ljava/lang/Object;Ljava/lang/Object;)Lcom/mojang/datafixers/util/Pair;
-	public static final fun xor (Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;)Lcom/mojang/serialization/Codec;
-}
-
 public final class dev/slne/surf/api/serialization/SurfSerializerModule {
 	public static final field INSTANCE Ldev/slne/surf/api/serialization/SurfSerializerModule;
 	public final fun getAdventure ()Lkotlinx/serialization/modules/SerializersModule;
@@ -214,11 +191,6 @@ public final class dev/slne/surf/api/serialization/java/datetime/datetime/zdt/Zo
 	public synthetic fun toInstant (Ljava/lang/Object;)Ljava/time/Instant;
 }
 
-public final class dev/slne/surf/api/serialization/java/datetime/time/local/LocalTimeCodec {
-	public static final field INSTANCE Ldev/slne/surf/api/serialization/java/datetime/time/local/LocalTimeCodec;
-	public final fun getCODEC ()Lcom/mojang/serialization/Codec;
-}
-
 public final class dev/slne/surf/api/serialization/java/datetime/time/local/LocalTimeSerializer : kotlinx/serialization/KSerializer {
 	public static final field INSTANCE Ldev/slne/surf/api/serialization/java/datetime/time/local/LocalTimeSerializer;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
@@ -228,11 +200,6 @@ public final class dev/slne/surf/api/serialization/java/datetime/time/local/Loca
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/time/LocalTime;)V
 }
 
-public final class dev/slne/surf/api/serialization/java/datetime/zone/id/ZoneIdCodec {
-	public static final field INSTANCE Ldev/slne/surf/api/serialization/java/datetime/zone/id/ZoneIdCodec;
-	public final fun getCODEC ()Lcom/mojang/serialization/Codec;
-}
-
 public final class dev/slne/surf/api/serialization/java/datetime/zone/id/ZonedIdSerializer : kotlinx/serialization/KSerializer {
 	public static final field INSTANCE Ldev/slne/surf/api/serialization/java/datetime/zone/id/ZonedIdSerializer;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
@@ -240,11 +207,6 @@ public final class dev/slne/surf/api/serialization/java/datetime/zone/id/ZonedId
 	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/time/ZoneId;)V
-}
-
-public final class dev/slne/surf/api/serialization/java/datetime/zone/offset/ZoneOffsetCodec {
-	public static final field INSTANCE Ldev/slne/surf/api/serialization/java/datetime/zone/offset/ZoneOffsetCodec;
-	public final fun getCODEC ()Lcom/mojang/serialization/Codec;
 }
 
 public final class dev/slne/surf/api/serialization/java/datetime/zone/offset/ZoneOffsetSerializer : kotlinx/serialization/KSerializer {

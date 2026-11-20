@@ -7,7 +7,6 @@ import dev.slne.surf.api.paper.test.command.subcommands.PacketEntityTest;
 import dev.slne.surf.api.paper.test.command.subcommands.PacketLoreTest;
 import dev.slne.surf.api.paper.test.command.subcommands.PrefixConfigTest;
 import dev.slne.surf.api.paper.test.command.subcommands.ReflectionTest;
-import dev.slne.surf.api.paper.test.command.subcommands.ScoreboardTest;
 import dev.slne.surf.api.paper.test.command.subcommands.SmoothTimeSkip;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.BlockPdcContainerTest;
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.GlowingTest;
@@ -36,7 +35,6 @@ public class SurfApiTestCommand extends CommandAPICommand {
 
         withSubcommands(
                 new PacketLoreTest("packetlore"),
-                new ScoreboardTest("scoreboard"),
                 new SidebarTest("sidebar"),
                 new SmoothTimeSkip("smoothtimeskip"),
                 new PacketEntityTest("packetentity"),

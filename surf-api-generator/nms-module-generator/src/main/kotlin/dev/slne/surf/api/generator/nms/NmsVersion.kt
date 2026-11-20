@@ -29,7 +29,7 @@ enum class NmsVersion(
     V26_2(
         versionId = "v26_2",
         classPrefix = "V26_2",
-        paperDevBundle = "26.2+",
+        paperDevBundle = "26.2.build.+",
     ),
     V26_3(
         versionId = "v26_3",
@@ -37,11 +37,15 @@ enum class NmsVersion(
         paperDevBundle = "26.3.build.+",
     );
 
-    /** Directory name of this version's module, as `settings.gradle.kts` lists it (e.g. `"v26-1"`). */
+    /**
+     * Directory name of this version's module, as `settings.gradle.kts` lists it (e.g. `"v26-1"`).
+     */
     val slug: String
         get() = versionId.replace('_', '-')
 
-    /** Relative path from the repository root to this version's Gradle module. */
+    /**
+     * Relative path from the repository root to this version's Gradle module.
+     */
     val modulePath: String
         get() = "$MODULE_BASE_PATH$slug"
 

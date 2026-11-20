@@ -22,8 +22,10 @@ interface PacketOperation {
 /**
  * Builds a packet operation by configuring an empty one.
  *
+ * Here `spawnPackets` is an injected `SurfPaperNmsSpawnPackets` bean:
+ *
  * ```kotlin
- * PacketOperation { add(SurfPaperNmsSpawnPackets.INSTANCE.despawn(ids)) }.execute(player)
+ * PacketOperation { add(spawnPackets.despawn(ids)) }.execute(player)
  * ```
  */
 @OptIn(ExperimentalContracts::class)

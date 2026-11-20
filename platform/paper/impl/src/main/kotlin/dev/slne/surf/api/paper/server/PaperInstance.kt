@@ -5,7 +5,6 @@ import dev.slne.surf.api.paper.SurfApiPaper
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.server.impl.SurfApiPaperImpl
-import dev.slne.surf.api.paper.server.inventory.framework.InventoryLoader
 import dev.slne.surf.api.paper.server.listener.ListenerManager
 import dev.slne.surf.api.paper.server.packet.PacketApiLoader
 import org.bukkit.Bukkit
@@ -17,7 +16,6 @@ object PaperInstance : CoreInstance() {
         super.onLoad()
 
         PacketApiLoader.onLoad()
-        InventoryLoader.load()
     }
 
     override suspend fun onEnable() {
@@ -30,7 +28,6 @@ object PaperInstance : CoreInstance() {
         plugin.logger.info("\u001B[36m\u001B[1mLoading surf-api v$pluginVersion for minecraft $mcVersion with nms $nmsVersion")
 
         PacketApiLoader.onEnable()
-        InventoryLoader.enable()
         ListenerManager.registerListeners()
         (SurfApiPaper.INSTANCE as SurfApiPaperImpl).onEnable()
     }
@@ -40,6 +37,5 @@ object PaperInstance : CoreInstance() {
 
         ListenerManager.unregisterListeners()
         PacketApiLoader.onDisable()
-        InventoryLoader.disable()
     }
 }

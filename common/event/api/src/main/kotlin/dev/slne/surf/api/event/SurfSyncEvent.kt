@@ -17,10 +17,6 @@ abstract class SurfSyncEvent : SurfEvent {
      */
     fun call(): Boolean {
         SurfEventBus.INSTANCE.callSync(this)
-        return if (this is SurfCancellableEvent) {
-            !isCancelled
-        } else {
-            true
-        }
+        return this !is SurfCancellableEvent || !isCancelled
     }
 }

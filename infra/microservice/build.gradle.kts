@@ -8,8 +8,7 @@ plugins {
 
 subprojects {
     afterEvaluate {
-        val usesApi = project.name !in setOf("surf-api-microservice-processor")
-        extensions.findByType<KotlinJvmExtension>()?.takeIf { usesApi }?.apply {
+        extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {
                 optIn.add("dev.slne.surf.microservice.api.InternalMicroserviceApi")
             }

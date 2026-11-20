@@ -25,7 +25,6 @@ import org.bukkit.entity.Player
  *
  * @receiver the [View] to register
  * @see unregister
- * @see viewFrame
  */
 fun View.register() {
     viewFrame.with(this)

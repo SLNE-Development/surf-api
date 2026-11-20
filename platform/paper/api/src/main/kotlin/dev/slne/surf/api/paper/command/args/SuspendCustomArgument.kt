@@ -1,14 +1,12 @@
 package dev.slne.surf.api.paper.command.args
 
-import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
-import com.github.shynixn.mccoroutine.folia.scope
 import com.mojang.brigadier.context.CommandContext
 import dev.jorel.commandapi.CommandAPIBukkit
 import dev.jorel.commandapi.CommandAPIHandler
 import dev.jorel.commandapi.arguments.Argument
 import dev.jorel.commandapi.arguments.CustomArgument
 import dev.jorel.commandapi.executors.CommandArguments
-import dev.slne.surf.api.paper.util.getCallingPlugin
+import dev.slne.surf.api.paper.command.executors.callingPluginCommandScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -23,14 +21,21 @@ import kotlinx.coroutines.async
  * @param T The final parsed argument type.
  * @param B The base argument type produced by the underlying [Argument].
  * @property base The underlying base argument used for initial parsing.
- * @property scope The [CoroutineScope] used to execute the suspendable parsing logic.
+ * @param scope The [CoroutineScope] that runs the parsing logic; `null` for the scope of the plugin
+ * that declares the argument, on the server thread.
  */
 abstract class SuspendCustomArgument<T, B>(
     private val base: Argument<B>,
-    private val scope: CoroutineScope = extractCallingPluginScopeOrThrow()
+    scope: CoroutineScope? = null,
 ) : CustomArgument<Deferred<T>, B>(base, { _ ->
     throw UnsupportedOperationException("Parsing is performed asynchronously via the overridden parse method")
 }) {
+
+    private val scope: () -> CoroutineScope = if (scope != null) {
+        { scope }
+    } else {
+        callingPluginCommandScope()
+    }
 
     /**
      * Parses the argument asynchronously.
@@ -69,7 +74,7 @@ abstract class SuspendCustomArgument<T, B>(
         val customResult = CommandAPIHandler.getRawArgumentInput(cmdCtx, key)
         val parsedInput = base.parseArgument(cmdCtx, key, previousArgs)
 
-        return scope.async {
+        return scope().async {
             try {
                 val sender = CommandAPIBukkit.get<CommandSourceStack>()
                     .getCommandSenderFromCommandSource(cmdCtx.source).source
@@ -78,29 +83,6 @@ abstract class SuspendCustomArgument<T, B>(
             } catch (e: CustomArgumentException) {
                 throw e.toCommandSyntax(customResult, cmdCtx)
             }
-        }
-    }
-
-    companion object {
-        /**
-         * Extracts the [CoroutineScope] of the calling plugin.
-         *
-         * The calling plugin must implement [SuspendingPlugin]. If it does not,
-         * an exception is thrown to prevent executing coroutines without
-         * proper lifecycle management.
-         *
-         * @return The plugin's coroutine scope.
-         * @throws IllegalArgumentException If the plugin does not implement [SuspendingPlugin].
-         */
-        private fun extractCallingPluginScopeOrThrow(): CoroutineScope {
-            val plugin = getCallingPlugin(2)
-
-            require(plugin is SuspendingPlugin) {
-                "Failed to extract CoroutineScope: plugin '${plugin.name}' does not implement SuspendingPlugin. " +
-                        "Provide a CoroutineScope explicitly or use a SuspendingPlugin."
-            }
-
-            return plugin.scope
         }
     }
 }

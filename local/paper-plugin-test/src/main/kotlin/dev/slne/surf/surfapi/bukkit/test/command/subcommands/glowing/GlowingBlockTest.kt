@@ -8,6 +8,8 @@ import dev.jorel.commandapi.kotlindsl.getValue
 import dev.jorel.commandapi.kotlindsl.locationArgument
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 
@@ -23,9 +25,9 @@ class GlowingBlockTest(name: String) : CommandAPICommand(name) {
             val color: NamedTextColor by args
 
             if (glow) {
-                SurfGlowingApi.INSTANCE.makeGlowing(location, sender, color)
+                glowingApi.makeGlowing(location, sender, color)
             } else {
-                SurfGlowingApi.INSTANCE.removeGlowing(location, sender)
+                glowingApi.removeGlowing(location, sender)
             }
 
             sender.sendMessage("Block at ${location.blockX}, ${location.blockY}, ${location.blockZ} is now ${if (glow) "glowing" else "not glowing"} with color $color.")
@@ -33,3 +35,6 @@ class GlowingBlockTest(name: String) : CommandAPICommand(name) {
 
     }
 }
+
+@OptIn(InternalSurfApi::class)
+private val glowingApi by surfBean<SurfGlowingApi>()

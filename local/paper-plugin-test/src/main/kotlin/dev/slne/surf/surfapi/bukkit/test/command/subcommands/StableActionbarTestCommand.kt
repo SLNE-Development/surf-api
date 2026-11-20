@@ -1,17 +1,20 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
-import com.github.shynixn.mccoroutine.folia.scope
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.slne.surf.api.messages.actionbar.sendActionBar
+import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.seconds
 
+@OptIn(InternalSurfApi::class)
 class StableActionbarTestCommand(name: String) : CommandAPICommand(name) {
     init {
         anyExecutor { sender, _ ->
-            sender.sendActionBar(plugin.scope, 5.seconds) {
+            val scope = SurfPaperPluginRuntime.get().coroutineScope(plugin)
+            sender.sendActionBar(scope, 5.seconds) {
                 appendInfoPrefix()
                 info("Aktuelle Sekunde: ")
                 variableValue(LocalDateTime.now().second)

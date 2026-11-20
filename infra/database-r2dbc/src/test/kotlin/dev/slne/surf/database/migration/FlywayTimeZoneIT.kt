@@ -1,8 +1,8 @@
 package dev.slne.surf.database.migration
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.testing.OutsideUtcVendor
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import dev.slne.surf.database.testing.withJvmZone
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
@@ -11,7 +11,6 @@ import java.sql.Connection
 import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -24,36 +23,36 @@ class FlywayTimeZoneIT {
 
     @ParameterizedTest
     @EnumSource(OutsideUtcVendor::class)
-    fun sqlMigrationRunsInUtcSession(vendor: OutsideUtcVendor) = withMigratedProbe(vendor) { api, before, after ->
-        assertEquals(vendor.sessionZone, api.probeZone(SQL_ROW))
-        assertWithin(before, after, vendor.epochMicrosInstant(api, "zone_probe", "wall_clock", SQL_ROW))
+    fun sqlMigrationRunsInUtcSession(vendor: OutsideUtcVendor) = withMigratedProbe(vendor) { testDb, before, after ->
+        assertEquals(vendor.sessionZone, testDb.probeZone(SQL_ROW))
+        assertWithin(before, after, vendor.epochMicrosInstant(testDb, "zone_probe", "wall_clock", SQL_ROW))
     }
 
     @ParameterizedTest
     @EnumSource(OutsideUtcVendor::class)
-    fun javaMigrationRunsInUtcSession(vendor: OutsideUtcVendor) = withMigratedProbe(vendor) { api, before, after ->
-        assertEquals(vendor.sessionZone, api.probeZone(JAVA_ROW))
-        assertWithin(before, after, vendor.epochMicrosInstant(api, "zone_probe", "wall_clock", JAVA_ROW))
+    fun javaMigrationRunsInUtcSession(vendor: OutsideUtcVendor) = withMigratedProbe(vendor) { testDb, before, after ->
+        assertEquals(vendor.sessionZone, testDb.probeZone(JAVA_ROW))
+        assertWithin(before, after, vendor.epochMicrosInstant(testDb, "zone_probe", "wall_clock", JAVA_ROW))
     }
 
     /**
      * Migrates a fresh database with the probe SQL migration and [ZoneProbeJdbcMigration] while the JVM zone is
-     * [JVM_ZONE], then calls [block] with the API and the instants bracketing the run.
+     * [JVM_ZONE], then calls [block] with the database and the instants bracketing the run.
      */
     private fun withMigratedProbe(
         vendor: OutsideUtcVendor,
-        block: (api: DatabaseApi, before: Instant, after: Instant) -> Unit,
+        block: (testDb: TestDatabase, before: Instant, after: Instant) -> Unit,
     ) = withJvmZone(JVM_ZONE) {
-        val api = vendor.container().toDatabaseApi(fresh = true)
+        val testDb = vendor.container().toTestDatabase(fresh = true)
         try {
             val before = Instant.now()
-            api.migrate("flyway_zone") {
+            testDb.migrate("flyway_zone") {
                 sql("migrations/flyway_zone/{vendor}")
                 classes(ZoneProbeJdbcMigration(vendor))
             }
-            block(api, before, Instant.now())
+            block(testDb, before, Instant.now())
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
@@ -68,8 +67,8 @@ class FlywayTimeZoneIT {
         )
     }
 
-    private fun DatabaseApi.probeZone(id: Int): String =
-        assertNotNull(migrationDataSource).connection.use { connection ->
+    private fun TestDatabase.probeZone(id: Int): String =
+        migrationDataSource.connection.use { connection ->
             connection.prepareStatement("SELECT session_zone FROM zone_probe WHERE id = ?").use { statement ->
                 statement.setInt(1, id)
                 statement.executeQuery().use { rows ->

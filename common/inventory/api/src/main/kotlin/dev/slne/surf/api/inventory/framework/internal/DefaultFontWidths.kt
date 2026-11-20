@@ -24,13 +24,19 @@ import net.kyori.adventure.text.format.TextDecoration
 @InternalSurfApi
 object DefaultFontWidths {
 
-    /** Advance of a glyph the vanilla font renders at its regular width (5px glyph + 1px spacing). */
+    /**
+     * Advance of a glyph the vanilla font renders at its regular width (5px glyph + 1px spacing).
+     */
     const val DEFAULT_ADVANCE = 6
 
-    /** Extra advance the font renderer adds to every glyph of bold text. */
+    /**
+     * Extra advance the font renderer adds to every glyph of bold text.
+     */
     const val BOLD_EXTRA_ADVANCE = 1
 
-    /** Advance of a space, which the vanilla font takes from its space provider. */
+    /**
+     * Advance of a space, which the vanilla font takes from its space provider.
+     */
     const val SPACE_ADVANCE = 4
 
     /**

@@ -55,10 +55,11 @@ per-call resolver plumbing in this repository - a new tag is global to the insta
 ## Untrusted input
 
 `deserialize` on a player-authored string hands that player every tag, including
-`<click:run_command:/op them>` and `<hover:show_text:…>`. The clients of this instance today:
+`<click:run_command:/op them>` and `<hover:show_text:…>`. The clients of this instance:
 
 - `SpongeConfigSerializers`' `Component` serializer - operator-authored, trusted.
-- `platform/paper/api/.../command/args/MiniMessageArgument.kt` and the Minestom equivalent - parse
+- `platform/paper/api/.../command/args/MiniMessageArgument.kt` and its Minestom and Velocity
+  counterparts - parse
   the raw argument and turn a `ParsingException` into a command error with
   `e.detailMessage()`, `e.originalText()` and `e.endIndex()`. **These parse player input.** Only
   register a `miniMessageArgument` behind a permission - see the `surf-api-commands` skill for how
@@ -76,14 +77,11 @@ Safe patterns, in order of preference:
 
 ## The other instance
 
-`MiniMessage.miniMessage()` - the vanilla singleton - has none of the Surf tags. It is used by the
-gradient-frame helpers in `platform/paper/impl/.../scoreboard/SurfScoreboardBuilderImpl.kt` and
-`platform/paper/impl/.../sidebar/SidebarBuilderImpl.kt`, which build
-`"<gradient:$firstHex:$secondHex:$phase><text></gradient>"` with a `Placeholder.component("text", …)`,
-and by `platform/velocity/api/.../command/args/MiniMessageArgument.kt`. Those three are the known
-inconsistency: everything else in the repository goes through the Surf instance. When touching them,
-switch to `dev.slne.surf.api.messages.minimessage.miniMessage` unless there is a reason not to - the
-gradient tag is standard, so the Surf instance parses those strings identically.
+`MiniMessage.miniMessage()` - the vanilla singleton - has none of the Surf tags. surf-api's own code
+does not use it: the sidebar's gradient lines in
+`platform/paper/impl/.../sidebar/SidebarBuilderImpl.kt` and
+`platform/velocity/api/.../command/args/MiniMessageArgument.kt` both go through
+`dev.slne.surf.api.messages.minimessage.miniMessage`. Keep it that way in new code.
 
 ## Small caps
 

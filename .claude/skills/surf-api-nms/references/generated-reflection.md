@@ -11,7 +11,9 @@ Declared in `foundation/annotations/src/main/kotlin/dev/slne/surf/api/shared/api
 A KSP processor generates a **Java** implementation class per annotated interface. The generated
 class resolves every reflected member once in a static initializer: methods and constructors become
 `MethodHandle` fields, fields and VarHandle operations become `VarHandle` (or derived `MethodHandle`)
-fields. Nothing is generated at runtime — if the KSP task did not run, the lookup throws.
+fields. Nothing is generated at runtime — if the KSP task did not run, the lookup throws. The
+processor runs only in modules that apply the `surf.ksp-processor` convention, as every version
+module does.
 
 ### The shape
 
@@ -171,7 +173,7 @@ ITEM_PROXY = proxyFactory.reflectionProxy<V1_21_11ItemProxy>()
 System.gc() // gc the remapper
 ```
 
-`V26_1Reflection`, `V26_2Reflection` and `V26_3Reflection` keep the same `object` with the same
-`initialize()` entry point, but the body is commented out — they exist only so
-`V<prefix>NmsProvider.initialize()` has something to call. Do not revive it for new work; add the
-member to `V<prefix>NmsReflections` instead.
+`V26_1Reflection`, `V26_2Reflection` and `V26_3Reflection` keep the same `object` with an empty
+`fun initialize() = Unit`, which exists so `V<prefix>NmsProvider.initialize()` has something to
+call. Paper ships Mojang-mapped, so a remapper has nothing to translate there; add new members to
+`V<prefix>NmsReflections` instead.

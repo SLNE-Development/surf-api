@@ -1,8 +1,8 @@
 package dev.slne.surf.database.columns.time
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.testing.DatabaseContainers
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.Table
@@ -19,13 +19,12 @@ import java.util.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
  * Time columns keep their instants when neither the JVM default zone nor the MariaDB server zone is UTC.
  *
- * The JVM default zone is global, so each test changes it and restores it afterwards. It is set before the API is
+ * The JVM default zone is global, so each test changes it and restores it afterwards. It is set before the database is
  * created because the PostgreSQL driver would otherwise take its session time zone from it.
  */
 @Testcontainers(disabledWithoutDocker = true)
@@ -42,8 +41,8 @@ class SessionTimeZoneIT {
     @ParameterizedTest
     @ValueSource(strings = [JVM_ZONE_WEST, JVM_ZONE_EAST])
     fun postgresTimestamptzKeepsTheInstant(jvmZone: String) = withJvmZone(jvmZone) {
-        val api = DatabaseContainers.postgres().toDatabaseApi(fresh = true)
-        api.useWithTable(
+        val testDb = DatabaseContainers.postgres().toTestDatabase(fresh = true)
+        testDb.useWithTable(
             """
             CREATE TABLE tz_events
             (
@@ -53,15 +52,15 @@ class SessionTimeZoneIT {
             )
             """
         ) {
-            assertRoundTrip(api, epochQuery = "SELECT EXTRACT(EPOCH FROM occurred_at)::BIGINT FROM tz_events")
+            assertRoundTrip(testDb, epochQuery = "SELECT EXTRACT(EPOCH FROM occurred_at)::BIGINT FROM tz_events")
         }
     }
 
     @ParameterizedTest
     @ValueSource(strings = [JVM_ZONE_WEST, JVM_ZONE_EAST])
     fun mariaDbOutsideUtcKeepsTheInstant(jvmZone: String) = withJvmZone(jvmZone) {
-        val api = DatabaseContainers.mariadbOutsideUtc().toDatabaseApi(fresh = true)
-        api.useWithTable(
+        val testDb = DatabaseContainers.mariadbOutsideUtc().toTestDatabase(fresh = true)
+        testDb.useWithTable(
             """
             CREATE TABLE tz_events
             (
@@ -71,7 +70,7 @@ class SessionTimeZoneIT {
             )
             """
         ) {
-            assertRoundTrip(api, epochQuery = "SELECT UNIX_TIMESTAMP(occurred_at) FROM tz_events")
+            assertRoundTrip(testDb, epochQuery = "SELECT UNIX_TIMESTAMP(occurred_at) FROM tz_events")
         }
     }
 
@@ -88,11 +87,11 @@ class SessionTimeZoneIT {
         assertNotEquals("+00:00", zone)
     }
 
-    private suspend fun assertRoundTrip(api: DatabaseApi, epochQuery: String) {
+    private suspend fun assertRoundTrip(testDb: TestDatabase, epochQuery: String) {
         val events = Events()
         val before = Instant.now()
 
-        val row = suspendTransaction(api.database) {
+        val row = suspendTransaction(testDb.database) {
             events.insert {
                 it[id] = 1
                 it[occurredAt] = OffsetDateTime.ofInstant(OCCURRED, TimeZone.getDefault().toZoneId())
@@ -101,26 +100,26 @@ class SessionTimeZoneIT {
         }
 
         assertEquals(OCCURRED, row[events.occurredAt].toInstant())
-        assertEquals(OCCURRED.epochSecond, api.queryLong(epochQuery))
+        assertEquals(OCCURRED.epochSecond, testDb.queryLong(epochQuery))
 
         val createdAt = row[events.createdAt].toInstant()
         val drift = Duration.between(before, createdAt).abs()
         assertTrue(drift < MAX_DEFAULT_DRIFT, "created_at $createdAt is $drift away from $before")
     }
 
-    private inline fun DatabaseApi.useWithTable(ddl: String, block: () -> Unit) = try {
+    private inline fun TestDatabase.useWithTable(ddl: String, block: () -> Unit) = try {
         execute(ddl.trimIndent())
         block()
     } finally {
-        shutdown()
+        close()
     }
 
-    private fun DatabaseApi.execute(sql: String) {
-        assertNotNull(migrationDataSource).connection.use { c -> c.createStatement().use { it.execute(sql) } }
+    private fun TestDatabase.execute(sql: String) {
+        migrationDataSource.connection.use { c -> c.createStatement().use { it.execute(sql) } }
     }
 
-    private fun DatabaseApi.queryLong(sql: String): Long =
-        assertNotNull(migrationDataSource).connection.use { c ->
+    private fun TestDatabase.queryLong(sql: String): Long =
+        migrationDataSource.connection.use { c ->
             c.createStatement().use { s -> s.executeQuery(sql).use { rows -> rows.next(); rows.getLong(1) } }
         }
 

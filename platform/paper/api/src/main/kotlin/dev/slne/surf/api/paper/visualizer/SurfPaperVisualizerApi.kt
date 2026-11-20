@@ -2,14 +2,11 @@
 
 package dev.slne.surf.api.paper.visualizer
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
-import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
-import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
-import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
-import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerMultipleLocations
-import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
+import dev.slne.surf.api.paper.visualizer.visualizer.*
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.Location
 import org.bukkit.World
 import org.spongepowered.math.vector.Vector3d
@@ -24,6 +21,7 @@ import kotlin.time.Duration
  * This interface is marked as experimental and may be subject to changes in future updates.
  */
 @ExperimentalVisualizerApi
+@SurfApiBean
 interface SurfPaperVisualizerApi {
 
     /**
@@ -71,32 +69,17 @@ interface SurfPaperVisualizerApi {
     fun getByUid(uid: UUID): SurfVisualizer?
 
     /**
-     * Provides a globally accessible singleton instance of `SurfBukkitVisualizerApi`.
-     *
-     * This companion object allows static access to the `SurfBukkitVisualizerApi` service,
-     * enabling users to retrieve the required visualizer API implementation. The `INSTANCE` property
-     * is resolved lazily from the DI container, ensuring that the bean is available
-     * and properly configured. If no bean provides it, an error is thrown.
-     *
-     * The `SurfBukkitVisualizerApi` interface and its associated features are marked as experimental,
-     * and users must opt into this API with caution, as it may be subject to changes in future versions.
+     * Static access to the [SurfPaperVisualizerApi] bean for surf-api's own entry points.
      */
     companion object {
         /**
-         * Singleton instance of the `SurfBukkitVisualizerApi` service.
+         * The [SurfPaperVisualizerApi] bean of surf-api's root Spring context, resolved on first use.
          *
-         * This property provides access to the required implementation of the `SurfBukkitVisualizerApi` interface.
-         * It is resolved from the DI container, which ensures that the bean is available.
-         * If no bean provides it, an `Error` will be thrown.
-         *
-         * The `SurfBukkitVisualizerApi` interface is experimental and provides access to the creation and management
-         * of visualizers within the Surf framework in a Bukkit environment. The API is annotated with
-         * `@ExperimentalVisualizerApi`, indicating its experimental nature and potential for future changes.
-         *
-         * This property is annotated with `@JvmStatic`, making it accessible directly at the class level in Java.
+         * @throws org.springframework.beans.factory.NoSuchBeanDefinitionException if the root context
+         * provides no such bean
          */
-        @JvmStatic
-        val INSTANCE get() = api
+        @InternalSurfApi
+        val instance by surfBean<SurfPaperVisualizerApi>()
     }
 }
 
@@ -110,28 +93,3 @@ interface SurfPaperVisualizerApi {
 @ExperimentalVisualizerApi
 inline fun <reified T : SurfVisualizer> SurfPaperVisualizerApi.getByUid(uid: UUID) =
     getByUid(uid) as? T
-
-
-/**
- * Provides access to the singleton instance of the `SurfBukkitVisualizerApi`,
- * which serves as the entry point for managing and interacting with Bukkit-based
- * visualizer functionality in the Surf API framework.
- *
- * This API is experimental and may be subject to change. Users should opt-in
- * to its usage with the understanding that it could contain bugs or undergo
- * significant updates in future versions.
- *
- * The `SurfBukkitVisualizerApi` instance allows for initializing, updating,
- * and managing visualization elements within the Bukkit environment. It is
- * intended for use in advanced visualization scenarios, including but not
- * limited to player-specific views, area definitions, and custom rendering strategies.
- *
- * Utilization of this property requires careful consideration of the
- * experimental nature of the API.
- *
- * @see SurfVisualizer
- * @see SurfVisualizerArea
- * @see UpdateStrategy
- */
-@ExperimentalVisualizerApi
-private val api by surfBean<SurfPaperVisualizerApi>()

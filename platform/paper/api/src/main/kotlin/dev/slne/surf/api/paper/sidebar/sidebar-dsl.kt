@@ -1,9 +1,7 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.sidebar
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.plugin.Plugin
 
 /**
@@ -16,7 +14,6 @@ import org.bukkit.plugin.Plugin
  * @param block configures the sidebar
  * @return the configured sidebar
  */
-@OptIn(InternalSurfApi::class)
 fun sidebar(plugin: Plugin, block: SidebarBuilder.() -> Unit): SurfViewerSidebar {
     return SurfSidebarFactory.INSTANCE.createSidebar(plugin, block)
 }
@@ -28,7 +25,6 @@ fun sidebar(plugin: Plugin, block: SidebarBuilder.() -> Unit): SurfViewerSidebar
  * @param block configures the sidebar and its update behavior
  * @return the configured auto-updating sidebar
  */
-@OptIn(InternalSurfApi::class)
 fun autoUpdatingSidebar(
     plugin: Plugin,
     block: AutoUpdatingSidebarBuilder.() -> Unit
@@ -41,7 +37,6 @@ fun autoUpdatingSidebar(
  * @param block configures the sidebar and its update behavior
  * @return the configured global sidebar
  */
-@OptIn(InternalSurfApi::class)
 fun globalSidebar(
     plugin: Plugin,
     block: AutoUpdatingSidebarBuilder.() -> Unit
@@ -64,7 +59,8 @@ interface SurfSidebarFactory {
         block: AutoUpdatingSidebarBuilder.() -> Unit
     ): SurfGlobalSidebar
 
+    @InternalSurfApi
     companion object {
-        val INSTANCE by surfBean<SurfSidebarFactory>()
+        internal val INSTANCE by surfBean<SurfSidebarFactory>()
     }
 }

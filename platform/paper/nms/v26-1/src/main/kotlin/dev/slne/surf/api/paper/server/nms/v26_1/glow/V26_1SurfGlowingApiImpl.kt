@@ -1,12 +1,11 @@
 package dev.slne.surf.api.paper.server.nms.v26_1.glow
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
 import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.common.NmsProvider
+import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.server.nms.v26_1.bridges.V26_1SurfPaperNmsGlowingBridgeImpl
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.block.BlockGlowingData
 import dev.slne.surf.api.paper.server.nms.v26_1.glow.block.BlockPlayerData
@@ -15,6 +14,7 @@ import dev.slne.surf.api.paper.server.nms.v26_1.glow.entity.EntityPlayerData
 import dev.slne.surf.api.paper.server.nms.v26_1.reflection.V26_1NmsReflections
 import dev.slne.surf.api.paper.util.isChunkVisible
 import io.papermc.paper.adventure.PaperAdventure
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.block.Block
@@ -104,7 +104,8 @@ object V26_1SurfGlowingApiImpl : SurfGlowingApi {
             playerData.blocks[blockLocation] = newData
 
             val plugin = NmsProvider.current.plugin
-            plugin.launch(plugin.entityDispatcher(viewer)) {
+            val runtime = SurfPaperPluginRuntime.get()
+            runtime.coroutineScope(plugin).launch(runtime.dispatchers(plugin).entity(viewer)) {
                 if (viewer.isChunkVisible(blockLocation)) {
                     newData.spawn().execute(viewer)
                 }

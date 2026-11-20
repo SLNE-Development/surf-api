@@ -1,0 +1,45 @@
+public abstract interface annotation class dev/slne/surf/api/spring/BootstrapComponent : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/spring/ConditionalOnPlugin : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ljava/lang/String;
+}
+
+public abstract interface annotation class dev/slne/surf/api/spring/ConditionalOnPlugins : java/lang/annotation/Annotation {
+	public abstract fun value ()[Ldev/slne/surf/api/spring/ConditionalOnPlugin;
+}
+
+public final class dev/slne/surf/api/spring/OnPluginCondition : org/springframework/context/annotation/Condition {
+	public fun matches (Lorg/springframework/context/annotation/ConditionContext;Lorg/springframework/core/type/AnnotatedTypeMetadata;)Z
+}
+
+public abstract interface annotation class dev/slne/surf/api/spring/PluginApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class dev/slne/surf/api/spring/SurfApiBean : java/lang/annotation/Annotation {
+}
+
+public abstract interface class dev/slne/surf/api/spring/SurfBootstrapLifecycle {
+	public abstract fun onBootstrap (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class dev/slne/surf/api/spring/SurfLifecycle {
+	public fun onDisable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onEnable (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onLoad (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/spring/SurfLifecycle$DefaultImpls {
+	public static fun onDisable (Ldev/slne/surf/api/spring/SurfLifecycle;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun onEnable (Ldev/slne/surf/api/spring/SurfLifecycle;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static fun onLoad (Ldev/slne/surf/api/spring/SurfLifecycle;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class dev/slne/surf/api/spring/SurfProperties {
+	public static final field APPLICATION_NAME Ljava/lang/String;
+	public static final field CONFIG_DIRECTORY Ljava/lang/String;
+	public static final field DEFAULT_CONFIG_DIRECTORY Ljava/lang/String;
+	public static final field INSTANCE Ldev/slne/surf/api/spring/SurfProperties;
+}
+

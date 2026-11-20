@@ -1,15 +1,15 @@
 package dev.slne.surf.api.paper.test.command.subcommands.lore;
 
-import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.NamespacedKeyArgument;
+import dev.jorel.commandapi.CommandAPICommand;
 import dev.slne.surf.api.messages.Colors;
 import dev.slne.surf.api.paper.packet.SurfPaperPacketApi;
+import dev.slne.surf.api.spring.SurfContexts;
 import dev.slne.surf.surfapi.bukkit.test.PaperPluginMainKt;
-import net.kyori.adventure.text.Component;
-import org.bukkit.NamespacedKey;
-
 import java.util.HashSet;
 import java.util.Set;
+import net.kyori.adventure.text.Component;
+import org.bukkit.NamespacedKey;
 
 public class PacketLoreCreate extends CommandAPICommand {
 
@@ -27,7 +27,7 @@ public class PacketLoreCreate extends CommandAPICommand {
 
             KEYS.add(key);
 
-            SurfPaperPacketApi.Companion.getINSTANCE().registerPacketLoreListener(
+            SurfContexts.INSTANCE.getRoot().getBean(SurfPaperPacketApi.class).registerPacketLoreListener(
                     PaperPluginMainKt.getPlugin(),
                     key,
                     (loreToDisplay, pdc, stack) -> {

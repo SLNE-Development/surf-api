@@ -2,19 +2,21 @@ package dev.slne.surf.api.paper.server.impl
 
 import com.google.common.io.ByteStreams
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.SurfApiPaper
 import dev.slne.surf.api.paper.server.hook.SurfBukkitHookManager
 import dev.slne.surf.api.paper.server.plugin
 import dev.slne.surf.api.paper.server.time.TimeHandler
 import dev.slne.surf.api.paper.time.SkipOperations
 import dev.slne.surf.api.paper.time.TimeSkipResult
+import io.papermc.paper.ServerBuildInfo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
+import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
@@ -24,8 +26,9 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
         SurfBukkitHookManager.onEnable()
     }
 
-    override val isFolia: Boolean by lazy { runCatching { Class.forName("io.papermc.paper.threadedregions.RegionizedServer") }.isSuccess }
-    override val isCanvasMc: Boolean by lazy { runCatching { Class.forName("io.canvasmc.canvas.event.EntityPortalAsyncEvent") }.isSuccess }
+    private val buildInfo = ServerBuildInfo.buildInfo()
+    override val isFolia: Boolean = buildInfo.isBrandCompatible(Key.key("papermc", "folia"))
+    override val isCanvasMc: Boolean = buildInfo.isBrandCompatible(Key.key("canvasmc", "canvas"))
 
     override fun sendPlayerToServer(playerUuid: UUID, server: String) {
         val player = Bukkit.getPlayer(playerUuid)

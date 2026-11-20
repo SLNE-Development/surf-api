@@ -29,7 +29,6 @@ public abstract interface class dev/slne/surf/api/event/SurfEventBus {
 }
 
 public final class dev/slne/surf/api/event/SurfEventBus$Companion {
-	public final fun getINSTANCE ()Ldev/slne/surf/api/event/SurfEventBus;
 }
 
 public final class dev/slne/surf/api/event/SurfEventBus$DefaultImpls {

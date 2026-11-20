@@ -2,7 +2,7 @@
 
 Source: `common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/impl/event/` -
 `SurfEventBusImpl.kt`, `SurfEventHandlerEntry.kt`, `invoker/` - plus
-`common/core/api/src/main/java/dev/slne/surf/api/core/invoker/InvokerFactory.java` and the two
+`common/common/api/src/main/java/dev/slne/surf/api/common/invoker/InvokerFactory.java` and the two
 templates in `common/core/impl/src/main/java/.../impl/event/invoker/`.
 
 Read this when you need to reason about ordering, performance or why a handler did or did not run.
@@ -120,8 +120,8 @@ Consequences:
   `IllegalAccessException`.
 - `InvokerFactory.create` wraps a `ReflectiveOperationException` in `AssertionError`.
 
-The same `InvokerFactory` is reused elsewhere in the surf ecosystem (Redis, RabbitMQ listeners), so
-the template pattern is shared - fix bugs in `HiddenInvokerUtil`, not per flavour.
+`SurfEventInvokerFactory` is the only user of `InvokerFactory`. `HiddenInvokerUtil` is shared with
+Velocity's `SuspendingEventHandler`, so fix bugs in `HiddenInvokerUtil`, not per flavour.
 
 ## Handler discovery
 

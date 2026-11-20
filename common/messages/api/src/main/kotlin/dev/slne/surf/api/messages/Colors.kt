@@ -1,7 +1,5 @@
 package dev.slne.surf.api.messages
 
-import dev.slne.surf.api.messages.Colors.Companion.INFO
-import dev.slne.surf.api.messages.Colors.Companion.PRIMARY
 import dev.slne.surf.api.messages.adventure.buildText
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -90,14 +88,14 @@ interface Colors {
          * Use for visual separators such as "-", "...", and "/".
          */
         @JvmField
-        val SPACER: NamedTextColor = NamedTextColor.GRAY
+        val SPACER: TextColor = NamedTextColor.GRAY
 
         /**
          * Dark spacer color (DARK_GRAY).
          * Use for darker separators such as ">>" or "|" in prefixes.
          */
         @JvmField
-        val DARK_SPACER: NamedTextColor = NamedTextColor.DARK_GRAY
+        val DARK_SPACER: TextColor = NamedTextColor.DARK_GRAY
 
         // -------------------- Prefix -------------------- //
 
@@ -158,96 +156,96 @@ interface Colors {
          * Minecraft black color.
          */
         @JvmField
-        val BLACK: NamedTextColor = NamedTextColor.BLACK
+        val BLACK: TextColor = NamedTextColor.BLACK
 
         /**
          * Minecraft dark blue color.
          */
         @JvmField
-        val DARK_BLUE: NamedTextColor = NamedTextColor.DARK_BLUE
+        val DARK_BLUE: TextColor = NamedTextColor.DARK_BLUE
 
         /**
          * Minecraft dark green color.
          */
         @JvmField
-        val DARK_GREEN: NamedTextColor = NamedTextColor.DARK_GREEN
+        val DARK_GREEN: TextColor = NamedTextColor.DARK_GREEN
 
         /**
          * Minecraft dark aqua color.
          */
         @JvmField
-        val DARK_AQUA: NamedTextColor = NamedTextColor.DARK_AQUA
+        val DARK_AQUA: TextColor = NamedTextColor.DARK_AQUA
 
         /**
          * Minecraft dark red color.
          */
         @JvmField
-        val DARK_RED: NamedTextColor = NamedTextColor.DARK_RED
+        val DARK_RED: TextColor = NamedTextColor.DARK_RED
 
         /**
          * Minecraft dark purple color.
          */
         @JvmField
-        val DARK_PURPLE: NamedTextColor = NamedTextColor.DARK_PURPLE
+        val DARK_PURPLE: TextColor = NamedTextColor.DARK_PURPLE
 
         /**
          * Minecraft gold color.
          */
         @JvmField
-        val GOLD: NamedTextColor = NamedTextColor.GOLD
+        val GOLD: TextColor = NamedTextColor.GOLD
 
         /**
          * Minecraft gray color.
          */
         @JvmField
-        val GRAY: NamedTextColor = NamedTextColor.GRAY
+        val GRAY: TextColor = NamedTextColor.GRAY
 
         /**
          * Minecraft dark gray color.
          */
         @JvmField
-        val DARK_GRAY: NamedTextColor = NamedTextColor.DARK_GRAY
+        val DARK_GRAY: TextColor = NamedTextColor.DARK_GRAY
 
         /**
          * Minecraft blue color.
          */
         @JvmField
-        val BLUE: NamedTextColor = NamedTextColor.BLUE
+        val BLUE: TextColor = NamedTextColor.BLUE
 
         /**
          * Minecraft green color.
          */
         @JvmField
-        val GREEN: NamedTextColor = NamedTextColor.GREEN
+        val GREEN: TextColor = NamedTextColor.GREEN
 
         /**
          * Minecraft aqua color.
          */
         @JvmField
-        val AQUA: NamedTextColor = NamedTextColor.AQUA
+        val AQUA: TextColor = NamedTextColor.AQUA
 
         /**
          * Minecraft red color.
          */
         @JvmField
-        val RED: NamedTextColor = NamedTextColor.RED
+        val RED: TextColor = NamedTextColor.RED
 
         /**
          * Minecraft light purple color.
          */
         @JvmField
-        val LIGHT_PURPLE: NamedTextColor = NamedTextColor.LIGHT_PURPLE
+        val LIGHT_PURPLE: TextColor = NamedTextColor.LIGHT_PURPLE
 
         /**
          * Minecraft yellow color.
          */
         @JvmField
-        val YELLOW: NamedTextColor = NamedTextColor.YELLOW
+        val YELLOW: TextColor = NamedTextColor.YELLOW
 
         /**
          * Minecraft white color.
          */
         @JvmField
-        val WHITE: NamedTextColor = NamedTextColor.WHITE
+        val WHITE: TextColor = NamedTextColor.WHITE
     }
 }

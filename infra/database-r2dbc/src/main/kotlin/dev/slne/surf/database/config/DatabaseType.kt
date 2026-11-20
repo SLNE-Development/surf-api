@@ -1,5 +1,8 @@
 package dev.slne.surf.database.config
 
+import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
+import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 
 /**
@@ -17,3 +20,18 @@ enum class DatabaseType(val defaultPort: Int) {
      */
     val vendor: String = name.lowercase()
 }
+
+/**
+ * The vendor of this database, derived from its dialect.
+ *
+ * @throws IllegalStateException if the dialect is neither MariaDB nor PostgreSQL
+ */
+val R2dbcDatabase.databaseType: DatabaseType
+    get() = when (dialect) {
+        is MariaDBDialect -> DatabaseType.MARIADB
+        is PostgreSQLDialect -> DatabaseType.POSTGRESQL
+        else -> error(
+            "Dialect ${dialect.javaClass.simpleName} has no DatabaseType, " +
+                    "expected one of ${DatabaseType.entries.joinToString()}"
+        )
+    }

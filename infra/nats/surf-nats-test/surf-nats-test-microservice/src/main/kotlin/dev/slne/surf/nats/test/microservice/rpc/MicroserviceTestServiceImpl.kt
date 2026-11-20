@@ -1,12 +1,17 @@
 package dev.slne.surf.nats.test.microservice.rpc
 
 import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.nats.NatsService
 import dev.slne.surf.nats.rpc.natsPersistentContext
 import dev.slne.surf.nats.test.common.proto.v1.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 private val log = logger()
 
+/**
+ * Serves [MicroserviceTestService] and keeps the entries of `store` in memory.
+ */
+@NatsService
 class MicroserviceTestServiceImpl : MicroserviceTestService {
     private val entries = ConcurrentLinkedQueue<String>()
 

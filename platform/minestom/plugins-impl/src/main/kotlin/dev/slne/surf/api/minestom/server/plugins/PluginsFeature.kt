@@ -5,9 +5,12 @@ import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
+import dev.slne.surf.api.minestom.server.impl.PluginsDirectory
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginDiscovery
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginManagerImpl
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfContexts
+import org.springframework.context.ConfigurableApplicationContext
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -20,12 +23,15 @@ import kotlin.io.path.createDirectories
 class PluginsFeatureBuilder internal constructor() {
 
     /**
-     * The directory plugin jars are loaded from, and their data directories are created in.
+     * The directory plugin jars are loaded from, and their data directories are created in. Defaults to the
+     * `surf.minestom.plugins` system property, or `plugins` when it is not set.
      *
-     * When the server declares plugin dependencies and this value is changed, also start it with
-     * `-Dsurf.minestom.plugins=<dir>`, so that the bootstrap reads the same directory.
+     * surf-api keeps its own data folder, `surf-api`, in the directory named by the system property, which is
+     * what the bootstrap reads too. When the server declares plugin dependencies or runs surf-api's Redis and
+     * NATS integrations and this value is changed, also start it with `-Dsurf.minestom.plugins=<dir>`, so that
+     * all of them use the same directory.
      */
-    var directory: Path = Path("plugins")
+    var directory: Path = PluginsDirectory.fromSystemProperty()
 
     /**
      * Whether plugins shaded into the server itself are loaded too, e.g. the plugin modules of the
@@ -37,8 +43,9 @@ class PluginsFeatureBuilder internal constructor() {
      * Whether the server fails to start when a plugin cannot be loaded or enabled.
      *
      * A plugin cannot be loaded when its description cannot be read, it is rejected, fails to be
-     * created, throws from `onLoad` or requires a plugin that could not be loaded; it cannot be
-     * enabled when it throws from `onEnable` or requires a plugin that could not be enabled. A jar
+     * created, its context cannot be built, a load hook of its beans throws or it requires a plugin
+     * that could not be loaded; it cannot be enabled when registering its listeners and commands or
+     * an enable hook of its beans throws, or it requires a plugin that could not be enabled. A jar
      * in [directory] without a `minestom-plugin.json` is no plugin and does not count. When
      * `false`, the server logs the failure and runs without that plugin and the plugins that depend
      * on it.
@@ -52,7 +59,9 @@ class PluginsFeatureBuilder internal constructor() {
  * Plugins extend [dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin] and are described by a
  * `minestom-plugin.json`, which the `dev.slne.surf.api.gradle.minestom` Gradle plugin generates.
  * Each plugin jar loaded from the `plugins` directory gets its own class loader, which sees the
- * server, the plugin itself and the plugins it depends on, but no other plugin.
+ * server, the plugin itself and the plugins it depends on, but no other plugin. Each plugin also
+ * gets its own Spring context, whose beans carry the plugin's logic; it sees surf-api's beans and the
+ * `@PluginApi` beans of the plugins it depends on.
  *
  * Plugins load in dependency order while the server starts, are enabled right after they are loaded,
  * before [dev.slne.surf.api.minestom.server.surfMinestomServer] returns and so before the server
@@ -67,7 +76,6 @@ class PluginsFeatureBuilder internal constructor() {
  * `surfMinestomServerApi { pluginDependencies { } }`, together with their dependencies, there, and
  * the feature loads them from there.
  */
-@OptIn(InternalSurfApi::class)
 class PluginsFeature internal constructor(
     private val settings: PluginsFeatureBuilder,
 ) : SurfMinestomFeature {
@@ -107,7 +115,10 @@ class PluginsFeature internal constructor(
             }
         }
 
-        val manager = PluginManagerImpl(directory, api.eventNode, serverClassLoader)
+        val root = checkNotNull(SurfContexts.rootOrNull as? ConfigurableApplicationContext) {
+            "The plugins feature needs surf-api's root context, which surfMinestomServer installs before it loads features"
+        }
+        val manager = PluginManagerImpl(directory, api.eventNode, serverClassLoader, root)
         this.manager = manager
         PluginManager.install(manager)
 

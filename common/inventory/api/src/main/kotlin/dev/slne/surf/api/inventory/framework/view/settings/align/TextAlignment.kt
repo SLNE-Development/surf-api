@@ -53,7 +53,8 @@ enum class TextAlignment {
             options.padding,
             options.containerWidth
         )
-    };
+    },
+    ;
 
     /**
      * Calculates the pixel shift (offset from the left edge) required to place a text run of

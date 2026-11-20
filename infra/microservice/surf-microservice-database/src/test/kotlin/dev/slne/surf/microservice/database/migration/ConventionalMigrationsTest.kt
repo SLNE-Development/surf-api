@@ -1,15 +1,15 @@
 package dev.slne.surf.microservice.database.migration
 
 import dev.slne.surf.database.config.DatabaseType
-import dev.slne.surf.microservice.database.DatabaseCustomizer
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class ConventionalMigrationsTest {
 
@@ -17,18 +17,18 @@ class ConventionalMigrationsTest {
     lateinit var root: Path
 
     @Test
-    fun `skips migrations when nothing is found and no customizer exists`() {
-        assertNull(select(customizer = null, TestClassPath(root).classLoader()))
+    fun `finds nothing when the application ships no migrations`() {
+        assertNull(discover(TestClassPath(root).classLoader()))
     }
 
     @Test
     fun `finds the SQL location when the class loader has it`() {
         val classLoader = TestClassPath(root).withSqlMigrationDirectory().classLoader()
 
-        val migrations = assertNotNull(select(customizer = null, classLoader))
+        val migrations = assertNotNull(discover(classLoader))
 
         assertEquals(ConventionalMigrations.SQL_LOCATION, migrations.sqlLocation)
-        assertTrue(migrations.classes.isEmpty())
+        assertEquals(emptyList(), migrations.classNames)
     }
 
     @Test
@@ -39,7 +39,7 @@ class ConventionalMigrationsTest {
             .withVendorSqlMigrationDirectory(DatabaseType.POSTGRESQL)
             .classLoader()
 
-        val migrations = assertNotNull(select(customizer = null, classLoader, DatabaseType.POSTGRESQL))
+        val migrations = assertNotNull(discover(classLoader, DatabaseType.POSTGRESQL))
 
         assertEquals("db/migration/{vendor}", migrations.sqlLocation)
     }
@@ -48,7 +48,7 @@ class ConventionalMigrationsTest {
     fun `uses the vendor location when only the database vendor has a folder`() {
         val classLoader = TestClassPath(root).withVendorSqlMigrationDirectory(DatabaseType.MARIADB).classLoader()
 
-        val migrations = assertNotNull(select(customizer = null, classLoader, DatabaseType.MARIADB))
+        val migrations = assertNotNull(discover(classLoader, DatabaseType.MARIADB))
 
         assertEquals(ConventionalMigrations.VENDOR_SQL_LOCATION, migrations.sqlLocation)
     }
@@ -57,9 +57,7 @@ class ConventionalMigrationsTest {
     fun `fails when vendor folders exist but none for the database vendor`() {
         val classLoader = TestClassPath(root).withVendorSqlMigrationDirectory(DatabaseType.MARIADB).classLoader()
 
-        val failure = assertFailsWith<IllegalStateException> {
-            select(customizer = null, classLoader, DatabaseType.POSTGRESQL)
-        }
+        val failure = assertFailsWith<IllegalStateException> { discover(classLoader, DatabaseType.POSTGRESQL) }
 
         assertEquals(
             "SQL migrations exist for db/migration/mariadb, but not for the configured postgresql database; " +
@@ -69,61 +67,77 @@ class ConventionalMigrationsTest {
     }
 
     @Test
-    fun `does not check vendor folders when the customizer disables migrations`() {
-        val classLoader = TestClassPath(root).withVendorSqlMigrationDirectory(DatabaseType.MARIADB).classLoader()
-
-        assertNull(select(Customizer(runMigrations = false), classLoader, DatabaseType.POSTGRESQL))
-    }
-
-    @Test
-    fun `finds listed migration classes`() {
-        val classLoader = TestClassPath(root)
-            .withListedMigrations(TestMigrations.ObjectMigration::class.java.name)
-            .classLoader()
-
-        val migrations = assertNotNull(select(customizer = null, classLoader))
-
-        assertNull(migrations.sqlLocation)
-        assertEquals(listOf(TestMigrations.ObjectMigration), migrations.classes)
-    }
-
-    @Test
-    fun `runs migrations for a customizer even if no convention found anything`() {
+    fun `finds the migration classes by name, not their package`() {
         val classLoader = TestClassPath(root).classLoader()
 
-        val migrations = select(Customizer(runMigrations = true), classLoader)
+        val migrations = assertNotNull(discover(classLoader, packages = listOf(MIGRATION_PACKAGE, NATS_PACKAGE)))
 
-        assertTrue(assertNotNull(migrations).isEmpty)
+        assertNull(migrations.sqlLocation)
+        assertEquals(DISCOVERED, migrations.classNames)
     }
 
     @Test
-    fun `runs conventional migrations for a customizer`() {
+    fun `skips anonymous and local migration classes`() {
+        val migrations = assertNotNull(discover(TestClassPath(root).classLoader(), packages = listOf(MIGRATION_PACKAGE)))
+
+        assertEquals(DISCOVERED, migrations.classNames)
+    }
+
+    @Test
+    fun `skips open classes whose constructor takes parameters and keeps those without`() {
+        val migrations = assertNotNull(discover(TestClassPath(root).classLoader(), packages = listOf(MIGRATION_PACKAGE)))
+
+        assertFalse(OPEN_MIGRATION in migrations.classNames)
+        assertContains(migrations.classNames, OPEN_DEFAULT_MIGRATION)
+    }
+
+    @Test
+    fun `finds a companion object migration by the name of the companion class`() {
+        val migrations = assertNotNull(discover(TestClassPath(root).classLoader(), packages = listOf(MIGRATION_PACKAGE)))
+
+        assertContains(migrations.classNames, COMPANION_MIGRATION)
+    }
+
+    @Test
+    fun `finds nothing in a package without migration classes`() {
+        assertNull(discover(TestClassPath(root).classLoader(), packages = listOf(NATS_PACKAGE)))
+    }
+
+    @Test
+    fun `lists a class once when packages overlap`() {
+        val classLoader = TestClassPath(root).classLoader()
+
+        val migrations = assertNotNull(discover(classLoader, packages = listOf(MIGRATION_PACKAGE, "dev.slne.surf.microservice.database")))
+
+        assertEquals(DISCOVERED, migrations.classNames)
+    }
+
+    @Test
+    fun `combines SQL and migration classes`() {
         val classLoader = TestClassPath(root).withSqlMigrationDirectory().classLoader()
 
-        val migrations = select(Customizer(runMigrations = true), classLoader)
+        val migrations = assertNotNull(discover(classLoader, packages = listOf(MIGRATION_PACKAGE)))
 
-        assertEquals(ConventionalMigrations.SQL_LOCATION, assertNotNull(migrations).sqlLocation)
+        assertEquals(
+            ConventionalMigrations(ConventionalMigrations.SQL_LOCATION, DISCOVERED),
+            migrations,
+        )
     }
 
-    @Test
-    fun `skips migrations when the customizer disables them`() {
-        val classLoader = TestClassPath(root).withSqlMigrationDirectory().classLoader()
-
-        assertNull(select(Customizer(runMigrations = false), classLoader))
-    }
-
-    @Test
-    fun `loads no classes when the customizer disables migrations`() {
-        val classLoader = TestClassPath(root).withListedMigrations("dev.slne.surf.Missing").classLoader()
-
-        assertNull(select(Customizer(runMigrations = false), classLoader))
-    }
-
-    private fun select(
-        customizer: DatabaseCustomizer?,
+    private fun discover(
         classLoader: ClassLoader,
         databaseType: DatabaseType = DatabaseType.MARIADB,
-    ) = ConventionalMigrations.select(customizer, classLoader, databaseType)
+        packages: List<String> = emptyList(),
+    ) = ConventionalMigrations.discover(classLoader, databaseType, packages)
 
-    private class Customizer(override val runMigrations: Boolean) : DatabaseCustomizer
+    private companion object {
+        const val MIGRATION_PACKAGE = "dev.slne.surf.microservice.database.migration"
+        const val NATS_PACKAGE = "dev.slne.surf.microservice.database.nats"
+        const val CLASS_MIGRATION = "$MIGRATION_PACKAGE.TestMigrations\$ClassMigration"
+        const val OBJECT_MIGRATION = "$MIGRATION_PACKAGE.TestMigrations\$ObjectMigration"
+        const val COMPANION_MIGRATION = "$MIGRATION_PACKAGE.TestMigrations\$WithCompanion\$Companion"
+        const val OPEN_MIGRATION = "$MIGRATION_PACKAGE.TestMigrations\$OpenBase"
+        const val OPEN_DEFAULT_MIGRATION = "$MIGRATION_PACKAGE.TestMigrations\$OpenWithDefaultConstructor"
+        val DISCOVERED = listOf(CLASS_MIGRATION, OBJECT_MIGRATION, OPEN_DEFAULT_MIGRATION, COMPANION_MIGRATION)
+    }
 }

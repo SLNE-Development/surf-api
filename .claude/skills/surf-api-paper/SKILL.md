@@ -1,6 +1,6 @@
 ---
 name: surf-api-paper
-description: Use when writing or building something that runs on Paper against surf-api - setting up a plugin project with the dev.slne.surf.api.gradle.paper-plugin Gradle plugin, configuring surfPaperPluginApi { }, working out what ends up in the generated paper-plugin.yml, writing the plugin main class and getting its load/enable/disable order right, running on Folia or CanvasMC, or reaching for a part of the api that only exists on Paper - sidebars and the legacy scoreboard, block PDC, packet listeners and packet lore, the visualizer, glowing, the tick-thread guard, the PlaceholderAPI hook, permission registration, or smooth time skipping.
+description: Use when writing or building something that runs on Paper against surf-api - setting up a plugin project with the dev.slne.surf.api.gradle.paper-plugin Gradle plugin, configuring surfPaperPluginApi { }, working out what ends up in the generated paper-plugin.yml, the generated main class and bootstrapper and the bootstrap/load/enable/disable order of a plugin's beans, running on Folia or CanvasMC, or reaching for a part of the api that only exists on Paper - sidebars, block PDC, packet listeners and packet lore, the visualizer, glowing, the tick-thread guard, the PlaceholderAPI hook, permission registration, or smooth time skipping.
 ---
 
 # surf-api on Paper
@@ -8,7 +8,7 @@ description: Use when writing or building something that runs on Paper against s
 Everything below comes from `platform/paper/api/`, `platform/paper/impl/`,
 `local/paper-plugin-test/` and
 `tooling/gradle-plugin/src/main/kotlin/dev/slne/surf/api/gradle/platform/paper/`. Read those when
-in doubt.
+in doubt. `docs/spring-migration.md` records why the Spring integration works the way it does.
 
 ## The shape of the runtime
 
@@ -19,15 +19,20 @@ surf-api is itself a Paper plugin. `platform/paper/impl/build.gradle.kts` names 
 the Via stack and Geyser-Spigot.
 
 Your plugin is a separate jar that compiles against `surf-api-paper` and declares `surf-paper-api`
-as a required dependency loading `BEFORE` it. Nothing of the api works before that plugin is
-enabled: every Paper-only entry point reads its implementation out of surf-api's root bean
-container through a private `by surfBean<T>()` property, and it is `surf-api-paper-impl` that starts
-that container and supplies the beans.
+as a required bootstrap and server dependency loading `BEFORE` it. surf-api builds a Spring context
+for your plugin below its own root context, and your code lives in the beans of that context. The
+Paper-only features are interfaces whose implementations are beans of surf-api's root context, so a
+bean gets them by constructor injection. Where an interface has a `companion object` accessor
+(`INSTANCE`), it is `@InternalSurfApi`, an error-level opt-in that plugins do not compile against.
+
+surf-api's jar carries Spring, `kotlin-reflect` and `kotlinx-coroutines-reactor` under their own
+package names, and Redis and NATS with Redisson, `io.nats` and BouncyCastle relocated. It does not
+carry Guava, Gson or SLF4J: those are the server's.
 
 | Directory | Coordinate | What it is |
 | --- | --- | --- |
 | `platform/paper/api` | `surf-api-paper-api` | the contracts you compile against |
-| `platform/paper/impl` | `surf-api-paper-impl` | the `surf-paper-api` plugin itself |
+| `platform/paper/impl` | `surf-api-paper-impl` | the `surf-paper-api` plugin itself; the server jar is `build/libs/*-all.jar` and a GitHub release asset, never a Maven artifact |
 | `aggregate/paper` | `surf-api-paper` | the coordinate downstream depends on; no code |
 | `platform/paper/nms/*` | `surf-api-paper-nms-*` | version bridges - see the `surf-api-nms` skill |
 | `local/paper-plugin-test` | not published | the in-repo test plugin; best source of real usage |
@@ -39,14 +44,13 @@ Gradle paths are flat: `:surf-api-paper-impl`, never `:platform:paper:impl`. See
 
 ```kotlin
 plugins {
-    id("dev.slne.surf.api.gradle.paper-plugin") version "3.0.0"
+    id("dev.slne.surf.api.gradle.paper-plugin") version "4.0.0"
 }
 
 group = "dev.slne.example"
 version = "1.0.0"
 
 surfPaperPluginApi {
-    mainClass("dev.slne.example.lobby.LobbyPlugin")
     authors.set(listOf("SLNE Development"))
 }
 ```
@@ -54,107 +58,119 @@ surfPaperPluginApi {
 The extension is named after the plugin: `CommonSurfPlugin.apply` creates
 `surf${platformName.replaceFirstChar { it.uppercase() }}Api`, and the platform name of
 `PaperPluginSurfPlugin` is `paperPlugin`, so the block is `surfPaperPluginApi { }` - there is no
-`paperPlugin { }`. `mainClass(...)` is the only required setting - `validate()` demands it with
-"Main class must be set to your plugin's main class". Note that `CommonSurfPlugin` **catches** a
-failed validation, logs `Failed to validate extension` and then skips the rest of its
-`afterEvaluate` work, so a missing main class shows up as a plugin that was never configured rather
-than as a build failure.
+`paperPlugin { }`. No setting is required. The build generates the main class and the
+bootstrapper into the plugin's base package, the longest package all of its sources share.
 
 For a Paper library or a module that is not a plugin, apply
 `dev.slne.surf.api.gradle.paper-raw` instead and configure `surfRawPaperApi { }`; it has the same
-settings minus the plugin-file ones.
+settings minus the plugin-file ones and generates no classes.
 
-What applying the plugin configures, what lands in `paper-plugin.yml`, the library loader, Folia and
-CanvasMC, and the testing defaults: **`references/project-setup.md`**.
+What applying the plugin configures, the generated classes and their checks, what lands in
+`paper-plugin.yml`, the library loader, Folia and CanvasMC, and the testing defaults:
+**`references/project-setup.md`**.
 
 ## Entry point and lifecycle
 
-A surf Paper plugin extends mccoroutine's `SuspendingJavaPlugin`, so the three lifecycle hooks are
-suspending. From `local/paper-plugin-test/src/main/kotlin/.../PaperPluginMain.kt`:
+The build generates two classes into the base package, and both carry no logic:
+
+- `GeneratedSurfBootstrapper` extends `SurfPaperBootstrapper` (Paper's bootstrapper)
+- `GeneratedSurfPlugin` extends `SurfPaperPlugin` (Paper's `main`)
+
+Both base classes live in `platform/paper/api/.../paper/plugin/`, and their lifecycle methods are
+`final`. They hand each phase to surf-api, which drives the plugin's Spring contexts and calls the
+hooks of the plugin's beans. Plugin logic goes into beans that implement `SurfLifecycle` (package
+`dev.slne.surf.api.spring`), as `local/paper-plugin-test/.../TestPluginLifecycle.kt` does:
 
 ```kotlin
-import dev.slne.surf.api.di.SurfContainer
+import dev.slne.surf.api.spring.SurfLifecycle
+import org.bukkit.plugin.Plugin
+import org.springframework.stereotype.Service
 
-@OptIn(InternalSurfApi::class)
-class PaperPluginMain : SuspendingJavaPlugin() {
-    override suspend fun onLoadAsync() {
-        MyPluginConfig.init()
-        SurfContainer.startChild(this)
-        TestInventoryView.register()
+@Service
+class LobbyLifecycle(private val plugin: Plugin) : SurfLifecycle {
+
+    override suspend fun onLoad() {
+        plugin.logger.info("Lobby loaded")
     }
 
-    override suspend fun onEnableAsync() {
-        SurfContainer.enableFor(this)
-        SurfApiTestCommand().register()
+    override suspend fun onEnable() {
+        plugin.logger.info("Lobby enabled")
     }
 
-    override suspend fun onDisableAsync() {
-        CommandAPI.unregister("surfapitest")
-        SurfContainer.stopFor(this)
-    }
-
-    companion object {
-        val instance: PaperPluginMain get() = getPlugin(PaperPluginMain::class.java)
+    override suspend fun onDisable() {
+        plugin.logger.info("Lobby disabled")
     }
 }
-
-val plugin get() = PaperPluginMain.instance
 ```
 
-`SurfContainer` lives in `surf-api-di-api` and is `@InternalSurfApi`, which is what the
-`@OptIn(InternalSurfApi::class)` on the class is for. Pass `this` - the plugin instance, not its
-class: that is the owner the container is keyed by and the one Paper is asked about for a
-classloader, a logger and a data directory.
+The phases, in order:
 
-The order that matters, and it is three calls because the platform has three phases:
+| Paper phase | What surf-api does for the plugin |
+| --- | --- |
+| bootstrap (`SurfPaperBootstrapper.bootstrap`) | builds the **bootstrap context**: only the components that implement `SurfBootstrapLifecycle` or carry `@BootstrapComponent`, then runs `onBootstrap` |
+| load (`SurfPaperPlugin.onLoad`) | builds the **plugin context** with every other component, below the import context that holds its dependencies' exports and below the bootstrap context, then runs `onLoad` |
+| enable (`SurfPaperPlugin.onEnable`) | registers the context's Bukkit `Listener` beans, its commands (`CommandAPICommand` and `CommandTree` beans, `CommandRegistrar` beans) and its `@SurfEventHandler` beans, then runs `onEnable` |
+| disable (`SurfPaperPlugin.onDisable`) | runs `onDisable` in reverse order, unregisters the `@SurfEventHandler` beans and closes the contexts; Paper itself unregisters the Bukkit listeners |
 
-- **`onLoadAsync`** - configuration, `SurfContainer.startChild(this)`, inventory view registration,
-  packet listeners. Runs while the server is still loading plugins. `startChild` builds this
-  plugin's container below surf-api's root and runs its beans through `load` only.
-- **`onEnableAsync`** - `SurfContainer.enableFor(this)` first, then command registration and
-  listeners. The `enable` phase deliberately lands here, where the rest of the server exists. The
-  phases are not chained, so leaving this call out leaves every bean loaded and never enabled, with
-  nothing to say so.
-- **`onDisableAsync`** - unregister commands, close sidebars, then `SurfContainer.stopFor(this)`,
-  which runs `disable` in reverse and forgets the container. surf-api's own beans keep running:
-  they belong to the root, which surf-api stops after every plugin.
+Rules that follow from it:
 
-Beans themselves need no registration call at all - annotate the class `@Service` (or
-`@Repository`, or an own `@BeanMeta` stereotype) and `startChild` finds it through the metadata KSP
-wrote into your jar. `local/paper-plugin-test/src/main/kotlin/.../hook/` is the worked example:
-plain beans, a stereotype chain, and beans guarded by `@ConditionalOnEnvironment`,
-`@ConditionalOnProperty` and an own `BeanCondition`. See **`surf-api-components`**.
+- **Scanning.** The component scan starts at the bootstrapper's package and reads only the
+  plugin's own jar. Annotate beans with Spring's stereotypes (`@Service`, `@Component`,
+  `@Configuration`, from `org.springframework.stereotype` and
+  `org.springframework.context.annotation`).
+- **The bootstrap phase is restricted.** A plugin sees only the classes of its bootstrap
+  dependencies and no server exists yet, so a bootstrap bean must not use the Bukkit server API,
+  another plugin's API or the main and region threads.
+- **Hooks block the server thread.** `onLoad`, `onEnable` and `onDisable` run on the thread Paper
+  calls the phase on, which is the main thread. A hook must not wait for work dispatched to the main
+  or a region thread or to the Bukkit scheduler; see `SurfLifecycle` in
+  `foundation/spring/api/.../spring/SurfLifecycle.kt`. A plugin whose load phase failed is never
+  enabled.
+- **The plugin instance is a bean.** The plugin context injects it under every type it has
+  (`Plugin`, `JavaPlugin`, the concrete class). The bootstrap context injects it only as
+  `org.bukkit.plugin.Plugin`, a proxy that works from the load phase on. Spring manages the instance
+  like any other singleton: `@Autowired` members, `@PostConstruct`, every `BeanPostProcessor`, and
+  `@PreDestroy` and `DisposableBean.destroy` when the context closes.
+- **Every plugin context holds a `CoroutineScope`** (a `SupervisorJob` on `Dispatchers.Default`,
+  cancelled after the disable hooks) and a `PaperDispatchers` bean with `main`, `region(...)`,
+  `entity(entity)` and `async`. Inject them; they are the plugin's own.
 
-A top-level `val plugin get() = ...` is the repository's convention for reaching the plugin instance
-from anywhere; the api itself does the same in `platform/paper/impl/.../PaperMain.kt`.
+`@PluginApi` exports, `@ConditionalOnPlugin` adapters, qualifiers and the rest of the bean model are
+in **`surf-api-components`**. Another surf plugin's exported beans are only visible when the build
+script declares it with `surfPluginDependency(name)`.
 
-The api's own lifecycle, for reference: `PaperBoostrapper.bootstrap` runs
-`PaperInstance.bootstrap()`, then `PaperMain.onLoadAsync` starts bStats and runs
-`PaperInstance.onLoad()` (packet api, inventory framework), and `onEnableAsync` runs
-`PaperInstance.onEnable()` (listeners, the `SurfApiPaper` implementation) plus the scoreboard
-registry. `PaperInstance` extends `CoreInstance`
-(`common/core/impl/.../core/server/CoreInstance.kt`), whose `bootstrap`/`onLoad`/`onEnable`/
-`onDisable` are `@MustBeInvokedByOverriders`.
+A plugin that needs its own main class or bootstrapper names it with `mainClass(...)` or
+`bootstrapper(...)`; it must extend the matching base class, which `checkSurfPluginClasses`
+verifies. With a named bootstrapper, the scan starts at that class's package.
+
+The api's own lifecycle, for reference: `PaperBoostrapper.bootstrap` installs NATS and Redis, builds
+surf-api's root bootstrap context through `PaperSpringRuntime` and runs `PaperInstance.bootstrap()`.
+`PaperMain.onLoad` starts bStats, builds the root context (`loadRoot`, which also installs it for
+surf-api's static entry points) and runs `PaperInstance.onLoad()`. `onEnable` runs the root's enable
+hooks, then `PaperInstance.onEnable()` (packet api, listeners, the `SurfApiPaper` implementation).
+`onDisable` closes the plugin contexts that are still open, tears surf-api down and closes the root
+last. `PaperInstance` extends `CoreInstance` (`common/core/impl/.../core/server/CoreInstance.kt`),
+whose `bootstrap`/`onLoad`/`onEnable`/`onDisable` are `@MustBeInvokedByOverriders`.
 
 ## `SurfApiPaper`
 
-`platform/paper/api/.../paper/SurfApiPaper.kt` is the platform object, a `SurfApiCore` with Paper
-additions. Its `companion object` holds one member, `INSTANCE`, which downcasts
-`SurfApiCore.instance` - itself a `by surfBean<SurfApiCore>()` property - so every call goes through
-it:
+`platform/paper/api/.../paper/SurfApiPaper.kt` is the platform interface, a `SurfApiCore` with Paper
+additions. Inject it:
 
 ```kotlin
-if (SurfApiPaper.INSTANCE.isFolia) { /* ... */ }
-SurfApiPaper.INSTANCE.sendPlayerToServer(player, "lobby")
-val result = SurfApiPaper.INSTANCE.skipTimeSmoothly(world, SkipOperations.NEXT_SUNRISE)
+@Service
+class LobbyTransfer(private val api: SurfApiPaper) {
+
+    suspend fun sendToLobby(player: Player) {
+        if (api.isFolia) { /* ... */ }
+        api.sendPlayerToServer(player, "lobby")
+        api.skipTimeSmoothly(player.world, SkipOperations.NEXT_SUNRISE)
+    }
+}
 ```
 
 `isFolia` and `isCanvasMc` are the platform probes; `skipTimeSmoothly` in its six overloads is the
 `time/` feature.
-
-The companion member is `INSTANCE` on almost every api type, including `SurfApiPaper` itself. Four
-spell it lowercase - `SurfApiCore.instance`, `SurfConfigApi.instance`, `ActionBarService.instance`
-and `SuspendRequirementService.instance` - so check the interface rather than guessing.
 
 ## What only exists on Paper
 
@@ -163,21 +179,22 @@ Details and examples: **`references/paper-features.md`**.
 
 | Package | What it is for |
 | --- | --- |
-| `sidebar/` | packet-based sidebars built with a DSL - `sidebar(plugin) { }`, `autoUpdatingSidebar(plugin) { }`, `globalSidebar(plugin) { }`. Titles and lines render asynchronously per viewer, only changes are sent, and the sidebar closes itself when the plugin is disabled. |
-| `scoreboard/` | the previous scoreboard api on top of scoreboard-library. `SurfScoreboardApi` is `@Deprecated` and points at `sidebar/`; it is still wired up in `PaperMain`, so existing code keeps working. Use `sidebar/` for anything new. |
+| `sidebar/` | packet-based sidebars built with a Kotlin DSL - `sidebar(plugin) { }`, `autoUpdatingSidebar(plugin) { }`, `globalSidebar(plugin) { }`. Titles and lines render asynchronously per viewer, only changes are sent, and the sidebar closes itself when the plugin is disabled. |
 | `pdc/` | persistent data containers on *blocks*, which Bukkit has no api for. `Block.pdc()` returns a `CustomBlockPersistentDataContainer`. |
 | `packet/` | two things: `SurfPaperPacketListenerApi` registers raw clientbound/serverbound packet listeners (`@NmsUseWithCaution`), and `SurfPaperPacketApi` registers lore handlers that rewrite an item's lore on the way to the client without touching the real item. |
-| `visualizer/` | block-display outlines for single locations, many locations or a whole area, shown to chosen viewers. `@ExperimentalVisualizerApi` - callers must opt in. |
-| `glow/` | makes an entity, a block or a location glow for one viewer only, in a chosen `NamedTextColor`. |
-| `region/` | `TickThreadGuard.ensureTickThread(...)` - asserts the current thread owns a position, chunk, entity, bounding box or the global tick, for code that has to be correct on Folia. |
+| `visualizer/` | block-display outlines for single locations, many locations or a whole area, shown to chosen viewers. `@ExperimentalVisualizerApi` - a warning-level opt-in. |
+| `glow/` | `SurfGlowingApi` makes an entity, a block or a location glow for one viewer only, in a chosen `NamedTextColor`. |
+| `region/` | the injected `TickThreadGuard`'s `ensureTickThread(...)` - asserts the current thread owns a position, chunk, entity, bounding box or the global tick, for code that has to be correct on Folia. |
 | `hook/` | the PlaceholderAPI bridge: build a `PapiExpansion` out of `PapiPlaceholder`s and register it with `SurfPaperPAPIHook`. PlaceholderAPI is a soft dependency. |
 | `permission/` | `PermissionRegistry` - an abstract class whose `create(permission)` registers a Bukkit `Permission` with the plugin manager and returns the node string, so permission constants are declared and registered in one place. |
-| `time/` | smooth time skipping: `SkipOperations` (NEXT_SUNRISE, NEXT_SUNSET, NEXT_DAY, NEXT_NOON, NEXT_NIGHT, NEXT_MIDNIGHT) and `TimeSkipResult`, driven through `SurfApiPaper.skipTimeSmoothly`. |
+| `time/` | smooth time skipping: `SkipOperations` (NEXT_SUNRISE, NEXT_SUNSET, NEXT_DAY, NEXT_NOON, NEXT_NIGHT, NEXT_MIDNIGHT) and `TimeSkipResult`, driven through `skipTimeSmoothly` on the injected `SurfApiPaper`. |
+| `coroutine/` | `PaperDispatchers`, `entity.withEntity { }` and `Int.ticks` - see Folia in `references/project-setup.md`. |
 
-Smaller Paper-side helpers worth knowing: `extensions/` (`server`, `pluginManager`), `util/`
-(`bukkit-util.kt` with `doInChunkAsync`, `chunkX`/`chunkZ`, `position-util.kt`,
-`reflection-remapper-util.kt`), `builder/item-stack.kt` and `serializer/bukkit/` (Configurate
-serializers for `ItemStack`, `Location`, `BlockData`, players and more).
+Smaller Paper-side helpers worth knowing: `extensions/` (`server`, `pluginManager`), `event/`
+(`listen<T> { }`, `Listener.register()`), `util/` (`bukkit-util.kt` with `doInChunkAsync`,
+`chunkX`/`chunkZ`, `position-util.kt`, `reflection-remapper-util.kt`), `builder/item-stack.kt` and
+`serializer/bukkit/` (Configurate serializers for `ItemStack`, `Location`, `BlockData`, players and
+more).
 
 ## Where not to look here
 
@@ -188,8 +205,8 @@ Paper packages:
 - `dialog/` → **`surf-api-dialogs`**
 - `command/` → **`surf-api-commands`**
 - messages, components and `Colors` → **`surf-api-messages`**
-- `serializer/`, Configurate config classes → **`surf-api-config`**
-- `event/`, `listen<T>` → **`surf-api-events`**
-- the bean container, `@Service`, `SurfComponent` → **`surf-api-components`**
+- `serializer/`, `@SurfConfig` classes and `ConfigHandle` → **`surf-api-config`**
+- the surf event bus and `@SurfEventHandler` → **`surf-api-events`**
+- beans, `SurfLifecycle`, `@PluginApi`, `@ConditionalOnPlugin` → **`surf-api-components`**
 - `nms/` and the version bridges → **`surf-api-nms`**
 - module layout, Gradle paths, `surf.module-*` plugins → **`surf-api-build`**

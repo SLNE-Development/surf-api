@@ -1,13 +1,11 @@
 # surf-nats
 
-[![Version](https://img.shields.io/badge/version-1.0.0--SNAPSHOT-informational)](https://github.com/SLNE-Development/surf-nats)
 [![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)](https://openjdk.org/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-coroutines-7F52FF?logo=kotlin)](https://kotlinlang.org/)
 [![Protobuf](https://img.shields.io/badge/Protobuf-proto2-4285F4)](https://protobuf.dev/)
 [![NATS](https://img.shields.io/badge/NATS-JetStream-27AAE1?logo=natsdotio)](https://nats.io)
 [![jnats](https://img.shields.io/badge/jnats-2.26.4-27AAE1)](https://github.com/nats-io/nats.java)
 [![Platforms](https://img.shields.io/badge/platforms-Paper%20%7C%20Velocity%20%7C%20Minestom%20%7C%20Standalone-lightgrey)](#installation)
-[![Last commit](https://img.shields.io/github/last-commit/SLNE-Development/surf-nats)](https://github.com/SLNE-Development/surf-nats/commits)
 
 surf-nats connects surf plugins and microservices over [NATS](https://nats.io). It provides two things:
 
@@ -31,8 +29,8 @@ surf-nats requires Java 25.
 
 ## Installation
 
-Apply the Gradle plugin `dev.slne.surf.nats` in every module that uses surf-nats or contains contracts. The plugin
-and the surf-nats libraries share one version:
+Apply the Gradle plugin `dev.slne.surf.api.gradle.nats` in every module that uses surf-nats or contains contracts. The
+plugin and the surf-nats libraries share the version of surf-api:
 
 ```kotlin
 // settings.gradle.kts
@@ -44,11 +42,11 @@ pluginManagement {
 
 // build.gradle.kts
 plugins {
-    id("dev.slne.surf.nats") version "SURF_NATS_VERSION"
+    id("dev.slne.surf.api.gradle.nats") version "SURF_API_VERSION"
 }
 ```
 
-Replace `SURF_NATS_VERSION` with the surf-nats release you build against.
+Replace `SURF_API_VERSION` with the surf-api release you build against.
 
 The plugin supports Kotlin/JVM modules only and fails on Kotlin Multiplatform modules. In every module, it does the
 following:
@@ -60,62 +58,90 @@ following:
 
 Next to a surf-api Gradle plugin, it also does the following:
 
-- It adds `surf-nats-api`, the type adapters in `surf-nats-types-common`, plus `surf-nats-types-paper` in Paper
-  modules, and `kotlinx-serialization-protobuf` to `compileOnly` and `testImplementation`. The surf-nats modules use
+- It adds `surf-api-nats-api`, the type adapters in `surf-api-nats-types-common`, plus `surf-api-nats-types-paper` in
+  Paper modules, and `kotlinx-serialization-protobuf` to `compileOnly` and `testImplementation`. The surf-nats modules use
   the version of the plugin, `kotlinx-serialization-protobuf` the kotlinx.serialization version that surf-nats is
-  built with. At runtime, the surf-nats platform plugin provides them.
-- It declares the surf-nats platform plugin as a dependency of your plugin: with
-  `dev.slne.surf.api.gradle.paper-plugin` as a required bootstrap and server dependency in `paper-plugin.yml`,
-  loaded before your plugin, and with `dev.slne.surf.api.gradle.velocity` as a required dependency in the plugin
-  file. A `dev.slne.surf.api.gradle.paper-raw` module gets the Paper types but no dependency declaration, so declare
-  the dependency on `surf-nats-paper` in its plugin file yourself.
-- With `dev.slne.surf.api.gradle.standalone`, it applies the surf-microservice plugin `dev.slne.surf.microservice`
-  and adds the runtime `surf-nats-standalone` to `implementation` (see [Microservices](#microservices)).
+  built with. At runtime, the surf-api plugin of the platform provides them.
+- It does not declare a surf-nats plugin as a dependency of your plugin: the surf-nats runtime ships inside the
+  surf-api plugin of Paper, Velocity, and Minestom, which your plugin already depends on.
+- With `dev.slne.surf.api.gradle.standalone`, it applies the surf-microservice plugin
+  `dev.slne.surf.api.gradle.microservice` and adds `surf-api-nats-spring` to `implementation` (see
+  [Microservices](#microservices)).
 
-With `paper-plugin` and `velocity`, applying the plugin is enough. Do not register the surf-nats plugin as a
-dependency yourself there, because the build would declare it twice. On Minestom, register the dependency in
-`minestomPluginFile`, which the plugin does not do:
-
-```kotlin
-minestomPluginFile {
-    pluginDependencies {
-        register("surf-nats-minestom")
-    }
-}
-```
-
-On Paper, Velocity, and Minestom, the surf-nats plugin opens the connection at startup and closes it at shutdown.
-Your plugin only creates and closes its own clients.
+On Paper, Velocity, and Minestom, the surf-api plugin opens the connection and closes it. A plugin that uses NATS
+gets a `NatsClient` bean named after the plugin: the plugin name in lowercase, with every run of characters other than
+letters and digits replaced by one hyphen (`Surf Chat` becomes `surf-chat`). Inject the client, or inject a generated
+service interface to call a remote service, or annotate a bean with `@NatsService` or `@NatsListener` methods; the
+plugin context registers them when the plugin is enabled. The connection opens when the first plugin that uses NATS
+loads, and closes with the last one. A plugin that uses nothing of NATS never connects. The surf-api plugin cannot
+connect during Paper's bootstrap phase, so create no client there.
 
 ### Microservices
 
-A microservice applies only the surf-api standalone plugin and `dev.slne.surf.nats`:
+A microservice applies only the surf-api standalone plugin and `dev.slne.surf.api.gradle.nats`:
 
 ```kotlin
 plugins {
-    id("dev.slne.surf.api.gradle.standalone")
-    id("dev.slne.surf.nats") version "SURF_NATS_VERSION"
+    id("dev.slne.surf.api.gradle.standalone") version "SURF_API_VERSION"
+    id("dev.slne.surf.api.gradle.nats") version "SURF_API_VERSION"
 }
 ```
 
-The surf-nats plugin applies the surf-microservice plugin and adds `surf-nats-standalone` at its own version. Do not
-add either yourself. The microservice runtime starts surf-nats before `onBootstrap` and shuts it down after
-`onDisable`. At shutdown, the clients stop receiving events and calls before `onDisable`, so `onDisable` can still
-publish events and call services. Close your clients in `onDisable`. Do not call `SurfNatsStandalone` yourself.
+The surf-nats plugin applies the surf-microservice plugin and adds `surf-api-nats-spring` at the plugin's version. Do
+not add either yourself. A microservice uses NATS through its Spring context. Do not call `SurfNatsStandalone`
+yourself, and do not create a `NatsClient` unless you want a name other than the default (see
+[Microservice client name](#microservice-client-name)). The context contributes:
+
+- A `NatsClient` named after the microservice, which closes with the context.
+- Service proxies for the generated service interfaces that your beans inject.
+- The `@NatsService` and `@NatsListener` beans of the application, registered when the surf-api hooks enable the
+  application and drained before they disable it.
+- A health indicator, the bean `natsHealthIndicator`. Spring Boot drops the `HealthIndicator` suffix, so its health
+  component is `nats`, which `microservicectl health` includes.
+
+A `@NatsService` bean that also carries `@NatsTransactional` runs its persistent methods at most once per message when
+the reliability module of surf-microservice is on the class path. The start fails without it.
+
+#### Microservice client name
+
+The microservice name decides the client name: `SURF_MICROSERVICE_NAME`, otherwise `spring.application.name`,
+otherwise the class name of the application in kebab case, without an `Application` or `Microservice` suffix
+(`PunishApplication` becomes `punish`). The client name is the queue group of `ANY_INSTANCE`
+listeners and the origin of the events the application publishes (`<client name>@<instance id>`). Service queue groups
+come from the contract and do not depend on it.
+
+A microservice built for surf-api 3.x named its client itself, for example with
+`NatsClient.create("punish-service")`. If that name differs from the microservice name, the upgraded service joins
+another queue group. During a rolling deploy, old and new instances sit in different groups, so each `ANY_INSTANCE`
+event is handled once per group, which is twice. A listener that filters on the origin of an event stops matching the
+instances of the other version.
+
+To keep the old name, declare a `NatsClient` bean. The bean of the application wins over the default client, and every
+service proxy, service and listener of the context uses it:
+
+```kotlin
+@Bean(destroyMethod = "close")
+fun natsClient(): NatsClient = NatsClient.create("punish-service")
+```
+
+To change the name instead, set `SURF_MICROSERVICE_NAME` or `spring.application.name`. Both also rename the database
+pool, the migration history table (a new name starts with an empty history) and the owner of stored replies, so prefer
+the bean when you only need the old client name. Switch to the default name once every instance of the old version is gone.
 
 ### NATS server
 
-You need a NATS server with JetStream enabled. For local development, start one with the `docker-compose.yml` in
-this repository:
+You need a NATS server with JetStream enabled. For local development, start one with `infra/nats/docker-compose.yml`
+from the root of the surf-api repository:
 
 ```sh
-docker compose up -d
+docker compose -f infra/nats/docker-compose.yml up -d nats
 ```
 
 ## Configuration
 
-surf-nats reads `config.yml` from its data directory: the plugin folder on Paper, Velocity, and Minestom, or
-`<dataPath>/nats` in a microservice.
+surf-nats reads `config.yml` from its data directory: the `nats` folder inside the data folder of the surf-api plugin
+on Paper, Velocity, and Minestom, or `<dataPath>/nats` in a microservice. When the file does not exist yet, surf-api
+copies it once from the data folder of the former `surf-api-nats-<platform>` or `surf-nats-<platform>` plugin.
 
 ```yaml
 servers:
@@ -337,7 +363,7 @@ surf-nats distributes contracts through [weaver](https://weaver.slne.dev), the p
 | `weaver.token`                 | `WEAVER_TOKEN`, optional for reading, required for publishing |
 | `weaver.repositories`          | `proto-releases-public`, searched for dependencies            |
 | `weaver.publishing.repository` | `proto-releases-public`, for releases and snapshots           |
-| `weaver.publishing.group`      | `project.group`                                               |
+| `weaver.publishing.group`      | `project.group` when set explicitly, otherwise unset          |
 | `weaver.publishing.name`       | `rootProject.name` for published modules, otherwise unset     |
 | `weaver.publishing.version`    | `project.version`                                             |
 
@@ -368,14 +394,14 @@ rejects a publish that does not compile.
 |------------------------------|-------------------------------------------------------------------------------------------------|
 | `stageSurfNatsWeaverSource`  | Copies the contracts into `build/surf-nats/weaver-source`.                                      |
 | `fetchProtos`                | Downloads the weaver dependencies of the module into `build/weaver/protos`.                     |
-| `fetchSurfNatsBaseline`      | Downloads the previous release of the module into `build/surf-nats/baseline`.                   |
+| `fetchSurfNatsBaseline`      | Downloads the previous release of the module into `build/surf-nats/baseline/protos`.            |
 | `checkSurfNatsCompatibility` | Compares the contracts with the baseline (see [Versioning](#versioning)).                       |
 | `publishProtos`              | Uploads the contracts to weaver.                                                                |
 
 The surf-nats protos (`surf/nats/v1/options.proto` and `surf/types/**`) come with the plugin, so code generation
-works without network access. They are also published to weaver as `dev.slne.surf.nats:surf-nats-types-common` and
-`dev.slne.surf.nats:surf-nats-types-paper`. The plugin adds `surf-nats-types-common`, at its own version, to the
-publish manifest of every module that publishes, and `surf-nats-types-paper` as well in Paper modules
+works without network access. They are also published to weaver as `dev.slne.surf.api:surf-api-nats-types-common` and
+`dev.slne.surf.api:surf-api-nats-types-paper`. The plugin adds `surf-api-nats-types-common`, at its own version, to the
+publish manifest of every module that publishes, and `surf-api-nats-types-paper` as well in Paper modules
 (`dev.slne.surf.api.gradle.paper-plugin` or `paper-raw`), so the server can resolve the imports. A release of your
 module cannot depend on a snapshot of surf-nats: the server rejects that publish. Use a release of surf-nats for a
 release of your module.
@@ -403,7 +429,7 @@ dependencies {
 }
 ```
 
-A project dependency must apply `dev.slne.weaver`. `dev.slne.surf.nats` applies it and stages `protoSourceDirs` as
+A project dependency must apply `dev.slne.weaver`. `dev.slne.surf.api.gradle.nats` applies it and stages `protoSourceDirs` as
 `weaver.publishing.source`. The build uses that module's `weaver.publishing.source` directly, without publishing.
 Publishing your module also needs a `weaver.publishing` group, name, and version in the other module. A remote
 dependency needs an exact version. Ranges and `+` are not supported. The dependencies also appear in the manifest of
@@ -426,15 +452,24 @@ compatibility check.
 
 ## Clients
 
-A `NatsClient` is your application's handle to NATS. Create one per plugin or microservice and close it when the
-application shuts down:
+A `NatsClient` is your application's handle to NATS. A standalone JVM application without a Spring context depends on
+`surf-api-nats-standalone`, opens the connection with `SurfNatsStandalone`, and creates and closes its client itself:
 
 ```kotlin
+SurfNatsStandalone.start(Path.of("nats"))
 val client = NatsClient.create("profiles")
 
 // On shutdown:
 client.close()
+SurfNatsStandalone.shutdown()
 ```
+
+`start` suspends until it is connected and reads `config.yml` from the given directory.
+
+A plugin on Paper, Velocity, or Minestom does not create its client. It injects the `NatsClient` bean of its plugin
+context, which closes with the context, and its client name is the normalised plugin name (see
+[Installation](#installation)). A microservice injects the bean of its context as well, and its client name is the
+microservice name (see [Microservice client name](#microservice-client-name)).
 
 The client name identifies your application. It consists of lowercase letters and digits, separated by hyphens.
 All instances of an application use the same name. Within one JVM, the name must be unique.
@@ -851,7 +886,7 @@ move the callers to version 2, then remove version 1.
 
 The task `checkSurfNatsCompatibility` runs with `check` and compares the contracts against the last release of the
 module in weaver, the baseline. `fetchSurfNatsBaseline` picks the highest release lower than `project.version` in
-`weaver.publishing.repository` and downloads its contracts into `build/surf-nats/baseline`. To compare against a
+`weaver.publishing.repository` and downloads its contracts into `build/surf-nats/baseline/protos`. To compare against a
 specific release instead, set its version:
 
 ```kotlin
@@ -1145,14 +1180,23 @@ Points that behave differently:
 
 ## Modules
 
-| Module                    | Contents                                                                                       |
-|---------------------------|------------------------------------------------------------------------------------------------|
-| `surf-nats-gradle-plugin` | The Gradle plugin `dev.slne.surf.nats`: code generation, build checks, compatibility check, weaver integration |
-| `surf-nats-api`           | The public API: client, `@NatsListener`, contexts, `Answer`, exceptions, generated-code model  |
-| `surf-nats-core`          | The implementation for the JVM, and the Node.js client `@slne/surf-api-nats`                       |
-| `surf-nats-types-common`  | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers, also published to weaver as protos |
-| `surf-nats-types-paper`   | The `surf.types.paper.v1` messages and their Paper serializers, also published to weaver as protos |
-| `surf-nats-paper`         | The Paper plugin                                                                               |
-| `surf-nats-velocity`      | The Velocity plugin                                                                            |
-| `surf-nats-minestom`      | The Minestom plugin                                                                            |
-| `surf-nats-standalone`    | The runtime for microservices, started by surf-microservice                                    |
+The modules live in `infra/nats` of the surf-api repository. Each module directory `surf-nats-<name>` builds the
+artifact `dev.slne.surf.api:surf-api-nats-<name>` and the Gradle project `:surf-api-nats:…:surf-api-nats-<name>`, for
+example `:surf-api-nats:surf-api-nats-core`.
+
+| Directory                                   | Contents                                                                                       |
+|---------------------------------------------|------------------------------------------------------------------------------------------------|
+| `surf-nats-api`                             | The public API: client, `@NatsListener`, contexts, `Answer`, exceptions, generated-code model  |
+| `surf-nats-core`                            | The implementation for the JVM, and the Node.js client `@slne/surf-api-nats`                   |
+| `surf-nats-types/surf-nats-types-common`    | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers, also published to weaver as protos |
+| `surf-nats-types/surf-nats-types-paper`     | The `surf.types.paper.v1` messages and their Paper serializers, also published to weaver as protos |
+| `surf-nats-spring`                          | The Spring integration, bundled into the surf-api plugin of each platform and used by microservices: plugin clients, service proxies, `@NatsService` and `@NatsListener` beans |
+| `surf-nats-platform/surf-nats-standalone`   | `SurfNatsStandalone` for plain JVM applications that do not run a Spring context, published as a shaded jar with jnats and the BouncyCastle it depends on relocated below `dev.slne.surf.nats.libs`; BouncyCastle's native libraries are left out, so it runs its Java implementation |
+| `surf-nats-test/surf-nats-test-common`      | Test contracts shared by the test plugin and the test microservice, published to weaver and Maven |
+| `surf-nats-test/surf-nats-test-fixtures`    | Contracts and a mapped type for the tests of `surf-nats-core`, `surf-nats-spring` and the local test plugins, not published |
+| `surf-nats-test/surf-nats-test-fixtures-internal` | Contracts generated with `generatedVisibility = INTERNAL`, not published                 |
+| `surf-nats-test/surf-nats-test-paper`       | A Paper test plugin that serves and calls the test contracts, not published                    |
+| `surf-nats-test/surf-nats-test-microservice` | A test microservice with an end-to-end test that starts its shadow jar, not published         |
+
+The Gradle plugin `dev.slne.surf.api.gradle.nats`, with code generation, build checks, the compatibility check, and
+the weaver integration, is part of `surf-api-gradle-plugin` in `tooling/gradle-plugin`.

@@ -2,7 +2,7 @@
 
 Sources: `view/state/` (`StateDsl.kt`, `StateHandle.kt`, `DeferredState.kt`, `StateRegistry.kt`),
 `view/button/` (`ViewButton.kt`, `ViewButtonDsl.kt`, `ViewButtonHandle.kt`) and
-`common/core/api/.../inventory/framework/internal/ViewButtonStates.kt`.
+`common/inventory/api/.../inventory/framework/internal/ViewButtonStates.kt`.
 
 ## Why state is deferred
 
@@ -139,7 +139,7 @@ not depend on which block you write first.
 
 ### The handle
 
-`ViewButtonHandle<T>` wraps a `lazyState` holding a `ViewButtonSession<T>` (core internal: the
+`ViewButtonHandle<T>` wraps a `lazyState` holding a `ViewButtonSession<T>` (shared, `common/inventory/api` internal: the
 ordered values, the initial one, the current index, `hasChanged`, wrapping `advance(step)`), plus
 the immutable `ViewButtonSpec`.
 

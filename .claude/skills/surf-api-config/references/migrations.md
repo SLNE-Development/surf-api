@@ -17,7 +17,32 @@ run in registration order. A negative version is rejected with `IllegalArgumentE
 
 ## Registering
 
-The normal place is the config companion's `init` block, because `SpongeConfigClass` hands its
+### On a `@SurfConfig` class
+
+List the migrations in the annotation. Their versions are their positions, starting at 1:
+
+```kotlin
+@ConfigSerializable
+@SurfConfig(
+    "config.yml",
+    migrations = [RenameServerVersionMigration::class, RemoveDeprecatedFieldMigration::class],
+)
+data class MyPluginConfig(
+    val release: String = "1.0.0",
+    val maxPlayers: Int = 100,
+)
+```
+
+`RenameServerVersionMigration` upgrades to version 1, `RemoveDeprecatedFieldMigration` to version 2.
+Each entry must be a Kotlin `object` or a class with a constructor without parameters; anything else
+fails the plugin's start with "Migration … of … must be an object or have a constructor without
+parameters". Append new migrations at the end: removing or reordering one changes the version of
+every migration after it, and deployed files already store those numbers. An inline lambda
+migration and a custom `versionKey` are not available here; the version key is `_config_version`.
+
+### In a companion class
+
+Register them in the companion's `init` block, because `SpongeConfigClass` hands its
 `migrationBuilder` to the manager when the manager is created:
 
 ```kotlin
@@ -28,7 +53,7 @@ data class MyPluginConfig(
 ) {
     companion object : SpongeYmlConfigClass<MyPluginConfig>(
         MyPluginConfig::class.java,
-        plugin.dataPath,
+        Path("config", "my-library"),
         "migration-example-config.yml"
     ) {
         init {
@@ -63,8 +88,8 @@ object RemoveDeprecatedFieldMigration : ConfigMigration {
 
 Two other entry points:
 
-- Build a `ConfigMigrationBuilder` yourself and pass it to
-  `surfConfigApi.createSpongeYmlConfigManager<C>(folder, fileName, migrations)` (the `migrations`
+- Build a `ConfigMigrationBuilder` yourself and pass it to an injected `SurfConfigApi`:
+  `configApi.createSpongeYmlConfigManager<C>(folder, fileName, migrations)` (the `migrations`
   parameter defaults to an empty `ConfigMigrationBuilder()`).
 - `manager.addMigration(version, migration)` / `manager.addMigration(version) { node -> … }` after
   the fact. Both return the manager for chaining, and both take effect **only on the next
@@ -76,7 +101,8 @@ Two other entry points:
 - On the initial load, inside `SpongeConfigManager.buildConfigManager`, **before** the node is
   deserialized into the config class. If anything changed, the node is saved straight away so the
   version field is persisted even if deserialization later fails.
-- On every `reloadFromFile()`, again before deserialization, via the private `applyMigrations`.
+- On every `reloadFromFile()` and `ConfigHandle.reload()`, again before deserialization, via the
+  private `applyMigrations`.
 
 Nothing applies migrations on `save()`.
 
@@ -92,9 +118,6 @@ init {
     migration(1, …)
 }
 ```
-
-Beware: the KDoc on `versionKey` says the default is `"config-version"`. It is wrong; the constant
-is `_config_version`.
 
 A file with no version field is version `-1` (Configurate's `VERSION_UNKNOWN`), so **every**
 registered migration runs the first time an existing, pre-versioning file is loaded. Write

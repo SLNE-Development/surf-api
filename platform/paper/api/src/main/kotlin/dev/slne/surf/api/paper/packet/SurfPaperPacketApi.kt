@@ -2,13 +2,14 @@
 
 package dev.slne.surf.api.paper.packet
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandler
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandlerSimple
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLorePriority
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
+import dev.slne.surf.api.spring.SurfApiBean
 
 /**
  * The SurfBukkitPacketApi interface extends packet handling capabilities for Bukkit environments.
@@ -21,6 +22,7 @@ import org.bukkit.plugin.Plugin
  * as automatic caller-plugin detection via `getCallingPlugin` is unreliable across different
  * call-site configurations.
  */
+@SurfApiBean
 interface SurfPaperPacketApi {
 
     /**
@@ -195,10 +197,6 @@ interface SurfPaperPacketApi {
      * @param plugin The plugin whose listeners should be unregistered.
      */
     fun unregisterPacketLoreListener(plugin: Plugin)
-
-    companion object {
-        val INSTANCE get() = api
-    }
 }
 
 private val api by surfBean<SurfPaperPacketApi>()

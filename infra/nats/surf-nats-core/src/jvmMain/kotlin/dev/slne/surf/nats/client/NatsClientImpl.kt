@@ -10,9 +10,12 @@ import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.connection.NatsConnectionManager
+import dev.slne.surf.nats.connection.SharedNatsConnection
 import dev.slne.surf.nats.descriptor.NatsEvent
+import dev.slne.surf.nats.embedded.NatsClientControl
 import dev.slne.surf.nats.event.*
 import dev.slne.surf.nats.protocol.ProtocolHeaders
+import dev.slne.surf.nats.rpc.LazyRpcCaller
 import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
 import dev.slne.surf.nats.rpc.RpcCallerImpl
 import dev.slne.surf.nats.rpc.ServiceDescriptor
@@ -36,13 +39,15 @@ import kotlin.time.toJavaDuration
  *
  * Listeners and service handlers run in [clientScope] on [Dispatchers.Default], so they must not block. An exception
  * that escapes a coroutine of the scope is logged. [close] cancels the scope.
+ *
+ * A client that [connect] was called on holds a share of the connection until it closes.
  */
 @InternalNatsApi
 internal class NatsClientImpl(
     name: String,
     internal val clientOrigin: ClientOrigin,
     private val onClose: (NatsClientImpl) -> Unit,
-) : AbstractNatsClient<NatsRegistration>(name), NatsClient {
+) : AbstractNatsClient<NatsRegistration>(name), NatsClient, NatsClientControl {
 
     internal val clientScope = CoroutineScope(
         Dispatchers.Default +
@@ -68,6 +73,12 @@ internal class NatsClientImpl(
 
     private val inboundDrained = CompletableFuture<Unit>()
 
+    private val connectionLock = Any()
+
+    private var holdsConnection = false
+
+    private var connectionReleased = false
+
     @Volatile
     private var replyDispatcher: Dispatcher? = null
 
@@ -92,8 +103,12 @@ internal class NatsClientImpl(
         connection.publish(descriptor.subject, header, data)
     }
 
-    override suspend fun registerListener(listener: Any): NatsRegistration = trackRegistration {
-        val methods = ListenerMethods.findListenerMethods(listener, this)
+    override suspend fun registerListener(listener: Any): NatsRegistration {
+        return registerListener(listener, listener.javaClass)
+    }
+
+    override suspend fun registerListener(listener: Any, scanType: Class<*>): NatsRegistration = trackRegistration {
+        val methods = ListenerMethods.findListenerMethods(listener, this, scanType)
         val entries = methods.map { it to ListenerInvokerFactory.create(listener, it.method) }
 
         val added = ArrayList<Pair<ListenerMethod, ListenerInvoker>>()
@@ -180,18 +195,32 @@ internal class NatsClientImpl(
     @Suppress("UNCHECKED_CAST")
     override fun <S : Any> service(type: KClass<S>): S {
         checkOpen()
-        return (serviceProxies[type.java] ?: createProxy(type.java)) as S
+        return (serviceProxies[type.java] ?: createProxy(type.java, lazy = false)) as S
     }
 
-    private fun createProxy(type: Class<*>): Any {
+    @Suppress("UNCHECKED_CAST")
+    override fun <S : Any> lazyService(type: KClass<S>): S {
+        checkOpen()
+        return (serviceProxies[type.java] ?: createProxy(type.java, lazy = true)) as S
+    }
+
+    /**
+     * Creates the proxy of [type]. An eager proxy starts its caller right away, which needs the connection; a lazy
+     * one starts it with its first call.
+     */
+    private fun createProxy(type: Class<*>, lazy: Boolean): Any {
         lifecycle.requireCloseNotStarted()
         var proxy: Any? = null
         lifecycle.admitBeforeClose(
             add = {
                 proxy = serviceProxies.computeIfAbsent(type) { serviceType ->
                     val descriptor = serviceDescriptor(serviceType)
-                    val caller = RpcCallerImpl(this, descriptor)
-                    ServiceProxyFactory.create<Any>(descriptor, caller).also { caller.start() }
+                    if (lazy) {
+                        ServiceProxyFactory.create(descriptor, LazyRpcCaller(this, descriptor))
+                    } else {
+                        val caller = RpcCallerImpl(this, descriptor)
+                        ServiceProxyFactory.create<Any>(descriptor, caller).also { caller.start() }
+                    }
                 }
             },
             undo = { proxy?.let { serviceProxies.remove(type, it) } },
@@ -238,7 +267,7 @@ internal class NatsClientImpl(
      * that calls [close] during the drain blocks until the drain gives up on that handler at its drain timeout.
      */
     @Blocking
-    internal fun stopAccepting() {
+    override fun stopAccepting() {
         lifecycle.stopAccepting()
         drainInboundOnce {
             val timeout = natsConfig.drainTimeout.seconds
@@ -263,7 +292,31 @@ internal class NatsClientImpl(
         serviceProxies.clear()
         eventSubscriptions.close()
         clientScope.cancel("${lifecycle.label} closed")
+        releaseConnection()
         onClose(this)
+    }
+
+    @Blocking
+    override fun connect() {
+        synchronized(connectionLock) {
+            check(!connectionReleased) { "NatsClient[$name] is closed" }
+            if (holdsConnection) return
+            SharedNatsConnection.acquire()
+            holdsConnection = true
+        }
+    }
+
+    /**
+     * Returns this client's share of the connection, if it holds one, and keeps [connect] from taking another.
+     */
+    @Blocking
+    private fun releaseConnection() {
+        synchronized(connectionLock) {
+            connectionReleased = true
+            if (!holdsConnection) return
+            holdsConnection = false
+            SharedNatsConnection.release()
+        }
     }
 
     @Blocking

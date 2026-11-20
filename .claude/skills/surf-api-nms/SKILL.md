@@ -14,14 +14,19 @@ Three layers, and the whole design rests on keeping them apart.
 | Version implementations | `platform/paper/nms/v1-21-11`, `v26-1`, `v26-2`, `v26-3` | one `V26_3…Impl` per bridge, plus extensions, packet registry, glowing, reflection |
 
 `platform/paper/nms/api/build.gradle.kts` depends on `projects.surfApiPaperApi`,
-`projects.surfApiInternal` and `libs.paper.api` — and on **no** `paperDevBundle`. That is the
-structural guarantee: the plumbing layer cannot reference `net.minecraft.*` even by accident,
-because those classes are not on its compile classpath.
+`projects.surfApiInternal`, `libs.paper.api` and, for `AbstractChannelInjector`, `netty-transport`
+and `netty-common` (all compile-only; Netty comes from the server at runtime) — and on **no**
+`paperDevBundle`.
+That is the structural guarantee: the plumbing layer cannot reference `net.minecraft.*` even by
+accident, because those classes are not on its compile classpath.
 
 ## How a bridge is declared
 
-A bridge is an interface with a `companion object` whose `INSTANCE` reads a private file-level
-property bound to the bean container. From
+A bridge is an interface whose implementation is a bean of surf-api's root Spring context. Most
+bridges are only injected and are the interface plus its proxy bean. When surf-api's own static
+code reads a bridge, the interface also gets a `companion object` whose `INSTANCE` reads a private
+file-level `by surfBean` property: public and `@InternalSurfApi` when other surf-api modules read
+it, `internal` when only `platform/paper/api` does. From
 `platform/paper/api/.../nms/bridges/SurfPaperNmsCommonBridge.kt`:
 
 ```kotlin
@@ -33,6 +38,7 @@ interface SurfPaperNmsCommonBridge {
     fun getStateId(material: Material): Int
 
     companion object {
+        @InternalSurfApi
         val INSTANCE get() = bridge
     }
 }
@@ -41,19 +47,21 @@ interface SurfPaperNmsCommonBridge {
 private val bridge by surfBean<SurfPaperNmsCommonBridge>()
 ```
 
-A caller writes `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()` — no instance to pass, no
-provider, no version. `surfBean` lives in `foundation/di/api/.../di/SurfContainer.kt`, is
-`@InternalSurfApi` (hence the file-level `@OptIn`), and resolves `SurfContainer.root.bean(T::class)`
-on first read.
+Code inside surf-api writes `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()` — no instance to
+pass, no provider, no version. The root build opts every surf-api module into `@InternalSurfApi`;
+a plugin does not get that opt-in and injects the bridge interface into a bean instead.
+`surfBean` lives in `foundation/spring/api/.../spring/SurfContexts.kt`, is `@InternalSurfApi`
+(hence the file-level `@OptIn`), and reads the bean from the installed root context
+(`SurfContexts.root`) on first access.
 
 Two things about that shape are load-bearing:
 
 - **`INSTANCE` is a getter, and the companion does not implement the interface.** A
-  `companion object : Foo by bridge` would have to read the bean while the companion's initialiser
-  runs, which is during class initialisation — possibly while the container is still building that
-  very bean. `SurfContainer` detects that and says so, but the fix is this shape.
+  `companion object : Foo by bridge` would read the bean while the companion's initialiser runs,
+  which is during class initialisation — possibly before surf-api installed its root context, or
+  while that context is still creating the very bean.
 - **`by surfBean<T>()`, never an eager `= ...`.** Eager initialisation resolves when the class is
-  loaded, so whichever class happens to load first decides whether the container was ready.
+  loaded, so whichever class happens to load first decides whether the root context was ready.
 
 ## `@NmsUseWithCaution`
 
@@ -67,20 +75,25 @@ deliberately **not** annotated, and
 
 ## Runtime selection, end to end
 
-1. A consumer touches `SurfPaperNmsCommonBridge.INSTANCE` → `surfBean` → `SurfContainer.root`.
-2. The root container answers with `SurfPaperNmsCommonBridgeProxy` from
-   `platform/paper/impl/.../proxy/`, an ordinary `@Service` bean declared as
+1. A consumer injects `SurfPaperNmsCommonBridge`, or surf-api's own code reads
+   `SurfPaperNmsCommonBridge.INSTANCE` → `surfBean` → `SurfContexts.root`.
+2. The root context answers with `SurfPaperNmsCommonBridgeProxy` from
+   `platform/paper/impl/.../proxy/`, an ordinary Spring `@Service` bean
+   (`org.springframework.stereotype.Service`, found by the root context's component scan of
+   `dev.slne.surf.api`) declared as
    `class SurfPaperNmsCommonBridgeProxy : SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()`.
-   There is one such proxy per bridge, all in that one package.
+   There is one such proxy per bridge, all in that one package. The proxies are singletons of the
+   root context, so they are created when surf-api's load phase builds it.
 3. `NmsProvider.current` (in `platform/paper/nms/api/.../common/NmsProvider.kt`) resolves the
-   server version through `NmsVersionResolver` (`Bukkit.getMinecraftVersion()` matched against
-   `NmsVersion.versionPrefix`), then scans the classpath for
+   server version through `NmsVersionResolver` (`NmsVersion.matching(Bukkit.getMinecraftVersion())`),
+   then scans the classpath for
    `META-INF/surf-api/nms-providers/*.json`, decodes `List<NmsProviderMeta>`, picks the entry whose
    `version` matches, and reflectively instantiates it through a `(JavaPlugin)` constructor.
 4. Those JSON files are generated by KSP. `V26_3NmsProvider` carries
    `@NmsProviderMarker(NmsVersion.V26_3)`; `NmsProvidersCollector` in
    `tooling/gradle-plugin/processor/.../nms/` collects every annotated class and writes
-   `META-INF/surf-api/nms-providers/<module>.json`.
+   `META-INF/surf-api/nms-providers/<module>.json`. The processor runs only in modules that apply
+   the `surf.ksp-processor` convention.
 5. `PacketApiLoader.onEnable()` in `platform/paper/impl` calls `provider.initialize()`, registers
    `provider.createPacketListeners()` and `AbstractChannelInjector.instance.register()`;
    `onDisable()` unwinds it and calls `provider.shutdown()`.
@@ -92,16 +105,21 @@ deliberately **not** annotated, and
 ## Build side
 
 Every version module's `build.gradle.kts` is the same file with one string changed:
-`id("surf.module-impl")` + `id("io.papermc.paperweight.userdev") apply true`,
-`api(projects.surfApiPaperNmsApi)`, `api(projects.surfApiCoreImpl)`, and
-`paperweight.paperDevBundle("26.3.build.+")`.
+`id("surf.module-impl")` + `id("surf.ksp-processor")` +
+`id("io.papermc.paperweight.userdev") apply true`, `api(projects.surfApiPaperNmsApi)`,
+`api(projects.surfApiCoreImpl)`, and `paperweight.paperDevBundle("26.3.build.+")`.
+
+`surf.ksp-processor` (`buildSrc/src/main/kotlin/surf.ksp-processor.gradle.kts`) applies KSP and adds
+`ksp(project(":surf-api-processor"))`. Every module that declares `@NmsProviderMarker` or
+`@GenerateReflection` must apply it, and only the version modules do. Without it the module still
+compiles, but `NmsProvider` and `generatedReflectionAccessor` find nothing at runtime.
 
 `paperweight.userdev` is declared `apply false` in the root `build.gradle.kts` at version
 `2.0.0-beta.24` and applied per version module. `paperDevBundle(…)` pulls the Mojang-mapped Paper
 server for that version — that is what puts `net.minecraft.*` and `org.bukkit.craftbukkit.*` on the
 module's compile classpath. The bundle strings differ in shape per version
-(`"1.21.11-R0.1-SNAPSHOT"`, `"26.1+"`, `"26.3.build.+"`); `NmsVersion.paperDevBundle` in the
-generator records the canonical string for each.
+(`"1.21.11-R0.1-SNAPSHOT"`, `"26.1+"`, `"26.2.build.+"`, `"26.3.build.+"`); `NmsVersion.paperDevBundle`
+in the generator records the string a newly generated module gets.
 
 `platform/paper/impl/build.gradle.kts` pulls the version modules in with `runtimeOnly`, never
 `api`/`implementation` — one line per version, e.g. `runtimeOnly(projects.surfApiPaperNmsV263)`.
@@ -124,13 +142,13 @@ Worked example: 26.4, generated from 26.3. Steps 1–3 are the generator; 4–8 
 3. **Run `./gradlew generateNmsModule`** (`-PforceOverwrite` to skip the overwrite prompt, which
    otherwise fails outright when there is no console). It **deletes** the target's
    `src/main/kotlin`, copies every `.kt` from the reference with `versionId` and `classPrefix`
-   replaced in both path and content, applies the transformations in declaration order, writes
-   `src/main/resources/META-INF/services/dev.slne.surf.api.paper.nms.common.NmsProvider`, and writes
+   replaced in both path and content, applies the transformations in declaration order, and writes
    `build.gradle.kts` only when absent.
 4. **Register the runtime enum** — `foundation/internal/src/main/kotlin/.../nms/NmsVersion.kt`:
    `V26_4("26.4")`. This is a *different* enum from the generator's; the generator's lives in an
    included build and is not on the settings classpath. Without this entry the generated
-   `@NmsProviderMarker(NmsVersion.V26_4)` does not compile.
+   `@NmsProviderMarker(NmsVersion.V26_4)` does not compile. The new module's `build.gradle.kts`
+   from the generator already applies `surf.ksp-processor`.
 5. **Include the module** — add `"v26-4"` to the literal list in `settings.gradle.kts`
    (`listOf("v1-21-11", "v26-1", "v26-2", "v26-3").forEach { includeModule("platform/paper/nms/$it") }`).
 6. **Ship it at runtime** — add `runtimeOnly(projects.surfApiPaperNmsV264)` to
@@ -159,28 +177,29 @@ transformation DSL and what to check when the new module loads but the wrong one
   `checkApiBoundary` rejects any API module that depends on it. Consumers depend on
   `platform/paper/api` and get the implementation through the proxy at runtime. Never
   `implementation(projects.surfApiPaperNmsV263)`.
-- **`META-INF/services/…NmsProvider` is dead weight.** The generator still writes it
-  (`NmsModuleGenerator.generateServiceFile`) and `v26-2`/`v26-3` carry one, but `NmsProvider.current`
-  reads `META-INF/surf-api/nms-providers/*.json`, never a services file. `v26-1` and `v1-21-11` have
-  no `src/main/resources` at all and work fine. Do not add a provider by hand-writing a services
-  entry — annotate with `@NmsProviderMarker` and let KSP write the JSON.
-- **Version matching is a string prefix, and the fallback is lexicographic.** `NmsVersionResolver`
-  does `entries.firstOrNull { mcVersion.startsWith(it.versionPrefix) }`, so a `26.11` server would
-  match `V26_1` ("26.1") when `V26_1` is declared first; and both the resolver and
-  `NmsProvider.current` fall back to `maxByOrNull { it.versionPrefix }`, which compares strings —
-  `"26.10" < "26.3"`. Both bite at a two-digit minor, so declaration order in
-  `foundation/internal/.../NmsVersion.kt` is load-bearing.
-- **A missing provider fails at first touch, not at startup.** `NmsProvider.current` is a `by lazy`,
-  so `No NmsProvider implementations found` / `Failed to load NmsProvider` surfaces on the first
-  bridge call. Usual causes: KSP did not run for the version module, or the module is missing from
-  `runtimeOnly` (step 6 above).
-- **`Reflection.initialize()` is an empty shell in the 26.x modules.** `V26_1Reflection`,
-  `V26_2Reflection` and `V26_3Reflection` have their `ReflectionRemapper` body commented out; only
-  `V1_21_11Reflection` still builds a `reflection-remapper` proxy factory. New reflective access goes
-  through `@GenerateReflection`.
-- **Mixins are not part of this layer.** `sponge-mixin` and `mixinextras` appear only in
-  `platform/minestom/impl`; the Paper NMS layer uses the channel injector and generated reflection
-  instead.
+- **Providers are found through JSON, not `META-INF/services`.** `NmsProvider.current` reads
+  `META-INF/surf-api/nms-providers/*.json`, never a services file, and no version module carries one.
+  Do not add a provider by hand-writing a services entry — annotate with `@NmsProviderMarker` and let
+  KSP write the JSON.
+- **Versions compare as numbers, never as strings.** `NmsVersion.matches` compares the server
+  version component by component, so `26.10` never matches `V26_1`, and `NmsVersion.matching` tries
+  the entries newest first. Without a match, `NmsVersionResolver` falls back to `NmsVersion.NEWEST`
+  and logs a warning, and `NmsProvider.current` picks the newest provider it found through
+  `NmsVersion.NEWEST_FIRST`. Keep comparisons on `components`; `maxByOrNull { it.versionPrefix }`
+  ranks `"26.3"` above `"26.10"`.
+- **A missing provider fails surf-api's load phase.** `NmsProvider.current` is a `by lazy`, but the
+  bridge proxies are singletons of surf-api's root context, which `PaperMain.onLoad` builds, so
+  `No NmsProvider implementations found` / `Failed to load NmsProvider` fails that context's
+  refresh. Usual causes: the version module does not apply `surf.ksp-processor`, or it is missing
+  from `runtimeOnly` (step 6 above).
+- **`Reflection.initialize()` is empty in the 26.x modules.** `V26_1Reflection`,
+  `V26_2Reflection` and `V26_3Reflection` declare `fun initialize() = Unit`, which exists so
+  `V<prefix>NmsProvider.initialize()` has something to call; only `V1_21_11Reflection` builds a
+  `reflection-remapper` proxy factory. Paper ships Mojang-mapped, so a remapper has nothing to
+  translate. New reflective access goes through `@GenerateReflection`.
+- **Mixins are not part of this layer.** `sponge-mixin` and `mixinextras` appear only in the
+  Minestom modules (`platform/minestom/impl` and `platform/minestom/npc-impl`); the Paper NMS layer
+  uses the channel injector and generated reflection instead.
 
 ## Declaring a remapped field or method
 
@@ -207,8 +226,9 @@ constant-argument annotations.
 
 ## Not in this skill
 
-The DI container, inventories, dialogs and commands each have their own skill — list
-`.claude/skills/` and read the matching one instead of inferring their rules from here. Module
+Spring beans and their lifecycle (`surf-api-components`), inventories, dialogs and commands each
+have their own skill — list `.claude/skills/` and read the matching one instead of inferring their
+rules from here. Module
 layout, published coordinates, `checkApiBoundary` and the Gradle conventions are the
 `surf-api-build` skill.
 

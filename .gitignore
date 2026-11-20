@@ -136,3 +136,9 @@ logs/
 !/.projectatlas/projectatlas-nonsource-files.toon
 
 bin/
+# JVM crash and compiler replay dumps
+replay_pid*.log
+hs_err_pid*.log
+
+# Local mirror of .claude/skills for other agent tools; regenerated, not tracked.
+.agents/

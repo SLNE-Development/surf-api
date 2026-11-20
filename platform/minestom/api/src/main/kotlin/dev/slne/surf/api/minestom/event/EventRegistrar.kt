@@ -13,7 +13,7 @@ import net.minestom.server.event.EventNode
  *     }
  * }
  *
- * surfMinestomApi {
+ * surfMinestomServer {
  *     listeners(WelcomeListener())
  * }
  * ```

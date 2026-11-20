@@ -1,14 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands
 
-import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.jorel.commandapi.CommandAPICommand
 import dev.jorel.commandapi.arguments.LocationType
 import dev.jorel.commandapi.kotlindsl.*
 import dev.slne.surf.api.paper.command.executors.playerExecutorSuspend
 import dev.slne.surf.api.paper.pdc.block.pdc
+import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.util.chunkX
 import dev.slne.surf.api.paper.util.chunkZ
 import dev.slne.surf.api.paper.util.doInChunkAsync
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import kotlinx.coroutines.withContext
 import org.bukkit.Location
@@ -189,14 +190,14 @@ class BlockPdcContainerTest(name: String) : CommandAPICommand(name) {
         val value = "$label-copy-${System.currentTimeMillis()}"
 
         val result = runCatching {
-            val sourcePdc = withContext(plugin.regionDispatcher(source)) {
+            val sourcePdc = withContext(dispatchers.region(source)) {
                 val sourceBlock = source.block
                 val sourcePdc = sourceBlock.pdc()
                 sourcePdc.set(TEST_KEY, PersistentDataType.STRING, value)
                 sourcePdc
             }
 
-            withContext(plugin.regionDispatcher(target)) {
+            withContext(dispatchers.region(target)) {
                 val targetBlock = target.block
                 sourcePdc.copyTo(targetBlock)
                 targetBlock.pdc().get(TEST_KEY, PersistentDataType.STRING)
@@ -213,6 +214,9 @@ class BlockPdcContainerTest(name: String) : CommandAPICommand(name) {
             sender.sendMessage("Block PDC copy test [$label] failed with exception: ${error::class.simpleName}: ${error.message}")
         }
     }
+
+    @OptIn(InternalSurfApi::class)
+    private val dispatchers get() = SurfPaperPluginRuntime.get().dispatchers(plugin)
 
     private fun chunkDistance(source: Location, target: Location): Int {
         val dx = abs(source.chunkX - target.chunkX)

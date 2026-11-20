@@ -4,6 +4,8 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 import java.util.*
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
 
 /**
  * A throw-away Groovy DSL build in `build/tmp/testkit`, run offline through Gradle TestKit.
@@ -21,6 +23,35 @@ internal class TestBuild private constructor(val dir: File, private val withSurf
     }
 
     fun script(content: String): File = file("build.gradle", content)
+
+    /**
+     * Writes `src/main/java/<package>/<Name>.java` for [className], a binary name such as `demo.Launcher`, with [members]
+     * as the class body.
+     */
+    fun javaClass(className: String, members: String = ""): File {
+        val packageName = className.substringBeforeLast('.', "")
+        val simpleName = className.substringAfterLast('.')
+        return file(
+            "src/main/java/${className.replace('.', '/')}.java",
+            "package $packageName;\n\npublic class $simpleName {\n$members\n}",
+        )
+    }
+
+    /**
+     * Writes the jar at [path] with [entries], pairs of entry name and text.
+     */
+    fun jar(path: String, vararg entries: Pair<String, String>): File {
+        val file = dir.resolve(path)
+        file.parentFile.mkdirs()
+        JarOutputStream(file.outputStream()).use { jar ->
+            for ((name, content) in entries) {
+                jar.putNextEntry(JarEntry(name))
+                jar.write((content.trimIndent() + "\n").toByteArray())
+                jar.closeEntry()
+            }
+        }
+        return file
+    }
 
     fun run(vararg arguments: String): BuildResult = runner(arguments).build()
 

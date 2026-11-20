@@ -23,6 +23,12 @@ val notPublished = setOf(
     "surf-api-paper-plugin-test",
     "surf-api-minestom-example",
     "surf-api-minestom-example-plugin",
+    "surf-api-paper-shared-bean-provider",
+    "surf-api-paper-shared-bean-consumer",
+    "surf-api-paper-shared-bean-test",
+    "surf-api-velocity-shared-bean-provider",
+    "surf-api-velocity-shared-bean-consumer",
+    "surf-api-velocity-shared-bean-test",
 )
 
 val snapshot = (findProperty("snapshot") as String).toBooleanStrict()

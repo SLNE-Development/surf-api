@@ -31,7 +31,7 @@ slot overlays as glyphs inside the inventory title.
 | `view/state/`, `view/button/` | `StateDsl.kt`, `StateHandle`, `StateRegistry`; `statefulButton`/`toggleButton`/`tripleButton`, `ViewButtonHandle` |
 | `view/container/` | `ViewContainer`, `ViewContainerComponent`, the concrete components, `ViewContainerDSL.kt` |
 | `view/settings/` | `SurfViewSettings`, `SimpleViewSettings`, `PaginatedViewSettings`, `ViewRows`, `ViewFontMetrics`, `ViewHeaderGeometry`, `align/TextAlignment`, `builder/` |
-| `view/icon/`, `ViewFrameAccessor.kt`, `extensions.kt` | `ViewIcon`; `viewFrame`, `register`, `open`, `titleBuilder`, `modifyConfig`, `outlineItem` |
+| `view/icon/`, `ViewFrameAccessor.kt`, `extensions.kt` | `ViewIcon`; `ViewFrameAccessor` and the internal `viewFrame`; `register`, `open`, `titleBuilder`, `modifyConfig`, `outlineItem` |
 
 Everything is top-level functions with **context parameters**, so each one needs an import. Import
 `…inventory.framework.view.*` for the lifecycle DSL, `…framework.dsl.*` for the slot/item DSL, and
@@ -83,15 +83,30 @@ delegating. A subclass gets `modifyContainer(context) { }` and
 ### Register, then open
 
 ```kotlin
-statsView.register()          // JavaPlugin#onLoad / onLoadAsync
-statsView.open(player)        // or open(player, data), open(players), open(players, data)
+@Component
+class StatsMenu : SurfLifecycle {
+    private val view = surfView("Statistiken") { /* … */ }
+
+    override suspend fun onLoad() {
+        view.register()
+    }
+
+    fun show(player: Player) = view.open(player)
+}
 ```
 
-`register()` is `viewFrame.with(this)`, `open` is `viewFrame.open(javaClass, player[, data])`, and
-`viewFrame` is `ViewFrameAccessor.INSTANCE.viewFrame()`, resolved from the bean container through a
-private `by surfBean<ViewFrameAccessor>()` and implemented per platform (`@Service` on
-`platform/*/impl/.../ViewFrameAccessorImpl`). Register during load; opening an unregistered view
-fails in IF.
+`open` also takes `(player, data)`, `(players)` and `(players, data)`.
+
+`register()` is `viewFrame.with(this)` and `open` is `viewFrame.open(javaClass, player[, data])`
+(`extensions.kt`). The `ViewFrame` is a bean of surf-api's root context
+(`platform/*/impl/.../inventory/framework/InventoryFrameworkConfiguration.kt`), created and
+registered with the server by surf-api; the extensions read it from there on first use. Register
+views in a load hook - `SurfLifecycle.onLoad` - so they are known before the first open; opening an
+unregistered view fails in IF.
+
+A bean that needs the frame itself injects `me.devnatan.inventoryframework.ViewFrame` directly, or
+the `ViewFrameAccessor` bean, whose `viewFrame()` returns the same frame. Both platforms ship
+`ViewFrameAccessor`; only surf-api implements it.
 
 ## Lifecycle hooks and which context you get
 
@@ -206,10 +221,10 @@ settings {
 ```
 
 The concrete components are `ViewContainerTitleComponent`, `ViewContainerRowTextComponent`,
-`ViewContainerGlyphComponent`, `ViewBlockCellComponent` and (deprecated, a no-op)
-`ViewContainerBackHintComponent`. The container DSL gives `header(...)`, `rowText(...)`,
-`rowTextAt(...)`, `clearRowText(s)`, `blockCell/blockSlot/blockRow/blockColumn/blockAllSlots`,
-`unblock*`, `addChild`/`removeChild`/`removeChildrenOfType`. See
+`ViewContainerGlyphComponent` and `ViewBlockCellComponent`. The container DSL gives `header(...)`,
+`rowText(...)`, `rowTextAt(...)`, `clearRowText(s)`,
+`blockCell/blockSlot/blockRow/blockColumn/blockAllSlots`, `unblock*`,
+`addChild`/`removeChild`/`removeChildrenOfType`. See
 **`references/container-components.md`**; for the pixel math, `charWidths` overrides, custom
 geometry and alignment recipes, **`references/header-and-alignment.md`**.
 
@@ -224,11 +239,14 @@ applied, so it cannot override the model.
 
 ## Paper vs Minestom
 
-`platform/minestom/api/.../minestom/inventory/framework/` is the same 62 files with the same names,
-package `dev.slne.surf.api.minestom.*`. Everything in this skill holds for both - the whole `view/`,
-`view/state/`, `view/button/`, `view/container/`, `view/settings/` and `view/pagination/` surface,
-defaults, glyphs and pixel math included (the math is shared through
-`common/core/api/.../inventory/framework/internal/`). Only these differ:
+`platform/minestom/api/.../minestom/inventory/framework/` holds the same files with the same names,
+package `dev.slne.surf.api.minestom.*`. The platform-neutral types - the settings enums
+(`ViewRows`, `PaginationViewRows`, ...), `ViewFontMetrics`, `ViewHeaderGeometry`, `TextAlignment`,
+`ViewContainerComponent` and `ViewBlockCellComponent` - live once in
+`common/inventory/api/.../inventory/framework/`. Everything in this skill holds for both - the
+whole `view/`, `view/state/`, `view/button/`, `view/container/`, `view/settings/` and
+`view/pagination/` surface, defaults, glyphs and pixel math included (the math is shared through
+`common/inventory/api/.../inventory/framework/internal/`). Only these differ:
 
 - Platform types: `BukkitItemComponentBuilder` → `MinestomItemComponentBuilder`
   (`dsl/PaperItemComponentBuilderDSL.kt` → `dsl/MinestomItemComponentBuilderDSL.kt`), `Material`
@@ -274,6 +292,11 @@ defaults, glyphs and pixel math included (the math is shared through
    is consumed by the back navigation instead.
 10. **`tripleButton` requires exactly three states** and every button state needs an appearance
     (`item(...)` or `renderItem { }`), both checked when the view is built, not when it opens.
+11. **`suspendSource(plugin)` needs a loaded plugin.** The `plugin` overloads of `suspendSource` and
+    `lazySuspendSource` (Paper) resolve the plugin's scope when the `pagination { }` block runs,
+    which for `paginatedSurfView` is when the view is built. Built in a top-level property or a
+    bean constructor, that is before the plugin's context is up, and it throws "Plugin '…' does not
+    run on surf-api or has not loaded yet". Build such a view in `onLoad`, or pass a scope.
 
 ## References
 

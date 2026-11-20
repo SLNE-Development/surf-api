@@ -14,6 +14,8 @@ import dev.slne.surf.api.paper.command.executors.playerExecutorSuspend
 import dev.slne.surf.api.paper.command.util.awaitAsyncPlayerProfile
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import dev.slne.surf.surfapi.bukkit.test.command.args.EquipmentSlotArgument
 import org.bukkit.command.CommandSender
 import org.bukkit.inventory.EquipmentSlot
@@ -116,7 +118,7 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         edit: (SurfPaperNmsPlayerBridge.PlayerInventoryEdit) -> Unit
     ): Boolean {
         return runCatching {
-            SurfPaperNmsPlayerBridge.INSTANCE.editOfflineInventory(target, edit)
+            playerBridge.editOfflineInventory(target, edit)
         }.onFailure { error ->
             sender.sendMessage("editOfflineInventory failed: ${error::class.simpleName}: ${error.message}")
         }.isSuccess
@@ -133,3 +135,6 @@ class OfflineInventoryEditTest(name: String) : CommandAPICommand(name) {
         )
     }
 }
+
+@OptIn(InternalSurfApi::class)
+private val playerBridge by surfBean<SurfPaperNmsPlayerBridge>()

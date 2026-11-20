@@ -1,37 +1,38 @@
 package dev.slne.surf.database.testing
 
 import dev.slne.surf.api.config.type.number.IntOr
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
+import dev.slne.surf.database.config.PoolConfig
+import dev.slne.surf.database.config.internal.DatabaseConnector
 import dev.slne.surf.database.config.internal.R2dbcConnectionFactories
+import dev.slne.surf.database.config.internal.newDialect
+import dev.slne.surf.database.logger.ComponentSqlLogger
 import dev.slne.surf.database.migration.internal.JdbcDataSources
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
 import io.r2dbc.spi.Connection
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
-import org.jetbrains.exposed.v1.core.vendors.DatabaseDialect
-import org.jetbrains.exposed.v1.core.vendors.MariaDBDialect
-import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
 import org.slf4j.event.Level
 import org.testcontainers.containers.JdbcDatabaseContainer
 import org.testcontainers.mariadb.MariaDBContainer
 import org.testcontainers.postgresql.PostgreSQLContainer
 import reactor.core.publisher.Mono
 import java.sql.DriverManager
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Lazily started, JVM-wide singleton database containers shared by all tests.
  */
 object DatabaseContainers {
-    private val mariadb: MariaDBContainer by lazy { MariaDBContainer("mariadb:11").also { it.start() } }
-    private val postgres: PostgreSQLContainer by lazy { PostgreSQLContainer("postgres:17").also { it.start() } }
+    private val mariadb: MariaDBContainer by lazy { MariaDBContainer("mariadb:12.3").also { it.start() } }
+    private val postgres: PostgreSQLContainer by lazy { PostgreSQLContainer("postgres:18").also { it.start() } }
     private val mariadbOutsideUtc: MariaDBContainer by lazy {
-        MariaDBContainer("mariadb:11").withCommand("--default-time-zone=$SERVER_TIME_ZONE").also { it.start() }
+        MariaDBContainer("mariadb:12.3").withCommand("--default-time-zone=$SERVER_TIME_ZONE").also { it.start() }
     }
     private val postgresOutsideUtc: PostgreSQLContainer by lazy {
-        PostgreSQLContainer("postgres:17")
+        PostgreSQLContainer("postgres:18")
             .withCommand("postgres", "-c", "fsync=off", "-c", "timezone=$POSTGRES_SERVER_TIME_ZONE")
             .also { it.start() }
     }
@@ -63,13 +64,13 @@ object DatabaseContainers {
 private val isolationCounter = AtomicInteger()
 
 /**
- * Builds a working [DatabaseApi] (R2DBC pool plus JDBC migration data source) for this container.
+ * Builds a working [TestDatabase] (R2DBC pool plus JDBC migration data source) for this container.
  *
  * With [fresh] set, a new empty database (MariaDB) or schema (PostgreSQL) is created first, so a test
  * does not see tables of other tests.
  */
-fun JdbcDatabaseContainer<*>.toDatabaseApi(fresh: Boolean = false): DatabaseApi =
-    connectionDetails(fresh).toDatabaseApi()
+fun JdbcDatabaseContainer<*>.toTestDatabase(fresh: Boolean = false): TestDatabase =
+    connectionDetails(fresh).toTestDatabase()
 
 /**
  * Connection details for this container's default database (MariaDB) or `public` schema (PostgreSQL).
@@ -111,38 +112,30 @@ internal fun JdbcDatabaseContainer<*>.connectionDetails(fresh: Boolean = false):
 }
 
 /**
- * Builds a working [DatabaseApi] (R2DBC pool plus JDBC migration data source) for these details.
+ * Builds a working [TestDatabase] (R2DBC pool plus JDBC migration data source) for these details.
  *
  * [sessionSetupSql], if set, runs once on every new R2DBC connection, for example to change a session setting.
  */
-internal fun ConnectionDetails.toDatabaseApi(sessionSetupSql: String? = null): DatabaseApi {
+internal fun ConnectionDetails.toTestDatabase(sessionSetupSql: String? = null): TestDatabase {
     val pool = ConnectionPool(
         ConnectionPoolConfiguration.builder()
-            .connectionFactory(R2dbcConnectionFactories.create(this))
+            .connectionFactory(R2dbcConnectionFactories.create(this, Duration.ofMillis(PoolConfig.Timeouts().lockTimeoutMillis)))
             .maxSize(5)
             .apply { if (sessionSetupSql != null) postAllocate { it.executeUpdate(sessionSetupSql) } }
             .build()
     )
 
-    // The API owns this pool, so shutdown() releases its connections to the shared container.
-    return DatabaseApi.createDatabase(
-        connectionFactory = pool,
-        dialect = dialect(),
-        logger = ComponentLogger.logger("DatabaseApi"),
-        logLevel = Level.DEBUG,
+    // The test database owns this pool, so close() releases its connections to the shared container.
+    return TestDatabase(
+        database = DatabaseConnector.connect(
+            connectionFactory = pool,
+            dialect = databaseType.newDialect(),
+            sqlLogger = ComponentSqlLogger(ComponentLogger.logger("TestDatabase"), Level.DEBUG),
+        ),
         migrationDataSource = JdbcDataSources.create(this),
         releaseResources = { pool.dispose() },
-        configCustomizer = {}
     )
 }
 
 private fun Connection.executeUpdate(sql: String): Mono<Void> =
     Mono.from(createStatement(sql).execute()).flatMap { Mono.from(it.rowsUpdated) }.then()
-
-/**
- * The Exposed dialect matching [ConnectionDetails.databaseType].
- */
-internal fun ConnectionDetails.dialect(): DatabaseDialect = when (databaseType) {
-    DatabaseType.MARIADB -> MariaDBDialect()
-    DatabaseType.POSTGRESQL -> PostgreSQLDialect()
-}

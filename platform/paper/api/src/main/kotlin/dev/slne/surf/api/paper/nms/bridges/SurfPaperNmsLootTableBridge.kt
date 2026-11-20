@@ -2,15 +2,16 @@
 
 package dev.slne.surf.api.paper.nms.bridges
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import org.bukkit.damage.DamageSource
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.inventory.ItemStack
 
 @NmsUseWithCaution
+@SurfApiBean
 interface SurfPaperNmsLootTableBridge {
 
     fun getDifferentLootTable(
@@ -25,11 +26,4 @@ interface SurfPaperNmsLootTableBridge {
         damageSource: DamageSource,
         causedByPlayer: Boolean,
     ): Collection<ItemStack>
-
-    companion object {
-        val INSTANCE get() = bridge
-    }
 }
-
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsLootTableBridge>()

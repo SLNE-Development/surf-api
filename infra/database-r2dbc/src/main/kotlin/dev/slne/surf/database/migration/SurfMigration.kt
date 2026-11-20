@@ -1,6 +1,5 @@
 package dev.slne.surf.database.migration
 
-import dev.slne.surf.database.DatabaseApi
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import java.sql.Connection
 
@@ -42,7 +41,7 @@ abstract class JdbcMigration(version: String, description: String) : SurfMigrati
 /**
  * A migration written with Exposed over R2DBC.
  *
- * [migrate] runs in its own `suspendTransaction` on [DatabaseApi.database], separate from the transaction that writes
+ * [migrate] runs in its own `suspendTransaction` on the migrated database, separate from the transaction that writes
  * the history row. If the process stops between the two, the migration runs again on the next start. If it throws,
  * its transaction is rolled back, except for DDL on MariaDB.
  */

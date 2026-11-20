@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.reliability.operation
 
-import dev.slne.surf.database.DatabaseApi
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import dev.slne.surf.database.reliability.operation.AtomicOperationConflictException
 import dev.slne.surf.database.reliability.operation.AtomicOperationInProgressException
@@ -18,12 +18,7 @@ import dev.slne.surf.nats.rpc.NatsRedeliveryException
 import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -108,10 +103,10 @@ class TransactionalInterceptorIT {
     @EnumSource(TestVendor::class)
     fun `concurrent deliveries on two instances run the handler once`(vendor: TestVendor) = runBlocking {
         val database = vendor.freshDatabase()
-        database.open("instance-a").use { first ->
-            database.open("instance-b").use { second ->
-                val instanceA = TransactionalInterceptor(OWNER, AtomicOperations(first), client)
-                val instanceB = TransactionalInterceptor(OWNER, AtomicOperations(second), client)
+        database.openWithReliabilitySchema("instance-a").use { first ->
+            database.openWithReliabilitySchema("instance-b").use { second ->
+                val instanceA = TransactionalInterceptor(OWNER, AtomicOperations(first.database), client)
+                val instanceB = TransactionalInterceptor(OWNER, AtomicOperations(second.database), client)
                 val handlerStarted = CompletableDeferred<Unit>()
                 val releaseHandler = CompletableDeferred<Unit>()
 
@@ -120,11 +115,11 @@ class TransactionalInterceptorIT {
                         instanceA.intercept(call("message-5") {
                             handlerStarted.complete(Unit)
                             releaseHandler.await()
-                            publishAndReply(first, it, "from a")
+                            publishAndReply(first.database, it, "from a")
                         })
                     }
                     handlerStarted.await()
-                    val b = async { instanceB.intercept(call("message-5") { publishAndReply(second, it, "from b") }) }
+                    val b = async { instanceB.intercept(call("message-5") { publishAndReply(second.database, it, "from b") }) }
                     delay(500.milliseconds) // instance B now waits for the claim of instance A
                     releaseHandler.complete(Unit)
                     listOf(a.await(), b.await())
@@ -132,7 +127,7 @@ class TransactionalInterceptorIT {
 
                 assertEquals(listOf("from a", "from a"), replies.map { it.bytes.decodeToString() })
                 assertEquals(1, runs.get())
-                assertEquals(1, database.entryCount(first, "message-5"))
+                assertEquals(1, database.entryCount(first.database, "message-5"))
                 assertEquals(listOf("from a"), publishedMessages())
             }
         }
@@ -142,12 +137,12 @@ class TransactionalInterceptorIT {
     @EnumSource(TestVendor::class)
     fun `a claim held beyond the lock timeout requests a redelivery`(vendor: TestVendor) = runBlocking {
         val database = vendor.freshDatabase()
-        database.open("holder").use { first ->
-            database.open("waiter").use { second ->
-                val holder = TransactionalInterceptor(OWNER, AtomicOperations(first), client)
+        database.openWithReliabilitySchema("holder").use { first ->
+            database.openWithReliabilitySchema("waiter").use { second ->
+                val holder = TransactionalInterceptor(OWNER, AtomicOperations(first.database), client)
                 val waiter = TransactionalInterceptor(
                     OWNER,
-                    AtomicOperations(second, AtomicOperationsConfig(lockTimeout = 1.seconds)),
+                    AtomicOperations(second.database, AtomicOperationsConfig(lockTimeout = 1.seconds)),
                     client,
                 )
                 val handlerStarted = CompletableDeferred<Unit>()
@@ -158,13 +153,13 @@ class TransactionalInterceptorIT {
                         holder.intercept(call("message-6") {
                             handlerStarted.complete(Unit)
                             releaseHandler.await()
-                            insertAndReply(first, it, "held")
+                            insertAndReply(first.database, it, "held")
                         })
                     }
                     handlerStarted.await()
 
                     val failure = assertFailsWith<NatsRedeliveryException> {
-                        waiter.intercept(call("message-6") { insertAndReply(second, it, "never") })
+                        waiter.intercept(call("message-6") { insertAndReply(second.database, it, "never") })
                     }
                     assertIs<AtomicOperationInProgressException>(failure.cause)
 
@@ -180,8 +175,8 @@ class TransactionalInterceptorIT {
     @EnumSource(TestVendor::class)
     fun `an unavailable database requests a redelivery`(vendor: TestVendor) = runBlocking {
         val database = vendor.freshDatabase()
-        val closed = database.open("closed")
-        val interceptor = TransactionalInterceptor(OWNER, AtomicOperations(closed.api), client)
+        val closed = database.openWithReliabilitySchema("closed")
+        val interceptor = TransactionalInterceptor(OWNER, AtomicOperations(closed.database), client)
         closed.close()
 
         assertFailsWith<NatsRedeliveryException> {
@@ -195,7 +190,8 @@ class TransactionalInterceptorIT {
     fun `events are published in order once the handler's transaction has committed`(vendor: TestVendor) =
         runBlocking {
             val database = vendor.freshDatabase()
-            database.open("interceptor").use { api ->
+            database.openWithReliabilitySchema("interceptor").use { opened ->
+                val api = opened.database
                 val committedAtPublish = ConcurrentLinkedQueue<Long>()
                 val observingClient: NatsClient = mockk {
                     every { publish(any()) } answers {
@@ -247,7 +243,8 @@ class TransactionalInterceptorIT {
     @EnumSource(TestVendor::class)
     fun `a failed publish after the commit keeps the reply`(vendor: TestVendor) = runBlocking {
         val database = vendor.freshDatabase()
-        database.open("interceptor").use { api ->
+        database.openWithReliabilitySchema("interceptor").use { opened ->
+            val api = opened.database
             val failingClient: NatsClient = mockk {
                 every { publish(any()) } throws IllegalStateException("NATS is not connected")
             }
@@ -267,7 +264,7 @@ class TransactionalInterceptorIT {
             events.publish(chatEvent(vendor.name))
         }
 
-        assertTrue("registerTransactionalService" in failure.message.orEmpty())
+        assertTrue("@NatsTransactional" in failure.message.orEmpty())
     }
 
     private fun call(
@@ -280,14 +277,14 @@ class TransactionalInterceptorIT {
         handler(messageId)
     }
 
-    private suspend fun insertAndReply(api: DatabaseApi, messageId: String, reply: String): NatsPersistentReply {
-        suspendTransaction(db = api.database) {
+    private suspend fun insertAndReply(api: R2dbcDatabase, messageId: String, reply: String): NatsPersistentReply {
+        suspendTransaction(db = api) {
             exec("INSERT INTO test_entries (entry) VALUES ('$messageId')")
         }
         return valueReply(reply)
     }
 
-    private suspend fun publishAndReply(api: DatabaseApi, messageId: String, message: String): NatsPersistentReply {
+    private suspend fun publishAndReply(api: R2dbcDatabase, messageId: String, message: String): NatsPersistentReply {
         events.publish(chatEvent(message), aggregateId = messageId)
         return insertAndReply(api, messageId, message)
     }
@@ -298,10 +295,11 @@ class TransactionalInterceptorIT {
 
     private fun withInterceptor(
         vendor: TestVendor,
-        block: suspend (TestDatabase, DatabaseApi, TransactionalInterceptor) -> Unit,
+        block: suspend (TestDatabase, R2dbcDatabase, TransactionalInterceptor) -> Unit,
     ) = runBlocking {
         val database = vendor.freshDatabase()
-        database.open("interceptor").use { api ->
+        database.openWithReliabilitySchema("interceptor").use { opened ->
+            val api = opened.database
             block(database, api, TransactionalInterceptor(OWNER, AtomicOperations(api), client))
         }
     }

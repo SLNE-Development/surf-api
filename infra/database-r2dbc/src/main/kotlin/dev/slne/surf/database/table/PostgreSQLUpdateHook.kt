@@ -8,7 +8,9 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 
 internal object PostgreSQLUpdateHook {
 
-    /** Name of the shared `plpgsql` function backing the `updated_at` trigger on PostgreSQL. */
+    /**
+     * Name of the shared `plpgsql` function backing the `updated_at` trigger on PostgreSQL.
+     */
     private const val UPDATED_AT_FUNCTION = "surf_set_updated_at"
 
     /**

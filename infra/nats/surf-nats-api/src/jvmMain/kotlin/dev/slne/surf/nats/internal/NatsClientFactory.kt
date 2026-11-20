@@ -11,6 +11,7 @@ public interface NatsClientFactory {
 
     public fun create(name: String): NatsClient
 
+    @InternalNatsApi
     public companion object {
         /**
          * The implementation that surf-nats-core registers as a `java.util.ServiceLoader` service.

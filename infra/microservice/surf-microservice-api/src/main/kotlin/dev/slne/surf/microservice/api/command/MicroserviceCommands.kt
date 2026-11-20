@@ -1,19 +1,22 @@
 package dev.slne.surf.microservice.api.command
 
+import dev.slne.surf.microservice.api.InternalMicroserviceApi
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Registry of the console commands of the running microservice.
  *
- * There is one registry per JVM, also reachable as
- * [Microservice.commands][dev.slne.surf.microservice.api.Microservice.commands]. Commands can be registered at any
- * time, including in property initializers of the microservice class. The runtime looks up the command on every
+ * There is one registry per JVM. Every `MicroserviceCommand` bean of the application is registered while the
+ * context starts; commands can also be registered directly, at any time. The runtime looks up the command on every
  * invocation, so a command registered later is available immediately. Commands cannot be unregistered. All members
  * are thread-safe.
  *
- * The runtime registers the built-in commands `exit` (alias `quit`), `health`, `help` and `spark` before it creates
- * the microservice, so these labels are always taken.
+ * The runtime registers the built-in commands `exit` (alias `quit`), `health`, `help` and `spark` once all singletons
+ * of the context exist, before the `MicroserviceCommand` beans. A built-in is skipped, with a warning, if one of its
+ * labels is taken already, so a command registered earlier, for example in `main`, replaces it; a replacement of
+ * `exit` has to request the shutdown itself. A `MicroserviceCommand` bean that reuses the label of a registered
+ * built-in fails the start.
  */
 public object MicroserviceCommands {
     private val registered = CopyOnWriteArrayList<MicroserviceCommand>()
@@ -39,12 +42,27 @@ public object MicroserviceCommands {
      */
     @Synchronized
     public fun register(command: MicroserviceCommand): MicroserviceCommand {
-        val takenLabel = (listOf(command.name) + command.aliases)
-            .find { label -> find(label) != null }
+        val takenLabel = firstTakenLabel(command)
         require(takenLabel == null) { "Command label '$takenLabel' is already registered" }
 
         registered += command
         return command
+    }
+
+    /**
+     * Registers [command] unless its name or one of its aliases is taken already.
+     *
+     * Checks and registers under the lock of [register], so concurrent callers cannot both claim a label. Unlike
+     * [register], it does not throw for a taken label.
+     *
+     * @return `null` if [command] was registered, otherwise the first of its labels that is taken
+     */
+    @InternalMicroserviceApi
+    @Synchronized
+    public fun registerIfAbsent(command: MicroserviceCommand): String? {
+        val takenLabel = firstTakenLabel(command)
+        if (takenLabel == null) registered += command
+        return takenLabel
     }
 
     /**
@@ -64,6 +82,9 @@ public object MicroserviceCommands {
         description: String? = null,
         block: suspend MicroserviceCommandContext.(args: List<String>) -> Unit,
     ): MicroserviceCommand = register(LambdaMicroserviceCommand(name, aliases, description, block))
+
+    private fun firstTakenLabel(command: MicroserviceCommand): String? =
+        (listOf(command.name) + command.aliases).find { label -> find(label) != null }
 
     private class LambdaMicroserviceCommand(
         name: String,

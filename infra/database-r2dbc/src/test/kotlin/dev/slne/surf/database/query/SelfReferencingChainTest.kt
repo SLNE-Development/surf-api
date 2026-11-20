@@ -1,15 +1,15 @@
 package dev.slne.surf.database.query
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.testing.DatabaseContainers
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.v1.core.Schema
-import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import org.jetbrains.exposed.v1.r2dbc.insertAndGetId
@@ -47,7 +47,7 @@ abstract class SelfReferencingChainTest {
     // Built after connecting: Exposed quotes identifiers with the dialect that is current at creation.
     private lateinit var nodes: ChainNodes
 
-    private lateinit var api: DatabaseApi
+    private lateinit var testDb: TestDatabase
     private lateinit var database: R2dbcDatabase
 
     // Ids of the rows inserted in setUp.
@@ -62,8 +62,8 @@ abstract class SelfReferencingChainTest {
     fun setUp(): Unit = runBlocking {
         // A fresh database (MariaDB) / schema (PostgreSQL) per class: each gets its own name, which Exposed's
         // JVM-wide identifier-quoting cache is keyed on.
-        api = container().toDatabaseApi(fresh = true)
-        database = api.database
+        testDb = container().toTestDatabase(fresh = true)
+        database = testDb.database
 
         suspendTransaction(database) {
             val schemaName = schemaName
@@ -86,7 +86,7 @@ abstract class SelfReferencingChainTest {
     @AfterAll
     fun tearDown() {
         // The shared containers outlive this class; only the connection pool is released.
-        if (::api.isInitialized) api.shutdown()
+        if (::testDb.isInitialized) testDb.close()
     }
 
     private suspend fun insert(parent: Long?): Long = nodes.insertAndGetId { row ->

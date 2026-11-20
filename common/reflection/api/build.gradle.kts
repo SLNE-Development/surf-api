@@ -19,7 +19,7 @@ plugins {
 
 dependencies {
     // `SurfReflection.INSTANCE` resolves the implementation with `surfBean`.
-    api(projects.surfApiDiApi)
+    api(projects.surfApiSpringApi)
     // `InternalSurfApi`, which the `surfBean` call opts into, and the Kotlin reflection artifact
     // `@SurfProxy`'s `KClass` parameter arrives with.
     api(projects.surfApiAnnotations)

@@ -81,7 +81,7 @@ class ConfigMigrationBuilder {
     /**
      * Sets the path in the config file where the version number is stored.
      *
-     * Defaults to `"config-version"` (a single root-level key).
+     * Defaults to [DEFAULT_VERSION_KEY] (`_config_version`), a single root-level key.
      *
      * @param path the path components to the version key
      * @return this builder for chaining

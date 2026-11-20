@@ -1,6 +1,5 @@
 package dev.slne.surf.database.migration.internal
 
-import dev.slne.surf.database.DatabaseApi
 import java.net.URL
 import java.util.*
 
@@ -18,7 +17,7 @@ import java.util.*
 internal class MigrationClassLoader(
     private val plugin: ClassLoader,
     private val sqlPaths: List<String>,
-) : ClassLoader(DatabaseApi::class.java.classLoader) {
+) : ClassLoader(MigrationClassLoader::class.java.classLoader) {
 
     override fun findClass(name: String): Class<*> = plugin.loadClass(name)
 

@@ -10,7 +10,7 @@ import kotlin.time.Duration
  * Titles and lines are rendered asynchronously on a background dispatcher for each viewer
  * whenever the sidebar is updated. Renderers may suspend. Code that requires access to the
  * viewer's region thread should switch to it using
- * `withContext(plugin.entityDispatcher(viewer))`.
+ * `withContext(dispatchers.entity(viewer))` with the plugin's [dev.slne.surf.api.paper.coroutine.PaperDispatchers].
  *
  * Rendering for the same viewer never overlaps. If additional updates are requested while a
  * render is already in progress, they are coalesced into a single follow-up render. Only content
@@ -19,9 +19,7 @@ import kotlin.time.Duration
  * The sidebar is closed automatically when [plugin] is disabled, and viewers are removed
  * automatically when they leave the server.
  *
- * A player should only view one sidebar at a time, including legacy
- * [dev.slne.surf.api.paper.scoreboard.SurfScoreboard] instances, as they all use the same
- * sidebar display slot.
+ * A player should only view one sidebar at a time, as all sidebars share the same display slot.
  *
  * All operations are thread-safe.
  */

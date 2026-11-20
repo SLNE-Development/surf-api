@@ -9,6 +9,8 @@ import dev.slne.surf.api.paper.util.toVector3d
 import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.Location
 import org.bukkit.block.BlockType
 import org.spongepowered.math.vector.Vector3f
@@ -31,7 +33,7 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val loc3: Location by args
                 val loc4: Location by args
 
-                SurfPaperVisualizerApi.INSTANCE.createAreaVisualizer(
+                visualizerApi.createAreaVisualizer(
                     sender.world,
                     useHighestYBlock = true,
                     initialSettings = BlockDisplaySettings {
@@ -100,3 +102,6 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
         }
     }
 }
+
+@OptIn(InternalSurfApi::class)
+private val visualizerApi by surfBean<SurfPaperVisualizerApi>()

@@ -1,28 +1,22 @@
 package dev.slne.surf.nats.gradle.bridge
 
-import dev.slne.surf.api.gradle.generators.pluginfiles.VelocityPluginFile
 import dev.slne.surf.nats.gradle.SurfNatsPluginVersion
-import net.minecrell.pluginyml.paper.PaperPluginDescription
-import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 
 /**
- * Adds the surf-nats dependencies of the surf-api platform plugins.
+ * Adds the surf-nats contract dependencies to projects that apply a surf-api platform plugin.
  *
- * Loaded only from `withPlugin` callbacks of surf-api plugin ids, so projects without surf-api never load surf-api
- * or plugin-yml classes.
+ * The surf-nats runtime ships inside the surf-api plugin of each platform, so a project declares no plugin
+ * dependency on it.
  */
 internal object SurfApiBridge {
-    private const val PAPER_PLUGIN = "surf-api-nats-paper"
-    private const val VELOCITY_PLUGIN = "surf-api-nats-velocity"
 
     /**
      * Adds the contract dependencies at the version of this plugin, with the Paper types only if [paper] is set.
      *
-     * The runtime comes from the surf-nats platform plugin, so the dependencies are `compileOnly`.
+     * The runtime is bundled into the surf-api plugin of the platform, so the dependencies are `compileOnly`.
      */
     fun Project.addContractDependencies(paper: Boolean) {
         val modules = buildList {
@@ -45,30 +39,6 @@ internal object SurfApiBridge {
                 }
 
                 configuration("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:${SurfNatsPluginVersion.KOTLINX_SERIALIZATION_VERSION}")
-            }
-        }
-    }
-
-    /**
-     * Declares `surf-api-nats-paper` as a required bootstrap and server dependency in the `paper-plugin.yml`.
-     */
-    fun Project.requirePaperPlugin() = configure<PaperPluginDescription> {
-        listOf(bootstrapDependencies, serverDependencies).forEach { deps ->
-            deps.register(PAPER_PLUGIN) {
-                this.required = true
-                this.joinClasspath = true
-                this.load = RelativeLoadOrder.BEFORE
-            }
-        }
-    }
-
-    /**
-     * Declares `surf-api-nats-velocity` as a required dependency in the `velocity-plugin.json`.
-     */
-    fun Project.requireVelocityPlugin() {
-        configure<VelocityPluginFile> {
-            pluginDependencies.register(VELOCITY_PLUGIN) {
-                this.optional.set(false)
             }
         }
     }

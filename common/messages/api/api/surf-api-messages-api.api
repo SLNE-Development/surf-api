@@ -231,7 +231,6 @@ public abstract interface class dev/slne/surf/api/messages/actionbar/ActionBarSe
 }
 
 public final class dev/slne/surf/api/messages/actionbar/ActionBarService$Companion {
-	public final fun getInstance ()Ldev/slne/surf/api/messages/actionbar/ActionBarService;
 }
 
 public final class dev/slne/surf/api/messages/actionbar/ActionBarService$DefaultImpls {
@@ -1512,16 +1511,6 @@ public final class dev/slne/surf/api/messages/minimessage/SurfMiniMessageHolder 
 
 public final class dev/slne/surf/api/messages/minimessage/SurfMiniMessageHolderKt {
 	public static final fun getMiniMessage ()Lnet/kyori/adventure/text/minimessage/MiniMessage;
-}
-
-public abstract interface class dev/slne/surf/api/messages/pagination/InternalPaginationBridge {
-	public static final field Companion Ldev/slne/surf/api/messages/pagination/InternalPaginationBridge$Companion;
-	public abstract fun createPaginationBuilder ()Ldev/slne/surf/api/messages/pagination/PaginationBuilder;
-	public abstract fun createPaginationBuilderSuspend ()Ldev/slne/surf/api/messages/pagination/SuspendPaginationBuilder;
-}
-
-public final class dev/slne/surf/api/messages/pagination/InternalPaginationBridge$Companion {
-	public final fun getINSTANCE ()Ldev/slne/surf/api/messages/pagination/InternalPaginationBridge;
 }
 
 public final class dev/slne/surf/api/messages/pagination/PageButton {

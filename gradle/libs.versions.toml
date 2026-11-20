@@ -6,6 +6,9 @@ canvas-api = "26.3.build.+"
 # Kolin
 kotlinVersion = "2.4.21"
 kotlinxCoroutines = "1.11.0"
+# kotlinx-coroutines-reactor alone resolves reactor-core 3.4.x, which the shaded reactor-netty and reactor-pool
+# of surf-api-database-r2dbc cannot run on; the database jar expects reactor-core from its host.
+reactor-core = "3.8.8"
 kotlinx-serialization = "1.12.0"
 
 # Packet Events
@@ -30,9 +33,6 @@ sparkMinestom = "1.10.186-SNAPSHOT" # substituted by the vendor/spark-minestom i
 terminal-console-appender = "1.3.0"
 log4j = "2.26.1"
 
-# Scoreboard Library
-scoreboard-library = "2.8.3"
-
 # Adventure
 adventure-api = "5.2.0"
 
@@ -43,8 +43,9 @@ velocity-proxy-ctd = "4.3.0" # latest release on repo.velocityctd.com; it trails
 # PAPI
 placeholder-api = "2.12.3"
 
-# McCoroutine
-mccoroutine = "2.23.1"
+# Spring: newest stable releases. The framework version is the one spring-boot pins.
+spring-framework = "7.0.10"
+spring-boot = "4.1.2"
 
 # Miscellaneous Libraries
 asm = "9.11.1"
@@ -63,20 +64,16 @@ commons-math3 = "3.6.1"
 plugin-yml-paper = "0.9.0"
 spongepowered-math = "2.0.1"
 fastutil = "8.5.19"
-okhttp = "5.5.1"
 dazzleconf = "1.4.0-M2"
 reflection-remapper = "0.1.3"
 brigadier = "1.0.500"
-datafixerupper = "8.0.16"
 configurate = "1.0.0"
 more-persistent-data-types = "2.4.0"
 inventory-framework = "1.1.2"
 flogger = "0.9"
 aide-reflection = "1.3"
-ktor = "3.6.1"
 glm = "0.9.9.1-15"
 ksp-version = "2.3.13"
-reactor-netty = "1.3.8"
 bytebuddy = "1.18.17"
 wyck = "4.0.0-e5d01de"
 gremlin = "0.0.9"
@@ -149,7 +146,16 @@ log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", ver
 kotlinxCoroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinxCoroutines" }
 kotlinxCoroutines-reactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactive", version.ref = "kotlinxCoroutines" }
+reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor-core" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
+
+# Spring
+spring-framework-bom = { module = "org.springframework:spring-framework-bom", version.ref = "spring-framework" }
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring-framework" }
+spring-test = { module = "org.springframework:spring-test", version.ref = "spring-framework" }
+spring-boot = { module = "org.springframework.boot:spring-boot", version.ref = "spring-boot" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
+spring-boot-health = { module = "org.springframework.boot:spring-boot-health", version.ref = "spring-boot" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinVersion" }
 kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlinVersion" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -162,6 +168,11 @@ packetevents-api = { module = "com.github.retrooper:packetevents-api", version.r
 packetevents-velocity = { module = "com.github.retrooper:packetevents-velocity", version.ref = "packetevents" }
 packetevents-netty-common = { module = "com.github.retrooper:packetevents-netty-common", version.ref = "packetevents" }
 
+# Netty, versioned by netty-bom
+netty-buffer = { module = "io.netty:netty-buffer" }
+netty-common = { module = "io.netty:netty-common" }
+netty-transport = { module = "io.netty:netty-transport" }
+
 # Entity Library
 
 # Command API
@@ -170,10 +181,6 @@ commandapi-bukkit-kotlin = { module = "dev.jorel:commandapi-kotlin-bukkit", vers
 commandapi-core = { module = "dev.jorel:commandapi-core", version.ref = "commandapi" }
 commandapi-velocity = { module = "dev.jorel:commandapi-velocity-core", version.ref = "commandapi" }
 commandapi-velocity-kotlin = { module = "dev.jorel:commandapi-kotlin-velocity", version.ref = "commandapi" }
-
-# Scoreboard Library
-scoreboard-library-api = { module = "net.megavex:scoreboard-library-api", version.ref = "scoreboard-library" }
-scoreboard-library-implementation = { module = "net.megavex:scoreboard-library-implementation", version.ref = "scoreboard-library" }
 
 # Adventure
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure-api" }
@@ -192,14 +199,9 @@ velocity-proxy-ctd = { module = "com.velocityctd:velocity-proxy", version.ref = 
 # PAPI
 placeholder-api = { module = "me.clip:placeholderapi", version.ref = "placeholder-api" }
 
-# McCoroutine
-mccoroutine-folia-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-folia-api", version.ref = "mccoroutine" }
-mccoroutine-folia-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-folia-core", version.ref = "mccoroutine" }
-mccoroutine-velocity-api = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-api", version.ref = "mccoroutine" }
-mccoroutine-velocity-core = { module = "dev.slne.forks.mccoroutine:mccoroutine-velocity-core", version.ref = "mccoroutine" }
-
 # Miscellaneous Libraries
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+kotlin-metadata-jvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlinVersion" }
 sponge-mixin = { module = "net.fabricmc:sponge-mixin", version.ref = "sponge-mixin" }
 mixinextras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixinextras" }
 flare-fastutil = { module = "space.vectrix.flare:flare-fastutil", version.ref = "flare" }
@@ -214,8 +216,6 @@ commons-math4-core = { module = "org.apache.commons:commons-math4-core", version
 commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
 spongepowered-math = { module = "org.spongepowered:math", version.ref = "spongepowered-math" }
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-okhttp-kotlin = { module = "com.squareup.okhttp3:okhttp-coroutines", version.ref = "okhttp" }
 dazzleconf = { module = "space.arim.dazzleconf:dazzleconf-ext-snakeyaml", version.ref = "dazzleconf" }
 reflection-remapper = { module = "xyz.jpenilla:reflection-remapper", version.ref = "reflection-remapper" }
 brigadier = { module = "com.mojang:brigadier", version.ref = "brigadier" }
@@ -231,17 +231,10 @@ flogger = { module = "com.google.flogger:flogger", version.ref = "flogger" }
 flogger-slf4j-backend = { module = "com.google.flogger:flogger-slf4j-backend", version.ref = "flogger" }
 aide-reflection = { module = "tech.hiddenproject:aide-reflection", version.ref = "aide-reflection" }
 glm = { module = "io.github.kotlin-graphics:glm", version.ref = "glm" }
-datafixerupper = { module = "com.mojang:datafixerupper", version.ref = "datafixerupper" }
 luckperms = { module = "net.luckperms:api", version.ref = "luckperms" }
 wyck = { module = "dev.wyck:wyck", version.ref = "wyck" }
 gremlin-runtime = { module = "xyz.jpenilla:gremlin-runtime", version.ref = "gremlin" }
 
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
-reactor-netty-core = { module = "io.projectreactor.netty:reactor-netty-core", version.ref = "reactor-netty" }
-reactor-netty-http = { module = "io.projectreactor.netty:reactor-netty-http", version.ref = "reactor-netty" }
 bytebuddy = { module = "net.bytebuddy:byte-buddy", version.ref = "bytebuddy" }
 bytebuddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "bytebuddy" }
 
@@ -330,10 +323,8 @@ npm-publish = { id = "dev.petuska.npm.publish", version.ref = "npm-publish" }
 
 
 [bundles]
-ktor-client = ["ktor-client-core", "ktor-client-okhttp", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json"]
 inventory-framework = ["inventory-framework-platform-paper", "inventory-framework-platform-bukkit"]
-reactor-netty = ["reactor-netty-core", "reactor-netty-http"]
-kotlin-coroutines = ["kotlinxCoroutines-core", "kotlinxCoroutines-reactor", "kotlinxCoroutines-reactive"]
+kotlin-coroutines = ["kotlinxCoroutines-core", "kotlinxCoroutines-reactor", "kotlinxCoroutines-reactive", "reactor-core"]
 kotlin-serialization = ["kotlin-serialization-json", "kotlin-serialization-protobuf", "kotlin-serialization-cbor"]
 
 # Infra

@@ -3,14 +3,15 @@
 
 package dev.slne.surf.api.paper.nms.bridges.packets.block
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import io.papermc.paper.math.BlockPosition
 import org.bukkit.block.data.BlockData
+import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
+@SurfApiBean
 interface SurfPaperNmsBlockPackets {
     fun updateBlockData(position: BlockPosition, blockData: BlockData): PacketOperation
 
@@ -21,11 +22,4 @@ interface SurfPaperNmsBlockPackets {
      * @return the packet operation
      */
     fun resetBlock(position: BlockPosition): PacketOperation
-
-    companion object {
-        val INSTANCE get() = bridge
-    }
 }
-
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsBlockPackets>()

@@ -24,5 +24,6 @@ enum class ViewIconType(
     EXCLAMATION_MARK("exclamation_mark"),
     QUESTION("question"),
     SEARCH("search"),
-    CIRCLE("circle"), ;
+    CIRCLE("circle"),
+    ;
 }

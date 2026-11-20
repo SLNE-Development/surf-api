@@ -1,9 +1,9 @@
 package dev.slne.surf.microservice.runtime.lifecycle
 
 /**
- * Part of the runtime that [MicroserviceLifecycle] starts and stops at a fixed point of its order.
+ * Part of the runtime that a [RuntimeComponentLifecycle] starts and stops in its phase.
  *
- * The lifecycle calls [start] at most once and [stop] only after [start] returned normally.
+ * [start] runs at most once and [stop] only after [start] returned normally.
  */
 internal interface RuntimeComponent {
     /**

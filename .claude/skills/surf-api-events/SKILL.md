@@ -1,13 +1,14 @@
 ---
 name: surf-api-events
-description: Use when working with surf-api events - declaring a SurfSyncEvent or SurfAsyncEvent, making one cancellable with SurfCancellableEvent, firing it with call()/callSync/callAsync, registering a listener with @SurfEventHandler or SurfEventBus.on/onAsync, choosing a SurfEventPriority or using ignoreCancelled, wanting a suspending listener, deciding between the surf event bus and the platform's own (Bukkit HandlerList/Listener, Minestom EventNode), or diagnosing "must not be suspend", "No @SurfEventHandler methods found", "must take exactly one parameter", a listener that never fires, or an exception swallowed inside a listener.
+description: Use when working with surf-api events - declaring a SurfSyncEvent or SurfAsyncEvent, making one cancellable with SurfCancellableEvent, firing it with call()/callSync/callAsync, registering a listener as a bean with @SurfEventHandler methods or through an injected SurfEventBus with on/onAsync, choosing a SurfEventPriority or using ignoreCancelled, wanting a suspending listener, deciding between the surf event bus and the platform's own (Bukkit HandlerList/Listener, Minestom EventNode), or diagnosing "must not be suspend", "No @SurfEventHandler methods found", "must take exactly one parameter", a listener that never fires, or an exception swallowed inside a listener.
 ---
 
 # surf-api events
 
-Every claim below comes from `common/event/api/src/main/kotlin/dev/slne/surf/api/event/` and
-`common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/impl/event/`. Read those files when
-in doubt; they are the only source of truth.
+Every claim below comes from `common/event/api/src/main/kotlin/dev/slne/surf/api/event/`,
+`common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/impl/event/` and, for listener
+beans, `common/core/impl/.../core/server/spring/SurfEventHandlerBeans.kt`. Read those files when in
+doubt; they are the only source of truth.
 
 The contracts are their own module, `surf-api-event-api`. You do not name it: every published
 coordinate that carried them re-exports it. The implementation stays in `surf-api-core-impl` --
@@ -65,21 +66,23 @@ val restock = ShopRestockEvent(shopId)
 if (restock.call()) { … }        // SurfAsyncEvent.call(), suspend function
 ```
 
-The bus functions underneath return the event itself, not a boolean:
-`SurfEventBus.callSync(event)` and `suspend SurfEventBus.callAsync(event)`. Use them when you want
-the fluent form; use `call()` when you want the cancellation answer.
+The bus functions underneath return the event itself, not a boolean: `eventBus.callSync(event)`
+and `suspend eventBus.callAsync(event)` on an injected `SurfEventBus`. Use them when you want the
+fluent form; use `call()` when you want the cancellation answer.
 
 Firing an async event needs a coroutine. Nothing in the event API creates one for you.
 
 ## Registering a listener
 
-### Annotated methods
+`SurfEventBus` is a bean of surf-api's root context, so every plugin bean can inject it. Plugin code
+reaches the bus only that way; the companion accessor `SurfEventBus.INSTANCE` is
+`@InternalSurfApi`.
+
+### Annotated methods on a bean
 
 ```kotlin
-object ShopListener {
-    fun register() = SurfEventBus.registerListeners(this)
-    fun unregister() = SurfEventBus.unregisterListeners(this)
-
+@Component
+class ShopListener {
     @SurfEventHandler
     private fun onAfk(event: PlayerAfkStateChangeEvent) { … }
 
@@ -90,9 +93,20 @@ object ShopListener {
 }
 ```
 
-`registerListeners` walks the class and its superclasses, so inherited handlers are picked up, and
-private methods are fine - the invoker uses a private lookup. Rules checked at registration, each
-throwing immediately:
+surf-api registers every singleton bean of a plugin context whose class declares or inherits a
+`@SurfEventHandler` method, in the plugin's enable phase, before the `onEnable` hooks run. It
+unregisters them when the plugin is disabled, after the `onDisable` hooks. This holds on Paper,
+Velocity and Minestom; beans of the plugin's ancestor contexts are not scanned. The standalone
+runtime does the same for its root context, which hosts the application:
+`SurfApiStandaloneBootstrap.enable` registers the beans and `shutdown` unregisters them, and a
+microservice gets this through `adopt`. Do not also call `registerListeners` on such a bean: the bus
+does not deduplicate, so every handler would fire twice.
+
+`registerListeners(listener)` registers an object by hand, and `unregisterListeners(listener)`
+removes every handler registered from that exact instance. Either way the bus walks the class and
+its superclasses, so inherited handlers are picked up, and private methods are fine - the invoker
+uses a private lookup. Rules checked at registration, each throwing immediately (for an
+auto-registered bean, the plugin's enable fails):
 
 - exactly one parameter (a trailing `Continuation` on a suspend function does not count), and its
   type must be a `SurfEvent` subclass
@@ -101,23 +115,31 @@ throwing immediately:
 - the declaring class must be reachable from the bus's lookup, else `IllegalAccessException`
 - at least one `@SurfEventHandler` method on the object, else "No @SurfEventHandler methods found"
 
-`unregisterListeners(listener)` removes every handler registered from that exact instance.
-
 ### Lambdas
 
 ```kotlin
-val token = SurfEventBus.on<PlayerAfkStateChangeEvent> { event -> … }
-val asyncToken = SurfEventBus.onAsync<ShopRestockEvent>(priority = SurfEventPriority.MONITOR) {
-    event -> audit(event)
-}
+@Service
+class AfkAudit(private val eventBus: SurfEventBus) : SurfLifecycle {
+    private val tokens = mutableListOf<Any>()
 
-SurfEventBus.unregisterListeners(token)
+    override suspend fun onEnable() {
+        tokens += eventBus.on<PlayerAfkStateChangeEvent> { event -> … }
+        tokens += eventBus.onAsync<ShopRestockEvent>(priority = SurfEventPriority.MONITOR) { event ->
+            audit(event)
+        }
+    }
+
+    override suspend fun onDisable() {
+        tokens.forEach(eventBus::unregisterListeners)
+    }
+}
 ```
 
-`on` / `onAsync` are reified extensions over `registerHandler(eventClass, priority,
-ignoreCancelled, handler)` and `registerAsyncHandler(…)`. Both default to
-`priority = SurfEventPriority.NORMAL, ignoreCancelled = true`, and both return an opaque token -
-**keep it**, it is the only way to unregister.
+`on` / `onAsync` are reified extensions on a `SurfEventBus` receiver over
+`registerHandler(eventClass, priority, ignoreCancelled, handler)` and `registerAsyncHandler(…)`.
+Both default to `priority = SurfEventPriority.NORMAL, ignoreCancelled = true`, and both return an
+opaque token - **keep it**, it is the only way to unregister. surf-api does not unregister lambda
+handlers for you.
 
 ## Priority, ordering and cancellation
 
@@ -140,11 +162,14 @@ Handlers always run **sequentially**, one after another, never in parallel, for 
 | A surf-api or cross-plugin signal that other surf plugins should be able to observe or veto | `SurfSyncEvent` / `SurfAsyncEvent` on the surf bus |
 | You need listeners that suspend or do I/O | `SurfAsyncEvent`, or Minestom's `SuspendingEventNode` |
 
-On Paper, `platform/paper/api/.../paper/event/listener-extension.kt` gives you Bukkit registration
-helpers (`Listener.register()`, `Listener.unregister()`, `listen<T> { }`, `SingleListener<T>`), and
-`platform/paper/api/.../paper/event/common/` holds the surf-bus events Paper declares. On Minestom,
-`EventRegistrar` contributes listeners to the api's `EventNode`, and `SuspendingEventNode` backs the
-suspending events such as `AsyncPlayerChatEvent`. Details: `references/platform-events.md`.
+A plugin's platform listeners are beans too: surf-api registers Paper `Listener` beans, Velocity
+beans with `@Subscribe` methods and Minestom `EventNode` beans in the enable phase. On Paper,
+`platform/paper/api/.../paper/event/listener-extension.kt` gives you Bukkit registration helpers for
+listeners that are not beans (`Listener.register()`, `Listener.unregister()`, `listen<T> { }`,
+`SingleListener<T>`), and `platform/paper/api/.../paper/event/common/` holds the surf-bus events
+Paper declares. On Minestom, `EventRegistrar` contributes listeners to the server's `EventNode` from
+`surfMinestomServer { }`, and `SuspendingEventNode` backs the suspending events such as
+`AsyncPlayerChatEvent`. Details: `references/platform-events.md`.
 
 ## Traps
 
@@ -166,15 +191,18 @@ suspending events such as `AsyncPlayerChatEvent`. Details: `references/platform-
   makes all later handlers run, and the event's `call()` then returns `true`.
 - **Keep the lambda token.** `unregisterListeners` matches by identity. Passing the event class, or
   the enclosing object, removes nothing.
-- **Unregister on disable.** Handlers are held in static bus state. A listener from an unloaded
-  plugin keeps firing, and keeps its classes alive, until it is unregistered.
+- **Unregister what you registered by hand.** Handlers live in the root context's bus, which
+  outlives every plugin. surf-api unregisters `@SurfEventHandler` beans on disable; a lambda token
+  or an object passed to `registerListeners` keeps firing, and keeps its plugin's classes alive,
+  until you unregister it in `onDisable`.
 - **Async handlers inherit the publisher's coroutine context.** `callAsync` calls `ensureActive()`
   before each handler, so cancelling the publishing coroutine stops the remaining handlers
   mid-dispatch. A `CancellationException` thrown by a handler itself is only logged.
-- **No impl, no bus.** `SurfEventBus.INSTANCE` reads a private `by surfBean<SurfEventBus>()`, which
-  resolves on first access, so a missing `-impl` module - or a touch before surf-api has started -
-  fails there with `No bean provides dev.slne.surf.api.event.SurfEventBus ...`.
+- **No runtime, no bus.** `call()` reads the bus from surf-api's installed root context, and reads
+  it again after a new root is installed, as after a standalone `shutdown()` and second `bootstrap`.
+  Without a running platform runtime - a missing `-impl` module, or a call before surf-api has
+  started - it fails with "surf-api's root context has not been started yet …".
 
 Dispatch internals, the hidden-class invokers and the exact exception and cancellation semantics:
-`references/dispatch-and-invokers.md`. Registering a listener as a bean: the `surf-api-components`
-skill.
+`references/dispatch-and-invokers.md`. Declaring beans, `SurfLifecycle` and the plugin context:
+the `surf-api-components` skill.

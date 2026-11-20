@@ -23,6 +23,7 @@ internal object DatabaseEnvironmentVariables {
     const val POOL_MAX_VALIDATION_TIME_MILLIS = "SURF_DATABASE_POOL_MAX_VALIDATION_TIME_MILLIS"
     const val POOL_MAX_IDLE_TIME_MILLIS = "SURF_DATABASE_POOL_MAX_IDLE_TIME_MILLIS"
     const val POOL_MAX_LIFE_TIME_MILLIS = "SURF_DATABASE_POOL_MAX_LIFE_TIME_MILLIS"
+    const val POOL_LOCK_TIMEOUT_MILLIS = "SURF_DATABASE_POOL_LOCK_TIMEOUT_MILLIS"
 
     val logLevel by env.optional(enumIgnoringCase<Level>()).named(LOG_LEVEL)
     val type by env.optional(enumIgnoringCase<DatabaseType>()).named(TYPE)
@@ -41,6 +42,7 @@ internal object DatabaseEnvironmentVariables {
     val poolMaxValidationTimeMillis by env.optionalLong().named(POOL_MAX_VALIDATION_TIME_MILLIS)
     val poolMaxIdleTimeMillis by env.optionalLong().named(POOL_MAX_IDLE_TIME_MILLIS)
     val poolMaxLifeTimeMillis by env.optionalLong().named(POOL_MAX_LIFE_TIME_MILLIS)
+    val poolLockTimeoutMillis by env.optionalLong().named(POOL_LOCK_TIMEOUT_MILLIS)
 }
 
 internal fun DatabaseConfig.withEnvironmentOverrides(): DatabaseConfig {
@@ -73,6 +75,8 @@ internal fun DatabaseConfig.withEnvironmentOverrides(): DatabaseConfig {
                     ?: pool.timeouts.maxIdleTimeMillis,
                 maxLifeTimeMillis = environment.poolMaxLifeTimeMillis
                     ?: pool.timeouts.maxLifeTimeMillis,
+                lockTimeoutMillis = environment.poolLockTimeoutMillis
+                    ?: pool.timeouts.lockTimeoutMillis,
             ),
         ),
     )
@@ -81,7 +85,14 @@ internal fun DatabaseConfig.withEnvironmentOverrides(): DatabaseConfig {
     return overridden
 }
 
-private fun DatabaseConfig.validate() {
+/**
+ * Checks that every value is in the range the drivers and servers accept.
+ *
+ * [DatabaseConfig.load] runs it on the loaded values. A [DatabaseConfig] built in code is checked by whoever consumes it.
+ *
+ * @throws IllegalArgumentException naming the offending value and its environment variable
+ */
+internal fun DatabaseConfig.validate() {
     require(credentials.resolvedPort in 1..65535) {
         "Database port must be in the range 1..65535. Configure ${DatabaseEnvironmentVariables.PORT}."
     }
@@ -103,6 +114,10 @@ private fun DatabaseConfig.validate() {
     require(sizing.minIdle <= sizing.maxSize) {
         "Database pool minIdle must not exceed maxSize. Configure " +
                 "${DatabaseEnvironmentVariables.POOL_MIN_IDLE} and ${DatabaseEnvironmentVariables.POOL_MAX_SIZE}."
+    }
+    require(pool.timeouts.lockTimeoutMillis in 1..Int.MAX_VALUE) {
+        "Database pool lockTimeoutMillis must be in 1..${Int.MAX_VALUE}, the range PostgreSQL accepts for lock_timeout. " +
+                "Configure ${DatabaseEnvironmentVariables.POOL_LOCK_TIMEOUT_MILLIS}."
     }
 }
 

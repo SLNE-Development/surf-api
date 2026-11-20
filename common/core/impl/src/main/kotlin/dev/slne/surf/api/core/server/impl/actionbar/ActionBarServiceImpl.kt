@@ -1,16 +1,16 @@
 package dev.slne.surf.api.core.server.impl.actionbar
 
+import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.core.SurfApiCore
+import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.api.messages.actionbar.ActionBarFinishReason
 import dev.slne.surf.api.messages.actionbar.ActionBarService
 import dev.slne.surf.api.messages.adventure.nameOrNull
 import dev.slne.surf.api.messages.adventure.uuidOrNull
-import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.di.Service
 import kotlinx.coroutines.*
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
+import org.springframework.stereotype.Service
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration

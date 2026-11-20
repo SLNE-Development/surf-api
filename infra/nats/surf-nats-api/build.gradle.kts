@@ -27,6 +27,7 @@ kotlin {
     sourceSets {
         jvmMain.dependencies {
             compileOnly(projects.surfApiCore)
+            compileOnly(libs.spring.context)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

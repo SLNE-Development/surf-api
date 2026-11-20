@@ -18,6 +18,10 @@ import dev.slne.surf.nats.js.fixtures.facade.NatsRpcError as FacadeRpcError
 import dev.slne.surf.nats.js.fixtures.facade.connect as facadeConnect
 import dev.slne.surf.nats.js.fixtures.facade.uuidFromString as facadeUuidFromString
 import dev.slne.surf.nats.js.fixtures.facade.uuidToString as facadeUuidToString
+import dev.slne.surf.nats.js.fixtures.NatsCallTimeoutError as KotlinCallTimeoutError
+import dev.slne.surf.nats.js.fixtures.NatsNoRespondersError as KotlinNoRespondersError
+import dev.slne.surf.nats.js.fixtures.NatsRemoteError as KotlinRemoteError
+import dev.slne.surf.nats.js.fixtures.NatsRpcError as KotlinRpcError
 
 class FacadeTest {
 

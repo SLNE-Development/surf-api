@@ -9,9 +9,13 @@ package dev.slne.surf.api.inventory.framework.view.settings
  * Set through the view settings' `paginationButtonPosition`.
  */
 enum class PaginationButtonPosition {
-    /** Navigation buttons appear in the top row of the inventory. */
+    /**
+     * Navigation buttons appear in the top row of the inventory.
+     */
     TOP,
 
-    /** Navigation buttons appear in the bottom row of the inventory. */
+    /**
+     * Navigation buttons appear in the bottom row of the inventory.
+     */
     BOTTOM
 }

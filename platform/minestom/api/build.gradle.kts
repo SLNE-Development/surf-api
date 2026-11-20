@@ -9,9 +9,6 @@ dependencies {
         exclude(libs.brigadier)
     }
     api(projects.surfApiInventoryApi)
-    // The configuration domain is no longer re-exported by surf-api-core-api, so a consumer of
-    // surf-api-minestom reaches the config contracts through here, the way it reaches the
-    // shared inventory framework.
     api(projects.surfApiConfigApi)
 
     compileOnlyApi(libs.minestom.server)
@@ -25,7 +22,6 @@ dependencies {
     api(libs.spongepowered.math)
     api(libs.commons.lang3)
     api(libs.commons.text)
-    api(libs.okhttp)
     api(libs.flogger)
     api(libs.commons.math4.core)
     api(libs.commons.math3)

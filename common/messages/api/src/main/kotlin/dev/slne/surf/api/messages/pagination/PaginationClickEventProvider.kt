@@ -6,7 +6,11 @@ import kotlinx.coroutines.launch
 import net.kyori.adventure.text.event.ClickEvent
 
 fun interface PaginationClickEventProvider<T> {
-    fun getCallback(targetPage: Int, pagination: Pagination<T>, content: Collection<T>): ClickEvent<*>
+    fun getCallback(
+        targetPage: Int,
+        pagination: Pagination<T>,
+        content: Collection<T>
+    ): ClickEvent<*>
 
     companion object {
         private object DEFAULT : PaginationClickEventProvider<Any> {
@@ -49,16 +53,9 @@ fun interface SuspendPaginationClickEventProvider<T> {
                 pagination: SuspendPagination<Any>,
                 content: Collection<Any>
             ): ClickEvent<*> = ClickEvent.callback { clicker ->
-                // A dead scope drops `launch` without a word, so a page button that was rendered
-                // from a scope that has since finished would simply do nothing, forever, with
-                // nothing in the log. Saying so is not a fix -- the caller has to pass a
-                // longer-lived scope, see the interface -- but a reported failure can be found,
-                // and silence cannot.
                 check(isActive) {
                     "The pagination page button for page $targetPage cannot run: the " +
-                            "CoroutineScope it was rendered with has already finished. A click " +
-                            "arrives long after the render, so the scope passed to the click " +
-                            "event provider has to outlive the message."
+                            "CoroutineScope it was rendered with has already finished."
                 }
 
                 launch {

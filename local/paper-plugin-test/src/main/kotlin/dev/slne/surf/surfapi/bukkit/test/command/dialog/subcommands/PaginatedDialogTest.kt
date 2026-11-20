@@ -2,12 +2,10 @@
 
 package dev.slne.surf.surfapi.bukkit.test.command.dialog.subcommands
 
-import com.github.shynixn.mccoroutine.folia.launch
-import com.github.shynixn.mccoroutine.folia.scope
 import dev.jorel.commandapi.CommandAPICommand
-import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.jorel.commandapi.kotlindsl.subcommand
 import dev.slne.surf.api.messages.adventure.buildText
+import dev.slne.surf.api.paper.command.executors.playerExecutorSuspend
 import dev.slne.surf.api.paper.dialog.base
 import dev.slne.surf.api.paper.dialog.builder.actionButton
 import dev.slne.surf.api.paper.dialog.clearDialogs
@@ -18,8 +16,8 @@ import dev.slne.surf.api.paper.dialog.query.PageResult
 import dev.slne.surf.api.paper.dialog.query.PageState
 import dev.slne.surf.api.paper.dialog.type
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.surfapi.bukkit.test.plugin
 import io.papermc.paper.dialog.Dialog
+import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.text.Component
 
 object PaginatedDialogTest {
@@ -114,21 +112,23 @@ object PaginatedDialogTest {
     }
 }
 
-fun CommandAPICommand.paginationDialogTestCommand() = subcommand("paginated") {
-    playerExecutor { player, _ ->
-        plugin.launch {
-            paginatedDialog(
-                player = player,
-                query = PaginatedDialogTest.PaginatedEntryQuery,
-                searchable = true,
-                itemBuilder = { entry ->
-                    buildText {
-                        text(entry.name)
-                    } to entry.dialog
-                },
-                scope = plugin.scope
-            )
-        }
+/**
+ * Adds the `paginated` subcommand; [pluginScope] keeps the dialog's page buttons working after the
+ * command has finished.
+ */
+fun CommandAPICommand.paginationDialogTestCommand(pluginScope: CoroutineScope) = subcommand("paginated") {
+    playerExecutorSuspend { player, _ ->
+        paginatedDialog(
+            player = player,
+            query = PaginatedDialogTest.PaginatedEntryQuery,
+            searchable = true,
+            itemBuilder = { entry ->
+                buildText {
+                    text(entry.name)
+                } to entry.dialog
+            },
+            scope = pluginScope
+        )
     }
 }
 

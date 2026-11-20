@@ -16,10 +16,6 @@ abstract class SurfAsyncEvent : SurfEvent {
      */
     suspend fun call(): Boolean {
         SurfEventBus.INSTANCE.callAsync(this)
-        return if (this is SurfCancellableEvent) {
-            !isCancelled
-        } else {
-            true
-        }
+        return this !is SurfCancellableEvent || !isCancelled
     }
 }

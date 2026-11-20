@@ -166,7 +166,9 @@ class ViewHeaderLayoutTest {
         assertEquals(DefaultFontWidths.textWidth("shop"), DefaultFontWidths.componentWidth(withoutFallback))
     }
 
-    /** Reverse of [ShiftGlyphs.renderShift]: maps each single-glyph shift back to its pixel amount. */
+    /**
+     * Reverse of [ShiftGlyphs.renderShift]: maps each single-glyph shift back to its pixel amount.
+     */
     private val shiftAmounts: Map<Char, Int> = buildMap {
         for (exponent in 0..9) {
             val amount = 1 shl exponent
@@ -212,7 +214,9 @@ class ViewHeaderLayoutTest {
         return advance
     }
 
-    /** Metrics of the fixed-width, capitals-only resource-pack menu font. */
+    /**
+     * Metrics of the fixed-width, capitals-only resource-pack menu font.
+     */
     private fun menuLayout(component: Component) = layoutViewText(
         component = component,
         charSpacing = -1,

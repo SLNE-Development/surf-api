@@ -1,14 +1,16 @@
 package dev.slne.surf.surfapi.bukkit.test.hook
 
-import dev.slne.surf.api.di.Service
-import dev.slne.surf.api.di.SurfComponent
 import dev.slne.surf.api.paper.extensions.server
+import dev.slne.surf.api.spring.SurfLifecycle
+import org.springframework.stereotype.Service
 
-/** An unconditional bean that only needs one of the three lifecycle phases. */
+/**
+ * A hook that only takes part in the load phase.
+ */
 @Service
-class Test2Hook : SurfComponent {
+class Test2Hook : SurfLifecycle {
 
-    override suspend fun load() {
+    override suspend fun onLoad() {
         System.err.println("Test2Hook loaded on server: ${server.name}")
     }
 }

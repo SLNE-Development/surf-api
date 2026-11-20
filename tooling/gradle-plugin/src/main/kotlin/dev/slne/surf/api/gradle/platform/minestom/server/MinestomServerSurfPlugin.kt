@@ -1,12 +1,12 @@
 package dev.slne.surf.api.gradle.platform.minestom.server
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 import dev.slne.surf.api.gradle.generated.Constants
 import dev.slne.surf.api.gradle.generators.GeneratePluginFile
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.platform.core.AbstractCoreSurfPlugin
+import dev.slne.surf.api.gradle.util.mergeRegistryFiles
 import dev.slne.surf.api.gradle.util.minestomSnapshots
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedDependency
@@ -60,7 +60,7 @@ internal class MinestomServerSurfPlugin :
     AbstractCoreSurfPlugin<MinestomServerSurfExtension>("minestomServer", SurfApiPlatform.MINESTOM_SERVER) {
 
     init {
-        // The core relocations (mojang, adventure nbt, configurate) come from the base class
+        // The core relocations (adventure nbt, configurate) come from the base class
         "me.devnatan.inventoryframework" relocatesTo "devnatan.inventoryframework"
     }
 
@@ -94,8 +94,7 @@ internal class MinestomServerSurfPlugin :
             // log4j-core and its add-ons each ship a Log4j plugin cache; all must reach the
             // transformer to be merged rather than dropped as duplicates
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
-            mergeServiceFiles()
-            transform(Log4j2PluginsCacheFileTransformer::class.java)
+            mergeRegistryFiles()
             manifest.attributes["Multi-Release"] = "true"
         }
 
@@ -263,12 +262,6 @@ internal class MinestomServerSurfPlugin :
             })
             forEachRelocation { from, to, excludes ->
                 relocate(from, to) { this.excludes.set(excludes) }
-            }
-            if (extension.withSurfRedis.get()) {
-                extension.surfRedisRelocation.orNull?.let { relocate("dev.slne.surf.redis", it) }
-            }
-            if (extension.withSurfDatabaseR2dbc.get()) {
-                extension.surfDatabaseR2dbcRelocation.orNull?.let { relocate("dev.slne.surf.database", it) }
             }
         }
 

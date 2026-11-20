@@ -1,14 +1,14 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.core
 
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
+import dev.slne.surf.api.spring.surfBean
 import java.util.*
 
 /**
  * The main API class for the SurfCoreApi.
  */
+@SurfApiBean
 interface SurfApiCore {
 
     /**
@@ -24,17 +24,13 @@ interface SurfApiCore {
      */
     fun getPlayer(playerUuid: UUID): Any?
 
+    @InternalSurfApi
     companion object {
 
         /**
          * The instance of the SurfCoreApi.
          */
-        @JvmStatic
-        val instance get() = api
+        @InternalSurfApi
+        val instance by surfBean<SurfApiCore>()
     }
 }
-
-/**
- * The instance of the SurfCoreApi.
- */
-private val api by surfBean<SurfApiCore>()

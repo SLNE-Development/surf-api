@@ -2,6 +2,7 @@ package dev.slne.surf.database.migration.internal
 
 import dev.slne.surf.database.migration.SurfMigration
 import java.io.File
+import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.net.JarURLConnection
 import java.net.URL
@@ -9,9 +10,9 @@ import java.net.URLClassLoader
 import java.util.jar.JarFile
 
 /**
- * Finds [SurfMigration] classes in a package and its subpackages, in directories and jars.
+ * Finds [SurfMigration] classes in a package and its subpackages, in directories and jars, or loads them by name.
  *
- * Lookups go through [ClassLoader.getResources] instead of the class path, so classes in plugin jars loaded by
+ * Package lookups go through [ClassLoader.getResources] instead of the class path, so classes in plugin jars loaded by
  * isolated class loaders are found as well.
  */
 internal object MigrationClassScanner {
@@ -20,20 +21,38 @@ internal object MigrationClassScanner {
     /**
      * Instantiates every concrete [SurfMigration] in [packageName] and its subpackages.
      *
-     * Kotlin `object`s are resolved through their `INSTANCE` field, other classes through their public no-arg
-     * constructor. Named nested classes are included; abstract, anonymous, local and synthetic classes are skipped.
+     * Kotlin `object`s are resolved through their `INSTANCE` field, companion objects through the field of their
+     * enclosing class, other classes through their public no-arg constructor. Named nested classes are included;
+     * abstract, anonymous, local and synthetic classes are skipped.
      *
      * A jar without a directory entry for the package is invisible to [ClassLoader.getResources]. If that lookup
      * finds nothing and [classLoader] is a [URLClassLoader], as plugin class loaders are, its jars are read directly.
      *
      * @return the migrations sorted by class name; empty if the package does not exist
      * @throws IllegalStateException if a class in the package cannot be loaded, or a migration has neither an
-     * `INSTANCE` field nor a public no-arg constructor, or cannot be instantiated
+     * `INSTANCE` field, companion field nor a public no-arg constructor, or cannot be instantiated
      */
     fun scan(classLoader: ClassLoader, packageName: String): List<SurfMigration> {
         val classNames = findClassNames(classLoader, packageName.replace('.', '/'))
         return classNames.mapNotNull { instantiate(load(it, classLoader)) }
     }
+
+    /**
+     * Instantiates exactly the classes named by [classNames], in that order, loading no other class.
+     *
+     * Instantiation follows the rules of [scan]: Kotlin `object`s are resolved through their `INSTANCE` field,
+     * companion objects through the field of their enclosing class, other classes through their public no-arg
+     * constructor.
+     *
+     * @param classNames binary class names, such as `com.acme.Migrations$V2_Seed` for a nested class
+     * @throws IllegalStateException if a class cannot be loaded, is no concrete [SurfMigration], has neither an
+     * `INSTANCE` field, companion field nor a public no-arg constructor, or cannot be instantiated
+     */
+    fun instantiateNamed(classLoader: ClassLoader, classNames: Collection<String>): List<SurfMigration> =
+        classNames.map { className ->
+            val migration = instantiate(load(className, classLoader))
+            checkNotNull(migration) { "$className is not a concrete SurfMigration class" }
+        }
 
     private fun findClassNames(classLoader: ClassLoader, packagePath: String): Set<String> {
         val packageUrls = classLoader.getResources(packagePath).toList()
@@ -88,7 +107,7 @@ internal object MigrationClassScanner {
         if (!isConcreteMigration(type)) return null
 
         return wrapFailure("Could not instantiate migration class ${type.name}") {
-            val instance = type.fields.find { it.name == "INSTANCE" && Modifier.isStatic(it.modifiers) }
+            val instance = findObjectField(type)
             val constructor = type.constructors.find { it.parameterCount == 0 }
 
             when {
@@ -98,6 +117,27 @@ internal object MigrationClassScanner {
             }
         }
     }
+
+    /**
+     * The static field that holds the singleton of an `object`: its own `INSTANCE`, or for a companion object the field
+     * of the enclosing class that is named like the companion and has its type.
+     */
+    private fun findObjectField(type: Class<*>): Field? =
+        type.fields.find { it.name == "INSTANCE" && it.isStatic() } ?: findCompanionField(type)
+
+    /**
+     * Reading the fields of the enclosing class resolves all their types; a field whose type is missing at runtime
+     * only means that the migration is no companion object.
+     */
+    private fun findCompanionField(type: Class<*>): Field? = try {
+        type.declaringClass?.declaredFields
+            ?.find { it.isStatic() && it.name == type.simpleName && it.type == type }
+            ?.also { it.isAccessible = true }
+    } catch (_: LinkageError) {
+        null
+    }
+
+    private fun Field.isStatic() = Modifier.isStatic(modifiers)
 
     private fun isConcreteMigration(type: Class<*>): Boolean =
         SurfMigration::class.java.isAssignableFrom(type) &&

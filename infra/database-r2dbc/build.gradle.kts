@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.bundles.databaseDriver)
     implementation(libs.bundles.migration)
 
+    compileOnly(libs.spring.context)
+    compileOnly(libs.spring.boot.autoconfigure)
+
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.testcontainers.junit)
@@ -25,6 +28,8 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.kotlinxCoroutines.test)
     testImplementation(projects.surfApiStandaloneTesting)
+    testImplementation(libs.spring.context)
+    testImplementation(libs.spring.boot.autoconfigure)
 }
 
 configurations.runtimeClasspath {
@@ -249,6 +254,8 @@ dependencies {
     add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.mariadb)
     add(shadowTestSourceSet.implementationConfigurationName, libs.testcontainers.postgresql)
     add(shadowTestSourceSet.implementationConfigurationName, libs.kotlinxCoroutines.test)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.spring.context)
+    add(shadowTestSourceSet.implementationConfigurationName, libs.spring.boot.autoconfigure)
     add(shadowTestSourceSet.implementationConfigurationName, "org.jetbrains.kotlin:kotlin-test-junit5")
     add(shadowTestSourceSet.runtimeOnlyConfigurationName, "org.junit.platform:junit-platform-launcher")
 }
@@ -261,6 +268,12 @@ dependencies {
  */
 val surfRuntimeGroups = setOf("dev.slne.surf.api", "dev.slne.forks.configurate")
 
+/**
+ * Libraries the surf runtime relocates into its own packages. surf-api's classes in the bundle refer
+ * to the relocated names, so the libraries have to be bundled and relocated with them.
+ */
+val relocatedSurfLibraries = setOf("net.kyori:adventure-nbt")
+
 fun Project.isInfra() = projectDir.startsWith(rootProject.file("infra"))
 val shadowTestRuntimeClasspath = configurations.named(shadowTestSourceSet.runtimeClasspathConfigurationName)
 
@@ -268,7 +281,8 @@ fun shadowTestRuntimeArtifacts(surfRuntime: Boolean) = shadowTestRuntimeClasspat
     configuration.incoming.artifactView {
         componentFilter { id ->
             val isSurfRuntime = when (id) {
-                is ModuleComponentIdentifier -> id.group in surfRuntimeGroups
+                is ModuleComponentIdentifier ->
+                    id.group in surfRuntimeGroups || "${id.group}:${id.module}" in relocatedSurfLibraries
                 // surf-api's own modules, which this build resolves to its projects
                 is ProjectComponentIdentifier -> id.build.buildPath == ":" && !project(id.projectPath).isInfra()
                 else -> false

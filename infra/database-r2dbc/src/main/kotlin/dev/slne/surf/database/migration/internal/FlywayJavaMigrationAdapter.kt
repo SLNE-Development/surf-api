@@ -1,6 +1,5 @@
 package dev.slne.surf.database.migration.internal
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.migration.ExposedMigration
 import dev.slne.surf.database.migration.JdbcMigration
 import dev.slne.surf.database.migration.SurfMigration
@@ -14,16 +13,17 @@ import org.flywaydb.core.internal.jdbc.StatementInterceptor
 import org.flywaydb.core.internal.resolver.ResolvedMigrationImpl
 import org.flywaydb.core.internal.resolver.java.JavaMigrationExecutor
 import org.flywaydb.core.internal.util.ClassUtils
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 
 /**
  * Exposes a [SurfMigration] to Flyway as a [JavaMigration].
  *
  * A [JdbcMigration] runs on Flyway's JDBC connection inside Flyway's transaction. An [ExposedMigration] runs outside
- * of Flyway's transaction, in its own `suspendTransaction` on [DatabaseApi.database].
+ * of Flyway's transaction, in its own `suspendTransaction` on [database].
  */
 internal class FlywayJavaMigrationAdapter(
-    private val api: DatabaseApi,
+    private val database: R2dbcDatabase,
     private val migration: SurfMigration,
 ) : JavaMigration {
 
@@ -60,7 +60,7 @@ internal class FlywayJavaMigrationAdapter(
         when (migration) {
             is JdbcMigration -> migration.migrate(context.connection)
             is ExposedMigration -> runBlocking {
-                suspendTransaction(db = api.database) {
+                suspendTransaction(db = database) {
                     with(migration) { migrate() }
                 }
             }

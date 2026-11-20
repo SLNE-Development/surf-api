@@ -1,138 +1,124 @@
 # Conditions
 
-Source: `foundation/di/api/src/main/kotlin/dev/slne/surf/api/di/condition/conditions.kt`.
+Sources: `foundation/spring/api/src/main/kotlin/dev/slne/surf/api/spring/ConditionalOnPlugin.kt`
+(`ConditionalOnPlugin`, `PluginPresence`, `OnPluginCondition`) and the platform implementations
+`PaperPluginPresence`, `VelocitySpringRuntime` and Minestom's `PluginManagerImpl`.
 
 ## The rule first
 
-A condition is evaluated at startup, before the bean exists. If it does not hold, the bean is
-**skipped**: never constructed, never injected. An injection point that requires it then fails with
-the unsatisfied-dependency message, which names the consumer and the type and tells you to check
-whether a condition skipped the provider - it does not name the condition itself, so when a type
-"no bean provides" clearly is annotated, the condition is the first thing to look at. A missing bean
-is treated as a configuration error on purpose.
+A condition decides whether Spring registers a bean definition at all. A bean whose condition does
+not hold never exists, and an injection point that requires it fails with
+`NoSuchBeanDefinitionException`, which does not name the condition. When a type that clearly
+carries a stereotype is "not found", check its conditions first.
 
-So: if a dependency is genuinely optional, say so at the injection point with `T?` (or `List<T>`,
-which may be empty). Do not guard the consumer with the same condition as the dependency and hope
-the two stay in step.
+Say at the injection point that a dependency is optional: `T?`, `List<T>` or `ObjectProvider<T>`.
 
-Every annotation below is `@Repeatable` and targets `CLASS`, `ANNOTATION_CLASS`, `PROPERTY` and
-`FUNCTION`. Repeating one means every copy has to hold, which is how several of them narrow a set
-rather than widen it. Annotating an **annotation class** puts the condition on every bean carrying
-that stereotype.
-
-Guard the declaring class, not the member: conditions are recorded per bean definition, and a
-`@Bean` factory's definition (`definition/BeanDefinition.kt`, `FactoryDefinition`) carries no
-conditions of its own. A condition on a `@Bean` property or function has nowhere to be recorded, so
-do not rely on it - move the condition to the class that declares the factory, or move the factory
-onto a class you can guard.
-
-## The family, with exact signatures
+## `@ConditionalOnPlugin`
 
 ```kotlin
-annotation class ConditionalOnProperty(
-    val key: Array<String>,
-    val havingValue: String = "",
-    val matchIfMissing: Boolean = false,
-    val file: String = "",
-)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@JvmRepeatable(ConditionalOnPlugins::class)
+@Conditional(OnPluginCondition::class)
+annotation class ConditionalOnPlugin(vararg val value: String)
 ```
 
-`key` is the path to the value, segment by segment. With `havingValue` set, the value has to equal it
-ignoring case; left empty, the property only has to be present. `matchIfMissing` says what an absent
-property counts as - that is how a feature defaults to on or off. `file` names the configuration file
-relative to the application's data directory; empty means the default file.
+One annotation stands for one plugin: it holds when the plugin is installed under **any** of the
+names, because a plugin's name can differ between platforms (`LuckPerms` on Paper, `luckperms` on
+Velocity). Code in a module shared by several platforms lists every name. Repeat the annotation to
+require several plugins; **every** repetition must hold. An annotation without a name fails. It goes
+on a component class, a `@Configuration` class or a `@Bean` method.
 
 ```kotlin
 @Service
-@ConditionalOnProperty(key = ["shop", "enabled"], havingValue = "true", matchIfMissing = true)
-class ShopService(private val transactions: TransactionApi)
+@ConditionalOnPlugin("LuckPerms", "luckperms")
+@ConditionalOnPlugin("PlaceholderAPI")
+class PlaceholderPermissions : Permissions
 ```
 
-```kotlin
-annotation class ConditionalOnEnvironment(val environments: Array<String>)
-```
+The compiler collects repetitions into the container `ConditionalOnPlugins`; never write it by hand.
 
-Holds if the process runs in one of the named environments. The environments come from the platform.
-Two annotations mean both groups have to match.
-
-```kotlin
-annotation class ConditionalOnClass(val clazz: KClass<*>)
-annotation class ConditionalOnClassName(val className: String)
-```
-
-For an integration with an optional library. `@ConditionalOnClass` needs the class at compile time
-(the annotation references it); `@ConditionalOnClassName` is the string form for when even that is
-unavailable - the usual case for a soft dependency compiled against nothing.
+Spring evaluates it from bytecode metadata before it loads the annotated class. A bean that
+extends or references an optional plugin's API therefore never causes a `NoClassDefFoundError`
+when that plugin is missing. Write the integration as an adapter behind an interface of the
+plugin's own:
 
 ```kotlin
-annotation class ConditionalOnPlugin(val pluginId: String)
-annotation class ConditionalOnAnyPlugin(val pluginIds: Array<String>)
-```
+import dev.slne.surf.api.spring.ConditionalOnPlugin
+import net.luckperms.api.LuckPermsProvider
+import org.springframework.stereotype.Service
+import java.util.UUID
 
-Whether the platform has that plugin loaded. `@ConditionalOnAnyPlugin` holds when at least one of
-the ids is loaded - for an integration that works with any of several interchangeable plugins.
-Repeating `@ConditionalOnPlugin` requires all of them.
-
-```kotlin
-annotation class ConditionalOnMissingBean(val type: KClass<*>)
-```
-
-Holds only when no other bean provides that type. This is how a default is written: mark the fallback
-with it, and any real implementation that appears takes over without the fallback knowing about it.
-Assignability decides, so a fallback guarded on an interface steps aside for anything implementing
-it.
-
-```kotlin
-@Service
-@ConditionalOnMissingBean(Storage::class)
-class InMemoryStorage : Storage
-```
-
-```kotlin
-annotation class ConditionalOn(val condition: KClass<out BeanCondition>)
-```
-
-Runs your own condition. Repeatable, and all of them have to hold.
-
-```kotlin
-annotation class DependsOnBean(val type: KClass<*>)
-```
-
-**Not a condition.** It orders this bean after the bean providing that type, without injecting it -
-for the rarer case where the order matters but the value does not, and the bean never touches it.
-Assignability decides, so the type may be an interface. Constructor parameters already express every
-dependency the bean actually uses, so reach for this only when there is nothing to inject.
-
-## Writing a `BeanCondition`
-
-```kotlin
-interface BeanCondition {
-    suspend fun evaluate(context: BeanConditionContext): Boolean
+interface PrefixSource {
+    fun prefix(player: UUID): String?
 }
 
-class BeanConditionContext(
-    val owner: Any,
-    val container: BeanContainer,
-    val beanClassName: String,
-)
+@Service
+@ConditionalOnPlugin("LuckPerms")
+class LuckPermsPrefixSource : PrefixSource {
+    override fun prefix(player: UUID): String? =
+        LuckPermsProvider.get().userManager.getUser(player)?.cachedData?.metaData?.prefix
+}
+
+@Service
+class ChatFormatter(private val prefixes: PrefixSource?)
 ```
 
+On a `@Bean` method, the optional plugin's types must not appear in the signature of a
+configuration class that is always loaded; put the method into a `@Configuration` class that
+carries the condition itself.
+
+The named plugin must be a declared dependency of the plugin, a soft one when it is optional, so
+the platform loads it first.
+
+## `PluginPresence`
+
+`PluginPresence` is `@InternalSurfApi`: the contract between `OnPluginCondition` and the platforms,
+not something plugin code implements or calls. The platform registers one in every plugin context,
+bootstrap and full, under
+`PluginPresence.BEAN_NAME` (`surfPluginPresence`), before the refresh. Root contexts have none,
+including a root that hosts an application, such as a standalone service or a microservice, so
+`@ConditionalOnPlugin` cannot be used there. What "installed" means:
+
+| Platform | Answered by |
+| --- | --- |
+| Paper | Bukkit's plugin manager once the server exists; in the bootstrap phase, the plugins Paper registered. Both include the names under `provides`. |
+| Velocity | `pluginManager.isLoaded`. The condition runs in the plugin's constructor, so only plugins Velocity constructed before count. |
+| Minestom | the plugin manager's loaded plugins |
+
+A condition evaluated in a context without a `PluginPresence` fails with "@ConditionalOnPlugin was
+evaluated in a context without a PluginPresence".
+
+## Spring's own conditions
+
+Spring's `@Conditional(MyCondition::class)` with an
+`org.springframework.context.annotation.Condition` works in every context. A condition runs before
+any bean exists, so it reads only the `ConditionContext`: the bean factory's definitions, the
+environment, the class loader.
+
 ```kotlin
-class OnLeaderNode : BeanCondition {
-    override suspend fun evaluate(context: BeanConditionContext) =
+import org.springframework.context.annotation.Condition
+import org.springframework.context.annotation.ConditionContext
+import org.springframework.context.annotation.Conditional
+import org.springframework.core.type.AnnotatedTypeMetadata
+import org.springframework.stereotype.Service
+
+class OnLeaderNode : Condition {
+    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata) =
         System.getenv("NODE_ROLE") == "leader"
 }
 
 @Service
-@ConditionalOn(OnLeaderNode::class)
+@Conditional(OnLeaderNode::class)
 class ScheduledTasks
 ```
 
-- The implementation needs a constructor the container can call **with no arguments**. A condition
-  runs before the beans it decides about exist, so it cannot inject them.
-- `context.container` is the container being built - ask it only about what is already known, never
-  about the bean being decided.
-- `context.owner` is the application (a plugin instance, a microservice); `beanClassName` is the
-  guarded bean, for messages.
-- `evaluate` suspends, so a condition may do real I/O - but it runs during startup, so keep it
-  cheap.
+Spring Boot's `@ConditionalOnProperty`, `@ConditionalOnClass` and `@ConditionalOnMissingBean`
+exist only in microservices, which run on Spring Boot. Paper, Velocity, Minestom and the standalone
+runtime ship Spring Framework without Boot.
+
+## Defaults and ordering without a condition
+
+- A default that a real implementation replaces carries Spring's `@Fallback`; any other candidate
+  wins over it.
+- A bean that must start after another without injecting it carries Spring's
+  `@DependsOn("beanName")`. Constructor parameters already order everything a bean uses.

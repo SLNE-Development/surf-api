@@ -4,7 +4,8 @@ import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.permission.MinestomPermissions
 import dev.slne.surf.api.minestom.permission.PermissionProvider
-import dev.slne.surf.api.minestom.server.impl.inventory.framework.MinestomInventoryLoader
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfContexts
 import net.kyori.adventure.util.TriState
 import net.minestom.server.thread.TickThread
 import net.minestom.testing.Env
@@ -17,6 +18,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 
 @EnvTest
+@OptIn(InternalSurfApi::class)
 class SurfMinestomServerTest {
 
     @Test
@@ -101,10 +103,10 @@ class SurfMinestomServerTest {
         val api = surfMinestomServer()
 
         try {
-            val loader = MinestomInventoryLoader.instance
+            val root = SurfContexts.root
             assertThrows<IllegalStateException> { surfMinestomServer() }
 
-            assertSame(loader, MinestomInventoryLoader.instance)
+            assertSame(root, SurfContexts.root)
             assertSame(api, SurfMinestomServer.instance)
         } finally {
             api.shutdown()

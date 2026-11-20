@@ -1,17 +1,17 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.config
 
 import dev.slne.surf.api.config.manager.SpongeConfigManager
 import dev.slne.surf.api.config.migration.ConfigMigrationBuilder
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
+import dev.slne.surf.api.spring.surfBean
 import java.nio.file.Path
 
 /**
  * API for managing configuration files in the Surf API, supporting both Sponge and DazzlConf configurations.
  * Provides methods to create, retrieve, and reload configuration files in various formats (YAML, JSON).
  */
+@SurfApiBean
 interface SurfConfigApi {
     /**
      * Creates a Sponge YAML configuration file.
@@ -41,13 +41,12 @@ interface SurfConfigApi {
         configClass: Class<C>,
         configFolder: Path,
         configFileName: @YamlConfigFileNamePattern String,
-    ): SpongeConfigManager<C> =
-        createSpongeYmlConfigManager(
-            configClass,
-            configFolder,
-            configFileName,
-            ConfigMigrationBuilder()
-        )
+    ): SpongeConfigManager<C> = createSpongeYmlConfigManager(
+        configClass,
+        configFolder,
+        configFileName,
+        ConfigMigrationBuilder()
+    )
 
     /**
      * Creates a Sponge YAML configuration manager.
@@ -94,13 +93,12 @@ interface SurfConfigApi {
         configClass: Class<C>,
         configFolder: Path,
         configFileName: @JsonConfigFileNamePattern String,
-    ): SpongeConfigManager<C> =
-        createSpongeJsonConfigManager(
-            configClass,
-            configFolder,
-            configFileName,
-            ConfigMigrationBuilder()
-        )
+    ): SpongeConfigManager<C> = createSpongeJsonConfigManager(
+        configClass,
+        configFolder,
+        configFileName,
+        ConfigMigrationBuilder()
+    )
 
     /**
      * Creates a Sponge JSON configuration manager.
@@ -147,27 +145,26 @@ interface SurfConfigApi {
     fun <C> getSpongeConfigManagerForConfig(configClass: Class<C>): SpongeConfigManager<C>
 
     /**
-     * Reaches the one [SurfConfigApi] without delegating to it.
+     * Static access to the [SurfConfigApi] bean for surf-api's own entry points; plugins inject
+     * [SurfConfigApi] instead.
      *
-     * This companion used to implement the interface by delegation, so that `SurfConfigApi.load`
-     * meant the same as `surfConfigApi.load`. It cannot, now that the implementation is a bean:
-     * delegation stores the delegate in a field, so the companion's initialiser has to resolve the
-     * bean — and this interface's initialiser runs as part of initialising its own implementation,
-     * which the container does while it is building that very bean. The result was a cycle the
-     * container could never answer.
-     *
-     * Reading [instance] through a getter is what breaks it: the initialiser stores nothing and
-     * the lookup happens when someone actually asks.
+     * The companion stores nothing: [instance] reads the bean through [surfConfigApi] on each access,
+     * which resolves it on first use. Initialising the implementation initialises this interface, so
+     * the companion must not resolve the bean while it is initialised.
      */
     companion object {
-        /** The one [SurfConfigApi], resolved on first use. */
-        val instance get() = surfConfigApi
+        /**
+         * The [SurfConfigApi] bean of surf-api's root context.
+         */
+        @InternalSurfApi
+        val instance: SurfConfigApi get() = surfConfigApi
     }
 }
 
 /**
  * Retrieves the singleton instance of [SurfConfigApi].
  */
+@InternalSurfApi
 val surfConfigApi by surfBean<SurfConfigApi>()
 
 /**

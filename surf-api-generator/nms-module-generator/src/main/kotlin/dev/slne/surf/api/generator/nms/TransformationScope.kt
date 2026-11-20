@@ -12,7 +12,9 @@ class TransformationScope internal constructor() {
 
     private val _transformations = mutableListOf<NmsTransformation>()
 
-    /** Snapshot of all registered transformations. */
+    /**
+     * Snapshot of all registered transformations.
+     */
     internal val transformations: List<NmsTransformation> get() = _transformations.toList()
 
     /**
@@ -25,17 +27,23 @@ class TransformationScope internal constructor() {
         _transformations += NmsTransformation.RenameClass(oldFqn, newFqn)
     }
 
-    /** Removes the `import` line for [fqn] from all generated files. */
+    /**
+     * Removes the `import` line for [fqn] from all generated files.
+     */
     fun removeImport(fqn: String) {
         _transformations += NmsTransformation.RemoveImport(fqn)
     }
 
-    /** Replaces every occurrence of [old] with [new] in all generated files. */
+    /**
+     * Replaces every occurrence of [old] with [new] in all generated files.
+     */
     fun replaceCode(old: String, new: String) {
         _transformations += NmsTransformation.ReplaceCode(old, new)
     }
 
-    /** Replaces matches of the given regex [pattern] with [replacement]. */
+    /**
+     * Replaces matches of the given regex [pattern] with [replacement].
+     */
     fun replacePattern(pattern: String, replacement: String) {
         _transformations += NmsTransformation.ReplacePattern(Regex(pattern), replacement)
     }
@@ -48,7 +56,9 @@ class TransformationScope internal constructor() {
         _transformations += NmsTransformation.TransformFile(filePattern, transformer)
     }
 
-    /** Excludes files whose relative path ends with [filePattern] from generation. */
+    /**
+     * Excludes files whose relative path ends with [filePattern] from generation.
+     */
     fun excludeFile(filePattern: String) {
         _transformations += NmsTransformation.ExcludeFile(filePattern)
     }

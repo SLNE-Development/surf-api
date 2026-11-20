@@ -79,10 +79,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
  * strictly to the plugin version. On top of that:
  *
  * - `paper-plugin` and `paper-raw` also get `surf-api-nats-types-paper` and its default type mappings.
- * - `paper-plugin` declares `surf-api-nats-paper` as a required bootstrap and server dependency in `paper-plugin.yml`.
- * - `velocity` declares `surf-api-nats-velocity` as a required plugin dependency.
- * - `standalone` applies `dev.slne.surf.api.gradle.microservice` and adds `surf-api-nats-standalone` to
- *   `implementation`.
+ * - `standalone` applies `dev.slne.surf.api.gradle.microservice` and adds `surf-api-nats-spring` to `implementation`.
+ *   A microservice uses NATS through its Spring context.
  */
 class SurfNatsPlugin : Plugin<Project> {
 
@@ -231,18 +229,6 @@ class SurfNatsPlugin : Plugin<Project> {
             }
         }
 
-        pluginManager.withPlugin(SURF_API_PAPER_PLUGIN) {
-            with(SurfApiBridge) {
-                requirePaperPlugin()
-            }
-        }
-
-        pluginManager.withPlugin(SURF_API_VELOCITY) {
-            with(SurfApiBridge) {
-                requireVelocityPlugin()
-            }
-        }
-
         pluginManager.withPlugin(SURF_API_STANDALONE) {
             configureMicroservice()
         }
@@ -250,12 +236,12 @@ class SurfNatsPlugin : Plugin<Project> {
 
     /**
      * Turns a surf-api standalone project into a microservice: applies the surf-microservice plugin and adds the
-     * NATS runtime at the version of this plugin, which starts through the microservice integration SPI.
+     * Spring NATS module at the version of this plugin. The microservice context contributes the NATS beans.
      */
     private fun Project.configureMicroservice() {
         pluginManager.apply(MICROSERVICE_PLUGIN)
 
-        val runtime = dependencies.create("${SurfNatsPluginVersion.GROUP}:$STANDALONE_MODULE") as ExternalModuleDependency
+        val runtime = dependencies.create("${SurfNatsPluginVersion.GROUP}:$SPRING_MODULE") as ExternalModuleDependency
         runtime.version { strictly(SurfNatsPluginVersion.VERSION) }
         dependencies.add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, runtime)
     }
@@ -303,7 +289,7 @@ class SurfNatsPlugin : Plugin<Project> {
         private const val SURF_API_VELOCITY = "dev.slne.surf.api.gradle.velocity"
         private const val SURF_API_STANDALONE = "dev.slne.surf.api.gradle.standalone"
         private const val MICROSERVICE_PLUGIN = "dev.slne.surf.api.gradle.microservice"
-        private const val STANDALONE_MODULE = "surf-api-nats-standalone"
+        private const val SPRING_MODULE = "surf-api-nats-spring"
 
         private val SURF_API_PAPER_PLUGINS = setOf(
             SURF_API_PAPER_PLUGIN,

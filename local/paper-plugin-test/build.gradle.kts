@@ -12,10 +12,6 @@ description = "surf-api-paper-plugin-test"
 
 dependencies {
     compileOnlyApi(projects.surfApiPaperApi)
-    // Only for the container host. A plugin starts its own child container through
-    // `PaperMain.containers`, and that lives in the implementation module — surf-api's paper-plugin
-    // declares `has-open-classloader: false`, so a plugin reaches it exactly because it declares
-    // SurfPaperAPI with `joinClasspath = true` below.
     compileOnlyApi(libs.commandapi.paper)
 
     paperweight.paperDevBundle(libs.paper.api.get().version)
@@ -23,11 +19,21 @@ dependencies {
 
 paper {
     main = "dev.slne.surf.surfapi.bukkit.test.PaperPluginMain"
+    bootstrapper = "dev.slne.surf.surfapi.bukkit.test.PaperPluginBootstrapper"
     name = "SurfPaperPluginTest"
     description = "Test plugin for Surf API for Paper"
     author = "twisti"
     apiVersion = "1.21"
     foliaSupported = true
+
+    // The plugin's bootstrap context is built on top of surf-api's root bootstrap context.
+    bootstrapDependencies {
+        register("SurfPaperAPI") {
+            required = true
+            load = PaperPluginDescription.RelativeLoadOrder.BEFORE
+            joinClasspath = true
+        }
+    }
 
     serverDependencies {
         register("CommandAPI") {

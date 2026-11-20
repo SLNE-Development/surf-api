@@ -1,12 +1,15 @@
 package dev.slne.surf.surfapi.bukkit.test.hook.condition
 
-import dev.slne.surf.api.di.condition.BeanCondition
-import dev.slne.surf.api.di.condition.BeanConditionContext
 import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
+import org.springframework.context.annotation.Condition
+import org.springframework.context.annotation.ConditionContext
+import org.springframework.core.type.AnnotatedTypeMetadata
 
-/** Lets a bean exist only while this plugin's own configuration says so. */
-class EnabledCondition : BeanCondition {
-    override suspend fun evaluate(context: BeanConditionContext): Boolean {
-        return ModernTestConfig.getConfig().enabled
-    }
+/**
+ * Matches when the test config enables the guarded bean.
+ */
+class EnabledCondition : Condition {
+
+    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata) =
+        ModernTestConfig.getConfig().enabled
 }

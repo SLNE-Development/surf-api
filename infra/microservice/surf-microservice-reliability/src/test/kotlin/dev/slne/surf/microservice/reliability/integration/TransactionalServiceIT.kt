@@ -1,18 +1,13 @@
 package dev.slne.surf.microservice.reliability.integration
 
-import dev.slne.surf.database.DatabaseApi
-import dev.slne.surf.microservice.reliability.ReliabilityConfig
-import dev.slne.surf.microservice.reliability.support.OriginListener
-import dev.slne.surf.microservice.reliability.support.ReceivedEvents
-import dev.slne.surf.microservice.reliability.support.ReceivedOrigin
-import dev.slne.surf.microservice.reliability.support.RecordingTestService
-import dev.slne.surf.microservice.reliability.support.TestClients
-import dev.slne.surf.microservice.reliability.support.TestDatabase
-import dev.slne.surf.microservice.reliability.support.TestNats
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import dev.slne.surf.microservice.api.MicroserviceInfo
+import dev.slne.surf.microservice.reliability.MicroserviceReliabilityAutoConfiguration
+import dev.slne.surf.microservice.reliability.TransactionalEvents
+import dev.slne.surf.microservice.reliability.support.*
 import dev.slne.surf.microservice.reliability.support.TestNats.streamMessageCount
-import dev.slne.surf.microservice.reliability.support.TestVendor
-import dev.slne.surf.microservice.reliability.support.eventually
 import dev.slne.surf.nats.NatsClient
+import dev.slne.surf.nats.NatsServiceInterceptorProvider
 import dev.slne.surf.nats.registerService
 import dev.slne.surf.nats.rpc.NatsPersistentCall
 import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
@@ -32,7 +27,9 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.springframework.beans.factory.getBean
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
@@ -74,7 +71,7 @@ class TransactionalServiceIT {
 
                 assertEquals(1, response.count)
                 assertEquals(1, instance.service.storedCountRuns.get())
-                assertEquals(1, instance.database.entryCount(instance.api, RecordingTestService.RPC_ENTRY))
+                assertEquals(1, instance.database.entryCount(instance.r2dbc, RecordingTestService.RPC_ENTRY))
                 assertEquals(listOf(1L, 2L), deliveries.map { it.deliveryCount })
                 assertEquals(1, deliveries.map { it.messageId }.distinct().size)
             }
@@ -115,7 +112,7 @@ class TransactionalServiceIT {
                     eventually("the replay must be acknowledged") { raw.streamMessageCount(WORK_QUEUE_STREAM) == 0L }
                     assertEquals(1, deliveries.map { it.messageId }.distinct().size)
                     assertEquals(1, instance.service.storeRunsOf(entry))
-                    assertEquals(1, instance.database.entryCount(instance.api, entry))
+                    assertEquals(1, instance.database.entryCount(instance.r2dbc, entry))
                 }
             }
         }
@@ -191,7 +188,7 @@ class TransactionalServiceIT {
                 delay(1.seconds) // a duplicate from the redelivery would arrive within this window
                 assertEquals(listOf(entry), received.messages)
                 assertEquals(1, instance.service.storeRunsOf(entry))
-                assertEquals(1, instance.database.entryCount(instance.api, entry))
+                assertEquals(1, instance.database.entryCount(instance.r2dbc, entry))
             }
         }
     }
@@ -214,7 +211,7 @@ class TransactionalServiceIT {
                 }
                 eventually("every event must arrive") { received.eventIds.size >= entries.size }
                 delay(1.seconds)
-                entries.forEach { assertEquals(1, database.entryCount(first.api, it), it) }
+                entries.forEach { assertEquals(1, database.entryCount(first.r2dbc, it), it) }
                 assertEquals(entries.size, received.eventIds.distinct().size)
                 assertEquals(entries.size, received.eventIds.size)
             }
@@ -223,7 +220,7 @@ class TransactionalServiceIT {
 
     private class Instance(
         val database: TestDatabase,
-        val api: DatabaseApi,
+        val r2dbc: R2dbcDatabase,
         val service: RecordingTestService,
         val serviceClient: NatsClient,
     )
@@ -234,24 +231,34 @@ class TransactionalServiceIT {
         block: suspend (Instance, NatsClient) -> Unit,
     ) = withInstance(vendor.freshDatabase(), wrap, block)
 
+    /**
+     * Runs [block] against one instance of the service: a context with the reliability auto-configuration whose
+     * interceptor provider supplies the interceptor of the registered service.
+     */
     private suspend fun withInstance(
         database: TestDatabase,
         wrap: (NatsPersistentInterceptor) -> NatsPersistentInterceptor = { it },
         block: suspend (Instance, NatsClient) -> Unit,
-    ) = database.open("instance").use { api ->
-        val runtime = ReliabilityRuntime.start(OWNER, api, ReliabilityConfig())
-        val service = RecordingTestService(api, runtime.events)
+    ) = database.open("instance") {
+        beanFactory.registerSingleton("microserviceInfo", MicroserviceInfo(OWNER, Path.of("unused")))
+        register(MicroserviceReliabilityAutoConfiguration::class.java)
+    }.use { opened ->
+        val context = opened.context
+        val service = RecordingTestService(opened.database, context.getBean<TransactionalEvents>())
         val serviceClient = TestClients.create("service")
         val caller = TestClients.create("caller")
         try {
-            serviceClient.registerService<MicroserviceTestService>(service, wrap(runtime.interceptorFor(serviceClient)))
-            withContext(Dispatchers.Default) { block(Instance(database, api, service, serviceClient), caller) }
+            val provider = context.getBean<NatsServiceInterceptorProvider>()
+            val interceptor = checkNotNull(provider.interceptorFor(service, service.javaClass, serviceClient)) {
+                "The provider must handle a @NatsTransactional service"
+            }
+            serviceClient.registerService<MicroserviceTestService>(service, wrap(interceptor))
+            withContext(Dispatchers.Default) { block(Instance(database, opened.database, service, serviceClient), caller) }
         } finally {
             withContext(Dispatchers.IO) {
                 caller.close()
                 serviceClient.close()
             }
-            runtime.stop()
         }
     }
 

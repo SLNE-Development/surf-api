@@ -1,9 +1,8 @@
 package dev.slne.surf.api.standalone.impl
 
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
-import dev.slne.surf.api.di.Service
 import net.kyori.adventure.audience.Audience
-import java.nio.file.Path
+import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
@@ -20,6 +19,4 @@ class SurfStandaloneApiImpl : SurfApiCoreImpl() {
     override fun isPlayer(audience: Audience): Boolean {
         return false
     }
-
-    val dataFolder: Path get() = Path.of("api-data")
 }

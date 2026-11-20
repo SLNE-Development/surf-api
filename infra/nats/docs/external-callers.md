@@ -16,8 +16,9 @@ methods.
 - **Get the contracts.** Every contract module publishes its `.proto` files to the weaver registry. On Node.js,
   the weaver CLI fetches them into one directory (see [Fetching the contracts](#fetching-the-contracts)). With any
   other client, download the artifact from weaver (see its REST API). The contracts import
-  `surf/nats/v1/options.proto` and the `surf/types/v1` messages from the artifact `surf-nats-types-common`, and
-  Paper contracts the `surf/types/paper/v1` messages from `surf-nats-types-paper`. A published contract module lists
+  `surf/nats/v1/options.proto` and the `surf/types/v1` messages from the artifact
+  `dev.slne.surf.api:surf-api-nats-types-common`, and Paper contracts the `surf/types/paper/v1` messages from
+  `dev.slne.surf.api:surf-api-nats-types-paper`. A published contract module lists
   these artifacts as dependencies, so one fetch brings them along. The `google/protobuf` files come with your
   Protocol Buffers tooling.
 - **The contract is the address.** Subjects and streams derive from the proto full names of the event message, the
@@ -89,11 +90,16 @@ Then install the package and its peer dependency:
 npm install @slne/surf-api-nats @bufbuild/protobuf@2.16.0
 ```
 
-A release has the version of the surf-nats release and the dist-tag `latest`. A snapshot build has the version
-`<version>.<yyyyMMddHHmmss>`, for example `1.0.0-SNAPSHOT.20261112093000`, and the dist-tag `snapshot`, so
-`npm install @slne/surf-api-nats@snapshot` installs the newest snapshot. To build the package locally, run
-`./gradlew :surf-nats-core:jsNodeProductionLibraryDistribution`, which writes it to
-`surf-nats-core/build/dist/js/productionLibrary`.
+A release has the version of the surf-api release and the dist-tag `latest`. A snapshot build has the version
+`<version>.<yyyyMMddHHmmss>` with a UTC timestamp, for example `4.1.0-SNAPSHOT.20261112093000`, and the dist-tag
+`snapshot`, so `npm install @slne/surf-api-nats@snapshot` installs the newest snapshot. To build the package locally,
+run the following command in the root of the surf-api repository:
+
+```sh
+./gradlew :surf-api-nats:surf-api-nats-core:jsNodeProductionLibraryDistribution
+```
+
+The task writes the package to `infra/nats/surf-nats-core/build/dist/js/productionLibrary`.
 
 The package runs on Node.js and exports ES modules with TypeScript declarations. It depends on
 `@nats-io/transport-node`, `@nats-io/jetstream`, and `@nats-io/obj` 3.4.0, and needs `@bufbuild/protobuf` 2.16.0 as a

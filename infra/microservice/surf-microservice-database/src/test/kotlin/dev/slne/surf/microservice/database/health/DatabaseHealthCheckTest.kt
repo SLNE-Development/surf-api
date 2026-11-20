@@ -1,64 +1,64 @@
 package dev.slne.surf.microservice.database.health
 
-import dev.slne.surf.microservice.api.health.MicroserviceHealthStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import org.springframework.boot.health.contributor.Status
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 class DatabaseHealthCheckTest {
 
     @Test
-    fun `reports healthy when the probe completes`() = runTest {
-        val result = checkDatabaseHealth(COMPONENT, TIMEOUT) {}
+    fun `reports up when the probe completes`() = runTest {
+        val health = checkDatabaseHealth(TIMEOUT) {}
 
-        assertEquals(MicroserviceHealthStatus.HEALTHY, result.status)
-        assertEquals(COMPONENT, result.component)
+        assertEquals(Status.UP, health.status)
+        assertTrue(health.details.isEmpty())
     }
 
     @Test
-    fun `reports unhealthy with the exception message`() = runTest {
-        val result = checkDatabaseHealth(COMPONENT, TIMEOUT) { error("connection refused") }
+    fun `reports down with the exception message`() = runTest {
+        val health = checkDatabaseHealth(TIMEOUT) { error("connection refused") }
 
-        assertEquals(MicroserviceHealthStatus.UNHEALTHY, result.status)
-        assertEquals("connection refused", result.message)
+        assertEquals(Status.DOWN, health.status)
+        assertEquals("connection refused", health.details["error"])
     }
 
     @Test
     fun `falls back to the exception type without a message`() = runTest {
-        val result = checkDatabaseHealth(COMPONENT, TIMEOUT) { throw IllegalStateException() }
+        val health = checkDatabaseHealth(TIMEOUT) { throw IllegalStateException() }
 
-        assertEquals(IllegalStateException::class.java.name, result.message)
+        assertEquals(IllegalStateException::class.java.name, health.details["error"])
     }
 
     @Test
-    fun `reports unhealthy when the probe throws an error`() = runTest {
-        val result = checkDatabaseHealth(COMPONENT, TIMEOUT) { throw NoClassDefFoundError("driver") }
+    fun `reports down when the probe throws an error`() = runTest {
+        val health = checkDatabaseHealth(TIMEOUT) { throw NoClassDefFoundError("driver") }
 
-        assertEquals(MicroserviceHealthStatus.UNHEALTHY, result.status)
-        assertEquals("driver", result.message)
+        assertEquals(Status.DOWN, health.status)
+        assertEquals("driver", health.details["error"])
     }
 
     @Test
-    fun `reports unhealthy when the probe times out`() = runTest {
-        val result = checkDatabaseHealth(COMPONENT, TIMEOUT) { delay(TIMEOUT * 2) }
+    fun `reports down when the probe times out`() = runTest {
+        val health = checkDatabaseHealth(TIMEOUT) { delay(TIMEOUT * 2) }
 
-        assertEquals(MicroserviceHealthStatus.UNHEALTHY, result.status)
-        assertEquals("Database health check timed out after $TIMEOUT", result.message)
+        assertEquals(Status.DOWN, health.status)
+        assertEquals("Database health check timed out after $TIMEOUT", health.details["error"])
     }
 
     @Test
     fun `propagates cancellation`() = runTest {
         assertFailsWith<CancellationException> {
-            checkDatabaseHealth(COMPONENT, TIMEOUT) { throw CancellationException("cancelled") }
+            checkDatabaseHealth(TIMEOUT) { throw CancellationException("cancelled") }
         }
     }
 
     private companion object {
-        const val COMPONENT = "database"
         val TIMEOUT = 2.5.seconds
     }
 }

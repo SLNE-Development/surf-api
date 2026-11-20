@@ -13,7 +13,7 @@ import org.gradle.api.provider.Property
  * surfMicroservice {
  *     database {
  *         // Pin a database release instead of the default, the major version of the plugin
- *         version = "2.4.2"
+ *         version = "4.0.0"
  *     }
  * }
  * ```
@@ -32,11 +32,8 @@ import org.gradle.api.provider.Property
  *
  * ```properties
  * surf.microservice.database.enabled=false
- * surf.database.version=2.4.2
+ * surf.database.version=4.0.0
  * ```
- *
- * The build fails if surf-api's `withSurfDatabaseR2dbc(...)` is also used, because it adds
- * `surf-api-database-r2dbc` to `api` with an unpinned version. Remove that call and set [version] here instead.
  */
 abstract class MicroserviceDatabaseExtension {
     /**

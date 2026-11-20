@@ -52,7 +52,7 @@ object V1_21_11LibLoaderBridgeImpl : LibLoaderBridge {
         fun getLibraryLoader(instance: PaperPluginClassLoader): URLClassLoader
 
         companion object {
-            val instance = SurfReflection.INSTANCE.createProxy<PaperPluginClassLoaderProxy>()
+            val instance = SurfReflection.instance.createProxy<PaperPluginClassLoaderProxy>()
         }
     }
 }

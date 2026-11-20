@@ -1,6 +1,6 @@
 # Inside a version module
 
-Four exist today: `platform/paper/nms/v1-21-11`, `v26-1`, `v26-2`, `v26-3`. Each carries ~50 Kotlin
+Four exist: `platform/paper/nms/v1-21-11`, `v26-1`, `v26-2`, `v26-3`. Each carries ~50 Kotlin
 files under `src/main/kotlin/dev/slne/surf/api/paper/server/nms/<versionId>/`, where `versionId` is
 `v1_21_11`, `v26_1`, `v26_2`, `v26_3`. Every class name is prefixed with the matching `classPrefix`
 (`V1_21_11`, `V26_1`, …) and carries `@Suppress("ClassName")`, because the prefix breaks Kotlin's
@@ -27,12 +27,11 @@ are looking at a version module.
 | `packet/lore/` | `V26_3PacketLoreListener`, `V26_3PacketLoreRegistry` |
 | `reflection/` | `V26_3NmsReflections` (the `@GenerateReflection` interface), `V26_3Reflection` (the `initialize()` hook) |
 | `region/V26_3TickThreadGuard.kt` | Folia tick-thread checks |
-| `scoreboard/V26_3PlayerNmsScoreboardImpl.kt` | packet sidebar |
+| `scoreboard/V26_3PlayerNmsScoreboardImpl.kt` | the per-player packet scoreboard behind the `sidebar/` api |
 
-`v26-2` and `v26-3` additionally have
-`src/main/resources/META-INF/services/dev.slne.surf.api.paper.nms.common.NmsProvider`, written by the
-generator. It is unused — see the traps in `SKILL.md`. `v26-1` and `v1-21-11` have no
-`src/main/resources` directory at all.
+No version module has a `src/main/resources` directory. Providers are discovered through the
+KSP-written `META-INF/surf-api/nms-providers/*.json`, not through `META-INF/services` — see the traps
+in `SKILL.md`.
 
 `v1-21-11` has one extra file, `reflection/V1_21_11ItemProxy.kt`, the last live
 `reflection-remapper` proxy in the tree.
@@ -89,6 +88,7 @@ Identical across all four modules except the bundle string:
 ```kotlin
 plugins {
     id("surf.module-impl")
+    id("surf.ksp-processor")
     id("io.papermc.paperweight.userdev") apply true
 }
 
@@ -104,10 +104,14 @@ dependencies {
 
     paperweight.paperDevBundle("26.3.build.+")
 
+    // CreativeOrderComparator indexes creative-mode items with two maps that have no JDK
+    // counterpart: one keyed by Paper's own ItemStackLinkedSet.TYPE_AND_TAG hash strategy, and one
+    // keyed by reference identity. The dev bundle happens to carry fastutil, but relying on that is
+    // not a dependency declaration.
+    compileOnly(libs.fastutil)
+
     compileOnly(libs.placeholder.api)
     compileOnly(libs.reflection.remapper)
-    compileOnly(libs.mccoroutine.folia.api)
-    compileOnly(libs.scoreboard.library.api)
 
     implementation(libs.bytebuddy)
 }
@@ -120,12 +124,17 @@ configurations.all {
 - `surf.module-impl` → `core-convention`, plus an assertion that the project name marks it as an
   implementation. `surfModuleRole` matches `-nms-v<digit>`, which is why `surf-api-paper-nms-v26-3`
   passes.
+- `surf.ksp-processor` runs `surf-api-processor`, which writes the provider JSON for
+  `@NmsProviderMarker` and the implementation of `V<prefix>NmsReflections`. Without it the module
+  compiles and then fails at runtime with `No NmsProvider implementations found`.
 - `io.papermc.paperweight.userdev` is declared once in the root `build.gradle.kts` as
   `version "2.0.0-beta.24" apply false` and applied here.
-- `paperweight.paperDevBundle(…)` is the only per-version line. The three live shapes are
-  `"1.21.11-R0.1-SNAPSHOT"` (full Maven version), `"26.1+"` / `"26.2+"` (open range) and
+- `paperweight.paperDevBundle(…)` is the only per-version line. The live shapes are
+  `"1.21.11-R0.1-SNAPSHOT"` (full Maven version), `"26.1+"` (open range) and `"26.2.build.+"` /
   `"26.3.build.+"` (build-qualified range). `NmsVersion.paperDevBundle` in the generator records the
-  canonical string for each version.
+  string a newly generated module gets and matches each existing module's value.
+- The generator's build-file template carries `compileOnly(libs.fastutil)` with its comment, so a
+  generated `build.gradle.kts` matches the one above apart from the dev bundle string.
 - `libs.reflection.remapper` stays `compileOnly` even though only `v1-21-11` still uses it at
   runtime; `platform/paper/impl` carries the `implementation` dependency.
 - The `spigot-api` exclusion is repeated in `platform/paper/impl/build.gradle.kts` too.
@@ -143,7 +152,7 @@ Real examples from the tree, useful as `transformations` fodder when generating 
   needs a manual rename (or a `transformFile`).
 - **Dropped reflection.** `v1-21-11`'s `V1_21_11Reflection.initialize()` builds a
   `ReflectionRemapper.forReobfMappingsInPaperJar()` and a `ReflectionProxyFactory`; the three 26.x
-  modules have that body commented out and keep only the empty `initialize()`. The replacement is
+  modules declare only an empty `initialize() = Unit`. The replacement is
   `@GenerateReflection`, which is version-neutral source but resolves against each module's own
   Mojang-mapped classpath.
 - **Component and data-component churn.** `V26_3SurfPaperNmsCommonBridgeImpl` reaches into

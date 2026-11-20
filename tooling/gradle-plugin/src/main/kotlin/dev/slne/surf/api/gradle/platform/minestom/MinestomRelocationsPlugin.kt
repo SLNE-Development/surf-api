@@ -18,8 +18,6 @@ internal class MinestomRelocationsPlugin : Plugin<Project> {
                 val prefix = Constants.RELOCATION_PREFIX
 
                 relocate("org.spongepowered.configurate", "$prefix.configurate")
-                relocate("com.mojang.serialization", "$prefix.mojang.serialization")
-                relocate("com.mojang.datafixers", "$prefix.mojang.datafixers")
                 relocate("net.kyori.adventure.nbt", "$prefix.kyori.nbt") {
                     exclude("net.kyori.adventure.nbt.api.**")
                 }

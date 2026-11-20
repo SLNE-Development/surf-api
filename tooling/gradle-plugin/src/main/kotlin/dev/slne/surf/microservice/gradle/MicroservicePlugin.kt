@@ -1,9 +1,7 @@
 package dev.slne.surf.microservice.gradle
 
 import dev.slne.surf.microservice.gradle.dependencies.addMicroserviceDependencies
-import dev.slne.surf.microservice.gradle.dependencies.addMicroserviceProcessor
 import dev.slne.surf.microservice.gradle.dependencies.addReliabilityDependencies
-import dev.slne.surf.microservice.gradle.dependencies.rejectSurfApiDatabase
 import dev.slne.surf.microservice.gradle.docker.applyDockerConventions
 import dev.slne.surf.microservice.gradle.docker.applyJavaDockerConventions
 import dev.slne.surf.microservice.gradle.generated.Constants
@@ -27,18 +25,20 @@ import org.gradle.kotlin.dsl.create
  *
  * What the plugin does depends on the plugins applied next to it, in any order:
  * - `java-library`: adds `surf-api-microservice-api` to `api` and `surf-api-microservice-runtime` to
- *   `runtimeOnly`. Unless disabled, it also adds the database integration (`surf-api-microservice-database` and
+ *   `implementation`. Unless disabled, it also adds the database integration (`surf-api-microservice-database` and
  *   `surf-api-database-r2dbc`) and, with surf-nats, `surf-api-microservice-reliability` to `implementation`. The
  *   microservice and database modules use the major version of the plugin, for example `4.+`.
- * - `com.google.devtools.ksp`: adds `surf-api-microservice-processor` to `ksp`. The processor records the
- *   [Microservice][dev.slne.surf.microservice.api.Microservice] subclass and the database migrations of the module,
- *   which the runtime finds at startup.
  * - `java`: derives the default Docker images from the Java toolchain, see [MicroserviceDockerExtension].
- * - `com.gradleup.shadow`: makes `shadowJar` the runnable microservice. Its main class is the runtime launcher, and it
- *   merges `META-INF/services` files so that the integrations of all modules are found. It also registers the tasks
- *   below.
+ * - `com.gradleup.shadow`: makes `shadowJar` the runnable microservice. Its `Main-Class` is the class set in
+ *   [MicroserviceExtension.mainClass], by default the single class with a `public static void main(String[])` in the
+ *   compiled main source set. The jar merges `META-INF/services` files, the `.imports` files in `META-INF/spring`
+ *   and, per key, `META-INF/spring.factories`, so that the Spring Boot auto-configurations and context initializers of
+ *   all modules are found. It also combines the log4j plugin caches, without which log4j finds no configuration. The
+ *   plugin also registers the tasks below.
  *
  * These tasks exist only with the Shadow plugin:
+ * - `detectMicroserviceMainClass`: resolves the main class for the `Main-Class` attribute. It fails if the project has
+ *   no class with a `public static void main(String[])` or several, and [MicroserviceExtension.mainClass] is not set.
  * - `runMicroservice`: builds the jar and runs it with `java -jar` on the project's Java toolchain. The working
  *   directory is `run/` in the project directory, so configuration and data survive `clean`. Standard input is
  *   forwarded to the microservice console.
@@ -55,9 +55,6 @@ import org.gradle.kotlin.dsl.create
  * - [RELIABILITY_ENABLED_PROPERTY]: [MicroserviceReliabilityExtension.enabled], derived from the database integration
  *   and surf-nats without it.
  *
- * A project must not use surf-api's `withSurfDatabaseR2dbc(...)`, which this plugin replaces: resolving the
- * dependencies fails if it was applied.
- *
  * DSL values are read lazily.
  */
 abstract class MicroservicePlugin : Plugin<Project> {
@@ -73,16 +70,12 @@ abstract class MicroservicePlugin : Plugin<Project> {
                 project.addMicroserviceDependencies(extension.database)
                 val explicitReliability = project.explicitReliability(extension.reliability)
                 project.addReliabilityDependencies(extension.database, explicitReliability)
-                project.rejectSurfApiDatabase()
-            }
-            withPlugin("com.google.devtools.ksp") {
-                project.addMicroserviceProcessor()
             }
             withPlugin("java") {
                 project.applyJavaDockerConventions(extension.docker)
             }
             withPlugin("com.gradleup.shadow") {
-                project.configureMicroserviceShadow(extension.docker)
+                project.configureMicroserviceShadow(extension)
             }
         }
     }

@@ -1,14 +1,14 @@
 package dev.slne.surf.api.paper.server.nms.v26_3.bridges
 
+import dev.slne.surf.api.common.util.setFinalField
+import dev.slne.surf.api.paper.nms.common.LibLoaderBridge
+import dev.slne.surf.api.paper.server.nms.v26_3.extensions.commodore
+import dev.slne.surf.api.paper.server.nms.v26_3.extensions.craftServer
 import dev.slne.surf.api.reflection.Field
 import dev.slne.surf.api.reflection.Field.Type
 import dev.slne.surf.api.reflection.SurfProxy
 import dev.slne.surf.api.reflection.SurfReflection
 import dev.slne.surf.api.reflection.createProxy
-import dev.slne.surf.api.common.util.setFinalField
-import dev.slne.surf.api.paper.nms.common.LibLoaderBridge
-import dev.slne.surf.api.paper.server.nms.v26_3.extensions.commodore
-import dev.slne.surf.api.paper.server.nms.v26_3.extensions.craftServer
 import io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader
 import org.bukkit.craftbukkit.util.ApiVersion
 import java.net.URLClassLoader
@@ -52,7 +52,7 @@ object V26_3LibLoaderBridgeImpl : LibLoaderBridge {
         fun getLibraryLoader(instance: PaperPluginClassLoader): URLClassLoader
 
         companion object {
-            val instance = SurfReflection.INSTANCE.createProxy<PaperPluginClassLoaderProxy>()
+            val instance = SurfReflection.instance.createProxy<PaperPluginClassLoaderProxy>()
         }
     }
 }

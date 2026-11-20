@@ -4,8 +4,11 @@ import dev.slne.surf.api.config.type.number.IntOr
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 
+/**
+ * Where and as whom the pool connects.
+ */
 @ConfigSerializable
-internal data class ConnectionDetails(
+data class ConnectionDetails(
     val databaseType: DatabaseType = DatabaseType.MARIADB,
     @param:Comment("The schema to use for the database connection. Only relevant for PostgreSQL.")
     val schema: String = "public",

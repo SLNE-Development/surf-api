@@ -1,5 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.config.serializer
 
 import dev.slne.surf.api.config.constraints.*
@@ -10,41 +8,32 @@ import dev.slne.surf.api.config.type.DurationOrDisabled
 import dev.slne.surf.api.config.type.StringOrDefault
 import dev.slne.surf.api.config.type.number.DoubleOr
 import dev.slne.surf.api.config.type.number.IntOr
-import dev.slne.surf.api.messages.minimessage.SurfMiniMessageHolder
-import dev.slne.surf.api.di.surfBean
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.Component
 import org.jetbrains.annotations.MustBeInvokedByOverriders
 import org.spongepowered.configurate.kotlin.dataClassFieldDiscoverer
 import org.spongepowered.configurate.kotlin.extensions.addConstraint
 import org.spongepowered.configurate.objectmapping.ObjectMapper
-import org.spongepowered.configurate.serialize.*
-import org.spongepowered.configurate.util.CheckedConsumer
-import java.lang.reflect.AnnotatedParameterizedType
-import java.lang.reflect.AnnotatedType
-import java.util.*
+import org.spongepowered.configurate.serialize.TypeSerializer
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
-import java.util.function.Predicate
 
-val surfSpongeConfigSerializers by surfBean<SpongeConfigSerializers>()
+internal val surfSpongeConfigSerializers by surfBean<SpongeConfigSerializers>()
 
 /**
  * Serializers for Sponge configurations, including support for Adventure [Component] and other types.
  */
 abstract class SpongeConfigSerializers {
-    private val _typeTokenSerializers = mutableMapOf<TypeToken<*>, TypeSerializer<*>>()
-    val typeTokenSerializers: Map<TypeToken<*>, TypeSerializer<*>> get() = _typeTokenSerializers
+    val typeTokenSerializers: Map<TypeToken<*>, TypeSerializer<*>>
+        field = ConcurrentHashMap<TypeToken<*>, TypeSerializer<*>>()
 
-    private val _classSerializers = mutableMapOf<Class<*>, TypeSerializer<*>>()
-    val classSerializers: Map<Class<*>, TypeSerializer<*>> get() = _classSerializers
-
-    init {
-        registerTypeTokenSerializer(LinkedListSerializer.TYPE, LinkedListSerializer())
-    }
+    val classSerializers: Map<Class<*>, TypeSerializer<*>>
+        field = ConcurrentHashMap<Class<*>, TypeSerializer<*>>()
 
     fun <T : Any> registerClassSerializer(clazz: Class<T>, serializer: TypeSerializer<T>) {
-        _classSerializers[clazz] = serializer
+        classSerializers[clazz] = serializer
     }
 
     inline fun <reified T : Any> registerClassSerializer(serializer: TypeSerializer<T>) {
@@ -52,15 +41,15 @@ abstract class SpongeConfigSerializers {
     }
 
     fun unregisterSerializer(clazz: Class<*>) {
-        _classSerializers.remove(clazz)
+        classSerializers.remove(clazz)
     }
 
     fun registerTypeTokenSerializer(typeToken: TypeToken<*>, serializer: TypeSerializer<*>) {
-        _typeTokenSerializers[typeToken] = serializer
+        typeTokenSerializers[typeToken] = serializer
     }
 
     fun unregisterTypeTokenSerializer(typeToken: TypeToken<*>) {
-        _typeTokenSerializers.remove(typeToken)
+        typeTokenSerializers.remove(typeToken)
     }
 
     @MustBeInvokedByOverriders
@@ -72,15 +61,17 @@ abstract class SpongeConfigSerializers {
      */
     @Suppress("UNCHECKED_CAST")
     fun buildSerializersModule(): Consumer<TypeSerializerCollection.Builder> = Consumer { builder ->
-        _classSerializers.forEach { (clazz, serializer) ->
+        classSerializers.forEach { (clazz, serializer) ->
             builder.register(clazz as Class<Any>, serializer as TypeSerializer<Any>)
         }
 
-        _typeTokenSerializers.forEach { (type, serializer) ->
+        typeTokenSerializers.forEach { (type, serializer) ->
             builder.register(type as TypeToken<Any>, serializer as TypeSerializer<Any>)
         }
 
-        builder.register(ComponentSerializer())
+        builder.register(ComponentSerializer)
+        builder.register(TextColorSerializer)
+        builder.register(LinkedListSerializer.TYPE, LinkedListSerializer)
         builder.register(EnumValueSerializer)
         builder.register(KeySerializer)
         builder.register(ConfigDuration.Serializer)
@@ -98,7 +89,6 @@ abstract class SpongeConfigSerializers {
         builder.register(UrlSerializer)
         builder.register(PathSerializer)
         builder.register(FileSerializer)
-        builder.register(TextColorSerializer)
 
         builder.register(MapSerializer.TYPE, MapSerializer(false))
 
@@ -149,70 +139,5 @@ abstract class SpongeConfigSerializers {
         )
 
         registerDefaults(builder)
-    }
-
-    /**
-     * Configurate scalar serializer for Adventure [Component] values.
-     *
-     * Components are serialized as MiniMessage strings and deserialized through the shared
-     * Surf MiniMessage instance.
-     */
-    class ComponentSerializer : ScalarSerializer.Annotated<Component>(Component::class.java) {
-
-        /**
-         * Deserializes a MiniMessage string into a [Component].
-         */
-        override fun deserialize(type: AnnotatedType, obj: Any): Component {
-            return SurfMiniMessageHolder.miniMessage().deserialize(obj.toString())
-        }
-
-        /**
-         * Serializes [item] into a MiniMessage string.
-         */
-        override fun serialize(type: AnnotatedType, item: Component, typeSupported: Predicate<Class<*>>): Any {
-            return SurfMiniMessageHolder.miniMessage().serialize(item)
-        }
-    }
-
-    /**
-     * Serializer for [LinkedList] objects in Sponge configurations.
-     */
-    class LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
-        override fun elementType(containerType: AnnotatedType): AnnotatedType? {
-            if (containerType !is AnnotatedParameterizedType) {
-                throw SerializationException(
-                    containerType,
-                    "Raw types are not supported for collections"
-                )
-            }
-
-            return containerType.annotatedActualTypeArguments[0]
-        }
-
-        override fun createNew(length: Int, elementType: AnnotatedType?): LinkedList<Any> {
-            return LinkedList<Any>()
-        }
-
-        @Throws(SerializationException::class)
-        override fun forEachElement(
-            collection: LinkedList<Any>,
-            action: CheckedConsumer<Any?, SerializationException?>,
-        ) {
-            for (el in collection) {
-                action.accept(el)
-            }
-        }
-
-        override fun deserializeSingle(
-            index: Int, collection: LinkedList<Any>,
-            deserialized: Any?,
-        ) {
-            if (deserialized == null) return
-            collection.add(deserialized)
-        }
-
-        companion object {
-            val TYPE: TypeToken<LinkedList<Any>> = object : TypeToken<LinkedList<Any>>() {}
-        }
     }
 }

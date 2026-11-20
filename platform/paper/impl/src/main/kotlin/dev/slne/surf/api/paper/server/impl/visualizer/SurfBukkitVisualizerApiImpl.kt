@@ -3,7 +3,6 @@
 package dev.slne.surf.api.paper.server.impl.visualizer
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.server.impl.visualizer.visualizer.AbstractSurfVisualizerImpl
 import dev.slne.surf.api.paper.server.impl.visualizer.visualizer.SurfVisualizerAreaImpl
@@ -19,6 +18,7 @@ import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.spongepowered.math.vector.Vector3d
+import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -113,6 +113,6 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
     }
 
     companion object {
-        val INSTANCE get() = SurfPaperVisualizerApi.INSTANCE as SurfBukkitVisualizerApiImpl
+        val INSTANCE get() = SurfPaperVisualizerApi.instance as SurfBukkitVisualizerApiImpl
     }
 }

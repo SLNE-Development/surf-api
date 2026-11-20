@@ -2,8 +2,6 @@ package dev.slne.surf.microservice.database.nats
 
 import dev.slne.surf.api.common.util.logger
 
-private val log = logger()
-
 /**
  * Sizes the default NATS handler limits to the database pool, see [PoolHandlerLimits].
  *
@@ -42,5 +40,9 @@ internal class PoolSizedHandlerLimits(
                 limits.long,
                 poolMaxSize,
             )
+    }
+
+    private companion object {
+        private val log = logger()
     }
 }

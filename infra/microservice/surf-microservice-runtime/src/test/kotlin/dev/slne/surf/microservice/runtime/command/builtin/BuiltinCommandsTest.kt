@@ -4,15 +4,21 @@ import dev.slne.surf.microservice.api.command.MicroserviceCommand
 import dev.slne.surf.microservice.api.command.MicroserviceCommandContext
 import dev.slne.surf.microservice.api.command.MicroserviceCommandResult
 import dev.slne.surf.microservice.api.command.MicroserviceCommandSource
-import dev.slne.surf.microservice.api.health.MicroserviceHealthCheckResult
-import dev.slne.surf.microservice.api.health.MicroserviceHealthContributor
-import dev.slne.surf.microservice.api.health.MicroserviceHealthStatus
+import dev.slne.surf.microservice.api.command.MicroserviceCommands
 import dev.slne.surf.microservice.runtime.command.MicroserviceCommandDispatcher
 import dev.slne.surf.microservice.runtime.command.RecordingCommandOutput
-import dev.slne.surf.microservice.runtime.health.MicroserviceHealthManager
+import dev.slne.surf.microservice.runtime.health.HealthCheckResult
+import dev.slne.surf.microservice.runtime.health.MicroserviceHealth
+import org.springframework.boot.health.contributor.CompositeHealthContributor
+import org.springframework.boot.health.contributor.Health
+import org.springframework.boot.health.contributor.HealthContributors
+import org.springframework.boot.health.contributor.HealthIndicator
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BuiltinCommandsTest {
@@ -42,8 +48,8 @@ class BuiltinCommandsTest {
     }
 
     @Test
-    fun `health reports healthy checks`() = runTest {
-        val health = HealthCommand(healthManager(healthy("database"), healthy("nats")))
+    fun `health reports healthy checks`() = runBlocking {
+        val health = HealthCommand(health("database" to up(), "nats" to up()))
 
         val dispatch = dispatch(health, "health")
 
@@ -52,34 +58,39 @@ class BuiltinCommandsTest {
     }
 
     @Test
-    fun `health fails with every unhealthy check`() = runTest {
-        val unhealthy = MicroserviceHealthCheckResult(
-            component = "database",
-            instance = "main",
-            status = MicroserviceHealthStatus.UNHEALTHY,
-            message = "connection refused",
-        )
-        val health = HealthCommand(healthManager(healthy("nats"), unhealthy))
+    fun `health fails with every unhealthy check`() = runBlocking {
+        val database = CompositeHealthContributor.fromMap(mapOf("main" to HealthIndicator { Health.down().withDetail("error", "connection refused").build() }))
+        val health = HealthCommand(health("nats" to up(), "database" to database))
 
         val dispatch = dispatch(health, "health")
 
         assertEquals(MicroserviceCommandResult.Failure("unhealthy\n- database[main]: connection refused"), dispatch.result)
     }
 
+    @Test
+    fun `a built-in is skipped when one of its aliases is already registered`() {
+        MicroserviceCommands.register(command("registration-taken"))
+        val builtin = command("registration-builtin", "registration-alias", "registration-taken")
+        val free = command("registration-free")
+
+        val skipped = registerBuiltinCommands(listOf(builtin, free))
+
+        assertEquals(mapOf(builtin to "registration-taken"), skipped)
+        assertNull(MicroserviceCommands.find("registration-builtin"))
+        assertNull(MicroserviceCommands.find("registration-alias"))
+        assertNotNull(MicroserviceCommands.find("registration-free"))
+    }
+
+    private fun command(name: String, vararg aliases: String): MicroserviceCommand = object : MicroserviceCommand(name, *aliases) {
+        override suspend fun MicroserviceCommandContext.execute(args: List<String>) = Unit
+    }
+
     private suspend fun dispatch(command: MicroserviceCommand, line: String) =
         MicroserviceCommandDispatcher { label -> command.takeIf { it.matches(label) } }
             .dispatch(line, MicroserviceCommandSource.CONSOLE, output)
 
-    private fun healthManager(vararg results: MicroserviceHealthCheckResult) = MicroserviceHealthManager {
-        listOf(
-            object : MicroserviceHealthContributor {
-                override val name = "fixed"
+    private fun health(vararg contributors: Pair<String, org.springframework.boot.health.contributor.HealthContributor>) =
+        MicroserviceHealth({ HealthContributors.of(CompositeHealthContributor.fromMap(contributors.toMap())) })
 
-                override suspend fun check() = results.toList()
-            },
-        )
-    }
-
-    private fun healthy(component: String) =
-        MicroserviceHealthCheckResult(component = component, status = MicroserviceHealthStatus.HEALTHY)
+    private fun up() = HealthIndicator { Health.up().build() }
 }

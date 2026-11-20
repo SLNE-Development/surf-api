@@ -24,12 +24,12 @@
 
 package dev.slne.surf.api.paper.server.impl.pdc.block
 
-import com.github.shynixn.mccoroutine.folia.globalRegionDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
-import com.github.shynixn.mccoroutine.folia.ticks
-import dev.slne.surf.api.paper.server.plugin
+import dev.slne.surf.api.paper.coroutine.ticks
+import dev.slne.surf.api.paper.server.coroutine.surfDispatchers
+import dev.slne.surf.api.paper.server.coroutine.surfScope
 import io.papermc.paper.math.BlockPosition
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.bukkit.block.Block
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -46,7 +46,7 @@ object BlockPdcManager {
         val entry = getEntry(block.block)
         dirtyBlocks.add(entry)
 
-        plugin.launch(plugin.globalRegionDispatcher) {
+        surfScope.launch(surfDispatchers.main) {
             delay(1.ticks)
             dirtyBlocks.remove(entry)
         }

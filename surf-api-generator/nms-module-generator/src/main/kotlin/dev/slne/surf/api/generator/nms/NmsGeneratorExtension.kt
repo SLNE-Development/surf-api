@@ -20,20 +20,28 @@ package dev.slne.surf.api.generator.nms
 @NmsGeneratorDsl
 open class NmsGeneratorExtension {
 
-    /** The NMS version whose sources serve as the generation template. */
+    /**
+     * The NMS version whose sources serve as the generation template.
+     */
     lateinit var referenceVersion: NmsVersion
 
-    /** The NMS version to generate. */
+    /**
+     * The NMS version to generate.
+     */
     lateinit var targetVersion: NmsVersion
 
     internal var transformationScope: TransformationScope = TransformationScope()
         private set
 
-    /** `true` if both [referenceVersion] and [targetVersion] have been set. */
+    /**
+     * `true` if both [referenceVersion] and [targetVersion] have been set.
+     */
     internal val isConfigured: Boolean
         get() = ::referenceVersion.isInitialized && ::targetVersion.isInitialized
 
-    /** Configures the source-code transformations applied during generation. */
+    /**
+     * Configures the source-code transformations applied during generation.
+     */
     fun transformations(block: TransformationScope.() -> Unit) {
         transformationScope = TransformationScope().apply(block)
     }

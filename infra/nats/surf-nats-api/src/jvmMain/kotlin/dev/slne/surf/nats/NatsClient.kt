@@ -126,7 +126,10 @@ public interface NatsClient : AutoCloseable {
      * The registration is closed again.
      */
     @IgnorableReturnValue
-    public suspend fun <S : Any> registerService(type: KClass<S>, implementation: S): NatsRegistration
+    public suspend fun <S : Any> registerService(
+        type: KClass<S>,
+        implementation: S
+    ): NatsRegistration
 
     /**
      * Registers an implementation of the generated service interface [type] whose persistent methods run through

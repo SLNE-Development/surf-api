@@ -24,7 +24,9 @@ class ViewButtonSession<T>(
     val states: List<T>,
     val initial: T,
 ) {
-    /** Index into [states] of the currently shown state. */
+    /**
+     * Index into [states] of the currently shown state.
+     */
     var currentIndex: Int = states.indexOf(initial)
         private set
 
@@ -35,7 +37,9 @@ class ViewButtonSession<T>(
         }
     }
 
-    /** The currently shown state. */
+    /**
+     * The currently shown state.
+     */
     val current: T get() = states[currentIndex]
 
     /**

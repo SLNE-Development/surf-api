@@ -55,6 +55,7 @@ dependencies {
     pluginDependencies.forEach { dep -> api(dep) }
 
     implementation("com.palantir.javapoet:javapoet:0.22.0")
+    implementation(libs.asm)
     implementation(libs.bundles.kotlin.serialization)
 
     // surf-nats: contract generation

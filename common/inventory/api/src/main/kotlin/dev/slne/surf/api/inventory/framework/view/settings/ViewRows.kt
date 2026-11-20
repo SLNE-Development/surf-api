@@ -16,23 +16,13 @@ import org.intellij.lang.annotations.MagicConstant
  * @property glyph the Unicode glyph character for the background texture of this row count
  */
 enum class ViewRows(val glyph: Char) {
-    /** 1-row inventory. */
     ONE('ꐓ'),
-
-    /** 2-row inventory. */
     TWO('ꐔ'),
-
-    /** 3-row inventory. */
     THREE('ꐭ'),
-
-    /** 4-row inventory. */
     FOUR('ꐮ'),
-
-    /** 5-row inventory. */
     FIVE('ꐯ'),
-
-    /** 6-row inventory. */
-    SIX('ꐰ');
+    SIX('ꐰ'),
+    ;
 
     /**
      * The integer row count for this entry (1 for [ONE], 2 for [TWO], …, 6 for [SIX]).

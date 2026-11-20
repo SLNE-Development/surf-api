@@ -19,20 +19,31 @@ package dev.slne.surf.api.inventory.framework.view.settings
  * @property actualRows the total [ViewRows] value: the content rows plus the button row
  */
 enum class PaginationViewRows(val actualRows: ViewRows) {
-    /** 1 content row; 2 total inventory rows. */
+    /**
+     * 1 content row; 2 total inventory rows.
+     */
     ONE(ViewRows.TWO),
 
-    /** 2 content rows; 3 total inventory rows. */
+    /**
+     * 2 content rows; 3 total inventory rows.
+     */
     TWO(ViewRows.THREE),
 
-    /** 3 content rows; 4 total inventory rows. */
+    /**
+     * 3 content rows; 4 total inventory rows.
+     */
     THREE(ViewRows.FOUR),
 
-    /** 4 content rows; 5 total inventory rows. */
+    /**
+     * 4 content rows; 5 total inventory rows.
+     */
     FOUR(ViewRows.FIVE),
 
-    /** 5 content rows; 6 total inventory rows. */
-    FIVE(ViewRows.SIX);
+    /**
+     * 5 content rows; 6 total inventory rows.
+     */
+    FIVE(ViewRows.SIX),
+    ;
 
     /**
      * How many rows the pagination engine fills at most: one less than [actualRows], because a

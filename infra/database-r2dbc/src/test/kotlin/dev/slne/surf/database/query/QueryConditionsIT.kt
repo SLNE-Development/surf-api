@@ -1,8 +1,8 @@
 package dev.slne.surf.database.query
 
-import dev.slne.surf.database.DatabaseApi
 import dev.slne.surf.database.testing.DatabaseContainers
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import dev.slne.surf.database.utils.isDataIntegrityViolation
 import dev.slne.surf.database.utils.isDuplicateKeyViolation
 import kotlinx.coroutines.flow.map
@@ -14,10 +14,10 @@ import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.alias
+import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.intLiteral
 import org.jetbrains.exposed.v1.core.lessEq
-import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.ExposedR2dbcException
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
@@ -67,12 +67,12 @@ abstract class QueryConditionsIT {
 
     protected abstract fun container(): JdbcDatabaseContainer<*>
 
-    private lateinit var api: DatabaseApi
+    private lateinit var testDb: TestDatabase
 
     @BeforeAll
     fun setUp(): Unit = runBlocking {
-        api = container().toDatabaseApi(fresh = true)
-        suspendTransaction(api.database) {
+        testDb = container().toTestDatabase(fresh = true)
+        suspendTransaction(testDb.database) {
             SchemaUtils.create(Texts, Parents, Children)
             TEXTS.forEach { (id, text) ->
                 Texts.insert {
@@ -85,7 +85,7 @@ abstract class QueryConditionsIT {
 
     @AfterAll
     fun tearDown(): Unit = runBlocking {
-        api.shutdown()
+        testDb.close()
     }
 
     @Test
@@ -126,7 +126,7 @@ abstract class QueryConditionsIT {
 
     @Test
     fun unionAllOfPagesAcrossQueries() = runBlocking<Unit> {
-        suspendTransaction(api.database) {
+        suspendTransaction(testDb.database) {
             val firstSource = intLiteral(FIRST_SOURCE).alias(SOURCE_KEY)
             val firstId = Texts.id.alias(ID_KEY)
             val low = Texts.select(firstSource, firstId).where { Texts.id lessEq PLAIN_OFF }
@@ -150,13 +150,13 @@ abstract class QueryConditionsIT {
 
     @Test
     fun detectsDuplicateKeys() = runBlocking {
-        suspendTransaction(api.database) { insertChild(id = 1, code = "first", parent = null) }
+        suspendTransaction(testDb.database) { insertChild(id = 1, code = "first", parent = null) }
 
         val duplicate = assertFailsWith<ExposedR2dbcException> {
-            suspendTransaction(api.database) { insertChild(id = 2, code = "first", parent = null) }
+            suspendTransaction(testDb.database) { insertChild(id = 2, code = "first", parent = null) }
         }
         val missingParent = assertFailsWith<ExposedR2dbcException> {
-            suspendTransaction(api.database) { insertChild(id = 3, code = "third", parent = 404) }
+            suspendTransaction(testDb.database) { insertChild(id = 3, code = "third", parent = 404) }
         }
 
         assertTrue(duplicate.isDuplicateKeyViolation())
@@ -168,7 +168,7 @@ abstract class QueryConditionsIT {
     @Test
     fun insertIgnoreSkipsAForeignKeyViolationOnlyOnMariaDb() = runBlocking<Unit> {
         val insertIgnore: suspend () -> Int = {
-            suspendTransaction(api.database) {
+            suspendTransaction(testDb.database) {
                 Children.insertIgnore {
                     it[id] = 10
                     it[code] = "orphan"
@@ -192,7 +192,7 @@ abstract class QueryConditionsIT {
         }
     }
 
-    private suspend fun idsWhere(condition: Op<Boolean>): Set<Int> = suspendTransaction(api.database) {
+    private suspend fun idsWhere(condition: Op<Boolean>): Set<Int> = suspendTransaction(testDb.database) {
         Texts.select(Texts.id).where(condition).map { it[Texts.id] }.toSet()
     }
 

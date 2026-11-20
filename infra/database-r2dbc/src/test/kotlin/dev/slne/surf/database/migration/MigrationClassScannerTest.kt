@@ -1,5 +1,6 @@
 package dev.slne.surf.database.migration
 
+import dev.slne.surf.database.migration.fixtures.companionscan.WithCompanion
 import dev.slne.surf.database.migration.fixtures.nestedscan.Grouped
 import dev.slne.surf.database.migration.fixtures.scan.V2_Object
 import dev.slne.surf.database.migration.internal.MigrationClassScanner
@@ -18,6 +19,7 @@ import kotlin.test.assertTrue
 class MigrationClassScannerTest {
 
     private val scanPackage = "dev.slne.surf.database.migration.fixtures.scan"
+    private val companionPackage = "dev.slne.surf.database.migration.fixtures.companionscan"
     private val expected = setOf("V2_Object", "V3_Class", "V5_Nested")
 
     @Test
@@ -35,6 +37,25 @@ class MigrationClassScannerTest {
             MigrationClassScanner.scan(javaClass.classLoader, "dev.slne.surf.database.migration.fixtures.badscan")
         }
         assertTrue(e.message!!.contains("V4_NeedsArgs"), e.message)
+    }
+
+    @Test
+    fun resolvesACompanionObjectThroughTheFieldOfItsEnclosingClass() {
+        val result = MigrationClassScanner.scan(javaClass.classLoader, companionPackage)
+
+        assertEquals(listOf("6", "7"), result.map { it.version })
+        assertSame(WithCompanion.Companion, result[0])
+    }
+
+    @Test
+    fun instantiatesANamedCompanionObject() {
+        val result = MigrationClassScanner.instantiateNamed(
+            javaClass.classLoader,
+            listOf("$companionPackage.WithCompanion\$Companion", "$companionPackage.WithNamedCompanion\$Seed"),
+        )
+
+        assertEquals(listOf("6", "7"), result.map { it.version })
+        assertSame(WithCompanion.Companion, result.first())
     }
 
     /**
@@ -105,6 +126,64 @@ class MigrationClassScannerTest {
         assertEquals(listOf("1", "2"), result.map { it.version })
         assertSame(Grouped.V1_NestedObject, result.first())
         assertIs<Grouped.V2_NestedClass>(result[1])
+    }
+
+    @Test
+    fun instantiatesExactlyTheNamedClasses() {
+        val result = MigrationClassScanner.instantiateNamed(
+            javaClass.classLoader,
+            listOf("$scanPackage.V3_Class", V2_Object::class.java.name, Grouped.V2_NestedClass::class.java.name),
+        )
+
+        assertEquals(listOf("3", "2", "2"), result.map { it.version })
+        assertSame(V2_Object, result[1])
+        assertIs<Grouped.V2_NestedClass>(result.last())
+    }
+
+    @Test
+    fun loadsNoClassBesidesTheNamedOnes() {
+        val broken = "$scanPackage.V3_Class"
+        val loader = object : ClassLoader(javaClass.classLoader) {
+            override fun loadClass(name: String, resolve: Boolean): Class<*> {
+                if (name == broken) throw NoClassDefFoundError("missing/Dependency")
+                return super.loadClass(name, resolve)
+            }
+        }
+
+        val result = MigrationClassScanner.instantiateNamed(loader, listOf(V2_Object::class.java.name))
+
+        assertSame(V2_Object, result.single())
+    }
+
+    @Test
+    fun namedClassThatCannotBeLoadedFails() {
+        val e = assertThrows<IllegalStateException> {
+            MigrationClassScanner.instantiateNamed(javaClass.classLoader, listOf("$scanPackage.DoesNotExist"))
+        }
+
+        assertTrue(e.message!!.contains("DoesNotExist"), e.message)
+    }
+
+    @Test
+    fun namedClassThatIsNoConcreteMigrationFails() {
+        listOf("NotAMigration", "Base").forEach { simpleName ->
+            val e = assertThrows<IllegalStateException>(simpleName) {
+                MigrationClassScanner.instantiateNamed(javaClass.classLoader, listOf("$scanPackage.$simpleName"))
+            }
+            assertTrue(e.message!!.contains(simpleName), e.message)
+        }
+    }
+
+    @Test
+    fun namedClassWithoutNoArgConstructorFails() {
+        val e = assertThrows<IllegalStateException> {
+            MigrationClassScanner.instantiateNamed(
+                javaClass.classLoader,
+                listOf("dev.slne.surf.database.migration.fixtures.badscan.V4_NeedsArgs"),
+            )
+        }
+
+        assertTrue(e.message!!.contains("V4_NeedsArgs"), e.message)
     }
 
     @Test

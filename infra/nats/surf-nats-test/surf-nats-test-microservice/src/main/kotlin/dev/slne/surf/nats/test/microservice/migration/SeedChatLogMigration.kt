@@ -4,7 +4,7 @@ import dev.slne.surf.database.migration.JdbcMigration
 import java.sql.Connection
 
 /**
- * Code migration found by the surf-microservice processor; runs after the SQL migration `V1__create_chat_log.sql`.
+ * Code migration of the microservice application; runs after the SQL migration `V1__create_chat_log.sql`.
  */
 object SeedChatLogMigration : JdbcMigration("2", "seed chat log") {
     override fun migrate(connection: Connection) {

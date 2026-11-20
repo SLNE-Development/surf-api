@@ -1,13 +1,8 @@
 package dev.slne.surf.database.reliability
 
-import dev.slne.surf.database.DatabaseApi
-import dev.slne.surf.database.reliability.operation.AtomicOperationConflictException
-import dev.slne.surf.database.reliability.operation.AtomicOperationInProgressException
-import dev.slne.surf.database.reliability.operation.AtomicOperations
-import dev.slne.surf.database.reliability.operation.AtomicOperationsConfig
-import dev.slne.surf.database.reliability.operation.OperationKey
-import dev.slne.surf.database.reliability.operation.StoredReply
+import dev.slne.surf.database.reliability.operation.*
 import dev.slne.surf.database.testing.MutableClock
+import dev.slne.surf.database.testing.TestDatabase
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -35,8 +30,8 @@ class AtomicOperationsIT {
 
     private fun reply(text: String) = StoredReply("text/plain", text.encodeToByteArray())
 
-    private fun ReliabilityVendor.operationRows(api: DatabaseApi): Long =
-        queryLong(api, "SELECT COUNT(*) FROM surf_atomic_operations")
+    private fun ReliabilityVendor.operationRows(testDb: TestDatabase): Long =
+        queryLong(testDb, "SELECT COUNT(*) FROM surf_atomic_operations")
 
     @ParameterizedTest
     @EnumSource(ReliabilityVendor::class)
@@ -48,7 +43,7 @@ class AtomicOperationsIT {
 
             coroutineScope {
                 val original = async {
-                    AtomicOperations(first).execute(key, fingerprint) {
+                    AtomicOperations(first.database).execute(key, fingerprint) {
                         runs.incrementAndGet()
                         claimed.complete(Unit)
                         finish.await()
@@ -57,7 +52,7 @@ class AtomicOperationsIT {
                 }
                 claimed.await()
                 val duplicate = async {
-                    AtomicOperations(second).execute(key, fingerprint) {
+                    AtomicOperations(second.database).execute(key, fingerprint) {
                         runs.incrementAndGet()
                         reply("second")
                     }
@@ -79,12 +74,12 @@ class AtomicOperationsIT {
             val runs = AtomicInteger()
             val claimed = CompletableDeferred<Long>()
             val finish = CompletableDeferred<Unit>()
-            val survivor = AtomicOperations(second)
+            val survivor = AtomicOperations(second.database)
 
             coroutineScope {
                 val crashing = async {
                     runCatching {
-                        AtomicOperations(first).execute(key, fingerprint) {
+                        AtomicOperations(first.database).execute(key, fingerprint) {
                             runs.incrementAndGet()
                             claimed.complete(with(vendor) { transaction.connectionId() })
                             finish.await()
@@ -120,9 +115,9 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun crashAfterCommitReturnsTheStoredReplyWithoutRunningTheBlock(vendor: ReliabilityVendor) =
         vendor.withTwoProcesses { first, second ->
-            AtomicOperations(first).execute(key, fingerprint) { reply("original") }
+            AtomicOperations(first.database).execute(key, fingerprint) { reply("original") }
 
-            val replayed = AtomicOperations(second).execute(key, fingerprint) { error("must not run again") }
+            val replayed = AtomicOperations(second.database).execute(key, fingerprint) { error("must not run again") }
 
             assertEquals(reply("original"), replayed)
         }
@@ -131,10 +126,10 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun sameKeyWithAnotherFingerprintConflicts(vendor: ReliabilityVendor) =
         vendor.withTwoProcesses { first, second ->
-            AtomicOperations(first).execute(key, fingerprint) { reply("original") }
+            AtomicOperations(first.database).execute(key, fingerprint) { reply("original") }
 
             val conflict = assertFailsWith<AtomicOperationConflictException> {
-                AtomicOperations(second).execute(key, byteArrayOf(9)) { error("must not run") }
+                AtomicOperations(second.database).execute(key, byteArrayOf(9)) { error("must not run") }
             }
 
             assertEquals(key, conflict.key)
@@ -144,7 +139,7 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun keysDifferingOnlyInCaseAreSeparateOperations(vendor: ReliabilityVendor) =
         vendor.withTwoProcesses { first, _ ->
-            val operations = AtomicOperations(first)
+            val operations = AtomicOperations(first.database)
             operations.execute(key, fingerprint) { reply("lower") }
 
             val upper = operations.execute(key.copy(idempotencyKey = "MESSAGE-1"), fingerprint) { reply("upper") }
@@ -157,7 +152,7 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun keysDifferingOnlyInTrailingSpacesAreSeparateOperations(vendor: ReliabilityVendor) =
         vendor.withTwoProcesses { first, _ ->
-            val operations = AtomicOperations(first)
+            val operations = AtomicOperations(first.database)
             operations.execute(key, fingerprint) { reply("plain") }
 
             val padded = operations.execute(key.copy(idempotencyKey = "message-1 "), fingerprint) { reply("padded") }
@@ -175,7 +170,7 @@ class AtomicOperationsIT {
 
             coroutineScope {
                 val holder = async {
-                    AtomicOperations(first).execute(key, fingerprint) {
+                    AtomicOperations(first.database).execute(key, fingerprint) {
                         claimed.complete(Unit)
                         finish.await()
                         reply("holder")
@@ -183,7 +178,7 @@ class AtomicOperationsIT {
                 }
                 claimed.await()
 
-                val impatient = AtomicOperations(second, AtomicOperationsConfig(lockTimeout = 1.seconds))
+                val impatient = AtomicOperations(second.database, AtomicOperationsConfig(lockTimeout = 1.seconds))
                 val failure = assertFailsWith<AtomicOperationInProgressException> {
                     impatient.execute(key, fingerprint) { error("must not run without the claim") }
                 }
@@ -198,7 +193,7 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun theBlockKeepsTheSessionLockTimeoutAfterTheBoundedClaim(vendor: ReliabilityVendor) =
         vendor.withTwoProcesses(sessionLockTimeout = true) { first, _ ->
-            val operations = AtomicOperations(first, AtomicOperationsConfig(lockTimeout = 1.seconds))
+            val operations = AtomicOperations(first.database, AtomicOperationsConfig(lockTimeout = 1.seconds))
 
             val inBlock = operations.execute(key, fingerprint) {
                 with(vendor) { reply(transaction.lockTimeout()) }
@@ -213,14 +208,14 @@ class AtomicOperationsIT {
         vendor.withTwoProcesses { first, second ->
             val clock = MutableClock()
             val config = AtomicOperationsConfig(retention = 1.hours, clock = clock)
-            val operations = AtomicOperations(first, config)
+            val operations = AtomicOperations(first.database, config)
             operations.execute(key, fingerprint) { reply("old") }
             operations.execute(key.copy(idempotencyKey = "message-2"), fingerprint) { reply("kept") }
             clock.advance(30.minutes)
             operations.execute(key.copy(idempotencyKey = "message-3"), fingerprint) { reply("young") }
 
             clock.advance(31.minutes)
-            val renewed = AtomicOperations(second, config).execute(key, fingerprint) { reply("new") }
+            val renewed = AtomicOperations(second.database, config).execute(key, fingerprint) { reply("new") }
             assertEquals(reply("new"), renewed)
 
             val deleted = operations.deleteExpired(limit = 10)
@@ -235,7 +230,7 @@ class AtomicOperationsIT {
         vendor.withTwoProcesses { first, _ ->
             val clock = MutableClock()
             val config = AtomicOperationsConfig(retention = 1.hours, maxAttempts = 1, clock = clock)
-            val operations = AtomicOperations(first, config)
+            val operations = AtomicOperations(first.database, config)
             operations.execute(key, fingerprint) { reply("old") }
             clock.advance(2.hours)
 
@@ -252,9 +247,9 @@ class AtomicOperationsIT {
         vendor.withTwoProcesses { first, second ->
             val clock = MutableClock()
             val config = AtomicOperationsConfig(retention = 1.hours, lockTimeout = 1.seconds, clock = clock)
-            AtomicOperations(first, config).execute(key, fingerprint) { reply("old") }
+            AtomicOperations(first.database, config).execute(key, fingerprint) { reply("old") }
             clock.advance(2.hours)
-            val operations = AtomicOperations(second, config)
+            val operations = AtomicOperations(second.database, config)
 
             val failure = vendor.holdShareLock(first, key).use {
                 assertFailsWith<AtomicOperationInProgressException> {
@@ -270,7 +265,7 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun deleteExpiredHonorsTheBatchLimit(vendor: ReliabilityVendor) = vendor.withTwoProcesses { first, _ ->
         val clock = MutableClock()
-        val operations = AtomicOperations(first, AtomicOperationsConfig(retention = 1.days, clock = clock))
+        val operations = AtomicOperations(first.database, AtomicOperationsConfig(retention = 1.days, clock = clock))
         repeat(5) { operations.execute(key.copy(idempotencyKey = "m$it"), fingerprint) { reply("r$it") } }
         clock.advance(2.days)
 
@@ -282,7 +277,7 @@ class AtomicOperationsIT {
     @ParameterizedTest
     @EnumSource(ReliabilityVendor::class)
     fun aFailingBlockStoresNothing(vendor: ReliabilityVendor) = vendor.withTwoProcesses { first, _ ->
-        val operations = AtomicOperations(first)
+        val operations = AtomicOperations(first.database)
 
         assertFailsWith<IllegalArgumentException> {
             operations.execute(key, fingerprint) {
@@ -297,7 +292,7 @@ class AtomicOperationsIT {
     @ParameterizedTest
     @EnumSource(ReliabilityVendor::class)
     fun executeInsideAnOpenTransactionFails(vendor: ReliabilityVendor) = vendor.withTwoProcesses { first, _ ->
-        val operations = AtomicOperations(first)
+        val operations = AtomicOperations(first.database)
 
         assertFailsWith<IllegalStateException> {
             suspendTransaction(db = first.database) {
@@ -311,9 +306,9 @@ class AtomicOperationsIT {
     @EnumSource(ReliabilityVendor::class)
     fun largeRepliesRoundTrip(vendor: ReliabilityVendor) = vendor.withTwoProcesses { first, second ->
         val bytes = ByteArray(2 * 1024 * 1024) { (it % 251).toByte() }
-        AtomicOperations(first).execute(key, fingerprint) { StoredReply("application/octet-stream", bytes) }
+        AtomicOperations(first.database).execute(key, fingerprint) { StoredReply("application/octet-stream", bytes) }
 
-        val replayed = AtomicOperations(second).execute(key, fingerprint) { error("must not run again") }
+        val replayed = AtomicOperations(second.database).execute(key, fingerprint) { error("must not run again") }
 
         assertContentEquals(bytes, replayed.bytes)
     }

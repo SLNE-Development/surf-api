@@ -19,6 +19,12 @@ dependencies {
     api(projects.surfApiPaperApi)
     api(projects.surfApiCoreImpl)
     api(projects.surfApiPaperNmsApi)
+    // The Redis integration, shipped inside this plugin already relocated.
+    implementation(shadowed(projects.surfApiRedis.surfApiRedisSpring))
+    // The NATS integration, shipped inside this plugin; io.nats is relocated by this jar.
+    implementation(projects.surfApiNats.surfApiNatsCore)
+    implementation(projects.surfApiNats.surfApiNatsSpring)
+    implementation(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesPaper)
     compileOnly(libs.paper.api)
 
     // The server provides Paper's api at runtime, so it is compileOnly -- but a test that stands in
@@ -33,14 +39,14 @@ dependencies {
 
     compileOnly(libs.placeholder.api)
 
-    implementation(libs.guava)
+    // Paper provides Guava, Gson and SLF4J, and its plugin class loader asks the server first.
+    compileOnly(libs.guava)
     implementation(libs.caffeine)
-    implementation(libs.gson)
+    compileOnly(libs.gson)
     implementation(libs.commons.lang3)
     implementation(libs.commons.text)
     implementation(libs.dazzleconf)
     implementation(libs.spongepowered.math)
-    implementation(libs.okhttp)
     implementation(libs.reflection.remapper)
     implementation(libs.more.persistent.data.types)
     implementation(libs.flogger)
@@ -48,10 +54,6 @@ dependencies {
     implementation(libs.commons.math4.core)
     implementation(libs.commons.math3)
     implementation(libs.aide.reflection)
-    api(libs.mccoroutine.folia.api)
-    api(libs.mccoroutine.folia.core)
-    runtimeOnly(libs.scoreboard.library.implementation)
-    implementation(libs.scoreboard.library.api)
 }
 
 paper {
@@ -101,12 +103,34 @@ paper {
 
 tasks {
     shadowJar {
-        mergeServiceFiles()
+        // NATS ships unrelocated in its modules; only the plugin jar relocates it.
+        relocateNats()
+        dependencies {
+            // Provided by the server, which the plugin class loader asks first.
+            exclude(dependency("org.slf4j:slf4j-api:.*"))
+        }
+        // Spring's own registries, which every Spring jar carries a part of.
+        mergeSpringRegistries()
         val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
         relocate("dev.wyck", "$relocationPrefix.dev.wyck")
     }
 }
+
+// The merged service file must keep every bundled ContextContributor; a lost one only shows as missing beans at startup.
+val checkContextContributors by tasks.registering(CheckShadowServiceFile::class) {
+    group = "verification"
+    description = "Checks that the shadow jar lists the config, NATS and Redis ContextContributors."
+    jar.set(tasks.shadowJar.flatMap { it.archiveFile })
+    service.set("dev.slne.surf.api.spring.context.ContextContributor")
+    expectedProviders.addAll(
+        "dev.slne.surf.api.config.impl.handle.SurfConfigContributor",
+        "dev.slne.surf.api.nats.NatsContextContributor",
+        "dev.slne.surf.api.redis.RedisContextContributor",
+    )
+}
+
+tasks.check { dependsOn(checkContextContributors) }
 
 tasks.generatePaperPluginDescription {
     useDefaultCentralProxy()

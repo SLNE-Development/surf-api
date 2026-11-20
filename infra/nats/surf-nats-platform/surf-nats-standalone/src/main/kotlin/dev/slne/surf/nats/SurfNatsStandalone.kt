@@ -5,10 +5,8 @@ import java.nio.file.Path
 /**
  * Controls the shared NATS connection of a standalone JVM application.
  *
- * Call [start] before creating a [NatsClient] and close every client before [shutdown]. A microservice built on
- * surf-microservice does not call these functions: the bundled microservice integration calls [start] with the
- * `nats` directory below the microservice data path before `Microservice.onBootstrap`, [stopAccepting] before
- * `Microservice.onDisable` and [shutdown] after it.
+ * Call [start] before creating a [NatsClient] and close every client before [shutdown]. A microservice does not call
+ * these functions: it uses NATS through its Spring context.
  *
  * ```kotlin
  * suspend fun main() {

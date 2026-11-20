@@ -8,19 +8,27 @@ Two directories hold it:
 
 ## The contracts in `platform/paper/api`
 
+The "Shape" column names the static accessor each bridge interface has, if any:
+
 | File | Shape | Notes |
 | --- | --- | --- |
-| `nms/SurfPaperNmsBridge.kt` | `INSTANCE`-carrying interface | packet-listener registration; the only bridge at the `nms` package root |
+| `nms/SurfPaperNmsBridge.kt` | interface, public `@InternalSurfApi` `INSTANCE` | packet-listener registration; the only bridge at the `nms` package root |
 | `nms/nms-opt-in.kt` | `@RequiresOptIn` annotation | `NmsUseWithCaution`, `Level.WARNING`, `AnnotationRetention.BINARY` |
-| `nms/bridges/SurfPaperNmsCommonBridge.kt` | `INSTANCE`-carrying | entity ids, block state ids, container counter, compostables, Velocity secret, online mode, `clearDialogs`, server IP |
-| `nms/bridges/SurfPaperNmsEntityBridge.kt`, `…PlayerBridge`, `…ItemBridge`, `…NbtBridge`, `…PortalBridge`, `…StatsBridge`, `…LootTableBridge`, `…GlowingBridge`, `…CommandArgumentTypesBridge` | `INSTANCE`-carrying | one per domain |
-| `nms/bridges/packets/SurfPaperNmsPacketBridges.kt` | `INSTANCE`-carrying | packet-operation factory |
+| `nms/bridges/SurfPaperNmsCommonBridge.kt` | interface, public `@InternalSurfApi` `INSTANCE` | entity ids, block state ids, container counter, compostables, Velocity secret, online mode, `clearDialogs`, server IP |
+| `nms/bridges/SurfPaperNmsCommandArgumentTypesBridge.kt` | interface, `internal` `INSTANCE` | compound-tag and signed-message argument types, read by `AdventureCompoundBinaryTagArgument` and `AsyncSignedMessageArgument` |
+| `nms/bridges/SurfPaperNmsEntityBridge.kt`, `…PlayerBridge`, `…ItemBridge`, `…NbtBridge`, `…PortalBridge`, `…StatsBridge`, `…LootTableBridge`, `…GlowingBridge` | interface, no companion | one per domain; injected only |
+| `nms/bridges/packets/SurfPaperNmsPacketBridges.kt` | interface, `internal` `INSTANCE` | packet-operation factory, read by `PacketOperation.start()` |
 | `nms/bridges/packets/PacketOperation.kt` | interface + inline builder | `execute(player)`, `add`, `plus`; `PacketOperation { … }` builder |
-| `nms/bridges/packets/block/SurfPaperNmsBlockPackets.kt`, `entity/SurfPaperNmsSpawnPackets.kt`, `player/SurfPaperNmsPlayerPackets.kt`, `player/SurfPaperNmsPlayerChatPackets.kt`, `player/SurfPaperNmsPlayerToastPackets.kt` | `INSTANCE`-carrying | packet construction per area |
+| `nms/bridges/packets/entity/SurfPaperNmsSpawnPackets.kt` | interface, public `@InternalSurfApi` `INSTANCE` | spawn packets |
+| `nms/bridges/packets/player/SurfPaperNmsPlayerToastPackets.kt` | interface, `internal` `INSTANCE` | toast packets, read by `Toast.createOperation()` |
+| `nms/bridges/packets/block/SurfPaperNmsBlockPackets.kt`, `player/SurfPaperNmsPlayerPackets.kt`, `player/SurfPaperNmsPlayerChatPackets.kt` | interface, no companion | packet construction per area; injected only |
 | `nms/bridges/data/chat/*.kt` | plain data classes | mirrors of NMS chat types, see below |
 | `nms/listener/packets/**` | interfaces | `NmsPacket`, `NmsServerboundPacket`, `NmsClientboundPacket` and the concrete wrappers (`SignUpdatePacket`, `RenameItemPacket`, `CommandSuggestionPacket`, `ServerboundCustomPayloadPacket`, `DisconnectPacket`, `SystemChatPacket`) |
 
 ### The `INSTANCE` pattern, in full
+
+A bridge needs a companion and a `by surfBean` val only when surf-api's own static code reads it.
+A bridge that is only injected is the interface plus its proxy bean and nothing else.
 
 ```kotlin
 @file:OptIn(InternalSurfApi::class)
@@ -31,6 +39,7 @@ interface SurfPaperNmsCommonBridge {
     // …
 
     companion object {
+        @InternalSurfApi
         val INSTANCE get() = bridge
     }
 }
@@ -42,20 +51,23 @@ private val bridge by surfBean<SurfPaperNmsCommonBridge>()
 Three things are load-bearing:
 
 1. The private top-level `bridge` val, **outside** the interface, delegated with
-   `by surfBean<T>()`. The delegate resolves `SurfContainer.root.bean(T::class)` the first time the
-   property is read, so the lookup happens when the bridge is used rather than when its class is
-   loaded.
+   `by surfBean<T>()` (`foundation/spring/api/.../spring/SurfContexts.kt`). The delegate reads the
+   bean from surf-api's installed root context (`SurfContexts.root`) the first time the property is
+   read, so the lookup happens when the bridge is used rather than when its class is loaded.
 2. `val INSTANCE get() = bridge` — a **getter**, not an initialised property, and the companion does
    **not** implement the interface. `companion object : <Interface> by bridge` would read the bean
-   inside the companion's initialiser, i.e. during class initialisation, which can land while the
-   container is still constructing that very bean; `SurfContainer` recognises that case and names
-   this shape as the fix.
-3. Callers therefore write `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()`. `INSTANCE` is also
-   what the `InternalNmsBridge.get()` / `InternalPacketListenerApiBridge.get()` downcasts described
-   below read.
+   inside the companion's initialiser, i.e. during class initialisation, which can land before the
+   root context is installed or while it is still creating that very bean.
+3. `INSTANCE` is hidden from plugins. When other surf-api modules read it, it is public and carries
+   `@InternalSurfApi`, an error-level opt-in that the root build grants surf-api's own modules:
+   they write `SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()`. When only `platform/paper/api`
+   itself reads it, it is `internal` instead, as on `SurfPaperNmsPacketBridges`,
+   `SurfPaperNmsPlayerToastPackets` and `SurfPaperNmsCommandArgumentTypesBridge`. A plugin injects
+   the bridge interface into a bean. `SurfPaperNmsBridge.INSTANCE` is also what the
+   `InternalNmsBridge.get()` downcast described below reads.
 
-`surfBean` is `@InternalSurfApi`, so the file carries `@file:OptIn(InternalSurfApi::class)` — every
-bridge file in `platform/paper/api/.../nms/` does.
+`surfBean` is `@InternalSurfApi` too, so a file that declares one carries
+`@file:OptIn(InternalSurfApi::class)`.
 
 ### Mirror types
 
@@ -84,7 +96,7 @@ Adventure types in the parameter list, with
 | `CommandSendPacketBlockerListener.kt` | abstract `PacketListener` holding `blockedPlayers` and `receivedFirstCommandPacket` |
 | `PacketLoreRegistry.kt` | `register`/`unregister` for `SurfPaperPacketLoreHandler` |
 | `GlowingLifecycleHandler.kt` | `removeAllGlowingOnQuit`, `getBlockGlowSpawnOperationForChunk` |
-| `scoreboard/PlayerNmsScoreboard.kt` | packet-based sidebar contract |
+| `scoreboard/PlayerNmsScoreboard.kt` | per-player packet scoreboard that backs the `sidebar/` api |
 | `dummy/DummyEntityEquipment.kt` | placeholder equipment |
 
 ### `NmsProvider`'s factory list
@@ -125,14 +137,14 @@ is the point.
    to `List<NmsProviderMeta>` (`version: NmsVersion`, `implementation: String`). A parse failure is
    logged at severe and skipped, not rethrown.
 4. Log `Discovered %s NmsProviders`, then `metas.find { it.version == version }`, else warn and fall
-   back to `metas.maxByOrNull { it.version.versionPrefix }`, else
-   `error("No NmsProvider implementations found")`.
+   back to the first entry of `NmsVersion.NEWEST_FIRST` that has a provider, which compares versions
+   as numbers, else `error("No NmsProvider implementations found")`.
 5. `Class.forName(selectedMeta.implementation)`, require a single-argument `(JavaPlugin)` constructor
    — the error message says so explicitly — and `newInstance(JavaPlugin.getProvidingPlugin(NmsProvider::class.java))`.
 
 The whole block is wrapped in a `try`/`catch` that logs and rethrows as
-`IllegalStateException("Failed to load NmsProvider", e)`. Because it is a `by lazy`, this all happens
-on the first `NmsProvider.current` touch.
+`IllegalStateException("Failed to load NmsProvider", e)`. It is a `by lazy`, and the first touch is
+the creation of the bridge proxies while surf-api's root context refreshes in `PaperMain.onLoad`.
 
 ### Who writes the JSON
 
@@ -144,10 +156,10 @@ argument as an enum entry, maps each to `NmsProviderMeta(version, binaryName)`, 
 `resolver.getModuleName().asString().split(":").last()` and in `finish()` writes
 `META-INF/surf-api/nms-providers/<module>.json`.
 
-`core-convention` (in `buildSrc`) adds `ksp(project(":surf-api-processor"))` to every module except
-`surf-api-annotations` and `surf-api-internal`, so a version module gets this for free.
-`@NmsProviderMarker` itself is in `foundation/internal/.../nms/NmsProviderMarker.kt` with
-`AnnotationRetention.RUNTIME`.
+The processor runs only where the `surf.ksp-processor` convention
+(`buildSrc/src/main/kotlin/surf.ksp-processor.gradle.kts`) adds `ksp(project(":surf-api-processor"))`;
+every version module applies it next to `surf.module-impl`. `@NmsProviderMarker` itself is in
+`foundation/internal/.../nms/NmsProviderMarker.kt` with `AnnotationRetention.RUNTIME`.
 
 ### The proxies in `platform/paper/impl`
 
@@ -161,11 +173,12 @@ class SurfPaperNmsCommonBridgeProxy :
     SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()
 ```
 
-`@Service` (`dev.slne.surf.api.di`) is all the registration there is: KSP writes the proxy into
-`META-INF/surf-api/beans/`, surf-api's root container constructs it, and the `surfBean` property in
-the `-api` interface finds it. The delegate target is evaluated when the bean is constructed, which
-is what first touches `NmsProvider.current`. **A new bridge needs a new proxy here** — the version
-module alone is not reachable.
+Spring's `@Service` (`org.springframework.stereotype.Service`) is all the registration there is:
+surf-api's root context scans `dev.slne.surf.api` and creates the proxy as a singleton, plugins
+inject it by the bridge interface, and the `surfBean` property in the `-api` file, where there is
+one, finds it for surf-api's own code. The delegate target is evaluated when the bean is constructed, which is what
+first touches `NmsProvider.current`. **A new bridge needs a new proxy here** — the version module
+alone is not reachable.
 
 ### The packet path
 
@@ -196,8 +209,9 @@ handler `isPacket`, `getPlayerFromConnection`, `getBukkitPlayer`.
 ## Adding a bridge
 
 1. Write the interface in `platform/paper/api/.../nms/bridges/`, `@NmsUseWithCaution`, Bukkit and
-   Adventure types only, with the `companion object { val INSTANCE get() = bridge }` block and the
-   private `by surfBean<T>()` val at file scope.
+   Adventure types only. Add the `companion object { … val INSTANCE get() = bridge }` block and the
+   private `by surfBean<T>()` val at file scope only when surf-api's own static code reads the
+   bridge; otherwise the interface and its proxy bean (step 3) are enough.
 2. Add a `createXBridge(): SurfPaperNmsXBridge` factory to `NmsProvider`.
 3. Add a `@Service`-annotated proxy in `platform/paper/impl/.../proxy/`.
 4. Implement `V<prefix>SurfPaperNmsXBridgeImpl` in **every** version module and return it from each

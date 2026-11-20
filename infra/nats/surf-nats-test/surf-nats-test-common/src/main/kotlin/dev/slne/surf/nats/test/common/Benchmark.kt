@@ -15,7 +15,7 @@ import kotlin.time.DurationUnit
  * Measures the latency and throughput of a suspending call, such as a service call or a publish.
  *
  * ```kotlin
- * val service = natsClient.service<MicroserviceTestService>()
+ * val service = client.service<MicroserviceTestService>()
  * val result = Benchmark.run("echo", warmup = 1_000, iterations = 10_000, concurrency = 16) {
  *     service.echo(EchoRequest("ping"))
  * }

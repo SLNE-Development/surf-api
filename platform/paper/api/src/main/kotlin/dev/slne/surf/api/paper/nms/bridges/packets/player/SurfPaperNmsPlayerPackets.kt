@@ -4,7 +4,6 @@
 package dev.slne.surf.api.paper.nms.bridges.packets.player
 
 import com.destroystokyo.paper.profile.PlayerProfile
-import dev.slne.surf.api.di.surfBean
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
@@ -15,8 +14,10 @@ import org.bukkit.GameMode
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import java.util.*
+import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
+@SurfApiBean
 interface SurfPaperNmsPlayerPackets {
     fun openSignEditor(position: BlockPosition, frontSide: Boolean): PacketOperation
 
@@ -39,11 +40,4 @@ interface SurfPaperNmsPlayerPackets {
     ): PacketOperation
 
     fun removePlayerInfoUpdate(profileIds: List<UUID>): PacketOperation
-
-    companion object {
-        val INSTANCE get() = bridge
-    }
 }
-
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsPlayerPackets>()

@@ -2,9 +2,9 @@
 
 package dev.slne.surf.api.minestom.inventory.framework
 
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.builder.buildItem
-import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.View
 import me.devnatan.inventoryframework.ViewConfigBuilder
 import me.devnatan.inventoryframework.context.OpenContext
@@ -24,7 +24,6 @@ import net.minestom.server.item.Material
  *
  * @receiver the [View] to register
  * @see unregister
- * @see viewFrame
  */
 fun View.register() {
     viewFrame.with(this)

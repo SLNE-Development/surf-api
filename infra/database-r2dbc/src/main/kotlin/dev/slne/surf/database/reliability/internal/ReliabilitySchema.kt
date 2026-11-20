@@ -1,8 +1,8 @@
 package dev.slne.surf.database.reliability.internal
 
-import dev.slne.surf.database.DatabaseApi
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.VarCharColumnType
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 
 /**
  * Names and server checks of the library-owned reliability schema.
@@ -19,7 +19,7 @@ internal object ReliabilitySchema {
     /**
      * Result of `SELECT VERSION()`, empty if the server returns none.
      */
-    suspend fun serverVersion(api: DatabaseApi): String = api.readCommittedTransaction {
+    suspend fun serverVersion(database: R2dbcDatabase): String = database.readCommittedTransaction {
         val result = exec("SELECT VERSION()") { row ->
             row.get(0, String::class.java)
         }
@@ -31,8 +31,8 @@ internal object ReliabilitySchema {
      * MariaDB storage engine per reliability table, `null` for a missing table.
      */
     suspend fun mariaDbTableEngines(
-        api: DatabaseApi
-    ): Map<String, String?> = api.readCommittedTransaction {
+        database: R2dbcDatabase
+    ): Map<String, String?> = database.readCommittedTransaction {
         val placeholders = tables.joinToString { "?" }
         val result = exec(
             "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES " +

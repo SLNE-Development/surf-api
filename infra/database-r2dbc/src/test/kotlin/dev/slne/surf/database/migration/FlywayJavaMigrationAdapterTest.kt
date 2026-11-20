@@ -3,7 +3,7 @@ package dev.slne.surf.database.migration
 import dev.slne.surf.database.migration.fixtures.plugina.V2_JdbcInsert
 import dev.slne.surf.database.migration.fixtures.plugina.V3_ExposedInsert
 import dev.slne.surf.database.migration.internal.FlywayJavaMigrationAdapter
-import dev.slne.surf.database.testing.withOfflineDatabaseApi
+import dev.slne.surf.database.testing.withOfflineDatabase
 import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.Configuration
 import org.flywaydb.core.api.configuration.FluentConfiguration
@@ -11,11 +11,7 @@ import org.flywaydb.core.api.migration.Context
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Proxy
 import java.sql.Connection
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class FlywayJavaMigrationAdapterTest {
 
@@ -32,7 +28,7 @@ class FlywayJavaMigrationAdapterTest {
     }
 
     private fun adapt(migration: SurfMigration, block: (FlywayJavaMigrationAdapter) -> Unit) =
-        withOfflineDatabaseApi { api -> block(FlywayJavaMigrationAdapter(api, migration)) }
+        withOfflineDatabase { database -> block(FlywayJavaMigrationAdapter(database, migration)) }
 
     @Test
     fun exposesVersionAndDescription() = adapt(Checksummed()) { adapter ->

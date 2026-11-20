@@ -7,12 +7,14 @@ import dev.jorel.commandapi.CommandAPIPaper
 import dev.jorel.commandapi.arguments.ArgumentSuggestions
 import dev.jorel.commandapi.arguments.LocationType
 import dev.jorel.commandapi.kotlindsl.*
+import dev.slne.surf.api.common.random.RandomSelector
 import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.messages.adventure.buildText
-import dev.slne.surf.api.common.random.RandomSelector
 import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import net.kyori.adventure.text.Component
 import org.bukkit.Location
 import org.bukkit.Registry
@@ -29,7 +31,7 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
             locationArgument("location", LocationType.BLOCK_POSITION)
             anyExecutor { sender, args ->
                 val location: Location by args
-                val visualizer = SurfPaperVisualizerApi.INSTANCE.createSingleLocationVisualizer(location).apply {
+                val visualizer = visualizerApi.createSingleLocationVisualizer(location).apply {
                     if (sender is Player) {
                         addViewer(sender)
                     }
@@ -100,3 +102,6 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
         }
     }
 }
+
+@OptIn(InternalSurfApi::class)
+private val visualizerApi by surfBean<SurfPaperVisualizerApi>()

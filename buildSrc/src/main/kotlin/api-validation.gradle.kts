@@ -8,5 +8,22 @@ plugins {
 }
 
 extensions.configure<KotlinJvmProjectExtension> {
-    abiValidation()
+    abiValidation {
+        filters {
+            exclude {
+                // May change in any release; what inlined plugin code references is PublishedSurfApi.
+                annotatedWith.add(SurfApiMarkers.INTERNAL)
+            }
+        }
+    }
 }
+
+val checkInlineInternalApi = tasks.register<CheckInlineInternalApi>("checkInlineInternalApi") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = "Fails when a public inline function references a declaration marked only @InternalSurfApi."
+    val main = project.extensions.getByType<SourceSetContainer>().named("main")
+    classes.from(main.map { it.output.classesDirs })
+    classpath.from(main.map { it.compileClasspath })
+}
+
+tasks.named("check") { dependsOn(checkInlineInternalApi) }

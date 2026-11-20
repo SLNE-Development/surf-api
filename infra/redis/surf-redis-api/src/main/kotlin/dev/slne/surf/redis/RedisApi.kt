@@ -1,7 +1,6 @@
 package dev.slne.surf.redis
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.common.flogger.StackSize
 import dev.slne.surf.api.common.util.getCallerClass
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.serialization.SurfSerializerModule
@@ -22,7 +21,6 @@ import dev.slne.surf.redis.sync.set.SyncSet
 import dev.slne.surf.redis.sync.value.SyncValue
 import dev.slne.surf.redis.util.Initializable
 import kotlinx.coroutines.*
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
@@ -76,47 +74,34 @@ import kotlin.time.Duration
  *
  * Call [disconnect] to dispose the instance's resources and release its share of the connection.
  *
- * ## Usage
- * A common setup is to provide a single, platform-owned [RedisApi] instance via a service and expose
- * it to consumers, which create sync structures where they are needed before the service connects.
+ * ## Usage in a surf-api plugin
+ * Every plugin context holds a managed `RedisApi`. A bean injects it and creates its sync structures
+ * and caches while the context refreshes: in a constructor, a property initializer or a `@Bean`
+ * method. surf-api freezes and connects the instance right after the context has refreshed, and
+ * disconnects it when the context closes, so a plugin never calls [freeze], [connect] or
+ * [disconnect] on it.
  *
  * ```
- * // Service that owns the RedisApi instance
- * class RedisService {
- *     val redisApi = RedisApi.create()
- *
- *     fun connect() {
- *         redisApi.freezeAndConnect()
- *     }
- *
- *     fun disconnect() {
- *         redisApi.disconnect()
- *     }
- *
- *     companion object {
- *         val instance = requiredService<RedisService>()
- *         fun get() = instance
- *
- *         fun namespaced(suffix: String) = "example-namespace:$suffix"
- *     }
- * }
- *
- * // Convenience accessor used by consumers
- * val redisApi get() = RedisService.get().redisApi
- *
- * // Consumer creates sync structures at the call site where they are needed
- * object SomeOtherService {
- *     private val someSyncList =
- *         redisApi.createSyncList<String>(RedisService.namespaced("some-sync-list"))
+ * @Service
+ * class OnlineService(redis: RedisApi) {
+ *     private val online = redis.createSyncSet<UUID>("online-players")
  * }
  * ```
+ *
+ * A structure created after the instance is frozen fails with [IllegalStateException].
+ *
+ * ## Usage outside surf-api's Spring contexts
+ * A standalone application creates the instance with [create], creates its structures, then calls
+ * [freezeAndConnect] and, on shutdown, [disconnect].
  */
 @Suppress("unused")
 class RedisApi private constructor(
     private val config: Config,
     private val connectionKey: RedissonConnectionKey,
     private val pluginName: String,
-    /** JSON instance used internally for (de-)serialization. */
+    /**
+     * JSON instance used internally for (de-)serialization.
+     */
     val json: Json,
 ) {
     private val parsedConfig = ConfigSupport.getConfig(config)
@@ -283,7 +268,6 @@ class RedisApi private constructor(
             return create(serializerModule = serializerModule, pluginName = getCallingPluginName())
         }
 
-        @OptIn(ExperimentalSerializationApi::class)
         private fun createJson(serializerModule: SerializersModule) = Json {
             ignoreUnknownKeys = true
             namingStrategy = JsonNamingStrategy.SnakeCase
@@ -406,7 +390,7 @@ class RedisApi private constructor(
      * Freezes this API instance and prevents further registrations.
      *
      * After freezing:
-     * - creating sync structures via `createSync*` is no longer allowed
+     * - creating sync structures via `createSync*` and caches via `createSimple*` is no longer allowed
      * - [connect] may be called
      *
      * @throws IllegalArgumentException if already frozen
@@ -499,6 +483,7 @@ class RedisApi private constructor(
             redisson.getRedisNodes(RedisNodes.SINGLE).pingAll()
         }
     } catch (_: Exception) {
+        currentCoroutineContext().ensureActive()
         false
     }
 
@@ -681,7 +666,7 @@ class RedisApi private constructor(
      * @throws IllegalStateException if the Redis client is frozen when attempting to create the structure.
      */
     private inline fun <S : SyncStructure<*>> createSyncStructure(creator: () -> S): S {
-        require(!isFrozen()) { "Redis client must not be frozen to create sync structures" }
+        check(!isFrozen()) { "Redis client must not be frozen to create sync structures" }
         val structure = creator()
         initializables.put(structure, Unit)
         disposables.put(structure, Unit)
@@ -705,10 +690,13 @@ class RedisApi private constructor(
     /**
      * Creates a [SimpleRedisCache] for the given [namespace] using the provided [serializer].
      *
+     * Must be called before [freeze].
+     *
      * @param namespace Prefix placed before each Redis key.
      * @param serializer Serializer used for cache values.
      * @param ttl Time-to-live for cache entries.
      * @param keyToString Function that converts a key of type `K` to its string representation.
+     * @throws IllegalStateException if the API is already frozen
      */
     fun <K : Any, V : Any> createSimpleCache(
         namespace: String,
@@ -716,23 +704,11 @@ class RedisApi private constructor(
         ttl: Duration,
         keyToString: (K) -> String = { it.toString() }
     ): SimpleRedisCache<K, V> {
+        check(!isFrozen()) { "Redis client must not be frozen to create simple caches" }
         val cache =
             RedisComponentProvider.createSimpleCache(namespace, serializer, ttl, keyToString, this)
 
-        if (isConnected()) {
-            log.atWarning()
-                .withStackTrace(StackSize.MEDIUM)
-                .log(
-                    "Creating SimpleRedisCache '%s' after RedisApi is connected; initializing immediately (blocking). " +
-                            "Consider creating caches before connecting to avoid this blocking call.",
-                    namespace
-                )
-
-            initialize(cache).block()
-        } else {
-            initializables.put(cache, Unit)
-        }
-
+        initializables.put(cache, Unit)
         disposables.put(cache, Unit)
         return cache
     }
@@ -772,6 +748,7 @@ class RedisApi private constructor(
      * @param ttl Time-to-live for cache entries.
      * @param idOf Function that extracts a stable identifier for elements.
      * @param indexes Optional index configuration for the set cache.
+     * @throws IllegalStateException if the API is already frozen
      */
     fun <T : Any> createSimpleSetRedisCache(
         namespace: String,
@@ -780,6 +757,7 @@ class RedisApi private constructor(
         idOf: (T) -> String,
         indexes: RedisSetIndexes<T> = RedisSetIndexes.empty()
     ): SimpleSetRedisCache<T> {
+        check(!isFrozen()) { "Redis client must not be frozen to create simple caches" }
         val cache =
             RedisComponentProvider.createSimpleSetRedisCache(
                 namespace,
@@ -790,19 +768,7 @@ class RedisApi private constructor(
                 this
             )
 
-        if (isConnected()) {
-            log.atWarning()
-                .withStackTrace(StackSize.MEDIUM)
-                .log(
-                    "Creating SimpleSetRedisCache '%s' after RedisApi is connected; initializing immediately (blocking). " +
-                            "Consider creating caches before connecting to avoid this blocking call.",
-                    namespace
-                )
-            initialize(cache).block()
-        } else {
-            initializables.put(cache, Unit)
-        }
-
+        initializables.put(cache, Unit)
         disposables.put(cache, Unit)
         return cache
     }

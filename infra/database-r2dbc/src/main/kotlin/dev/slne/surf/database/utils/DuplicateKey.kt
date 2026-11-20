@@ -14,3 +14,13 @@ import dev.slne.surf.database.reliability.internal.SqlFailure
  * new transaction. To insert a row only if its key is absent, Exposed's `insertIgnore` keeps the transaction usable.
  */
 fun Throwable.isDuplicateKeyViolation(): Boolean = SqlFailure.of(this) == SqlFailure.DUPLICATE_KEY
+
+/**
+ * Returns whether this failure rolled back its transaction because of a conflict with a concurrent one, so that the
+ * whole transaction can be run again: a deadlock (SQLSTATE `40P01`, MariaDB `1213`), a serialization failure
+ * (`40001`) or, on MariaDB under REPEATABLE READ with `innodb_snapshot_isolation`, a row changed since the snapshot
+ * (`1020`).
+ *
+ * Inspects the cause chain like [isDuplicateKeyViolation].
+ */
+fun Throwable.isTransientConflict(): Boolean = SqlFailure.of(this) == SqlFailure.TRANSIENT_CONFLICT

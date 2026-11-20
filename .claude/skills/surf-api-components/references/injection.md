@@ -1,142 +1,136 @@
 # Injection in detail
 
-Sources: `foundation/di/api/.../BeanContainer.kt`, `Bean.kt`, `Qualifier.kt`, `Primary.kt`,
-`Priority.kt`, `definition/BeanDefinition.kt`.
+Sources: `foundation/spring/impl/.../spring/context/ImportContexts.kt` (`PluginBeanFactory`,
+`ImportBeanFactory`), `PluginExport.kt`, `SurfContextManager.kt`, and the cases in
+`foundation/spring/impl/src/test/kotlin/dev/slne/surf/api/spring/context/SurfContextManagerTest.kt`.
+Everything not named there is plain Spring Framework behaviour.
 
-## What a bean can be resolved as
+## Where candidates come from
 
-A bean's `provides` list is its own class plus every supertype except `Any`. That is what makes
-resolution over an interface work, and it means a bean is reachable under any of those types without
-anything being declared twice.
+A plugin context answers from its own beans first, then asks its import context, then the root.
+The import context holds one lazy, synthetic definition per export of a direct dependency, named
+`import/<provider>/<bean name>`. The `/` cannot occur in a parameter name, so Spring's fallback of
+matching a parameter name against bean names never picks an export by accident.
 
-Consequence: a bean that implements a widely used interface becomes a candidate for every injection
-point asking for it. Two such beans and no `@Primary` is an ambiguity failure, not a coin toss.
+An export carries the bean's full generic type. An export declared as `Repo<Foo>` never satisfies
+a `Repo<Bar>` parameter.
 
-## The four parameter shapes
-
-The container records each constructor parameter as an injection point with the declared type plus
-three flags - optional, collection kind, lazy - and the flags decide how it is resolved.
+## The parameter shapes
 
 ### `T` - exactly one
 
-Resolved from this container's own candidates first; if none, the parent is asked, then its parent.
-No candidate anywhere is a failure that names the consumer and the type. Several candidates in one
-container with nothing to pick between them is an ambiguity failure.
+Spring collects the candidates of this context and its ancestors. One candidate is injected. Among
+several, Spring narrows by `@Qualifier`, then takes the `@Primary` one, then the only one left
+without `@Fallback`, then the one whose bean name equals the parameter name (kept in the bytecode
+by `javaParameters`); anything still ambiguous fails with `NoUniqueBeanDefinitionException`. No candidate fails with
+`NoSuchBeanDefinitionException`. Both arrive wrapped in `UnsatisfiedDependencyException`.
 
 ### `T?` - optional
 
-A nullable parameter accepts absence: the whole hierarchy is searched, and `null` is passed if
-nothing provides the type. Use it instead of a condition when the bean works fine without the
-dependency. An optional parameter that nothing provides also creates no graph edge.
+A nullable Kotlin parameter is not required: Spring passes `null` when nothing provides `T`. It
+does not soften ambiguity; two candidates still fail. `Optional<T>` behaves the same.
 
-### `List<T>` / `Set<T>` - every candidate
+### `List<T>` / `Set<T>` / `Map<String, T>` - every candidate
 
-The union of this container and its parents:
+Every candidate of this context and its ancestors, root beans and imported exports included.
+`List<T>` is sorted by `@Order` or `Ordered`. A class whose only constructor takes the collection
+receives an empty one when nothing provides `T`. Collections never fail on ambiguity, including
+exports from several providers.
 
-1. this container's candidates, sorted by `@Priority` (lower first) and then by provider id, so the
-   order is stable across runs whatever order the metadata files arrived in
-2. then the parent's candidates, recursively, by the same rule
+### `ObjectProvider<T>` - resolved on use
 
-`Set<T>` is the same list turned into a set. An empty collection is an answer, not a failure - a
-registrar with no handlers starts normally.
+Nothing is resolved at construction:
 
-A collection parameter creates an edge to **every** provider of its element type, so all of them
-exist before the collection is handed over.
+- `getObject()` - exactly one, as for `T`
+- `getIfAvailable()` - one or `null`; still fails on ambiguity
+- `getIfUnique()` - one, or `null` when there is none **or** several
+- `orderedStream()` / `stream()` - every candidate
 
-Do not write `Lazy<List<T>>`: a parameter is one shape or the other, and the collection branch is
-taken first, so the laziness would be silently lost.
+Use it to break a constructor cycle, to reach a lazy bean only when needed, or to look a bean up
+after the plugin's phases ran. A NATS client or service proxy, or a `RedisApi`, created through an
+`ObjectProvider` after the context refreshed connects late or fails; see the surf-api skills for
+those integrations.
 
-### `Lazy<T>` - resolved on first access
+### `@Lazy T` - a resolving proxy
 
-The value is produced the first time `.value` is read. Two uses:
+Spring's `@Lazy` on an interface-typed parameter injects a proxy that resolves the bean on its
+first call. It breaks a constructor cycle like `ObjectProvider<T>`, with the call site unchanged.
 
-- **breaking a cycle on purpose.** A lazy parameter creates no graph edge, which is exactly why it
-  is the answer to a cyclic-dependency failure. Make the parameter lazy on the side that genuinely
-  uses the value later than construction.
-- **holding something that does not exist yet** - the registration target of a
-  `BeanPostProcessor`, for instance.
-
-A required `Lazy<T>` whose bean does not exist fails at **first access**, not at startup. That is the
-price of postponing it.
-
-## `@Bean` factories
+## `@Bean` methods
 
 ```kotlin
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
-annotation class Bean(val scope: Scope = Scope.SINGLETON)
-```
+@Configuration
+class StorageConfiguration {
 
-- Works on a property (read once) or a function (called once, with its parameters resolved like any
-  other injection point).
-- The declaring class must itself be a bean. The factory is created after its declaring bean; the
-  graph enforces that, so a consumer of the published type transitively waits for the declaring bean
-  too.
-- **The published type is the declared type** of the property or the return type of the function -
-  not the runtime class of the value. Write the contract explicitly:
-
-  ```kotlin
-  @Bean val api: RedisApi = RedisApiImpl()        // publishes RedisApi
-  @Bean val api = RedisApiImpl()                  // publishes RedisApiImpl - consumers of RedisApi fail
-  ```
-
-  The published bean is indexed under that declared type and its supertypes, the same as a class
-  bean.
-- `scope` defaults to `Scope.SINGLETON`. Set it explicitly when the published value should live in
-  the root container: `@Bean(scope = Scope.SHARED)`.
-- A factory can carry `@Qualifier`, `@Primary` and `@Priority`; those are recorded per factory.
-  Conditions are not - put a `@ConditionalOn*` on the declaring class instead
-  (see `references/conditions.md`).
-- In failure messages a factory is identified as `DeclaringClass#memberName`.
-
-## Qualifier, primary, priority
-
-```kotlin
-annotation class Qualifier(val name: String)   // class, value parameter, property, function
-annotation class Primary                       // class, property, function - not a parameter
-annotation class Priority(val value: Int = 0)  // class, annotation class, property, function
-```
-
-- An injection point without a qualifier considers **all** candidates for the type, qualified ones
-  included; a qualifier on a bean does not hide it. It then takes the only candidate, or the
-  `@Primary` one, or fails.
-- A qualifier at the injection point narrows to candidates with that exact name. A name that matches
-  nothing is treated as "no candidate" - so a required parameter fails and a nullable one gets
-  `null`. A typo in a qualifier therefore looks like a missing bean.
-- At most one `@Primary` per provided type. Two of them fail rather than one being picked.
-- `@Priority` is only a tie-breaker between beans the graph leaves unordered - two independent
-  listeners whose registration order happens to matter. It also sets the order of candidates handed
-  to a collection parameter, and the order of the `BeanPostProcessor` chain. It can never override
-  the graph.
-- `@Priority` on an annotation class applies to every bean carrying that stereotype.
-
-## Reaching the container directly
-
-Only at the edges - a platform entry point, a static callback, somewhere with no constructor to
-inject into. Inside a bean, use the constructor.
-
-```kotlin
-interface BeanContainer {
-    val parent: BeanContainer?
-    val owner: Any
-
-    fun <T : Any> beanOrNull(type: KClass<T>, qualifier: String? = null): T?
-    fun <T : Any> bean(type: KClass<T>, qualifier: String? = null): T
-    fun <T : Any> beansOfType(type: KClass<T>): List<T>
-    fun <T : Any> lazyBean(type: KClass<T>, qualifier: String? = null): Lazy<T>
+    @Bean
+    @Primary
+    fun storage(settings: ConfigHandle<StorageSettings>): Storage = DatabaseStorage(settings.value.url)
 }
 ```
 
-Reified extensions exist for all four, so the usual call is
-`container.bean<ShopService>()` / `container.beansOfType<PriceHandler>()` /
-`container.lazyBean<RedisApi>()` / `container.beanOrNull<Storage>("fallback")`.
+- A `@Bean` method belongs in a `@Configuration` class. `kotlin("plugin.spring")` opens it, so
+  Spring creates its CGLIB subclass, and one `@Bean` method calling another returns the singleton.
+- The declared return type is the type Spring predicts before the bean exists, which type matching
+  of lazy beans relies on, and the type an export carries to consumers. Write the contract there.
+- Parameters are resolved like constructor parameters, in every shape above.
+- `@Qualifier`, `@Primary`, `@Fallback`, `@Order`, `@Lazy` and `@ConditionalOnPlugin` work on the
+  method.
 
-- `bean` throws when there is no candidate, or when several match and none is `@Primary`. Both
-  messages name what was found.
-- `beanOrNull` returns `null` for "none", but still throws on ambiguity - absence and
-  undecidability are different problems.
-- `beansOfType` returns this container's and its parents' candidates; empty is a valid answer.
-- `lazyBean` resolves on first access, which is how a platform entry point can hold a handle to a
-  bean that does not exist yet.
+## Qualifier, primary, fallback, order
 
-`owner` is the application the container belongs to - a plugin instance, a microservice. `parent` is
-`null` only on the root.
+```kotlin
+@Service @Qualifier("file") class FileStorage : Storage
+@Service @Qualifier("memory") @Fallback class MemoryStorage : Storage
+
+@Service
+class Writer(@Qualifier("file") private val storage: Storage)
+```
+
+- A qualifier at the injection point narrows the candidates to that name. A name that matches
+  nothing means "no candidate": a `T` parameter fails and a `T?` parameter receives `null`, so a
+  typo in a qualifier looks like a missing bean.
+- `@Primary` decides an unqualified injection point; two primaries for one type fail.
+- `@Fallback` beans count only when no other candidate is left. A default implementation that a
+  real one replaces carries `@Fallback`. surf-api's Redis and NATS beans are registered this way,
+  so a plugin's own `NatsClient` or `RedisApi` bean wins.
+- `@Order` sorts collections, `orderedStream()` and the lifecycle hooks. It never picks a single
+  candidate. On a `@Bean` method it sorts collections only; the lifecycle hooks read `@Order` or
+  `Ordered` from the bean's class.
+
+## Exports from several providers
+
+A plugin context treats candidates from two different providers as undecidable for a single-valued
+injection point:
+
+- `T`, `T?`, `Optional<T>` and `ObjectProvider.getIfAvailable()` fail with
+  `NoUniqueBeanDefinitionException`, even when one export is `@Primary`, carries a higher priority,
+  or its bean name matches the parameter name.
+- `ObjectProvider.getIfUnique()` returns `null`.
+- A programmatic `getBean(Type::class.java)` fails the same way.
+- `@Qualifier("<value>")` at the injection point picks one. Only a plain `@Qualifier` value travels
+  with an export; a custom qualifier annotation stays behind.
+
+Within one provider, and among the plugin's own beans, Spring's usual rules apply.
+
+## Programmatic lookups
+
+Inject what a bean needs. Code that holds an `ApplicationContext` uses Spring's reified Kotlin
+extensions from `org.springframework.beans.factory`:
+
+```kotlin
+val shop = context.getBean<ShopService>()
+val handlers = context.getBeansOfType<PriceHandler>().values
+```
+
+A plugin bean can inject `ApplicationContext` itself. `getBeansOfType` looks only at the context it
+is called on, not at its ancestors.
+
+surf-api's own static entry points read root beans through the `@InternalSurfApi` delegate
+`surfBean<T>(qualifier)` in `dev.slne.surf.api.spring`:
+
+```kotlin
+private val bridge by surfBean<SurfPaperNmsNbtBridge>()
+```
+
+It resolves on first read from `SurfContexts.root`. A read before the platform installed the root
+fails with "surf-api's root context has not been started yet".

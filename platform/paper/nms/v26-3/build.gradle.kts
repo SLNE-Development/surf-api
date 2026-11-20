@@ -1,5 +1,6 @@
 plugins {
     id("surf.module-impl")
+    id("surf.ksp-processor")
     id("io.papermc.paperweight.userdev") apply true
 }
 
@@ -15,16 +16,10 @@ dependencies {
 
     paperweight.paperDevBundle("26.3.build.+")
 
-    // CreativeOrderComparator indexes creative-mode items with two maps that have no JDK
-    // counterpart: one keyed by Paper's own ItemStackLinkedSet.TYPE_AND_TAG hash strategy, and one
-    // keyed by reference identity. The dev bundle happens to carry fastutil, but relying on that is
-    // not a dependency declaration.
     compileOnly(libs.fastutil)
 
     compileOnly(libs.placeholder.api)
     compileOnly(libs.reflection.remapper)
-    compileOnly(libs.mccoroutine.folia.api)
-    compileOnly(libs.scoreboard.library.api)
 
     implementation(libs.bytebuddy)
 }

@@ -4,13 +4,19 @@
  * @see surfModuleRole
  */
 enum class SurfModuleRole {
-    /** Declares contracts that consumers compile against. */
+    /**
+     * Declares contracts that consumers compile against.
+     */
     API,
 
-    /** Provides implementations; wired in at runtime and shaded into the final jar. */
+    /**
+     * Provides implementations; wired in at runtime and shaded into the final jar.
+     */
     IMPL,
 
-    /** Holds no sources and only groups other modules for consumers. */
+    /**
+     * Holds no sources and only groups other modules for consumers.
+     */
     AGGREGATE,
 }
 
@@ -23,7 +29,7 @@ private val NMS_VERSION_MODULE = Regex("-nms-v[0-9]")
  *
  * - `-impl`, which every platform and domain implementation uses
  * - `-internal`, used by `surf-api-internal`, whose contents are a contract between the KSP
- *   processor and the container rather than something a consumer writes against
+ *   processor and the NMS provider loader rather than something a consumer writes against
  * - `-nms-v<digit>`, used by the versioned NMS bridges
  *
  * Everything else counts as an API module. Aggregates are never derived from the name — they are

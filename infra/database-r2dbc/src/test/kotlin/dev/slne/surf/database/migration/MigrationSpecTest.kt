@@ -80,6 +80,7 @@ class MigrationSpecTest {
     @Test
     fun eachEntryAloneIsEnough() {
         assertEquals(listOf("one"), spec { classes(V1()) }.build("p").migrations.map { it.description })
+        assertEquals(listOf("a.B"), spec { classNames("a.B") }.build("p").classNames)
         assertEquals(listOf("a.b"), spec { classPackage("a.b") }.build("p").packages)
     }
 
@@ -93,6 +94,23 @@ class MigrationSpecTest {
 
         assertEquals(listOf("db/migrations"), plan.sqlPaths)
         assertEquals(listOf("a.b"), plan.packages)
+    }
+
+    @Test
+    fun classNamesAreTrimmedKeepTheirOrderAndAreDeduplicated() {
+        val plan = spec {
+            classNames("b.Second", " a.First ")
+            classNames("b.Second", "a.First")
+        }.build("p")
+
+        assertEquals(listOf("b.Second", "a.First"), plan.classNames)
+    }
+
+    @Test
+    fun rejectsBlankClassNames() {
+        listOf("", " ").forEach {
+            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().classNames(it) }
+        }
     }
 
     @Test

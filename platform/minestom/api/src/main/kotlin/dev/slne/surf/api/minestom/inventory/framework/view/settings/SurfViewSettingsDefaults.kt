@@ -1,17 +1,10 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.settings
 
 import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
-import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
-import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
-import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
-import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.*
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
-import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults.DEFAULT_HEADER_FONT
-import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults.rowFont
+import dev.slne.surf.api.messages.adventure.key
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.text.format.TextColor
@@ -29,19 +22,29 @@ import net.kyori.adventure.text.format.TextColor
  * @see dev.slne.surf.api.minestom.inventory.framework.view.settings.builder.SurfViewSettingsBuilder
  */
 object SurfViewSettingsDefaults {
-    /** Default value for [SurfViewSettings.cancelOnClick]: `true`. */
+    /**
+     * Default value for [SurfViewSettings.cancelOnClick]: `true`.
+     */
     const val DEFAULT_CANCEL_ON_CLICK = true
 
-    /** Default value for [SurfViewSettings.cancelOnDrag]: `true`. */
+    /**
+     * Default value for [SurfViewSettings.cancelOnDrag]: `true`.
+     */
     const val DEFAULT_CANCEL_ON_DRAG = true
 
-    /** Default value for [SurfViewSettings.cancelOnDrop]: `true`. */
+    /**
+     * Default value for [SurfViewSettings.cancelOnDrop]: `true`.
+     */
     const val DEFAULT_CANCEL_ON_DROP = true
 
-    /** Default value for [SurfViewSettings.cancelOnPickup]: `true`. */
+    /**
+     * Default value for [SurfViewSettings.cancelOnPickup]: `true`.
+     */
     const val DEFAULT_CANCEL_ON_PICKUP = true
 
-    /** Default value for [SurfViewSettings.navigateBackOnOutsideClick]: `true`. */
+    /**
+     * Default value for [SurfViewSettings.navigateBackOnOutsideClick]: `true`.
+     */
     const val DEFAULT_NAVIGATE_BACK_ON_CLOSE = true
 
     /**
@@ -64,10 +67,14 @@ object SurfViewSettingsDefaults {
      */
     val ASCENDED_HEADER_FONT = key("surf", "menu_font_normal_ascended")
 
-    /** The Adventure [Key] for the default menu font (`surf:menu`), used for the header textures. */
+    /**
+     * The Adventure [Key] for the default menu font (`surf:menu`), used for the header textures.
+     */
     val DEFAULT_MENU_FONT = key("surf", "menu")
 
-    /** Default [TextAlignment] for the header: [TextAlignment.CENTER]. */
+    /**
+     * Default [TextAlignment] for the header: [TextAlignment.CENTER].
+     */
     val DEFAULT_HEADER_ALIGNMENT = TextAlignment.CENTER
 
     /**
@@ -90,7 +97,9 @@ object SurfViewSettingsDefaults {
      */
     const val DEFAULT_BACKGROUND_GLYPH = false
 
-    /** Default [ViewHeaderGeometry]: the pixel layout of the current header texture. */
+    /**
+     * Default [ViewHeaderGeometry]: the pixel layout of the current header texture.
+     */
     val DEFAULT_HEADER_GEOMETRY = ViewHeaderGeometry.DEFAULT
 
     /**
@@ -109,16 +118,24 @@ object SurfViewSettingsDefaults {
      */
     val DEFAULT_ROW_FONT_METRICS = ViewFontMetrics.VANILLA_ROW
 
-    /** Default [TextAlignment] for text rendered on a slot row: [TextAlignment.CENTER]. */
+    /**
+     * Default [TextAlignment] for text rendered on a slot row: [TextAlignment.CENTER].
+     */
     val DEFAULT_ROW_TEXT_ALIGNMENT = TextAlignment.CENTER
 
-    /** Default column span for text rendered on a slot row: the full width of the slot grid. */
+    /**
+     * Default column span for text rendered on a slot row: the full width of the slot grid.
+     */
     val DEFAULT_ROW_TEXT_COLUMNS = 0 until ViewSlotGeometry.COLUMNS
 
-    /** Default number of rows for simple views: [ViewRows.FIVE]. */
+    /**
+     * Default number of rows for simple views: [ViewRows.FIVE].
+     */
     val DEFAULT_VIEW_ROWS = ViewRows.FIVE
 
-    /** Default [PaginationViewRows] for paginated views: [PaginationViewRows.FIVE]. */
+    /**
+     * Default [PaginationViewRows] for paginated views: [PaginationViewRows.FIVE].
+     */
     val DEFAULT_PAGINATION_VIEW_ROWS = PaginationViewRows.FIVE
 
     /**
@@ -127,7 +144,9 @@ object SurfViewSettingsDefaults {
      */
     val DEFAULT_PAGINATION_EMPTY_ROWS = PaginationEmptyRows.NONE
 
-    /** Default [PaginationButtonPosition] for paginated views: [PaginationButtonPosition.BOTTOM]. */
+    /**
+     * Default [PaginationButtonPosition] for paginated views: [PaginationButtonPosition.BOTTOM].
+     */
     val DEFAULT_PAGINATION_BUTTON_POSITION = PaginationButtonPosition.BOTTOM
 
     /**

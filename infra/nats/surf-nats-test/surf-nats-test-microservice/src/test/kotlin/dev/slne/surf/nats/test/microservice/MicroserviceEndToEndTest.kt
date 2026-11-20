@@ -10,7 +10,9 @@ import org.testcontainers.mariadb.MariaDBContainer
 import java.nio.file.Path
 import java.sql.DriverManager
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -18,16 +20,21 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Starts the shadow jar of this module as the Docker image would and drives it through its console.
  *
- * Covers the surf-microservice v3 stack end to end: main-class discovery, the database and NATS integrations,
- * SQL and code migrations, the `health` command and the shutdown order.
+ * Covers the Spring Boot microservice stack end to end: the main class of the jar, the database and NATS
+ * auto-configurations, SQL and code migrations, the `health` command, the data folder and the shutdown order.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MicroserviceEndToEndTest {
     private val nats = NatsContainer("nats:2-alpine").withJetStream().apply { start() }
-    private val mariadb = MariaDBContainer("mariadb:11").apply { start() }
+    private val mariadb = MariaDBContainer("mariadb:12.3").apply { start() }
 
     @TempDir
     lateinit var workDir: Path
+
+    /**
+     * The data folder given through `SURF_MICROSERVICE_CONFIG_DIR`; not the default `config` of the working directory.
+     */
+    private val dataDir get() = workDir.resolve("data")
 
     @AfterAll
     fun stopContainers() {
@@ -38,23 +45,34 @@ class MicroserviceEndToEndTest {
     @Test
     fun `starts with NATS and the database, migrates, reports healthy and stops in order`() {
         val exitCode = MicroserviceProcess.start(microserviceJar(), workDir, environment()).use { microservice ->
-            microservice.awaitLine("Microservice nats-test started", STARTUP_TIMEOUT)
+            microservice.awaitLine("Started NatsTestMicroservice", STARTUP_TIMEOUT)
 
             microservice.send("health")
             microservice.awaitLine("healthy (2 checks)", COMMAND_TIMEOUT)
 
             microservice.send("exit")
-            microservice.awaitExit(SHUTDOWN_TIMEOUT).also { assertStartOrder(microservice.output) }
+            microservice.awaitExit(SHUTDOWN_TIMEOUT).also {
+                assertStartAndStopOrder(microservice.output)
+            }
         }
 
         assertEquals(0, exitCode)
         assertMigrated()
+        assertDataFolder()
     }
 
-    private fun assertStartOrder(output: List<String>) {
-        val database = output.indexOfFirst { "Started integration database" in it }
-        val nats = output.indexOfFirst { "Started integration nats" in it }
-        assertTrue(database in 0..<nats, "the database must start before NATS:\n${output.joinToString("\n")}")
+    /**
+     * The database migrates before NATS connects, and the shutdown begins before NATS disconnects.
+     */
+    private fun assertStartAndStopOrder(output: List<String>) {
+        val log = output.joinToString("\n")
+        val databaseMigrated = output.indexOfFirst { "Migrated 'nats_test'" in it }
+        val natsConnected = output.indexOfFirst { "NATS connection opened" in it }
+        val shutdownRequested = output.indexOfFirst { "Shutting down the microservice" in it }
+        val natsDisconnecting = output.indexOfFirst { "Disconnecting from NATS" in it }
+
+        assertTrue(databaseMigrated in 0..<natsConnected, "the database must migrate before NATS connects:\n$log")
+        assertTrue(shutdownRequested in 0..<natsDisconnecting, "the shutdown must precede the NATS disconnect:\n$log")
     }
 
     private fun assertMigrated() {
@@ -71,6 +89,15 @@ class MicroserviceEndToEndTest {
         }
     }
 
+    /**
+     * `database.yml` is created in the configured data folder and nowhere else.
+     */
+    private fun assertDataFolder() {
+        assertTrue(dataDir.resolve("database.yml").exists(), "database.yml is missing in $dataDir")
+        assertFalse(workDir.resolve("config").exists(), "the default data folder must stay unused")
+        assertFalse(workDir.resolve("database.yml").exists(), "database.yml must not be written to the working directory")
+    }
+
     private fun environment() = mapOf(
         "SURF_NATS_SERVERS" to nats.connectionUrl,
         "SURF_DATABASE_HOST" to mariadb.host,
@@ -78,17 +105,22 @@ class MicroserviceEndToEndTest {
         "SURF_DATABASE_NAME" to mariadb.databaseName,
         "SURF_DATABASE_USERNAME" to mariadb.username,
         "SURF_DATABASE_PASSWORD" to mariadb.password,
+        "SURF_MICROSERVICE_CONFIG_DIR" to dataDir.toString(),
         "SURF_MICROSERVICE_COMMAND_SOCKET" to workDir.resolve("run/microservice.sock").toString(),
     )
 
-    private fun microserviceJar(): Path = Path(checkNotNull(System.getProperty(JAR_PROPERTY)) {
-        "System property $JAR_PROPERTY is not set; run the test through Gradle"
-    })
-
     private companion object {
-        const val JAR_PROPERTY = "surf.microservice.jar"
         val STARTUP_TIMEOUT = 2.minutes
         val COMMAND_TIMEOUT = 30.seconds
         val SHUTDOWN_TIMEOUT = 1.minutes
     }
 }
+
+/**
+ * The path of the shadow jar that Gradle built for the test.
+ */
+internal fun microserviceJar(): Path = Path(checkNotNull(System.getProperty(JAR_PROPERTY)) {
+    "System property $JAR_PROPERTY is not set; run the test through Gradle"
+})
+
+private const val JAR_PROPERTY = "surf.microservice.jar"

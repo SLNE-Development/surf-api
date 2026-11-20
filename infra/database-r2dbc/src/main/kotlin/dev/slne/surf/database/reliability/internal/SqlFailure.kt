@@ -13,7 +13,8 @@ internal enum class SqlFailure {
     LOCK_TIMEOUT,
 
     /**
-     * Deadlock or serialization failure: the transaction was rolled back and can be retried as a whole.
+     * Deadlock, serialization failure or, on MariaDB under REPEATABLE READ with `innodb_snapshot_isolation`, a row
+     * changed since the snapshot: the transaction was rolled back and can be retried as a whole.
      */
     TRANSIENT_CONFLICT;
 
@@ -25,6 +26,7 @@ internal enum class SqlFailure {
         private const val MARIADB_DUPLICATE_ENTRY = 1062
         private const val MARIADB_LOCK_WAIT_TIMEOUT = 1205
         private const val MARIADB_DEADLOCK = 1213
+        private const val MARIADB_RECORD_CHANGED = 1020
 
         fun of(failure: Throwable): SqlFailure? {
             val cause = generateSequence(failure) { it.cause }
@@ -37,7 +39,8 @@ internal enum class SqlFailure {
                 cause.sqlState == PG_LOCK_NOT_AVAILABLE || cause.errorCode == MARIADB_LOCK_WAIT_TIMEOUT -> LOCK_TIMEOUT
                 cause.sqlState == PG_DEADLOCK_DETECTED ||
                         cause.sqlState == SERIALIZATION_FAILURE ||
-                        cause.errorCode == MARIADB_DEADLOCK -> TRANSIENT_CONFLICT
+                        cause.errorCode == MARIADB_DEADLOCK ||
+                        cause.errorCode == MARIADB_RECORD_CHANGED -> TRANSIENT_CONFLICT
 
                 else -> null
             }

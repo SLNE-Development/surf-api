@@ -3,28 +3,29 @@ package dev.slne.surf.api.paper.server.command
 import com.destroystokyo.paper.event.brigadier.AsyncPlayerSendCommandsEvent
 import com.destroystokyo.paper.event.player.PlayerConnectionCloseEvent
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.shynixn.mccoroutine.folia.launch
 import dev.jorel.commandapi.ExecutableCommand
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.di.Service
 import dev.slne.surf.api.paper.command.executors.CoroutineScopeProvider
 import dev.slne.surf.api.paper.command.requirement.SuspendRequirementService
+import dev.slne.surf.api.paper.coroutine.withEntity
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.CommandSendPacketBlockerListener
 import dev.slne.surf.api.paper.nms.common.NmsProvider
-import dev.slne.surf.api.paper.server.plugin
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import kotlinx.coroutines.*
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
 @Service
-class SuspendRequirementServiceImpl : SuspendRequirementService {
+class SuspendRequirementServiceImpl(
+    private val serviceScope: CoroutineScope
+) : SuspendRequirementService {
     companion object {
         private val log = logger()
 
@@ -90,11 +91,11 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
         }
 
         ready.add(sender.uniqueId)
-        sender.updateCommands()
+        sender.withEntity { it.updateCommands() }
     }
 
     fun triggerRefreshForSender(sender: Player) {
-        plugin.launch {
+        serviceScope.launch {
             refreshForSender(sender)
         }
     }
@@ -143,19 +144,25 @@ class SuspendRequirementServiceImpl : SuspendRequirementService {
             cached.invalidate(uuid)
         }
 
+        /**
+         * Evaluates the requirement for [sender] in its plugin's scope and caches the result.
+         *
+         * A failure, including a plugin whose scope cannot be resolved because it never enabled,
+         * keeps the cached value, so it cannot block the sender's command list.
+         */
         suspend fun refreshForSender(sender: Player) {
-            withContext(scope().coroutineContext.minusKey(Job)) {
-                try {
+            try {
+                withContext(scope().coroutineContext.minusKey(Job)) {
                     val isRequirementMet = requirement(sender)
                     if (sender.isConnected) { // check if this player instance is still connected
                         cached.put(sender.uniqueId, isRequirementMet)
                     }
-                } catch (e: Throwable) {
-                    if (e is CancellationException) throw e
-                    log.atWarning()
-                        .withCause(e)
-                        .log("Failed to check requirement for sender $sender! Not updating cache.")
                 }
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                log.atWarning()
+                    .withCause(e)
+                    .log("Failed to check requirement for sender $sender! Not updating cache.")
             }
         }
     }

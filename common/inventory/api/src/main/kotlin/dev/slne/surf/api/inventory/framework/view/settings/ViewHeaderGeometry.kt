@@ -47,7 +47,9 @@ data class ViewHeaderGeometry(
     val slotGlyphInset: Int = DEFAULT_SLOT_GLYPH_INSET,
     val rowTextPadding: Int = DEFAULT_ROW_TEXT_PADDING,
 ) {
-    /** Width in pixels of the full nine-column slot grid. */
+    /**
+     * Width in pixels of the full nine-column slot grid.
+     */
     val slotAreaWidth: Int get() = ViewSlotGeometry.spanWidth(ViewSlotGeometry.COLUMNS, slotSize)
 
     /**
@@ -118,16 +120,24 @@ data class ViewHeaderGeometry(
     }
 
     companion object {
-        /** Default [titleLeftShift]: the vanilla inventory starts 8 pixels left of the title origin. */
+        /**
+         * Default [titleLeftShift]: the vanilla inventory starts 8 pixels left of the title origin.
+         */
         const val DEFAULT_TITLE_LEFT_SHIFT = -8
 
-        /** Default [titlePadding]: the title may use the full width of the inventory. */
+        /**
+         * Default [titlePadding]: the title may use the full width of the inventory.
+         */
         const val DEFAULT_TITLE_PADDING = 0
 
-        /** Default [titleWidth]: the width of the vanilla chest inventory screen. */
+        /**
+         * Default [titleWidth]: the width of the vanilla chest inventory screen.
+         */
         const val DEFAULT_TITLE_WIDTH = 176
 
-        /** Default [slotOriginX]: slot column `0` starts one pixel left of the title origin. */
+        /**
+         * Default [slotOriginX]: slot column `0` starts one pixel left of the title origin.
+         */
         const val DEFAULT_SLOT_ORIGIN_X = -1
 
         /**
@@ -138,10 +148,14 @@ data class ViewHeaderGeometry(
          */
         const val DEFAULT_SLOT_GLYPH_INSET = 0
 
-        /** Default [rowTextPadding]: one pixel of breathing room inside a column span. */
+        /**
+         * Default [rowTextPadding]: one pixel of breathing room inside a column span.
+         */
         const val DEFAULT_ROW_TEXT_PADDING = 1
 
-        /** The geometry of the vanilla chest inventory. */
+        /**
+         * The geometry of the vanilla chest inventory.
+         */
         val DEFAULT = ViewHeaderGeometry()
     }
 }

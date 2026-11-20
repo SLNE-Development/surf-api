@@ -3,14 +3,14 @@
 
 package dev.slne.surf.api.paper.util
 
-import com.github.shynixn.mccoroutine.folia.SuspendingPlugin
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.regionDispatcher
 import dev.slne.surf.api.luckperms.LuckPermsAccess
 import dev.slne.surf.api.luckperms.prefix
 import dev.slne.surf.api.messages.minimessage.miniMessage
 import dev.slne.surf.api.common.util.getCallerClass
 import dev.slne.surf.api.paper.SurfApiPaper
+import dev.slne.surf.api.paper.coroutine.PaperDispatchers
+import dev.slne.surf.api.paper.extensions.server
+import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import io.papermc.paper.math.BlockPosition
 import io.papermc.paper.math.Position
 import kotlinx.coroutines.*
@@ -20,6 +20,7 @@ import kotlinx.coroutines.sync.withPermit
 import org.bukkit.*
 import org.bukkit.block.Block
 import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
 import org.spongepowered.math.vector.Vector3d
 import org.spongepowered.math.vector.Vector3i
@@ -67,39 +68,59 @@ suspend fun forEachPlayerInRegion(
     action: suspend (player: Player) -> Unit,
     concurrent: Boolean = false,
 ) = forEachPlayerInRegion(
-    plugin = getCallingSuspendingPlugin(),
+    plugin = getCallingPlugin(1),
     action = action,
     concurrent = concurrent,
 )
 
 /**
- * Executes a suspendable action on each online player, optionally concurrently.
+ * Executes a suspendable action on each online player on the thread that owns the player,
+ * optionally concurrently.
  *
+ * A player that is removed before or while its turn is skipped; the remaining players are still
+ * processed. Cancellation of the calling coroutine aborts the iteration.
+ *
+ * @param plugin The plugin whose dispatchers run the action.
  * @param action The suspendable action to perform on each player.
  * @param concurrent If `true`, actions will run concurrently; otherwise, sequentially. Default is `false`.
  */
 suspend fun forEachPlayerInRegion(
-    plugin: SuspendingPlugin,
+    plugin: Plugin,
     action: suspend (player: Player) -> Unit,
     concurrent: Boolean = false,
 ) {
+    val dispatchers = SurfPaperPluginRuntime.get().dispatchers(plugin)
+
     if (concurrent) {
         coroutineScope {
-            Bukkit.getOnlinePlayers()
-                .map {
-                    async {
-                        withContext(plugin.entityDispatcher(it)) {
-                            action(it)
-                        }
-                    }
-                }.awaitAll()
-        }
-    } else {
-        for (player in Bukkit.getOnlinePlayers()) {
-            withContext(plugin.entityDispatcher(player)) {
-                action(player)
+            for (player in server.onlinePlayers) {
+                launch {
+                    runOnPlayerThread(dispatchers, player, action)
+                }
             }
         }
+    } else {
+        for (player in server.onlinePlayers) {
+            runOnPlayerThread(dispatchers, player, action)
+        }
+    }
+}
+
+/**
+ * Runs [action] for [player] on its entity dispatcher and swallows the cancellation that the
+ * dispatcher raises for a removed entity, but not the cancellation of the calling coroutine.
+ */
+private suspend fun runOnPlayerThread(
+    dispatchers: PaperDispatchers,
+    player: Player,
+    action: suspend (player: Player) -> Unit,
+) {
+    try {
+        withContext(dispatchers.entity(player)) {
+            action(player)
+        }
+    } catch (_: CancellationException) {
+        currentCoroutineContext().ensureActive()
     }
 }
 
@@ -209,16 +230,6 @@ fun Player.isChunkVisible(world: World, chunkX: Int, chunkZ: Int): Boolean {
 }
 
 /**
- * Retrieves the calling suspending plugin.
- *
- * @return The calling [SuspendingPlugin].
- * @throws IllegalStateException If the calling plugin cannot be determined.
- */
-private fun getCallingSuspendingPlugin() = getCallingPlugin(2) as? SuspendingPlugin
-    ?: error("Cannot determine plugin")
-
-
-/**
  * Extracts the x-coordinate from a packed chunk key.
  *
  * @param key The packed chunk key from [Chunk.getChunkKey].
@@ -268,6 +279,9 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector
         chunkKeys.add(key)
     }
 
+    val dispatchers = SurfPaperPluginRuntime.get()
+        .dispatchers(JavaPlugin.getProvidingPlugin(SurfApiPaper::class.java))
+
     val snapshots = ConcurrentHashMap<Long, ChunkSnapshot>(chunkKeys.size)
     coroutineScope {
         val semaphore =
@@ -278,10 +292,7 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector
                     val chunk = world.getChunkAtAsync(getXFromChunkKey(key), getZFromChunkKey(key))
                         .await()
 
-                    withContext(
-                        JavaPlugin.getProvidingPlugin(SurfApiPaper::class.java)
-                            .regionDispatcher(world, chunk.x, chunk.z)
-                    ) {
+                    withContext(dispatchers.region(world, chunk.x, chunk.z)) {
                         val snapshot = chunk
                             .getChunkSnapshot(true, false, false, false)
                         snapshots[key] = snapshot
@@ -312,10 +323,11 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector
 suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
     val chunkX = pos.blockX() shr 4
     val chunkZ = pos.blockZ() shr 4
-    val plugin = JavaPlugin.getProvidingPlugin(SurfApiPaper::class.java)
+    val dispatchers = SurfPaperPluginRuntime.get()
+        .dispatchers(JavaPlugin.getProvidingPlugin(SurfApiPaper::class.java))
     val chunk = getChunkAtAsync(chunkX, chunkZ).await()
 
-    return withContext(plugin.regionDispatcher(this, chunkX, chunkZ)) {
+    return withContext(dispatchers.region(this, chunkX, chunkZ)) {
         chunk.getBlock(
             pos.blockX() and 15,
             pos.blockY(),

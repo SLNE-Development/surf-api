@@ -1,10 +1,9 @@
 package dev.slne.surf.database.columns.time
 
-import dev.slne.surf.database.DatabaseApi
-import dev.slne.surf.database.migration.migrate
 import dev.slne.surf.database.table.AuditableTable
 import dev.slne.surf.database.testing.OutsideUtcVendor
-import dev.slne.surf.database.testing.toDatabaseApi
+import dev.slne.surf.database.testing.TestDatabase
+import dev.slne.surf.database.testing.toTestDatabase
 import dev.slne.surf.database.testing.withJvmZone
 import kotlinx.coroutines.flow.single
 import org.jetbrains.exposed.v1.core.Column
@@ -112,9 +111,9 @@ class TimeZoneMatrixIT {
 
     @ParameterizedTest(name = "{0}, JVM {1}")
     @MethodSource("matrix")
-    fun appWrittenValuesRoundTripAndMatchTheDatabase(vendor: OutsideUtcVendor, jvmZone: String) = withApi(vendor, jvmZone) { api ->
+    fun appWrittenValuesRoundTripAndMatchTheDatabase(vendor: OutsideUtcVendor, jvmZone: String) = withTestDatabase(vendor, jvmZone) { testDb ->
         val table = InstantColumns()
-        val rows = transaction(api) {
+        val rows = transaction(testDb) {
             SchemaUtils.create(table)
             table.insert {
                 it[id] = 1
@@ -140,10 +139,10 @@ class TimeZoneMatrixIT {
             assertEquals(REGULAR, row[table.exposed])
             assertEquals(WALL_CLOCK, row[table.local])
 
-            assertEquals(libraryInstant.epochMicros(), vendor.epochMicros(api, table.tableName, "library", id))
-            assertEquals(libraryInstant.epochMicros(), vendor.epochMicros(api, table.tableName, "zoned", id))
-            assertEquals(REGULAR.epochMicros(), vendor.epochMicros(api, table.tableName, "exposed", id))
-            assertEquals(WALL_CLOCK.utcEpochMicros(), vendor.epochMicros(api, table.tableName, "local", id))
+            assertEquals(libraryInstant.epochMicros(), vendor.epochMicros(testDb, table.tableName, "library", id))
+            assertEquals(libraryInstant.epochMicros(), vendor.epochMicros(testDb, table.tableName, "zoned", id))
+            assertEquals(REGULAR.epochMicros(), vendor.epochMicros(testDb, table.tableName, "exposed", id))
+            assertEquals(WALL_CLOCK.utcEpochMicros(), vendor.epochMicros(testDb, table.tableName, "local", id))
         }
     }
 
@@ -155,9 +154,9 @@ class TimeZoneMatrixIT {
     @ParameterizedTest(name = "{0}, JVM {1}")
     @MethodSource("matrix")
     fun datetimeInTheJvmZonesDaylightSavingGapIsStoredOneHourLate(vendor: OutsideUtcVendor, jvmZone: String) =
-        withApi(vendor, jvmZone) { api ->
+        withTestDatabase(vendor, jvmZone) { testDb ->
             val table = InstantColumns()
-            val row = transaction(api) {
+            val row = transaction(testDb) {
                 SchemaUtils.create(table)
                 table.insert {
                     it[id] = 1
@@ -172,14 +171,14 @@ class TimeZoneMatrixIT {
             val expected =
                 if (jvmZone == JVM_ZONE_WEST) SKIPPED_HOUR_WALL_CLOCK.plusHours(1) else SKIPPED_HOUR_WALL_CLOCK
             assertEquals(expected, row[table.local])
-            assertEquals(expected.utcEpochMicros(), vendor.epochMicros(api, table.tableName, "local", 1))
+            assertEquals(expected.utcEpochMicros(), vendor.epochMicros(testDb, table.tableName, "local", 1))
         }
 
     @ParameterizedTest(name = "{0}, JVM {1}")
     @MethodSource("matrix")
-    fun databaseDefaultsReadAsTheCurrentTime(vendor: OutsideUtcVendor, jvmZone: String) = withApi(vendor, jvmZone) { api ->
+    fun databaseDefaultsReadAsTheCurrentTime(vendor: OutsideUtcVendor, jvmZone: String) = withTestDatabase(vendor, jvmZone) { testDb ->
         val table = DefaultColumns()
-        val row = transaction(api) {
+        val row = transaction(testDb) {
             SchemaUtils.create(table)
             table.insert { it[id] = 1 }
             table.byId(table.id, 1)
@@ -188,15 +187,15 @@ class TimeZoneMatrixIT {
         assertCurrent(row[table.library].toInstant())
         assertCurrent(row[table.exposed])
         assertCurrentUtcWallClock(row[table.local])
-        assertCurrent(vendor.epochMicrosInstant(api, table.tableName, "library", 1))
-        assertCurrent(vendor.epochMicrosInstant(api, table.tableName, "exposed", 1))
+        assertCurrent(vendor.epochMicrosInstant(testDb, table.tableName, "library", 1))
+        assertCurrent(vendor.epochMicrosInstant(testDb, table.tableName, "exposed", 1))
     }
 
     @ParameterizedTest(name = "{0}, JVM {1}")
     @MethodSource("matrix")
-    fun auditableTimestampsFollowInsertAndUpdate(vendor: OutsideUtcVendor, jvmZone: String) = withApi(vendor, jvmZone) { api ->
+    fun auditableTimestampsFollowInsertAndUpdate(vendor: OutsideUtcVendor, jvmZone: String) = withTestDatabase(vendor, jvmZone) { testDb ->
         val table = AuditedRows()
-        val inserted = transaction(api) {
+        val inserted = transaction(testDb) {
             SchemaUtils.create(table)
             table.insert {
                 it[id] = 1
@@ -204,7 +203,7 @@ class TimeZoneMatrixIT {
             }
             table.byId(table.id, 1)
         }
-        val updated = transaction(api) {
+        val updated = transaction(testDb) {
             table.update({ table.id eq 1 }) { it[note] = "updated" }
             table.byId(table.id, 1)
         }
@@ -214,16 +213,16 @@ class TimeZoneMatrixIT {
         assertCurrent(updated[table.updatedAt].toInstant())
         assertTrue(updated[table.updatedAt].toInstant() > inserted[table.updatedAt].toInstant())
         assertEquals(inserted[table.createdAt], updated[table.createdAt])
-        assertCurrent(vendor.epochMicrosInstant(api, table.tableName, "created_at", 1))
-        assertCurrent(vendor.epochMicrosInstant(api, table.tableName, "updated_at", 1))
+        assertCurrent(vendor.epochMicrosInstant(testDb, table.tableName, "created_at", 1))
+        assertCurrent(vendor.epochMicrosInstant(testDb, table.tableName, "updated_at", 1))
     }
 
     @ParameterizedTest(name = "JVM {0}")
     @ValueSource(strings = [JVM_ZONE_WEST, JVM_ZONE_EAST])
-    fun postgresTimestampWithTimeZoneKeepsTheInstant(jvmZone: String) = withApi(OutsideUtcVendor.POSTGRESQL, jvmZone) { api ->
+    fun postgresTimestampWithTimeZoneKeepsTheInstant(jvmZone: String) = withTestDatabase(OutsideUtcVendor.POSTGRESQL, jvmZone) { testDb ->
         val table = OffsetColumns()
         val written = REPEATED_HOUR.atOffset(ZoneOffset.ofHoursMinutes(5, 45))
-        val row = transaction(api) {
+        val row = transaction(testDb) {
             SchemaUtils.create(table)
             table.insert {
                 it[id] = 1
@@ -233,19 +232,19 @@ class TimeZoneMatrixIT {
         }
 
         assertEquals(REPEATED_HOUR, row[table.value].toInstant())
-        assertEquals(REPEATED_HOUR.epochMicros(), OutsideUtcVendor.POSTGRESQL.epochMicros(api, table.tableName, "value", 1))
+        assertEquals(REPEATED_HOUR.epochMicros(), OutsideUtcVendor.POSTGRESQL.epochMicros(testDb, table.tableName, "value", 1))
         assertCurrent(row[table.generated].toInstant())
     }
 
     @ParameterizedTest(name = "{0}, JVM {1}")
     @MethodSource("matrix")
-    fun sqlMigrationValuesAgreeWithEveryColumnType(vendor: OutsideUtcVendor, jvmZone: String) = withApi(vendor, jvmZone) { api ->
-        api.migrate("tz_matrix") { sql("migrations/timezone/{vendor}") }
+    fun sqlMigrationValuesAgreeWithEveryColumnType(vendor: OutsideUtcVendor, jvmZone: String) = withTestDatabase(vendor, jvmZone) { testDb ->
+        testDb.migrate("tz_matrix") { sql("migrations/timezone/{vendor}") }
         val library = SqlRowsAsLibrary()
         val exposed = SqlRowsAsExposed()
         val local = SqlRowsAsLocal()
 
-        transaction(api) {
+        transaction(testDb) {
             library.insert {
                 it[id] = 3
                 it[plain] = REPEATED_HOUR.atJvmOffset()
@@ -258,7 +257,7 @@ class TimeZoneMatrixIT {
             }
         }
 
-        transaction(api) {
+        transaction(testDb) {
             val generated = library.byId(library.id, 1)
             assertCurrent(generated[library.plain].toInstant())
             assertCurrent(generated[library.withZone].toInstant())
@@ -288,24 +287,24 @@ class TimeZoneMatrixIT {
         }
 
         for (column in listOf("plain", "with_zone")) {
-            assertCurrent(vendor.epochMicrosInstant(api, "tz_sql", column, 1))
-            assertEquals(REGULAR.epochMicros(), vendor.epochMicros(api, "tz_sql", column, 2))
-            assertEquals(REPEATED_HOUR.epochMicros(), vendor.epochMicros(api, "tz_sql", column, 3))
-            assertEquals(REGULAR.epochMicros(), vendor.epochMicros(api, "tz_sql", column, 4))
+            assertCurrent(vendor.epochMicrosInstant(testDb, "tz_sql", column, 1))
+            assertEquals(REGULAR.epochMicros(), vendor.epochMicros(testDb, "tz_sql", column, 2))
+            assertEquals(REPEATED_HOUR.epochMicros(), vendor.epochMicros(testDb, "tz_sql", column, 3))
+            assertEquals(REGULAR.epochMicros(), vendor.epochMicros(testDb, "tz_sql", column, 4))
         }
     }
 
-    private fun withApi(vendor: OutsideUtcVendor, jvmZone: String, block: suspend (DatabaseApi) -> Unit) = withJvmZone(jvmZone) {
-        val api = vendor.container().toDatabaseApi(fresh = true)
+    private fun withTestDatabase(vendor: OutsideUtcVendor, jvmZone: String, block: suspend (TestDatabase) -> Unit) = withJvmZone(jvmZone) {
+        val testDb = vendor.container().toTestDatabase(fresh = true)
         try {
-            block(api)
+            block(testDb)
         } finally {
-            api.shutdown()
+            testDb.close()
         }
     }
 
-    private suspend fun <T> transaction(api: DatabaseApi, block: suspend R2dbcTransaction.() -> T): T =
-        suspendTransaction(api.database) { block() }
+    private suspend fun <T> transaction(testDb: TestDatabase, block: suspend R2dbcTransaction.() -> T): T =
+        suspendTransaction(testDb.database) { block() }
 
     private suspend fun Table.byId(idColumn: Column<Int>, id: Int): ResultRow =
         selectAll().where { idColumn eq id }.single()

@@ -1,10 +1,8 @@
 package dev.slne.surf.database.testing
 
-import dev.slne.surf.database.DatabaseApi
 import org.testcontainers.containers.JdbcDatabaseContainer
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import kotlin.test.assertNotNull
 
 /**
  * A database vendor whose test server runs outside UTC, with direct access to stored time values.
@@ -26,11 +24,11 @@ enum class OutsideUtcVendor(
     );
 
     /**
-     * Microseconds since the epoch of [column] in row [id], read over the migration data source of [api] in a UTC
+     * Microseconds since the epoch of [column] in row [id], read over the migration data source of [testDb] in a UTC
      * session, so wall-clock types count as UTC.
      */
-    fun epochMicros(api: DatabaseApi, table: String, column: String, id: Int): Long =
-        assertNotNull(api.migrationDataSource).connection.use { connection ->
+    fun epochMicros(testDb: TestDatabase, table: String, column: String, id: Int): Long =
+        testDb.migrationDataSource.connection.use { connection ->
             connection.createStatement().use { statement ->
                 statement.execute(utcSessionSql)
                 val expression = epochMicrosExpression.format(column)
@@ -44,6 +42,6 @@ enum class OutsideUtcVendor(
     /**
      * [epochMicros] as an [Instant].
      */
-    fun epochMicrosInstant(api: DatabaseApi, table: String, column: String, id: Int): Instant =
-        Instant.EPOCH.plus(epochMicros(api, table, column, id), ChronoUnit.MICROS)
+    fun epochMicrosInstant(testDb: TestDatabase, table: String, column: String, id: Int): Instant =
+        Instant.EPOCH.plus(epochMicros(testDb, table, column, id), ChronoUnit.MICROS)
 }

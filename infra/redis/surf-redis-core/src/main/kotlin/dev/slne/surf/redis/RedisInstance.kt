@@ -13,6 +13,16 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
+/**
+ * Process-wide Redis networking: the Netty event loop, the Redisson executor, the Reactor
+ * schedulers and the platform information the Redis modules need.
+ *
+ * The single implementation is found through [ServiceLoader][java.util.ServiceLoader] and created on
+ * the first access of [instance], so a process that never uses Redis never starts a thread. Creating
+ * it starts the event loop and the schedulers; [disable] stops them for good, and an instance cannot
+ * be restarted afterwards. [disableIfStarted] is the shutdown hook for a host that may never have
+ * used Redis.
+ */
 abstract class RedisInstance {
     val eventLoopGroup: MultiThreadIoEventLoopGroup
     val redissonExecutorService: ExecutorService
@@ -53,6 +63,13 @@ abstract class RedisInstance {
         } finally {
             Thread.currentThread().contextClassLoader = contextClassLoader
         }
+
+        log.atInfo()
+            .log(
+                "Enabling Redis networking using %s transport with Redisson %s",
+                TransportInfo.instance.transportString,
+                RedisConstants.REDISSON_VERSION
+            )
     }
 
     val streamPollScheduler: Scheduler = Schedulers.newBoundedElastic(
@@ -67,13 +84,10 @@ abstract class RedisInstance {
 
     abstract val dataPath: Path
 
+    /**
+     * Opens the Redis configuration file now instead of on the first connection.
+     */
     fun load() {
-        log.atInfo()
-            .log(
-                "Enabling Redis networking using %s transport with Redisson %s",
-                TransportInfo.instance.transportString,
-                RedisConstants.REDISSON_VERSION
-            )
         RedisConfig.init()
     }
 
@@ -118,7 +132,20 @@ abstract class RedisInstance {
 
     companion object {
         private val log = logger()
-        val instance = requiredService<RedisInstance>()
+        private val holder = lazy { requiredService<RedisInstance>() }
+
+        /**
+         * The implementation, created on first access.
+         */
+        val instance: RedisInstance get() = holder.value
+
         fun get() = instance
+
+        /**
+         * Shuts the networking down if [instance] was ever accessed, and does nothing otherwise.
+         */
+        fun disableIfStarted() {
+            if (holder.isInitialized()) holder.value.disable()
+        }
     }
 }

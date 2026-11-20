@@ -1,6 +1,6 @@
 package dev.slne.surf.microservice.reliability.test
 
-import dev.slne.surf.database.DatabaseApi
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import dev.slne.surf.microservice.reliability.support.RecordingTestService
 import dev.slne.surf.microservice.reliability.support.TestDatabase
 import dev.slne.surf.microservice.reliability.support.TestVendor
@@ -16,7 +16,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * [TransactionalHandlerFixture] on a fresh database without the reliability schema and without a started NATS.
+ * [TransactionalHandlerFixture] on a fresh database, where the fixture migrates the reliability schema itself, and
+ * without a started NATS.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class TransactionalHandlerFixtureIT {
@@ -25,7 +26,7 @@ class TransactionalHandlerFixtureIT {
     @EnumSource(TestVendor::class)
     fun `events of a committed block are recorded`(vendor: TestVendor) =
         withFixture(vendor) { setup, fixture ->
-            val service = RecordingTestService(setup.api, fixture.events)
+            val service = RecordingTestService(setup.database, fixture.events)
 
             val result = fixture.runInHandler {
                 service.store(StoreRequest(entry = "first"))
@@ -43,7 +44,7 @@ class TransactionalHandlerFixtureIT {
     @EnumSource(TestVendor::class)
     fun `a failing block rolls back its statements and events`(vendor: TestVendor) =
         withFixture(vendor) { setup, fixture ->
-            val service = RecordingTestService(setup.api, fixture.events)
+            val service = RecordingTestService(setup.database, fixture.events)
 
             val thrown = assertFailsWith<IllegalStateException> {
                 fixture.runInHandler {
@@ -61,7 +62,7 @@ class TransactionalHandlerFixtureIT {
     @EnumSource(TestVendor::class)
     fun `concurrent blocks record their events independently`(vendor: TestVendor) =
         withFixture(vendor) { setup, fixture ->
-            val service = RecordingTestService(setup.api, fixture.events)
+            val service = RecordingTestService(setup.database, fixture.events)
 
             coroutineScope {
                 (1..5).map { index ->
@@ -83,7 +84,7 @@ class TransactionalHandlerFixtureIT {
     @ParameterizedTest
     @EnumSource(TestVendor::class)
     fun `clear forgets the recorded events`(vendor: TestVendor) = withFixture(vendor) { setup, fixture ->
-        val service = RecordingTestService(setup.api, fixture.events)
+        val service = RecordingTestService(setup.database, fixture.events)
         fixture.runInHandler { service.store(StoreRequest(entry = "cleared")) }
 
         fixture.clear()
@@ -91,15 +92,16 @@ class TransactionalHandlerFixtureIT {
         assertEquals(emptyList(), fixture.published)
     }
 
-    private class Setup(private val database: TestDatabase, val api: DatabaseApi) {
-        suspend fun entries(entry: String): Long = database.entryCount(api, entry)
+    private class Setup(private val testDatabase: TestDatabase, val database: R2dbcDatabase) {
+        suspend fun entries(entry: String): Long = testDatabase.entryCount(database, entry)
     }
 
     private fun withFixture(vendor: TestVendor, block: suspend (Setup, TransactionalHandlerFixture) -> Unit) =
         runBlocking {
-            val database = vendor.freshDatabase(migrateReliability = false)
-            database.open("fixture").use { api ->
-                block(Setup(database, api), TransactionalHandlerFixture.create(api, owner = OWNER))
+            val testDatabase = vendor.freshDatabase()
+            testDatabase.open("fixture").use { opened ->
+                val fixture = TransactionalHandlerFixture.create(opened.database, opened.migrationRunner, OWNER)
+                block(Setup(testDatabase, opened.database), fixture)
             }
         }
 

@@ -16,8 +16,14 @@ Events and request/response messaging moved to [surf-nats](../nats/README.md#mig
 
 ## Configuration
 
-Connection settings come from `config.yml` in the data directory and can be overridden by
-environment variables. The same four keys listed below are the ones available in `config.yml`.
+Connection settings come from `redis/config.yml` in the data folder of surf-api, or in a standalone
+application from `config.yml` in the directory passed to `StandaloneRedisInstance`. Environment variables
+override them. `config.yml` accepts the four keys listed in the table below, spelled in kebab-case
+(`client-name`, not `clientName`); a key in any other spelling is ignored.
+
+A `config.yml` of the retired `surf-redis-paper`, `surf-redis-velocity` and `surf-redis-minestom` plugins (also as
+`surf-api-redis-paper`, `surf-api-redis-velocity` and `surf-api-redis-minestom`) is copied there once, on the first
+start without `redis/config.yml`.
 
 ### Environment variables
 
@@ -29,7 +35,7 @@ Each variable overrides the matching `config.yml` key. Precedence is
 | `SURF_REDIS_HOST`        | string                | `host`           | `localhost`                         |
 | `SURF_REDIS_PORT`        | int, `0`–`65535`      | `port`           | `6379`                              |
 | `SURF_REDIS_PASSWORD`    | string (secret)       | `password`       | none (no authentication)            |
-| `SURF_REDIS_CLIENT_NAME` | string                | `clientName`     | `surf-redis-client-<random UUID>`   |
+| `SURF_REDIS_CLIENT_NAME` | string                | `client-name`    | `surf-redis-client-<random UUID>`   |
 
 ```bash
 export SURF_REDIS_HOST=redis.internal
@@ -69,7 +75,9 @@ offending variable; the raw value of `SURF_REDIS_PASSWORD` is redacted from fail
 It manages the lifecycle of all Redis-backed components and holds a share of the underlying Redisson
 client.
 
-A typical application creates **exactly one** `RedisApi` instance and shares it across the system.
+In a surf-api plugin, the plugin context provides the `RedisApi` and manages its lifecycle (see
+[Usage in a surf-api plugin](#usage-in-a-surf-api-plugin-recommended)). A standalone application creates
+**exactly one** `RedisApi` instance and shares it across the system.
 
 ### Connection sharing
 
@@ -86,67 +94,70 @@ scopes. Connecting or disconnecting one instance does not affect another:
   it has disconnected
 * a connection failure leaves nothing behind, and an instance whose components fail to initialize
   releases its share again
-* clients that are still held when the surf-redis platform plugin is disabled are shut down and their
+* clients that are still held when surf-api shuts down are shut down and their
   owners logged as a warning
 
-Lifecycle:
-1. Create the API
-2. Create sync structures and caches
-3. Freeze the API
-4. Connect to Redis
-5. Disconnect on shutdown
+A standalone application depends on `dev.slne.surf.api:surf-api-redis-standalone` and drives the
+lifecycle itself:
+
+1. Start surf-redis with `StandaloneRedisInstance`, which names the application and the directory of
+   `config.yml`
+2. Create the API
+3. Create sync structures and caches
+4. Freeze the API
+5. Connect to Redis
+6. Disconnect on shutdown, then shut surf-redis down
 
 ```kotlin
-val redisApi = RedisApi.create()
+val redis = StandaloneRedisInstance("my-app", Path.of("redis"))
+redis.create()
 
+val redisApi = RedisApi.create("my-app")
 val counter = redisApi.createSyncValue<Int>("example-namespace:counter", defaultValue = 0)
-
 redisApi.freezeAndConnect()
+
+// On shutdown:
+redisApi.disconnect()
+redis.shutdown()
 ```
 
 ---
 
-## Service Pattern (recommended)
+## Usage in a surf-api plugin (recommended)
 
-In most applications, `RedisApi` is wrapped inside a service that owns its lifecycle and exposes
-a global access point.
+surf-api bundles surf-redis into its plugin on Paper, Velocity and Minestom. To compile against it, call
+`withSurfRedis()` in the extension of the surf-api Gradle plugin, for example
+`surfPaperPluginApi { withSurfRedis() }`. It adds `dev.slne.surf.api:surf-api-redis-api:+` to `compileOnly`, which
+resolves to the newest release, like the surf-api platform dependency. Your plugin jar neither bundles nor relocates
+surf-redis.
 
-```kotlin
-class RedisService {
-
-    val redisApi = RedisApi.create()
-
-    fun connect() {
-        redisApi.freezeAndConnect()
-    }
-
-    fun disconnect() {
-        redisApi.disconnect()
-    }
-
-    companion object {
-        val instance = requiredService<RedisService>()
-        fun get() = instance
-
-        fun namespaced(suffix: String) =
-            "example-namespace:$suffix"
-    }
-}
-
-val redisApi get() = RedisService.get().redisApi
-```
-
-Sync structures are typically created **where they are used**, not inside the Redis service:
+`surf-api-redis-api` is published as a shaded jar. Redisson and Netty are relocated, so import them from the
+relocated packages:
 
 ```kotlin
-object SomeOtherService {
-    private val counter =
-        redisApi.createSyncValue<Int>(
-            RedisService.namespaced("counter"),
-            defaultValue = 0
-        )
+import dev.slne.surf.redis.libs.redisson.api.RedissonClient
+import dev.slne.surf.redis.libs.redisson.api.RedissonReactiveClient
+import dev.slne.surf.redis.shaded.io.netty.buffer.ByteBuf
+```
+
+Every plugin context holds a managed `RedisApi`; a bean injects it and creates its sync structures and
+caches while the context refreshes, in a constructor, a property initializer or a `@Bean` method.
+
+```kotlin
+@Service
+class OnlineService(redis: RedisApi) {
+    private val online = redis.createSyncSet<UUID>("online-players")
 }
 ```
+
+surf-api freezes and connects the instance right after the context refreshed, before `onLoad`, and
+disconnects it when the context closes. A plugin never calls `freeze()`, `connect()` or
+`disconnect()` on it, and creating a structure after the freeze throws `IllegalStateException`.
+`RedissonClient` and `RedissonReactiveClient` are injectable too; their calls fail with
+`IllegalStateException` while Redis is not connected. A plugin that injects none of them never starts
+the Redis networking.
+
+Outside surf-api's Spring contexts, follow the standalone lifecycle in [RedisApi](#redisapi).
 
 ---
 
@@ -169,7 +180,7 @@ Replicated single value.
 ```kotlin
 val onlineCount =
     redisApi.createSyncValue(
-        RedisService.namespaced("online-count"),
+        "example:online-count",
         defaultValue = 0
     )
 
@@ -190,7 +201,7 @@ Replicated ordered list.
 ```kotlin
 val players =
     redisApi.createSyncList<String>(
-        RedisService.namespaced("players")
+        "example:players"
     )
 
 players += "Alice"
@@ -204,7 +215,7 @@ Replicated set.
 ```kotlin
 val onlinePlayers =
     redisApi.createSyncSet<String>(
-        RedisService.namespaced("online-players")
+        "example:online-players"
     )
 
 onlinePlayers += "Alice"
@@ -218,7 +229,7 @@ Replicated key-value map.
 ```kotlin
 val playerScores =
     redisApi.createSyncMap<UUID, Int>(
-        RedisService.namespaced("scores")
+        "example:scores"
     )
 
 playerScores[playerId] = 42
@@ -232,6 +243,16 @@ resynchronization, defaults, and reloads. Values go directly through the codec i
 binary representation and are never converted through JSON.
 
 ```kotlin
+import dev.slne.surf.redis.codec.RedisCodec
+import dev.slne.surf.redis.codec.readString
+import dev.slne.surf.redis.codec.readUuid
+import dev.slne.surf.redis.codec.readVarInt
+import dev.slne.surf.redis.codec.writeString
+import dev.slne.surf.redis.codec.writeUuid
+import dev.slne.surf.redis.codec.writeVarInt
+import dev.slne.surf.redis.shaded.io.netty.buffer.ByteBuf
+import java.util.UUID
+
 data class PlayerState(val name: String, val score: Int)
 
 object PlayerStateCodec : RedisCodec<PlayerState> {
@@ -256,13 +277,13 @@ object UUIDBinaryCodec : RedisCodec<UUID> {
 }
 
 val states = redisApi.createSyncMap(
-    id = RedisService.namespaced("player-states"),
+    id = "example:player-states",
     keyCodec = UUIDBinaryCodec,
     valueCodec = PlayerStateCodec
 )
 
 val queue = redisApi.createSyncList(
-    id = RedisService.namespaced("player-queue"),
+    id = "example:player-queue",
     codec = UUIDBinaryCodec
 )
 ```
@@ -328,7 +349,7 @@ Set-based cache with optional indexes.
 
 ```kotlin
 val cache =
-    redisApi.createSimpleSetRedisCache(
+    redisApi.createSimpleSetRedisCache<Player>(
         namespace = "players",
         ttl = 30.seconds,
         idOf = { it.id.toString() }
@@ -355,7 +376,7 @@ The connection-sharing registry is checked with JetBrains Lincheck model checkin
 as part of `check`; they can also be run directly:
 
 ```bash
-./gradlew :surf-redis-core:lincheckTest
+./gradlew :surf-api-redis:surf-api-redis-core:lincheckTest
 ```
 
 ---
@@ -380,53 +401,32 @@ Not guaranteed:
 
 ### 1. Creating sync structures after `freeze()`
 
-All sync structures (`SyncValue`, `SyncList`, `SyncSet`, `SyncMap`) **must be created before**
-`RedisApi.freeze()` is called.
+All sync structures (`SyncValue`, `SyncList`, `SyncSet`, `SyncMap`) and caches **must be created
+before** `RedisApi.freeze()` is called. Creating one afterwards throws an exception.
 
-This can be subtle in larger applications, because sync structures are often created in
-*other services* that depend on Redis, not inside the Redis service itself.
+In a surf-api plugin, surf-api freezes the plugin's `RedisApi` right after the context refreshed.
+Create structures in a constructor, a property initializer or a `@Bean` method of a singleton bean,
+which all run during the refresh. A bean created later, for example a lazy bean or one obtained
+through an `ObjectProvider` after the start, cannot create structures.
 
-**Problematic setup**
-
-```kotlin
-class SomeService {
-    private val counter =
-        redisApi.createSyncValue("counter", 0) // <-- may run too late
-}
-```
-
-If `SomeService` is initialized **after** `RedisApi.freeze()` has already been called,
-sync structure creation will fail or behave incorrectly.
-
-**Correct approach**
-
-You must ensure that **all services that create sync structures are initialized
-before the Redis API is frozen**.
-
-A common pattern is:
-
-* RedisService owns the `RedisApi`
-* All dependent services are initialized *before* `connect()` is called
+In a standalone application, you freeze the API yourself. Structures are often created in services
+that depend on Redis rather than in the code that owns the `RedisApi`, so initialize every such
+service before you call `freezeAndConnect()`:
 
 ```kotlin
-class RedisService {
+class RedisSetup {
 
-    val redisApi = RedisApi.create()
+    val redisApi = RedisApi.create("my-app")
 
     fun connect() {
-        // Ensure all services that create sync structures are initialized here
-        SomeService.init()
-        AnotherService.init()
+        // Initialize every service that creates sync structures first.
+        SomeService.init(redisApi)
+        AnotherService.init(redisApi)
 
         redisApi.freezeAndConnect()
     }
 }
 ```
-
-Alternatively, ensure that service initialization order guarantees that
-all sync structures are created eagerly during startup.
-
-**Rule of thumb:**
 
 > [!TIP]
 > If a service creates sync structures, it must be initialized before `RedisApi.freeze()`.

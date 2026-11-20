@@ -14,10 +14,14 @@ import dev.slne.surf.api.paper.inventory.framework.view.onFirstRender
 import dev.slne.surf.api.paper.inventory.framework.view.surfView
 import org.bukkit.inventory.ItemType
 
-/** Sichtbarkeitsstufen für den Tripple-Button. */
+/**
+ * Sichtbarkeitsstufen für den Tripple-Button.
+ */
 enum class TestVisibility { ALL, FRIENDS, NONE }
 
-/** Schwierigkeitsgrade für den Multi-State-Button. */
+/**
+ * Schwierigkeitsgrade für den Multi-State-Button.
+ */
 enum class TestDifficulty { EASY, NORMAL, HARD, INSANE }
 
 /**

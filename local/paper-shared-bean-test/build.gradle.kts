@@ -4,7 +4,9 @@ plugins {
 
 description = "surf-api-paper-shared-bean-test"
 
-/** One artifact the test downloads: its name on disk, where it comes from and what it has to be. */
+/**
+ * One artifact the test downloads: its name on disk, where it comes from and what it has to be.
+ */
 data class PinnedDownload(
     val id: String,
     val fileName: String,
@@ -12,7 +14,9 @@ data class PinnedDownload(
     val sha256: String,
 ) {
 
-    /** The three lines describing this artifact in the test's input file. */
+    /**
+     * The three lines describing this artifact in the test's input file.
+     */
     fun asProperties() = """
         download.$id.file=$fileName
         download.$id.url=$url
@@ -20,7 +24,9 @@ data class PinnedDownload(
     """.trimIndent()
 }
 
-/** The release part of a Modrinth version name such as `v5.5.71-bukkit`. */
+/**
+ * The release part of a Modrinth version name such as `v5.5.71-bukkit`.
+ */
 fun modrinthRelease(version: String) = version.removePrefix("v").substringBefore('-')
 
 /**
@@ -108,6 +114,9 @@ dependencies {
     // The JUnit api directly, rather than `kotlin("test")`: the Kotlin plugin picks that
     // artifact's framework variant from the `test` task, and this test has a task of its own.
     paperTest.implementationConfigurationName(libs.junit.jupiter)
+
+    // Redis and NATS for the server to connect to, in Docker containers the test starts.
+    paperTest.implementationConfigurationName(libs.testcontainers.junit)
     paperTest.runtimeOnlyConfigurationName(libs.junit.platform.launcher)
 
     // For the marker strings the consuming plugin writes, so the test and the plugin cannot drift.
@@ -165,18 +174,32 @@ val writeBootTestInputs = tasks.register("writeSharedBeanBootTestInputs") {
 }
 
 /**
+ * JVM arguments for the test JVM and for the server process it starts, from the Gradle property
+ * `surf.bootTest.jvmArgs`, separated by whitespace.
+ *
+ * Both JVMs download over HTTPS and need the same settings, for example
+ * `-Djavax.net.ssl.trustStoreType=Windows-ROOT` behind a TLS-intercepting proxy.
+ */
+val bootTestJvmArgs = providers.gradleProperty("surf.bootTest.jvmArgs")
+    .map { it.trim().split(Regex("\\s+")).filter(String::isNotEmpty) }
+    .orElse(emptyList())
+
+/**
  * Starts a real Paper server with surf-api and the two test plugins, and asserts on its log.
  *
  * Not wired into `check` and not wired into `test`: run it by name.
  */
 tasks.register<Test>("paperSharedBeanBootTest") {
     group = "verification"
-    description = "Boots a real Paper server and proves a Scope.SHARED bean crosses two plugins."
+    description = "Boots a real Paper server and proves a @PluginApi bean crosses two plugins."
 
     testClassesDirs = paperTest.output.classesDirs
     classpath = paperTest.runtimeClasspath
 
     dependsOn(writeBootTestInputs)
+
+    jvmArgs(bootTestJvmArgs.get())
+    systemProperty("surf.sharedBeanBootTest.jvmArgs", bootTestJvmArgs.get().joinToString(" "))
 
     systemProperty(
         "surf.sharedBeanBootTest.inputs",

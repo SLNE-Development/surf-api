@@ -96,14 +96,18 @@ class ViewButtonStateScope<T> internal constructor(val value: T) {
     }
 }
 
-/** Immutable per-state configuration produced by [ViewButtonStateScope]. */
+/**
+ * Immutable per-state configuration produced by [ViewButtonStateScope].
+ */
 internal class ViewButtonStateSpec<T>(
     val value: T,
     val itemFactory: SlotRenderContext.() -> ItemStack,
     val enterHandler: (SlotClickContext.(from: T) -> Unit)?,
 )
 
-/** Immutable button configuration produced by [ViewButtonBuilder]. */
+/**
+ * Immutable button configuration produced by [ViewButtonBuilder].
+ */
 internal class ViewButtonSpec<T>(
     val states: List<ViewButtonStateSpec<T>>,
     val values: List<T>,

@@ -1,19 +1,18 @@
 package dev.slne.surf.api.paper.server.time
 
-import com.github.shynixn.mccoroutine.folia.globalRegionDispatcher
-import com.github.shynixn.mccoroutine.folia.ticks
-import dev.slne.surf.api.paper.server.plugin
+import dev.slne.surf.api.paper.coroutine.ticks
+import dev.slne.surf.api.paper.server.coroutine.surfDispatchers
 import dev.slne.surf.api.paper.time.TimeSkipResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.bukkit.World
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 object TimeHandler {
     const val DEFAULT_SKIP_AMOUNT: Long = 100L
-    private val skippingWorlds: MutableSet<UUID> = Collections.synchronizedSet(mutableSetOf())
+    private val skippingWorlds: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
 
-    @Suppress("DEPRECATION")
     suspend fun skipTimeSmoothly(world: World, timeToAdd: Long, duration: Long): TimeSkipResult {
         val targetTime = world.fullTime + timeToAdd
         val step = timeToAdd / duration
@@ -21,7 +20,7 @@ object TimeHandler {
 
         if (inProcess) return TimeSkipResult.ALREADY_SKIPPING
 
-        return withContext(plugin.globalRegionDispatcher) {
+        return withContext(surfDispatchers.main) {
             while (true) {
                 val newTime = world.fullTime + step
                 if (newTime >= targetTime) {

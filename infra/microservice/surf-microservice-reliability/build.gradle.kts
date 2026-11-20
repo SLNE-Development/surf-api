@@ -25,12 +25,16 @@ dependencies {
     api(projects.surfApiMicroservice.surfApiMicroserviceDatabase)
     compileOnly(shadowed(projects.surfApiDatabaseR2dbc))
     compileOnly(projects.surfApiNats.surfApiNatsApi)
+    compileOnly(libs.spring.context)
+    compileOnly(libs.spring.boot.autoconfigure)
 
     testFixturesCompileOnly(projects.surfApiCore)
     testFixturesCompileOnly(shadowed(projects.surfApiDatabaseR2dbc))
     testFixturesCompileOnly(projects.surfApiNats.surfApiNatsApi)
 
     testImplementation(shadowed(projects.surfApiDatabaseR2dbc))
+    testImplementation(libs.spring.context)
+    testImplementation(libs.spring.boot.autoconfigure)
     testImplementation(shadowed(projects.surfApiNats.surfApiNatsPlatform.surfApiNatsStandalone))
     testImplementation(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestCommon)
     testImplementation(libs.jnats)
@@ -52,13 +56,20 @@ dependencies {
  */
 val surfRuntimeGroups = setOf("dev.slne.surf.api", "dev.slne.forks.configurate")
 
+/**
+ * Libraries the surf runtime relocates into its own packages. surf-api's classes in the bundle refer
+ * to the relocated names, so the libraries have to be bundled and relocated with them.
+ */
+val relocatedSurfLibraries = setOf("net.kyori:adventure-nbt")
+
 fun Project.isInfra() = projectDir.startsWith(rootProject.file("infra"))
 
 fun testRuntimeArtifacts(surfRuntime: Boolean) = configurations.testRuntimeClasspath.map { configuration ->
     configuration.incoming.artifactView {
         componentFilter { id ->
             val isSurfRuntime = when (id) {
-                is ModuleComponentIdentifier -> id.group in surfRuntimeGroups
+                is ModuleComponentIdentifier ->
+                    id.group in surfRuntimeGroups || "${id.group}:${id.module}" in relocatedSurfLibraries
                 // surf-api's own modules, which this build resolves to its projects
                 is ProjectComponentIdentifier -> id.build.buildPath == ":" && !project(id.projectPath).isInfra()
                 else -> false

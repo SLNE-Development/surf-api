@@ -1,16 +1,13 @@
 @file:Suppress("UnstableApiUsage")
-@file:OptIn(ExperimentalVisualizerApi::class)
 
 package dev.slne.surf.api.paper.server.impl.visualizer.visualizer
 
-import com.github.shynixn.mccoroutine.folia.entityDispatcher
-import com.github.shynixn.mccoroutine.folia.launch
-import dev.slne.surf.api.common.collection.TransformingSet2ObjectSet
 import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.paper.server.coroutine.surfDispatchers
+import dev.slne.surf.api.paper.server.coroutine.surfScope
 import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImpl
-import dev.slne.surf.api.paper.server.plugin
-import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
+import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.entity.Player
@@ -28,11 +25,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
     }
 
     protected val internalViewerUuids: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
-    override val viewerUuids: MutableSet<UUID> = Collections.unmodifiableSet(internalViewerUuids)
-
-    @Deprecated("Use viewerUuids instead", replaceWith = ReplaceWith("viewerUuids"))
-    override val viewers: Set<Player> =
-        TransformingSet2ObjectSet(viewerUuids, Bukkit::getPlayer, Player::getUniqueId)
+    override val viewerUuids: Set<UUID> = Collections.unmodifiableSet(internalViewerUuids)
 
     override val uid: UUID = UUID.randomUUID()
 
@@ -186,7 +179,7 @@ abstract class AbstractSurfVisualizerImpl : SurfVisualizer {
         if (server.isOwnedByCurrentRegion(this)) {
             action()
         } else {
-            plugin.launch(plugin.entityDispatcher(this)) {
+            surfScope.launch(surfDispatchers.entity(this)) {
                 action()
             }
         }
