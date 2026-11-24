@@ -1,5 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.visualizer
 
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
@@ -33,19 +31,20 @@ interface SurfPaperVisualizerApi {
      * as it may change in future releases.
      *
      * @param location The location at which the visualizer will be anchored.
-     * @return An instance of SurfVisualizerSingleLocation representing the visualizer created for the specified location.
+     * @return An instance of SurfVisualizerSingleLocation representing the visualizer created for
+     * the specified location.
      */
     fun createSingleLocationVisualizer(location: Location): SurfVisualizerSingleLocation
 
     /**
-     * Creates a new instance of `SurfVisualizerMultipleLocations`, which supports managing visualizations
-     * across multiple locations. This visualizer allows adding, removing, and managing specific visual
-     * locations along with their associated display settings.
+     * Creates a new instance of `SurfVisualizerMultipleLocations`, which supports managing
+     * visualizations across multiple locations. This visualizer allows adding, removing, and
+     * managing specific visual locations along with their associated display settings.
      *
      * This method is part of an experimental API and may be subject to changes in future updates.
      *
-     * @return A new `SurfVisualizerMultipleLocations` instance that provides functionality to handle
-     *         multiple visualization locations.
+     * @return A new `SurfVisualizerMultipleLocations` instance that provides functionality to
+     *         handle multiple visualization locations.
      */
     fun createMultiLocationVisualizer(world: World): SurfVisualizerMultipleLocations
 
@@ -60,11 +59,12 @@ interface SurfPaperVisualizerApi {
     /**
      * Retrieves a `SurfVisualizer` instance by its unique identifier.
      *
-     * This function searches for and returns a `SurfVisualizer` object associated with the provided UUID.
-     * If no visualizer is found with the given identifier, the function returns `null`.
+     * This function searches for and returns a `SurfVisualizer` object associated with the provided
+     * UUID. If no visualizer is found with the given identifier, the function returns `null`.
      *
      * @param uid The unique identifier of the visualizer to be retrieved.
-     * @return The `SurfVisualizer` instance associated with the provided UUID, or `null` if no match is found.
+     * @return The `SurfVisualizer` instance associated with the provided UUID, or `null` if no
+     * match is found.
      */
     fun getByUid(uid: UUID): SurfVisualizer?
 
@@ -73,10 +73,11 @@ interface SurfPaperVisualizerApi {
      */
     companion object {
         /**
-         * The [SurfPaperVisualizerApi] bean of surf-api's root Spring context, resolved on first use.
+         * The [SurfPaperVisualizerApi] bean of surf-api's root Spring context, resolved on first
+         * use.
          *
-         * @throws org.springframework.beans.factory.NoSuchBeanDefinitionException if the root context
-         * provides no such bean
+         * @throws org.springframework.beans.factory.NoSuchBeanDefinitionException if the root
+         * context provides no such bean
          */
         @InternalSurfApi
         val instance by surfBean<SurfPaperVisualizerApi>()
@@ -84,12 +85,15 @@ interface SurfPaperVisualizerApi {
 }
 
 /**
- * Retrieves a `SurfVisualizer` instance of the specified type `T` corresponding to the given unique identifier (UID).
- * If the visualizer with the provided UID exists and is of type `T`, it will be returned; otherwise, `null` will be returned.
+ * Retrieves a `SurfVisualizer` instance of the specified type `T` corresponding to the given unique
+ * identifier (UID). If the visualizer with the provided UID exists and is of type `T`, it will be
+ * returned; otherwise, `null` will be returned.
  *
  * @param uid The unique identifier of the visualizer to retrieve.
- * @return The visualizer instance of type `T` matching the given UID, or `null` if no matching instance is found.
+ * @return The visualizer instance of type `T` matching the given UID, or `null` if no matching
+ * instance is found.
  */
 @ExperimentalVisualizerApi
-inline fun <reified T : SurfVisualizer> SurfPaperVisualizerApi.getByUid(uid: UUID) =
-    getByUid(uid) as? T
+inline fun <reified T : SurfVisualizer> SurfPaperVisualizerApi.getByUid(uid: UUID): T? {
+    return getByUid(uid) as? T
+}

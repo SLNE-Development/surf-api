@@ -1,17 +1,18 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.icon
 
-import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.inventory.framework.view.icon.ViewIconColor
 import dev.slne.surf.api.inventory.framework.view.icon.ViewIconType
+import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.minestom.builder.ItemDsl
 import dev.slne.surf.api.minestom.builder.buildItem
+import net.minestom.server.item.ItemStack
 import net.minestom.server.item.Material
 
 fun viewIcon(
     icon: ViewIconType,
     color: ViewIconColor,
-    init: ItemDsl.() -> Unit = {}
-) = ViewIcon(icon, color).build(init)
+    init: ItemDsl.() -> Unit = {},
+): ItemStack = ViewIcon(icon, color).build(init)
 
 class ViewIcon(
     val icon: ViewIconType,
@@ -21,9 +22,11 @@ class ViewIcon(
         get() = "surf_menu_icon_${color.configName}_${icon.configName}"
 
     @Suppress("UnstableApiUsage")
-    fun build(init: ItemDsl.() -> Unit) = buildItem(Material.PAPER) {
-        init()
+    fun build(init: ItemDsl.() -> Unit): ItemStack {
+        return buildItem(Material.PAPER) {
+            init()
 
-        itemModel(key("nexo", itemModel))
+            itemModel(key("nexo", itemModel))
+        }
     }
 }

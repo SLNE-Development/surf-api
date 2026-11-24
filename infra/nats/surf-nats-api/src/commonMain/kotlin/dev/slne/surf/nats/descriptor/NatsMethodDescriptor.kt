@@ -7,8 +7,8 @@ import kotlinx.serialization.KSerializer
 /**
  * Describes one rpc of a generated service interface.
  *
- * Only generated code creates instances. The values are resolved from the `.proto` options of the rpc and its
- * service at generation time.
+ * Only generated code creates instances. The values are resolved from the `.proto` options of the
+ * rpc and its service at generation time.
  */
 public class NatsMethodDescriptor<Req : Any, Res> @NatsGeneratedApi constructor(
     /**
@@ -26,8 +26,8 @@ public class NatsMethodDescriptor<Req : Any, Res> @NatsGeneratedApi constructor(
      */
     public val persistent: Boolean,
     /**
-     * The caller-side timeout in seconds, or `null` for the default of 5 seconds for core methods and 60 seconds for
-     * persistent methods.
+     * The caller-side timeout in seconds, or `null` for the default of 5 seconds for core methods
+     * and 60 seconds for persistent methods.
      */
     public val callTimeoutSeconds: Int?,
     /**
@@ -44,7 +44,8 @@ public class NatsMethodDescriptor<Req : Any, Res> @NatsGeneratedApi constructor(
      */
     public val requestSerializer: KSerializer<Req>,
     /**
-     * The serializer of the response message, `null` exactly when [resultKind] is [NatsResultKind.UNIT].
+     * The serializer of the response message, `null` exactly when [resultKind] is
+     * [NatsResultKind.UNIT].
      */
     public val responseSerializer: KSerializer<*>?,
 )

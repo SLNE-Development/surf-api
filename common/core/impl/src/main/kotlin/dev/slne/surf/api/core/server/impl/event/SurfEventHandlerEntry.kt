@@ -1,8 +1,8 @@
 package dev.slne.surf.api.core.server.impl.event
 
-import dev.slne.surf.api.event.SurfEventPriority
 import dev.slne.surf.api.core.server.impl.event.invoker.SurfAsyncEventInvoker
 import dev.slne.surf.api.core.server.impl.event.invoker.SurfSyncEventInvoker
+import dev.slne.surf.api.event.SurfEventPriority
 
 sealed interface SurfEventHandlerEntry {
     val priority: SurfEventPriority

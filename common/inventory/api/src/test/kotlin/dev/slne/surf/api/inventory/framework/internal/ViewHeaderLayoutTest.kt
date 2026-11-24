@@ -54,7 +54,7 @@ class ViewHeaderLayoutTest {
         val text = "Shop"
         assertEquals(
             DefaultFontWidths.textWidth(text) + text.length,
-            DefaultFontWidths.textWidth(text, bold = true)
+            DefaultFontWidths.textWidth(text, bold = true),
         )
     }
 
@@ -71,6 +71,7 @@ class ViewHeaderLayoutTest {
         for (title in titles) {
             var expected = 0
             var index = 0
+
             while (index < title.length) {
                 val codePoint = title.codePointAt(index)
                 expected += DefaultFontWidths.charWidth(codePoint)
@@ -90,8 +91,12 @@ class ViewHeaderLayoutTest {
 
         for (title in titles) {
             val width = DefaultFontWidths.textWidth(title)
-            val shift =
-                TextAlignmentMath.centerAlignedShift(width, leftShift, padding, containerWidth)
+            val shift = TextAlignmentMath.centerAlignedShift(
+                width,
+                leftShift,
+                padding,
+                containerWidth,
+            )
 
             // Doubled to compare half-pixel centres in integer math.
             val textCentre = (2 * shift) + width
@@ -99,7 +104,7 @@ class ViewHeaderLayoutTest {
 
             assertTrue(
                 (textCentre - containerCentre) in -2..2,
-                "'$title' is off centre by ${(textCentre - containerCentre) / 2.0}px"
+                "'$title' is off centre by ${(textCentre - containerCentre) / 2.0}px",
             )
         }
     }
@@ -116,7 +121,7 @@ class ViewHeaderLayoutTest {
                 width,
                 leftShift,
                 padding,
-                containerWidth
+                containerWidth,
             ) + width
         }
 
@@ -127,7 +132,10 @@ class ViewHeaderLayoutTest {
     fun `a component is measured across its whole tree`() {
         val component = Component.text("Guthaben: ").append(Component.text("1.250"))
 
-        assertEquals(DefaultFontWidths.textWidth("Guthaben: 1.250"), DefaultFontWidths.componentWidth(component))
+        assertEquals(
+            DefaultFontWidths.textWidth("Guthaben: 1.250"),
+            DefaultFontWidths.componentWidth(component),
+        )
     }
 
     @Test
@@ -137,7 +145,7 @@ class ViewHeaderLayoutTest {
 
         assertEquals(
             DefaultFontWidths.componentWidth(plain),
-            DefaultFontWidths.componentWidth(coloured)
+            DefaultFontWidths.componentWidth(coloured),
         )
     }
 
@@ -162,8 +170,14 @@ class ViewHeaderLayoutTest {
         val withFallback = Component.translatable("surf.menu.title", "Shop")
         val withoutFallback = Component.translatable("shop")
 
-        assertEquals(DefaultFontWidths.textWidth("Shop"), DefaultFontWidths.componentWidth(withFallback))
-        assertEquals(DefaultFontWidths.textWidth("shop"), DefaultFontWidths.componentWidth(withoutFallback))
+        assertEquals(
+            DefaultFontWidths.textWidth("Shop"),
+            DefaultFontWidths.componentWidth(withFallback),
+        )
+        assertEquals(
+            DefaultFontWidths.textWidth("shop"),
+            DefaultFontWidths.componentWidth(withoutFallback),
+        )
     }
 
     /**
@@ -172,9 +186,11 @@ class ViewHeaderLayoutTest {
     private val shiftAmounts: Map<Char, Int> = buildMap {
         for (exponent in 0..9) {
             val amount = 1 shl exponent
+
             for (signed in intArrayOf(amount, -amount)) {
                 val glyph = ShiftGlyphs.renderShift(signed)
                 check(glyph.length == 1) { "expected a single glyph for $signed, got '$glyph'" }
+
                 put(glyph[0], signed)
             }
         }
@@ -182,7 +198,8 @@ class ViewHeaderLayoutTest {
 
     /**
      * Independently measures how far a laid-out component advances the cursor: shift glyphs
-     * contribute their own amount, every other code point the advance of the font it is measured in.
+     * contribute their own amount, every other code point the advance of the font it is measured
+     * in.
      */
     private fun advanceOf(component: Component, charSize: Int, bold: Boolean = false): Int {
         val effectiveBold = when (component.decoration(TextDecoration.BOLD)) {
@@ -195,6 +212,7 @@ class ViewHeaderLayoutTest {
         var advance = 0
         val text = (component as? TextComponent)?.content() ?: ""
         var index = 0
+
         while (index < text.length) {
             val codePoint = text.codePointAt(index)
             val shift = if (Character.charCount(codePoint) == 1) {
@@ -240,7 +258,7 @@ class ViewHeaderLayoutTest {
             assertEquals(
                 advanceOf(laidOut.component, charSize = 9),
                 laidOut.width,
-                "reported width of '" + plain(component) + "'"
+                "reported width of '" + plain(component) + "'",
             )
         }
     }
@@ -261,7 +279,7 @@ class ViewHeaderLayoutTest {
         assertEquals(laidOut.width, advanceOf(laidOut.component, charSize = 9))
         assertTrue(
             ' ' !in (laidOut.component as TextComponent).content(),
-            "the space was emitted verbatim: '${(laidOut.component as TextComponent).content()}'"
+            "the space was emitted verbatim: '${(laidOut.component as TextComponent).content()}'",
         )
     }
 
@@ -312,8 +330,9 @@ class ViewHeaderLayoutTest {
         for (child in component.children()) append(plain(child))
     }
 
-    private fun fallbackOf(component: Component) =
-        (component as? TranslatableComponent)?.let { it.fallback() ?: it.key() } ?: ""
+    private fun fallbackOf(component: Component) = (component as? TranslatableComponent)?.let {
+        it.fallback() ?: it.key()
+    } ?: ""
 
     @Test
     fun `column shifts follow the slot pitch`() {
@@ -331,7 +350,7 @@ class ViewHeaderLayoutTest {
         // text. Doubled to compare half-pixel centres in integer math.
         val inventoryCentre = (2 * -8) + 176
         val gridCentre = (2 * ViewSlotGeometry.columnShift(0, -1)) +
-                ViewSlotGeometry.spanWidth(ViewSlotGeometry.COLUMNS)
+            ViewSlotGeometry.spanWidth(ViewSlotGeometry.COLUMNS)
 
         assertEquals(inventoryCentre, gridCentre)
     }
@@ -352,9 +371,9 @@ class ViewHeaderLayoutTest {
                 slot,
                 ViewSlotGeometry.slotOf(
                     ViewSlotGeometry.columnOf(slot),
-                    ViewSlotGeometry.rowOf(slot)
+                    ViewSlotGeometry.rowOf(slot),
                 ),
-                "round-trip of slot $slot"
+                "round-trip of slot $slot",
             )
         }
     }
@@ -373,7 +392,10 @@ class ViewHeaderLayoutTest {
             val shift = TextAlignmentMath.centerAlignedShift(width, spanShift, 0, spanWidth)
 
             assertTrue(shift >= spanShift, "'$title' starts left of the span")
-            assertTrue(shift + width <= spanShift + spanWidth + 1, "'$title' ends right of the span")
+            assertTrue(
+                shift + width <= spanShift + spanWidth + 1,
+                "'$title' ends right of the span",
+            )
         }
     }
 }

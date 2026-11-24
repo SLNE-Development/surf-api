@@ -12,19 +12,24 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * Checks the defaults that `DatabaseConnector` applies to a database and how its dialect maps to a [DatabaseType].
- * Nothing here connects to a database.
+ * Checks the defaults that `DatabaseConnector` applies to a database and how its dialect maps to a
+ * [DatabaseType]. Nothing here connects to a database.
  */
 class DatabaseConnectorTest {
 
     @Test
     fun transactionsDefaultToReadCommitted() = withOfflineDatabase { database ->
-        assertEquals(IsolationLevel.READ_COMMITTED, database.transactionManager.defaultIsolationLevel)
+        assertEquals(
+            IsolationLevel.READ_COMMITTED,
+            database.transactionManager.defaultIsolationLevel,
+        )
     }
 
     @Test
     fun customizerCanOverrideTheIsolationLevel() {
-        val level = withOfflineDatabase(customize = { defaultR2dbcIsolationLevel = IsolationLevel.SERIALIZABLE }) { database ->
+        val level = withOfflineDatabase(
+            customize = { defaultR2dbcIsolationLevel = IsolationLevel.SERIALIZABLE },
+        ) { database ->
             database.transactionManager.defaultIsolationLevel
         }
 
@@ -43,7 +48,10 @@ class DatabaseConnectorTest {
     @Test
     fun databaseTypeIsDerivedFromTheDialect() {
         assertEquals(DatabaseType.MARIADB, withOfflineDatabase { it.databaseType })
-        assertEquals(DatabaseType.POSTGRESQL, withOfflineDatabase(dialect = PostgreSQLDialect()) { it.databaseType })
+        assertEquals(
+            DatabaseType.POSTGRESQL,
+            withOfflineDatabase(dialect = PostgreSQLDialect()) { it.databaseType },
+        )
     }
 
     @Test

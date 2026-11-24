@@ -35,7 +35,12 @@ class LocalDateTimeSerializerTest {
 
     @Test
     fun `absent date or time is a missing field`() {
-        assertMissingField("surf.types.v1.LocalDateTime", "date", "time") { decodeHex(LocalDateTimeSerializer, "") }
+        assertMissingField("surf.types.v1.LocalDateTime", "date", "time") {
+            decodeHex(
+                LocalDateTimeSerializer,
+                "",
+            )
+        }
         assertMissingField("surf.types.v1.LocalDateTime", "time") {
             decodeHex(LocalDateTimeSerializer, "0a0708ea0f100b1803")
         }

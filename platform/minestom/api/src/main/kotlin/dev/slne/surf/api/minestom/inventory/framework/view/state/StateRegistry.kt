@@ -40,8 +40,11 @@ class StateRegistry @PublishedApi internal constructor() {
      */
     @PublishedApi
     internal fun <S> register(deferred: DeferredState<S>): Int {
-        require(resolvedStates.isEmpty()) { "Cannot register new states after resolution has begun" }
+        require(resolvedStates.isEmpty()) {
+            "Cannot register new states after resolution has begun"
+        }
         deferredStates.add(deferred)
+
         return nextIndex++
     }
 
@@ -60,6 +63,7 @@ class StateRegistry @PublishedApi internal constructor() {
     @Suppress("UNCHECKED_CAST")
     internal fun resolveStates(view: View) {
         check(!resolved) { "States have already been resolved" }
+
         resolved = true
 
         for (deferred in deferredStates) {
@@ -67,12 +71,24 @@ class StateRegistry @PublishedApi internal constructor() {
                 is DeferredState.Immutable<*> -> view.state(deferred.initialValue)
                 is DeferredState.Mutable<*> -> view.mutableState(deferred.initialValue)
                 is DeferredState.MutableInt -> view.mutableState(deferred.initialValue)
-                is DeferredState.Computed<*> -> view.computedState(deferred.computation as Function<Context, Any?>)
-                is DeferredState.ComputedSupplier<*> -> view.computedState(deferred.computation as Supplier<Any?>)
-                is DeferredState.Lazy<*> -> view.lazyState(deferred.computation as Function<Context, Any?>)
-                is DeferredState.LazySupplier<*> -> view.lazyState(deferred.computation as Supplier<Any?>)
+                is DeferredState.Computed<*> -> view.computedState(
+                    deferred.computation as Function<Context, Any?>,
+                )
+
+                is DeferredState.ComputedSupplier<*> -> view.computedState(
+                    deferred.computation as Supplier<Any?>,
+                )
+
+                is DeferredState.Lazy<*> -> view.lazyState(
+                    deferred.computation as Function<Context, Any?>,
+                )
+
+                is DeferredState.LazySupplier<*> -> view.lazyState(
+                    deferred.computation as Supplier<Any?>,
+                )
+
                 is DeferredState.Initial<*> -> if (deferred.key != null) view.initialState<Any>(
-                    deferred.key
+                    deferred.key,
                 ) else view.initialState<Any>()
             }
 

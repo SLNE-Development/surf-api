@@ -26,7 +26,10 @@ class MicroserviceCommandSocketTest {
     fun `a short configured path is used unchanged`() {
         val configured = temporaryDirectory.resolve("c.sock")
 
-        assertEquals(configured.toAbsolutePath(), MicroserviceCommandSocket.resolvePath(configured, temporaryDirectory))
+        assertEquals(
+            configured.toAbsolutePath(),
+            MicroserviceCommandSocket.resolvePath(configured, temporaryDirectory),
+        )
     }
 
     @Test
@@ -37,13 +40,23 @@ class MicroserviceCommandSocketTest {
 
         assertEquals(temporaryDirectory.toAbsolutePath(), resolved.parent)
         assertTrue(resolved.byteLength() <= MicroserviceCommandSocket.MAX_PATH_BYTES, "$resolved")
-        assertEquals(resolved, MicroserviceCommandSocket.resolvePath(deep, temporaryDirectory), "fallback must be stable")
+        assertEquals(
+            resolved,
+            MicroserviceCommandSocket.resolvePath(deep, temporaryDirectory),
+            "fallback must be stable",
+        )
     }
 
     @Test
     fun `different long paths fall back to different sockets`() {
-        val first = MicroserviceCommandSocket.resolvePath(deepPath("first.sock"), temporaryDirectory)
-        val second = MicroserviceCommandSocket.resolvePath(deepPath("second.sock"), temporaryDirectory)
+        val first = MicroserviceCommandSocket.resolvePath(
+            deepPath("first.sock"),
+            temporaryDirectory,
+        )
+        val second = MicroserviceCommandSocket.resolvePath(
+            deepPath("second.sock"),
+            temporaryDirectory,
+        )
 
         assertNotEquals(first, second)
     }
@@ -53,7 +66,11 @@ class MicroserviceCommandSocketTest {
         val base = temporaryDirectory.toAbsolutePath().toString().length + 1
         val name = "ü".repeat((MicroserviceCommandSocket.MAX_PATH_BYTES - base) / 2 + 1)
         val configured = temporaryDirectory.resolve(name)
-        assertTrue(configured.toAbsolutePath().toString().length <= MicroserviceCommandSocket.MAX_PATH_BYTES)
+        assertTrue(
+            configured.toAbsolutePath()
+                .toString()
+                .length <= MicroserviceCommandSocket.MAX_PATH_BYTES,
+        )
 
         val resolved = MicroserviceCommandSocket.resolvePath(configured, temporaryDirectory)
 
@@ -69,7 +86,10 @@ class MicroserviceCommandSocketTest {
 
     @Test
     fun `the fallback of a deep path can be bound and connected`() {
-        val resolved = MicroserviceCommandSocket.resolvePath(deepPath("microservice.sock"), temporaryDirectory)
+        val resolved = MicroserviceCommandSocket.resolvePath(
+            deepPath("microservice.sock"),
+            temporaryDirectory,
+        )
 
         try {
             ServerSocketChannel.open(StandardProtocolFamily.UNIX).use { server ->
@@ -83,8 +103,13 @@ class MicroserviceCommandSocketTest {
         }
     }
 
-    private fun deepPath(name: String): Path =
-        temporaryDirectory.resolve("a-deep-working-directory".repeat(6)).resolve("run").resolve(name)
+    private fun deepPath(name: String): Path {
+        return temporaryDirectory.resolve("a-deep-working-directory".repeat(6))
+            .resolve("run")
+            .resolve(
+                name,
+            )
+    }
 
     private fun Path.byteLength(): Int = toString().toByteArray(Charsets.UTF_8).size
 }

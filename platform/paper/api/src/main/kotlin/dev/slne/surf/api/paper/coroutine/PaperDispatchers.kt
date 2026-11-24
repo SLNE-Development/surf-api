@@ -70,7 +70,8 @@ interface PaperDispatchers {
  * the plugin to schedule for.
  */
 @InternalSurfApi
-class PaperDispatchersElement(val dispatchers: PaperDispatchers) : AbstractCoroutineContextElement(Key) {
+class PaperDispatchersElement(val dispatchers: PaperDispatchers) :
+    AbstractCoroutineContextElement(Key) {
 
     /**
      * The key of [PaperDispatchersElement].
@@ -97,9 +98,12 @@ suspend fun <T : Entity, R> T.withEntity(block: (T) -> R): R {
     }
 
     val dispatchers = currentCoroutineContext()[PaperDispatchersElement]?.dispatchers
-        ?: error("withEntity needs a coroutine of a surf plugin, such as one of its scope or its lifecycle hooks")
+        ?: error(
+            "withEntity needs a coroutine of a surf plugin, such as one of its scope or its lifecycle hooks",
+        )
 
     check(dispatchers is PluginDispatchers) { "withEntity needs surf-api's own PaperDispatchers" }
+
     return dispatchers.runOnEntity(this, block)
 }
 

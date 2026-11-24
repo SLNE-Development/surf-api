@@ -13,7 +13,7 @@ import net.kyori.adventure.chat.ChatType as AdventureChatType
 internal data class BoundChatType(
     val chatType: RegistryKey<ChatType>,
     val name: Component,
-    val targetName: Component? = null
+    val targetName: Component? = null,
 ) {
     /**
      * The chat type ID of the chat packets: the registry ID plus one.
@@ -28,10 +28,11 @@ internal data class BoundChatType(
             return registryId + 1
         }
 
-    fun withTargetName(targetName: Component) = copy(targetName = targetName)
+    fun withTargetName(targetName: Component): BoundChatType = copy(targetName = targetName)
 
-    fun adventure(): AdventureChatType.Bound =
-        AdventureChatType.chatType(chatType.key()).bind(name, targetName)
+    fun adventure(): AdventureChatType.Bound {
+        return AdventureChatType.chatType(chatType.key()).bind(name, targetName)
+    }
 
     /**
      * Applies the decoration of the chat type to [content], for audiences that do not receive chat

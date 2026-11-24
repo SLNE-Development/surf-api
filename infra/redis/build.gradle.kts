@@ -27,9 +27,11 @@ extra["shadedPackages"] = shadedPackages
 
 subprojects {
     tasks.withType<ShadowJar>().configureEach {
-        shadedPackages.forEach { (from, to) -> relocate(from, to) }
-        // Redisson's XML namespace registration names its unrelocated handler class and schemas, which the
-        // shaded jar does not contain.
+        for ((from, to) in shadedPackages) {
+            relocate(from, to)
+        }
+        // Redisson's XML namespace registration names its unrelocated handler class and schemas,
+        // which the shaded jar does not contain.
         exclude("META-INF/spring.handlers", "META-INF/spring.schemas", "META-INF/spring.tooling")
     }
 
@@ -52,6 +54,7 @@ subprojects {
                         ) {
                             val fileName = name.substringAfter("META-INF/native/")
                             val nettyIndex = fileName.indexOf("netty_")
+
                             if (nettyIndex >= 0) {
                                 val before = fileName.substring(0, nettyIndex)
                                 val after = fileName.substring(nettyIndex)
@@ -65,12 +68,14 @@ subprojects {
 
                         val newEntry = ZipEntry(newName)
                         newEntry.time = entry.time
+
                         if (entry.method == ZipEntry.STORED) {
                             newEntry.method = ZipEntry.STORED
                             newEntry.size = entry.size
                             newEntry.crc = entry.crc
                             newEntry.compressedSize = entry.compressedSize
                         }
+
                         zipOut.putNextEntry(newEntry)
                         zipIn.getInputStream(entry).use { input ->
                             input.copyTo(zipOut)
@@ -96,7 +101,8 @@ subprojects {
             }
         }
 
-        if (extensions.findByType<PublishingExtension>()?.publications?.findByName("shadow") != null) {
+        val publications = extensions.findByType<PublishingExtension>()?.publications
+        if (publications?.findByName("shadow") != null) {
             tasks.withType<AbstractPublishToMaven>().configureEach {
                 onlyIf("only the shadow publication owns these coordinates") {
                     publication.name != "pluginMaven"

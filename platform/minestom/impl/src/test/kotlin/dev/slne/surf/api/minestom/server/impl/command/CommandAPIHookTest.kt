@@ -109,6 +109,7 @@ class CommandAPIHookTest {
         val instance = env.createEmptyInstance()
         var player: Player? = null
         CommandAPI.installPlatform(platform)
+
         try {
             val connection = env.createConnection()
             player = connect(connection, instance)
@@ -131,6 +132,7 @@ class CommandAPIHookTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 }

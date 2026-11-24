@@ -13,16 +13,17 @@ import java.io.File
 /**
  * Checks whether changes to Protobuf sources are compatible with a published baseline.
  *
- * Types and services are matched by their fully qualified Protobuf names. Renaming an element or moving it to another
- * package is therefore treated as removing it.
+ * Types and services are matched by their fully qualified Protobuf names. Renaming an element or
+ * moving it to another package is therefore treated as removing it.
  *
- * Besides wire compatibility, reports Kotlin package changes, removed reservations, event configuration changes and
- * changed RPC options. Call timeouts are not compared.
+ * Besides wire compatibility, reports Kotlin package changes, removed reservations, event
+ * configuration changes and changed RPC options. Call timeouts are not compared.
  */
 object CompatibilityChecker {
 
     /**
-     * Loads the baseline and current sources against the bundled protos and [protoPathDirs], then compares them.
+     * Loads the baseline and current sources against the bundled protos and [protoPathDirs], then
+     * compares them.
      *
      * [currentDirs] without `.proto` files count as removing every baseline declaration.
      *
@@ -30,7 +31,8 @@ object CompatibilityChecker {
      * @param currentDirs directories containing the sources to check
      * @param protoPathDirs additional directories used to resolve imported Protobuf definitions
      * @return all compatibility violations and warnings
-     * @throws dev.slne.surf.nats.gradle.generator.SurfNatsGeneratorException if a schema cannot be loaded
+     * @throws dev.slne.surf.nats.gradle.generator.SurfNatsGeneratorException if a schema cannot be
+     * loaded
      */
     fun check(
         baselineDirs: List<File>,
@@ -64,8 +66,8 @@ object CompatibilityChecker {
 /**
  * Compares baseline declarations with the current declarations and collects compatibility findings.
  *
- * Findings are emitted in baseline file and declaration order. Violations and warnings are kept separately,
- * preserving their original locations and message text.
+ * Findings are emitted in baseline file and declaration order. Violations and warnings are kept
+ * separately, preserving their original locations and message text.
  *
  * @param currentFiles the current Protobuf files used to match baseline declarations
  */
@@ -73,7 +75,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     private val violations = mutableListOf<CompatibilityFinding>()
     private val warnings = mutableListOf<CompatibilityFinding>()
 
-    // The option readers only report call timeouts that do not fit an Int, and timeouts are not compared.
+    // The option readers only report call timeouts that do not fit an Int, and timeouts are not
+    // compared.
     private val ignoredProblems = Problems()
     private val rawDefaults = RawDefaults()
 
@@ -98,7 +101,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     /**
      * Compares baseline files against the indexed current declarations.
      *
-     * Checks package changes before types and services in each file, preserving the order in which findings are reported.
+     * Checks package changes before types and services in each file, preserving the order in which
+     * findings are reported.
      *
      * @param baselineFiles the baseline source files to check
      * @return the collected violations and warnings
@@ -121,6 +125,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     private fun compareKotlinPackage(file: ProtoFile) {
         val baselinePackage = file.kotlinPackage
         val names = file.types.map { it.type.toString() } + file.services.map { it.type.toString() }
+
         for (name in names) {
             val currentPackage = currentPackages[name] ?: continue
             if (currentPackage == baselinePackage) continue
@@ -142,11 +147,12 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     private fun compareType(baseline: Type) {
         val name = baseline.type.toString()
         val current = currentTypes[name]
+
         when {
             current == null -> removed(
                 baseline.location,
                 name,
-                "${kind(baseline)} $name was removed or renamed"
+                "${kind(baseline)} $name was removed or renamed",
             )
 
             baseline is MessageType && current is MessageType -> compareMessage(baseline, current)
@@ -154,13 +160,14 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             else -> changed(
                 current.location,
                 name,
-                "changed from ${kind(baseline)} to ${kind(current)}"
+                "changed from ${kind(baseline)} to ${kind(current)}",
             )
         }
     }
 
     /**
-     * Compares a message's fields, reservations, event opt-in, and generated constructor parameter order.
+     * Compares a message's fields, reservations, event opt-in, and generated constructor parameter
+     * order.
      *
      * Field and reservation violations are reported before the constructor-order warning.
      */
@@ -192,15 +199,18 @@ private class Comparison(currentFiles: List<ProtoFile>) {
         for ((fieldName, before) in baselineFields) {
             val element = "$messageName.$fieldName"
             val after = currentFields[fieldName]
+
             if (after == null) {
                 removedField(before, current, currentReservations, element)
                 continue
             }
+
             compareExistingField(baseline, current, before, after, element)
         }
 
         for ((fieldName, field) in currentFields) {
             if (fieldName in baselineFields || !isRequired(field)) continue
+
             reportNewRequiredField(messageName, fieldName, field)
         }
     }
@@ -231,36 +241,38 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             field.location,
             "$messageName.$fieldName",
             "new field '$fieldName' = ${field.tag} is required, so readers fail on messages of senders that do not " +
-                    "know it; declare it optional or optional with a [default]",
+                "know it; declare it optional or optional with a [default]",
         )
     }
 
     /**
      * Compares the normalized default values of two matching fields.
      *
-     * Reports whether a default was added, removed, or changed. Equivalent source literals do not produce findings.
+     * Reports whether a default was added, removed, or changed. Equivalent source literals do not
+     * produce findings.
      */
     private fun compareDefault(before: Field, after: Field, element: String) {
         val defaultBefore = normalizedDefault(before)
         val defaultAfter = normalizedDefault(after)
+
         when {
             defaultBefore == defaultAfter -> Unit
             defaultBefore == null -> changed(
                 after.location,
                 element,
-                "[default = ${after.default}] was added"
+                "[default = ${after.default}] was added",
             )
 
             defaultAfter == null -> changed(
                 after.location,
                 element,
-                "[default = ${before.default}] was removed"
+                "[default = ${before.default}] was removed",
             )
 
             else -> changed(
                 after.location,
                 element,
-                "[default] changed from ${before.default} to ${after.default}"
+                "[default] changed from ${before.default} to ${after.default}",
             )
         }
     }
@@ -268,8 +280,9 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     /**
      * Warns when existing Kotlin constructor parameters change their positions.
      *
-     * Parameters are ordered by field number, a oneof by its lowest case number. Adding a lower-numbered field or
-     * oneof case therefore shifts existing positional arguments even when the constructor call still compiles.
+     * Parameters are ordered by field number, a oneof by its lowest case number. Adding a
+     * lower-numbered field or oneof case therefore shifts existing positional arguments even when
+     * the constructor call still compiles.
      */
     private fun compareParameterOrder(baseline: MessageType, current: MessageType) {
         val before = parameterOrder(baseline)
@@ -279,30 +292,35 @@ private class Comparison(currentFiles: List<ProtoFile>) {
 
         val causes = shiftCauses(baseline, current, before, after)
         val location = causes.firstOrNull()?.first ?: current.location
-        val cause =
-            causes.joinToString("; ") { it.second }.ifEmpty { "the parameter order changed" }
+        val cause = causes.joinToString("; ") { it.second }.ifEmpty {
+            "the parameter order changed"
+        }
         warnings += CompatibilityFinding(
             location.withoutBase().toString(),
             current.type.toString(),
             "$cause, so positional arguments of the constructor of ${current.type.simpleName} shift: " +
-                    "${moves.joinToString(", ")}. Named arguments are unaffected; " +
-                    "new fields always get a number above the current maximum",
+                "${moves.joinToString(", ")}. Named arguments are unaffected; " +
+                "new fields always get a number above the current maximum",
         )
     }
 
     /**
-     * Describes the positions of existing constructor parameters that moved between [before] and [after].
+     * Describes the positions of existing constructor parameters that moved between [before] and
+     * [after].
      *
      * Removed parameters are excluded. The descriptions follow the baseline parameter order.
      */
     private fun movedParameters(
         before: List<OrderedParameter>,
-        after: List<OrderedParameter>
+        after: List<OrderedParameter>,
     ): List<String> {
-        val positionsAfter =
-            after.withIndex().associate { (index, parameter) -> parameter.key to index }
+        val positionsAfter = after.withIndex().associate { (index, parameter) ->
+            parameter.key to index
+        }
+
         return before.withIndex().mapNotNull { (index, parameter) ->
             val newIndex = positionsAfter[parameter.key]
+
             if (newIndex == null || newIndex == index) {
                 null
             } else {
@@ -312,10 +330,11 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     }
 
     /**
-     * Finds changes that explain shifted constructor parameters, along with their reporting locations.
+     * Finds changes that explain shifted constructor parameters, along with their reporting
+     * locations.
      *
-     * Added fields and oneof cases are considered first, followed by removed parameters. Cause order is significant
-     * because the first cause determines the warning location.
+     * Added fields and oneof cases are considered first, followed by removed parameters. Cause
+     * order is significant because the first cause determines the warning location.
      */
     private fun shiftCauses(
         baseline: MessageType,
@@ -329,6 +348,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
 
         for (parameter in after) {
             val previous = beforeByKey[parameter.key]
+
             if (previous == null) {
                 newParameterShiftCause(parameter, baselineMax)?.let { causes += it }
             } else {
@@ -337,27 +357,31 @@ private class Comparison(currentFiles: List<ProtoFile>) {
         }
 
         val keysAfter = after.mapTo(HashSet()) { it.key }
+
         for (parameter in before) {
             if (parameter.key !in keysAfter) {
                 causes += current.location to "'${parameter.protoName}' was removed"
             }
         }
+
         return causes
     }
 
     /**
-     * Explains when a newly added field or oneof is numbered below the highest baseline field number.
+     * Explains when a newly added field or oneof is numbered below the highest baseline field
+     * number.
      *
      * @return the cause and location, or `null` when the new parameter does not explain a shift
      */
     private fun newParameterShiftCause(
         parameter: OrderedParameter,
-        baselineMax: Int
+        baselineMax: Int,
     ): Pair<Location, String>? {
         if (parameter.number >= baselineMax) return null
+
         val kind = if (parameter.oneofCases != null) "new oneof" else "new field"
         return parameter.location to
-                "$kind '${parameter.protoName}' = ${parameter.number} is numbered below the baseline maximum $baselineMax"
+            "$kind '${parameter.protoName}' = ${parameter.number} is numbered below the baseline maximum $baselineMax"
     }
 
     /**
@@ -371,15 +395,17 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     ): List<Pair<Location, String>> {
         val previousCases = previous.oneofCases ?: return emptyList()
         val currentCases = current.oneofCases ?: return emptyList()
+
         val causes = mutableListOf<Pair<Location, String>>()
 
         for (case in currentCases.values) {
             if (case.name !in previousCases && case.tag < previous.number) {
                 causes += case.location to
-                        "new oneof case '${case.name}' = ${case.tag} is numbered below the lowest " +
-                        "baseline case ${previous.number} of oneof '${current.protoName}'"
+                    "new oneof case '${case.name}' = ${case.tag} is numbered below the lowest " +
+                    "baseline case ${previous.number} of oneof '${current.protoName}'"
             }
         }
+
         return causes
     }
 
@@ -388,35 +414,37 @@ private class Comparison(currentFiles: List<ProtoFile>) {
      *
      * Each oneof contributes one parameter positioned at the lowest field number of its cases.
      */
-    private fun parameterOrder(type: MessageType): List<OrderedParameter> = orderedMembers(
-        type,
-        field = { field ->
-            OrderedParameter(
-                key = "field:${field.name}",
-                protoName = field.name,
-                kotlinName = KotlinNaming.lowerCamel(field.name),
-                number = field.tag,
-                location = field.location,
-                oneofCases = null,
-            )
-        },
-        oneof = { oneOf, number ->
-            OrderedParameter(
-                key = "oneof:${oneOf.name}",
-                protoName = oneOf.name,
-                kotlinName = KotlinNaming.lowerCamel(oneOf.name),
-                number = number,
-                location = oneOf.location,
-                oneofCases = oneOf.fields.associateBy { it.name },
-            )
-        },
-    )
+    private fun parameterOrder(type: MessageType): List<OrderedParameter> {
+        return orderedMembers(
+            type,
+            field = { field ->
+                OrderedParameter(
+                    key = "field:${field.name}",
+                    protoName = field.name,
+                    kotlinName = KotlinNaming.lowerCamel(field.name),
+                    number = field.tag,
+                    location = field.location,
+                    oneofCases = null,
+                )
+            },
+            oneof = { oneOf, number ->
+                OrderedParameter(
+                    key = "oneof:${oneOf.name}",
+                    protoName = oneOf.name,
+                    kotlinName = KotlinNaming.lowerCamel(oneOf.name),
+                    number = number,
+                    location = oneOf.location,
+                    oneofCases = oneOf.fields.associateBy { it.name },
+                )
+            },
+        )
+    }
 
     /**
      * Describes a generated Kotlin constructor parameter and its position in a Protobuf message.
      *
-     * [key] distinguishes plain fields from oneofs. [oneofCases] is `null` for plain fields and contains the cases
-     * of a oneof parameter otherwise.
+     * [key] distinguishes plain fields from oneofs. [oneofCases] is `null` for plain fields and
+     * contains the cases of a oneof parameter otherwise.
      */
     private class OrderedParameter(
         val key: String,
@@ -436,7 +464,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
         name: String,
         before: List<Reserved>,
         after: List<Reserved>,
-        location: Location
+        location: Location,
     ) {
         val currentValues = after.flatMap { it.values }
         val currentRanges = currentValues
@@ -456,18 +484,19 @@ private class Comparison(currentFiles: List<ProtoFile>) {
                 is IntRange -> "${value.first} to ${value.last}".takeUnless {
                     covers(
                         currentRanges,
-                        value
+                        value,
                     )
                 }
 
                 is String -> "\"$value\"".takeUnless { value in currentNames }
                 else -> null
             }
+
             if (dropped != null) {
                 changed(
                     location,
                     name,
-                    "reserved $dropped is no longer reserved; reservations must be kept"
+                    "reserved $dropped is no longer reserved; reservations must be kept",
                 )
             }
         }
@@ -476,30 +505,39 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     /**
      * Returns whether [ranges], sorted by start, together cover all of [range].
      *
-     * Uses long arithmetic to avoid overflow when a reservation reaches the largest possible field number.
+     * Uses long arithmetic to avoid overflow when a reservation reaches the largest possible field
+     * number.
      */
     private fun covers(ranges: List<IntRange>, range: IntRange): Boolean {
         var next = range.first.toLong()
+
         for (candidate in ranges) {
             if (candidate.first > next) break
-            if (candidate.last >= next) next = candidate.last.toLong() + 1
+
+            if (candidate.last >= next) {
+                next = candidate.last.toLong() + 1
+            }
+
             if (next > range.last) return true
         }
+
         return next > range.last
     }
 
     /**
      * Reports a removed field that was required or whose number or name is not reserved.
      *
-     * Both reasons are combined into one violation when applicable. A fully reserved optional field produces no finding.
+     * Both reasons are combined into one violation when applicable. A fully reserved optional field
+     * produces no finding.
      */
     private fun removedField(
         field: Field,
         current: MessageType,
         reserved: List<Reserved>,
-        element: String
+        element: String,
     ) {
         val reasons = mutableListOf<String>()
+
         if (isRequired(field)) {
             reasons += "it was required, so readers of the baseline fail on messages without it"
         }
@@ -508,15 +546,18 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             field.tag.toString().takeUnless { reserved.any { it.matchesTag(field.tag) } },
             "\"${field.name}\"".takeUnless { reserved.any { it.matchesName(field.name) } },
         )
+
         if (missingReservations.isNotEmpty()) {
-            reasons += "add ${missingReservations.joinToString(" ") { "`reserved $it;`" }} to ${current.name}"
+            val reservations = missingReservations.joinToString(" ") { "`reserved $it;`" }
+            reasons += "add $reservations to ${current.name}"
         }
 
         if (reasons.isEmpty()) return
+
         removed(
             field.location,
             element,
-            "field '${field.name}' = ${field.tag} was removed: ${reasons.joinToString("; ")}"
+            "field '${field.name}' = ${field.tag} was removed: ${reasons.joinToString("; ")}",
         )
     }
 
@@ -528,12 +569,14 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     private fun compareEvent(baseline: MessageType, current: MessageType) {
         val wasEvent = SurfProtoOptions.isEvent(baseline.options)
         if (!wasEvent) return
+
         val isEvent = SurfProtoOptions.isEvent(current.options)
+
         if (!isEvent) {
             changed(
                 current.location,
                 baseline.type.toString(),
-                "is no longer an event: (surf.nats.v1.event) = true was removed"
+                "is no longer an event: (surf.nats.v1.event) = true was removed",
             )
         }
     }
@@ -550,10 +593,11 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             name,
             "zero value",
             baseline.constant(0)?.name,
-            current.constant(0)?.name
+            current.constant(0)?.name,
         )
 
         val currentReservations = Reserved.fromElements(current.toElement().reserveds)
+
         for (before in baseline.constants) {
             compareEnumConstant(name, before, current, currentReservations)
         }
@@ -563,7 +607,8 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     }
 
     /**
-     * Compares an enum constant with its current namesake, or verifies reservations after its removal.
+     * Compares an enum constant with its current namesake, or verifies reservations after its
+     * removal.
      */
     private fun compareEnumConstant(
         enumName: String,
@@ -573,38 +618,45 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     ) {
         val element = "$enumName.${before.name}"
         val after = current.constant(before.name)
+
         if (after != null) {
             diff(after.location, element, "number", before.tag, after.tag)
+
             return
         }
 
         val reservedTag = reservations.any { it.matchesTag(before.tag) }
         val reservedName = reservations.any { it.matchesName(before.name) }
+
         if (!reservedTag || !reservedName) {
             removed(
                 before.location,
                 element,
                 "enum value ${before.name} = ${before.tag} was removed without reserving its number and name " +
-                        "(add `reserved ${before.tag};` `reserved \"${before.name}\";` to ${current.name})",
+                    "(add `reserved ${before.tag};` `reserved \"${before.name}\";` to ${current.name})",
             )
         }
     }
 
     /**
-     * Matches RPCs by name and compares their request and response types, persistence, and recipients.
+     * Matches RPCs by name and compares their request and response types, persistence, and
+     * recipients.
      *
      * Removed services and RPCs are violations. Call timeout changes are intentionally ignored.
      */
     private fun compareService(baseline: Service) {
         val name = baseline.type.toString()
         val current = currentServices[name]
+
         if (current == null) {
             removed(baseline.location, name, "service $name was removed or renamed")
+
             return
         }
 
         val serviceBefore = SurfProtoOptions.service(baseline, ignoredProblems)
         val serviceAfter = SurfProtoOptions.service(current, ignoredProblems)
+
         for (before in baseline.rpcs) {
             compareRpc(name, before, current, serviceBefore, serviceAfter)
         }
@@ -624,8 +676,10 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     ) {
         val element = "$serviceName.${before.name}"
         val after = current.rpc(before.name)
+
         if (after == null) {
             removed(before.location, element, "rpc ${before.name} was removed or renamed")
+
             return
         }
 
@@ -634,14 +688,14 @@ private class Comparison(currentFiles: List<ProtoFile>) {
             element,
             "request type",
             before.requestType.toString(),
-            after.requestType.toString()
+            after.requestType.toString(),
         )
         diff(
             after.location,
             element,
             "response type",
             before.responseType.toString(),
-            after.responseType.toString()
+            after.responseType.toString(),
         )
 
         val methodBefore = SurfProtoOptions.method(before, serviceBefore, ignoredProblems)
@@ -658,32 +712,37 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     /**
      * Returns the effective label of [field], including map and oneof membership.
      */
-    private fun label(type: MessageType, field: Field): String = when {
-        field.type?.isMap == true -> "map"
-        field.isRepeated -> "repeated"
-        field.isOneOf -> {
-            val oneofName =
-                type.oneOfs.firstOrNull { oneOf -> oneOf.fields.any { it.name == field.name } }?.name
-            "oneof ${oneofName ?: "?"}"
-        }
+    private fun label(type: MessageType, field: Field): String {
+        return when {
+            field.type?.isMap == true -> "map"
+            field.isRepeated -> "repeated"
+            field.isOneOf -> {
+                val oneofName = type.oneOfs.firstOrNull { oneOf ->
+                    oneOf.fields.any { it.name == field.name }
+                }
+                    ?.name
+                "oneof ${oneofName ?: "?"}"
+            }
 
-        field.label == Field.Label.REQUIRED -> "required"
-        else -> "optional"
+            field.label == Field.Label.REQUIRED -> "required"
+            else -> "optional"
+        }
     }
 
     /**
      * Normalizes the default of [field] to the value the generator emits.
      *
-     * Equivalent literals then compare equal, such as `0x10` and `16`, or differently escaped forms of the same string
-     * or byte sequence.
+     * Equivalent literals then compare equal, such as `0x10` and `16`, or differently escaped forms
+     * of the same string or byte sequence.
      *
-     * Scalars compare as their generated Kotlin source text, which also decides how a default compares across a type
-     * change: `int32` and `string` defaults `5` are equal, `int32` and `int64` ones (`5`, `5L`) are not. Changing that
-     * changes the reported findings.
+     * Scalars compare as their generated Kotlin source text, which also decides how a default
+     * compares across a type change: `int32` and `string` defaults `5` are equal, `int32` and
+     * `int64` ones (`5`, `5L`) are not. Changing that changes the reported findings.
      */
     private fun normalizedDefault(field: Field): String? {
         val literal = field.default ?: return null
         val type = field.type ?: return literal
+
         return when {
             type == ProtoType.STRING -> rawDefaults.bytes(field.location, literal)?.decodeToString()
                 ?: literal
@@ -699,10 +758,12 @@ private class Comparison(currentFiles: List<ProtoFile>) {
     /**
      * Formats a Protobuf type for field compatibility messages, including map key and value types.
      */
-    private fun typeName(type: ProtoType?): String = when {
-        type == null -> "?"
-        type.isMap -> "map<${type.keyType}, ${type.valueType}>"
-        else -> type.toString()
+    private fun typeName(type: ProtoType?): String {
+        return when {
+            type == null -> "?"
+            type.isMap -> "map<${type.keyType}, ${type.valueType}>"
+            else -> type.toString()
+        }
     }
 
     /**
@@ -717,6 +778,7 @@ private class Comparison(currentFiles: List<ProtoFile>) {
      */
     private fun <T> diff(location: Location, element: String, what: String, before: T, after: T) {
         if (before == after) return
+
         changed(location, element, "$what changed from $before to $after")
     }
 

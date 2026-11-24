@@ -15,8 +15,10 @@ internal class EnumListStep(
         if (direction == Direction.OUTGOING) return null
 
         val list = message.get(field)
+
         for (index in 0 until list.size) {
             val value = list.get(index)!!
+
             if (!enum.isKnown(value)) {
                 list.set(index, enum.zero)
             }

@@ -1,10 +1,6 @@
 package dev.slne.surf.microservice.runtime
 
-import dev.slne.probe.microservice.CONTEXT_EXIT_CODE
-import dev.slne.probe.microservice.EXIT_CONTEXT
-import dev.slne.probe.microservice.FAIL_ENABLE
-import dev.slne.probe.microservice.LATE_DISABLE_LOG
-import dev.slne.probe.microservice.LATE_LOG_MESSAGE
+import dev.slne.probe.microservice.*
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -12,7 +8,8 @@ import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Starts a Spring Boot microservice through [runMicroservice] in a separate JVM, because a microservice owns its JVM.
+ * Starts a Spring Boot microservice through [runMicroservice] in a separate JVM, because a
+ * microservice owns its JVM.
  */
 class RunMicroserviceTest {
 
@@ -56,7 +53,11 @@ class RunMicroserviceTest {
 
     @Test
     fun `logging stays usable until a context closed by another thread finished its disable hooks`() {
-        val result = ProbeJvm.run(probe, listOf(EXIT_CONTEXT, LATE_DISABLE_LOG), timeout = 30.seconds)
+        val result = ProbeJvm.run(
+            probe,
+            listOf(EXIT_CONTEXT, LATE_DISABLE_LOG),
+            timeout = 30.seconds,
+        )
 
         assertEquals(CONTEXT_EXIT_CODE, result.exitCode, result.errorOutput + result.output)
         assertContains(result.output, LATE_LOG_MESSAGE)

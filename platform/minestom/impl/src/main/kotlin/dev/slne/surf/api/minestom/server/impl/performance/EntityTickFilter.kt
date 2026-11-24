@@ -21,6 +21,7 @@ object EntityTickFilter {
     fun shouldTick(entity: Entity): Boolean {
         val disabled = disabledTypeIds
         val id = entity.entityType.id()
+
         return id < 0 || id >= disabled.size || !disabled[id]
     }
 
@@ -29,7 +30,11 @@ object EntityTickFilter {
      */
     fun configure(types: Collection<EntityType>) {
         val disabled = BooleanArray((types.maxOfOrNull(EntityType::id) ?: -1) + 1)
-        types.forEach { type -> disabled[type.id()] = true }
+
+        for (type in types) {
+            disabled[type.id()] = true
+        }
+
         disabledTypeIds = disabled
     }
 }

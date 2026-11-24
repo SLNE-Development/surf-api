@@ -67,7 +67,10 @@ class HandlerLimitsTest {
     @Test
     fun `long share above its configured total fails validation`() {
         assertFailsWith<IllegalStateException> {
-            val config = NatsConfig(maxConcurrentHandlers = IntOr.Default(4), maxConcurrentLongHandlers = IntOr.Default(5))
+            val config = NatsConfig(
+                maxConcurrentHandlers = IntOr.Default(4),
+                maxConcurrentLongHandlers = IntOr.Default(5),
+            )
             config.validate()
         }
         assertFailsWith<IllegalStateException> {

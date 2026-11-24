@@ -20,8 +20,9 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Starts the shadow jar of this module as the Docker image would and drives it through its console.
  *
- * Covers the Spring Boot microservice stack end to end: the main class of the jar, the database and NATS
- * auto-configurations, SQL and code migrations, the `health` command, the data folder and the shutdown order.
+ * Covers the Spring Boot microservice stack end to end: the main class of the jar, the database and
+ * NATS auto-configurations, SQL and code migrations, the `health` command, the data folder and the
+ * shutdown order.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MicroserviceEndToEndTest {
@@ -32,7 +33,8 @@ class MicroserviceEndToEndTest {
     lateinit var workDir: Path
 
     /**
-     * The data folder given through `SURF_MICROSERVICE_CONFIG_DIR`; not the default `config` of the working directory.
+     * The data folder given through `SURF_MICROSERVICE_CONFIG_DIR`; not the default `config` of the
+     * working directory.
      */
     private val dataDir get() = workDir.resolve("data")
 
@@ -44,7 +46,11 @@ class MicroserviceEndToEndTest {
 
     @Test
     fun `starts with NATS and the database, migrates, reports healthy and stops in order`() {
-        val exitCode = MicroserviceProcess.start(microserviceJar(), workDir, environment()).use { microservice ->
+        val exitCode = MicroserviceProcess.start(
+            microserviceJar(),
+            workDir,
+            environment(),
+        ).use { microservice ->
             microservice.awaitLine("Started NatsTestMicroservice", STARTUP_TIMEOUT)
 
             microservice.send("health")
@@ -71,20 +77,34 @@ class MicroserviceEndToEndTest {
         val shutdownRequested = output.indexOfFirst { "Shutting down the microservice" in it }
         val natsDisconnecting = output.indexOfFirst { "Disconnecting from NATS" in it }
 
-        assertTrue(databaseMigrated in 0..<natsConnected, "the database must migrate before NATS connects:\n$log")
-        assertTrue(shutdownRequested in 0..<natsDisconnecting, "the shutdown must precede the NATS disconnect:\n$log")
+        assertTrue(
+            databaseMigrated in 0..<natsConnected,
+            "the database must migrate before NATS connects:\n$log",
+        )
+        assertTrue(
+            shutdownRequested in 0..<natsDisconnecting,
+            "the shutdown must precede the NATS disconnect:\n$log",
+        )
     }
 
     private fun assertMigrated() {
-        DriverManager.getConnection(mariadb.jdbcUrl, mariadb.username, mariadb.password).use { connection ->
+        DriverManager.getConnection(
+            mariadb.jdbcUrl,
+            mariadb.username,
+            mariadb.password,
+        ).use { connection ->
             val versions = connection.createStatement().executeQuery(
                 "SELECT version FROM flyway_schema_history_nats_test WHERE success = 1 AND version IS NOT NULL " +
-                    "ORDER BY installed_rank"
-            ).use { rows -> generateSequence { if (rows.next()) rows.getString(1) else null }.toList() }
+                    "ORDER BY installed_rank",
+            ).use { rows ->
+                generateSequence { if (rows.next()) rows.getString(1) else null }.toList()
+            }
             assertEquals(listOf("1", "2"), versions)
 
             val messages = connection.createStatement().executeQuery("SELECT message FROM chat_log")
-                .use { rows -> generateSequence { if (rows.next()) rows.getString(1) else null }.toList() }
+                .use { rows ->
+                    generateSequence { if (rows.next()) rows.getString(1) else null }.toList()
+                }
             assertEquals(listOf(SeedChatLogMigration.SEED_MESSAGE), messages)
         }
     }
@@ -95,7 +115,10 @@ class MicroserviceEndToEndTest {
     private fun assertDataFolder() {
         assertTrue(dataDir.resolve("database.yml").exists(), "database.yml is missing in $dataDir")
         assertFalse(workDir.resolve("config").exists(), "the default data folder must stay unused")
-        assertFalse(workDir.resolve("database.yml").exists(), "database.yml must not be written to the working directory")
+        assertFalse(
+            workDir.resolve("database.yml").exists(),
+            "database.yml must not be written to the working directory",
+        )
     }
 
     private fun environment() = mapOf(
@@ -119,8 +142,12 @@ class MicroserviceEndToEndTest {
 /**
  * The path of the shadow jar that Gradle built for the test.
  */
-internal fun microserviceJar(): Path = Path(checkNotNull(System.getProperty(JAR_PROPERTY)) {
-    "System property $JAR_PROPERTY is not set; run the test through Gradle"
-})
+internal fun microserviceJar(): Path {
+    return Path(
+        checkNotNull(System.getProperty(JAR_PROPERTY)) {
+            "System property $JAR_PROPERTY is not set; run the test through Gradle"
+        },
+    )
+}
 
 private const val JAR_PROPERTY = "surf.microservice.jar"

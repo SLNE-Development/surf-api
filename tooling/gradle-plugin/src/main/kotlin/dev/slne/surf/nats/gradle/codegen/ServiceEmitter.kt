@@ -17,21 +17,23 @@ import dev.slne.surf.nats.protocol.ProtocolDescriptors
 import dev.slne.surf.nats.protocol.ResultKindOption
 
 /**
- * Generates Kotlin service interfaces and their NATS descriptors from the services of a [ResolvedContract].
+ * Generates Kotlin service interfaces and their NATS descriptors from the services of a
+ * [ResolvedContract].
  *
- * Reports nothing: [ContractResolver] has checked every service before emission starts. The runtime relies on this
- * generated shape:
+ * Reports nothing: [ContractResolver] has checked every service before emission starts. The runtime
+ * relies on this generated shape:
  *
  * - The service is an interface with the configured visibility and one `abstract suspend fun` per
  *   [ResolvedContract.methods] entry, in rpc declaration order.
- * - A function takes a single `request` parameter, or none when the rpc request is `google.protobuf.Empty`.
- * - The return type follows the resolved result kind: none for `UNIT`, the response type for `VALUE`, and
- *   `Answer<Response>` for `ANSWER`.
- * - The companion has `@JvmField val NATS_DESCRIPTOR: NatsServiceDescriptor<Service>` with the proto service name
- *   and one `NatsMethodDescriptor` per function. A method descriptor carries the proto and Kotlin names, the
- *   resolved `persistent`, `callTimeoutSeconds` (`null` for the default), `recipients` and `resultKind`, and the
- *   request and response serializers. The response serializer is `null` when the response is
+ * - A function takes a single `request` parameter, or none when the rpc request is
  *   `google.protobuf.Empty`.
+ * - The return type follows the resolved result kind: none for `UNIT`, the response type for
+ *   `VALUE`, and `Answer<Response>` for `ANSWER`.
+ * - The companion has `@JvmField val NATS_DESCRIPTOR: NatsServiceDescriptor<Service>` with the
+ *   proto service name and one `NatsMethodDescriptor` per function. A method descriptor carries the
+ *   proto and Kotlin names, the resolved `persistent`, `callTimeoutSeconds` (`null` for the
+ *   default), `recipients` and `resultKind`, and the request and response serializers. The response
+ *   serializer is `null` when the response is `google.protobuf.Empty`.
  */
 internal class ServiceEmitter(
     private val types: KotlinTypeResolver,
@@ -54,7 +56,13 @@ internal class ServiceEmitter(
         return TypeSpec.interfaceBuilder(className)
             .applyVisibility(visibility)
             .addFunctions(methods.map { it.function })
-            .addType(createDescriptorCompanion(className, service.type.toString(), methods.map { it.descriptor }))
+            .addType(
+                createDescriptorCompanion(
+                    className,
+                    service.type.toString(),
+                    methods.map { it.descriptor },
+                ),
+            )
             .build()
     }
 
@@ -91,7 +99,13 @@ internal class ServiceEmitter(
         val resultType = resultType(resultKind, method.response.kotlinType)
 
         return Method(
-            function = methodFunction(method.rpc, method.kotlinName, method.request, resultKind, resultType),
+            function = methodFunction(
+                method.rpc,
+                method.kotlinName,
+                method.request,
+                resultKind,
+                resultType,
+            ),
             descriptor = methodDescriptor(
                 rpcName = method.rpc.name,
                 kotlinName = method.kotlinName,
@@ -109,10 +123,12 @@ internal class ServiceEmitter(
     private fun resultType(
         kind: ResultKindOption,
         responseType: ClassName,
-    ): TypeName = when (kind) {
-        ResultKindOption.UNIT -> UNIT
-        ResultKindOption.VALUE -> responseType
-        ResultKindOption.ANSWER -> KotlinTypes.ANSWER.parameterizedBy(responseType)
+    ): TypeName {
+        return when (kind) {
+            ResultKindOption.UNIT -> UNIT
+            ResultKindOption.VALUE -> responseType
+            ResultKindOption.ANSWER -> KotlinTypes.ANSWER.parameterizedBy(responseType)
+        }
     }
 
     private fun methodFunction(
@@ -139,7 +155,8 @@ internal class ServiceEmitter(
     /**
      * Generates the `NatsMethodDescriptor` expression of an rpc.
      *
-     * The response serializer is `null` for a `google.protobuf.Empty` response, which has no payload.
+     * The response serializer is `null` for a `google.protobuf.Empty` response, which has no
+     * payload.
      */
     private fun methodDescriptor(
         rpcName: String,
@@ -169,7 +186,7 @@ internal class ServiceEmitter(
                 add(
                     "resultKind = %T.%L,\n",
                     KotlinTypes.NATS_RESULT_KIND,
-                    natsResultKind(resultKind)
+                    natsResultKind(resultKind),
                 )
                 add("requestSerializer = %L,\n", request.serializer)
                 add("responseSerializer = %L,\n", responseSerializer)
@@ -184,6 +201,7 @@ internal class ServiceEmitter(
     private fun CodeBlock.Builder.addListArgument(name: String, items: List<CodeBlock>) {
         if (items.isEmpty()) {
             add("%L = emptyList(),\n", name)
+
             return
         }
 
@@ -192,10 +210,12 @@ internal class ServiceEmitter(
         add("),\n")
     }
 
-    private fun natsResultKind(kind: ResultKindOption): String = when (kind) {
-        ResultKindOption.UNIT -> "UNIT"
-        ResultKindOption.VALUE -> "VALUE"
-        ResultKindOption.ANSWER -> "ANSWER"
+    private fun natsResultKind(kind: ResultKindOption): String {
+        return when (kind) {
+            ResultKindOption.UNIT -> "UNIT"
+            ResultKindOption.VALUE -> "VALUE"
+            ResultKindOption.ANSWER -> "ANSWER"
+        }
     }
 
     private data class Method(val function: FunSpec, val descriptor: CodeBlock)

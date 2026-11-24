@@ -8,14 +8,16 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Why an attempt to handle a persistent delivery ended.
  *
- * A [permanent] cause repeats on every delivery of the same message, so a fire with a permanent cause is
- * dead-lettered without further redeliveries. [DeliveryDisposition.of] maps a cause to the action on the delivery.
+ * A [permanent] cause repeats on every delivery of the same message, so a fire with a permanent
+ * cause is dead-lettered without further redeliveries. [DeliveryDisposition.of] maps a cause to the
+ * action on the delivery.
  */
 @InternalNatsApi
 internal enum class DeliveryCause(val permanent: Boolean = false) {
 
     /**
-     * The attempt produced a reply its flow accepts: an empty reply for a fire, any reply for a persistent RPC.
+     * The attempt produced a reply its flow accepts: an empty reply for a fire, any reply for a
+     * persistent RPC.
      */
     COMPLETED,
 
@@ -72,26 +74,32 @@ internal enum class DeliveryCause(val permanent: Boolean = false) {
     companion object {
 
         /**
-         * Classifies a failure to load the request payload. Only a missing object is permanent. Any other load
-         * failure, such as a slow read, may not repeat.
+         * Classifies a failure to load the request payload. Only a missing object is permanent. Any
+         * other load failure, such as a slow read, may not repeat.
          */
-        fun ofLoadFailure(e: Throwable): DeliveryCause = if (isObjectNotFound(e)) PAYLOAD_MISSING else FAILED
+        fun ofLoadFailure(e: Throwable): DeliveryCause {
+            return if (isObjectNotFound(e)) PAYLOAD_MISSING else FAILED
+        }
 
         /**
-         * Classifies a failure to decode the request. A cancellation says nothing about the request and stays
-         * transient.
+         * Classifies a failure to decode the request. A cancellation says nothing about the request
+         * and stays transient.
          */
-        fun ofDecodeFailure(e: Throwable): DeliveryCause = if (e is CancellationException) FAILED else UNDECODABLE
+        fun ofDecodeFailure(e: Throwable): DeliveryCause {
+            return if (e is CancellationException) FAILED else UNDECODABLE
+        }
 
         /**
-         * Classifies a failure of the handler or interceptor, or of a call whose failing step is unknown.
+         * Classifies a failure of the handler or interceptor, or of a call whose failing step is
+         * unknown.
          */
-        fun ofFailure(e: Throwable): DeliveryCause =
-            if (e is NatsRedeliveryException) REDELIVERY_REQUESTED else FAILED
+        fun ofFailure(e: Throwable): DeliveryCause {
+            return if (e is NatsRedeliveryException) REDELIVERY_REQUESTED else FAILED
+        }
 
         private fun isObjectNotFound(e: Throwable): Boolean {
             return e is IllegalArgumentException &&
-                    e.message?.startsWith("[${NatsJetStreamClientError.OsObjectNotFound.id()}]") == true
+                e.message?.startsWith("[${NatsJetStreamClientError.OsObjectNotFound.id()}]") == true
         }
     }
 }

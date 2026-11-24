@@ -59,10 +59,13 @@ class DialogBaseBuilder {
         if (bodies.isEmpty()) return
 
         val body = body
+
         if (body == null) {
             this.body = bodies
+
             return
         }
+
         body.addAll(bodies)
     }
 
@@ -71,10 +74,13 @@ class DialogBaseBuilder {
         if (built.isEmpty()) return
 
         val inputs = this.inputs
+
         if (inputs == null) {
             this.inputs = built
+
             return
         }
+
         inputs.addAll(built)
     }
 
@@ -89,10 +95,11 @@ class DialogBaseBuilder {
             pause,
             afterAction,
             body ?: emptyList(),
-            inputs ?: emptyList()
+            inputs ?: emptyList(),
         )
     }
 }
 
-fun dialogBase(block: DialogBaseBuilder.() -> Unit): DialogMetadata =
-    DialogBaseBuilder().apply(block).build()
+fun dialogBase(block: DialogBaseBuilder.() -> Unit): DialogMetadata {
+    return DialogBaseBuilder().apply(block).build()
+}

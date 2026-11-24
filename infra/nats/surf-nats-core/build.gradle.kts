@@ -19,8 +19,8 @@ plugins {
     id("com.github.gmazzo.buildconfig") version "6.1.2"
 }
 
-// Kotlin/JS test harness: protobuf-es and protoc-gen-surf-nats code for src/jsTest/proto and NATS servers (Docker) for
-// the e2e tests.
+// Kotlin/JS test harness: protobuf-es and protoc-gen-surf-nats code for src/jsTest/proto and NATS
+// servers (Docker) for the e2e tests.
 
 val bufVersion = "1.75.0"
 val natsTestImage = "nats:2-alpine"
@@ -31,23 +31,29 @@ val fixtureEsProtoDir = layout.buildDirectory.dir("es-proto")
 val generatedEsDir = layout.buildDirectory.dir("generated/es")
 val fixtureImageFile = layout.buildDirectory.file("generated/protoc-image/fixtures.binpb")
 val protocGoldenDir = layout.projectDirectory.dir("src/jsTest/protoc/golden")
-// Below the root build/js, so Node resolves the npm dependencies of the staged package from the root node_modules
+// Below the root build/js, so Node resolves the npm dependencies of the staged package from the
+// root node_modules
 val protocPluginDir = rootProject.layout.buildDirectory.dir("js/surf-nats-protoc")
 
 val prepareProtocPlugin = tasks.register<Sync>("prepareProtocPlugin") {
-    description = "Stages the npm distribution, whose bin protoc-gen-surf-nats generateFixtureEs runs."
+    description =
+        "Stages the npm distribution, whose bin protoc-gen-surf-nats generateFixtureEs runs."
     into(protocPluginDir)
     from(tasks.named("jsNodeProductionLibraryDistribution"))
 }
 val natsTestUrlFile = layout.buildDirectory.file("nats-js-test/url.txt")
 val natsTestAuthFile = layout.buildDirectory.file("nats-js-test/auth.properties")
 val natsTestContainersFile = layout.buildDirectory.file("nats-js-test/containers.txt")
-val jsE2eEnabled = providers.gradleProperty("surf.nats.js.e2e").map(String::toBoolean).getOrElse(true)
+val jsE2eEnabled = providers.gradleProperty("surf.nats.js.e2e").map(String::toBoolean).getOrElse(
+    true,
+)
 
 val prepareFixtureEsProtos = tasks.register<Sync>("prepareFixtureEsProtos") {
     description = "Stages the protos and the buf configuration for generateFixtureEs."
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
-    val protocGenEs = rootNodeModules.map { it.file("@bufbuild/protoc-gen-es/bin/protoc-gen-es").asFile }
+    val protocGenEs = rootNodeModules.map {
+        it.file("@bufbuild/protoc-gen-es/bin/protoc-gen-es").asFile
+    }
     val protocGenSurfNats = protocPluginDir.map { it.file("bin/protoc-gen-surf-nats.mjs").asFile }
 
     into(fixtureEsProtoDir)
@@ -69,9 +75,15 @@ val prepareFixtureEsProtos = tasks.register<Sync>("prepareFixtureEsProtos") {
 }
 
 val generateFixtureEs = tasks.register<Exec>("generateFixtureEs") {
-    description = "Generates protobuf-es code and surf-nats clients (target=js+dts) for the JS test protos into " +
-            "build/generated/es."
-    dependsOn(prepareFixtureEsProtos, prepareProtocPlugin, ":kotlinNpmInstall", tasks.named("kotlinNodeJsSetup"))
+    description =
+        "Generates protobuf-es code and surf-nats clients (target=js+dts) for the JS test protos into " +
+        "build/generated/es."
+    dependsOn(
+        prepareFixtureEsProtos,
+        prepareProtocPlugin,
+        ":kotlinNpmInstall",
+        tasks.named("kotlinNodeJsSetup"),
+    )
 
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
     val buf = rootNodeModules.map { it.file("@bufbuild/buf/bin/buf").asFile.absolutePath }
@@ -89,9 +101,11 @@ val generateFixtureEs = tasks.register<Exec>("generateFixtureEs") {
     }
 }
 
-// FileDescriptorSet of the JS test protos (with source info) for the in-process tests of protoc-gen-surf-nats.
+// FileDescriptorSet of the JS test protos (with source info) for the in-process tests of
+// protoc-gen-surf-nats.
 val buildFixtureImage = tasks.register<Exec>("buildFixtureImage") {
-    description = "Builds the JS test protos into a FileDescriptorSet for the protoc-gen-surf-nats tests."
+    description =
+        "Builds the JS test protos into a FileDescriptorSet for the protoc-gen-surf-nats tests."
     dependsOn(prepareFixtureEsProtos, ":kotlinNpmInstall", tasks.named("kotlinNodeJsSetup"))
 
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
@@ -105,14 +119,23 @@ val buildFixtureImage = tasks.register<Exec>("buildFixtureImage") {
     doFirst {
         imageFile.get().asFile.parentFile.mkdirs()
         executable = nodeExecutable.get()
-        setArgs(listOf(buf.get(), "build", "--as-file-descriptor-set", "-o", imageFile.get().asFile.absolutePath))
+        setArgs(
+            listOf(
+                buf.get(),
+                "build",
+                "--as-file-descriptor-set",
+                "-o",
+                imageFile.get().asFile.absolutePath,
+            ),
+        )
     }
 }
 
-// NATS servers (Docker, random host ports) for the Kotlin/JS e2e tests: one with JetStream, one with token and one with
-// user/password authentication. jsNodeTest starts them when it executes; the build service removes them when the build
-// finishes. Containers of one build directory are listed in containersFile, so concurrent builds never remove each
-// other's, and start() removes the leftovers of an aborted run in this build directory.
+// NATS servers (Docker, random host ports) for the Kotlin/JS e2e tests: one with JetStream, one
+// with token and one with user/password authentication. jsNodeTest starts them when it executes;
+// the build service removes them when the build finishes. Containers of one build directory are
+// listed in containersFile, so concurrent builds never remove each other's, and start() removes the
+// leftovers of an aborted run in this build directory.
 abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoCloseable {
     interface Parameters : BuildServiceParameters {
         val image: Property<String>
@@ -130,6 +153,7 @@ abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoC
     @Synchronized
     fun start() {
         if (started) return
+
         started = true
         removeListedContainers()
 
@@ -146,7 +170,12 @@ abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoC
         val executor = Executors.newFixedThreadPool(servers.size)
         val (url, tokenUrl, userUrl) = try {
             servers
-                .map { (name, arguments) -> CompletableFuture.supplyAsync({ run(name, arguments) }, executor) }
+                .map { (name, arguments) ->
+                    CompletableFuture.supplyAsync(
+                        { run(name, arguments) },
+                        executor,
+                    )
+                }
                 .map(CompletableFuture<String>::join)
         } finally {
             executor.shutdown()
@@ -155,18 +184,36 @@ abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoC
         write(parameters.urlFile, url)
         write(
             parameters.authFile,
-            listOf("tokenUrl=$tokenUrl", "token=$TOKEN", "userUrl=$userUrl", "user=$USER", "pass=$PASS")
+            listOf(
+                "tokenUrl=$tokenUrl",
+                "token=$TOKEN",
+                "userUrl=$userUrl",
+                "user=$USER",
+                "pass=$PASS",
+            )
                 .joinToString(System.lineSeparator()),
         )
     }
 
-    override fun close() = removeListedContainers()
+    override fun close() {
+        removeListedContainers()
+    }
 
     private fun run(name: String, arguments: List<String>): String {
         execOperations.exec {
             commandLine(
-                listOf("docker", "run", "-d", "--rm", "--name", name, "-p", "127.0.0.1::4222", parameters.image.get()) +
-                        arguments
+                listOf(
+                    "docker",
+                    "run",
+                    "-d",
+                    "--rm",
+                    "--name",
+                    name,
+                    "-p",
+                    "127.0.0.1::4222",
+                    parameters.image.get(),
+                ) +
+                    arguments,
             )
             standardOutput = ByteArrayOutputStream()
         }
@@ -176,14 +223,19 @@ abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoC
             commandLine("docker", "port", name, "4222/tcp")
             standardOutput = port
         }
-        val url = "nats://" + port.toString().lineSequence().map(String::trim).first(String::isNotEmpty)
+        val url = "nats://" + port.toString()
+            .lineSequence()
+            .map(String::trim)
+            .first(String::isNotEmpty)
         logger.lifecycle("NATS test server $name listens on $url")
+
         return url
     }
 
     private fun removeListedContainers() {
         val file = parameters.containersFile.get().asFile
         if (!file.isFile) return
+
         for (name in file.readLines().map(String::trim).filter(String::isNotEmpty)) {
             execOperations.exec {
                 commandLine("docker", "rm", "-f", name)
@@ -192,6 +244,7 @@ abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoC
                 errorOutput = ByteArrayOutputStream()
             }
         }
+
         file.delete()
     }
 
@@ -210,7 +263,10 @@ abstract class NatsTestServers : BuildService<NatsTestServers.Parameters>, AutoC
     }
 }
 
-val natsTestServers = gradle.sharedServices.registerIfAbsent("surfNatsJsTestServers", NatsTestServers::class.java) {
+val natsTestServers = gradle.sharedServices.registerIfAbsent(
+    "surfNatsJsTestServers",
+    NatsTestServers::class.java,
+) {
     parameters {
         image = natsTestImage
         containerPrefix = natsTestContainerPrefix
@@ -240,20 +296,21 @@ kotlin {
         generateTypeScriptDefinitions()
         outputModuleName = "@slne/surf-api-nats"
 
-        // The hand-written facade (src/jsMain/resources) adds protobuf-es generics on top of the Kotlin exports;
-        // bin/protoc-gen-surf-nats.mjs runs the protoc plugin.
+        // The hand-written facade (src/jsMain/resources) adds protobuf-es generics on top of the
+        // Kotlin exports; bin/protoc-gen-surf-nats.mjs runs the protoc plugin.
         compilations["main"].packageJson {
             customField("main", "index.mjs")
             customField("types", "index.d.mts")
             customField("bin", mapOf("protoc-gen-surf-nats" to "bin/protoc-gen-surf-nats.mjs"))
             customField(
-                "exports", mapOf(
+                "exports",
+                mapOf(
                     "." to mapOf(
                         "types" to "./index.d.mts",
                         "import" to "./index.mjs",
                         "default" to "./index.mjs",
-                    )
-                )
+                    ),
+                ),
             )
         }
     }
@@ -291,7 +348,12 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation(npm("@bufbuild/protobuf", libs.versions.bufbuild.protobuf.get()))
                 implementation(devNpm("@bufbuild/buf", bufVersion))
-                implementation(devNpm("@bufbuild/protoc-gen-es", libs.versions.bufbuild.protobuf.get()))
+                implementation(
+                    devNpm(
+                        "@bufbuild/protoc-gen-es",
+                        libs.versions.bufbuild.protobuf.get(),
+                    ),
+                )
             }
         }
         jvmMain.dependencies {
@@ -340,7 +402,10 @@ tasks.named<KotlinJsTest>("jsNodeTest") {
     inputs.dir(protocGoldenDir)
     environment("SURF_NATS_PROTOC_IMAGE", fixtureImageFile.get().asFile.absolutePath)
     environment("SURF_NATS_PROTOC_GOLDEN_DIR", protocGoldenDir.asFile.absolutePath)
-    if (providers.gradleProperty("surf.nats.protoc.updateGolden").map(String::toBoolean).getOrElse(false)) {
+    if (providers.gradleProperty("surf.nats.protoc.updateGolden").map(String::toBoolean).getOrElse(
+            false,
+        )
+    ) {
         environment("SURF_NATS_PROTOC_UPDATE_GOLDEN", "true")
     }
 
@@ -355,7 +420,8 @@ tasks.named<KotlinJsTest>("jsNodeTest") {
     }
 }
 
-// npm distribution and generated fixtures, staged next to the consumer sample and the interop script.
+// npm distribution and generated fixtures, staged next to the consumer sample and the interop
+// script.
 val jsDistributionWithFixtures = copySpec {
     from(tasks.named("jsNodeProductionLibraryDistribution")) {
         into("node_modules/@slne/surf-api-nats")
@@ -371,14 +437,16 @@ val jsDistributionWithFixtures = copySpec {
 val jsConsumerCheckDir = layout.buildDirectory.dir("js-consumer-check")
 
 val prepareJsConsumerCheck = tasks.register<Sync>("prepareJsConsumerCheck") {
-    description = "Stages the TypeScript consumer sample with the npm distribution and the generated fixtures."
+    description =
+        "Stages the TypeScript consumer sample with the npm distribution and the generated fixtures."
     into(jsConsumerCheckDir)
     from("src/jsTest/consumer")
     with(jsDistributionWithFixtures)
     from(rootNodeModules.map { it.dir("@bufbuild/protobuf") }) {
         into("node_modules/@bufbuild/protobuf")
     }
-    // The target=ts golden files of protoc-gen-surf-nats, next to the protobuf-es declarations they import
+    // The target=ts golden files of protoc-gen-surf-nats, next to the protobuf-es declarations they
+    // import
     into("golden-ts") {
         from(protocGoldenDir.dir("ts"))
         from("src/jsTest/resources/gen")
@@ -394,9 +462,11 @@ val checkJsConsumerTypes = tasks.register<Exec>("checkJsConsumerTypes") {
     dependsOn(prepareJsConsumerCheck, ":kotlinNpmInstall")
 
     val nodeExecutable = project.the<NodeJsEnvSpec>().executable
-    // The TypeScript version KGP pins for the package; the hoisted root copy may be an older transitive one.
+    // The TypeScript version KGP pins for the package; the hoisted root copy may be an older
+    // transitive one.
     val jsPackages = rootProject.layout.buildDirectory.dir("js/packages/@slne")
-    // Falls back to the root copy while npm is not installed yet: the task graph reads this before kotlinNpmInstall runs.
+    // Falls back to the root copy while npm is not installed yet: the task graph reads this before
+    // kotlinNpmInstall runs.
     val tsc = jsPackages.map { packages ->
         val rootTsc = rootNodeModules.get().file("typescript/bin/tsc").asFile
         val packageTsc = listOf("surf-api-nats-test", "surf-api-nats")
@@ -404,7 +474,8 @@ val checkJsConsumerTypes = tasks.register<Exec>("checkJsConsumerTypes") {
             .firstOrNull { it.isFile }
         (packageTsc ?: rootTsc).absolutePath
     }
-    // Written after a successful run: UP-TO-DATE until the staged consumer or the TypeScript version changes
+    // Written after a successful run: UP-TO-DATE until the staged consumer or the TypeScript
+    // version changes
     val passedMarker = layout.buildDirectory.file("js-consumer-check.passed")
 
     inputs.dir(jsConsumerCheckDir)
@@ -421,16 +492,18 @@ val checkJsConsumerTypes = tasks.register<Exec>("checkJsConsumerTypes") {
     }
 }
 
-// JVM <-> JS interop: JsInteropTest (jvmTest classes, tag js-interop) runs src/jsTest/interop/interop.mjs on Node against
-// the npm distribution and the generated fixtures. jvmTest excludes the tag and stays independent of the JS build.
-// The staging directory lies below the root build/js: Node resolves the npm dependencies of the distribution by walking
-// up from the importing file to the root node_modules. Node is the binary KGP downloads (NodeJsEnvSpec);
+// JVM <-> JS interop: JsInteropTest (jvmTest classes, tag js-interop) runs
+// src/jsTest/interop/interop.mjs on Node against the npm distribution and the generated fixtures.
+// jvmTest excludes the tag and stays independent of the JS build. The staging directory lies below
+// the root build/js: Node resolves the npm dependencies of the distribution by walking up from the
+// importing file to the root node_modules. Node is the binary KGP downloads (NodeJsEnvSpec);
 // -Psurf.nats.interop.node=<path> selects another one.
 
 val jsInteropDir = rootProject.layout.buildDirectory.dir("js/surf-nats-interop")
 
 val prepareJsInterop = tasks.register<Sync>("prepareJsInterop") {
-    description = "Stages the interop script with the npm distribution and the generated fixtures for jvmInteropTest."
+    description =
+        "Stages the interop script with the npm distribution and the generated fixtures for jvmInteropTest."
     into(jsInteropDir)
     from("src/jsTest/interop")
     with(jsDistributionWithFixtures)
@@ -444,15 +517,18 @@ abstract class JsInteropArguments : CommandLineArgumentProvider {
     @get:Input
     abstract val node: Property<String>
 
-    override fun asArguments(): List<String> = listOf(
-        "-Dsurf.nats.interop.dir=${directory.get().asFile.absolutePath}",
-        "-Dsurf.nats.interop.node=${node.get()}",
-    )
+    override fun asArguments(): List<String> {
+        return listOf(
+            "-Dsurf.nats.interop.dir=${directory.get().asFile.absolutePath}",
+            "-Dsurf.nats.interop.node=${node.get()}",
+        )
+    }
 }
 
 val jvmInteropTest = tasks.register<Test>("jvmInteropTest") {
     group = "verification"
-    description = "Runs JsInteropTest: surf-nats-js on Node against the JVM runtime (Testcontainers NATS)."
+    description =
+        "Runs JsInteropTest: surf-nats-js on Node against the JVM runtime (Testcontainers NATS)."
 
     val compilation = kotlin.jvm().compilations.getByName("test")
     testClassesDirs = compilation.output.classesDirs
@@ -465,7 +541,8 @@ val jvmInteropTest = tasks.register<Test>("jvmInteropTest") {
     dependsOn(prepareJsInterop)
     jvmArgumentProviders += objects.newInstance<JsInteropArguments>().apply {
         directory = jsInteropDir
-        node = providers.gradleProperty("surf.nats.interop.node").orElse(project.the<NodeJsEnvSpec>().executable)
+        node = providers.gradleProperty("surf.nats.interop.node")
+            .orElse(project.the<NodeJsEnvSpec>().executable)
     }
     mustRunAfter("jvmTest")
 }
@@ -475,15 +552,17 @@ tasks.named("check") {
 }
 
 // npm package @slne/surf-api-nats in the weaver registry (npm-releases-public). The package is
-// jsNodeProductionLibraryDistribution with another version: weaver npm versions are immutable, so a snapshot publishes
-// as <base>-SNAPSHOT.<yyyyMMddHHmmss UTC> under the dist-tag snapshot, a release unchanged under latest. The plugin
-// wires the upload into publish; publishToMavenLocal stays npm-free. The timestamp is taken once per configuration;
-// with the configuration cache enabled it would be reused and the republish rejected.
+// jsNodeProductionLibraryDistribution with another version: weaver npm versions are immutable, so a
+// snapshot publishes as <base>-SNAPSHOT.<yyyyMMddHHmmss UTC> under the dist-tag snapshot, a release
+// unchanged under latest. The plugin wires the upload into publish; publishToMavenLocal stays
+// npm-free. The timestamp is taken once per configuration; with the configuration cache enabled it
+// would be reused and the republish rejected.
 
 val npmDistribution = tasks.named<Copy>("jsNodeProductionLibraryDistribution")
 val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
 val npmVersion = if (isSnapshot) {
-    val timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    val timestamp = ZonedDateTime.now(ZoneOffset.UTC)
+        .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
     "${project.version}.$timestamp"
 } else {
     project.version.toString()
@@ -492,20 +571,32 @@ val weaverUrl = providers.environmentVariable("WEAVER_URL").orElse("https://weav
 val nodeExecutable = project.the<NodeJsEnvSpec>().executable.map(::File)
 
 npmPublish {
-    // Node as KGP installs it: node.exe and node_modules/npm at the root on Windows, bin/ and lib/ elsewhere. Set
-    // explicitly: the plugin's nodeHome convention calls NodeJsSetupTask.getDestination(), which KGP 2.4 removed.
+    // Node as KGP installs it: node.exe and node_modules/npm at the root on Windows, bin/ and lib/
+    // elsewhere. Set explicitly: the plugin's nodeHome convention calls
+    // NodeJsSetupTask.getDestination(), which KGP 2.4 removed.
     val isWindows = System.getProperty("os.name").startsWith("Windows")
-    nodeHome = layout.dir(nodeExecutable.map { node -> if (isWindows) node.parentFile else node.parentFile.parentFile })
+    nodeHome = layout.dir(
+        nodeExecutable.map { node ->
+            if (isWindows) node.parentFile else node.parentFile.parentFile
+        },
+    )
     nodeBin = layout.file(nodeExecutable)
-    npmBin = layout.file(nodeExecutable.map { node ->
-        val npmCli = "node_modules/npm/bin/npm-cli.js"
-        if (isWindows) node.resolveSibling(npmCli) else node.parentFile.resolveSibling("lib/$npmCli")
-    })
+    npmBin = layout.file(
+        nodeExecutable.map { node ->
+            val npmCli = "node_modules/npm/bin/npm-cli.js"
+            if (isWindows) node.resolveSibling(npmCli) else node.parentFile.resolveSibling(
+                "lib/$npmCli",
+            )
+        },
+    )
 
     packages.named("js") {
         files.setFrom(npmDistribution)
-        packageJsonTemplateFile = layout.file(npmDistribution.map { it.destinationDir.resolve("package.json") })
-        // Set explicitly: the plugin derives both from @slne/surf-api-nats.mjs, and assembling then fails
+        packageJsonTemplateFile = layout.file(
+            npmDistribution.map { it.destinationDir.resolve("package.json") },
+        )
+        // Set explicitly: the plugin derives both from @slne/surf-api-nats.mjs, and assembling then
+        // fails
         main = "index.mjs"
         types = "index.d.mts"
         packageJson {

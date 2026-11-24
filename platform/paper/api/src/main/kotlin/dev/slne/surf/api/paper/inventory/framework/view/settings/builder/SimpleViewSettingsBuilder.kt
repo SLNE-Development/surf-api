@@ -1,9 +1,9 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings.builder
 
 import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SimpleViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
-import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
 
 /**
  * DSL builder for [SimpleViewSettings].
@@ -58,22 +58,24 @@ class SimpleViewSettingsBuilder @PublishedApi internal constructor() : SurfViewS
     }
 
     @PublishedApi
-    override fun build(): SimpleViewSettings = SimpleViewSettings(
-        font = font,
-        headerTextAlignment = headerTextAlignment,
-        headerTextColor = headerTextColor,
-        headerFontMetrics = headerFontMetrics,
-        rowFontMetrics = rowFontMetrics,
-        headerGeometry = headerGeometry,
-        backgroundGlyph = backgroundGlyph,
-        rowFonts = rowFonts,
-        cancelOnClick = cancelOnClick,
-        cancelOnDrag = cancelOnDrag,
-        cancelOnDrop = cancelOnDrop,
-        cancelOnPickup = cancelOnPickup,
-        navigateBackOnOutsideClick = navigateBackOnOutsideClick,
-        rows = rows,
-    )
+    override fun build(): SimpleViewSettings {
+        return SimpleViewSettings(
+            font = font,
+            headerTextAlignment = headerTextAlignment,
+            headerTextColor = headerTextColor,
+            headerFontMetrics = headerFontMetrics,
+            rowFontMetrics = rowFontMetrics,
+            headerGeometry = headerGeometry,
+            backgroundGlyph = backgroundGlyph,
+            rowFonts = rowFonts,
+            cancelOnClick = cancelOnClick,
+            cancelOnDrag = cancelOnDrag,
+            cancelOnDrop = cancelOnDrop,
+            cancelOnPickup = cancelOnPickup,
+            navigateBackOnOutsideClick = navigateBackOnOutsideClick,
+            rows = rows,
+        )
+    }
 }
 
 /**
@@ -90,5 +92,6 @@ class SimpleViewSettingsBuilder @PublishedApi internal constructor() : SurfViewS
  * @param block configuration block applied to a [SimpleViewSettingsBuilder]
  * @return the built [SimpleViewSettings]
  */
-inline fun simpleViewSettings(block: SimpleViewSettingsBuilder.() -> Unit): SimpleViewSettings =
-    SimpleViewSettingsBuilder().apply(block).build()
+inline fun simpleViewSettings(block: SimpleViewSettingsBuilder.() -> Unit): SimpleViewSettings {
+    return SimpleViewSettingsBuilder().apply(block).build()
+}

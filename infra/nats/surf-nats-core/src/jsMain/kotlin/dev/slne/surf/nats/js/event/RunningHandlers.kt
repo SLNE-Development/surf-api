@@ -16,11 +16,14 @@ internal class RunningHandlers {
     private var idle = CompletableDeferred(Unit)
 
     /**
-     * Adopts the handler [result] like `await` does: a promise or thenable settles later, any other value at the
-     * next microtask. A rejection, including a throwing `then`, is reported to [onFailure].
+     * Adopts the handler [result] like `await` does: a promise or thenable settles later, any other
+     * value at the next microtask. A rejection, including a throwing `then`, is reported to
+     * [onFailure].
      */
     fun track(result: Any?, onFailure: (Any?) -> Unit) {
-        if (count++ == 0) idle = CompletableDeferred()
+        if (count++ == 0) {
+            idle = CompletableDeferred()
+        }
 
         Promise.resolve(PromiseResult(result)).then(
             onFulfilled = { settled() },
@@ -44,6 +47,8 @@ internal class RunningHandlers {
     }
 
     private fun settled() {
-        if (--count == 0) idle.complete(Unit)
+        if (--count == 0) {
+            idle.complete(Unit)
+        }
     }
 }

@@ -56,8 +56,8 @@ fun everything() = Everything(
     nestedById = mapOf(5L to Everything.Nested("by-id", listOf(5))),
 )
 
-// Event classes with hand-written descriptors. They stand in for contracts of other modules, which one generator run
-// never sees together, and for classes that are not generated events.
+// Event classes with hand-written descriptors. They stand in for contracts of other modules, which
+// one generator run never sees together, and for classes that are not generated events.
 
 /**
  * Uses the proto name, and therefore the subject, of the generated [Created] with another type.
@@ -69,7 +69,10 @@ data class CreatedImpostor(@ProtoNumber(1) val id: Long) : NatsEvent {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR = NatsEventDescriptor<CreatedImpostor>("surf.nats.test.v1.Created", serializer())
+        val NATS_DESCRIPTOR = NatsEventDescriptor<CreatedImpostor>(
+            "surf.nats.test.v1.Created",
+            serializer(),
+        )
     }
 }
 
@@ -83,7 +86,10 @@ data class InvalidProtoNameEvent(@ProtoNumber(1) val id: Long) : NatsEvent {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR = NatsEventDescriptor<InvalidProtoNameEvent>("surf.nats.test.v1.Invalid Name", serializer())
+        val NATS_DESCRIPTOR = NatsEventDescriptor<InvalidProtoNameEvent>(
+            "surf.nats.test.v1.Invalid Name",
+            serializer(),
+        )
     }
 }
 

@@ -29,33 +29,51 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Runs protoc-gen-surf-nats in process on the FileDescriptorSet of the JS test protos (buildFixtureImage).
+ * Runs protoc-gen-surf-nats in process on the FileDescriptorSet of the JS test protos
+ * (buildFixtureImage).
  *
- * The output for the jsTest protos is compared with src/jsTest/protoc/golden, with the plugin version replaced by
- * `<version>`; run jsNodeTest with `-Psurf.nats.protoc.updateGolden=true` to rewrite those files.
+ * The output for the jsTest protos is compared with src/jsTest/protoc/golden, with the plugin
+ * version replaced by `<version>`; run jsNodeTest with `-Psurf.nats.protoc.updateGolden=true` to
+ * rewrite those files.
  */
 class ProtocPluginTest {
 
     private val image: FileDescriptorSet by lazy(::decodeImage)
 
     private fun decodeImage(): FileDescriptorSet {
-        val path = process.env["SURF_NATS_PROTOC_IMAGE"] ?: fail("SURF_NATS_PROTOC_IMAGE is not set")
-        return decodeFileDescriptorSet(FileDescriptorSetSchema, readFileSync(path, ReadFileSyncBufferOptions()))
+        val path = process.env["SURF_NATS_PROTOC_IMAGE"]
+            ?: fail("SURF_NATS_PROTOC_IMAGE is not set")
+
+        return decodeFileDescriptorSet(
+            FileDescriptorSetSchema,
+            readFileSync(path, ReadFileSyncBufferOptions()),
+        )
     }
 
     private fun pluginTest(block: suspend (plugin: Plugin) -> Unit): Promise<Unit> = asyncTest {
         block(ProtocPlugin.create(import<Protoplugin>(ProtocPlugin.MODULE)))
     }
 
-    private fun Plugin.run(image: FileDescriptorSet, parameter: String, vararg files: String): List<OutputFile> {
+    private fun Plugin.run(
+        image: FileDescriptorSet,
+        parameter: String,
+        vararg files: String,
+    ): List<OutputFile> {
         val request = createCodeGeneratorRequest(
             CodeGeneratorRequestSchema,
-            CodeGeneratorRequestInit(fileToGenerate = arrayOf(*files), parameter = parameter, protoFile = image.file),
+            CodeGeneratorRequestInit(
+                fileToGenerate = arrayOf(*files),
+                parameter = parameter,
+                protoFile = image.file,
+            ),
         )
+
         return run(request).file.map { OutputFile(it.name, it.content) }
     }
 
-    private fun Plugin.generate(parameter: String, vararg files: String): List<OutputFile> = run(image, parameter, *files)
+    private fun Plugin.generate(parameter: String, vararg files: String): List<OutputFile> {
+        return run(image, parameter, *files)
+    }
 
     @Test
     fun typeScriptMatchesTheGoldenFiles() = pluginTest { plugin ->
@@ -69,7 +87,14 @@ class ProtocPluginTest {
 
     @Test
     fun filesWithoutServicesGenerateNothing() = pluginTest { plugin ->
-        assertEquals(emptyList(), plugin.generate("", "surf/natsjs/test/v1/events.proto", "surf/natsjs/test/v1/rules.proto"))
+        assertEquals(
+            emptyList(),
+            plugin.generate(
+                "",
+                "surf/natsjs/test/v1/events.proto",
+                "surf/natsjs/test/v1/rules.proto",
+            ),
+        )
     }
 
     @Test
@@ -92,7 +117,10 @@ class ProtocPluginTest {
 
     @Test
     fun legacyCommonJsImportStyle() = pluginTest { plugin ->
-        val files = plugin.generate("target=js,js_import_style=legacy_commonjs", "surf/natsjs/test/v2/services.proto")
+        val files = plugin.generate(
+            "target=js,js_import_style=legacy_commonjs",
+            "surf/natsjs/test/v2/services.proto",
+        )
         val js = files.single().content
         assertTrue("require(\"./services_pb\")" in js, js)
         assertTrue("exports.createPlayerServiceClient = createPlayerServiceClient;" in js, js)
@@ -100,7 +128,10 @@ class ProtocPluginTest {
 
     @Test
     fun importExtensionTs() = pluginTest { plugin ->
-        val content = plugin.generate("target=ts,import_extension=.ts", "surf/natsjs/lookup/v1/lookup.proto").single().content
+        val content = plugin.generate(
+            "target=ts,import_extension=.ts",
+            "surf/natsjs/lookup/v1/lookup.proto",
+        ).single().content
         assertTrue("from \"../../test/v1/services_pb.ts\";" in content, content)
     }
 
@@ -109,15 +140,18 @@ class ProtocPluginTest {
         val file = "surf/natsjs/test/v1/services.proto"
         val crlf = decodeImage()
         val locations = crlf.file.single { it.name == file }.sourceCodeInfo?.location.orEmpty()
-        // Assigning an empty comment would mark it as present, which adds an empty comment to the preamble
+        // Assigning an empty comment would mark it as present, which adds an empty comment to the
+        // preamble
         for (location in locations.map { it.unsafeCast<MutableSourceLocation>() }) {
             if (location.leadingComments.isNotEmpty()) {
                 location.leadingComments = location.leadingComments.replace("\n", "\r\n")
             }
+
             if (location.trailingComments.isNotEmpty()) {
                 location.trailingComments = location.trailingComments.replace("\n", "\r")
             }
         }
+
         assertEquals(
             plugin.generate("target=ts", file).map { it.content },
             plugin.run(crlf, "target=ts", file).map { it.content },
@@ -136,8 +170,8 @@ class ProtocPluginTest {
     fun invalidRpcNamesAndOptionsAreRejectedTogether() = pluginTest { plugin ->
         plugin.assertError(
             "surf/natsjs/invalid/v1/names.proto:13:3: rpc surf.natsjs.invalid.v1.NamesService._Find: every name " +
-                    "component must start with an ASCII letter and contain only ASCII letters, digits and '_'\n" +
-                    "surf/natsjs/invalid/v1/names.proto:14:3: rpc Spread: persistent methods cannot address ALL_INSTANCES",
+                "component must start with an ASCII letter and contain only ASCII letters, digits and '_'\n" +
+                "surf/natsjs/invalid/v1/names.proto:14:3: rpc Spread: persistent methods cannot address ALL_INSTANCES",
             "target=ts", "surf/natsjs/invalid/v1/names.proto",
         )
     }
@@ -146,7 +180,7 @@ class ProtocPluginTest {
     fun surfOptionsOnlyVisibleThroughAPublicImportAreRejected() = pluginTest { plugin ->
         plugin.assertError(
             "surf/natsjs/invalid/v1/indirect.proto: files using surf-nats options must import " +
-                    "\"surf/nats/v1/options.proto\" directly",
+                "\"surf/nats/v1/options.proto\" directly",
             "target=ts", "surf/natsjs/invalid/v1/indirect.proto",
         )
     }
@@ -163,9 +197,9 @@ class ProtocPluginTest {
     fun callTimeoutsBeyondIntAreRejected() = pluginTest { plugin ->
         plugin.assertError(
             "surf/natsjs/invalid/v1/timeouts.proto:12:1: option NatsServiceOptions.call_timeout_seconds must be " +
-                    "between 0 and 2147483647, was '4294967295'\n" +
-                    "surf/natsjs/invalid/v1/timeouts.proto:14:3: option NatsMethodOptions.call_timeout_seconds must be " +
-                    "between 0 and 2147483647, was '2147483648'",
+                "between 0 and 2147483647, was '4294967295'\n" +
+                "surf/natsjs/invalid/v1/timeouts.proto:14:3: option NatsMethodOptions.call_timeout_seconds must be " +
+                "between 0 and 2147483647, was '2147483648'",
             "target=ts", "surf/natsjs/invalid/v1/timeouts.proto",
         )
     }
@@ -174,7 +208,7 @@ class ProtocPluginTest {
     fun packagesWithoutVersionSuffixAreRejected() = pluginTest { plugin ->
         plugin.assertError(
             "surf/natsjs/invalid/unversioned.proto: package 'surf.natsjs.invalid' declares events or services and " +
-                    "must end with a major version '.v<N>' (N >= 1, no leading zeros)",
+                "must end with a major version '.v<N>' (N >= 1, no leading zeros)",
             "target=ts", "surf/natsjs/invalid/unversioned.proto",
         )
     }
@@ -206,14 +240,25 @@ class ProtocPluginTest {
 
     private fun assertGolden(target: String, generated: List<OutputFile>) {
         val version = "${ProtocPlugin.NAME} ${ProtocPlugin.version}"
-        val files = generated.map { OutputFile(it.name, it.content.replace(version, "${ProtocPlugin.NAME} <version>")) }
-        val root = process.env["SURF_NATS_PROTOC_GOLDEN_DIR"] ?: fail("SURF_NATS_PROTOC_GOLDEN_DIR is not set")
+        val files = generated.map {
+            OutputFile(
+                it.name,
+                it.content.replace(version, "${ProtocPlugin.NAME} <version>"),
+            )
+        }
+        val root = process.env["SURF_NATS_PROTOC_GOLDEN_DIR"]
+            ?: fail("SURF_NATS_PROTOC_GOLDEN_DIR is not set")
         val dir = "$root/$target"
+
         if (process.env["SURF_NATS_PROTOC_UPDATE_GOLDEN"] == "true") {
             for (file in files) {
-                mkdirSync("$dir/${file.name}".substringBeforeLast('/'), MkdirSyncRecursiveOptions(requiredRecursive = true))
+                mkdirSync(
+                    "$dir/${file.name}".substringBeforeLast('/'),
+                    MkdirSyncRecursiveOptions(requiredRecursive = true),
+                )
                 writeFileSync("$dir/${file.name}", file.content)
             }
+
             return
         }
 
@@ -226,8 +271,12 @@ class ProtocPluginTest {
             emptyList()
         }
         assertEquals(expected, files.map { it.name }.sorted(), "generated files of $dir")
+
         for (file in files) {
-            val golden = readFileSync("$dir/${file.name}", ReadFileSyncBufferOptions()).decodeToString()
+            val golden = readFileSync(
+                "$dir/${file.name}",
+                ReadFileSyncBufferOptions(),
+            ).decodeToString()
             assertEquals(golden.replace("\r\n", "\n"), file.content, "$dir/${file.name}")
         }
     }

@@ -9,7 +9,10 @@ open class CommandSyntaxException(
     val input: String? = null,
     val cursor: Int? = null,
     cause: Throwable? = null,
-) : RuntimeException(component?.let { PlainTextComponentSerializer.plainText().serialize(it) }, cause) {
+) : RuntimeException(
+    component?.let { PlainTextComponentSerializer.plainText().serialize(it) },
+    cause,
+) {
     companion object {
         @Serial
         private const val serialVersionUID: Long = -540694787746386949L

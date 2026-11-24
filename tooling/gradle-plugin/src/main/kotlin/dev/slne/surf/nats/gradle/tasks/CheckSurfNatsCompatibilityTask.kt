@@ -1,4 +1,3 @@
-
 package dev.slne.surf.nats.gradle.tasks
 
 import dev.slne.surf.nats.gradle.compat.CompatibilityChecker
@@ -15,17 +14,19 @@ import org.gradle.api.tasks.*
 import java.io.File
 
 /**
- * Checks whether the current `.proto` sources are compatible with the previous release of the module.
+ * Checks whether the current `.proto` sources are compatible with the previous release of the
+ * module.
  *
- * The plugin registers it as `checkSurfNatsCompatibility` and makes `check` and weaver's `publishProtos` depend on
- * it. The baseline is the release that [FetchSurfNatsBaselineTask] downloads into [baselineDirectory].
+ * The plugin registers it as `checkSurfNatsCompatibility` and makes `check` and weaver's
+ * `publishProtos` depend on it. The baseline is the release that [FetchSurfNatsBaselineTask]
+ * downloads into [baselineDirectory].
  *
- * Types and services are matched by their fully qualified proto names, so renaming or moving one counts as removing
- * it. Violations fail the task. Warnings are wire-compatible changes that still affect Kotlin callers. They are
- * logged and written to [reportFile] without failing the task.
+ * Types and services are matched by their fully qualified proto names, so renaming or moving one
+ * counts as removing it. Violations fail the task. Warnings are wire-compatible changes that still
+ * affect Kotlin callers. They are logged and written to [reportFile] without failing the task.
  *
- * The task is skipped when [checkEnabled] or [active] is `false`, or when [baselineVersionFile] is missing or records
- * [FetchSurfNatsBaselineTask.NO_BASELINE]. To turn the check off:
+ * The task is skipped when [checkEnabled] or [active] is `false`, or when [baselineVersionFile] is
+ * missing or records [FetchSurfNatsBaselineTask.NO_BASELINE]. To turn the check off:
  *
  * ```kotlin
  * surfNats {
@@ -75,8 +76,8 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     /**
      * The report file, `build/reports/surf-nats/compatibility.txt` by default.
      *
-     * It starts with `compatible` when there are no violations, and otherwise lists one violation per line. Each
-     * warning follows on its own line, prefixed with `warning: `.
+     * It starts with `compatible` when there are no violations, and otherwise lists one violation
+     * per line. Each warning follows on its own line, prefixed with `warning: `.
      */
     @get:OutputFile
     abstract val reportFile: RegularFileProperty
@@ -93,8 +94,9 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
     /**
      * Compares the sources with the baseline, logs the warnings and writes [reportFile].
      *
-     * @throws GradleException when the baseline holds no `.proto` files, a schema cannot be loaded, or the check
-     *   finds violations. The violation message lists each change and suggests a new major package version.
+     * @throws GradleException when the baseline holds no `.proto` files, a schema cannot be loaded,
+     *   or the check finds violations. The violation message lists each change and suggests a new
+     *   major package version.
      */
     @TaskAction
     fun check() {
@@ -126,12 +128,13 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
         if (hasProtos) return
 
         throw GradleException(
-            "The surf-nats compatibility baseline ${baselineVersion()} contains no .proto files"
+            "The surf-nats compatibility baseline ${baselineVersion()} contains no .proto files",
         )
     }
 
-    private fun baselineVersion(): String =
-        FetchSurfNatsBaselineTask.readVersion(baselineVersionFile.get().asFile)
+    private fun baselineVersion(): String {
+        return FetchSurfNatsBaselineTask.readVersion(baselineVersionFile.get().asFile)
+    }
 
     private fun writeReport(
         violations: List<CompatibilityFinding>,
@@ -158,23 +161,27 @@ abstract class CheckSurfNatsCompatibilityTask : ProtoInputsTask() {
 
         throw GradleException(
             "surf-nats contracts are incompatible with the baseline (${violations.size} violations):\n" +
-                    violations.joinToString("\n") +
-                    "\nFix these changes or publish them in a new major package version (.v<N+1>)."
+                violations.joinToString("\n") +
+                "\nFix these changes or publish them in a new major package version (.v<N+1>).",
         )
     }
 
     private class CheckEnabled : Spec<Task> {
-        override fun isSatisfiedBy(element: Task): Boolean =
-            (element as CheckSurfNatsCompatibilityTask).checkEnabled.get()
+        override fun isSatisfiedBy(element: Task): Boolean {
+            return (element as CheckSurfNatsCompatibilityTask).checkEnabled.get()
+        }
     }
 
     private class Active : Spec<Task> {
-        override fun isSatisfiedBy(element: Task): Boolean =
-            (element as CheckSurfNatsCompatibilityTask).active.get()
+        override fun isSatisfiedBy(element: Task): Boolean {
+            return (element as CheckSurfNatsCompatibilityTask).active.get()
+        }
     }
 
     private class BaselineAvailable : Spec<Task> {
-        override fun isSatisfiedBy(element: Task): Boolean =
-            (element as CheckSurfNatsCompatibilityTask).baselineVersion() != FetchSurfNatsBaselineTask.NO_BASELINE
+        override fun isSatisfiedBy(element: Task): Boolean {
+            return (element as CheckSurfNatsCompatibilityTask)
+                .baselineVersion() != FetchSurfNatsBaselineTask.NO_BASELINE
+        }
     }
 }

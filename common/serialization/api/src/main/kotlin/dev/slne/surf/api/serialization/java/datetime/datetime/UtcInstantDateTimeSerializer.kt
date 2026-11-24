@@ -8,7 +8,7 @@ import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
 
 abstract class UtcInstantDateTimeSerializer<T : Any>(
-    serialName: String
+    serialName: String,
 ) : KSerializer<T> {
     override val descriptor = PrimitiveSerialDescriptor(serialName, PrimitiveKind.LONG)
 

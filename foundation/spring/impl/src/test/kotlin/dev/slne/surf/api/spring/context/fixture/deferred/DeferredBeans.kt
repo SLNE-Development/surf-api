@@ -23,7 +23,8 @@ class BootstrapBean : SurfLifecycle, SurfBootstrapLifecycle {
  * Lives in the full context and injects the bootstrap bean from the context above.
  */
 @Service
-class LateBean(private val bootstrapBean: BootstrapBean) : SurfLifecycle, SmartInitializingSingleton {
+class LateBean(private val bootstrapBean: BootstrapBean) : SurfLifecycle,
+    SmartInitializingSingleton {
     init {
         Journal.record("created:late")
     }

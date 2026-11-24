@@ -20,19 +20,20 @@ object SkylightSuppression {
     }
 
     /**
-     * Sky light that never relights or sends and reports unset content, so no sky light mask bit is set.
+     * Sky light that never relights or sends and reports unset content, so no sky light mask bit is
+     * set.
      */
     @Suppress("UnstableApiUsage")
     object DisabledSkyLight : Light {
 
-        override fun requiresUpdate() = false
-        override fun requiresSend() = false
+        override fun requiresUpdate(): Boolean = false
+        override fun requiresSend(): Boolean = false
         override fun array(): ByteArray = LightCompute.UNSET_CONTENT
-        override fun getLevel(x: Int, y: Int, z: Int) = 0
+        override fun getLevel(x: Int, y: Int, z: Int): Int = 0
 
-        override fun flip() = Unit
-        override fun invalidate() = Unit
-        override fun set(copyArray: ByteArray) = Unit
+        override fun flip(): Unit = Unit
+        override fun invalidate(): Unit = Unit
+        override fun set(copyArray: ByteArray): Unit = Unit
 
         override fun calculateInternal(
             blockPalette: Palette,

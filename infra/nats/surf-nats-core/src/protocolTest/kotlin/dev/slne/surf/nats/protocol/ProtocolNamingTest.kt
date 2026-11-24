@@ -19,6 +19,7 @@ class ProtocolNamingTest {
     @Test
     fun kebabCaseMatchesReferenceRegexExhaustively() {
         val boundary = Regex("(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+
         for (name in allStrings("abAB1_-Ä", maxLength = 4)) {
             val expected = name.split(boundary).joinToString("-") { it.lowercase() }
             assertEquals(expected, ProtocolNaming.kebabCase(name), "kebab-case of '$name'")
@@ -30,6 +31,7 @@ class ProtocolNamingTest {
         for (subject in ProtocolVectors.validSubjects) {
             assertTrue(SubjectSyntax.isValid(subject), "subject '$subject'")
         }
+
         for (subject in ProtocolVectors.invalidSubjects) {
             assertFalse(SubjectSyntax.isValid(subject), "subject '$subject'")
         }
@@ -37,11 +39,17 @@ class ProtocolNamingTest {
 
     @Test
     fun subjectsMatchReferenceRegexExhaustively() {
-        // java.util.regex `^[^\s.*>]+(\.[^\s.*>]+)*$` with `\s` spelled out, so JS evaluates the same set.
+        // java.util.regex `^[^\s.*>]+(\.[^\s.*>]+)*$` with `\s` spelled out, so JS evaluates the
+        // same set.
         val token = "[^ \t\n\u000B\u000C\r.*>]+"
         val subject = Regex("$token(\\.$token)*")
+
         for (candidate in allStrings("a.*> \t\$ ", maxLength = 4)) {
-            assertEquals(subject.matches(candidate), SubjectSyntax.isValid(candidate), "subject '$candidate'")
+            assertEquals(
+                subject.matches(candidate),
+                SubjectSyntax.isValid(candidate),
+                "subject '$candidate'",
+            )
         }
     }
 
@@ -51,6 +59,7 @@ class ProtocolNamingTest {
             assertTrue(ProtocolNaming.isProtoName(name), "proto name '$name'")
             assertEquals(name, ProtocolNaming.requireProtoName(name, "test"))
         }
+
         for (name in ProtocolVectors.invalidProtoNames) {
             assertFalse(ProtocolNaming.isProtoName(name), "proto name '$name'")
             val error = assertFailsWith<IllegalArgumentException>("proto name '$name'") {
@@ -65,6 +74,7 @@ class ProtocolNamingTest {
         for (name in ProtocolVectors.protoNames) {
             assertEquals('.' !in name, ProtocolNaming.isProtoIdentifier(name), "identifier '$name'")
         }
+
         for (name in ProtocolVectors.invalidProtoNames) {
             assertFalse(ProtocolNaming.isProtoIdentifier(name), "identifier '$name'")
         }
@@ -88,8 +98,13 @@ class ProtocolNamingTest {
     fun protoNamesMatchReferenceRegexExhaustively() {
         val identifier = "[A-Za-z][A-Za-z0-9_]*"
         val pattern = Regex("$identifier(\\.$identifier)*")
+
         for (candidate in allStrings("aB1_.-", maxLength = 5)) {
-            assertEquals(pattern.matches(candidate), ProtocolNaming.isProtoName(candidate), "proto name '$candidate'")
+            assertEquals(
+                pattern.matches(candidate),
+                ProtocolNaming.isProtoName(candidate),
+                "proto name '$candidate'",
+            )
         }
     }
 
@@ -98,6 +113,7 @@ class ProtocolNamingTest {
         for (name in ProtocolVectors.kebabNames) {
             assertTrue(ProtocolNaming.isKebabName(name), "name '$name'")
         }
+
         for (name in ProtocolVectors.invalidKebabNames) {
             assertFalse(ProtocolNaming.isKebabName(name), "name '$name'")
         }
@@ -106,17 +122,31 @@ class ProtocolNamingTest {
     @Test
     fun kebabNamesMatchReferenceRegexExhaustively() {
         val pattern = Regex("[a-z0-9]+(-[a-z0-9]+)*")
+
         for (candidate in allStrings("a1-A_", maxLength = 5)) {
-            assertEquals(pattern.matches(candidate), ProtocolNaming.isKebabName(candidate), "name '$candidate'")
+            assertEquals(
+                pattern.matches(candidate),
+                ProtocolNaming.isKebabName(candidate),
+                "name '$candidate'",
+            )
         }
     }
 
     @Test
     fun majorVersionsMatchVectors() {
         for ((protoPackage, expected) in ProtocolVectors.majorVersions) {
-            assertEquals(expected, ProtocolNaming.majorVersionOrNull(protoPackage), "package '$protoPackage'")
-            assertEquals(expected, ProtocolNaming.majorVersion(protoPackage), "package '$protoPackage'")
+            assertEquals(
+                expected,
+                ProtocolNaming.majorVersionOrNull(protoPackage),
+                "package '$protoPackage'",
+            )
+            assertEquals(
+                expected,
+                ProtocolNaming.majorVersion(protoPackage),
+                "package '$protoPackage'",
+            )
         }
+
         for (protoPackage in ProtocolVectors.invalidVersionPackages) {
             assertNull(ProtocolNaming.majorVersionOrNull(protoPackage), "package '$protoPackage'")
             assertFailsWith<IllegalArgumentException>("package '$protoPackage'") {
@@ -127,12 +157,19 @@ class ProtocolNamingTest {
 
     @Test
     fun majorVersionErrorsNameTheSource() {
-        val plain = assertFailsWith<IllegalArgumentException> { ProtocolNaming.majorVersion("surf.punish") }
+        val plain = assertFailsWith<IllegalArgumentException> {
+            ProtocolNaming.majorVersion("surf.punish")
+        }
         assertEquals(
             "Proto package 'surf.punish' must end with a major version suffix '.v<N>' (N >= 1, no leading zeros)",
             plain.message,
         )
-        val named = assertFailsWith<IllegalArgumentException> { ProtocolNaming.majorVersion("surf.punish", "a.B") }
+        val named = assertFailsWith<IllegalArgumentException> {
+            ProtocolNaming.majorVersion(
+                "surf.punish",
+                "a.B",
+            )
+        }
         assertEquals(
             "Proto package 'surf.punish' of a.B must end with a major version suffix '.v<N>' (N >= 1, no leading zeros)",
             named.message,
@@ -144,12 +181,29 @@ class ProtocolNamingTest {
         for (name in ProtocolVectors.kebabNames) {
             assertEquals(name, ProtocolNaming.requireClientName(name))
         }
+
         for (name in ProtocolVectors.invalidKebabNames) {
-            val error = assertFailsWith<IllegalArgumentException>("name '$name'") { ProtocolNaming.requireClientName(name) }
-            assertEquals("Invalid NATS client name '$name': must be kebab-case ([a-z0-9] separated by '-')", error.message)
+            val error = assertFailsWith<IllegalArgumentException>("name '$name'") {
+                ProtocolNaming.requireClientName(
+                    name,
+                )
+            }
+            assertEquals(
+                "Invalid NATS client name '$name': must be kebab-case ([a-z0-9] separated by '-')",
+                error.message,
+            )
         }
-        val labelled = assertFailsWith<IllegalArgumentException> { ProtocolNaming.requireClientName("A", "client name") }
-        assertEquals("Invalid client name 'A': must be kebab-case ([a-z0-9] separated by '-')", labelled.message)
+
+        val labelled = assertFailsWith<IllegalArgumentException> {
+            ProtocolNaming.requireClientName(
+                "A",
+                "client name",
+            )
+        }
+        assertEquals(
+            "Invalid client name 'A': must be kebab-case ([a-z0-9] separated by '-')",
+            labelled.message,
+        )
     }
 
     private fun allStrings(alphabet: String, maxLength: Int): List<String> {
@@ -159,6 +213,7 @@ class ProtocolNamingTest {
             previous = previous.flatMap { prefix -> alphabet.map { prefix + it } }
             result += previous
         }
+
         return result
     }
 }

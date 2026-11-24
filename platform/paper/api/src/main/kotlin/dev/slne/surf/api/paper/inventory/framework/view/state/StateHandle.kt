@@ -52,8 +52,7 @@ class StateHandle<S> @PublishedApi internal constructor(
  * @param context the current [Context]
  * @return the state value
  */
-operator fun <T> StateHandle<State<T>>.get(context: Context): T =
-    resolve().get(context)
+operator fun <T> StateHandle<State<T>>.get(context: Context): T = resolve().get(context)
 
 /**
  * Reads the current value of this mutable state from the given [context].
@@ -62,8 +61,7 @@ operator fun <T> StateHandle<State<T>>.get(context: Context): T =
  * @return the state value
  */
 @JvmName("getMutableState")
-operator fun <T> StateHandle<MutableState<T>>.get(context: Context): T =
-    resolve().get(context)
+operator fun <T> StateHandle<MutableState<T>>.get(context: Context): T = resolve().get(context)
 
 /**
  * Sets the value of this mutable state within the given [context].
@@ -81,8 +79,7 @@ operator fun <T> StateHandle<MutableState<T>>.set(context: Context, value: T) {
  * @param context the current [Context]
  * @return the current integer value
  */
-operator fun StateHandle<MutableIntState>.get(context: Context): Int =
-    resolve().get(context)
+operator fun StateHandle<MutableIntState>.get(context: Context): Int = resolve().get(context)
 
 /**
  * Sets the integer value of this [MutableIntState] within the given [context].
@@ -100,8 +97,7 @@ operator fun StateHandle<MutableIntState>.set(context: Context, value: Int) {
  * @param context the current [Context]
  * @return the value after incrementing
  */
-fun StateHandle<MutableIntState>.increment(context: Context): Int =
-    resolve().increment(context)
+fun StateHandle<MutableIntState>.increment(context: Context): Int = resolve().increment(context)
 
 /**
  * Atomically decrements the integer value of this [MutableIntState] by 1.
@@ -109,5 +105,4 @@ fun StateHandle<MutableIntState>.increment(context: Context): Int =
  * @param context the current [Context]
  * @return the value after decrementing
  */
-fun StateHandle<MutableIntState>.decrement(context: Context): Int =
-    resolve().decrement(context)
+fun StateHandle<MutableIntState>.decrement(context: Context): Int = resolve().decrement(context)

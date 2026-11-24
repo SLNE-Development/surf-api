@@ -14,12 +14,32 @@ internal class HelpCommand(
 
     override suspend fun MicroserviceCommandContext.execute(args: List<String>) {
         sendLine("Commands:")
-        commands().sortedBy { command -> command.name.lowercase() }.forEach { command -> sendLine("  ${describe(command)}") }
+
+        for (command in commands().sortedBy { command -> command.name.lowercase() }) {
+            sendLine(
+                "  ${
+                    describe(
+                        command,
+                    )
+                }",
+            )
+        }
     }
 
-    private fun describe(command: MicroserviceCommand) = buildString {
-        append(command.name)
-        if (command.aliases.isNotEmpty()) append(command.aliases.joinToString(prefix = " (", postfix = ")"))
-        command.description?.let { description -> append(" - ").append(description) }
+    private fun describe(command: MicroserviceCommand): String {
+        return buildString {
+            append(command.name)
+
+            if (command.aliases.isNotEmpty()) {
+                append(
+                    command.aliases.joinToString(
+                        prefix = " (",
+                        postfix = ")",
+                    ),
+                )
+            }
+
+            command.description?.let { description -> append(" - ").append(description) }
+        }
     }
 }

@@ -2,7 +2,6 @@ package dev.slne.surf.api.minestom.server.visibility
 
 import dev.slne.surf.api.minestom.player.SurfMinestomPlayer
 import dev.slne.surf.api.minestom.visibility.PlayerVisibility
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.entity.AutomaticPlayerVisibility
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.Player
@@ -21,7 +20,6 @@ import java.util.function.Predicate
  * updates run on the service tick. The combined rule reads the selection and the applied rule
  * through volatile fields.
  */
-@OptIn(InternalSurfApi::class)
 internal class PlayerVisibilityHandler(private val player: Player) {
     private class RuleRequest(
         val predicate: Predicate<in Entity>?,
@@ -64,10 +62,10 @@ internal class PlayerVisibilityHandler(private val player: Player) {
             val selection = visibilitySelection
 
             admittingPlayers &&
-                    player.autoViewEntities() &&
-                    selection.instance === player.instance &&
-                    entity.instance === player.instance &&
-                    selection.ids.binarySearch(entity.entityId) >= 0
+                player.autoViewEntities() &&
+                selection.instance === player.instance &&
+                entity.instance === player.instance &&
+                selection.ids.binarySearch(entity.entityId) >= 0
         }
     }
 

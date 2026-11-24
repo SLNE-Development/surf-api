@@ -25,10 +25,12 @@ class GenerateMigrationScriptIT {
 
     companion object {
         @JvmStatic
-        fun databases(): List<Arguments> = listOf(
-            Arguments.of("mariadb"),
-            Arguments.of("postgres"),
-        )
+        fun databases(): List<Arguments> {
+            return listOf(
+                Arguments.of("mariadb"),
+                Arguments.of("postgres"),
+            )
+        }
 
         private fun container(db: String): JdbcDatabaseContainer<*> = when (db) {
             "mariadb" -> DatabaseContainers.mariadb()
@@ -38,6 +40,7 @@ class GenerateMigrationScriptIT {
 
     private fun withTestDatabase(db: String, block: suspend (TestDatabase) -> Unit) = runBlocking {
         val testDb = container(db).toTestDatabase(fresh = true)
+
         try {
             block(testDb)
         } finally {
@@ -47,8 +50,14 @@ class GenerateMigrationScriptIT {
 
     @ParameterizedTest
     @MethodSource("databases")
-    fun generatesCreateStatementForMissingTable(db: String, @TempDir dir: Path) = withTestDatabase(db) { testDb ->
-        val file = testDb.database.generateMigrationScript(Items, scriptDirectory = dir, scriptName = "V2__items")
+    fun generatesCreateStatementForMissingTable(db: String, @TempDir dir: Path) = withTestDatabase(
+        db,
+    ) { testDb ->
+        val file = testDb.database.generateMigrationScript(
+            Items,
+            scriptDirectory = dir,
+            scriptName = "V2__items",
+        )
 
         assertEquals("V2__items.sql", file.name)
         assertTrue(file.exists())

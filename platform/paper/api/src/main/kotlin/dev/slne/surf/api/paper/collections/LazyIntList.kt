@@ -1,8 +1,9 @@
 package dev.slne.surf.api.paper.collections
+
 import java.util.function.IntSupplier
 
 class LazyIntList(
-    private val defaultValueGenerator: IntSupplier
+    private val defaultValueGenerator: IntSupplier,
 ) {
     private var values = IntArray(16)
     private var initialized = BooleanArray(16)
@@ -18,6 +19,7 @@ class LazyIntList(
         val value = defaultValueGenerator.asInt
         values[index] = value
         initialized[index] = true
+
         return value
     }
 
@@ -33,14 +35,18 @@ class LazyIntList(
         size = 0
     }
 
-    fun listCopy(): List<Int?> = List(size) { index ->
-        if (initialized[index]) values[index] else null
+    fun listCopy(): List<Int?> {
+        return List(size) { index ->
+            if (initialized[index]) values[index] else null
+        }
     }
 
-    fun listCopyNotNull(): List<Int> = buildList {
-        for (index in indices) {
-            if (initialized[index]) {
-                add(values[index])
+    fun listCopyNotNull(): List<Int> {
+        return buildList {
+            for (index in indices) {
+                if (initialized[index]) {
+                    add(values[index])
+                }
             }
         }
     }
@@ -58,7 +64,7 @@ class LazyIntList(
                 requiredSize.toInt(),
                 (values.size.toLong() * 2)
                     .coerceAtMost(Int.MAX_VALUE.toLong())
-                    .toInt()
+                    .toInt(),
             )
 
             values = values.copyOf(capacity)

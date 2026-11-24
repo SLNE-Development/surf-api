@@ -8,7 +8,7 @@ class SurfEventHandlerTest(name: String) : CommandAPICommand(name) {
     init {
         withSubcommands(
             SurfSyncEventHandlerTest("sync"),
-            SurfAsyncEventHandlerTest("async")
+            SurfAsyncEventHandlerTest("async"),
         )
     }
 }

@@ -12,10 +12,23 @@ class OffsetDateTimeSerializerTest {
     @Serializable
     private data class Holder(
         @ProtoNumber(1) val single: @Serializable(OffsetDateTimeSerializer::class) OffsetDateTime,
-        @ProtoNumber(2) val list: List<@Serializable(OffsetDateTimeSerializer::class) OffsetDateTime> = emptyList(),
+        @ProtoNumber(2) val list: List<
+            @Serializable(
+                OffsetDateTimeSerializer::class,
+            ) OffsetDateTime,
+            > = emptyList(),
     )
 
-    private val value = OffsetDateTime.of(2026, 11, 3, 12, 30, 15, 500_000_000, ZoneOffset.ofHours(1))
+    private val value = OffsetDateTime.of(
+        2026,
+        11,
+        3,
+        12,
+        30,
+        15,
+        500_000_000,
+        ZoneOffset.ofHours(1),
+    )
     private val hex = "08c78ba7d7061080cab5ee0118901c"
 
     @Test
@@ -71,7 +84,17 @@ class OffsetDateTimeSerializerTest {
 
     @Test
     fun `invalid nanos and offsets are rejected`() {
-        assertInvalid { decodeHex(OffsetDateTimeSerializer, "08c78ba7d70610ffffffffffffffffff011800") } // nanos -1
-        assertInvalid { decodeHex(OffsetDateTimeSerializer, "08c78ba7d70618c0b204") } // offset 72,000 s (+20:00)
+        assertInvalid {
+            decodeHex(
+                OffsetDateTimeSerializer,
+                "08c78ba7d70610ffffffffffffffffff011800",
+            )
+        } // nanos -1
+        assertInvalid {
+            decodeHex(
+                OffsetDateTimeSerializer,
+                "08c78ba7d70618c0b204",
+            )
+        } // offset 72,000 s (+20:00)
     }
 }

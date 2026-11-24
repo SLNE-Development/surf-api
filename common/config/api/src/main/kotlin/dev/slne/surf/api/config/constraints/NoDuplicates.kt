@@ -25,16 +25,18 @@ import java.lang.reflect.Type
 annotation class NoDuplicates {
     companion object {
         internal object Factory : Constraint.Factory<NoDuplicates, Any?> {
-            override fun make(data: NoDuplicates, type: Type): Constraint<Any?> = Constraint { value ->
-                val elements = when (value) {
-                    null -> return@Constraint
-                    is Iterable<*> -> value.toList()
-                    is Array<*> -> value.toList()
-                    else -> return@Constraint
-                }
+            override fun make(data: NoDuplicates, type: Type): Constraint<Any?> {
+                return Constraint { value ->
+                    val elements = when (value) {
+                        null -> return@Constraint
+                        is Iterable<*> -> value.toList()
+                        is Array<*> -> value.toList()
+                        else -> return@Constraint
+                    }
 
-                if (elements.size != elements.toSet().size) {
-                    throw SerializationException("Collection must not contain duplicate values")
+                    if (elements.size != elements.toSet().size) {
+                        throw SerializationException("Collection must not contain duplicate values")
+                    }
                 }
             }
         }

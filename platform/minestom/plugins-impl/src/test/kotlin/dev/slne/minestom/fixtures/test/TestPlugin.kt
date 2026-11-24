@@ -90,8 +90,9 @@ class TestPluginSurfListener {
 class TestPluginBeans {
 
     @Bean
-    fun listenerNode(): EventNode<Event> =
-        EventNode.all("test-plugin-listeners").addListener(PlayerSpawnEvent::class.java) { }
+    fun listenerNode(): EventNode<Event> {
+        return EventNode.all("test-plugin-listeners").addListener(PlayerSpawnEvent::class.java) { }
+    }
 
     @Bean
     fun beanCommand(): CommandAPICommand = CommandAPICommand(BEAN_COMMAND).anyExecutor { _, _ -> }

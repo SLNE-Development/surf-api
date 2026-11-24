@@ -37,9 +37,12 @@ class EntityViewerLookupTest {
                 }
                 // One chunk outside each edge and corner.
                 val outside = range + 1
+
                 for (dx in intArrayOf(-outside, 0, outside)) {
                     for (dz in intArrayOf(-outside, 0, outside)) {
-                        if (dx != 0 || dz != 0) fixture.spawn(centerX + dx, centerZ + dz)
+                        if (dx != 0 || dz != 0) {
+                            fixture.spawn(centerX + dx, centerZ + dz)
+                        }
                     }
                 }
 
@@ -58,6 +61,7 @@ class EntityViewerLookupTest {
     @Test
     fun `negative chunk coordinates match the reference filter`(env: Env) {
         val fixture = TrackerFixture()
+
         for (range in listOf(0, 1, 8, 32)) {
             val centerX = -40
             val centerZ = -33
@@ -75,6 +79,7 @@ class EntityViewerLookupTest {
         val fixture = TrackerFixture()
         repeat(64) { fixture.spawn(3, -2) }
         fixture.spawn(4, -2)
+
         for (range in listOf(0, 1, 8)) {
             fixture.assertEquivalent(3, -2, range)
             fixture.assertEquivalent(2, -2, range)
@@ -84,11 +89,13 @@ class EntityViewerLookupTest {
     @Test
     fun `entities distributed over thousands of chunks match the reference filter`(env: Env) {
         val fixture = TrackerFixture()
+
         for (chunkX in -40..40 step 2) {
             for (chunkZ in -40..40 step 2) {
                 fixture.spawn(chunkX, chunkZ)
             }
         }
+
         fixture.assertEquivalent(0, 0, 32)
         fixture.assertEquivalent(7, -5, 32)
         fixture.assertEquivalent(-39, 39, 8)
@@ -135,8 +142,9 @@ class EntityViewerLookupTest {
         private val tracker = EntityTracker.newTracker()
         private val recorded = HashMap<Int, Point>()
         private val recordedChunks = HashMap<Int, Pair<Int, Int>>()
-        private val resolver =
-            EntityViewerLookup.EntityPositionResolver { entity -> recorded[entity.entityId] }
+        private val resolver = EntityViewerLookup.EntityPositionResolver { entity ->
+            recorded[entity.entityId]
+        }
 
         fun spawn(chunkX: Int, chunkZ: Int): Entity {
             val entity = Entity(EntityType.ZOMBIE)
@@ -144,6 +152,7 @@ class EntityViewerLookupTest {
             tracker.register(entity, point, EntityTracker.Target.ENTITIES, null)
             recorded[entity.entityId] = point
             recordedChunks[entity.entityId] = chunkX to chunkZ
+
             return entity
         }
 
@@ -160,11 +169,12 @@ class EntityViewerLookupTest {
             recordedChunks.remove(entity.entityId)
         }
 
-        fun expectedNearby(centerChunkX: Int, centerChunkZ: Int, range: Int): Set<Int> =
-            recordedChunks.filterValues { (chunkX, chunkZ) ->
+        fun expectedNearby(centerChunkX: Int, centerChunkZ: Int, range: Int): Set<Int> {
+            return recordedChunks.filterValues { (chunkX, chunkZ) ->
                 chunkX in centerChunkX - range..centerChunkX + range &&
                     chunkZ in centerChunkZ - range..centerChunkZ + range
             }.keys
+        }
 
         fun directNearby(centerChunkX: Int, centerChunkZ: Int, range: Int): Set<Int> {
             val ids = LinkedHashSet<Int>()
@@ -174,7 +184,13 @@ class EntityViewerLookupTest {
                 centerChunkX,
                 centerChunkZ,
                 range,
-            ) { entity -> assertTrue(ids.add(entity.entityId), "direct scan visited an entity twice") }
+            ) { entity ->
+                assertTrue(
+                    ids.add(entity.entityId),
+                    "direct scan visited an entity twice",
+                )
+            }
+
             return ids
         }
 
@@ -186,10 +202,16 @@ class EntityViewerLookupTest {
             )
         }
 
-        private fun chunkCenter(chunkX: Int, chunkZ: Int): Point =
-            Pos(chunkX * 16.0 + 8.0, 42.0, chunkZ * 16.0 + 8.0).also { point ->
+        private fun chunkCenter(chunkX: Int, chunkZ: Int): Point {
+            return Pos(chunkX * 16.0 + 8.0, 42.0, chunkZ * 16.0 + 8.0).also { point ->
                 check(point.chunkX() == chunkX && point.chunkZ() == chunkZ)
-                check(CoordConversion.chunkIndex(point) == CoordConversion.chunkIndex(chunkX, chunkZ))
+                check(
+                    CoordConversion.chunkIndex(point) == CoordConversion.chunkIndex(
+                        chunkX,
+                        chunkZ,
+                    ),
+                )
             }
+        }
     }
 }

@@ -26,6 +26,7 @@ interface ServerboundCustomPayloadPacket : NmsServerboundPacket {
             override fun hashCode(): Int {
                 var result = id.hashCode()
                 result = 31 * result + data.contentHashCode()
+
                 return result
             }
         }

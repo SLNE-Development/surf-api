@@ -18,8 +18,8 @@ import java.util.jar.JarFile
  */
 internal fun interface SuperclassLookup {
     /**
-     * Returns the internal name of the superclass of [internalName], or `null` for `java/lang/Object`
-     * and for a class the lookup cannot find.
+     * Returns the internal name of the superclass of [internalName], or `null` for
+     * `java/lang/Object` and for a class the lookup cannot find.
      */
     fun superclassOf(internalName: String): String?
 }
@@ -39,7 +39,8 @@ internal sealed interface SuperclassChain {
  */
 internal object SuperclassChecker {
     /**
-     * Follows the superclasses of [className] (a binary name such as `a.b.C`) until [expectedBase] or the end of the chain.
+     * Follows the superclasses of [className] (a binary name such as `a.b.C`) until [expectedBase]
+     * or the end of the chain.
      */
     fun check(className: String, expectedBase: String, lookup: SuperclassLookup): SuperclassChain {
         val chain = mutableListOf(className)
@@ -50,10 +51,14 @@ internal object SuperclassChecker {
         while (current != target) {
             if (!seen.add(current)) break
             val next = lookup.superclassOf(current) ?: break
+
             chain += next.replace('/', '.')
             current = next
         }
-        return if (current == target) SuperclassChain.Reaches(chain) else SuperclassChain.Misses(chain)
+
+        return if (current == target) SuperclassChain.Reaches(chain) else SuperclassChain.Misses(
+            chain,
+        )
     }
 }
 
@@ -66,7 +71,8 @@ internal object SuperclassChecker {
  * Only the header is parsed, so the check works on classes compiled for a newer class file
  * version than the surrounding code and never loads a class.
  */
-internal class ClassPathLookup(directories: Collection<File>, classpath: Collection<File>) : SuperclassLookup, Closeable {
+internal class ClassPathLookup(directories: Collection<File>, classpath: Collection<File>) :
+    SuperclassLookup, Closeable {
     private val directories = (directories + classpath).filter { it.isDirectory }
     private val openJars = classpath.filter { it.isFile && it.extension == "jar" }.mapNotNull {
         try {
@@ -88,12 +94,16 @@ internal class ClassPathLookup(directories: Collection<File>, classpath: Collect
         }?.let { return it }
 
         return openJars.firstNotNullOfOrNull { jar ->
-            jar.getJarEntry(entry)?.let { jar.getInputStream(it).use { stream -> ClassReader(stream) } }
+            jar.getJarEntry(entry)?.let {
+                jar.getInputStream(it).use { stream -> ClassReader(stream) }
+            }
         }
     }
 
     override fun close() {
-        openJars.forEach { it.close() }
+        for (openJar in openJars) {
+            openJar.close()
+        }
     }
 }
 
@@ -121,12 +131,23 @@ abstract class CheckSurfPluginClassesTask : VerificationTask() {
 
     @TaskAction
     fun check() {
-        val failures = ClassPathLookup(classDirectories.files, compileClasspath.files).use { lookup ->
-            expectedBases.get().mapNotNull { (className, base) -> failureOf(className, base, lookup) }
+        val failures = ClassPathLookup(
+            classDirectories.files,
+            compileClasspath.files,
+        ).use { lookup ->
+            expectedBases.get().mapNotNull { (className, base) ->
+                failureOf(
+                    className,
+                    base,
+                    lookup,
+                )
+            }
         }
+
         if (failures.isNotEmpty()) {
             throw GradleException(failures.joinToString("\n"))
         }
+
         markPassed()
     }
 
@@ -142,8 +163,8 @@ abstract class CheckSurfPluginClassesTask : VerificationTask() {
         if (result is SuperclassChain.Reaches) return null
 
         return "The class '$className' named in $declaredIn must extend '$base', " +
-                "but its superclass chain is ${result.chain.joinToString(" -> ")}. " +
-                "Extend '$base' or remove the class from $declaredIn to use the generated one. " +
-                "Disable this check with verifyPluginClasses = false."
+            "but its superclass chain is ${result.chain.joinToString(" -> ")}. " +
+            "Extend '$base' or remove the class from $declaredIn to use the generated one. " +
+            "Disable this check with verifyPluginClasses = false."
     }
 }

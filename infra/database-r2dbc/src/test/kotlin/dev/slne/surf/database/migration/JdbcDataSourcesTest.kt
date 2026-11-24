@@ -18,8 +18,8 @@ class JdbcDataSourcesTest {
         val ds = JdbcDataSources.create(
             ConnectionDetails(
                 databaseType = DatabaseType.MARIADB, host = "h", port = IntOr.Default(1),
-                database = "d", username = "u", password = "p"
-            )
+                database = "d", username = "u", password = "p",
+            ),
         )
         assertIs<MariaDbDataSource>(ds)
         assertTrue(ds.url.contains("jdbc:mariadb://h:1/d"), ds.url)
@@ -29,9 +29,14 @@ class JdbcDataSourcesTest {
     fun createsPostgresDataSourceWithSchema() {
         val ds = JdbcDataSources.create(
             ConnectionDetails(
-                databaseType = DatabaseType.POSTGRESQL, schema = "s", host = "h", port = IntOr.Default(1),
-                database = "d", username = "u", password = "p"
-            )
+                databaseType = DatabaseType.POSTGRESQL,
+                schema = "s",
+                host = "h",
+                port = IntOr.Default(1),
+                database = "d",
+                username = "u",
+                password = "p",
+            ),
         )
         assertIs<PGSimpleDataSource>(ds)
         assertContentEquals(arrayOf("h"), ds.serverNames)

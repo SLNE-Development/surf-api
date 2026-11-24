@@ -13,11 +13,12 @@ private const val DATABASE_GROUP = "dev.slne.surf.api"
 private const val DATABASE_ARTIFACT = "surf-api-database-r2dbc"
 
 /**
- * Adds the microservice API (`api`), the runtime and, while [database] is enabled, the database integration plus
- * `surf-api-database-r2dbc` (all `implementation`). The runtime is on the compile classpath because the microservice
- * calls `runMicroservice` from its `main` function.
+ * Adds the microservice API (`api`), the runtime and, while [database] is enabled, the database
+ * integration plus `surf-api-database-r2dbc` (all `implementation`). The runtime is on the compile
+ * classpath because the microservice calls `runMicroservice` from its `main` function.
  *
- * Requires `java-library`. The database dependencies follow [database] until `implementation` is first resolved.
+ * Requires `java-library`. The database dependencies follow [database] until `implementation` is
+ * first resolved.
  */
 internal fun Project.addMicroserviceDependencies(database: MicroserviceDatabaseExtension) {
     dependencies {
@@ -31,7 +32,9 @@ internal fun Project.addMicroserviceDependencies(database: MicroserviceDatabaseE
     }
 }
 
-private fun Project.databaseDependencies(database: MicroserviceDatabaseExtension): Provider<List<Dependency>> {
+private fun Project.databaseDependencies(
+    database: MicroserviceDatabaseExtension,
+): Provider<List<Dependency>> {
     val factory = dependencyFactory
     val integration = microserviceModule("surf-api-microservice-database")
     val none = providers.provider { emptyList<Dependency>() }

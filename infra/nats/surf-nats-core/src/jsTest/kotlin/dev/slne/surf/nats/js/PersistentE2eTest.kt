@@ -4,13 +4,7 @@ import dev.slne.surf.nats.js.api.CallOptions
 import dev.slne.surf.nats.js.client.JsRuntimeDefaults
 import dev.slne.surf.nats.js.error.NatsCallTimeoutError
 import dev.slne.surf.nats.js.error.NatsRpcError
-import dev.slne.surf.nats.js.fixtures.AuditEntry
-import dev.slne.surf.nats.js.fixtures.AuditEntrySchema
-import dev.slne.surf.nats.js.fixtures.AuditQuerySchema
-import dev.slne.surf.nats.js.fixtures.AuditResult
-import dev.slne.surf.nats.js.fixtures.AuditResultSchema
-import dev.slne.surf.nats.js.fixtures.AuditService
-import dev.slne.surf.nats.js.fixtures.fields
+import dev.slne.surf.nats.js.fixtures.*
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.protocol.ServiceNames
@@ -38,7 +32,10 @@ class PersistentE2eTest {
 
     private fun entry(action: String, data: Uint8Array<*>? = null): AuditEntry = unsafeJso {
         this.action = action
-        if (data != null) this.data = data
+
+        if (data != null) {
+            this.data = data
+        }
     }
 
     private val names = ServiceNames("surf.natsjs.test.v1.AuditService")
@@ -47,6 +44,7 @@ class PersistentE2eTest {
     fun fireIsStoredWithMsgIdAndWithoutDeadline() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
+
         try {
             raw.addPersistentStreams(names)
 
@@ -57,12 +55,18 @@ class PersistentE2eTest {
             assertEquals(names.methodSubject("Record", true), message.subject)
             val msgId = assertNotNull(header(message, ProtocolHeaders.NATS_MSG_ID))
             assertEquals(36, msgId.length)
-            assertEquals(ProtocolHeaders.PROTOBUF_CONTENT_TYPE, header(message, ProtocolHeaders.CONTENT_TYPE))
+            assertEquals(
+                ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+                header(message, ProtocolHeaders.CONTENT_TYPE),
+            )
             assertEquals(client.origin, header(message, ProtocolHeaders.ORIGIN))
             assertNull(header(message, ProtocolHeaders.DEADLINE))
             assertNull(header(message, ProtocolHeaders.NATS_TTL))
             assertNull(header(message, ProtocolHeaders.REPLY_TO))
-            assertEquals("ban", raw.decode(AuditEntrySchema, message.data).fields<AuditEntry>().action)
+            assertEquals(
+                "ban",
+                raw.decode(AuditEntrySchema, message.data).fields<AuditEntry>().action,
+            )
             message.ack()
         } finally {
             client.close().await()
@@ -74,6 +78,7 @@ class PersistentE2eTest {
     fun fireWithoutStreamIsRejected() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
+
         try {
             raw.deletePersistentStreams(names)
             val error = assertFailsWith<NatsRpcError> {
@@ -95,6 +100,7 @@ class PersistentE2eTest {
     fun persistentRpcRepliesThroughTheReplyInbox() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
+
         try {
             raw.addPersistentStreams(names)
 
@@ -110,9 +116,16 @@ class PersistentE2eTest {
                 assertNotNull(header(message, ProtocolHeaders.NATS_MSG_ID))
                 // AuditService has call_timeout_seconds: 10
                 assertEquals("10s", header(message, ProtocolHeaders.NATS_TTL))
-                assertEquals("ban", raw.decode(AuditQuerySchema, message.data).fields<AuditEntry>().action)
+                assertEquals(
+                    "ban",
+                    raw.decode(AuditQuerySchema, message.data).fields<AuditEntry>().action,
+                )
 
-                raw.publish(replyTo, raw.encode(AuditResultSchema, unsafeJso<AuditResult> { count = 3 }), raw.jvmHeaders())
+                raw.publish(
+                    replyTo,
+                    raw.encode(AuditResultSchema, unsafeJso<AuditResult> { count = 3 }),
+                    raw.jvmHeaders(),
+                )
                 message.ack()
 
                 assertEquals(3, call.await().fields<AuditResult>().count)
@@ -127,12 +140,17 @@ class PersistentE2eTest {
     fun persistentRpcTimesOutWithoutReply() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
+
         try {
             raw.addPersistentStreams(names)
             coroutineScope {
                 val call = async {
                     assertFails {
-                        client.call(method("query"), entry("x"), callOptions(timeoutMs = 1500)).await()
+                        client.call(
+                            method("query"),
+                            entry("x"),
+                            callOptions(timeoutMs = 1500),
+                        ).await()
                     }
                 }
 
@@ -154,12 +172,17 @@ class PersistentE2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
         val key = "audit-${uniqueName("action")}"
+
         try {
             raw.addPersistentStreams(names)
             coroutineScope {
                 val lost = async {
                     assertFails {
-                        client.call(method("query"), entry("ban"), CallOptions(timeoutMs = 1500, idempotencyKey = key))
+                        client.call(
+                            method("query"),
+                            entry("ban"),
+                            CallOptions(timeoutMs = 1500, idempotencyKey = key),
+                        )
                             .await()
                     }
                 }
@@ -170,13 +193,29 @@ class PersistentE2eTest {
 
                 // Within the duplicate window of the stream
                 val repeat = async {
-                    client.call(method("query"), entry("ban"), CallOptions(idempotencyKey = key)).await()
+                    client.call(
+                        method("query"),
+                        entry("ban"),
+                        CallOptions(idempotencyKey = key),
+                    ).await()
                 }
-                val second = assertNotNull(raw.nextPersistent(names), "the repeat must be stored again")
+                val second = assertNotNull(
+                    raw.nextPersistent(names),
+                    "the repeat must be stored again",
+                )
                 assertEquals(key, header(second, ProtocolHeaders.MESSAGE_ID))
-                assertTrue(header(first, ProtocolHeaders.NATS_MSG_ID) != header(second, ProtocolHeaders.NATS_MSG_ID))
+                assertTrue(
+                    header(first, ProtocolHeaders.NATS_MSG_ID) != header(
+                        second,
+                        ProtocolHeaders.NATS_MSG_ID,
+                    ),
+                )
                 val replyTo = assertNotNull(header(second, ProtocolHeaders.REPLY_TO))
-                raw.publish(replyTo, raw.encode(AuditResultSchema, unsafeJso<AuditResult> { count = 7 }), raw.jvmHeaders())
+                raw.publish(
+                    replyTo,
+                    raw.encode(AuditResultSchema, unsafeJso<AuditResult> { count = 7 }),
+                    raw.jvmHeaders(),
+                )
                 second.ack()
 
                 assertEquals(7, repeat.await().fields<AuditResult>().count)
@@ -191,11 +230,20 @@ class PersistentE2eTest {
     fun invalidIdempotencyKeysAreRejectedBeforePublishing() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
+
         try {
             raw.addPersistentStreams(names)
-            for (key in listOf("", "with space", "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1))) {
+            for (key in listOf(
+                "",
+                "with space",
+                "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1),
+            )) {
                 val error = assertFails {
-                    client.call(method("record"), entry("x"), CallOptions(idempotencyKey = key)).await()
+                    client.call(
+                        method("record"),
+                        entry("x"),
+                        CallOptions(idempotencyKey = key),
+                    ).await()
                 }
                 assertTrue(error.message!!.startsWith("Idempotency key"), error.message)
             }
@@ -211,6 +259,7 @@ class PersistentE2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
         val previousTimeout = JsRuntimeDefaults.jetStreamPublishTimeout
+
         try {
             // The stream stores and deduplicates, but never acknowledges a publish
             raw.addPersistentStreams(names, noAck = true)
@@ -232,8 +281,16 @@ class PersistentE2eTest {
             assertTrue(took in 2400..6000, "took $took ms")
             eventually { attempts.size >= 2 }
             assertNotNull(attempts.first())
-            assertEquals(1, attempts.toSet().size, "every attempt must carry the same Nats-Msg-Id: $attempts")
-            assertEquals(1, raw.streamMessages(names.stream), "the stream must deduplicate the attempts")
+            assertEquals(
+                1,
+                attempts.toSet().size,
+                "every attempt must carry the same Nats-Msg-Id: $attempts",
+            )
+            assertEquals(
+                1,
+                raw.streamMessages(names.stream),
+                "the stream must deduplicate the attempts",
+            )
         } finally {
             JsRuntimeDefaults.jetStreamPublishTimeout = previousTimeout
             client.close().await()
@@ -247,6 +304,7 @@ class PersistentE2eTest {
         val client = TestNats.client(uniqueName("persist-caller"))
         val previousTimeout = JsRuntimeDefaults.jetStreamPublishTimeout
         val previousWindow = RuntimeDefaults.dedupeWindow
+
         try {
             raw.addPersistentStreams(names, noAck = true)
             JsRuntimeDefaults.jetStreamPublishTimeout = 400.milliseconds
@@ -273,6 +331,7 @@ class PersistentE2eTest {
     fun largeFireUsesThePersistentPayloadBucket() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("persist-caller"))
+
         try {
             raw.addPersistentStreams(names)
             val data = bytesOfSize(1_500_000)
@@ -282,7 +341,12 @@ class PersistentE2eTest {
             val message = assertNotNull(raw.nextPersistent(names))
             val ref = assertNotNull(header(message, ProtocolHeaders.PAYLOAD_REF))
             assertEquals(0, message.data.length)
-            val storedBytes = assertNotNull(raw.getBlob(ProtocolDefaults.PERSISTENT_PAYLOAD_BUCKET, ref))
+            val storedBytes = assertNotNull(
+                raw.getBlob(
+                    ProtocolDefaults.PERSISTENT_PAYLOAD_BUCKET,
+                    ref,
+                ),
+            )
             val stored = raw.decode(AuditEntrySchema, storedBytes).fields<AuditEntry>()
             assertEquals("big", stored.action)
             assertTrue(data.contentEquals(stored.data))

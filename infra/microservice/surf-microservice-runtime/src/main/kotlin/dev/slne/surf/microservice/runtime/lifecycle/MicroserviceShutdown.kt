@@ -3,12 +3,14 @@ package dev.slne.surf.microservice.runtime.lifecycle
 import java.util.concurrent.CountDownLatch
 
 /**
- * The shutdown request of the running microservice, such as the `exit` command or the close of its context.
+ * The shutdown request of the running microservice, such as the `exit` command or the close of its
+ * context.
  *
- * [request] may be called from any thread and any number of times; [awaitRequest] returns after the first call.
+ * [request] may be called from any thread and any number of times; [awaitRequest] returns after the
+ * first call.
  *
- * The request does not say when the close of the context is over, because another thread than the waiting one may
- * close it: [awaitContextClosed] returns once [markContextClosed] ran.
+ * The request does not say when the close of the context is over, because another thread than the
+ * waiting one may close it: [awaitContextClosed] returns once [markContextClosed] ran.
  */
 internal class MicroserviceShutdown {
     private val requested = CountDownLatch(1)
@@ -31,7 +33,8 @@ internal class MicroserviceShutdown {
     }
 
     /**
-     * Signals that the context destroyed all its beans, the last step of a close that runs application code.
+     * Signals that the context destroyed all its beans, the last step of a close that runs
+     * application code.
      */
     fun markContextClosed() {
         contextClosed.countDown()

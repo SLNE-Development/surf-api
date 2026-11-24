@@ -58,20 +58,23 @@ class PluginExport internal constructor(
         check(owner.isActive) {
             "Plugin '$provider' is closed; its export '$beanName' is no longer available"
         }
+
         return withContextClassLoader(ownerClassLoader) { owner.beanFactory.getBean(beanName) }
     }
 
-    internal fun toBeanDefinition(): RootBeanDefinition = RootBeanDefinition().apply {
-        setTargetType(type)
-        isPrimary = primary
-        isFallback = fallback
-        isDefaultCandidate = defaultCandidate
-        isLazyInit = true
-        isSynthetic = true
-        qualifier?.let { addQualifier(AutowireCandidateQualifier(Qualifier::class.java, it)) }
+    internal fun toBeanDefinition(): RootBeanDefinition {
+        return RootBeanDefinition().apply {
+            setTargetType(type)
+            isPrimary = primary
+            isFallback = fallback
+            isDefaultCandidate = defaultCandidate
+            isLazyInit = true
+            isSynthetic = true
+            qualifier?.let { addQualifier(AutowireCandidateQualifier(Qualifier::class.java, it)) }
+        }
     }
 
-    override fun toString() = "PluginExport($importName: $type)"
+    override fun toString(): String = "PluginExport($importName: $type)"
 
     companion object {
 
@@ -115,6 +118,7 @@ internal fun collectExports(
     classLoader: ClassLoader,
 ): List<PluginExport> {
     val beanFactory = context.beanFactory
+
     return beanFactory.beanDefinitionNames.mapNotNull { name ->
         exportedBeanType(beanFactory, name)?.let { type ->
             createExport(provider, context, classLoader, name, type)
@@ -146,18 +150,19 @@ internal fun collectReferences(
 
 private fun isCandidate(definition: BeanDefinition): Boolean {
     return !definition.isAbstract &&
-            definition.isSingleton &&
-            definition.isAutowireCandidate &&
-            definition.role == BeanDefinition.ROLE_APPLICATION
+        definition.isSingleton &&
+        definition.isAutowireCandidate &&
+        definition.role == BeanDefinition.ROLE_APPLICATION
 }
 
 private fun exportedBeanType(
     beanFactory: ConfigurableListableBeanFactory,
-    name: String
+    name: String,
 ): Class<*>? {
     if (!isCandidate(beanFactory.getMergedBeanDefinition(name))) return null
 
     val type = beanFactory.getType(name, false) ?: return null
+
     return type.takeIf { type ->
         ClassUtils.getAllInterfacesForClassAsSet(type).any { api -> api.isPluginApi() }
     }
@@ -176,7 +181,10 @@ private fun createExport(
     type: Class<*>,
     ownReference: Boolean = false,
 ): PluginExport {
-    if (!ownReference) checkNotSelfManaged(provider, name, type)
+    if (!ownReference) {
+        checkNotSelfManaged(provider, name, type)
+    }
+
     val beanFactory = context.beanFactory
     val definition = beanFactory.getMergedBeanDefinition(name)
 
@@ -202,11 +210,11 @@ private fun createExport(
 internal fun checkNotSelfManaged(provider: String, beanName: String, type: Class<*>) {
     check(
         !Lifecycle::class.java.isAssignableFrom(type) &&
-                !ApplicationListener::class.java.isAssignableFrom(type)
+            !ApplicationListener::class.java.isAssignableFrom(type),
     ) {
         "Plugin '$provider' exports bean '$beanName', which implements Lifecycle or ApplicationListener. " +
-                "A consumer context would start, stop or register it a second time; move that part " +
-                "into a bean that implements no @PluginApi interface."
+            "A consumer context would start, stop or register it a second time; move that part " +
+            "into a bean that implements no @PluginApi interface."
     }
 }
 

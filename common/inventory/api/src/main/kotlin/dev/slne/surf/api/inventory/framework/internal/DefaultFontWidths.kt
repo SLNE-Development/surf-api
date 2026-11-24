@@ -112,6 +112,7 @@ object DefaultFontWidths {
     ): Int {
         var width = 0
         var index = 0
+
         while (index < text.length) {
             val codePoint = text.codePointAt(index)
             width += charWidth(codePoint, bold, overrides)
@@ -136,11 +137,13 @@ object DefaultFontWidths {
         component: Component,
         bold: Boolean = false,
         overrides: Map<Int, Int> = emptyMap(),
-    ): Int = layoutViewText(
-        component = component,
-        charSpacing = 0,
-        uppercase = false,
-        spaceShift = null,
-        bold = bold,
-    ) { codePoint, glyphBold -> charWidth(codePoint, glyphBold, overrides) }.width
+    ): Int {
+        return layoutViewText(
+            component = component,
+            charSpacing = 0,
+            uppercase = false,
+            spaceShift = null,
+            bold = bold,
+        ) { codePoint, glyphBold -> charWidth(codePoint, glyphBold, overrides) }.width
+    }
 }

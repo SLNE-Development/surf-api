@@ -6,7 +6,8 @@ import dev.slne.surf.nats.protocol.ProtocolOptions
 import dev.slne.surf.nats.protocol.RecipientsOption
 
 /**
- * The scalar and enum fields of one surf option message. Every getter returns `null` for an unset field.
+ * The scalar and enum fields of one surf option message. Every getter returns `null` for an unset
+ * field.
  */
 internal class OptionValues(private val message: ReflectMessage?) {
     fun boolean(name: String): Boolean? = value(name) as Boolean?
@@ -14,11 +15,14 @@ internal class OptionValues(private val message: ReflectMessage?) {
     fun int(name: String): Int? = value(name) as Int?
 
     /**
-     * Returns the numeric field [name], including `uint32` values beyond the `Int` range that [int] cannot represent.
+     * Returns the numeric field [name], including `uint32` values beyond the `Int` range that [int]
+     * cannot represent.
      */
     fun number(name: String): Double? = value(name) as Double?
 
-    fun recipients(): RecipientsOption? = int(ProtocolOptions.RECIPIENTS)?.let(RecipientsOption::ofNumber)
+    fun recipients(): RecipientsOption? {
+        return int(ProtocolOptions.RECIPIENTS)?.let(RecipientsOption::ofNumber)
+    }
 
     private fun value(name: String): Any? {
         val message = message ?: return null

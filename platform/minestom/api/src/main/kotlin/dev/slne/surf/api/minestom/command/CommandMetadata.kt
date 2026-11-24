@@ -17,11 +17,13 @@ data class CommandMetadata(
             fullDescription: Collection<String>,
             usage: Collection<String>,
             help: String?,
-        ): CommandMetadata = CommandMetadata(
-            shortDescription = shortDescription,
-            fullDescription = fullDescription.toList(),
-            usage = usage.toList(),
-            help = help,
-        )
+        ): CommandMetadata {
+            return CommandMetadata(
+                shortDescription = shortDescription,
+                fullDescription = fullDescription.toList(),
+                usage = usage.toList(),
+                help = help,
+            )
+        }
     }
 }

@@ -5,8 +5,9 @@ import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabaseConfig
 /**
  * Customizes Exposed's configuration of the database that [SurfDatabaseAutoConfiguration] connects.
  *
- * Every bean runs in `@Order` order after the library's defaults are set, including `defaultMaxAttempts = 1`, which a
- * bean can raise to restore Exposed's implicit retries. For example:
+ * Every bean runs in `@Order` order after the library's defaults are set, including
+ * `defaultMaxAttempts = 1`, which a bean can raise to restore Exposed's implicit retries. For
+ * example:
  *
  * ```
  * @Bean

@@ -12,8 +12,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * contexts get no contributions: the root context, and with it the contributors, does not exist
  * yet in Paper's bootstrap phase.
  *
- * A root context that hosts an application in the same context, such as a standalone service,
- * finds its contributors through `java.util.ServiceLoader` instead, because no bean exists before its
+ * A root context that hosts an application in the same context, such as a standalone service, finds
+ * its contributors through `java.util.ServiceLoader` instead, because no bean exists before its
  * refresh; a contributor is therefore also listed in `META-INF/services` and has a constructor
  * without parameters.
  */

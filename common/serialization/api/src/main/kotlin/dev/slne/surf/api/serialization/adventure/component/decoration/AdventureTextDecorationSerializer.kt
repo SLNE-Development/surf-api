@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 import net.kyori.adventure.text.format.TextDecoration
 
-typealias SerializableTextDecoration = @Serializable(with = AdventureTextDecorationSerializer::class) TextDecoration
+typealias SerializableTextDecoration = @Serializable(
+    with = AdventureTextDecorationSerializer::class,
+) TextDecoration
 
 object AdventureTextDecorationSerializer : KSerializer<TextDecoration> by serializer()

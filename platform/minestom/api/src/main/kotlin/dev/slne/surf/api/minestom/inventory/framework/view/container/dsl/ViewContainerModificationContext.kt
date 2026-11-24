@@ -16,4 +16,6 @@ import dev.slne.surf.api.minestom.inventory.framework.view.container.ViewContain
  * @see blockCell
  */
 @ConsistentCopyVisibility
-data class ViewContainerModificationContext internal constructor(@PublishedApi internal val container: ViewContainer)
+data class ViewContainerModificationContext internal constructor(
+    @PublishedApi internal val container: ViewContainer,
+)

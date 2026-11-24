@@ -16,12 +16,13 @@ import org.jetbrains.exposed.v1.r2dbc.mappers.R2dbcTypeMapping
 /**
  * Connects Exposed to a [ConnectionFactory] with the library's defaults.
  *
- * Transactions default to READ COMMITTED, so they never read uncommitted rows of other transactions; [customize] may
- * set another `defaultR2dbcIsolationLevel`. Exposed applies the level per transaction, so MariaDB's session variable
- * `@@tx_isolation` does not show it.
+ * Transactions default to READ COMMITTED, so they never read uncommitted rows of other
+ * transactions; [customize] may set another `defaultR2dbcIsolationLevel`. Exposed applies the level
+ * per transaction, so MariaDB's session variable `@@tx_isolation` does not show it.
  *
- * The type mapping registers [UtcSessionTypeMapper] on top of Exposed's defaults. A [customize] that replaces
- * `typeMapping` drops it, and Exposed's `timestamp()` columns then convert through the JVM default zone again.
+ * The type mapping registers [UtcSessionTypeMapper] on top of Exposed's defaults. A [customize]
+ * that replaces `typeMapping` drops it, and Exposed's `timestamp()` columns then convert through
+ * the JVM default zone again.
  */
 internal object DatabaseConnector {
 
@@ -30,20 +31,23 @@ internal object DatabaseConnector {
         dialect: DatabaseDialect,
         sqlLogger: SqlLogger,
         customize: R2dbcDatabaseConfig.Builder.() -> Unit = {},
-    ): R2dbcDatabase = R2dbcDatabase.connect(
-        connectionFactory,
-        R2dbcDatabaseConfig {
-            explicitDialect = dialect
-            typeMapping = utcTypeMapping()
-            this.sqlLogger = sqlLogger
-            defaultR2dbcIsolationLevel = IsolationLevel.READ_COMMITTED
-            customize()
-        },
-    )
+    ): R2dbcDatabase {
+        return R2dbcDatabase.connect(
+            connectionFactory,
+            R2dbcDatabaseConfig {
+                explicitDialect = dialect
+                typeMapping = utcTypeMapping()
+                this.sqlLogger = sqlLogger
+                defaultR2dbcIsolationLevel = IsolationLevel.READ_COMMITTED
+                customize()
+            },
+        )
+    }
 
     private fun utcTypeMapping(): R2dbcTypeMapping {
         val mapping = R2dbcRegistryTypeMapping.default() as R2dbcRegistryTypeMapping
         mapping.register(UtcSessionTypeMapper)
+
         return mapping
     }
 }
@@ -51,7 +55,9 @@ internal object DatabaseConnector {
 /**
  * A new instance of the Exposed dialect of this vendor.
  */
-internal fun DatabaseType.newDialect(): DatabaseDialect = when (this) {
-    DatabaseType.MARIADB -> MariaDBDialect()
-    DatabaseType.POSTGRESQL -> PostgreSQLDialect()
+internal fun DatabaseType.newDialect(): DatabaseDialect {
+    return when (this) {
+        DatabaseType.MARIADB -> MariaDBDialect()
+        DatabaseType.POSTGRESQL -> PostgreSQLDialect()
+    }
 }

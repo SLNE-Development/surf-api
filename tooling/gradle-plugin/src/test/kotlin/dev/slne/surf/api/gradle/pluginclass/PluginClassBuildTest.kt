@@ -13,13 +13,18 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Builds with the surf plugins through TestKit, offline. The surf-api artifacts cannot be resolved, so
- * only tasks that need no dependency resolution run, and nothing is compiled.
+ * Builds with the surf plugins through TestKit, offline. The surf-api artifacts cannot be resolved,
+ * so only tasks that need no dependency resolution run, and nothing is compiled.
  */
 class PluginClassBuildTest {
 
-    private fun project(info: TestInfo, plugin: String, extension: String, configure: String = ""): TestBuild =
-        TestBuild.create(info.displayName, withSurfApi = true).apply {
+    private fun project(
+        info: TestInfo,
+        plugin: String,
+        extension: String,
+        configure: String = "",
+    ): TestBuild {
+        return TestBuild.create(info.displayName, withSurfApi = true).apply {
             file("gradle.properties", "kotlin.stdlib.default.dependency=false")
             file(
                 "build.gradle",
@@ -31,15 +36,20 @@ class PluginClassBuildTest {
                 """,
             )
         }
+    }
 
     private fun TestBuild.source(path: String, content: String) = file("src/main/$path", content)
 
-    private fun TestBuild.pluginYml(): String =
-        dir.resolve("build/generated/plugin-yml/Paper/paper-plugin.yml").readText()
+    private fun TestBuild.pluginYml(): String {
+        return dir.resolve("build/generated/plugin-yml/Paper/paper-plugin.yml").readText()
+    }
 
     private fun TestBuild.baseSources() {
         source("kotlin/com/example/plugin/Greeter.kt", "package com.example.plugin\nclass Greeter")
-        source("java/com/example/plugin/command/Command.java", "package com.example.plugin.command;\nclass Command {}")
+        source(
+            "java/com/example/plugin/command/Command.java",
+            "package com.example.plugin.command;\nclass Command {}",
+        )
     }
 
     @Test
@@ -53,9 +63,17 @@ class PluginClassBuildTest {
         assertContains(description, "main: com.example.plugin.GeneratedSurfPlugin")
         assertContains(description, "bootstrapper: com.example.plugin.GeneratedSurfBootstrapper")
 
-        val generated = build.dir.resolve("build/generated/surf-api/paper-plugin/com/example/plugin")
-        assertContains(generated.resolve("GeneratedSurfPlugin.java").readText(), "extends SurfPaperPlugin")
-        assertContains(generated.resolve("GeneratedSurfBootstrapper.java").readText(), "extends SurfPaperBootstrapper")
+        val generated = build.dir.resolve(
+            "build/generated/surf-api/paper-plugin/com/example/plugin",
+        )
+        assertContains(
+            generated.resolve("GeneratedSurfPlugin.java").readText(),
+            "extends SurfPaperPlugin",
+        )
+        assertContains(
+            generated.resolve("GeneratedSurfBootstrapper.java").readText(),
+            "extends SurfPaperBootstrapper",
+        )
     }
 
     @Test
@@ -76,19 +94,31 @@ class PluginClassBuildTest {
 
     @Test
     fun `paper plugin generates only the class the build script does not name`(info: TestInfo) {
-        val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi", "mainClass 'com.example.plugin.MyPlugin'")
+        val build = project(
+            info,
+            PAPER_PLUGIN,
+            "surfPaperPluginApi",
+            "mainClass 'com.example.plugin.MyPlugin'",
+        )
         build.baseSources()
 
         build.run("generatePaperPluginDescription", "generateSurfPluginClasses")
 
         assertContains(build.pluginYml(), "main: com.example.plugin.MyPlugin")
-        assertContains(build.pluginYml(), "bootstrapper: com.example.plugin.GeneratedSurfBootstrapper")
-        val generated = build.dir.resolve("build/generated/surf-api/paper-plugin/com/example/plugin")
+        assertContains(
+            build.pluginYml(),
+            "bootstrapper: com.example.plugin.GeneratedSurfBootstrapper",
+        )
+        val generated = build.dir.resolve(
+            "build/generated/surf-api/paper-plugin/com/example/plugin",
+        )
         assertEquals(listOf("GeneratedSurfBootstrapper.java"), generated.list()!!.toList())
     }
 
     @Test
-    fun `paper plugin lists surf plugins as server and bootstrap dependencies and CommandAPI as server dependency`(info: TestInfo) {
+    fun `paper plugin lists surf plugins as server and bootstrap dependencies and CommandAPI as server dependency`(
+        info: TestInfo,
+    ) {
         val build = project(
             info, PAPER_PLUGIN, "surfPaperPluginApi",
             "surfPluginDependency 'surf-core-paper'\nsoftSurfPluginDependency 'surf-lobby-paper'",
@@ -99,12 +129,22 @@ class PluginClassBuildTest {
 
         val description = build.pluginYml()
         val (server, bootstrap) = description.substringAfter("dependencies:").let {
-            it.substringAfter("server:").substringBefore("bootstrap:") to it.substringAfter("bootstrap:")
+            it.substringAfter("server:")
+                .substringBefore("bootstrap:") to it.substringAfter("bootstrap:")
         }
 
-        assertContains(server, "surf-core-paper:\n      load: BEFORE\n      required: true\n      join-classpath: true")
-        assertContains(server, "surf-lobby-paper:\n      load: BEFORE\n      required: false\n      join-classpath: true")
-        assertContains(server, "CommandAPI:\n      load: BEFORE\n      required: true\n      join-classpath: true")
+        assertContains(
+            server,
+            "surf-core-paper:\n      load: BEFORE\n      required: true\n      join-classpath: true",
+        )
+        assertContains(
+            server,
+            "surf-lobby-paper:\n      load: BEFORE\n      required: false\n      join-classpath: true",
+        )
+        assertContains(
+            server,
+            "CommandAPI:\n      load: BEFORE\n      required: true\n      join-classpath: true",
+        )
         assertContains(bootstrap, "surf-core-paper:")
         assertContains(bootstrap, "surf-lobby-paper:")
         assertFalse("CommandAPI" in bootstrap, bootstrap)
@@ -118,7 +158,10 @@ class PluginClassBuildTest {
         build.run("generatePaperPluginDescription", "generateSurfPluginClasses")
 
         assertContains(build.pluginYml(), "main: com.example.GeneratedSurfPlugin")
-        assertEquals("com.example", build.dir.resolve("build/generated/surf-api/base-package/base-package.txt").readText())
+        assertEquals(
+            "com.example",
+            build.dir.resolve("build/generated/surf-api/base-package/base-package.txt").readText(),
+        )
     }
 
     @Test
@@ -144,7 +187,9 @@ class PluginClassBuildTest {
     }
 
     @Test
-    fun `a Paper plugin that names its classes needs no common package and is warned about the sources the scan misses`(info: TestInfo) {
+    fun `a Paper plugin that names its classes needs no common package and is warned about the sources the scan misses`(
+        info: TestInfo,
+    ) {
         val build = project(
             info, PAPER_PLUGIN, "surfPaperPluginApi",
             "mainClass 'com.example.Main'\nbootstrapper 'com.example.Boot'\nbasePackage = 'dev.slne.surf.api'",
@@ -156,13 +201,24 @@ class PluginClassBuildTest {
 
         assertContains(build.pluginYml(), "main: com.example.Main")
         assertContains(build.pluginYml(), "bootstrapper: com.example.Boot")
-        assertContains(result.output, "The package 'com.example' of the class 'com.example.Boot' does not contain the source packages 'org.other'")
-        assertEquals("", build.dir.resolve("build/generated/surf-api/base-package/base-package.txt").readText())
+        assertContains(
+            result.output,
+            "The package 'com.example' of the class 'com.example.Boot' does not contain the source packages 'org.other'",
+        )
+        assertEquals(
+            "",
+            build.dir.resolve("build/generated/surf-api/base-package/base-package.txt").readText(),
+        )
     }
 
     @Test
     fun `a Paper plugin that generates only its main class still needs the base package`(info: TestInfo) {
-        val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi", "bootstrapper 'com.example.Boot'")
+        val build = project(
+            info,
+            PAPER_PLUGIN,
+            "surfPaperPluginApi",
+            "bootstrapper 'com.example.Boot'",
+        )
         build.source("kotlin/com/example/Main.kt", "package com.example\nclass Main")
         build.source("kotlin/org/other/Other.kt", "package org.other\nclass Other")
 
@@ -173,19 +229,35 @@ class PluginClassBuildTest {
 
     @Test
     fun `an explicit base package that misses a source package warns`(info: TestInfo) {
-        val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi", "basePackage = 'com.example.core'")
+        val build = project(
+            info,
+            PAPER_PLUGIN,
+            "surfPaperPluginApi",
+            "basePackage = 'com.example.core'",
+        )
         build.source("kotlin/com/example/core/Core.kt", "package com.example.core\nclass Core")
-        build.source("kotlin/com/example/listener/Listener.kt", "package com.example.listener\nclass Listener")
+        build.source(
+            "kotlin/com/example/listener/Listener.kt",
+            "package com.example.listener\nclass Listener",
+        )
 
         val result = build.run("generatePaperPluginDescription", "generateSurfPluginClasses")
 
         assertContains(build.pluginYml(), "main: com.example.core.GeneratedSurfPlugin")
-        assertContains(result.output, "The base package 'com.example.core' does not contain the source packages 'com.example.listener'")
+        assertContains(
+            result.output,
+            "The base package 'com.example.core' does not contain the source packages 'com.example.listener'",
+        )
     }
 
     @Test
     fun `a malformed explicit base package fails the build before the generator runs`(info: TestInfo) {
-        val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi", "basePackage = 'com.example.'")
+        val build = project(
+            info,
+            PAPER_PLUGIN,
+            "surfPaperPluginApi",
+            "basePackage = 'com.example.'",
+        )
         build.baseSources()
 
         val result = build.runAndFail("generateSurfPluginClasses")
@@ -196,7 +268,10 @@ class PluginClassBuildTest {
     @Test
     fun `a Paper plugin inside the surf-api namespace builds`(info: TestInfo) {
         val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi")
-        build.source("kotlin/dev/slne/surf/api/example/Example.kt", "package dev.slne.surf.api.example\nclass Example")
+        build.source(
+            "kotlin/dev/slne/surf/api/example/Example.kt",
+            "package dev.slne.surf.api.example\nclass Example",
+        )
 
         build.run("generatePaperPluginDescription", "generateSurfPluginClasses")
 
@@ -206,7 +281,10 @@ class PluginClassBuildTest {
     @Test
     fun `a Minestom plugin inside the surf-api namespace fails the build, generated or named`(info: TestInfo) {
         val generated = project(info, "dev.slne.surf.api.gradle.minestom", "surfMinestomApi")
-        generated.source("kotlin/dev/slne/surf/api/example/Example.kt", "package dev.slne.surf.api.example\nclass Example")
+        generated.source(
+            "kotlin/dev/slne/surf/api/example/Example.kt",
+            "package dev.slne.surf.api.example\nclass Example",
+        )
 
         val generatedResult = generated.runAndFail("generateMinestomPluginFile")
 
@@ -221,7 +299,10 @@ class PluginClassBuildTest {
             minestomPluginFile { main = 'dev.slne.surf.api.example.Main' }
             """,
         )
-        named.source("kotlin/dev/slne/surf/api/example/Example.kt", "package dev.slne.surf.api.example\nclass Example")
+        named.source(
+            "kotlin/dev/slne/surf/api/example/Example.kt",
+            "package dev.slne.surf.api.example\nclass Example",
+        )
 
         val namedResult = named.runAndFail("computeSurfBasePackage")
 
@@ -244,7 +325,8 @@ class PluginClassBuildTest {
 
         val result = build.run("generateVelocityPluginFile", "generateSurfPluginClasses")
 
-        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json").readText()
+        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json")
+            .readText()
         assertContains(pluginFile, "\"main\": \"com.example.Main\"")
         assertContains(result.output, "does not contain the source packages 'org.other'")
     }
@@ -264,12 +346,19 @@ class PluginClassBuildTest {
 
     @Test
     fun `generatePluginClass off writes no Velocity plugin file and generates no class`(info: TestInfo) {
-        val build = project(info, "dev.slne.surf.api.gradle.velocity", "surfVelocityApi", "generatePluginClass = false")
+        val build = project(
+            info,
+            "dev.slne.surf.api.gradle.velocity",
+            "surfVelocityApi",
+            "generatePluginClass = false",
+        )
         build.baseSources()
 
         build.run("generateVelocityPluginFile", "generateSurfPluginClasses")
 
-        assertFalse(build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json").exists())
+        assertFalse(
+            build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json").exists(),
+        )
         assertFalse(build.dir.resolve("build/generated/surf-api/velocity-plugin/com").exists())
     }
 
@@ -289,13 +378,21 @@ class PluginClassBuildTest {
 
         build.run("generateVelocityPluginFile", "generateSurfPluginClasses")
 
-        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json").readText()
+        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json")
+            .readText()
         assertContains(pluginFile, "\"main\": \"com.example.plugin.MyPlugin\"")
     }
 
     @Test
-    fun `generatePluginClass off writes no Minestom plugin file, service entry or class path copy`(info: TestInfo) {
-        val build = project(info, "dev.slne.surf.api.gradle.minestom", "surfMinestomApi", "generatePluginClass = false")
+    fun `generatePluginClass off writes no Minestom plugin file, service entry or class path copy`(
+        info: TestInfo,
+    ) {
+        val build = project(
+            info,
+            "dev.slne.surf.api.gradle.minestom",
+            "surfMinestomApi",
+            "generatePluginClass = false",
+        )
         build.baseSources()
 
         build.run(
@@ -310,7 +407,9 @@ class PluginClassBuildTest {
     }
 
     @Test
-    fun `generatePluginClass off keeps the Minestom files of a named main class and drops them when it goes`(info: TestInfo) {
+    fun `generatePluginClass off keeps the Minestom files of a named main class and drops them when it goes`(
+        info: TestInfo,
+    ) {
         val build = TestBuild.create(info.displayName, withSurfApi = true)
         build.file("gradle.properties", "kotlin.stdlib.default.dependency=false")
         fun script(main: String) = build.file(
@@ -324,17 +423,27 @@ class PluginClassBuildTest {
         script("minestomPluginFile { main = 'com.example.plugin.MyPlugin' }")
         build.baseSources()
         val tasks = arrayOf(
-            "generateMinestomPluginFile", "generateMinestomPluginIndex", "generateMinestomPluginClassPathFile",
+            "generateMinestomPluginFile",
+            "generateMinestomPluginIndex",
+            "generateMinestomPluginClassPathFile",
         )
 
         build.run(*tasks)
 
         val generated = build.dir.resolve("build/generated/surf-api")
         val main = "com.example.plugin.MyPlugin"
-        assertContains(generated.resolve("minestom/minestom-plugin.json").readText(), "\"main\": \"$main\"")
+        assertContains(
+            generated.resolve("minestom/minestom-plugin.json").readText(),
+            "\"main\": \"$main\"",
+        )
         val index = "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin"
         assertEquals(main, generated.resolve("minestom-classpath/index/$index").readText())
-        assertTrue(generated.resolve("minestom-classpath/descriptor/META-INF/surf-minestom-plugins/$main.json").isFile)
+        assertTrue(
+            generated.resolve(
+                "minestom-classpath/descriptor/META-INF/surf-minestom-plugins/$main.json",
+            )
+                .isFile,
+        )
 
         script("")
         build.run(*tasks)
@@ -348,8 +457,14 @@ class PluginClassBuildTest {
         val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi")
         build.baseSources()
 
-        assertEquals(TaskOutcome.SUCCESS, build.run("computeSurfBasePackage").task(":computeSurfBasePackage")?.outcome)
-        assertEquals(TaskOutcome.UP_TO_DATE, build.run("computeSurfBasePackage").task(":computeSurfBasePackage")?.outcome)
+        assertEquals(
+            TaskOutcome.SUCCESS,
+            build.run("computeSurfBasePackage").task(":computeSurfBasePackage")?.outcome,
+        )
+        assertEquals(
+            TaskOutcome.UP_TO_DATE,
+            build.run("computeSurfBasePackage").task(":computeSurfBasePackage")?.outcome,
+        )
 
         build.source("kotlin/org/other/Other.kt", "package org.other\nclass Other")
         val result = build.runAndFail("computeSurfBasePackage")
@@ -364,9 +479,12 @@ class PluginClassBuildTest {
 
         build.run("generateVelocityPluginFile", "generateSurfPluginClasses")
 
-        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json").readText()
+        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json")
+            .readText()
         assertContains(pluginFile, "\"main\": \"com.example.plugin.GeneratedSurfPlugin\"")
-        val generated = build.dir.resolve("build/generated/surf-api/velocity-plugin/com/example/plugin/GeneratedSurfPlugin.java")
+        val generated = build.dir.resolve(
+            "build/generated/surf-api/velocity-plugin/com/example/plugin/GeneratedSurfPlugin.java",
+        )
         assertContains(generated.readText(), "extends SurfVelocityPlugin")
     }
 
@@ -386,7 +504,8 @@ class PluginClassBuildTest {
 
         build.run("generateVelocityPluginFile", "generateSurfPluginClasses")
 
-        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json").readText()
+        val pluginFile = build.dir.resolve("build/generated/surf-api/velocity/velocity-plugin.json")
+            .readText()
         assertContains(pluginFile, "\"main\": \"com.example.plugin.MyPlugin\"")
         assertFalse(build.dir.resolve("build/generated/surf-api/velocity-plugin/com").exists())
     }
@@ -403,17 +522,27 @@ class PluginClassBuildTest {
 
         val main = "com.example.plugin.GeneratedSurfPlugin"
         val generated = build.dir.resolve("build/generated/surf-api")
-        assertContains(generated.resolve("minestom/minestom-plugin.json").readText(), "\"main\": \"$main\"")
+        assertContains(
+            generated.resolve("minestom/minestom-plugin.json").readText(),
+            "\"main\": \"$main\"",
+        )
         assertEquals(
             main,
-            generated.resolve("minestom-classpath/index/META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin").readText(),
+            generated.resolve(
+                "minestom-classpath/index/META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin",
+            )
+                .readText(),
         )
         assertContains(
-            generated.resolve("minestom-classpath/descriptor/META-INF/surf-minestom-plugins/$main.json").readText(),
+            generated.resolve(
+                "minestom-classpath/descriptor/META-INF/surf-minestom-plugins/$main.json",
+            )
+                .readText(),
             "\"main\": \"$main\"",
         )
         assertContains(
-            generated.resolve("minestom-plugin/com/example/plugin/GeneratedSurfPlugin.java").readText(),
+            generated.resolve("minestom-plugin/com/example/plugin/GeneratedSurfPlugin.java")
+                .readText(),
             "extends SurfMinestomPlugin",
         )
     }
@@ -422,14 +551,21 @@ class PluginClassBuildTest {
     fun `the base package and class generation tasks work with the configuration cache`(info: TestInfo) {
         val build = project(info, PAPER_PLUGIN, "surfPaperPluginApi")
         build.baseSources()
-        val tasks = arrayOf("computeSurfBasePackage", "generateSurfPluginClasses", "--configuration-cache")
+        val tasks = arrayOf(
+            "computeSurfBasePackage",
+            "generateSurfPluginClasses",
+            "--configuration-cache",
+        )
 
         val stored = build.run(*tasks)
         val reused = build.run(*tasks)
 
         assertContains(stored.output, "Configuration cache entry stored")
         assertContains(reused.output, "Configuration cache entry reused")
-        assertEquals("com.example.plugin", build.dir.resolve("build/generated/surf-api/base-package/base-package.txt").readText())
+        assertEquals(
+            "com.example.plugin",
+            build.dir.resolve("build/generated/surf-api/base-package/base-package.txt").readText(),
+        )
     }
 
     @Test
@@ -476,14 +612,30 @@ class PluginClassBuildTest {
     fun `a passed Spring check is up to date until the bundled modules change`(info: TestInfo) {
         val build = springProject(info, extension = "", dependency = "")
 
-        assertEquals(TaskOutcome.SUCCESS, build.run("checkNoBundledSpring").task(":checkNoBundledSpring")?.outcome)
-        assertEquals(TaskOutcome.UP_TO_DATE, build.run("checkNoBundledSpring").task(":checkNoBundledSpring")?.outcome)
+        assertEquals(
+            TaskOutcome.SUCCESS,
+            build.run("checkNoBundledSpring").task(":checkNoBundledSpring")?.outcome,
+        )
+        assertEquals(
+            TaskOutcome.UP_TO_DATE,
+            build.run("checkNoBundledSpring").task(":checkNoBundledSpring")?.outcome,
+        )
     }
 
     @Test
     fun `the Spring check ignores a Spring BOM that contributes no artifact`(info: TestInfo) {
-        val build = springProject(info, extension = "", dependency = "implementation platform('org.springframework:spring-framework-bom:1.0')")
-        publishPom(build.dir.resolve("local-repository"), "org.springframework", "spring-framework-bom", "1.0", "pom")
+        val build = springProject(
+            info,
+            extension = "",
+            dependency = "implementation platform('org.springframework:spring-framework-bom:1.0')",
+        )
+        publishPom(
+            build.dir.resolve("local-repository"),
+            "org.springframework",
+            "spring-framework-bom",
+            "1.0",
+            "pom",
+        )
 
         val result = build.run("checkNoBundledSpring")
 
@@ -491,8 +643,14 @@ class PluginClassBuildTest {
     }
 
     @Test
-    fun `the Spring check fails a build that shades a jar carrying Spring under another coordinate`(info: TestInfo) {
-        val build = springProject(info, extension = "", dependency = "implementation 'com.example:fat:1.0'")
+    fun `the Spring check fails a build that shades a jar carrying Spring under another coordinate`(
+        info: TestInfo,
+    ) {
+        val build = springProject(
+            info,
+            extension = "",
+            dependency = "implementation 'com.example:fat:1.0'",
+        )
 
         val result = build.runAndFail("checkNoBundledSpring")
 
@@ -503,7 +661,8 @@ class PluginClassBuildTest {
     /**
      * A velocity plugin whose runtime classpath holds a Spring stub from a local Maven repository.
      *
-     * The repository also holds `com.example:fat:1.0`, whose jar carries an unrelocated Spring class.
+     * The repository also holds `com.example:fat:1.0`, whose jar carries an unrelocated Spring
+     * class.
      */
     private fun springProject(
         info: TestInfo,
@@ -515,7 +674,13 @@ class PluginClassBuildTest {
         build.baseSources()
         val repository = build.dir.resolve("local-repository")
         publishStub(repository, "org.springframework", "spring-core", "1.0")
-        publishStub(repository, "com.example", "fat", "1.0", "org/springframework/core/SpringVersion.class")
+        publishStub(
+            repository,
+            "com.example",
+            "fat",
+            "1.0",
+            "org/springframework/core/SpringVersion.class",
+        )
         build.file(
             "build.gradle",
             """
@@ -525,14 +690,28 @@ class PluginClassBuildTest {
             dependencies { $dependency }
             """,
         )
+
         return build
     }
 
     /**
      * Publishes a POM without a jar, as a BOM is.
      */
-    private fun publishPom(repository: File, group: String, name: String, version: String, packaging: String): File {
-        val directory = repository.resolve("${group.replace('.', '/')}/$name/$version").apply { mkdirs() }
+    private fun publishPom(
+        repository: File,
+        group: String,
+        name: String,
+        version: String,
+        packaging: String,
+    ): File {
+        val directory = repository.resolve(
+            "${
+                group.replace(
+                    '.',
+                    '/',
+                )
+            }/$name/$version",
+        ).apply { mkdirs() }
         directory.resolve("$name-$version.pom").writeText(
             """
             <project>
@@ -542,12 +721,19 @@ class PluginClassBuildTest {
               <version>$version</version>
               <packaging>$packaging</packaging>
             </project>
-            """.trimIndent()
+            """.trimIndent(),
         )
+
         return directory
     }
 
-    private fun publishStub(repository: File, group: String, name: String, version: String, entry: String = "stub.txt") {
+    private fun publishStub(
+        repository: File,
+        group: String,
+        name: String,
+        version: String,
+        entry: String = "stub.txt",
+    ) {
         val directory = publishPom(repository, group, name, version, "jar")
         JarOutputStream(directory.resolve("$name-$version.jar").outputStream()).use { jar ->
             jar.putNextEntry(JarEntry(entry))

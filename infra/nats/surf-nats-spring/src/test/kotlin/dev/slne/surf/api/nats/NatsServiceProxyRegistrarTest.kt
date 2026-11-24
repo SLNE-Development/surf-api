@@ -10,14 +10,25 @@ import kotlin.test.assertEquals
 
 class NatsServiceProxyRegistrarTest {
 
-    private val classLoader = HidingClassLoader(SignatureNeedsHidden::class.java, GenericArgumentNeedsHidden::class.java)
+    private val classLoader = HidingClassLoader(
+        SignatureNeedsHidden::class.java,
+        GenericArgumentNeedsHidden::class.java,
+    )
     private val registry = DefaultListableBeanFactory().apply { beanClassLoader = classLoader }
 
-    private fun registrar(proxyDefinition: (Class<*>) -> BeanDefinition = { error("no service proxy is expected for $it") }) =
-        NatsServiceProxyRegistrar(classLoader, proxyDefinition)
+    private fun registrar(
+        proxyDefinition: (Class<*>) -> BeanDefinition = { type ->
+            error("no service proxy is expected for $type")
+        },
+    ): NatsServiceProxyRegistrar {
+        return NatsServiceProxyRegistrar(classLoader, proxyDefinition)
+    }
 
     private fun define(beanName: String, type: Class<*>) {
-        registry.registerBeanDefinition(beanName, RootBeanDefinition().apply { beanClassName = type.name })
+        registry.registerBeanDefinition(
+            beanName,
+            RootBeanDefinition().apply { beanClassName = type.name },
+        )
     }
 
     @Test
@@ -43,14 +54,16 @@ class NatsServiceProxyRegistrarTest {
         registry.registerBeanDefinition("factory", RootBeanDefinition(ConsumerFactory::class.java))
         val proxied = mutableListOf<Class<*>>()
 
-        registrar { proxied += it; RootBeanDefinition(it) }.postProcessBeanDefinitionRegistry(registry)
+        registrar { proxied += it; RootBeanDefinition(it) }.postProcessBeanDefinitionRegistry(
+            registry,
+        )
 
         assertEquals(listOf<Class<*>>(NotifierService::class.java), proxied)
     }
 
     /**
-     * Injects a service interface into the factory itself, while its product needs none: Spring constructs the
-     * factory, so the factory's injection points count.
+     * Injects a service interface into the factory itself, while its product needs none: Spring
+     * constructs the factory, so the factory's injection points count.
      */
     class ConsumerFactory(private val notifier: NotifierService) : FactoryBean<String> {
         override fun getObject() = notifier.toString()

@@ -28,6 +28,7 @@ class StreamVersionTracker {
 
         while (true) {
             val current = lastVersion.get()
+
             when {
                 version <= current -> return Outcome.SKIPPED
                 version != current + 1L -> return Outcome.RESYNC
@@ -46,6 +47,7 @@ class StreamVersionTracker {
 
         while (true) {
             val current = lastVersion.get()
+
             when {
                 last <= current -> return Outcome.SKIPPED
                 first != current + 1L -> return Outcome.RESYNC

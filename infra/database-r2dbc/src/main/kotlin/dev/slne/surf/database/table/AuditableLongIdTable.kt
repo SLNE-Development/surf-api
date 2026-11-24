@@ -12,6 +12,7 @@ open class AuditableLongIdTable(name: String = "") : ULongIdTable(name) {
 
     override fun createStatement(): List<String> {
         val statements = super.createStatement()
+
         return PostgreSQLUpdateHook.modifyStatements(statements, this, updatedAt, tableName)
     }
 }

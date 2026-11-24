@@ -31,8 +31,17 @@ class SparkStaticLoggingTest {
         val failure = CancellationException()
 
         assertTrue(SparkStaticLogging.redirectTo(logger))
-        SparkStaticLogger.log(Level.SEVERE, "Uncaught exception thrown in thread spark-test", failure)
+        SparkStaticLogger.log(
+            Level.SEVERE,
+            "Uncaught exception thrown in thread spark-test",
+            failure,
+        )
 
-        assertEquals(listOf<Pair<String, Throwable?>>("Uncaught exception thrown in thread spark-test" to failure), recorded)
+        assertEquals(
+            listOf<Pair<String, Throwable?>>(
+                "Uncaught exception thrown in thread spark-test" to failure,
+            ),
+            recorded,
+        )
     }
 }

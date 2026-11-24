@@ -15,7 +15,11 @@ internal object RegexSerializer : ScalarSerializer.Annotated<Regex>(Regex::class
         }
     }
 
-    override fun serialize(type: AnnotatedType, item: Regex, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: Regex,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.pattern
     }
 }

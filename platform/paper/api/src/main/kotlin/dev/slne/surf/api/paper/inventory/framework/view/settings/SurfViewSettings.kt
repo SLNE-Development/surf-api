@@ -58,6 +58,7 @@ sealed interface SurfViewSettings {
      *
      * @param row the one-based slot row (1-6)
      */
-    fun rowFont(@ViewRows.Companion.Rows row: Int): Key =
-        rowFonts[row] ?: SurfViewSettingsDefaults.rowFont(row)
+    fun rowFont(@ViewRows.Companion.Rows row: Int): Key {
+        return rowFonts[row] ?: SurfViewSettingsDefaults.rowFont(row)
+    }
 }

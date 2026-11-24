@@ -10,11 +10,16 @@ class ReliabilityConfigTest {
 
     @Test
     fun `stored replies are kept for the redelivery horizon of surf-nats by default`() {
-        assertEquals(NatsPersistentLimits.REDELIVERY_HORIZON, ReliabilityConfig().atomicOperations.retention)
+        assertEquals(
+            NatsPersistentLimits.REDELIVERY_HORIZON,
+            ReliabilityConfig().atomicOperations.retention,
+        )
     }
 
     @Test
     fun `rejects a cleanup interval that is not positive`() {
-        assertFailsWith<IllegalArgumentException> { ReliabilityConfig(cleanupInterval = Duration.ZERO) }
+        assertFailsWith<IllegalArgumentException> {
+            ReliabilityConfig(cleanupInterval = Duration.ZERO)
+        }
     }
 }

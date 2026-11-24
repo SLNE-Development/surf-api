@@ -6,11 +6,12 @@ import java.util.*
 /**
  * Class loader that Flyway runs with during a migration.
  *
- * Classes and resources are looked up in the library first and in [plugin] second. The library comes first so that
- * Flyway's `ServiceLoader` finds the relocated Flyway plugins bundled with this library.
+ * Classes and resources are looked up in the library first and in [plugin] second. The library
+ * comes first so that Flyway's `ServiceLoader` finds the relocated Flyway plugins bundled with this
+ * library.
  *
- * Resources under one of the [sqlPaths] come from [plugin] only, so SQL files that the library's class loader
- * happens to see under the same path are never run as migrations of the plugin.
+ * Resources under one of the [sqlPaths] come from [plugin] only, so SQL files that the library's
+ * class loader happens to see under the same path are never run as migrations of the plugin.
  *
  * @param sqlPaths Classpath paths of the SQL locations, such as `db/migrations`.
  */
@@ -23,14 +24,15 @@ internal class MigrationClassLoader(
 
     override fun getResource(name: String): URL? {
         if (isSqlResource(name)) return plugin.getResource(name)
+
         return parent.getResource(name) ?: plugin.getResource(name)
     }
 
     /**
      * Returns the library's resources followed by the plugin's.
      *
-     * A URL found by both, for example when [plugin] delegates to the library, is returned once. URLs are compared by
-     * their external form because [URL.equals] resolves hosts.
+     * A URL found by both, for example when [plugin] delegates to the library, is returned once.
+     * URLs are compared by their external form because [URL.equals] resolves hosts.
      */
     override fun getResources(name: String): Enumeration<URL> {
         if (isSqlResource(name)) return plugin.getResources(name)
@@ -44,6 +46,7 @@ internal class MigrationClassLoader(
 
     private fun isSqlResource(name: String): Boolean {
         val path = name.trimStart('/')
+
         return sqlPaths.any { root -> root.isEmpty() || path == root || path.startsWith("$root/") }
     }
 }

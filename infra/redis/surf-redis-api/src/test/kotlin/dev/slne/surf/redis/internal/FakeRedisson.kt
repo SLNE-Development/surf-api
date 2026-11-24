@@ -27,8 +27,14 @@ internal class FakeRedisson {
         }
     }
 
-    private fun <T> proxy(type: Class<T>, handler: (java.lang.reflect.Method, Array<Any?>?) -> Any?): T {
-        val instance = Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { self, method, args ->
+    private fun <T> proxy(
+        type: Class<T>,
+        handler: (java.lang.reflect.Method, Array<Any?>?) -> Any?,
+    ): T {
+        val instance = Proxy.newProxyInstance(
+            type.classLoader,
+            arrayOf(type),
+        ) { self, method, args ->
             when (method.name) {
                 "toString" -> "Fake${type.simpleName}@${System.identityHashCode(self)}"
                 "hashCode" -> System.identityHashCode(self)
@@ -55,6 +61,7 @@ internal class FakeRedissonConnector : RedissonConnector {
             nextConnectFailure = null
             throw it
         }
+
         return FakeRedisson().also(created::add).client
     }
 
@@ -63,6 +70,7 @@ internal class FakeRedissonConnector : RedissonConnector {
             nextProbeFailure = null
             throw it
         }
+
         return null
     }
 

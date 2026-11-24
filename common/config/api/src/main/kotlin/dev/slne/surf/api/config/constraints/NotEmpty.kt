@@ -16,10 +16,13 @@ import java.lang.reflect.Type
 annotation class NotEmpty {
     companion object {
         internal object Factory : Constraint.Factory<NotEmpty, Any?> {
-            override fun make(data: NotEmpty, type: Type): Constraint<Any?> = { value ->
-                val size = value.configSizeOrNull()
-                if (size != null && size == 0) {
-                    throw SerializationException("Value must not be empty")
+            override fun make(data: NotEmpty, type: Type): Constraint<Any?> {
+                return { value ->
+                    val size = value.configSizeOrNull()
+
+                    if (size != null && size == 0) {
+                        throw SerializationException("Value must not be empty")
+                    }
                 }
             }
         }

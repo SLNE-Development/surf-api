@@ -14,36 +14,52 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Pins that migrations run by Flyway see the session time zone UTC, with the JVM and the server outside UTC.
+ * Pins that migrations run by Flyway see the session time zone UTC, with the JVM and the server
+ * outside UTC.
  *
- * Unlike [JdbcDataSourcesIT], the migrations here go through the Flyway runner and its Java migration adapter.
+ * Unlike [JdbcDataSourcesIT], the migrations here go through the Flyway runner and its Java
+ * migration adapter.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayTimeZoneIT {
 
     @ParameterizedTest
     @EnumSource(OutsideUtcVendor::class)
-    fun sqlMigrationRunsInUtcSession(vendor: OutsideUtcVendor) = withMigratedProbe(vendor) { testDb, before, after ->
+    fun sqlMigrationRunsInUtcSession(
+        vendor: OutsideUtcVendor,
+    ) = withMigratedProbe(vendor) { testDb, before, after ->
         assertEquals(vendor.sessionZone, testDb.probeZone(SQL_ROW))
-        assertWithin(before, after, vendor.epochMicrosInstant(testDb, "zone_probe", "wall_clock", SQL_ROW))
+        assertWithin(
+            before,
+            after,
+            vendor.epochMicrosInstant(testDb, "zone_probe", "wall_clock", SQL_ROW),
+        )
     }
 
     @ParameterizedTest
     @EnumSource(OutsideUtcVendor::class)
-    fun javaMigrationRunsInUtcSession(vendor: OutsideUtcVendor) = withMigratedProbe(vendor) { testDb, before, after ->
+    fun javaMigrationRunsInUtcSession(
+        vendor: OutsideUtcVendor,
+    ) = withMigratedProbe(vendor) { testDb, before, after ->
         assertEquals(vendor.sessionZone, testDb.probeZone(JAVA_ROW))
-        assertWithin(before, after, vendor.epochMicrosInstant(testDb, "zone_probe", "wall_clock", JAVA_ROW))
+        assertWithin(
+            before,
+            after,
+            vendor.epochMicrosInstant(testDb, "zone_probe", "wall_clock", JAVA_ROW),
+        )
     }
 
     /**
-     * Migrates a fresh database with the probe SQL migration and [ZoneProbeJdbcMigration] while the JVM zone is
-     * [JVM_ZONE], then calls [block] with the database and the instants bracketing the run.
+     * Migrates a fresh database with the probe SQL migration and [ZoneProbeJdbcMigration] while the
+     * JVM zone is [JVM_ZONE], then calls [block] with the database and the instants bracketing the
+     * run.
      */
     private fun withMigratedProbe(
         vendor: OutsideUtcVendor,
         block: (testDb: TestDatabase, before: Instant, after: Instant) -> Unit,
     ) = withJvmZone(JVM_ZONE) {
         val testDb = vendor.container().toTestDatabase(fresh = true)
+
         try {
             val before = Instant.now()
             testDb.migrate("flyway_zone") {
@@ -57,29 +73,32 @@ class FlywayTimeZoneIT {
     }
 
     /**
-     * Fails if [stored] is not between [before] and [after], widened by [TOLERANCE]. A session zone other than UTC
-     * shifts the stored wall-clock time by hours.
+     * Fails if [stored] is not between [before] and [after], widened by [TOLERANCE]. A session zone
+     * other than UTC shifts the stored wall-clock time by hours.
      */
     private fun assertWithin(before: Instant, after: Instant, stored: Instant) {
         assertTrue(
             stored >= before - TOLERANCE && stored <= after + TOLERANCE,
-            "Stored wall-clock time $stored is not within $TOLERANCE of [$before, $after]"
+            "Stored wall-clock time $stored is not within $TOLERANCE of [$before, $after]",
         )
     }
 
-    private fun TestDatabase.probeZone(id: Int): String =
-        migrationDataSource.connection.use { connection ->
-            connection.prepareStatement("SELECT session_zone FROM zone_probe WHERE id = ?").use { statement ->
-                statement.setInt(1, id)
-                statement.executeQuery().use { rows ->
-                    assertTrue(rows.next(), "No zone_probe row with id $id")
-                    rows.getString(1)
+    private fun TestDatabase.probeZone(id: Int): String {
+        return migrationDataSource.connection.use { connection ->
+            connection.prepareStatement("SELECT session_zone FROM zone_probe WHERE id = ?")
+                .use { statement ->
+                    statement.setInt(1, id)
+                    statement.executeQuery().use { rows ->
+                        assertTrue(rows.next(), "No zone_probe row with id $id")
+                        rows.getString(1)
+                    }
                 }
-            }
         }
+    }
 
     /**
-     * Stores the session time zone and the server's current wall-clock time, as the SQL migration does.
+     * Stores the session time zone and the server's current wall-clock time, as the SQL migration
+     * does.
      */
     private class ZoneProbeJdbcMigration(private val vendor: OutsideUtcVendor) :
         JdbcMigration("2", "zone probe jdbc") {
@@ -92,7 +111,7 @@ class FlywayTimeZoneIT {
             connection.createStatement().use {
                 it.execute(
                     "INSERT INTO zone_probe (id, source, session_zone, wall_clock) " +
-                        "VALUES ($JAVA_ROW, 'java', $zoneExpression, $nowExpression)"
+                        "VALUES ($JAVA_ROW, 'java', $zoneExpression, $nowExpression)",
                 )
             }
         }

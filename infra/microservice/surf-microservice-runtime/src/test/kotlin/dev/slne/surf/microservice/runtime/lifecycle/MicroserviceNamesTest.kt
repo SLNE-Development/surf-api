@@ -16,7 +16,17 @@ class MicroserviceNamesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["", "Punish", "surf_punish", "-punish", "punish-", "surf--punish", "surf punish"])
+    @ValueSource(
+        strings = [
+            "",
+            "Punish",
+            "surf_punish",
+            "-punish",
+            "punish-",
+            "surf--punish",
+            "surf punish",
+        ],
+    )
     fun `rejects invalid names`(name: String) {
         assertFailsWith<IllegalStateException> { MicroserviceNames.requireValid(name) }
     }

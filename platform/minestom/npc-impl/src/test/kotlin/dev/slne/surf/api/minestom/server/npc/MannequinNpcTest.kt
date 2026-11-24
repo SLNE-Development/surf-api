@@ -66,7 +66,7 @@ class MannequinNpcTest {
 
         val player = connect(env.createConnection(), instance)
         env.process().eventHandler().call(
-            PlayerEntityInteractEvent(player, npc, PlayerHand.MAIN, Vec.ZERO)
+            PlayerEntityInteractEvent(player, npc, PlayerHand.MAIN, Vec.ZERO),
         )
 
         assertEquals(player.uuid, interacted.get())
@@ -88,7 +88,7 @@ class MannequinNpcTest {
 
         assertTrue(
             env.tickWhile({ holograms().isEmpty() }, Duration.ofSeconds(5)),
-            "the hologram was never spawned"
+            "the hologram was never spawned",
         )
 
         val displays = holograms()
@@ -111,6 +111,7 @@ class MannequinNpcTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 }

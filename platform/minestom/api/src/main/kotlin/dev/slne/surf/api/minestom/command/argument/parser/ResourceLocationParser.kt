@@ -27,15 +27,22 @@ internal object ResourceLocationParser : ArgumentType<Key> {
      */
     fun readKey(reader: StringReader): Key {
         val start = reader.cursor
+
         while (reader.canRead() && isAllowed(reader.peek())) {
             reader.skip()
         }
 
         val text = reader.string.substring(start, reader.cursor)
         val separator = text.indexOf(':')
-        val namespace = if (separator >= 1) text.substring(0, separator) else Key.MINECRAFT_NAMESPACE
+        val namespace = if (separator >= 1) text.substring(
+            0,
+            separator,
+        ) else Key.MINECRAFT_NAMESPACE
         val value = if (separator >= 0) text.substring(separator + 1) else text
-        if (value.isEmpty()) invalid(reader, start)
+
+        if (value.isEmpty()) {
+            invalid(reader, start)
+        }
 
         return try {
             Key.key(namespace, value)
@@ -49,8 +56,10 @@ internal object ResourceLocationParser : ArgumentType<Key> {
         throw INVALID.createWithContext(reader)
     }
 
-    private fun isAllowed(character: Char): Boolean = character in '0'..'9' ||
+    private fun isAllowed(character: Char): Boolean {
+        return character in '0'..'9' ||
             character in 'a'..'z' ||
             character == '_' || character == ':' || character == '/' ||
             character == '.' || character == '-'
+    }
 }

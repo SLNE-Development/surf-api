@@ -56,12 +56,14 @@ class DialogActionBuilder {
     }
 
     fun playerCallback(callback: ClickCallback<Player>) {
-        callback(ClickCallback.widen(callback, Player::class.java) { other ->
-            other.sendText {
-                appendErrorPrefix()
-                error("Only players can use this action!")
-            }
-        })
+        callback(
+            ClickCallback.widen(callback, Player::class.java) { other ->
+                other.sendText {
+                    appendErrorPrefix()
+                    error("Only players can use this action!")
+                }
+            },
+        )
     }
 
     fun commandTemplate(template: String) {
@@ -77,8 +79,9 @@ class DialogActionBuilder {
         additions: CompoundBinaryTag.Builder.() -> Unit,
     ) {
         val additionsTag = CompoundBinaryTag.builder().apply(additions).build()
-        val holder =
-            BinaryTagHolder.binaryTagHolder(TagStringIO.tagStringIO().asString(additionsTag))
+        val holder = BinaryTagHolder.binaryTagHolder(
+            TagStringIO.tagStringIO().asString(additionsTag),
+        )
 
         action = DialogAction.customClick(id, holder)
     }
@@ -93,7 +96,7 @@ class DialogActionBuilder {
         callback: (response: DialogResponseView, player: Player) -> Unit,
     ) {
         customClick(
-            options
+            options,
         ) { response, audience ->
             if (audience !is Player) {
                 audience.sendText {
@@ -109,12 +112,15 @@ class DialogActionBuilder {
     internal fun build(): DialogAction {
         val action = action
         require(action != null) { "DialogAction must be built" }
+
         return action
     }
 }
 
-fun DialogAction(block: DialogActionBuilder.() -> Unit): DialogAction =
-    DialogActionBuilder().apply(block).build()
+fun DialogAction(block: DialogActionBuilder.() -> Unit): DialogAction {
+    return DialogActionBuilder().apply(block).build()
+}
 
-fun dialogAction(block: DialogActionBuilder.() -> Unit): DialogAction =
-    DialogActionBuilder().apply(block).build()
+fun dialogAction(block: DialogActionBuilder.() -> Unit): DialogAction {
+    return DialogActionBuilder().apply(block).build()
+}

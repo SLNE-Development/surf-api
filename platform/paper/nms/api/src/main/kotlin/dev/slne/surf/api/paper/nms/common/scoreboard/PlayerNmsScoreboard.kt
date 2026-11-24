@@ -54,18 +54,22 @@ abstract class PlayerNmsScoreboard(protected val player: Player) {
         if (deleted) return
 
         val operation = PacketOperation.start()
+
         if (!shown) {
             shown = true
             operation.add(createObjective(title))
         } else if (this.title != title) {
             operation.add(updateObjective(title))
         }
+
         this.title = title
 
         val oldLines = this.lines
         this.lines = lines
+
         for (index in 0 until max(oldLines.size, lines.size)) {
             val line = lines.getOrNull(index)
+
             if (line == null) {
                 operation.add(resetScore(ENTRIES[index]))
             } else if (line != oldLines.getOrNull(index)) {
@@ -83,7 +87,10 @@ abstract class PlayerNmsScoreboard(protected val player: Player) {
         if (deleted) return
 
         deleted = true
-        if (shown) send(removeObjective())
+
+        if (shown) {
+            send(removeObjective())
+        }
     }
 
     protected abstract fun createObjective(title: Component): PacketOperation

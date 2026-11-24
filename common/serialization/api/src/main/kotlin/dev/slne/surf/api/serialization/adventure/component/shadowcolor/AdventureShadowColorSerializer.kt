@@ -8,7 +8,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import net.kyori.adventure.text.format.ShadowColor
 
-typealias SerializableShadowColor = @Serializable(with = AdventureShadowColorSerializer::class) ShadowColor
+typealias SerializableShadowColor = @Serializable(
+    with = AdventureShadowColorSerializer::class,
+) ShadowColor
 
 object AdventureShadowColorSerializer : KSerializer<ShadowColor> {
     override val descriptor = PrimitiveSerialDescriptor("surf.api.ShadowColor", PrimitiveKind.INT)

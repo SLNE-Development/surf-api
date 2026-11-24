@@ -25,23 +25,23 @@ enum class Rarity(
     ),
     UNCOMMON(
         displayName = "Ungewöhnlich",
-        color = color(0x55FF55)
+        color = color(0x55FF55),
     ),
     RARE(
         displayName = "Selten",
-        color = color(0x55FFFF)
+        color = color(0x55FFFF),
     ),
     EPIC(
         displayName = "Episch",
-        color = color(0xFF55FF)
+        color = color(0xFF55FF),
     ),
     LEGENDARY(
         displayName = "Legendär",
-        color = color(0xFFAA00)
+        color = color(0xFFAA00),
     ),
     MYTHIC(
         displayName = "Mythisch",
-        color = color(0xAA00AA)
+        color = color(0xAA00AA),
     ),
     ;
 

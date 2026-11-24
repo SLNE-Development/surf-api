@@ -72,7 +72,9 @@ class MinecraftArgumentIntegrationTest {
         )
         assertEquals(
             "100t",
-            TimeArgument("delay").toDefinition().stringify(Duration.ofMillis(100L * MinecraftServer.TICK_MS)),
+            TimeArgument("delay")
+                .toDefinition()
+                .stringify(Duration.ofMillis(100L * MinecraftServer.TICK_MS)),
         )
     }
 
@@ -96,11 +98,19 @@ class MinecraftArgumentIntegrationTest {
 
         val flame = compiled.read(sender, "minecraft:flame")
         assertEquals(Particle.fromKey("minecraft:flame"), flame)
-        assertThrows(CommandSyntaxException::class.java) { compiled.read(sender, "minecraft:not_a_particle") }
+        assertThrows(CommandSyntaxException::class.java) {
+            compiled.read(
+                sender,
+                "minecraft:not_a_particle",
+            )
+        }
 
         assertEquals(ArgumentParserType.PARTICLE, compiled.declaration().parser)
         assertNull(compiled.declaration().properties)
-        assertEquals("minecraft:flame", ParticleArgument("particle").toDefinition().stringify(flame))
+        assertEquals(
+            "minecraft:flame",
+            ParticleArgument("particle").toDefinition().stringify(flame),
+        )
     }
 
     @Test
@@ -115,7 +125,10 @@ class MinecraftArgumentIntegrationTest {
 
         assertEquals(ArgumentParserType.GAMEMODE, compiled.declaration().parser)
         assertNull(compiled.declaration().properties)
-        assertEquals("survival", GameModeArgument("mode").toDefinition().stringify(GameMode.SURVIVAL))
+        assertEquals(
+            "survival",
+            GameModeArgument("mode").toDefinition().stringify(GameMode.SURVIVAL),
+        )
     }
 
     @Test
@@ -123,17 +136,25 @@ class MinecraftArgumentIntegrationTest {
         withPlatform(env) {
             CommandAPICommand("allow-game-mode")
                 .withArguments(
-                    GameModeArgument("mode").includeSuggestions(ArgumentSuggestions.strings("extra")),
+                    GameModeArgument("mode")
+                        .includeSuggestions(ArgumentSuggestions.strings("extra")),
                 )
                 .anyExecutor { _, _ -> }
                 .register()
 
-            assertTrue(runCommand(env.process().command().consoleSender, "allow-game-mode survival"))
+            assertTrue(
+                runCommand(
+                    env.process().command().consoleSender,
+                    "allow-game-mode survival",
+                ),
+            )
         }
     }
 
     @Test
-    fun `every new value argument is reachable through the executor and reports its native parser`(env: Env) {
+    fun `every new value argument is reachable through the executor and reports its native parser`(
+        env: Env,
+    ) {
         val captured = mutableMapOf<String, Any?>()
         withPlayerPlatform(env) { manager, player ->
             CommandAPICommand("resource-location-cmd")
@@ -143,7 +164,9 @@ class MinecraftArgumentIntegrationTest {
                 }
                 .register()
             CommandAPICommand("time-cmd").withArguments(TimeArgument("timeValue"))
-                .anyExecutor { _, arguments -> captured["time-cmd"] = arguments.get<Duration>("timeValue") }
+                .anyExecutor { _, arguments ->
+                    captured["time-cmd"] = arguments.get<Duration>("timeValue")
+                }
                 .register()
             CommandAPICommand("team-color-cmd").withArguments(TeamColorArgument("teamColorValue"))
                 .anyExecutor { _, arguments ->
@@ -151,10 +174,14 @@ class MinecraftArgumentIntegrationTest {
                 }
                 .register()
             CommandAPICommand("particle-cmd").withArguments(ParticleArgument("particleValue"))
-                .anyExecutor { _, arguments -> captured["particle-cmd"] = arguments.get<Particle>("particleValue") }
+                .anyExecutor { _, arguments ->
+                    captured["particle-cmd"] = arguments.get<Particle>("particleValue")
+                }
                 .register()
             CommandAPICommand("game-mode-cmd").withArguments(GameModeArgument("gameModeValue"))
-                .anyExecutor { _, arguments -> captured["game-mode-cmd"] = arguments.get<GameMode>("gameModeValue") }
+                .anyExecutor { _, arguments ->
+                    captured["game-mode-cmd"] = arguments.get<GameMode>("gameModeValue")
+                }
                 .register()
 
             assertTrue(runCommand(player, "resource-location-cmd minecraft:diamond"))
@@ -173,7 +200,9 @@ class MinecraftArgumentIntegrationTest {
             assertEquals(GameMode.SURVIVAL, captured["game-mode-cmd"])
 
             val packet = declaredCommands(env, player)
-            fun parserOf(nodeName: String) = packet.nodes.single { node -> node.name == nodeName }.parser
+            fun parserOf(nodeName: String): ArgumentParserType {
+                return packet.nodes.single { node -> node.name == nodeName }.parser
+            }
             assertEquals(ArgumentParserType.RESOURCE_LOCATION, parserOf("resourceLocationValue"))
             assertEquals(ArgumentParserType.TIME, parserOf("timeValue"))
             assertEquals(ArgumentParserType.TEAM_COLOR, parserOf("teamColorValue"))
@@ -206,7 +235,7 @@ class MinecraftArgumentIntegrationTest {
         val child = CommandTree("minecraft-dsl-child")
             .then(
                 StringArgument("prefix")
-                                                            .resourceLocationArgument("resourceLocation") { anyExecutor { _, _ -> } }
+                    .resourceLocationArgument("resourceLocation") { anyExecutor { _, _ -> } }
                     .timeArgument("time") { anyExecutor { _, _ -> } }
                     .teamColorArgument("teamColor") { anyExecutor { _, _ -> } }
                     .particleArgument("particle") { anyExecutor { _, _ -> } }
@@ -230,8 +259,12 @@ class MinecraftArgumentIntegrationTest {
     }
 
     private inline fun withPlatform(env: Env, block: () -> Unit) {
-        val platform = MinestomCommandAPIPlatform(env.process().command(), MinestomCommandOwnership())
+        val platform = MinestomCommandAPIPlatform(
+            env.process().command(),
+            MinestomCommandOwnership(),
+        )
         CommandAPI.installPlatform(platform)
+
         try {
             block()
         } finally {
@@ -252,17 +285,25 @@ class MinecraftArgumentIntegrationTest {
         val instance = env.createEmptyInstance()
         var player: Player? = null
         CommandAPI.installPlatform(platform)
+
         try {
-            val connected = connect(env.createConnection(profile("Value-${UUID.randomUUID()}")), instance)
+            val connected = connect(
+                env.createConnection(profile("Value-${UUID.randomUUID()}")),
+                instance,
+            )
             player = connected
             block(manager, connected)
         } finally {
             try {
-                if (player?.isRemoved == false) player.remove()
+                if (player?.isRemoved == false) {
+                    player.remove()
+                }
+
                 platform.close()
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.destroyInstance(instance)
         }
     }
@@ -274,6 +315,7 @@ class MinecraftArgumentIntegrationTest {
                 .onSuccess(connected::complete)
                 .onFailure(connected::completeExceptionally)
         }
+
         return connected.join()
     }
 

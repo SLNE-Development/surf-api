@@ -29,7 +29,9 @@ suspend fun <T : Entity, R> T.withEntity(block: (T) -> R): R {
         val removalWatch = SchedulerManager.scheduleTask(
             {
                 if (entity.isRemoved && claimed.compareAndSet(false, true)) {
-                    continuation.cancel(CancellationException("Entity was removed before the task ran: $entity"))
+                    continuation.cancel(
+                        CancellationException("Entity was removed before the task ran: $entity"),
+                    )
                 }
             },
             TaskSchedule.tick(1),
@@ -39,6 +41,7 @@ suspend fun <T : Entity, R> T.withEntity(block: (T) -> R): R {
             if (!claimed.compareAndSet(false, true)) return@scheduleNextTick
 
             removalWatch.cancel()
+
             try {
                 continuation.resume(block(entity))
             } catch (throwable: Throwable) {
@@ -59,7 +62,8 @@ suspend fun <T : Entity, R> T.withEntity(block: (T) -> R): R {
  * @throws IllegalStateException if an entity is removed or not in an instance when called
  * @throws CancellationException if an entity is removed before its task ran
  */
-suspend fun <T : Entity, R> Collection<T>.withEntities(block: (T) -> R): List<R> =
-    coroutineScope {
+suspend fun <T : Entity, R> Collection<T>.withEntities(block: (T) -> R): List<R> {
+    return coroutineScope {
         map { entity -> async { entity.withEntity(block) } }.awaitAll()
     }
+}

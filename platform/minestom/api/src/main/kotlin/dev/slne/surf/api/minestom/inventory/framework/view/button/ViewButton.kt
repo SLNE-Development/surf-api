@@ -45,7 +45,7 @@ class ViewButtonStateScope<T> internal constructor(val value: T) {
     fun item(
         material: Material,
         amount: Int = 1,
-        init: (@ItemDslMarker ItemDsl).() -> Unit = {}
+        init: (@ItemDslMarker ItemDsl).() -> Unit = {},
     ) {
         itemFactory = { buildItem(material, amount, init) }
     }
@@ -89,7 +89,7 @@ class ViewButtonStateScope<T> internal constructor(val value: T) {
     internal fun build(): ViewButtonStateSpec<T> {
         val factory = checkNotNull(itemFactory) {
             "Button state '$value' has no appearance. " +
-                    "Declare one with item(...) { } or renderItem { }."
+                "Declare one with item(...) { } or renderItem { }."
         }
 
         return ViewButtonStateSpec(value, factory, enterHandler)
@@ -156,9 +156,10 @@ class ViewButtonBuilder<T> internal constructor() {
         scopeOf(value).apply(block)
     }
 
-    internal fun scopeOf(value: T): ViewButtonStateScope<T> =
-        scopes.firstOrNull { it.value == value }
+    internal fun scopeOf(value: T): ViewButtonStateScope<T> {
+        return scopes.firstOrNull { it.value == value }
             ?: ViewButtonStateScope(value).also { scopes.add(it) }
+    }
 
     /**
      * Runs [action] on every state change, regardless of which state was entered.
@@ -187,7 +188,9 @@ class ViewButtonBuilder<T> internal constructor() {
      *
      * @param action the callback invoked with the [CloseContext], the initial and the final state
      */
-    fun onCloseChanged(action: @InventoryFrameworkDSL CloseContext.(initial: T, current: T) -> Unit) {
+    fun onCloseChanged(
+        action: @InventoryFrameworkDSL CloseContext.(initial: T, current: T) -> Unit,
+    ) {
         closeChangedHandler = action
     }
 
@@ -237,7 +240,7 @@ class ViewButtonBuilder<T> internal constructor() {
  */
 @InventoryFrameworkDSL
 class ViewToggleButtonBuilder internal constructor(
-    private val delegate: ViewButtonBuilder<Boolean>
+    private val delegate: ViewButtonBuilder<Boolean>,
 ) {
     init {
         // Pin the cycle order to off -> on so it does not depend on which block is declared first.
@@ -279,7 +282,9 @@ class ViewToggleButtonBuilder internal constructor(
      * @param action the callback invoked with the [CloseContext], the initial and the final value
      * @see ViewButtonBuilder.onCloseChanged
      */
-    fun onCloseChanged(action: @InventoryFrameworkDSL CloseContext.(initial: Boolean, current: Boolean) -> Unit) {
+    fun onCloseChanged(
+        action: @InventoryFrameworkDSL CloseContext.(initial: Boolean, current: Boolean) -> Unit,
+    ) {
         delegate.onCloseChanged(action)
     }
 }

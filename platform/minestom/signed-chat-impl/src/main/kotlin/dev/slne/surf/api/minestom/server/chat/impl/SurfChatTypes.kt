@@ -7,7 +7,6 @@ import net.minestom.server.message.ChatType
 import net.minestom.server.message.ChatTypeDecoration
 import net.minestom.server.registry.RegistryKey
 
-
 /**
  * The chat types the surf api adds to the registry.
  */
@@ -30,18 +29,19 @@ internal object SurfChatTypes {
     fun register() {
         ChatTypeRegistry.getKey(RAW_KEY)?.let {
             raw = it
+
             return
         }
 
         val decoration = ChatTypeDecoration(
             "%s",
             listOf(ChatTypeDecoration.Parameter.CONTENT),
-            Style.empty()
+            Style.empty(),
         )
 
         raw = ChatTypeRegistry.register(
             RAW_KEY,
-            ChatType.create(decoration, decoration)
+            ChatType.create(decoration, decoration),
         )
     }
 }

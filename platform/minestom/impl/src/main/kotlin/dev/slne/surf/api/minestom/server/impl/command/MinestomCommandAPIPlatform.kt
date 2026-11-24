@@ -32,7 +32,9 @@ internal class MinestomCommandAPIPlatform(
     private val ownership: MinestomCommandOwnership,
     suggestionScope: () -> CoroutineScope = { minestomAsyncScope },
     private val compiler: MinestomCommandCompiler = MinestomCommandCompiler(),
-    private val tree: BrigadierCommandTree = BrigadierCommandTree(suggestionScope = suggestionScope),
+    private val tree: BrigadierCommandTree = BrigadierCommandTree(
+        suggestionScope = suggestionScope,
+    ),
 ) : CommandAPIPlatform, AutoCloseable {
 
     private val lock = ReentrantLock()
@@ -55,57 +57,68 @@ internal class MinestomCommandAPIPlatform(
      */
     override fun register(
         definition: CommandDefinition,
-        namespace: String?
-    ): RegisteredCommand = lock.withLock {
-        check(!closed) { "The Minestom CommandAPI platform is closed" }
+        namespace: String?,
+    ): RegisteredCommand {
+        return lock.withLock {
+            check(!closed) { "The Minestom CommandAPI platform is closed" }
 
-        val compiled = compiler.compile(definition, namespace)
-        compiled.names.forEach { name ->
-            check(!ownership.contains(name) && commandManager.getCommand(name) == null) {
-                "Command name '$name' is already registered"
-            }
-        }
+            val compiled = compiler.compile(definition, namespace)
 
-        var treeRegistered = false
-        try {
-            tree.register(definition.name, compiled.names, definition)
-            treeRegistered = true
-
-            ownership.claim(compiled.names, compiled)
-            registrations += compiled
-
-            PluginCommands.track(compiled.registration.name)
-        } catch (failure: Throwable) {
-            if (treeRegistered) {
-                try {
-                    detach(compiled)
-                } catch (rollbackFailure: Throwable) {
-                    failure.addSuppressed(rollbackFailure)
+            for (name in compiled.names) {
+                check(!ownership.contains(name) && commandManager.getCommand(name) == null) {
+                    "Command name '$name' is already registered"
                 }
-            } else {
-                ownership.release(compiled)
             }
-            throw failure
+
+            var treeRegistered = false
+
+            try {
+                tree.register(definition.name, compiled.names, definition)
+                treeRegistered = true
+
+                ownership.claim(compiled.names, compiled)
+                registrations += compiled
+
+                PluginCommands.track(compiled.registration.name)
+            } catch (failure: Throwable) {
+                if (treeRegistered) {
+                    try {
+                        detach(compiled)
+                    } catch (rollbackFailure: Throwable) {
+                        failure.addSuppressed(rollbackFailure)
+                    }
+                } else {
+                    ownership.release(compiled)
+                }
+
+                throw failure
+            }
+
+            return compiled.registration
         }
-        return compiled.registration
     }
 
     /**
      * Executes [input] with the current dispatcher; Brigadier failures propagate to the caller.
      */
-    override fun execute(sender: CommandSender, input: String): Int =
-        tree.dispatcher.execute(input, sender)
+    override fun execute(sender: CommandSender, input: String): Int {
+        return tree.dispatcher.execute(input, sender)
+    }
 
     /**
      * Unregisters the command that owns the label [name].
      *
      * Returns `false` when no command of this platform owns it.
      */
-    override fun unregister(name: String): Boolean = lock.withLock {
-        val compiled = ownership.find(name) ?: return false
-        if (compiled !in registrations) return false
-        detach(compiled)
-        return true
+    override fun unregister(name: String): Boolean {
+        return lock.withLock {
+            val compiled = ownership.find(name) ?: return false
+            if (compiled !in registrations) return false
+
+            detach(compiled)
+
+            return true
+        }
     }
 
     /**
@@ -114,31 +127,37 @@ internal class MinestomCommandAPIPlatform(
      * Every command is detached even when some fail; the first failure is rethrown with the later
      * ones attached as suppressed exceptions.
      */
-    override fun close(): Unit = lock.withLock {
-        if (closed) return
-        closed = true
-        installed.compareAndSet(this, null)
+    override fun close() {
+        lock.withLock {
+            if (closed) return
 
-        var failure: Throwable? = null
-        val registrationsSnapshot = registrations.toList()
-        registrationsSnapshot.forEach { compiled ->
-            try {
-                detach(compiled)
-            } catch (currentFailure: Throwable) {
-                if (failure == null) {
-                    failure = currentFailure
-                } else {
-                    failure.addSuppressed(currentFailure)
+            closed = true
+            installed.compareAndSet(this, null)
+
+            var failure: Throwable? = null
+            val registrationsSnapshot = registrations.toList()
+
+            for (compiled in registrationsSnapshot) {
+                try {
+                    detach(compiled)
+                } catch (currentFailure: Throwable) {
+                    if (failure == null) {
+                        failure = currentFailure
+                    } else {
+                        failure.addSuppressed(currentFailure)
+                    }
                 }
             }
-        }
 
-        registrations.clear()
-        failure?.let { throw it }
+            registrations.clear()
+            failure?.let { throw it }
+        }
     }
 
     private fun detach(compiled: CompiledRegistration) {
-        check(lock.isHeldByCurrentThread) { "Platform state lock must be held while detaching a command" }
+        check(lock.isHeldByCurrentThread) {
+            "Platform state lock must be held while detaching a command"
+        }
 
         try {
             PluginCommands.forget(compiled.registration.name)
@@ -158,8 +177,8 @@ internal class MinestomCommandAPIPlatform(
         fun active(): MinestomCommandAPIPlatform? = installed.get()
 
         /**
-         * Closes [platform] and makes [previous], the platform that was active before [platform] was
-         * constructed, the active one again.
+         * Closes [platform] and makes [previous], the platform that was active before [platform]
+         * was constructed, the active one again.
          *
          * A failure of [AutoCloseable.close] propagates after the reactivation.
          */
@@ -183,7 +202,9 @@ internal class MinestomCommandAPIPlatform(
         /**
          * The dispatcher of the active platform, or `null` while none is active.
          */
-        fun activeDispatcher(): CommandDispatcher<CommandSender>? = installed.get()?.tree?.dispatcher
+        fun activeDispatcher(): CommandDispatcher<CommandSender>? {
+            return installed.get()?.tree?.dispatcher
+        }
 
         /**
          * The name registry of the active platform, or `null` while none is active.

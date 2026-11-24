@@ -1,17 +1,17 @@
 package dev.slne.surf.api.paper.inventory.framework.view.container.dsl
 
 import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
-import dev.slne.surf.api.messages.adventure.buildText
-import dev.slne.surf.api.messages.builder.SurfComponentBuilder
-import dev.slne.surf.api.paper.inventory.framework.view.AbstractSurfViewRef
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.container.component.components.ViewBlockCellComponent
-import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerRowTextComponent
-import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.messages.adventure.buildText
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.paper.inventory.framework.view.AbstractSurfViewRef
+import dev.slne.surf.api.paper.inventory.framework.view.container.component.components.ViewContainerRowTextComponent
+import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -93,8 +93,8 @@ inline fun <reified T : ViewContainerComponent> removeChildrenOfType() {
  * ```
  *
  * @param header the title component to render
- * @param alignment horizontal alignment of the title; defaults to the alignment the title
- *   currently rendered uses, or to the view's
+ * @param alignment horizontal alignment of the title; defaults to the alignment the title currently
+ *   rendered uses, or to the view's
  *   [headerTextAlignment][dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment]
  *   if the container has no title yet
  */
@@ -116,8 +116,8 @@ fun header(
  * ```
  *
  * @param header the plain-text title to render
- * @param alignment horizontal alignment of the title; defaults to the alignment the title
- *   currently rendered uses, or to the view's
+ * @param alignment horizontal alignment of the title; defaults to the alignment the title currently
+ *   rendered uses, or to the view's
  *   [headerTextAlignment][dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment]
  *   if the container has no title yet
  */
@@ -141,8 +141,8 @@ fun header(
  * }
  * ```
  *
- * @param alignment horizontal alignment of the title; defaults to the alignment the title
- *   currently rendered uses, or to the view's
+ * @param alignment horizontal alignment of the title; defaults to the alignment the title currently
+ *   rendered uses, or to the view's
  *   [headerTextAlignment][dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettings.headerTextAlignment]
  *   if the container has no title yet
  * @param block builds the title component
@@ -200,7 +200,7 @@ fun rowText(
         columns = columns,
         geometry = settings.headerGeometry,
         defaultColor = settings.headerTextColor,
-        metrics = settings.rowFontMetrics
+        metrics = settings.rowFontMetrics,
     )
 }
 
@@ -286,13 +286,14 @@ fun rowText(
             columns = columns,
             geometry = geometry,
             defaultColor = defaultColor,
-            metrics = metrics
-        )
+            metrics = metrics,
+        ),
     )
 }
 
 /**
- * Renders the plain, white string [text] inside the slot [row] using an explicitly given row [font].
+ * Renders the plain, white string [text] inside the slot [row] using an explicitly given row
+ * [font].
  *
  * @param row the one-based slot row to render in (1-6)
  * @param text the plain text to render, emitted as-is
@@ -342,7 +343,7 @@ fun rowTextAt(
         row = row,
         text = text,
         alignment = TextAlignment.LEFT,
-        columns = column until ViewSlotGeometry.COLUMNS
+        columns = column until ViewSlotGeometry.COLUMNS,
     )
 }
 
@@ -449,6 +450,7 @@ fun blockRow(
 ) {
     for (x in 0 until ViewSlotGeometry.COLUMNS) {
         if (x in exemptColumns) continue
+
         blockCell(x, row, geometry)
     }
 }
@@ -474,6 +476,7 @@ fun blockRow(
 ) {
     for (x in 0 until ViewSlotGeometry.COLUMNS) {
         if (exemptColumns.contains(x)) continue
+
         blockCell(x, row, geometry)
     }
 }
@@ -495,6 +498,7 @@ fun blockColumn(
 ) {
     for (row in 1..rows) {
         if (row in exemptRows) continue
+
         blockCell(column, row, geometry)
     }
 }
@@ -516,6 +520,7 @@ fun blockColumn(
 ) {
     for (row in 1..rows) {
         if (exemptRows.contains(row)) continue
+
         blockCell(column, row, geometry)
     }
 }
@@ -558,6 +563,7 @@ fun blockAllSlots(
 ) {
     for (slot in 0 until rows * ViewSlotGeometry.COLUMNS) {
         if (exemptSlots.contains(slot)) continue
+
         blockSlot(slot, geometry)
     }
 }

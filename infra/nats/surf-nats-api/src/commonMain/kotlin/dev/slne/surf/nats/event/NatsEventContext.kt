@@ -10,14 +10,15 @@ import kotlin.coroutines.CoroutineContext
  *
  * Available to suspending listeners through [natsEventContext] or [natsEventContextOrNull].
  *
- * @property origin the publisher's identity as `client@instanceId`, or null if the publisher supplied no origin. The
- * client part is the publisher's client name. The instance ID is random and tells apart publishers with the same
- * client name.
+ * @property origin the publisher's identity as `client@instanceId`, or null if the publisher
+ * supplied no origin. The client part is the publisher's client name. The instance ID is random and
+ * tells apart publishers with the same client name.
  * @property isFromThisClient whether the event was published by this client in this JVM.
  * Events from other clients in the same JVM are treated as coming from a different client.
- * @property eventId the identity of the logical event from the `Surf-Event-Id` header, or null if the publisher sent
- * none. Every surf-nats publisher sends one. A publisher that repeats an event sends it with the same identity, so
- * listeners can deduplicate by it, for example with `NatsEventDeduplicator`.
+ * @property eventId the identity of the logical event from the `Surf-Event-Id` header, or null if
+ * the publisher sent none. Every surf-nats publisher sends one. A publisher that repeats an event
+ * sends it with the same identity, so listeners can deduplicate by it, for example with
+ * `NatsEventDeduplicator`.
  */
 public class NatsEventContext @InternalNatsApi constructor(
     public val origin: String?,
@@ -33,12 +34,16 @@ public class NatsEventContext @InternalNatsApi constructor(
 /**
  * Returns the current listener's [NatsEventContext], or null outside its coroutine context.
  */
-public suspend fun natsEventContextOrNull(): NatsEventContext? = currentCoroutineContext()[NatsEventContext]
+public suspend fun natsEventContextOrNull(): NatsEventContext? {
+    return currentCoroutineContext()[NatsEventContext]
+}
 
 /**
  * Returns the current listener's [NatsEventContext].
  *
  * @throws IllegalStateException if the current coroutine has no listener context.
  */
-public suspend fun natsEventContext(): NatsEventContext = currentCoroutineContext()[NatsEventContext]
-    ?: error("NatsEventContext not found. Make sure you are in a NatsListener context.")
+public suspend fun natsEventContext(): NatsEventContext {
+    return currentCoroutineContext()[NatsEventContext]
+        ?: error("NatsEventContext not found. Make sure you are in a NatsListener context.")
+}

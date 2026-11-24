@@ -1,14 +1,7 @@
 package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.external.protobuf.create
-import dev.slne.surf.nats.js.fixtures.PlainNestedSchema
-import dev.slne.surf.nats.js.fixtures.PlainSampleData
-import dev.slne.surf.nats.js.fixtures.PlainSampleSchema
-import dev.slne.surf.nats.js.fixtures.PlainWellKnownData
-import dev.slne.surf.nats.js.fixtures.PlainWellKnownSchema
-import dev.slne.surf.nats.js.fixtures.TimestampSchema
-import dev.slne.surf.nats.js.fixtures.ValueSchema
-import dev.slne.surf.nats.js.fixtures.fromJsonString
+import dev.slne.surf.nats.js.fixtures.*
 import js.date.Date
 import js.typedarrays.Uint8Array
 import js.typedarrays.toByteArray
@@ -26,7 +19,9 @@ class ToPlainTest {
 
     private fun sample(json: String) = fromJsonString(PlainSampleSchema, json)
 
-    private fun plainJson(json: String): String = JSON.stringify(toPlain(PlainSampleSchema, sample(json)))
+    private fun plainJson(json: String): String {
+        return JSON.stringify(toPlain(PlainSampleSchema, sample(json)))
+    }
 
     @Test
     fun setFieldsBecomePlainValues() {
@@ -58,7 +53,10 @@ class ToPlainTest {
             "nested":null,"children":[],"color":null,"colors":[],"target":{"case":null,"value":null}}
         """.trimIndent().replace("\n", "")
 
-        assertEquals(expected, JSON.stringify(toPlain(PlainSampleSchema, create(PlainSampleSchema))))
+        assertEquals(
+            expected,
+            JSON.stringify(toPlain(PlainSampleSchema, create(PlainSampleSchema))),
+        )
     }
 
     @Test
@@ -69,7 +67,10 @@ class ToPlainTest {
 
     @Test
     fun bytesStayUint8Arrays() {
-        val plain = toPlain(PlainSampleSchema, sample("""{"name":"x","data":"AQI="}""")).unsafeCast<PlainSampleData>()
+        val plain = toPlain(
+            PlainSampleSchema,
+            sample("""{"name":"x","data":"AQI="}"""),
+        ).unsafeCast<PlainSampleData>()
         assertContentEquals(byteArrayOf(1, 2), assertIs<Uint8Array<*>>(plain.data).toByteArray())
     }
 
@@ -95,7 +96,12 @@ class ToPlainTest {
 
     @Test
     fun aMessageOfAnotherSchemaIsRejected() {
-        assertFailsWith<IllegalArgumentException> { toPlain(PlainNestedSchema, sample("""{"name":"x"}""")) }
+        assertFailsWith<IllegalArgumentException> {
+            toPlain(
+                PlainNestedSchema,
+                sample("""{"name":"x"}"""),
+            )
+        }
     }
 
     @Test
@@ -131,13 +137,19 @@ class ToPlainTest {
             "options":{},"bigId":null,"bigIds":[],"choice":{"case":null,"value":null}}
         """.trimIndent().replace("\n", "")
 
-        assertEquals(expected, JSON.stringify(toPlain(PlainWellKnownSchema, create(PlainWellKnownSchema))))
+        assertEquals(
+            expected,
+            JSON.stringify(toPlain(PlainWellKnownSchema, create(PlainWellKnownSchema))),
+        )
     }
 
     @Test
     fun aValueOfKindNullIsNull() {
         val plain = wellKnownJson("""{"setting":null,"options":{"o":null}}""")
-        assertTrue(plain.contains(""""setting":null,""") && plain.contains(""""options":{"o":null}"""), plain)
+        assertTrue(
+            plain.contains(""""setting":null,""") && plain.contains(""""options":{"o":null}"""),
+            plain,
+        )
         assertNull(toPlain(ValueSchema, fromJsonString(ValueSchema, "null")))
         assertNull(toPlain(ValueSchema, create(ValueSchema)))
     }
@@ -145,18 +157,30 @@ class ToPlainTest {
     @Test
     fun aStructInAOneofBecomesAPlainObject() {
         val plain = wellKnownJson("""{"document":{"k":"v","n":[]}}""")
-        assertTrue(plain.endsWith(""""choice":{"case":"document","value":{"k":"v","n":[]}}}"""), plain)
+        assertTrue(
+            plain.endsWith(""""choice":{"case":"document","value":{"k":"v","n":[]}}}"""),
+            plain,
+        )
     }
 
     @Test
     fun aBytesWrapperBecomesAUint8Array() {
-        val plain = toPlain(PlainWellKnownSchema, fromJsonString(PlainWellKnownSchema, """{"blob":"AQI="}"""))
+        val plain = toPlain(
+            PlainWellKnownSchema,
+            fromJsonString(PlainWellKnownSchema, """{"blob":"AQI="}"""),
+        )
         val blob = plain.unsafeCast<PlainWellKnownData>().blob
         assertContentEquals(byteArrayOf(1, 2), assertIs<Uint8Array<*>>(blob).toByteArray())
     }
 
-    private fun wellKnownJson(json: String): String =
-        JSON.stringify(toPlain(PlainWellKnownSchema, fromJsonString(PlainWellKnownSchema, json)))
+    private fun wellKnownJson(json: String): String {
+        return JSON.stringify(
+            toPlain(
+                PlainWellKnownSchema,
+                fromJsonString(PlainWellKnownSchema, json),
+            ),
+        )
+    }
 
     private companion object {
         const val UUID = "00112233-4455-6677-8899-aabbccddeeff"

@@ -21,26 +21,34 @@ internal object SurfProtoOptions {
     /**
      * The `(surf.nats.v1.event)` message option.
      */
-    val EVENT: ProtoMember =
-        ProtoMember.get(Options.MESSAGE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.EVENT))
+    val EVENT: ProtoMember = ProtoMember.get(
+        Options.MESSAGE_OPTIONS,
+        ProtocolOptions.qualified(ProtocolOptions.EVENT),
+    )
 
     /**
      * The `(surf.nats.v1.service)` service option.
      */
-    val SERVICE: ProtoMember =
-        ProtoMember.get(Options.SERVICE_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.SERVICE))
+    val SERVICE: ProtoMember = ProtoMember.get(
+        Options.SERVICE_OPTIONS,
+        ProtocolOptions.qualified(ProtocolOptions.SERVICE),
+    )
 
     /**
      * The `(surf.nats.v1.method)` method option.
      */
-    val METHOD: ProtoMember =
-        ProtoMember.get(Options.METHOD_OPTIONS, ProtocolOptions.qualified(ProtocolOptions.METHOD))
+    val METHOD: ProtoMember = ProtoMember.get(
+        Options.METHOD_OPTIONS,
+        ProtocolOptions.qualified(ProtocolOptions.METHOD),
+    )
 
-    private val SERVICE_OPTIONS =
-        ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.SERVICE_OPTIONS))
+    private val SERVICE_OPTIONS = ProtoType.get(
+        ProtocolOptions.qualified(ProtocolOptions.SERVICE_OPTIONS),
+    )
 
-    private val METHOD_OPTIONS =
-        ProtoType.get(ProtocolOptions.qualified(ProtocolOptions.METHOD_OPTIONS))
+    private val METHOD_OPTIONS = ProtoType.get(
+        ProtocolOptions.qualified(ProtocolOptions.METHOD_OPTIONS),
+    )
 
     private val INT_MAX: BigInteger = BigInteger.valueOf(Int.MAX_VALUE.toLong())
 
@@ -54,8 +62,7 @@ internal object SurfProtoOptions {
      * @param member the option extension to look up
      * @return `true` if the option is present, otherwise `false`
      */
-    fun isSet(options: Options, member: ProtoMember): Boolean =
-        options.get(member) != null
+    fun isSet(options: Options, member: ProtoMember): Boolean = options.get(member) != null
 
     /**
      * Checks whether a Protobuf message is marked as a NATS event.
@@ -73,22 +80,26 @@ internal object SurfProtoOptions {
      *
      * Values that cannot be read are reported to [problems] and count as unset.
      */
-    fun service(service: Service, problems: Problems): ResolvedService = ProtocolResolution.service(
-        serviceOptions(service.options, service.location, problems),
-        service.type.toString(),
-    )
+    fun service(service: Service, problems: Problems): ResolvedService {
+        return ProtocolResolution.service(
+            serviceOptions(service.options, service.location, problems),
+            service.type.toString(),
+        )
+    }
 
     /**
      * Resolves the `(surf.nats.v1.method)` options of [rpc] against its [service].
      *
      * Values that cannot be read are reported to [problems] and count as unset.
      */
-    fun method(rpc: Rpc, service: ResolvedService, problems: Problems): ResolvedMethod = ProtocolResolution.method(
-        methodOptions(rpc.options, rpc.location, problems),
-        service,
-        emptyResponse = rpc.responseType == ProtoType.EMPTY,
-        streaming = rpc.requestStreaming || rpc.responseStreaming,
-    )
+    fun method(rpc: Rpc, service: ResolvedService, problems: Problems): ResolvedMethod {
+        return ProtocolResolution.method(
+            methodOptions(rpc.options, rpc.location, problems),
+            service,
+            emptyResponse = rpc.responseType == ProtoType.EMPTY,
+            streaming = rpc.requestStreaming || rpc.responseStreaming,
+        )
+    }
 
     /**
      * Parses the NATS configuration declared on a Protobuf service.
@@ -102,8 +113,13 @@ internal object SurfProtoOptions {
      *
      * @return the parsed service configuration
      */
-    private fun serviceOptions(options: Options, location: Location, problems: Problems): ServiceOptions {
+    private fun serviceOptions(
+        options: Options,
+        location: Location,
+        problems: Problems,
+    ): ServiceOptions {
         val values = options.get(SERVICE) as? Map<*, *>? ?: return ServiceOptions()
+
         val reader = Reader(SERVICE_OPTIONS, values, location, problems)
 
         return ServiceOptions(
@@ -125,8 +141,13 @@ internal object SurfProtoOptions {
      *
      * @return the parsed method configuration
      */
-    private fun methodOptions(options: Options, location: Location, problems: Problems): MethodOptions {
+    private fun methodOptions(
+        options: Options,
+        location: Location,
+        problems: Problems,
+    ): MethodOptions {
         val values = options.get(METHOD) as? Map<*, *>? ?: return MethodOptions()
+
         val reader = Reader(METHOD_OPTIONS, values, location, problems)
 
         return MethodOptions(
@@ -144,8 +165,9 @@ internal object SurfProtoOptions {
      *
      * @return the configured boolean value, or `false` if absent
      */
-    private fun flag(options: Options, member: ProtoMember): Boolean =
-        options.get(member)?.toString()?.toBooleanStrict() ?: false
+    private fun flag(options: Options, member: ProtoMember): Boolean {
+        return options.get(member)?.toString()?.toBooleanStrict() ?: false
+    }
 
     /**
      * Converts fields of a parsed Protobuf option message into protocol values.
@@ -173,8 +195,7 @@ internal object SurfProtoOptions {
          *
          * @return the raw parsed value, or `null` if absent
          */
-        private fun raw(field: String): Any? =
-            values[ProtoMember.get(type, field)]
+        private fun raw(field: String): Any? = values[ProtoMember.get(type, field)]
 
         /**
          * Reads an optional boolean field.
@@ -185,8 +206,7 @@ internal object SurfProtoOptions {
          * @param field the Protobuf field name
          * @return the boolean value, or `null` if absent
          */
-        fun boolean(field: String): Boolean? =
-            raw(field)?.toString()?.toBooleanStrict()
+        fun boolean(field: String): Boolean? = raw(field)?.toString()?.toBooleanStrict()
 
         /**
          * Reads a call timeout expressed in seconds.
@@ -200,6 +220,7 @@ internal object SurfProtoOptions {
          */
         fun timeoutSeconds(field: String): Int? {
             val value = raw(field) ?: return null
+
             val seconds = DefaultValues.integer(value.toString(), BigInteger.ZERO, INT_MAX)
 
             if (seconds == null) {
@@ -207,6 +228,7 @@ internal object SurfProtoOptions {
                     location,
                     "option ${type.simpleName}.$field must be between 0 and ${Int.MAX_VALUE}, was '$value'",
                 )
+
                 return null
             }
 
@@ -228,14 +250,15 @@ internal object SurfProtoOptions {
         fun recipients(field: String): RecipientsOption? {
             val value = raw(field)?.toString() ?: return null
 
-            // Wire accepts exactly the constants of NatsRecipients, so this fails only if RecipientsOption lags behind.
+            // Wire accepts exactly the constants of NatsRecipients, so this fails only if
+            // RecipientsOption lags behind.
             val option = RecipientsOption.ofName(value)
 
             if (option == null) {
                 problems.error(
                     location,
                     "option ${type.simpleName}.$field has unknown value '$value', expected one of " +
-                            RecipientsOption.entries.joinToString { it.protoName },
+                        RecipientsOption.entries.joinToString { it.protoName },
                 )
             }
 

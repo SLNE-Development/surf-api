@@ -25,36 +25,39 @@ object JavaUUIDLongSerializer : KSerializer<UUID> {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    override fun deserialize(decoder: Decoder): UUID = decoder.decodeStructure(descriptor) {
-        if (decodeSequentially()) {
-            return@decodeStructure UUID(
-                decodeLongElement(descriptor, 0),
-                decodeLongElement(descriptor, 1),
-            )
-        }
-
-        var most = 0L
-        var least = 0L
-        var seen = 0
-        while (true) {
-            when (val index = decodeElementIndex(descriptor)) {
-                0 -> {
-                    most = decodeLongElement(descriptor, 0)
-                    seen = seen or 1
-                }
-
-                1 -> {
-                    least = decodeLongElement(descriptor, 1)
-                    seen = seen or 2
-                }
-
-                CompositeDecoder.DECODE_DONE -> break
-                else -> throw SerializationException("Unexpected element index $index")
+    override fun deserialize(decoder: Decoder): UUID {
+        return decoder.decodeStructure(descriptor) {
+            if (decodeSequentially()) {
+                return@decodeStructure UUID(
+                    decodeLongElement(descriptor, 0),
+                    decodeLongElement(descriptor, 1),
+                )
             }
+
+            var most = 0L
+            var least = 0L
+            var seen = 0
+
+            while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> {
+                        most = decodeLongElement(descriptor, 0)
+                        seen = seen or 1
+                    }
+
+                    1 -> {
+                        least = decodeLongElement(descriptor, 1)
+                        seen = seen or 2
+                    }
+
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> throw SerializationException("Unexpected element index $index")
+                }
+            }
+
+            if (seen != 3) throw SerializationException("UUID requires both 'most' and 'least'")
+
+            UUID(most, least)
         }
-
-        if (seen != 3) throw SerializationException("UUID requires both 'most' and 'least'")
-
-        UUID(most, least)
     }
 }

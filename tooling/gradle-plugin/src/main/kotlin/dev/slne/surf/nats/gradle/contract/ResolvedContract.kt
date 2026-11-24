@@ -6,13 +6,15 @@ import com.squareup.wire.schema.MessageType
 import com.squareup.wire.schema.Service
 
 /**
- * What [ContractResolver] decided for the generated declarations of one run, looked up by Wire declaration.
+ * What [ContractResolver] decided for the generated declarations of one run, looked up by Wire
+ * declaration.
  *
  * Mapped types have no entry. A lookup of a declaration the resolver did not resolve throws
- * [IllegalStateException]. Fields, enum values and rpcs that cannot be represented are left out, so the result
- * is complete only if resolution reported no problem.
+ * [IllegalStateException]. Fields, enum values and rpcs that cannot be represented are left out, so
+ * the result is complete only if resolution reported no problem.
  *
- * The maps must compare keys by identity: Wire declarations are data classes with structural equality.
+ * The maps must compare keys by identity: Wire declarations are data classes with structural
+ * equality.
  */
 internal class ResolvedContract(
     private val members: Map<MessageType, List<MessageMember>>,

@@ -7,9 +7,10 @@ import java.util.*
 /**
  * A Kotlin value that the JVM encodes for the interop script and the value it expects back.
  *
- * [echo] is what the JVM must decode when the script sends the message back through `InteropService`; `null` means
- * the script must reject the Kotlin bytes and sends nothing back. A [raw] vector is served by [RawVectorResponder]
- * because the JS-facing message type differs from the Kotlin type that encodes it.
+ * [echo] is what the JVM must decode when the script sends the message back through
+ * `InteropService`; `null` means the script must reject the Kotlin bytes and sends nothing back. A
+ * [raw] vector is served by [RawVectorResponder] because the JS-facing message type differs from
+ * the Kotlin type that encodes it.
  */
 internal class InteropVector(
     val name: String,

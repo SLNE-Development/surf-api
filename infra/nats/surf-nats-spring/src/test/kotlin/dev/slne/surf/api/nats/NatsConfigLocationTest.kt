@@ -29,14 +29,20 @@ class NatsConfigLocationTest {
         val folder = NatsConfigLocation.resolve(surfApi)
 
         assertEquals("servers: legacy", folder.resolve("config.yml").readText())
-        assertEquals("servers: legacy", plugins.resolve("surf-api-nats-paper/config.yml").readText())
+        assertEquals(
+            "servers: legacy",
+            plugins.resolve("surf-api-nats-paper/config.yml").readText(),
+        )
     }
 
     @Test
     fun `the Minestom legacy folder is found too`() {
         writeConfig(plugins.resolve("surf-nats-minestom"), "servers: minestom")
 
-        assertEquals("servers: minestom", NatsConfigLocation.resolve(surfApi).resolve("config.yml").readText())
+        assertEquals(
+            "servers: minestom",
+            NatsConfigLocation.resolve(surfApi).resolve("config.yml").readText(),
+        )
     }
 
     @Test

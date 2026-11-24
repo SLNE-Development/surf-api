@@ -79,6 +79,7 @@ object McVersionRemapper {
     fun countVersionDotsForPatchDetection(version: String): Int {
         if (version.contains(".build.")) {
             val mcVersionPart = version.substringBefore(".build.")
+
             return if (hasNumericPatchVersionPart(mcVersionPart)) 3 else 2
         }
 
@@ -94,12 +95,12 @@ object McVersionRemapper {
         val parts = mcVersionPart.split('.')
 
         return parts.size >= 3 &&
-                parts[0].isNotEmpty() &&
-                parts[1].isNotEmpty() &&
-                parts[2].isNotEmpty() &&
-                parts[0].all(Char::isDigit) &&
-                parts[1].all(Char::isDigit) &&
-                parts[2].all(Char::isDigit)
+            parts[0].isNotEmpty() &&
+            parts[1].isNotEmpty() &&
+            parts[2].isNotEmpty() &&
+            parts[0].all(Char::isDigit) &&
+            parts[1].all(Char::isDigit) &&
+            parts[2].all(Char::isDigit)
     }
 
     private class McVersionClassVisitorWrapper : AsmVisitorWrapper {
@@ -114,14 +115,14 @@ object McVersionRemapper {
             fields: FieldList<FieldDescription.InDefinedShape?>,
             methods: MethodList<*>,
             writerFlags: Int,
-            readerFlags: Int
+            readerFlags: Int,
         ): ClassVisitor {
             return McVersionClassVisitor(classVisitor)
         }
     }
 
     private class McVersionClassVisitor(
-        visitor: ClassVisitor
+        visitor: ClassVisitor,
     ) : ClassVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitMethod(
@@ -129,7 +130,7 @@ object McVersionRemapper {
             name: String,
             descriptor: String,
             signature: String?,
-            exceptions: Array<String>?
+            exceptions: Array<String>?,
         ): MethodVisitor? {
             if (name == "countColons" && descriptor == "(Ljava/lang/String;)I") {
                 val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
@@ -141,7 +142,7 @@ object McVersionRemapper {
                     REMAPPER_INTERNAL,
                     "countVersionDotsForPatchDetection",
                     "(Ljava/lang/String;)I",
-                    false
+                    false,
                 )
                 mv.visitInsn(Opcodes.IRETURN)
                 mv.visitMaxs(1, 1)

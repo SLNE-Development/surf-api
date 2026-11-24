@@ -6,7 +6,8 @@ import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Tracks the commands registered by each plugin so they can be unregistered when the plugin unloads.
+ * Tracks the commands registered by each plugin so they can be unregistered when the plugin
+ * unloads.
  *
  * The map is concurrent; entries are added by the platform on registration and removed on
  * unregistration.
@@ -20,6 +21,7 @@ object PluginCommands {
      */
     internal fun track(name: String) {
         val plugin = SurfMinestomPlugin.current() ?: return
+
         owned.computeIfAbsent(plugin) { ConcurrentHashMap.newKeySet() } += name
     }
 
@@ -27,7 +29,9 @@ object PluginCommands {
      * Removes the command [name] from every plugin's set.
      */
     internal fun forget(name: String) {
-        owned.values.forEach { names -> names -= name }
+        for (names in owned.values) {
+            names -= name
+        }
     }
 
     /**
@@ -37,6 +41,9 @@ object PluginCommands {
      */
     fun unregisterAll(plugin: SurfMinestomPlugin): Int {
         val names = owned.remove(plugin) ?: return 0
-        return names.count { name -> runCatching { CommandAPI.unregister(name) }.getOrDefault(false) }
+
+        return names.count { name ->
+            runCatching { CommandAPI.unregister(name) }.getOrDefault(false)
+        }
     }
 }

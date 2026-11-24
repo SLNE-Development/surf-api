@@ -17,8 +17,8 @@ internal fun interface SignatureValidator {
          * A signature that cannot be verified, e.g. because it is malformed, is rejected. The
          * failure is logged at debug level only, as the signature is client input.
          */
-        fun from(publicKey: PublicKey, algorithm: String) =
-            SignatureValidator { updater, signature ->
+        fun from(publicKey: PublicKey, algorithm: String): SignatureValidator {
+            return SignatureValidator { updater, signature ->
                 try {
                     val verifier = Signature.getInstance(algorithm)
                     verifier.initVerify(publicKey)
@@ -29,5 +29,6 @@ internal fun interface SignatureValidator {
                     false
                 }
             }
+        }
     }
 }

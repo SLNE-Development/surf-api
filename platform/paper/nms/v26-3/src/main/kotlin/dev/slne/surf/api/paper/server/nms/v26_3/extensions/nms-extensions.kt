@@ -68,16 +68,19 @@ fun Player.toNms(): ServerPlayer = (this as CraftPlayer).handle
 fun Material.toNmsBlock(): Block = CraftMagicNumbers.getBlock(this)
 fun Material.toNmsItem(): Item = CraftMagicNumbers.getItem(this)
 fun BlockData.toNms(): NmsBlockState = (this as CraftBlockData).state
-fun Vector3f?.toNms(): NmsVector3f? =
-    if (this == null) null else NmsVector3f(this.x(), this.y(), this.z())
+fun Vector3f?.toNms(): NmsVector3f? {
+    return if (this == null) null else NmsVector3f(this.x(), this.y(), this.z())
+}
 
-fun FinePosition.toNms() = Vec3(x(), y(), z())
+fun FinePosition.toNms(): Vec3 = Vec3(x(), y(), z())
 fun BlockState.toNms(): NmsBlockState = (this as CraftBlockState).handle
-fun Quaternionf?.toNms(): NmsQuaternionf? =
-    if (this == null) null else NmsQuaternionf(x(), y(), z(), w())
+fun Quaternionf?.toNms(): NmsQuaternionf? {
+    return if (this == null) null else NmsQuaternionf(x(), y(), z(), w())
+}
 
-fun Billboard.toNms(): Display.BillboardConstraints =
-    Display.BillboardConstraints.valueOf(this.name)
+fun Billboard.toNms(): Display.BillboardConstraints {
+    return Display.BillboardConstraints.valueOf(this.name)
+}
 
 fun ItemStack.toNms(): NmsItemStack = CraftItemStack.asNMSCopy(this)
 fun ItemStack.unwrap(): NmsItemStack = CraftItemStack.unwrap(this)
@@ -90,79 +93,103 @@ fun SignBlockUpdateSettings.SignText.toNms(): SignText {
         line1.toNms(),
         line2.toNms(),
         line3.toNms(),
-        line4.toNms()
+        line4.toNms(),
     )
 
     return SignText(lines, lines, DyeColor.BLACK, false)
 }
 
-fun InventoryType.toNms(): MenuType<*> = when (this) {
-    InventoryType.ANVIL -> MenuType.ANVIL
-    InventoryType.BEACON -> MenuType.BEACON
-    InventoryType.BLAST_FURNACE -> MenuType.BLAST_FURNACE
-    InventoryType.BREWING -> MenuType.BREWING_STAND
-    InventoryType.CARTOGRAPHY -> MenuType.CARTOGRAPHY_TABLE
-    InventoryType.CHEST -> MenuType.GENERIC_9x6
-    InventoryType.DISPENSER, InventoryType.DROPPER -> MenuType.GENERIC_3x3
-    InventoryType.ENCHANTING -> MenuType.ENCHANTMENT
-    InventoryType.FURNACE -> MenuType.FURNACE
-    InventoryType.GRINDSTONE -> MenuType.GRINDSTONE
-    InventoryType.HOPPER -> MenuType.HOPPER
-    InventoryType.LECTERN -> MenuType.LECTERN
-    InventoryType.LOOM -> MenuType.LOOM
-    InventoryType.MERCHANT -> MenuType.MERCHANT
-    InventoryType.SHULKER_BOX -> MenuType.SHULKER_BOX
-    InventoryType.SMOKER -> MenuType.SMOKER
-    InventoryType.SMITHING -> MenuType.SMITHING
-    InventoryType.STONECUTTER -> MenuType.STONECUTTER
-    InventoryType.PLAYER -> MenuType.GENERIC_9x4
-    InventoryType.CRAFTER -> MenuType.CRAFTER_3x3
-    InventoryType.WORKBENCH -> MenuType.CRAFTING
-    InventoryType.BARREL, InventoryType.CHISELED_BOOKSHELF, InventoryType.DECORATED_POT, InventoryType.JUKEBOX, InventoryType.COMPOSTER, InventoryType.ENDER_CHEST -> MenuType.GENERIC_9x3
-    InventoryType.CREATIVE, InventoryType.CRAFTING -> throw UnsupportedOperationException("Can't open a $this inventory!")
-    else -> throw UnsupportedOperationException("Unknown inventory type: $this")
+fun InventoryType.toNms(): MenuType<*> {
+    return when (this) {
+        InventoryType.ANVIL -> MenuType.ANVIL
+        InventoryType.BEACON -> MenuType.BEACON
+        InventoryType.BLAST_FURNACE -> MenuType.BLAST_FURNACE
+        InventoryType.BREWING -> MenuType.BREWING_STAND
+        InventoryType.CARTOGRAPHY -> MenuType.CARTOGRAPHY_TABLE
+        InventoryType.CHEST -> MenuType.GENERIC_9x6
+        InventoryType.DISPENSER, InventoryType.DROPPER -> MenuType.GENERIC_3x3
+        InventoryType.ENCHANTING -> MenuType.ENCHANTMENT
+        InventoryType.FURNACE -> MenuType.FURNACE
+        InventoryType.GRINDSTONE -> MenuType.GRINDSTONE
+        InventoryType.HOPPER -> MenuType.HOPPER
+        InventoryType.LECTERN -> MenuType.LECTERN
+        InventoryType.LOOM -> MenuType.LOOM
+        InventoryType.MERCHANT -> MenuType.MERCHANT
+        InventoryType.SHULKER_BOX -> MenuType.SHULKER_BOX
+        InventoryType.SMOKER -> MenuType.SMOKER
+        InventoryType.SMITHING -> MenuType.SMITHING
+        InventoryType.STONECUTTER -> MenuType.STONECUTTER
+        InventoryType.PLAYER -> MenuType.GENERIC_9x4
+        InventoryType.CRAFTER -> MenuType.CRAFTER_3x3
+        InventoryType.WORKBENCH -> MenuType.CRAFTING
+        InventoryType.BARREL,
+        InventoryType.CHISELED_BOOKSHELF,
+        InventoryType.DECORATED_POT,
+        InventoryType.JUKEBOX,
+        InventoryType.COMPOSTER,
+        InventoryType.ENDER_CHEST,
+        -> MenuType.GENERIC_9x3
+
+        InventoryType.CREATIVE, InventoryType.CRAFTING -> throw UnsupportedOperationException(
+            "Can't open a $this inventory!",
+        )
+
+        else -> throw UnsupportedOperationException("Unknown inventory type: $this")
+    }
 }
 
 fun BlockPos.toBukkit(): BlockPosition = Position.block(x, y, z)
 
-fun Array<Component>.toBukkit() = this.map { it.toBukkit() }
+fun Array<Component>.toBukkit(): List<AdventureComponent> = this.map { it.toBukkit() }
 fun AdventureComponent.toNms(): Component = PaperAdventure.asVanilla(this)
 fun Component.toBukkit(): AdventureComponent = PaperAdventure.asAdventure(this)
 
-fun Server.toCraft() = this as CraftServer
+fun Server.toCraft(): CraftServer = this as CraftServer
 val craftServer: CraftServer get() = server.toCraft()
 val commodore: Commodore get() = CraftMagicNumbers.INSTANCE.commodore
 
-fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> =
-    CraftEntityType.bukkitToMinecraft(this)
+fun EntityType.toNms(): net.minecraft.world.entity.EntityType<*> {
+    return CraftEntityType.bukkitToMinecraft(this)
+}
 
 @Suppress("DEPRECATION")
-fun EntityType.toNmsHolder() =
-    CraftEntityType.bukkitToMinecraftHolder(this) as Holder.Reference<net.minecraft.world.entity.EntityType<*>>
+fun EntityType.toNmsHolder(): Holder.Reference<net.minecraft.world.entity.EntityType<*>> {
+    return CraftEntityType.bukkitToMinecraftHolder(this)
+        as Holder.Reference<net.minecraft.world.entity.EntityType<*>>
+}
 
 fun World.toNms(): ServerLevel = (this as CraftWorld).handle
 fun Entity.toNms(): net.minecraft.world.entity.Entity = (this as CraftEntity).handleRaw
-fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity =
-    (this as CraftLivingEntity).handle
-
-fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource =
-    (this as CraftDamageSource).handle
-
-fun AdvancementDisplay.Frame.toNms() = when (this) {
-    CHALLENGE -> AdvancementType.CHALLENGE
-    GOAL -> AdvancementType.GOAL
-    TASK -> AdvancementType.TASK
+fun LivingEntity.toNms(): net.minecraft.world.entity.LivingEntity {
+    return (this as CraftLivingEntity).handle
 }
 
-fun NamespacedKey.toIdentifier() = Identifier.fromNamespaceAndPath(namespace, key)
-fun GameMode.toNms() = GameType.byId(this.value)
+fun DamageSource.toNms(): net.minecraft.world.damagesource.DamageSource {
+    return (this as CraftDamageSource).handle
+}
+
+fun AdvancementDisplay.Frame.toNms(): AdvancementType {
+    return when (this) {
+        CHALLENGE -> AdvancementType.CHALLENGE
+        GOAL -> AdvancementType.GOAL
+        TASK -> AdvancementType.TASK
+    }
+}
+
+fun NamespacedKey.toIdentifier(): Identifier = Identifier.fromNamespaceAndPath(namespace, key)
+fun GameMode.toNms(): GameType = GameType.byId(this.value)
 
 fun ChatType.Bound.toNms(sender: ServerPlayer): net.minecraft.network.chat.ChatType.Bound {
     val chatTypeLookup = sender.level().registryAccess().lookupOrThrow(Registries.CHAT_TYPE)
 
     return net.minecraft.network.chat.ChatType.Bound(
-        chatTypeLookup.getOrThrow(ResourceKey.create(Registries.CHAT_TYPE, PaperAdventure.asVanilla(type().key()))),
+        chatTypeLookup.getOrThrow(
+            ResourceKey.create(
+                Registries.CHAT_TYPE,
+                PaperAdventure.asVanilla(type().key()),
+            ),
+        ),
         PaperAdventure.asVanilla(name()),
-        Optional.ofNullable(PaperAdventure.asVanilla(target()))
+        Optional.ofNullable(PaperAdventure.asVanilla(target())),
     )
 }

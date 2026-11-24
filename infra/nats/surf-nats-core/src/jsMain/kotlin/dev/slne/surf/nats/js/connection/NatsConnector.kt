@@ -32,21 +32,23 @@ internal object NatsConnector {
         scope: CoroutineScope,
         connection: NatsConnection,
         logger: ClientLogger,
-    ): Job = scope.launch {
-        connection.status()
-            .asFlow()
-            .collect { status ->
-                when (val type = status.type) {
-                    "disconnect", "error", "staleConnection", "slowConsumer" -> {
-                        logger.warn(
-                            "NATS connection $type",
-                            status.server ?: status.error ?: ""
-                        )
-                    }
+    ): Job {
+        return scope.launch {
+            connection.status()
+                .asFlow()
+                .collect { status ->
+                    when (val type = status.type) {
+                        "disconnect", "error", "staleConnection", "slowConsumer" -> {
+                            logger.warn(
+                                "NATS connection $type",
+                                status.server ?: status.error ?: "",
+                            )
+                        }
 
-                    "reconnect" -> logger.info("NATS connection reconnect: ${status.server}")
+                        "reconnect" -> logger.info("NATS connection reconnect: ${status.server}")
+                    }
                 }
-            }
+        }
     }
 
     private fun connectionOptions(
@@ -67,7 +69,7 @@ internal object NatsConnector {
             is ConnectSettings.Auth.UserPass -> ConnectionOptions.copy(
                 options,
                 user = auth.user,
-                pass = auth.pass
+                pass = auth.pass,
             )
 
             is ConnectSettings.Auth.CredsFile -> {

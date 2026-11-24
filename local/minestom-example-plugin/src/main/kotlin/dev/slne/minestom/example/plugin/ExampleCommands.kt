@@ -17,7 +17,9 @@ class ExampleCommands : CommandRegistrar {
     override fun register() {
         commandAPICommand("plugins") {
             playerExecutor { player, _ ->
-                val plugins = PluginManager.instance.plugins.joinToString { "${it.meta.name} ${it.meta.version}" }
+                val plugins = PluginManager.instance.plugins.joinToString {
+                    "${it.meta.name} ${it.meta.version}"
+                }
                 player.sendMessage(Component.text("Plugins: $plugins"))
             }
         }

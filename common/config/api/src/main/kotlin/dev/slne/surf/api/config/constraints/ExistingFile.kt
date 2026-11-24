@@ -32,10 +32,13 @@ import kotlin.io.path.isRegularFile
 annotation class ExistingFile {
     companion object {
         internal object Factory : Constraint.Factory<ExistingFile, Any?> {
-            override fun make(data: ExistingFile, type: Type): Constraint<Any?> = Constraint { value ->
-                val path = value.asPathOrNull() ?: return@Constraint
-                if (!path.exists() || !path.isRegularFile()) {
-                    throw SerializationException("Path must point to an existing file: $path")
+            override fun make(data: ExistingFile, type: Type): Constraint<Any?> {
+                return Constraint { value ->
+                    val path = value.asPathOrNull() ?: return@Constraint
+
+                    if (!path.exists() || !path.isRegularFile()) {
+                        throw SerializationException("Path must point to an existing file: $path")
+                    }
                 }
             }
         }

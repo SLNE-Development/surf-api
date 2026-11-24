@@ -13,13 +13,14 @@ typealias SerializableLocalDate = @Serializable(with = LocalDateSerializer::clas
 object LocalDateSerializer : KSerializer<LocalDate> {
     override val descriptor = PrimitiveSerialDescriptor(
         "surf.api.java.datetime.date.LocalDate",
-        PrimitiveKind.LONG
+        PrimitiveKind.LONG,
     )
 
     override fun serialize(encoder: Encoder, value: LocalDate) {
         encoder.encodeLong(value.toEpochDay())
     }
 
-    override fun deserialize(decoder: Decoder): LocalDate =
-        LocalDate.ofEpochDay(decoder.decodeLong())
+    override fun deserialize(decoder: Decoder): LocalDate {
+        return LocalDate.ofEpochDay(decoder.decodeLong())
+    }
 }

@@ -13,7 +13,7 @@ data class RemoteChatSessionData(
     val sessionId: @Contextual UUID,
     val expiresAt: @Contextual Instant,
     val key: @Contextual PublicKey,
-    val keySignature: ByteArray
+    val keySignature: ByteArray,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -32,6 +32,7 @@ data class RemoteChatSessionData(
         result = 31 * result + expiresAt.hashCode()
         result = 31 * result + key.hashCode()
         result = 31 * result + keySignature.contentHashCode()
+
         return result
     }
 }

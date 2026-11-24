@@ -12,8 +12,9 @@ package dev.slne.surf.api.minestom.command.suggestion
  * the way the argument parses it. Entries are always filtered by the typed prefix. Providers run
  * like [ArgumentSuggestions]: in a coroutine on the asynchronous scope, with exceptions logged.
  *
- * Register a provider with [dev.slne.surf.api.minestom.command.argument.Argument.replaceSafeSuggestions]
- * or [dev.slne.surf.api.minestom.command.argument.Argument.includeSafeSuggestions].
+ * Register a provider with
+ * [dev.slne.surf.api.minestom.command.argument.Argument.replaceSafeSuggestions] or
+ * [dev.slne.surf.api.minestom.command.argument.Argument.includeSafeSuggestions].
  */
 fun interface SafeSuggestions<T> {
     /**
@@ -37,6 +38,7 @@ fun interface SafeSuggestions<T> {
          */
         fun <T> suggest(values: Collection<T>): SafeSuggestions<T> {
             val copy = values.toList()
+
             return SafeSuggestions { copy.map(::withoutTooltip) }
         }
 
@@ -52,14 +54,17 @@ fun interface SafeSuggestions<T> {
         /**
          * Alias of [suggest] for a provider.
          */
-        fun <T> suggestCollection(provider: (SuggestionInfo) -> Collection<T>): SafeSuggestions<T> =
-            suggest(provider)
+        fun <T> suggestCollection(provider: (SuggestionInfo) -> Collection<T>): SafeSuggestions<T> {
+            return suggest(provider)
+        }
 
         /**
          * Returns a provider that suggests the values the suspending [provider] returns for each
          * request.
          */
-        fun <T> suggestAsync(provider: suspend (SuggestionInfo) -> Collection<T>): SafeSuggestions<T> {
+        fun <T> suggestAsync(
+            provider: suspend (SuggestionInfo) -> Collection<T>,
+        ): SafeSuggestions<T> {
             return SafeSuggestions { info ->
                 provider(info).map(::withoutTooltip)
             }
@@ -68,20 +73,23 @@ fun interface SafeSuggestions<T> {
         /**
          * Alias of [suggestAsync].
          */
-        fun <T> suggestCollectionAsync(provider: suspend (SuggestionInfo) -> Collection<T>): SafeSuggestions<T> =
-            suggestAsync(provider)
+        fun <T> suggestCollectionAsync(
+            provider: suspend (SuggestionInfo) -> Collection<T>,
+        ): SafeSuggestions<T> {
+            return suggestAsync(provider)
+        }
 
         /**
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
-        fun <T> tooltips(vararg values: Tooltip<T>): SafeSuggestions<T> =
-            tooltips(listOf(*values))
+        fun <T> tooltips(vararg values: Tooltip<T>): SafeSuggestions<T> = tooltips(listOf(*values))
 
         /**
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
         fun <T> tooltips(values: Collection<Tooltip<T>>): SafeSuggestions<T> {
             val copy = values.toList()
+
             return SafeSuggestions { copy }
         }
 
@@ -95,21 +103,30 @@ fun interface SafeSuggestions<T> {
         /**
          * Alias of [tooltips] for a provider.
          */
-        fun <T> tooltipCollection(provider: (SuggestionInfo) -> Collection<Tooltip<T>>): SafeSuggestions<T> =
-            tooltips(provider)
+        fun <T> tooltipCollection(
+            provider: (SuggestionInfo) -> Collection<Tooltip<T>>,
+        ): SafeSuggestions<T> {
+            return tooltips(provider)
+        }
 
         /**
          * Returns a provider that suggests the entries the suspending [provider] returns for each
          * request.
          */
-        fun <T> tooltipsAsync(provider: suspend (SuggestionInfo) -> Collection<Tooltip<T>>): SafeSuggestions<T> =
-            SafeSuggestions { info -> provider(info).toList() }
+        fun <T> tooltipsAsync(
+            provider: suspend (SuggestionInfo) -> Collection<Tooltip<T>>,
+        ): SafeSuggestions<T> {
+            return SafeSuggestions { info -> provider(info).toList() }
+        }
 
         /**
          * Alias of [tooltipsAsync].
          */
-        fun <T> tooltipCollectionAsync(provider: suspend (SuggestionInfo) -> Collection<Tooltip<T>>): SafeSuggestions<T> =
-            tooltipsAsync(provider)
+        fun <T> tooltipCollectionAsync(
+            provider: suspend (SuggestionInfo) -> Collection<Tooltip<T>>,
+        ): SafeSuggestions<T> {
+            return tooltipsAsync(provider)
+        }
 
         private fun <T> withoutTooltip(value: T) = Tooltip(value, null)
     }

@@ -38,16 +38,22 @@ abstract class CheckApiBoundary : DefaultTask() {
 
         if (found.isEmpty()) {
             logger.lifecycle("{}: api boundary clean", modulePath.get())
+
             return
         }
 
         val report = buildString {
-            appendLine("${modulePath.get()} is an API module but depends on implementation modules:")
-            found.forEach { appendLine("  - $it") }
+            appendLine(
+                "${modulePath.get()} is an API module but depends on implementation modules:",
+            )
+            for (violation in found) {
+                appendLine("  - $violation")
+            }
+
             append(
                 "An API module may only depend on other API modules. Move the dependency to the " +
-                        "matching implementation module, or move the type the API needs into an " +
-                        "API module of its own."
+                    "matching implementation module, or move the type the API needs into an " +
+                    "API module of its own.",
             )
         }
 

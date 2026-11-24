@@ -9,7 +9,8 @@ import java.util.zip.GZIPOutputStream
 /**
  * Minimal ustar reader and writer for the archives the weaver registry serves.
  *
- * Entry names are written verbatim, so tests can create entries a real packer would never emit, such as `../x`.
+ * Entry names are written verbatim, so tests can create entries a real packer would never emit,
+ * such as `../x`.
  */
 internal object TarGz {
 
@@ -18,12 +19,14 @@ internal object TarGz {
 
     fun create(entries: Map<String, String>): ByteArray {
         val tar = ByteArrayOutputStream()
+
         for ((name, content) in entries) {
             val data = content.toByteArray(Charsets.UTF_8)
             tar.write(header(name, data.size))
             tar.write(data)
             tar.write(ByteArray((BLOCK - data.size % BLOCK) % BLOCK))
         }
+
         tar.write(ByteArray(BLOCK * 2))
 
         return ByteArrayOutputStream().also { out ->
@@ -37,14 +40,21 @@ internal object TarGz {
         val tar = GZIPInputStream(ByteArrayInputStream(archive)).use { it.readBytes() }
         val names = mutableListOf<String>()
         var offset = 0
+
         while (offset + BLOCK <= tar.size) {
             val name = String(tar, offset, 100, Charsets.UTF_8).trimEnd(NUL[0])
             if (name.isEmpty()) break
+
             val size = String(tar, offset + 124, 11, Charsets.US_ASCII).trim(NUL[0], ' ').toInt(8)
             val type = tar[offset + 156]
-            if (type == '0'.code.toByte() || type == 0.toByte()) names += name
+
+            if (type == '0'.code.toByte() || type == 0.toByte()) {
+                names += name
+            }
+
             offset += BLOCK + (size + BLOCK - 1) / BLOCK * BLOCK
         }
+
         return names
     }
 
@@ -68,6 +78,7 @@ internal object TarGz {
 
         val checksum = header.sumOf { it.toInt() and 0xFF }
         put(148, checksum.toString(8).padStart(6, '0') + NUL + " ")
+
         return header
     }
 }

@@ -23,7 +23,6 @@ import dev.slne.surf.api.minestom.server.impl.player.PlayerFlightListener
 import dev.slne.surf.api.minestom.server.impl.player.SurfPlayerProviders
 import dev.slne.surf.api.nats.NatsPlatform
 import dev.slne.surf.api.redis.RedisPlatform
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.SurfRootContext
 import dev.slne.surf.api.spring.context.surfCoroutineScope
@@ -64,8 +63,9 @@ internal class SurfMinestomRuntime private constructor(
     private val builder: SurfMinestomServerBuilder,
 ) : SurfMinestomServer {
     override val eventNode: EventNode<Event> = EventNode.all(builder.eventNodeName)
-    override val features: Collection<SurfMinestomFeature> =
-        builder.features.values.sortedBy(SurfMinestomFeature::loadPriority)
+    override val features: Collection<SurfMinestomFeature> = builder.features.values.sortedBy(
+        SurfMinestomFeature::loadPriority,
+    )
 
     private val instance = SurfMinestomInstance()
     private val commandApi = MinestomCommandAPIService()
@@ -104,7 +104,10 @@ internal class SurfMinestomRuntime private constructor(
     private fun load() {
         SurfPlayerProviders.install(builder.playerFactory)
 
-        if (builder.recommendedServerProperties) RecommendedServerProperties.apply()
+        if (builder.recommendedServerProperties) {
+            RecommendedServerProperties.apply()
+        }
+
         preparePacketEvents()
         NatsPlatform.install(SURF_API_DATA_DIRECTORY)
         RedisPlatform.install(SURF_API_DATA_DIRECTORY)
@@ -137,10 +140,13 @@ internal class SurfMinestomRuntime private constructor(
         builder.configurationPhase?.let { phase ->
             ConfigurationPhase.install(
                 phase.build(),
-                eventNode
+                eventNode,
             )
         }
-        builder.registrars.forEach { registrar -> registrar.register(eventNode) }
+
+        for (registrar in builder.registrars) {
+            registrar.register(eventNode)
+        }
 
         for (feature in features) {
             LOGGER.info("Loading feature {}", feature.id)
@@ -148,9 +154,11 @@ internal class SurfMinestomRuntime private constructor(
             loaded += feature
         }
 
-        // Installed after the features, so the server's provider takes precedence over one a feature
-        // installed
-        builder.permissionProvider?.let { provider -> MinestomPermissions.installProvider(provider) }
+        // Installed after the features, so the server's provider takes precedence over one a
+        // feature installed
+        builder.permissionProvider?.let { provider ->
+            MinestomPermissions.installProvider(provider)
+        }
         running.set(true)
 
         SchedulerManager.buildShutdownTask(::shutdown)
@@ -161,6 +169,7 @@ internal class SurfMinestomRuntime private constructor(
     private fun enable() {
         runBlocking {
             checkNotNull(root) { "surf-api's root context is not loaded" }.enable()
+
             instance.onEnable()
         }
         reportFailedMixins()
@@ -177,6 +186,7 @@ internal class SurfMinestomRuntime private constructor(
 
         lifecycleLock.withLock {
             if (!running.compareAndSet(true, false)) return
+
             teardown()
         }
     }
@@ -186,16 +196,22 @@ internal class SurfMinestomRuntime private constructor(
         checkNotStarting()
 
         if (!stopping.compareAndSet(false, true)) {
-            if (Thread.currentThread() !== stoppingThread) stopped.join()
+            if (Thread.currentThread() !== stoppingThread) {
+                stopped.join()
+            }
+
             return
         }
 
         stoppingThread = Thread.currentThread()
+
         try {
-            // Minestom runs the shutdown of the api as one of its shutdown tasks, before it closes the
-            // connections
+            // Minestom runs the shutdown of the api as one of its shutdown tasks, before it closes
+            // the connections
             try {
-                if (MinecraftServer.isStarted()) MinecraftServer.stopCleanly()
+                if (MinecraftServer.isStarted()) {
+                    MinecraftServer.stopCleanly()
+                }
             } catch (failure: Throwable) {
                 LOGGER.error("Failed to stop the Minestom server cleanly", failure)
             }
@@ -217,13 +233,16 @@ internal class SurfMinestomRuntime private constructor(
     }
 
     override fun exit(status: Int) {
-        Thread({
-            try {
-                exitFlushingLogs(status)
-            } catch (refused: IllegalStateException) {
-                LOGGER.warn("Not exiting: {}", refused.message)
-            }
-        }, "surf-minestom-exit").apply { isDaemon = false }.start()
+        Thread(
+            {
+                try {
+                    exitFlushingLogs(status)
+                } catch (refused: IllegalStateException) {
+                    LOGGER.warn("Not exiting: {}", refused.message)
+                }
+            },
+            "surf-minestom-exit",
+        ).apply { isDaemon = false }.start()
     }
 
     private fun checkNotStarting() {
@@ -239,9 +258,11 @@ internal class SurfMinestomRuntime private constructor(
      */
     private fun checkNotInLifecycle() {
         val thread = Thread.currentThread()
-        check(!lifecycleLock.isHeldByCurrentThread && (thread !== stoppingThread || stopped.isDone)) {
+        check(
+            !lifecycleLock.isHeldByCurrentThread && (thread !== stoppingThread || stopped.isDone),
+        ) {
             "The JVM cannot be terminated from code the start or the stop of the surf api runs, e.g. a " +
-                    "disable or a shutdown action; call exit() on a server reference captured before"
+                "disable or a shutdown action; call exit() on a server reference captured before"
         }
     }
 
@@ -260,18 +281,23 @@ internal class SurfMinestomRuntime private constructor(
         if (ServerProperties.SHUTDOWN_ON_SIGNAL.get()) {
             LOGGER.warn(
                 "Minestom stops the server from a shutdown hook of its own, which runs concurrently " +
-                        "with the one of the surf api; start the server from the jar built by the surf " +
-                        "Gradle plugin, or set -Dminestom.shutdown-on-signal=false"
+                    "with the one of the surf api; start the server from the jar built by the surf " +
+                    "Gradle plugin, or set -Dminestom.shutdown-on-signal=false",
             )
         }
 
-        Runtime.getRuntime().addShutdownHook(Thread({
-            try {
-                stop()
-            } finally {
-                LogFlush.flush()
-            }
-        }, "surf-minestom-shutdown"))
+        Runtime.getRuntime().addShutdownHook(
+            Thread(
+                {
+                    try {
+                        stop()
+                    } finally {
+                        LogFlush.flush()
+                    }
+                },
+                "surf-minestom-shutdown",
+            ),
+        )
         isShutdownHookInstalled = true
     }
 
@@ -300,6 +326,7 @@ internal class SurfMinestomRuntime private constructor(
         try {
             val toDisable = loaded.toList()
             loaded.clear()
+
             for (feature in toDisable.asReversed()) {
                 step("disable feature ${feature.id}") { feature.disable(this) }
             }
@@ -307,6 +334,7 @@ internal class SurfMinestomRuntime private constructor(
             if (builder.configurationPhase != null) {
                 step("uninstall the configuration phase") { ConfigurationPhase.uninstall() }
             }
+
             step("stop the command api") { commandApi.stop() }
             step("uninstall the flight listener") { PlayerFlightListener.uninstall() }
             step("reset the entity tick filter") { EntityTickFilter.configure(emptySet()) }
@@ -320,7 +348,9 @@ internal class SurfMinestomRuntime private constructor(
             }
 
             step("reset the permission provider") { MinestomPermissions.installProvider(null) }
-            step("reset the unsigned argument factory") { SignedCommandArguments.resetUnsignedFactory() }
+            step("reset the unsigned argument factory") {
+                SignedCommandArguments.resetUnsignedFactory()
+            }
 
             root?.let { root ->
                 step("disable the root context") { runBlocking { root.disable() } }
@@ -331,6 +361,7 @@ internal class SurfMinestomRuntime private constructor(
         } finally {
             current.compareAndSet(this, null)
         }
+
         return failures.first
     }
 
@@ -345,8 +376,12 @@ internal class SurfMinestomRuntime private constructor(
         if (!SurfMixinAgent.isInstalled()) return
 
         val failed = SurfMixinAgent.failedTransformations()
+
         if (failed.isNotEmpty()) {
-            LOGGER.error("Mixins failed to apply to {}, the surf api does not work correctly", failed)
+            LOGGER.error(
+                "Mixins failed to apply to {}, the surf api does not work correctly",
+                failed,
+            )
         }
     }
 
@@ -354,11 +389,11 @@ internal class SurfMinestomRuntime private constructor(
         private val LOGGER = ComponentLogger.logger()
 
         /**
-         * surf-api's own data folder on a Minestom server, `surf-api` inside the plugins directory next to the
-         * plugins' folders.
+         * surf-api's own data folder on a Minestom server, `surf-api` inside the plugins directory
+         * next to the plugins' folders.
          */
-        @OptIn(InternalSurfApi::class)
-        private val SURF_API_DATA_DIRECTORY: Path = PluginsDirectory.fromSystemProperty().resolve("surf-api")
+        private val SURF_API_DATA_DIRECTORY: Path = PluginsDirectory.fromSystemProperty()
+            .resolve("surf-api")
 
         private const val SERVER_BEAN = "surfMinestomServer"
 
@@ -374,6 +409,7 @@ internal class SurfMinestomRuntime private constructor(
                     "Mixin is not installed; start the server from the jar built by the surf Gradle plugin"
                 }
                 LOGGER.warn("Mixin is not installed, the surf mixins do not apply")
+
                 return
             }
 
@@ -404,8 +440,10 @@ internal class SurfMinestomRuntime private constructor(
         @Volatile
         private var isShutdownHookInstalled: Boolean = false
 
-        fun current(): SurfMinestomServer = checkNotNull(current.get()) {
-            "The surf api has not been started yet, call surfMinestomServer { } first"
+        fun current(): SurfMinestomServer {
+            return checkNotNull(current.get()) {
+                "The surf api has not been started yet, call surfMinestomServer { } first"
+            }
         }
 
         /**
@@ -421,7 +459,10 @@ internal class SurfMinestomRuntime private constructor(
 
             // A JVM whose last non-daemon thread ends runs its hooks and exits with status 0, so a
             // daemon caller, e.g. the console, hands the termination to a non-daemon thread
-            if (!Thread.currentThread().isDaemon) terminate()
+            if (!Thread.currentThread().isDaemon) {
+                terminate()
+            }
+
             val terminator = Thread(::terminate, "surf-minestom-exit").apply { isDaemon = false }
             terminator.start()
             terminator.join()
@@ -438,7 +479,10 @@ internal class SurfMinestomRuntime private constructor(
                 LOGGER.error("Failed to stop the server before exiting", failure)
             }
 
-            if (!isShutdownHookInstalled) LogFlush.flush()
+            if (!isShutdownHookInstalled) {
+                LogFlush.flush()
+            }
+
             kotlin.system.exitProcess(checkNotNull(exitRequest.get()).status)
         }
 
@@ -446,8 +490,8 @@ internal class SurfMinestomRuntime private constructor(
             val thread = Thread.currentThread()
             check(thread !is TickThread && thread !is TickSchedulerThread) {
                 "The server cannot be stopped from the tick thread ${thread.name}, which would stay " +
-                        "blocked until the plugins and Minestom are stopped; use SurfMinestomServer.exit() " +
-                        "or another thread"
+                    "blocked until the plugins and Minestom are stopped; use SurfMinestomServer.exit() " +
+                    "or another thread"
             }
         }
 
@@ -456,6 +500,7 @@ internal class SurfMinestomRuntime private constructor(
          */
         private fun isJvmShuttingDown(): Boolean {
             val probe = Thread {}
+
             return try {
                 Runtime.getRuntime().addShutdownHook(probe)
                 Runtime.getRuntime().removeShutdownHook(probe)
@@ -477,12 +522,15 @@ internal class SurfMinestomRuntime private constructor(
 
             runtime.lifecycleLock.withLock {
                 runtime.startingThread = Thread.currentThread()
+
                 try {
                     runtime.load()
 
                     // Requested by another thread, which waits for the lock and then finds the api
                     // torn down
-                    check(!runtime.shutdownRequested.get()) { "The surf api was shut down while it started" }
+                    check(!runtime.shutdownRequested.get()) {
+                        "The surf api was shut down while it started"
+                    }
                 } catch (failure: Throwable) {
                     runtime.teardown()?.let(failure::addSuppressed)
                     current.compareAndSet(runtime, null)
@@ -494,6 +542,7 @@ internal class SurfMinestomRuntime private constructor(
 
             runtime.installShutdownHook()
             lastStarted = runtime
+
             return runtime
         }
     }

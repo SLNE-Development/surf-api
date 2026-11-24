@@ -34,13 +34,19 @@ class PlayerEventsTest {
             val results = mutableListOf<AsyncPlayerCountEvent.Result>()
             node.addListener<AsyncPlayerCountEvent> { event ->
                 results += event.result
-                if (event.player === first) event.allow()
+
+                if (event.player === first) {
+                    event.allow()
+                }
             }
 
             assertTrue(onVirtualThread { PlayerEvents.admit(first) })
             assertFalse(onVirtualThread { PlayerEvents.admit(second) })
             assertEquals(
-                listOf(AsyncPlayerCountEvent.Result.KICK_FULL, AsyncPlayerCountEvent.Result.KICK_FULL),
+                listOf(
+                    AsyncPlayerCountEvent.Result.KICK_FULL,
+                    AsyncPlayerCountEvent.Result.KICK_FULL,
+                ),
                 results,
             )
         } finally {
@@ -96,6 +102,7 @@ class PlayerEventsTest {
         env.process().eventHandler().addChild(node)
 
         val api = surfMinestomServer()
+
         try {
             val instance = env.createFlatInstance()
             val player = env.createPlayer(instance, Pos.ZERO)
@@ -142,6 +149,7 @@ class PlayerEventsTest {
         Thread.startVirtualThread {
             runCatching(block).fold(result::complete, result::completeExceptionally)
         }
+
         return result.join()
     }
 }

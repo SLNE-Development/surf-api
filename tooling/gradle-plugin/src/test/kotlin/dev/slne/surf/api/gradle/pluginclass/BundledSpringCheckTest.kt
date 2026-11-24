@@ -9,8 +9,8 @@ import java.io.File
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BundledSpringCheckTest {
@@ -27,7 +27,10 @@ class BundledSpringCheckTest {
         )
 
         assertEquals(
-            listOf("org.springframework.boot:spring-boot:4.0.0", "org.springframework:spring-core:7.0.0"),
+            listOf(
+                "org.springframework.boot:spring-boot:4.0.0",
+                "org.springframework:spring-core:7.0.0",
+            ),
             BundledSpring.find(modules),
         )
     }
@@ -47,19 +50,30 @@ class BundledSpringCheckTest {
     fun `finds Spring classes at the root and in multi-release directories of an archive`() {
         val artifacts = listOf(
             jar("fat-1.0.jar", "org/springframework/core/SpringVersion.class"),
-            jar("versioned-1.0.jar", "META-INF/versions/21/org/springframework/core/SpringVersion.class"),
+            jar(
+                "versioned-1.0.jar",
+                "META-INF/versions/21/org/springframework/core/SpringVersion.class",
+            ),
             jar("gson-2.11.0.jar", "com/google/gson/Gson.class"),
         )
 
-        assertEquals(listOf("fat-1.0.jar", "versioned-1.0.jar"), BundledSpring.findInArtifacts(artifacts))
+        assertEquals(
+            listOf("fat-1.0.jar", "versioned-1.0.jar"),
+            BundledSpring.findInArtifacts(artifacts),
+        )
     }
 
     @Test
     fun `ignores relocated Spring, directories and files that are no archive`() {
-        val classes = directory.resolve("classes").also { it.resolve("org/springframework/core").mkdirs() }
+        val classes = directory.resolve("classes").also {
+            it.resolve("org/springframework/core").mkdirs()
+        }
         val notes = directory.resolve("notes.txt").apply { writeText("org/springframework/") }
         val artifacts = listOf(
-            jar("relocated-1.0.jar", "com/example/libs/org/springframework/core/SpringVersion.class"),
+            jar(
+                "relocated-1.0.jar",
+                "com/example/libs/org/springframework/core/SpringVersion.class",
+            ),
             classes,
             notes,
         )
@@ -67,23 +81,26 @@ class BundledSpringCheckTest {
         assertEquals(emptyList(), BundledSpring.findInArtifacts(artifacts))
     }
 
-    private fun jar(name: String, vararg entries: String): File =
-        directory.resolve(name).also { file ->
+    private fun jar(name: String, vararg entries: String): File {
+        return directory.resolve(name).also { file ->
             JarOutputStream(file.outputStream()).use { jar ->
-                entries.forEach { entry ->
+                for (entry in entries) {
                     jar.putNextEntry(JarEntry(entry))
                     jar.closeEntry()
                 }
             }
         }
+    }
 
-    private fun task(modules: Set<String>, artifacts: List<File> = emptyList()) =
-        ProjectBuilder.builder().withProjectDir(directory.resolve("project")).build()
-            .tasks.register<CheckNoBundledSpringTask>("check").get().apply {
-                bundledModules.set(modules)
-                bundledArtifacts.from(artifacts)
-                passMarker.set(directory.resolve("passed"))
-            }
+    private fun task(
+        modules: Set<String>,
+        artifacts: List<File> = emptyList(),
+    ) = ProjectBuilder.builder().withProjectDir(directory.resolve("project")).build()
+        .tasks.register<CheckNoBundledSpringTask>("check").get().apply {
+            bundledModules.set(modules)
+            bundledArtifacts.from(artifacts)
+            passMarker.set(directory.resolve("passed"))
+        }
 
     @Test
     fun `the task passes without Spring and records that it passed`() {
@@ -107,7 +124,10 @@ class BundledSpringCheckTest {
 
     @Test
     fun `the task fails with an artifact that carries Spring under another coordinate`() {
-        val fatJar = jar("surf-api-core-api-4.0.0-all.jar", "org/springframework/core/SpringVersion.class")
+        val fatJar = jar(
+            "surf-api-core-api-4.0.0-all.jar",
+            "org/springframework/core/SpringVersion.class",
+        )
 
         val failure = assertFailsWith<GradleException> {
             task(setOf("dev.slne.surf.api:surf-api-core-api:4.0.0"), listOf(fatJar)).check()

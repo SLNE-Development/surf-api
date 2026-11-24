@@ -1,7 +1,7 @@
 package dev.slne.surf.api.inventory.framework.view.icon
 
 enum class ViewIconColor(
-    val configName: String
+    val configName: String,
 ) {
     RED("red"),
     BLUE("blue"),

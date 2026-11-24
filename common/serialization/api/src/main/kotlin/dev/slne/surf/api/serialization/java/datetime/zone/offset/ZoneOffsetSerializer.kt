@@ -13,7 +13,7 @@ typealias SerializableZoneOffset = @Serializable(with = ZoneOffsetSerializer::cl
 object ZoneOffsetSerializer : KSerializer<ZoneOffset> {
     override val descriptor = PrimitiveSerialDescriptor(
         "surf.api.java.datetime.zone.ZoneOffset",
-        PrimitiveKind.STRING
+        PrimitiveKind.STRING,
     )
 
     override fun serialize(
@@ -23,6 +23,5 @@ object ZoneOffsetSerializer : KSerializer<ZoneOffset> {
         encoder.encodeString(value.id)
     }
 
-    override fun deserialize(decoder: Decoder): ZoneOffset =
-        ZoneOffset.of(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): ZoneOffset = ZoneOffset.of(decoder.decodeString())
 }

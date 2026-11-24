@@ -7,8 +7,8 @@ import dev.slne.surf.nats.runtime.ListenerRules
 /**
  * Parsed [ListenOptions] with the shared listener rules.
  *
- * [problem] holds the reason why the combination is invalid, or `null`. [of] throws [IllegalArgumentException] for
- * an unknown `recipients` value.
+ * [problem] holds the reason why the combination is invalid, or `null`. [of] throws
+ * [IllegalArgumentException] for an unknown `recipients` value.
  */
 internal class ListenerSettings(
     val recipients: Recipients,
@@ -19,13 +19,16 @@ internal class ListenerSettings(
     fun queueGroup(clientName: String): String? = ListenerRules.queueGroup(recipients, clientName)
 
     companion object {
-        fun of(options: ListenOptions?) = ListenerSettings(
-            recipients = parseRecipients(options?.recipients),
-            ignoreFromThisClient = options?.ignoreFromThisClient == true,
-        )
+        fun of(options: ListenOptions?): ListenerSettings {
+            return ListenerSettings(
+                recipients = parseRecipients(options?.recipients),
+                ignoreFromThisClient = options?.ignoreFromThisClient == true,
+            )
+        }
 
         private fun parseRecipients(value: String?): Recipients {
             if (value == null) return ListenerRules.DEFAULT_RECIPIENTS
+
             val found = Recipients.entries.find { it.name == value }
 
             require(found != null) {

@@ -3,6 +3,7 @@ package dev.slne.surf.api.minestom.highlight
 import net.kyori.adventure.text.format.NamedTextColor
 import net.minestom.server.coordinate.Point
 import net.minestom.server.coordinate.Pos
+import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
@@ -163,17 +164,20 @@ class BlockHighlightsTest {
     private fun Instance.prepare(x: Int, y: Int, z: Int): Point {
         val position = Pos(x.toDouble(), y.toDouble(), z.toDouble())
         loadChunk(position).join()
+
         return position
     }
 
-    private fun blockDisplays(instance: Instance) =
-        instance.entities.filter { it.entityType == EntityType.BLOCK_DISPLAY }
+    private fun blockDisplays(instance: Instance): List<Entity> {
+        return instance.entities.filter { it.entityType == EntityType.BLOCK_DISPLAY }
+    }
 
     private fun cleanUp(env: Env, instance: Instance, vararg players: Player) {
-        players.forEach {
-            BlockHighlights.hideAll(it)
-            it.remove()
+        for (player in players) {
+            BlockHighlights.hideAll(player)
+            player.remove()
         }
+
         env.destroyInstance(instance)
     }
 
@@ -184,6 +188,7 @@ class BlockHighlightsTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 }

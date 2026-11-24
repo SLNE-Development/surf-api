@@ -21,6 +21,7 @@ object CapturedLog {
         val rootLogger = context.configuration.rootLogger
         rootLogger.addAppender(appender, null, null)
         context.updateLoggers()
+
         try {
             block()
         } finally {
@@ -28,10 +29,12 @@ object CapturedLog {
             context.updateLoggers()
             appender.stop()
         }
+
         return appender.events.toList()
     }
 
-    private class RecordingAppender : AbstractAppender("captured-log", null, null, true, Property.EMPTY_ARRAY) {
+    private class RecordingAppender :
+        AbstractAppender("captured-log", null, null, true, Property.EMPTY_ARRAY) {
         val events = CopyOnWriteArrayList<LogEvent>()
 
         override fun append(event: LogEvent) {

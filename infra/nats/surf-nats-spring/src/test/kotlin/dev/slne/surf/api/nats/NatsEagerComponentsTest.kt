@@ -13,7 +13,10 @@ class NatsEagerComponentsTest {
     private val beanFactory = DefaultListableBeanFactory()
 
     private fun defineLazy(name: String, type: Class<*>) {
-        beanFactory.registerBeanDefinition(name, RootBeanDefinition(type).apply { isLazyInit = true })
+        beanFactory.registerBeanDefinition(
+            name,
+            RootBeanDefinition(type).apply { isLazyInit = true },
+        )
     }
 
     @Test
@@ -26,7 +29,9 @@ class NatsEagerComponentsTest {
 
         assertEquals(
             mapOf("service" to false, "listener" to false, "consumer" to true),
-            beanFactory.beanDefinitionNames.associateWith { beanFactory.getBeanDefinition(it).isLazyInit },
+            beanFactory.beanDefinitionNames.associateWith { name ->
+                beanFactory.getBeanDefinition(name).isLazyInit
+            },
         )
     }
 
@@ -34,7 +39,8 @@ class NatsEagerComponentsTest {
     fun `a bean whose class cannot be loaded is skipped`() {
         beanFactory.registerBeanDefinition(
             "missing",
-            RootBeanDefinition().apply { beanClassName = "dev.slne.surf.api.nats.DoesNotExist"; isLazyInit = true },
+            RootBeanDefinition()
+                .apply { beanClassName = "dev.slne.surf.api.nats.DoesNotExist"; isLazyInit = true },
         )
         beanFactory.beanClassLoader = HidingClassLoader(SignatureNeedsHidden::class.java)
         defineLazy("signature", SignatureNeedsHidden::class.java)

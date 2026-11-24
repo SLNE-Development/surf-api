@@ -1,5 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.nms.bridges
 
 import com.destroystokyo.paper.profile.PlayerProfile
@@ -7,7 +5,7 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import kotlinx.coroutines.CoroutineScope
 import net.kyori.adventure.chat.ChatType
 import net.kyori.adventure.chat.SignedMessage
@@ -18,7 +16,6 @@ import org.bukkit.inventory.ItemStack
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
-import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
 @ApiStatus.NonExtendable
@@ -49,14 +46,14 @@ interface SurfPaperNmsPlayerBridge {
         player: Player,
         original: SignedMessage,
         boundChatType: ChatType.Bound,
-        unsignedContent: Component
+        unsignedContent: Component,
     )
 
     fun increaseNextChatIndex(player: Player): Int?
 
     fun createPlayerChatMessageMirrorFromAdventure(
         adventure: SignedMessage,
-        unsignedContent: Component? = adventure.unsignedContent()
+        unsignedContent: Component? = adventure.unsignedContent(),
     ): PlayerChatMessageMirror?
 
     fun createAdventureChatMessageFromMirror(mirror: PlayerChatMessageMirror): SignedMessage
@@ -64,7 +61,7 @@ interface SurfPaperNmsPlayerBridge {
     fun sendPlayerChatMessage(
         receiver: Player,
         message: SignedMessage,
-        boundChatType: ChatType.Bound
+        boundChatType: ChatType.Bound,
     )
 
     fun getPaperRawChatType(): ChatType
@@ -83,7 +80,7 @@ interface SurfPaperNmsPlayerBridge {
      */
     suspend fun editOfflineInventory(
         profile: PlayerProfile,
-        edit: (PlayerInventoryEdit) -> Unit
+        edit: (PlayerInventoryEdit) -> Unit,
     )
 
     /**
@@ -95,7 +92,7 @@ interface SurfPaperNmsPlayerBridge {
      */
     data class PlayerInventoryEdit(
         val items: MutableList<ItemStack>,
-        val equipment: EntityEquipment
+        val equipment: EntityEquipment,
     )
 
     /**

@@ -12,21 +12,21 @@ import java.util.*
 private val SQLITE_AND_ORACLE_DATE_TIME_STRING_FORMATTER by lazy {
     DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss.SSS",
-        Locale.ROOT
+        Locale.ROOT,
     ).withZone(ZoneOffset.UTC)
 }
 
 private val MYSQL_FRACTION_DATE_TIME_STRING_FORMATTER by lazy {
     DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss.SSSSSS",
-        Locale.ROOT
+        Locale.ROOT,
     ).withZone(ZoneOffset.UTC)
 }
 
 private val MYSQL_DATE_TIME_STRING_FORMATTER by lazy {
     DateTimeFormatter.ofPattern(
         "yyyy-MM-dd HH:mm:ss",
-        Locale.ROOT
+        Locale.ROOT,
     ).withZone(ZoneOffset.UTC)
 }
 
@@ -34,12 +34,15 @@ private val DEFAULT_DATE_TIME_STRING_FORMATTER by lazy {
     DateTimeFormatter.ISO_LOCAL_DATE_TIME.withLocale(Locale.ROOT).withZone(ZoneOffset.UTC)
 }
 
-private fun oracleDateTimeLiteral(instant: Instant) =
-    "TO_TIMESTAMP('${SQLITE_AND_ORACLE_DATE_TIME_STRING_FORMATTER.format(instant)}', 'YYYY-MM-DD HH24:MI:SS.FF3')"
+private fun oracleDateTimeLiteral(instant: Instant): String {
+    return "TO_TIMESTAMP('${SQLITE_AND_ORACLE_DATE_TIME_STRING_FORMATTER.format(instant)}', 'YYYY-MM-DD HH24:MI:SS.FF3')"
+}
 
-private fun formatterForDateString(date: String) = dateTimeWithFractionFormat(
-    date.substringAfterLast('.', "").length
-)
+private fun formatterForDateString(date: String): DateTimeFormatter {
+    return dateTimeWithFractionFormat(
+        date.substringAfterLast('.', "").length,
+    )
+}
 
 private fun dateTimeWithFractionFormat(fraction: Int): DateTimeFormatter {
     val baseFormat = "yyyy-MM-dd HH:mm:ss"
@@ -48,17 +51,20 @@ private fun dateTimeWithFractionFormat(fraction: Int): DateTimeFormatter {
     } else {
         baseFormat
     }
+
     return DateTimeFormatter.ofPattern(newFormat).withLocale(Locale.ROOT).withZone(ZoneOffset.UTC)
 }
 
 /**
  * Stores an instant as its UTC wall-clock time.
  *
- * The column is created as `timestamp` (PostgreSQL) or `TIMESTAMP(6)` (MariaDB) and also works on `timestamptz` and
- * `DATETIME(6)` columns. Values are bound as UTC `LocalDateTime`, which the database interprets in the session time
- * zone, so the connection must run with the session time zone UTC, as every connection of the pool built by
- * [SurfDatabaseAutoConfiguration][dev.slne.surf.database.spring.SurfDatabaseAutoConfiguration] does. The JVM default
- * zone only determines the zone or offset of the values read back, never the instant.
+ * The column is created as `timestamp` (PostgreSQL) or `TIMESTAMP(6)` (MariaDB) and also works on
+ * `timestamptz` and `DATETIME(6)` columns. Values are bound as UTC `LocalDateTime`, which the
+ * database interprets in the session time zone, so the connection must run with the session time
+ * zone UTC, as every connection of the pool built by
+ * [SurfDatabaseAutoConfiguration][dev.slne.surf.database.spring.SurfDatabaseAutoConfiguration]
+ * does. The JVM default zone only determines the zone or offset of the values read back, never the
+ * instant.
  */
 abstract class UtcInstantDateTimeColumnType<T : Any> :
     ColumnType<T>(),
@@ -66,8 +72,7 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
 
     override val hasTimePart: Boolean = true
 
-    override fun sqlType(): String =
-        currentDialect.dataTypeProvider.timestampType()
+    override fun sqlType(): String = currentDialect.dataTypeProvider.timestampType()
 
     protected abstract fun toInstant(value: T): Instant
     protected abstract fun fromInstant(instant: Instant): T
@@ -83,11 +88,10 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
                 oracleDateTimeLiteral(instant)
 
             is MysqlDialect -> {
-                val formatter =
-                    if (dialect.isFractionDateTimeSupported())
-                        MYSQL_FRACTION_DATE_TIME_STRING_FORMATTER
-                    else
-                        MYSQL_DATE_TIME_STRING_FORMATTER
+                val formatter = if (dialect.isFractionDateTimeSupported())
+                    MYSQL_FRACTION_DATE_TIME_STRING_FORMATTER
+                else
+                    MYSQL_DATE_TIME_STRING_FORMATTER
                 "'${formatter.format(instant)}'"
             }
 
@@ -128,7 +132,7 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
 
             else ->
                 error(
-                    "Unexpected value for UTC DateTime column: $value of ${value::class.qualifiedName}"
+                    "Unexpected value for UTC DateTime column: $value of ${value::class.qualifiedName}",
                 )
         }
 
@@ -173,32 +177,34 @@ abstract class UtcInstantDateTimeColumnType<T : Any> :
 /**
  * `CURRENT_TIMESTAMP` as default or expression for an [UtcInstantDateTimeColumnType] column.
  *
- * On PostgreSQL it yields the UTC wall-clock time and ignores [includeUpdate]; `AuditableTable` keeps `updated_at`
- * current with a trigger instead. On MariaDB it relies on the session time zone UTC and appends
- * `ON UPDATE CURRENT_TIMESTAMP` when [includeUpdate] is set.
+ * On PostgreSQL it yields the UTC wall-clock time and ignores [includeUpdate]; `AuditableTable`
+ * keeps `updated_at` current with a trigger instead. On MariaDB it relies on the session time zone
+ * UTC and appends `ON UPDATE CURRENT_TIMESTAMP` when [includeUpdate] is set.
  */
 open class CurrentTimestampBase<T>(
     columnType: IColumnType<T & Any>,
-    private val includeUpdate: Boolean = false
+    private val includeUpdate: Boolean = false,
 ) : Function<T>(columnType) {
-    override fun toQueryBuilder(queryBuilder: QueryBuilder) = queryBuilder {
-        +when (val dialect = currentDialect) {
-            // Postgres' CURRENT_TIMESTAMP is a `timestamp with time zone`. The column is stored as
-            // `timestamp without time zone` holding UTC wall-clock values (see notNullValueToDB), so
-            // convert to UTC to keep the DB default consistent with application-written instants.
-            // Postgres has no inline `ON UPDATE` (that requires a trigger), so includeUpdate is not
-            // expressible here and is intentionally ignored to keep the generated DDL valid.
-            is PostgreSQLDialect ->
-                "(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"
+    override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+        queryBuilder {
+            +when (val dialect = currentDialect) {
+                // Postgres' CURRENT_TIMESTAMP is a `timestamp with time zone`. The column is stored
+                // as `timestamp without time zone` holding UTC wall-clock values (see
+                // notNullValueToDB), so convert to UTC to keep the DB default consistent with
+                // application-written instants. Postgres has no inline `ON UPDATE` (that requires a
+                // trigger), so includeUpdate is not expressible here and is intentionally ignored
+                // to keep the generated DDL valid.
+                is PostgreSQLDialect ->
+                    "(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"
 
-            else -> {
-                val current =
-                    if ((dialect as? MysqlDialect)?.isFractionDateTimeSupported() == true)
-                        "CURRENT_TIMESTAMP(6)"
-                    else
-                        "CURRENT_TIMESTAMP"
+                else -> {
+                    val supportsFraction =
+                        (dialect as? MysqlDialect)?.isFractionDateTimeSupported() == true
+                    val current =
+                        if (supportsFraction) "CURRENT_TIMESTAMP(6)" else "CURRENT_TIMESTAMP"
 
-                if (includeUpdate) "$current ON UPDATE $current" else current
+                    if (includeUpdate) "$current ON UPDATE $current" else current
+                }
             }
         }
     }

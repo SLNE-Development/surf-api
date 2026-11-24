@@ -38,7 +38,7 @@ inline fun bossBar(block: @BossBarDsl BossBarBuilder.() -> Unit): BossBar {
  * @param block The configuration block for building the boss bar.
  * @return A configured [BossBar] instance.
  */
-inline fun BossBar(block: @BossBarDsl BossBarBuilder.() -> Unit) = bossBar(block)
+inline fun BossBar(block: @BossBarDsl BossBarBuilder.() -> Unit): BossBar = bossBar(block)
 
 /**
  * A DSL builder for creating a [BossBar].
@@ -52,7 +52,8 @@ class BossBarBuilder {
     var name: Component = Component.empty()
 
     /**
-     * The progress of the boss bar, ranging from [BossBar.MIN_PROGRESS] (0.0) to [BossBar.MAX_PROGRESS] (1.0).
+     * The progress of the boss bar, ranging from [BossBar.MIN_PROGRESS] (0.0) to
+     * [BossBar.MAX_PROGRESS] (1.0).
      *
      * @throws IllegalArgumentException if the progress is set outside the valid range.
      *
@@ -65,7 +66,9 @@ class BossBarBuilder {
      */
     var progress = BossBar.MIN_PROGRESS
         set(value) {
-            require(value in BossBar.MIN_PROGRESS..BossBar.MAX_PROGRESS) { "Progress must be between 0 and 1" }
+            require(value in BossBar.MIN_PROGRESS..BossBar.MAX_PROGRESS) {
+                "Progress must be between 0 and 1"
+            }
             field = value
         }
 

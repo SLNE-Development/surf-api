@@ -12,6 +12,7 @@ class DatabaseContainersTest {
     @Test
     fun mariaDbFreshDatabaseWorksOverR2dbcAndJdbc() = runTest {
         val testDb = DatabaseContainers.mariadb().toTestDatabase(fresh = true)
+
         try {
             val name = suspendTransaction(db = testDb.database) {
                 exec("SELECT DATABASE()") { it.get(0, String::class.java) }!!.first()
@@ -25,6 +26,7 @@ class DatabaseContainersTest {
     @Test
     fun postgresFreshDatabaseWorksOverR2dbcAndJdbc() = runTest {
         val testDb = DatabaseContainers.postgres().toTestDatabase(fresh = true)
+
         try {
             val name = suspendTransaction(db = testDb.database) {
                 exec("SELECT current_schema()") { it.get(0, String::class.java) }!!.first()

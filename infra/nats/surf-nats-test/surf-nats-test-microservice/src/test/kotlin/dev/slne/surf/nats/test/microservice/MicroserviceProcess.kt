@@ -13,8 +13,8 @@ import kotlin.time.TimeSource
 /**
  * A microservice jar running in its own JVM, driven through its console like an operator would.
  *
- * Every output line, including stderr, ends up in [output] in arrival order once it was consumed by [awaitLine] or
- * [awaitExit].
+ * Every output line, including stderr, ends up in [output] in arrival order once it was consumed by
+ * [awaitLine] or [awaitExit].
  */
 class MicroserviceProcess private constructor(private val process: Process) : AutoCloseable {
     private val lines = LinkedBlockingQueue<String>()
@@ -40,19 +40,25 @@ class MicroserviceProcess private constructor(private val process: Process) : Au
     /**
      * Waits for an output line containing [text] and returns it.
      *
-     * @throws AssertionError if the line does not appear within [timeout] or the process exits first
+     * @throws AssertionError if the line does not appear within [timeout] or the process exits
+     * first
      */
     fun awaitLine(text: String, timeout: Duration): String {
         val deadline = TimeSource.Monotonic.markNow() + timeout
+
         while (deadline.hasNotPassedNow()) {
             val line = lines.poll(POLL_MILLIS, TimeUnit.MILLISECONDS)
+
             if (line == null) {
                 if (!reader.isAlive && lines.isEmpty()) break
+
                 continue
             }
+
             output += line
             if (text in line) return line
         }
+
         throw AssertionError("No output line containing '$text' within $timeout")
     }
 
@@ -65,12 +71,16 @@ class MicroserviceProcess private constructor(private val process: Process) : Au
         }
         reader.join(READER_TIMEOUT.inWholeMilliseconds)
         lines.drainTo(output)
+
         return process.exitValue()
     }
 
     override fun close() {
         if (process.isAlive) {
-            process.destroyForcibly().waitFor(READER_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            process.destroyForcibly().waitFor(
+                READER_TIMEOUT.inWholeMilliseconds,
+                TimeUnit.MILLISECONDS,
+            )
         }
     }
 
@@ -88,6 +98,7 @@ class MicroserviceProcess private constructor(private val process: Process) : Au
                 .redirectErrorStream(true)
                 .also { builder -> builder.environment().putAll(environment) }
                 .start()
+
             return MicroserviceProcess(process)
         }
     }

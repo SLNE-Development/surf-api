@@ -30,7 +30,9 @@ class SharedRedissonClientRegistry(
             return released.compareAndSet(false, true) && releaseLease(this, entry)
         }
 
-        override fun toString(): String = "Lease(owner=$owner, client=$client, released=$isReleased)"
+        override fun toString(): String {
+            return "Lease(owner=$owner, client=$client, released=$isReleased)"
+        }
     }
 
     @Blocking
@@ -45,6 +47,7 @@ class SharedRedissonClientRegistry(
 
     fun ownersOf(key: RedissonConnectionKey): List<String> {
         val entry = entries[key] ?: return emptyList()
+
         return entry.lock.withLock { entry.leases.map { it.owner } }
     }
 
@@ -56,16 +59,20 @@ class SharedRedissonClientRegistry(
         for (entry in entries.values.toList()) {
             entry.lock.withLock {
                 if (entry.closed) return@withLock
+
                 val client = entry.client
+
                 if (client != null) {
                     leaked[entry.key] = entry.leases.map { it.owner }
                     clients += client
                 }
+
                 closeLocked(entry)
             }
         }
 
         var failure: Throwable? = null
+
         for (client in clients) {
             try {
                 shutdown(client, "platform shutdown")
@@ -73,26 +80,29 @@ class SharedRedissonClientRegistry(
                 if (failure == null) failure = t else failure.addSuppressed(t)
             }
         }
-        failure?.let { throw it }
+
+        if (failure != null) throw failure
 
         return leaked
     }
 
-    private fun tryAcquire(entry: Entry, owner: String, config: Config): Lease? = entry.lock.withLock {
-        if (entry.closed) return null
+    private fun tryAcquire(entry: Entry, owner: String, config: Config): Lease? {
+        return entry.lock.withLock {
+            if (entry.closed) return null
 
-        val client = entry.client ?: createLocked(entry, config)
-        val lease = Lease(entry, client, owner)
-        entry.leases += lease
+            val client = entry.client ?: createLocked(entry, config)
+            val lease = Lease(entry, client, owner)
+            entry.leases += lease
 
-        log.atInfo()
-            .log(
-                "%s attached to shared Redisson client %s (%d owner(s))",
-                owner,
-                entry.key,
-                entry.leases.size
-            )
-        lease
+            log.atInfo()
+                .log(
+                    "%s attached to shared Redisson client %s (%d owner(s))",
+                    owner,
+                    entry.key,
+                    entry.leases.size,
+                )
+            lease
+        }
     }
 
     private fun createLocked(entry: Entry, config: Config): SharedRedissonClient {
@@ -114,37 +124,45 @@ class SharedRedissonClientRegistry(
             )
         } catch (failure: Throwable) {
             closeLocked(entry)
+
             try {
                 redisson.shutdown()
             } catch (shutdownFailure: Throwable) {
                 failure.addSuppressed(shutdownFailure)
             }
+
             throw failure
         }
 
         entry.client = client
-        log.atInfo().log("Created shared Redisson client %s", entry.key)
+        log.atInfo()
+            .log("Created shared Redisson client %s", entry.key)
+
         return client
     }
 
     private fun releaseLease(lease: Lease, entry: Entry): Boolean {
         val orphaned = entry.lock.withLock {
             if (!entry.leases.remove(lease)) return false
+
             if (entry.leases.isNotEmpty()) {
                 log.atInfo()
                     .log(
                         "%s detached from shared Redisson client %s (%d owner(s) left)",
                         lease.owner,
                         entry.key,
-                        entry.leases.size
+                        entry.leases.size,
                     )
+
                 return false
             }
+
             closeLocked(entry)
             entry.client
         } ?: return false
 
         shutdown(orphaned, "last owner ${lease.owner} released it")
+
         return true
     }
 
@@ -156,7 +174,8 @@ class SharedRedissonClientRegistry(
 
     @Blocking
     private fun shutdown(client: SharedRedissonClient, reason: String) {
-        log.atInfo().log("Shutting down shared Redisson client %s (%s)", client.key, reason)
+        log.atInfo()
+            .log("Shutting down shared Redisson client %s (%s)", client.key, reason)
         client.redisson.shutdown()
     }
 

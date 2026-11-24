@@ -4,7 +4,8 @@ import dev.slne.surf.database.migration.JdbcMigration
 import java.sql.Connection
 
 /**
- * The migration is the companion object of the class, which has no `INSTANCE` field and no public constructor.
+ * The migration is the companion object of the class, which has no `INSTANCE` field and no public
+ * constructor.
  */
 class WithCompanion {
     companion object : JdbcMigration("6", "companion") {

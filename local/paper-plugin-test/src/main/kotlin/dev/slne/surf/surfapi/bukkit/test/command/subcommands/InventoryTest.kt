@@ -10,7 +10,6 @@ import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testPagin
 class InventoryTest(name: String) : CommandAPICommand(name) {
     init {
         playerExecutor { player, _ ->
-//            TestInventoryView.open(player)
             testInventoryViewDsl.open(player)
         }
 

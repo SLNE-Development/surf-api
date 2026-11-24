@@ -9,12 +9,12 @@ import org.slf4j.event.Level
 
 class ComponentSqlLogger(
     private val logger: ComponentLogger,
-    private val level: Level
+    private val level: Level,
 ) : SqlLogger {
 
     override fun log(
         context: StatementContext,
-        transaction: Transaction
+        transaction: Transaction,
     ) {
         logger.atLevel(level)
             .addArgument { context.expandArgs(transaction) }

@@ -9,5 +9,8 @@ internal external interface Msg {
     val reply: String?
     val data: Uint8Array<*>
     val headers: MsgHdrs?
-    fun respond(payload: Uint8Array<*> = definedExternally, opts: NatsPublishOptions = definedExternally): Boolean
+    fun respond(
+        payload: Uint8Array<*> = definedExternally,
+        opts: NatsPublishOptions = definedExternally,
+    ): Boolean
 }

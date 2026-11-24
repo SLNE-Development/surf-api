@@ -45,11 +45,7 @@ import net.minestom.server.instance.block.banner.BannerPattern
 import net.minestom.server.instance.block.jukebox.JukeboxSong
 import net.minestom.server.item.armor.TrimMaterial
 import net.minestom.server.item.armor.TrimPattern
-import net.minestom.server.item.enchant.Enchantment
-import net.minestom.server.item.enchant.EntityEffect
-import net.minestom.server.item.enchant.LevelBasedValue
-import net.minestom.server.item.enchant.LocationEffect
-import net.minestom.server.item.enchant.ValueEffect
+import net.minestom.server.item.enchant.*
 import net.minestom.server.item.instrument.Instrument
 import net.minestom.server.listener.manager.PacketListenerManager
 import net.minestom.server.message.ChatType
@@ -63,7 +59,11 @@ import net.minestom.server.timer.SchedulerManager
 import net.minestom.server.world.DimensionType
 import net.minestom.server.world.biome.Biome
 
-val server get() = MinecraftServer.process() ?: error("Server is not initialized yet. Please make sure to call this after the server has started.")
+val server
+    get() = MinecraftServer.process()
+        ?: error(
+            "Server is not initialized yet. Please make sure to call this after the server has started.",
+        )
 
 inline val GlobalEventHandler: GlobalEventHandler get() = getGlobalEventHandler()
 inline val PacketListenerManager: PacketListenerManager get() = getPacketListenerManager()
@@ -87,10 +87,15 @@ inline val TrimPatternRegistry: DynamicRegistry<TrimPattern> get() = getTrimPatt
 inline val BannerPatternRegistry: DynamicRegistry<BannerPattern> get() = getBannerPatternRegistry()
 inline val WolfVariantRegistry: DynamicRegistry<WolfVariant> get() = getWolfVariantRegistry()
 inline val EnchantmentRegistry: DynamicRegistry<Enchantment> get() = getEnchantmentRegistry()
-inline val PaintingVariantRegistry: DynamicRegistry<PaintingVariant> get() = getPaintingVariantRegistry()
+inline val PaintingVariantRegistry: DynamicRegistry<PaintingVariant>
+    get() = getPaintingVariantRegistry()
 inline val JukeboxSongRegistry: DynamicRegistry<JukeboxSong> get() = getJukeboxSongRegistry()
 inline val InstrumentRegistry: DynamicRegistry<Instrument> get() = getInstrumentRegistry()
-inline val EnchantmentLevelBasedValues: DynamicRegistry<StructCodec<out LevelBasedValue>> get() = enchantmentLevelBasedValues()
-inline val EnchantmentValueEffects: DynamicRegistry<StructCodec<out ValueEffect>> get() = enchantmentValueEffects()
-inline val EnchantmentEntityEffects: DynamicRegistry<StructCodec<out EntityEffect>> get() = enchantmentEntityEffects()
-inline val EnchantmentLocationEffects: DynamicRegistry<StructCodec<out LocationEffect>> get() = enchantmentLocationEffects()
+inline val EnchantmentLevelBasedValues: DynamicRegistry<StructCodec<out LevelBasedValue>>
+    get() = enchantmentLevelBasedValues()
+inline val EnchantmentValueEffects: DynamicRegistry<StructCodec<out ValueEffect>>
+    get() = enchantmentValueEffects()
+inline val EnchantmentEntityEffects: DynamicRegistry<StructCodec<out EntityEffect>>
+    get() = enchantmentEntityEffects()
+inline val EnchantmentLocationEffects: DynamicRegistry<StructCodec<out LocationEffect>>
+    get() = enchantmentLocationEffects()

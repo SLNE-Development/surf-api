@@ -30,7 +30,10 @@ internal class PluginClassLoader(
                 ?: dependencies.firstNotNullOfOrNull { dependency -> dependency.findOwnClass(name) }
                 ?: throw ClassNotFoundException(name)
 
-            if (resolve) resolveClass(loaded)
+            if (resolve) {
+                resolveClass(loaded)
+            }
+
             return loaded
         }
     }
@@ -39,20 +42,26 @@ internal class PluginClassLoader(
      * Returns the class from this plugin's own jar, or `null`. Does not consult the server or other
      * plugins.
      */
-    fun findOwnClass(name: String): Class<*>? = synchronized(getClassLoadingLock(name)) {
-        findLoadedClass(name) ?: fromOwnJar(name)
+    fun findOwnClass(name: String): Class<*>? {
+        return synchronized(getClassLoadingLock(name)) {
+            findLoadedClass(name) ?: fromOwnJar(name)
+        }
     }
 
-    private fun fromParent(name: String): Class<*>? = try {
-        parent.loadClass(name)
-    } catch (_: ClassNotFoundException) {
-        null
+    private fun fromParent(name: String): Class<*>? {
+        return try {
+            parent.loadClass(name)
+        } catch (_: ClassNotFoundException) {
+            null
+        }
     }
 
-    private fun fromOwnJar(name: String): Class<*>? = try {
-        findClass(name)
-    } catch (_: ClassNotFoundException) {
-        null
+    private fun fromOwnJar(name: String): Class<*>? {
+        return try {
+            findClass(name)
+        } catch (_: ClassNotFoundException) {
+            null
+        }
     }
 
     override fun toString(): String = "PluginClassLoader($pluginId)"

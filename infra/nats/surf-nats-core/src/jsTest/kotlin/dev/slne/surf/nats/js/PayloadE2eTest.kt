@@ -2,16 +2,7 @@ package dev.slne.surf.nats.js
 
 import dev.slne.surf.nats.js.codec.NatsHeaders
 import dev.slne.surf.nats.js.external.nats.core.Msg
-import dev.slne.surf.nats.js.fixtures.AuditEntry
-import dev.slne.surf.nats.js.fixtures.AuditService
-import dev.slne.surf.nats.js.fixtures.BlobData
-import dev.slne.surf.nats.js.fixtures.BlobRequestSchema
-import dev.slne.surf.nats.js.fixtures.BlobResponseSchema
-import dev.slne.surf.nats.js.fixtures.FindPlayerRequest
-import dev.slne.surf.nats.js.fixtures.LocateResponse
-import dev.slne.surf.nats.js.fixtures.LocateResponseSchema
-import dev.slne.surf.nats.js.fixtures.PlayerService
-import dev.slne.surf.nats.js.fixtures.fields
+import dev.slne.surf.nats.js.fixtures.*
 import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
@@ -45,6 +36,7 @@ class PayloadE2eTest {
     fun largeRequestsAndResponsesGoThroughTheObjectStore() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
+
         try {
             val requestData = bytesOfSize(1_500_000, seed = 3)
             val responseData = bytesOfSize(1_200_000, seed = 5)
@@ -79,6 +71,7 @@ class PayloadE2eTest {
     fun smallPayloadsStayInline() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
+
         try {
             raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
                 val data = raw.decode(BlobRequestSchema, request.data).fields<BlobData>().data
@@ -99,6 +92,7 @@ class PayloadE2eTest {
     fun requestsAreOffloadedExactlyAboveTheReservedPayloadSize() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
+
         try {
             val requests = mutableListOf<Msg>()
             raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
@@ -109,7 +103,7 @@ class PayloadE2eTest {
 
             // Headers at the size check: the base headers and the Surf-Deadline line (13 digits)
             val headerBytes = NatsHeaders.serializedLength(NatsHeaders.forOrigin(client.origin)) +
-                    headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
+                headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
             val maxPayload = assertNotNull(raw.connection.info).max_payload.toLong()
             val maxBody = (maxPayload - headerBytes - ProtocolDefaults.PAYLOAD_REF_RESERVE).toInt()
             // BlobRequest.data is the field tag, a 3-byte length varint and the data
@@ -133,16 +127,27 @@ class PayloadE2eTest {
     fun offloadedPayloadsMustNotOutliveTheBucketTtl() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
+
         try {
             val requests = mutableListOf<Msg>()
             raw.subscribe(echoSubject, queue = players.queueGroup) { requests += it }
             raw.flush()
 
-            // The transient bucket keeps objects for 10 min; a call waiting longer cannot offload its request
+            // The transient bucket keeps objects for 10 min; a call waiting longer cannot offload
+            // its request
             val error = assertFailsWith<IllegalArgumentException> {
-                client.call(echo, blob(bytesOfSize(1_500_000)), callOptions(timeoutMs = 601_000)).await()
+                client.call(
+                    echo,
+                    blob(bytesOfSize(1_500_000)),
+                    callOptions(timeoutMs = 601_000),
+                ).await()
             }
-            assertTrue(error.message!!.contains("exceeds the TTL of 10m (bucket ${ProtocolDefaults.TRANSIENT_PAYLOAD_BUCKET})"), error.message)
+            assertTrue(
+                error.message!!.contains(
+                    "exceeds the TTL of 10m (bucket ${ProtocolDefaults.TRANSIENT_PAYLOAD_BUCKET})",
+                ),
+                error.message,
+            )
 
             raw.flush()
             delay(200.milliseconds)
@@ -157,6 +162,7 @@ class PayloadE2eTest {
     fun payloadBucketsAreCreatedWithTheJvmTtlAndFileStorage() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
+
         try {
             raw.subscribe(echoSubject, queue = players.queueGroup) { request ->
                 raw.respond(request, raw.encode(BlobResponseSchema, blob(bytesOfSize(10))))
@@ -167,17 +173,25 @@ class PayloadE2eTest {
 
             // One offload per bucket; only surf-nats-js creates these buckets on the e2e server
             client.call(echo, blob(bytesOfSize(1_500_000))).await()
-            client.call(AuditService.methods.first { it.localName == "record" }, unsafeJso<AuditEntry> {
-                action = "big"
-                data = bytesOfSize(1_500_000)
-            }).await()
+            client.call(
+                AuditService.methods.first { it.localName == "record" },
+                unsafeJso<AuditEntry> {
+                    action = "big"
+                    data = bytesOfSize(1_500_000)
+                },
+            ).await()
 
             for (bucket in PayloadBucket.entries) {
                 val status = raw.bucketStatus(bucket.bucketName)
                 assertEquals(bucket.bucketName, status.bucket)
-                assertEquals(bucket.ttl.inWholeMilliseconds * 1_000_000.0, status.ttl, "ttl of ${bucket.bucketName}")
+                assertEquals(
+                    bucket.ttl.inWholeMilliseconds * 1_000_000.0,
+                    status.ttl,
+                    "ttl of ${bucket.bucketName}",
+                )
                 assertEquals("file", status.storage, "storage of ${bucket.bucketName}")
             }
+
             assertEquals(600_000L, PayloadBucket.TRANSIENT.ttl.inWholeMilliseconds)
             assertEquals(7 * 24 * 3_600_000L, PayloadBucket.PERSISTENT.ttl.inWholeMilliseconds)
         } finally {
@@ -190,6 +204,7 @@ class PayloadE2eTest {
     fun offloadedAllInstancesAnswersAreResolvedAndDeleted() = e2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("payload-caller"))
+
         try {
             val bucket = PayloadBucket.TRANSIENT
             raw.ensureBucket(bucket)
@@ -197,7 +212,13 @@ class PayloadE2eTest {
             val responder = this
             raw.subscribe(players.methodSubject("Locate", persistent = false)) { request ->
                 responder.launch {
-                    val ref = raw.putBlob(bucket.bucketName, raw.encode(LocateResponseSchema, unsafeJso<LocateResponse> { server = "lobby-7" }))
+                    val ref = raw.putBlob(
+                        bucket.bucketName,
+                        raw.encode(
+                            LocateResponseSchema,
+                            unsafeJso<LocateResponse> { server = "lobby-7" },
+                        ),
+                    )
                     refs += ref
                     val headers = raw.jvmHeaders()
                     headers.set(ProtocolHeaders.PAYLOAD_REF, ref)
@@ -207,7 +228,10 @@ class PayloadE2eTest {
             raw.flush()
 
             val locate = PlayerService.methods.first { it.localName == "locate" }
-            val answer = client.callAnswer(locate, unsafeJso<FindPlayerRequest> { name = "Steve" }).await()
+            val answer = client.callAnswer(
+                locate,
+                unsafeJso<FindPlayerRequest> { name = "Steve" },
+            ).await()
 
             assertTrue(answer.known)
             assertEquals("lobby-7", answer.value.fields<LocateResponse>().server)
@@ -219,7 +243,8 @@ class PayloadE2eTest {
         }
     }
 
-    // Plays the JVM ANY_INSTANCE responder: reads and deletes the request object, offloads the response.
+    // Plays the JVM ANY_INSTANCE responder: reads and deletes the request object, offloads the
+    // response.
     private fun CoroutineScope.respondLarge(
         raw: RawNats,
         request: Msg,
@@ -230,7 +255,10 @@ class PayloadE2eTest {
             val bucket = ProtocolDefaults.TRANSIENT_PAYLOAD_BUCKET
             val requestRef = assertNotNull(header(request, ProtocolHeaders.PAYLOAD_REF))
             val body = assertNotNull(raw.getBlob(bucket, requestRef))
-            assertEquals(1_500_000, raw.decode(BlobRequestSchema, body).fields<BlobData>().data?.length)
+            assertEquals(
+                1_500_000,
+                raw.decode(BlobRequestSchema, body).fields<BlobData>().data?.length,
+            )
 
             val ref = raw.putBlob(bucket, raw.encode(BlobResponseSchema, blob(data)))
             val headers = raw.jvmHeaders()

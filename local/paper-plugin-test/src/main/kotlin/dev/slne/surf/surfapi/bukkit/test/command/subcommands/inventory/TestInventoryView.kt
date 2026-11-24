@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory
 
+import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.messages.adventure.text
@@ -13,8 +15,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.*
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.blockAllSlots
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.header
 import dev.slne.surf.api.paper.inventory.framework.view.container.dsl.rowText
-import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
-import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import dev.slne.surf.api.paper.inventory.framework.view.state.get
 import dev.slne.surf.api.paper.inventory.framework.view.state.increment
 import dev.slne.surf.api.paper.inventory.framework.view.state.mutableState
@@ -40,9 +40,13 @@ val testInventoryViewDsl = surfView("TestInventoryView") {
 
         rowText(1, "<- Klick da mal drauf")
         rowText(2, text("links", Colors.GREEN), TextAlignment.LEFT, columns = 0..2)
-        rowText(2, buildText {
-            error("rechts", TextDecoration.BOLD)
-        }, TextAlignment.RIGHT, columns = 6..8)
+        rowText(
+            2,
+            buildText {
+                error("rechts", TextDecoration.BOLD)
+            },
+            TextAlignment.RIGHT, columns = 6..8,
+        )
         rowText(5, columns = 3..5) {
             text("Guthaben: ", Colors.DARK_SPACER)
             text("1.250", Colors.GREEN)
@@ -66,8 +70,8 @@ val testInventoryViewDsl = surfView("TestInventoryView") {
         player.showDialog(
             noticeDialog(
                 text("Du hast das Inventar geschlossen!"),
-                text("Du hast den Diamanten ${counterState[this]} mal geklickt!")
-            )
+                text("Du hast den Diamanten ${counterState[this]} mal geklickt!"),
+            ),
         )
     }
 }
@@ -83,19 +87,22 @@ object TestInventoryView : View() {
     }
 
     override fun onFirstRender(render: RenderContext) {
-        render.slot(1, buildItem(ItemType.DIAMOND) {
-            displayName {
-                text("Diamond")
-            }
-        }).onClick(counterState::increment)
+        render.slot(
+            1,
+            buildItem(ItemType.DIAMOND) {
+                displayName {
+                    text("Diamond")
+                }
+            },
+        ).onClick(counterState::increment)
     }
 
     override fun onClose(close: CloseContext) {
         close.player.showDialog(
             noticeDialog(
                 text("Du hast das Inventar geschlossen!"),
-                text("Du hast den Diamanten ${counterState.get(close)} mal geklickt!")
-            )
+                text("Du hast den Diamanten ${counterState.get(close)} mal geklickt!"),
+            ),
         )
     }
 }

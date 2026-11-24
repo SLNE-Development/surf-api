@@ -20,20 +20,21 @@ data class MinestomPluginFileDto(
         val optional: Boolean,
     )
 
-
     companion object {
-        fun fromFile(file: MinestomPluginFile) = MinestomPluginFileDto(
-            id = file.id.orNull,
-            main = file.effectiveMain().orNull,
-            name = file.name.orNull,
-            version = file.version.orNull,
-            description = file.description.orNull,
-            url = file.url.orNull,
-            authors = file.authors.orNull,
-            dependencies = file.pluginDependencies
-                .filter { it.enabled.get() }
-                .map { DependencyDto(it.name, it.optional.get()) }
-        )
+        fun fromFile(file: MinestomPluginFile): MinestomPluginFileDto {
+            return MinestomPluginFileDto(
+                id = file.id.orNull,
+                main = file.effectiveMain().orNull,
+                name = file.name.orNull,
+                version = file.version.orNull,
+                description = file.description.orNull,
+                url = file.url.orNull,
+                authors = file.authors.orNull,
+                dependencies = file.pluginDependencies
+                    .filter { it.enabled.get() }
+                    .map { DependencyDto(it.name, it.optional.get()) },
+            )
+        }
     }
 }
 

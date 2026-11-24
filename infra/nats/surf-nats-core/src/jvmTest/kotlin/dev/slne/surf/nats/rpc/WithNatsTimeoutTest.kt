@@ -13,7 +13,9 @@ class WithNatsTimeoutTest {
 
     @Test
     fun `positive timeout is put into the coroutine context`() = runTest {
-        val timeout = withNatsCallTimeout(3.seconds) { currentCoroutineContext()[NatsTimeoutElement]?.timeout }
+        val timeout = withNatsCallTimeout(3.seconds) {
+            currentCoroutineContext()[NatsTimeoutElement]?.timeout
+        }
         assertEquals(3.seconds, timeout)
     }
 

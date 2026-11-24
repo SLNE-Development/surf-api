@@ -1,6 +1,5 @@
 package dev.slne.surf.api.nats
 
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.SurfProperties
 import org.junit.jupiter.api.AfterEach
@@ -15,7 +14,6 @@ import kotlin.test.assertFailsWith
 /**
  * NATS reads its directory once per JVM, so the tests that install share one.
  */
-@OptIn(InternalSurfApi::class)
 class NatsConfigDirectoryInitializerTest {
 
     @AfterEach
@@ -55,13 +53,22 @@ class NatsConfigDirectoryInitializerTest {
     }
 
     private fun assertInstalled(directory: Path) {
-        val failure = assertFailsWith<IllegalStateException> { NatsPlatform.install(directories.resolve("other")) }
+        val failure = assertFailsWith<IllegalStateException> {
+            NatsPlatform.install(
+                directories.resolve(
+                    "other",
+                ),
+            )
+        }
         assertContains(failure.message.orEmpty(), directory.toString())
     }
 
     private fun contextWithDirectory(directory: Path) = AnnotationConfigApplicationContext().apply {
         environment.propertySources.addFirst(
-            MapPropertySource("test", mapOf(SurfProperties.CONFIG_DIRECTORY to directory.toString())),
+            MapPropertySource(
+                "test",
+                mapOf(SurfProperties.CONFIG_DIRECTORY to directory.toString()),
+            ),
         )
     }
 

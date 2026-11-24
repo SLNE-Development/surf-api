@@ -65,7 +65,7 @@ class ItemDsl(material: Material, amount: Int = 1) {
     fun displayName(name: Component) {
         builder.set(
             DataComponents.CUSTOM_NAME,
-            name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
+            name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE),
         )
     }
 
@@ -90,7 +90,7 @@ class ItemDsl(material: Material, amount: Int = 1) {
     fun lore(vararg lore: Component) {
         builder.set(
             DataComponents.LORE,
-            lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) }
+            lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) },
         )
     }
 

@@ -3,7 +3,7 @@ package dev.slne.surf.api.minestom.inventory.framework.view
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import me.devnatan.inventoryframework.View
 import net.minestom.server.entity.Player
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayDeque
 
@@ -25,15 +25,17 @@ internal object ViewNavigationHistory {
         deque.addLast(entry)
     }
 
-    fun pushForward(player: Player, entry: NavEntry) = deque(player).addLast(entry)
+    fun pushForward(player: Player, entry: NavEntry): Unit = deque(player).addLast(entry)
 
-    fun markBackNavigation(player: Player) = backNav.add(player.uuid)
+    fun markBackNavigation(player: Player): Boolean = backNav.add(player.uuid)
 
-    fun consumeBackNavigation(player: Player) = backNav.remove(player.uuid)
+    fun consumeBackNavigation(player: Player): Boolean = backNav.remove(player.uuid)
 
     fun popToPrevious(player: Player): NavEntry? {
         val deque = paths[player.uuid] ?: return null
+
         deque.removeLastOrNull()
+
         return deque.lastOrNull()
     }
 
@@ -51,4 +53,4 @@ internal object ViewNavigationHistory {
  * Forgets the views [player] navigated through; called by the server once they disconnect.
  */
 @InternalSurfApi
-fun clearViewNavigationHistory(player: Player) = ViewNavigationHistory.clear(player)
+fun clearViewNavigationHistory(player: Player): Unit = ViewNavigationHistory.clear(player)

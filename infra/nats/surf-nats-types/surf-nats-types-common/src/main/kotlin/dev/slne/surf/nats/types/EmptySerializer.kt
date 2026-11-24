@@ -10,8 +10,9 @@ import kotlinx.serialization.encoding.Encoder
 /**
  * Serializes [Unit] as the well-known protobuf message `google.protobuf.Empty`.
  *
- * Encoding writes no fields. Decoding skips any fields in the message. The `dev.slne.surf.nats` Gradle plugin maps
- * `google.protobuf.Empty`, for example as the return type of a service method, to [Unit] with this serializer.
+ * Encoding writes no fields. Decoding skips any fields in the message. The `dev.slne.surf.nats`
+ * Gradle plugin maps `google.protobuf.Empty`, for example as the return type of a service method,
+ * to [Unit] with this serializer.
  */
 object EmptySerializer : KSerializer<Unit> {
     private val empty = EmptyProto()

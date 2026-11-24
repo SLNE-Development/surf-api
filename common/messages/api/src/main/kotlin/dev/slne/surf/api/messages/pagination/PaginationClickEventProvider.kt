@@ -9,7 +9,7 @@ fun interface PaginationClickEventProvider<T> {
     fun getCallback(
         targetPage: Int,
         pagination: Pagination<T>,
-        content: Collection<T>
+        content: Collection<T>,
     ): ClickEvent<*>
 
     companion object {
@@ -18,8 +18,10 @@ fun interface PaginationClickEventProvider<T> {
                 targetPage: Int,
                 pagination: Pagination<Any>,
                 content: Collection<Any>,
-            ): ClickEvent<*> = ClickEvent.callback { clicker ->
-                clicker.sendMessage(pagination.renderComponent(content, targetPage))
+            ): ClickEvent<*> {
+                return ClickEvent.callback { clicker ->
+                    clicker.sendMessage(pagination.renderComponent(content, targetPage))
+                }
             }
         }
 
@@ -43,7 +45,7 @@ fun interface SuspendPaginationClickEventProvider<T> {
     suspend fun CoroutineScope.getCallback(
         targetPage: Int,
         pagination: SuspendPagination<T>,
-        content: Collection<T>
+        content: Collection<T>,
     ): ClickEvent<*>
 
     companion object {
@@ -51,15 +53,17 @@ fun interface SuspendPaginationClickEventProvider<T> {
             override suspend fun CoroutineScope.getCallback(
                 targetPage: Int,
                 pagination: SuspendPagination<Any>,
-                content: Collection<Any>
-            ): ClickEvent<*> = ClickEvent.callback { clicker ->
-                check(isActive) {
-                    "The pagination page button for page $targetPage cannot run: the " +
+                content: Collection<Any>,
+            ): ClickEvent<*> {
+                return ClickEvent.callback { clicker ->
+                    check(isActive) {
+                        "The pagination page button for page $targetPage cannot run: the " +
                             "CoroutineScope it was rendered with has already finished."
-                }
+                    }
 
-                launch {
-                    clicker.sendMessage(pagination.renderComponent(content, targetPage))
+                    launch {
+                        clicker.sendMessage(pagination.renderComponent(content, targetPage))
+                    }
                 }
             }
         }

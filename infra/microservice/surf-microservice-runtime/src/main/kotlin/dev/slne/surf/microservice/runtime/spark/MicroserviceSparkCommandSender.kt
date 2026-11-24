@@ -4,7 +4,7 @@ import dev.slne.surf.microservice.api.command.MicroserviceCommandOutput
 import me.lucko.spark.common.command.sender.CommandSender
 import me.lucko.spark.lib.adventure.text.Component
 import me.lucko.spark.lib.adventure.text.serializer.ansi.ANSIComponentSerializer
-import java.util.UUID
+import java.util.*
 
 /**
  * Forwards spark messages, rendered with ANSI colors, to a command output. Holds every permission.

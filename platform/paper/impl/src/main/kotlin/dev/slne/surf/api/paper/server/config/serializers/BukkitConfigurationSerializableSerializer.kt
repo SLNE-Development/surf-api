@@ -18,24 +18,30 @@ object BukkitConfigurationSerializableSerializer : TypeSerializer<ConfigurationS
             return ConfigurationSerialization.deserializeObject(args, clazz)
                 ?: throw SerializationException(
                     clazz,
-                    "Could not deserialize ${clazz.name} via ConfigurationSerializable"
+                    "Could not deserialize ${clazz.name} via ConfigurationSerializable",
                 )
         } catch (e: Throwable) {
             if (e is SerializationException) throw e
-            throw SerializationException(clazz, "Could not deserialize ${clazz.name} via ConfigurationSerializable", e)
+
+            throw SerializationException(
+                clazz,
+                "Could not deserialize ${clazz.name} via ConfigurationSerializable",
+                e,
+            )
         }
     }
-
 
     @Suppress("OverrideOnly")
     override fun serialize(type: Type, obj: ConfigurationSerializable?, node: ConfigurationNode) {
         if (obj == null) {
             node.raw(null)
+
             return
         }
 
         val map = obj.serialize()
-        map.forEach { (key, value) ->
+
+        for ((key, value) in map) {
             node.node(key).set(value)
         }
     }

@@ -3,8 +3,8 @@ package dev.slne.surf.nats.protocol
 /**
  * Subject scheme `surf.<kind>.<proto full name>`.
  *
- * The full name keeps the spelling of the `.proto`, so renaming a message, a service or its package changes the
- * subject. Service subjects are built by [ServiceNames].
+ * The full name keeps the spelling of the `.proto`, so renaming a message, a service or its package
+ * changes the subject. Service subjects are built by [ServiceNames].
  */
 internal object ProtocolSubjects {
     const val ROOT = "surf"
@@ -18,10 +18,12 @@ internal object ProtocolSubjects {
     /**
      * Returns the subject `surf.evt.<messageName>` of an event message.
      *
-     * Throws [IllegalArgumentException] when [messageName] is no proto full name ([ProtocolNaming.isProtoName]).
+     * Throws [IllegalArgumentException] when [messageName] is no proto full name
+     * ([ProtocolNaming.isProtoName]).
      */
     fun event(messageName: String): String {
         ProtocolNaming.requireProtoName(messageName, "event")
+
         return of(EVENT, messageName)
     }
 

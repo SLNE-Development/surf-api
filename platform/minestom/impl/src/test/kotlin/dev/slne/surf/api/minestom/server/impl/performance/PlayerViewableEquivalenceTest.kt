@@ -49,10 +49,13 @@ class PlayerViewableEquivalenceTest {
             .toSet()
 
         val viewable = instance.entityTracker.viewable(listOf(shared), 0, 0)
-        val viewers = viewable.viewers.map { it.entityId }.toSet()
+        val viewers = viewable.viewers
+            .map { it.entityId }
+            .toSet()
 
         val direct = HashMap<Int, Player>()
         val resolver = EntityViewerLookup.EntityPositionResolver { entity -> entity.position }
+
         for (tracker in listOf(instance.entityTracker, shared.entityTracker)) {
             EntityViewerLookup.directScan(
                 tracker.entities(EntityTracker.Target.PLAYERS),
@@ -74,6 +77,7 @@ class PlayerViewableEquivalenceTest {
 
     private fun connect(env: Env, instance: Instance, username: String, pos: Pos): Player {
         val connection = env.createConnection(GameProfile(UUID.randomUUID(), username))
+
         return onVirtualThread { connection.connect(instance, pos) }
     }
 
@@ -83,6 +87,7 @@ class PlayerViewableEquivalenceTest {
     private fun awaitSpawn(env: Env, vararg players: Player) {
         repeat(SPAWN_ATTEMPTS) {
             if (players.all { player -> player.instance != null }) return
+
             env.tick()
             Thread.sleep(SPAWN_POLL_MILLIS)
         }

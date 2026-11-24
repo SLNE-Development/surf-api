@@ -22,6 +22,7 @@ class ServiceProxyFactoryTest {
         override suspend fun call(index: Int, request: Any): Any? {
             delay(1.milliseconds)
             calls += index to request
+
             return result
         }
     }
@@ -35,7 +36,10 @@ class ServiceProxyFactoryTest {
         val caller = RecordingCaller(Text("ok"))
         val request = MixedRequest(1, 2L, 3.5, true, "label")
 
-        assertEquals(Text("ok"), ServiceProxyFactory.create<CalcService>(descriptor, caller).mixed(request))
+        assertEquals(
+            Text("ok"),
+            ServiceProxyFactory.create<CalcService>(descriptor, caller).mixed(request),
+        )
 
         val (index, passed) = caller.calls.single()
         assertEquals(index("mixed"), index)
@@ -46,7 +50,10 @@ class ServiceProxyFactoryTest {
     fun `proxy passes Unit for an Empty request`() = runTest {
         val caller = RecordingCaller(HealthReply())
 
-        assertEquals(HealthReply(), ServiceProxyFactory.create<CalcService>(descriptor, caller).health())
+        assertEquals(
+            HealthReply(),
+            ServiceProxyFactory.create<CalcService>(descriptor, caller).health(),
+        )
 
         assertEquals(listOf<Pair<Int, Any>>(index("health") to Unit), caller.calls)
     }

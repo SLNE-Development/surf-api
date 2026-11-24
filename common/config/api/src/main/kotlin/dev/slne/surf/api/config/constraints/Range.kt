@@ -20,36 +20,50 @@ import java.lang.reflect.Type
 annotation class Range(val min: Double, val max: Double) {
     companion object {
         internal object Factory : Constraint.Factory<Range, Number?> {
-            override fun make(data: Range, type: Type): Constraint<Number?> = { value ->
-                if (value != null) {
-                    val double = value.toDouble()
-                    if (double < data.min || double > data.max) {
-                        throw SerializationException("Number is out of range: $value, expected ${data.min}..${data.max}")
+            override fun make(data: Range, type: Type): Constraint<Number?> {
+                return { value ->
+                    if (value != null) {
+                        val double = value.toDouble()
+
+                        if (double < data.min || double > data.max) {
+                            throw SerializationException(
+                                "Number is out of range: $value, expected ${data.min}..${data.max}",
+                            )
+                        }
                     }
                 }
             }
         }
 
         internal object FactoryIntOr : Constraint.Factory<Range, IntOr?> {
-            override fun make(data: Range, type: Type): Constraint<IntOr?> = { intOr ->
-                val value = intOr?.value
+            override fun make(data: Range, type: Type): Constraint<IntOr?> {
+                return { intOr ->
+                    val value = intOr?.value
 
-                if (value != null) {
-                    val double = value.toDouble()
-                    if (double < data.min || double > data.max) {
-                        throw SerializationException("Number is out of range: $value, expected ${data.min}..${data.max}")
+                    if (value != null) {
+                        val double = value.toDouble()
+
+                        if (double < data.min || double > data.max) {
+                            throw SerializationException(
+                                "Number is out of range: $value, expected ${data.min}..${data.max}",
+                            )
+                        }
                     }
                 }
             }
         }
 
         internal object FactoryDoubleOr : Constraint.Factory<Range, DoubleOr?> {
-            override fun make(data: Range, type: Type): Constraint<DoubleOr?> = { doubleOr ->
-                val value = doubleOr?.value
+            override fun make(data: Range, type: Type): Constraint<DoubleOr?> {
+                return { doubleOr ->
+                    val value = doubleOr?.value
 
-                if (value != null) {
-                    if (value < data.min || value > data.max) {
-                        throw SerializationException("Number is out of range: $value, expected ${data.min}..${data.max}")
+                    if (value != null) {
+                        if (value < data.min || value > data.max) {
+                            throw SerializationException(
+                                "Number is out of range: $value, expected ${data.min}..${data.max}",
+                            )
+                        }
                     }
                 }
             }

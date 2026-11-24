@@ -47,8 +47,8 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.toJavaDuration
 
 /**
- * Date arithmetic and UTC day bucketing on every time column type, against servers outside UTC and with a JVM
- * default zone far east of UTC.
+ * Date arithmetic and UTC day bucketing on every time column type, against servers outside UTC and
+ * with a JVM default zone far east of UTC.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class TemporalShiftIT {
@@ -120,12 +120,21 @@ class TemporalShiftIT {
     @ParameterizedTest
     @EnumSource(OutsideUtcVendor::class)
     fun filtersWithAShiftedColumn(vendor: OutsideUtcVendor) = withRows(vendor) { rows ->
-        val cutoff = OffsetDateTime.ofInstant(LATE_EVENING + 1.hours.toJavaDuration(), ZoneOffset.UTC)
+        val cutoff = OffsetDateTime.ofInstant(
+            LATE_EVENING + 1.hours.toJavaDuration(),
+            ZoneOffset.UTC,
+        )
 
-        val beforeCutoff = rows.selectAll().where { (rows.library + 59.minutes) less cutoff }.count()
-        val atOrAfterCutoff = rows.selectAll().where { (rows.library + 1.hours) greaterEq cutoff }.count()
+        val beforeCutoff = rows.selectAll()
+            .where { (rows.library + 59.minutes) less cutoff }
+            .count()
+        val atOrAfterCutoff = rows.selectAll()
+            .where { (rows.library + 1.hours) greaterEq cutoff }
+            .count()
 
-        val withinAYear = rows.selectAll().where { rows.library greaterEq (CurrentOffsetDateTime() - 365.days) }.count()
+        val withinAYear = rows.selectAll()
+            .where { rows.library greaterEq (CurrentOffsetDateTime() - 365.days) }
+            .count()
 
         assertEquals(1, beforeCutoff)
         assertEquals(1, atOrAfterCutoff)
@@ -180,7 +189,10 @@ class TemporalShiftIT {
 
         val shifted = rows.library + (1.microseconds + 999.nanoseconds)
 
-        assertEquals(LATE_EVENING + 1.microseconds.toJavaDuration(), rows.select(shifted).single()[shifted].toInstant())
+        assertEquals(
+            LATE_EVENING + 1.microseconds.toJavaDuration(),
+            rows.select(shifted).single()[shifted].toInstant(),
+        )
     }
 
     private suspend fun <T : Temporal> assertShift(
@@ -194,17 +206,27 @@ class TemporalShiftIT {
         val earlier = column - backward
         val row = rows.select(later, earlier).single()
 
-        assertEquals(LATE_EVENING + forward.toJavaDuration(), toInstant(row[later]), "$column + $forward")
-        assertEquals(LATE_EVENING - backward.toJavaDuration(), toInstant(row[earlier]), "$column - $backward")
+        assertEquals(
+            LATE_EVENING + forward.toJavaDuration(),
+            toInstant(row[later]),
+            "$column + $forward",
+        )
+        assertEquals(
+            LATE_EVENING - backward.toJavaDuration(),
+            toInstant(row[earlier]),
+            "$column - $backward",
+        )
     }
 
-    private fun withRows(vendor: OutsideUtcVendor, block: suspend R2dbcTransaction.(TimeRows) -> Unit) =
-        withTestDatabase(vendor) {
-            val rows = TimeRows()
-            SchemaUtils.create(rows)
-            rows.insertRow(id = 1, instant = LATE_EVENING)
-            block(rows)
-        }
+    private fun withRows(
+        vendor: OutsideUtcVendor,
+        block: suspend R2dbcTransaction.(TimeRows) -> Unit,
+    ) = withTestDatabase(vendor) {
+        val rows = TimeRows()
+        SchemaUtils.create(rows)
+        rows.insertRow(id = 1, instant = LATE_EVENING)
+        block(rows)
+    }
 
     private suspend fun TimeRows.insertRow(id: Int, instant: Instant) {
         insert {
@@ -217,15 +239,18 @@ class TemporalShiftIT {
         }
     }
 
-    private fun withTestDatabase(vendor: OutsideUtcVendor, block: suspend R2dbcTransaction.() -> Unit) =
-        withJvmZone(JVM_ZONE) {
-            val testDb: TestDatabase = vendor.container().toTestDatabase(fresh = true)
-            try {
-                suspendTransaction(testDb.database) { block() }
-            } finally {
-                testDb.close()
-            }
+    private fun withTestDatabase(
+        vendor: OutsideUtcVendor,
+        block: suspend R2dbcTransaction.() -> Unit,
+    ) = withJvmZone(JVM_ZONE) {
+        val testDb: TestDatabase = vendor.container().toTestDatabase(fresh = true)
+
+        try {
+            suspendTransaction(testDb.database) { block() }
+        } finally {
+            testDb.close()
         }
+    }
 
     private companion object {
         /**

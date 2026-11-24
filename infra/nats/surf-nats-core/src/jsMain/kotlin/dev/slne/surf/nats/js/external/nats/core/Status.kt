@@ -3,13 +3,13 @@
 package dev.slne.surf.nats.js.external.nats.core
 
 /**
- * Binds the `Status` union of nats-core, discriminated by `type`. The members of a variant are `undefined` on the
- * other variants.
+ * Binds the `Status` union of nats-core, discriminated by `type`. The members of a variant are
+ * `undefined` on the other variants.
  */
 internal external interface Status {
     /**
-     * One of `disconnect`, `reconnect`, `reconnecting`, `update`, `ldm`, `error`, `ping`, `staleConnection`,
-     * `slowConsumer`, `forceReconnect` and `close`.
+     * One of `disconnect`, `reconnect`, `reconnecting`, `update`, `ldm`, `error`, `ping`,
+     * `staleConnection`, `slowConsumer`, `forceReconnect` and `close`.
      */
     val type: String
 

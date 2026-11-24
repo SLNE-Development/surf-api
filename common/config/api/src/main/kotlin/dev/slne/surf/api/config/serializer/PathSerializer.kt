@@ -16,7 +16,11 @@ internal object PathSerializer : ScalarSerializer.Annotated<Path>(Path::class.ja
         }
     }
 
-    override fun serialize(type: AnnotatedType, item: Path, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: Path,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.toString()
     }
 }

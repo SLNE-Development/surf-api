@@ -28,9 +28,9 @@ object NpcDisplaySync {
         val auxiliaryPosition = auxiliary.position
 
         return auxiliaryPosition.x() == npcPosition.x() + offset.x() &&
-                auxiliaryPosition.y() == npcPosition.y() + offset.y() &&
-                auxiliaryPosition.z() == npcPosition.z() + offset.z() &&
-                auxiliaryPosition.yaw() == Pos.fixYaw(npcPosition.yaw()) &&
-                auxiliaryPosition.pitch() == Pos.fixPitch(npcPosition.pitch())
+            auxiliaryPosition.y() == npcPosition.y() + offset.y() &&
+            auxiliaryPosition.z() == npcPosition.z() + offset.z() &&
+            auxiliaryPosition.yaw() == Pos.fixYaw(npcPosition.yaw()) &&
+            auxiliaryPosition.pitch() == Pos.fixPitch(npcPosition.pitch())
     }
 }

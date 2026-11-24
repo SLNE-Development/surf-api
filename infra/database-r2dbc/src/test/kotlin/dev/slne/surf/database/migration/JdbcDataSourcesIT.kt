@@ -23,7 +23,9 @@ class JdbcDataSourcesIT {
 
     @Test
     fun connectsToPostgresContainer() {
-        postgresDataSource(DatabaseContainers.postgres()).connection.use { assertTrue(it.isValid(5)) }
+        postgresDataSource(DatabaseContainers.postgres()).connection.use {
+            assertTrue(it.isValid(5))
+        }
     }
 
     @Test
@@ -45,27 +47,53 @@ class JdbcDataSourcesIT {
         val c = DatabaseContainers.postgresOutsideUtc()
 
         // psql sends no TimeZone startup parameter, so it reports the server's default zone.
-        val result = c.execInContainer("psql", "-U", c.username, "-d", c.databaseName, "-Atc", "SHOW TimeZone")
+        val result = c.execInContainer(
+            "psql",
+            "-U",
+            c.username,
+            "-d",
+            c.databaseName,
+            "-Atc",
+            "SHOW TimeZone",
+        )
 
         assertEquals(DatabaseContainers.POSTGRES_SERVER_TIME_ZONE, result.stdout.trim())
     }
 
-    private fun mariaDbDataSource(c: MariaDBContainer): DataSource = JdbcDataSources.create(
-        ConnectionDetails(
-            databaseType = DatabaseType.MARIADB, host = c.host, port = IntOr.Default(c.getMappedPort(3306)),
-            database = c.databaseName, username = c.username, password = c.password
+    private fun mariaDbDataSource(c: MariaDBContainer): DataSource {
+        return JdbcDataSources.create(
+            ConnectionDetails(
+                databaseType = DatabaseType.MARIADB,
+                host = c.host,
+                port = IntOr.Default(c.getMappedPort(3306)),
+                database = c.databaseName,
+                username = c.username,
+                password = c.password,
+            ),
         )
-    )
+    }
 
-    private fun postgresDataSource(c: PostgreSQLContainer): DataSource = JdbcDataSources.create(
-        ConnectionDetails(
-            databaseType = DatabaseType.POSTGRESQL, host = c.host, port = IntOr.Default(c.getMappedPort(5432)),
-            database = c.databaseName, username = c.username, password = c.password
+    private fun postgresDataSource(c: PostgreSQLContainer): DataSource {
+        return JdbcDataSources.create(
+            ConnectionDetails(
+                databaseType = DatabaseType.POSTGRESQL,
+                host = c.host,
+                port = IntOr.Default(c.getMappedPort(5432)),
+                database = c.databaseName,
+                username = c.username,
+                password = c.password,
+            ),
         )
-    )
+    }
 
     private fun DataSource.queryString(sql: String): String = connection.use { c ->
-        c.createStatement().use { s -> s.executeQuery(sql).use { rows -> rows.next(); rows.getString(1) } }
+        c.createStatement().use { s ->
+            s.executeQuery(sql).use { rows ->
+                rows.next(); rows.getString(
+                1,
+            )
+            }
+        }
     }
 
     private companion object {

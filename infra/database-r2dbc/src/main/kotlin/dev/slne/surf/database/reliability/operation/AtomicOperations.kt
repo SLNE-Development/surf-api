@@ -19,10 +19,10 @@ import kotlin.time.toJavaDuration
 /**
  * Executes operations at most once per [OperationKey] and stores their replies on one database.
  *
- * [execute] claims the key, runs the block, stores the block's reply and commits all of it in one READ COMMITTED
- * transaction. A repeated execution of a committed key returns the stored reply without running the block. There is
- * no separately committed "processing" state: a crash before the commit leaves nothing behind, and the next execution
- * runs the block again.
+ * [execute] claims the key, runs the block, stores the block's reply and commits all of it in one
+ * READ COMMITTED transaction. A repeated execution of a committed key returns the stored reply
+ * without running the block. There is no separately committed "processing" state: a crash before
+ * the commit leaves nothing behind, and the next execution runs the block again.
  *
  * Several processes may share the tables, each with its own instance. Requires the schema of
  * [ReliabilityMigrationSet][dev.slne.surf.database.reliability.ReliabilityMigrationSet].
@@ -36,29 +36,32 @@ class AtomicOperations(
     private val claim = OperationClaim(database.databaseType, config.lockTimeout)
 
     /**
-     * Executes [block] once for [key] and returns its reply, or returns the reply stored by an earlier execution.
+     * Executes [block] once for [key] and returns its reply, or returns the reply stored by an
+     * earlier execution.
      *
-     * Concurrent executions of the same key wait for each other: the first one runs [block], the others return its
-     * reply after it commits, or one of them runs [block] if it rolls back. A wait longer than
-     * [AtomicOperationsConfig.lockTimeout] fails without running [block].
+     * Concurrent executions of the same key wait for each other: the first one runs [block], the
+     * others return its reply after it commits, or one of them runs [block] if it rolls back. A
+     * wait longer than [AtomicOperationsConfig.lockTimeout] fails without running [block].
      *
-     * [block] runs inside the operation's transaction: its statements on [database] and the stored reply
-     * commit or roll back together. Statements on other databases and other side effects are not covered. If [block] throws, the transaction rolls back, nothing is
-     * stored and the exception propagates. After a deadlock or serialization failure the whole transaction is
-     * retried, up to [AtomicOperationsConfig.maxAttempts] times, so [block] can run more than once per call; only
-     * the last run commits.
+     * [block] runs inside the operation's transaction: its statements on [database] and the stored
+     * reply commit or roll back together. Statements on other databases and other side effects are
+     * not covered. If [block] throws, the transaction rolls back, nothing is stored and the
+     * exception propagates. After a deadlock or serialization failure the whole transaction is
+     * retried, up to [AtomicOperationsConfig.maxAttempts] times, so [block] can run more than once
+     * per call; only the last run commits.
      *
-     * A stored reply expires after [AtomicOperationsConfig.retention]; an execution after that deletes it and runs
-     * [block] again. Deleting the expired reply does not count as an attempt.
+     * A stored reply expires after [AtomicOperationsConfig.retention]; an execution after that
+     * deletes it and runs [block] again. Deleting the expired reply does not count as an attempt.
      *
-     * @param requestFingerprint Hash of the request, 1 to 64 bytes. A repeated execution with another fingerprint is
-     * rejected, so a reused key cannot return the reply of a different request.
-     * @throws IllegalStateException if called inside an open transaction, or the attempts are exhausted by claims
-     * that vanished concurrently
+     * @param requestFingerprint Hash of the request, 1 to 64 bytes. A repeated execution with
+     * another fingerprint is rejected, so a reused key cannot return the reply of a different
+     * request.
+     * @throws IllegalStateException if called inside an open transaction, or the attempts are
+     * exhausted by claims that vanished concurrently
      * @throws IllegalArgumentException if [requestFingerprint] is empty or longer than 64 bytes
      * @throws AtomicOperationConflictException if [key] was executed with another fingerprint
-     * @throws AtomicOperationInProgressException if a concurrent execution held [key] longer than the lock timeout,
-     * also while an expired reply is deleted
+     * @throws AtomicOperationInProgressException if a concurrent execution held [key] longer than
+     * the lock timeout, also while an expired reply is deleted
      */
     suspend fun execute(
         key: OperationKey,
@@ -81,16 +84,18 @@ class AtomicOperations(
             }
         }
 
-        lastFailure?.let { if (SqlFailure.of(it) == SqlFailure.TRANSIENT_CONFLICT) throw it }
+        if (lastFailure != null) {
+            if (SqlFailure.of(lastFailure) == SqlFailure.TRANSIENT_CONFLICT) throw lastFailure
+        }
         throw IllegalStateException(
             "Operation $key did not complete in ${config.maxAttempts} attempts",
-            lastFailure
+            lastFailure,
         )
     }
 
     /**
-     * Deletes up to [limit] expired operations of all owners and returns how many were deleted. Rows locked by a
-     * concurrent cleanup are skipped.
+     * Deletes up to [limit] expired operations of all owners and returns how many were deleted.
+     * Rows locked by a concurrent cleanup are skipped.
      *
      * @throws IllegalArgumentException if [limit] is not positive
      */
@@ -101,7 +106,7 @@ class AtomicOperations(
             val expired = AtomicOperationTable.select(
                 AtomicOperationTable.owner,
                 AtomicOperationTable.operation,
-                AtomicOperationTable.idempotencyKey
+                AtomicOperationTable.idempotencyKey,
             )
                 .where { AtomicOperationTable.expiresAt lessEq config.clock.instant() }
                 .orderBy(AtomicOperationTable.expiresAt)
@@ -131,54 +136,63 @@ class AtomicOperations(
     }
 
     /**
-     * One of the [AtomicOperationsConfig.maxAttempts] attempts of [execute]. Deleting an expired reply and claiming
-     * the key again belong to the same attempt, so an expired reply does not consume an attempt.
+     * One of the [AtomicOperationsConfig.maxAttempts] attempts of [execute]. Deleting an expired
+     * reply and claiming the key again belong to the same attempt, so an expired reply does not
+     * consume an attempt.
      */
     private suspend fun attempt(
         key: OperationKey,
         requestFingerprint: ByteArray,
         block: suspend AtomicOperationScope.() -> StoredReply,
-    ): Attempt = try {
-        claimOrReplay(key, requestFingerprint, block)
-            ?: claimOrReplay(key, requestFingerprint, block)
-            ?: Attempt.Retry(null)
-    } catch (e: Exception) {
-        if (SqlFailure.of(e) != SqlFailure.TRANSIENT_CONFLICT) throw e
-        Attempt.Retry(e)
+    ): Attempt {
+        return try {
+            claimOrReplay(key, requestFingerprint, block)
+                ?: claimOrReplay(key, requestFingerprint, block)
+                ?: Attempt.Retry(null)
+        } catch (e: Exception) {
+            if (SqlFailure.of(e) != SqlFailure.TRANSIENT_CONFLICT) throw e
+
+            Attempt.Retry(e)
+        }
     }
 
     /**
      * Claims [key] and runs [block], or replays the reply of the execution that holds the key.
      *
-     * @return `null` if the stored reply had expired and was deleted, so that the key can be claimed again
+     * @return `null` if the stored reply had expired and was deleted, so that the key can be
+     * claimed again
      */
     private suspend fun claimOrReplay(
         key: OperationKey,
         requestFingerprint: ByteArray,
         block: suspend AtomicOperationScope.() -> StoredReply,
-    ): Attempt? = try {
-        Attempt.Completed(executeClaimed(key, requestFingerprint, block))
-    } catch (_: ClaimTakenException) {
-        replayStored(key, requestFingerprint)
+    ): Attempt? {
+        return try {
+            Attempt.Completed(executeClaimed(key, requestFingerprint, block))
+        } catch (_: ClaimTakenException) {
+            replayStored(key, requestFingerprint)
+        }
     }
 
     private suspend fun executeClaimed(
         key: OperationKey,
         requestFingerprint: ByteArray,
         block: suspend AtomicOperationScope.() -> StoredReply,
-    ): StoredReply = database.readCommittedTransaction {
-        val now = config.clock.instant()
-        claim.insert(
-            transaction = this,
-            key = key,
-            fingerprint = requestFingerprint,
-            now = now,
-            expiresAt = now.plus(config.retention.toJavaDuration()),
-        )
+    ): StoredReply {
+        return database.readCommittedTransaction {
+            val now = config.clock.instant()
+            claim.insert(
+                transaction = this,
+                key = key,
+                fingerprint = requestFingerprint,
+                now = now,
+                expiresAt = now.plus(config.retention.toJavaDuration()),
+            )
 
-        val reply = ActiveOperationScope(key, this).block()
-        storeReply(key, reply)
-        reply
+            val reply = ActiveOperationScope(key, this).block()
+            storeReply(key, reply)
+            reply
+        }
     }
 
     private suspend fun storeReply(key: OperationKey, reply: StoredReply) {
@@ -217,22 +231,25 @@ class AtomicOperations(
             else -> Attempt.Completed(
                 checkNotNull(stored.reply) {
                     "Operation $key was committed without a reply"
-                }
+                },
             )
         }
     }
 
-    private fun OperationKey.matches(): Op<Boolean> = allOf(
-        AtomicOperationTable.owner eq this.owner,
-        AtomicOperationTable.operation eq this.operation,
-        AtomicOperationTable.idempotencyKey eq this.idempotencyKey,
-    )
+    private fun OperationKey.matches(): Op<Boolean> {
+        return allOf(
+            AtomicOperationTable.owner eq this.owner,
+            AtomicOperationTable.operation eq this.operation,
+            AtomicOperationTable.idempotencyKey eq this.idempotencyKey,
+        )
+    }
 
     private sealed interface Attempt {
         class Completed(val reply: StoredReply) : Attempt
 
         /**
-         * @property cause Transient database failure, or `null` if the stored row vanished or expired concurrently.
+         * @property cause Transient database failure, or `null` if the stored row vanished or
+         * expired concurrently.
          */
         class Retry(val cause: Throwable?) : Attempt
     }

@@ -46,7 +46,7 @@ object BlockHighlights {
         instance: Instance,
         position: Point,
         color: TextColor? = null,
-        block: Block = instance.blockAtOrAir(position)
+        block: Block = instance.blockAtOrAir(position),
     ) {
         val key = HighlightKey.of(viewer, instance, position)
 
@@ -87,9 +87,10 @@ object BlockHighlights {
      *
      * @return whether a highlight was taken back
      */
-    fun hide(viewer: Player, instance: Instance, position: Point): Boolean =
-        highlights.remove(HighlightKey.of(viewer, instance, position))
+    fun hide(viewer: Player, instance: Instance, position: Point): Boolean {
+        return highlights.remove(HighlightKey.of(viewer, instance, position))
             ?.also { it.retire() } != null
+    }
 
     /**
      * Takes back every highlight [viewer] was shown.
@@ -117,17 +118,24 @@ object BlockHighlights {
      */
     fun count(viewer: Player): Int = highlights.keys.count { it.viewer == viewer.uuid }
 
-    private fun Instance.blockAtOrAir(position: Point): Block =
-        if (isChunkLoaded(position)) getBlock(position) else Block.AIR
+    private fun Instance.blockAtOrAir(position: Point): Block {
+        return if (isChunkLoaded(position)) getBlock(position) else Block.AIR
+    }
 
-    private fun Point.blockPos() =
-        Pos(blockX().toDouble(), blockY().toDouble(), blockZ().toDouble())
+    private fun Point.blockPos(): Pos {
+        return Pos(
+            blockX().toDouble(),
+            blockY().toDouble(),
+            blockZ().toDouble(),
+        )
+    }
 
     /**
      * A highlight entity together with the state of its asynchronous placement.
      *
-     * The placement callback and [retire] exclude each other, so an entity retired while it is still
-     * being placed is removed once the placement finished instead of being left in the instance.
+     * The placement callback and [retire] exclude each other, so an entity retired while it is
+     * still being placed is removed once the placement finished instead of being left in the
+     * instance.
      */
     private class Highlight(private val entity: Entity) {
         private var finished = false
@@ -152,7 +160,10 @@ object BlockHighlights {
         @Synchronized
         fun retire() {
             retired = true
-            if (finished) entity.remove()
+
+            if (finished) {
+                entity.remove()
+            }
         }
 
         @Synchronized
@@ -168,16 +179,22 @@ object BlockHighlights {
         val instance: UUID,
         val x: Int,
         val y: Int,
-        val z: Int
+        val z: Int,
     ) {
         companion object {
-            fun of(viewer: Player, instance: Instance, position: Point) = HighlightKey(
-                viewer.uuid,
-                instance.uuid,
-                position.blockX(),
-                position.blockY(),
-                position.blockZ()
-            )
+            fun of(
+                viewer: Player,
+                instance: Instance,
+                position: Point,
+            ): BlockHighlights.HighlightKey {
+                return HighlightKey(
+                    viewer.uuid,
+                    instance.uuid,
+                    position.blockX(),
+                    position.blockY(),
+                    position.blockZ(),
+                )
+            }
         }
     }
 }

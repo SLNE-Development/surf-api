@@ -3,8 +3,9 @@ package dev.slne.surf.nats.protocol
 /**
  * Golden protocol vectors shared by the generator, the JVM runtime and the JS runtime tests.
  *
- * The kebab-case outputs were produced by the regex implementation that the JVM runtime used before the shared
- * sources (`(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])`, pieces lowercased and joined with `-`).
+ * The kebab-case outputs were produced by the regex implementation that the JVM runtime used before
+ * the shared sources (`(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])`, pieces lowercased and
+ * joined with `-`).
  */
 internal object ProtocolVectors {
 
@@ -67,8 +68,22 @@ internal object ProtocolVectors {
     )
 
     val invalidSubjects = listOf(
-        "", "a b", "a..b", "a.*", "a.>", ".a", "a.", ".", "..", "a\tb", "a\nb", "a.b\n", "a\u000Bb", "a\u000Cb",
-        "a\rb", "a.b c",
+        "",
+        "a b",
+        "a..b",
+        "a.*",
+        "a.>",
+        ".a",
+        "a.",
+        ".",
+        "..",
+        "a\tb",
+        "a\nb",
+        "a.b\n",
+        "a\u000Bb",
+        "a\u000Cb",
+        "a\rb",
+        "a.b c",
     )
 
     val protoNames = listOf(
@@ -84,8 +99,24 @@ internal object ProtocolVectors {
     )
 
     val invalidProtoNames = listOf(
-        "", ".", "..", "a.", ".a", "a..b", "_a", "a._b", "1a", "a.1b", "a-b", "a b", "a\$", "\$rpc", "ä", "a.*",
-        "a.>", "a.b ",
+        "",
+        ".",
+        "..",
+        "a.",
+        ".a",
+        "a..b",
+        "_a",
+        "a._b",
+        "1a",
+        "a.1b",
+        "a-b",
+        "a b",
+        "a\$",
+        "\$rpc",
+        "ä",
+        "a.*",
+        "a.>",
+        "a.b ",
     )
 
     val kebabNames = listOf("a", "surf-punish", "a1-b2", "1", "abc-def-ghi")
@@ -142,7 +173,10 @@ internal object ProtocolVectors {
 
     val events = listOf(
         EventVector("surf.punish.v1.PlayerJoined", "surf.evt.surf.punish.v1.PlayerJoined"),
-        EventVector("surf.demo.v1.PlayerJoined.Location", "surf.evt.surf.demo.v1.PlayerJoined.Location"),
+        EventVector(
+            "surf.demo.v1.PlayerJoined.Location",
+            "surf.evt.surf.demo.v1.PlayerJoined.Location",
+        ),
         EventVector("surf.servers.v2.HTTPServer2Up", "surf.evt.surf.servers.v2.HTTPServer2Up"),
         EventVector("my_pkg.v1.Snake_Event", "surf.evt.my_pkg.v1.Snake_Event"),
     )
@@ -172,8 +206,16 @@ internal object ProtocolVectors {
             stream = "SURF_PERSIST_surf_punish_v1_PlayerService",
             dlqStream = "SURF_DLQ_surf_punish_v1_PlayerService",
             methods = listOf(
-                MethodVector("FindPlayer", persistent = false, "surf.rpc.surf.punish.v1.PlayerService.FindPlayer"),
-                MethodVector("Store", persistent = true, "surf.persist.surf.punish.v1.PlayerService.Store"),
+                MethodVector(
+                    "FindPlayer",
+                    persistent = false,
+                    "surf.rpc.surf.punish.v1.PlayerService.FindPlayer",
+                ),
+                MethodVector(
+                    "Store",
+                    persistent = true,
+                    "surf.persist.surf.punish.v1.PlayerService.Store",
+                ),
             ),
         ),
         ServiceVector(
@@ -186,7 +228,11 @@ internal object ProtocolVectors {
             stream = "SURF_PERSIST_surf_punish_v2_PlayerService",
             dlqStream = "SURF_DLQ_surf_punish_v2_PlayerService",
             methods = listOf(
-                MethodVector("FindPlayer", persistent = false, "surf.rpc.surf.punish.v2.PlayerService.FindPlayer"),
+                MethodVector(
+                    "FindPlayer",
+                    persistent = false,
+                    "surf.rpc.surf.punish.v2.PlayerService.FindPlayer",
+                ),
             ),
         ),
         ServiceVector(
@@ -199,8 +245,16 @@ internal object ProtocolVectors {
             stream = "SURF_PERSIST_my__pkg_v10_Snake__Service",
             dlqStream = "SURF_DLQ_my__pkg_v10_Snake__Service",
             methods = listOf(
-                MethodVector("get_player", persistent = false, "surf.rpc.my_pkg.v10.Snake_Service.get_player"),
-                MethodVector("Push", persistent = true, "surf.persist.my_pkg.v10.Snake_Service.Push"),
+                MethodVector(
+                    "get_player",
+                    persistent = false,
+                    "surf.rpc.my_pkg.v10.Snake_Service.get_player",
+                ),
+                MethodVector(
+                    "Push",
+                    persistent = true,
+                    "surf.persist.my_pkg.v10.Snake_Service.Push",
+                ),
             ),
         ),
         ServiceVector(

@@ -12,7 +12,12 @@ class UuidSerializerTest {
     private data class Holder(
         @ProtoNumber(1) val single: @Serializable(UuidSerializer::class) UUID,
         @ProtoNumber(2) val list: List<@Serializable(UuidSerializer::class) UUID> = emptyList(),
-        @ProtoNumber(3) val map: Map<String, @Serializable(UuidSerializer::class) UUID> = emptyMap(),
+        @ProtoNumber(3) val map: Map<
+            String,
+            @Serializable(
+                UuidSerializer::class,
+            ) UUID,
+            > = emptyMap(),
         @ProtoNumber(4) val nullable: @Serializable(UuidSerializer::class) UUID? = null,
     )
 
@@ -36,9 +41,9 @@ class UuidSerializerTest {
     fun `nested field, list elements and map values`() {
         val value = Holder(single = a, list = listOf(a, b), map = mapOf("k" to b))
         val hex = "0a120a1000112233445566778899aabbccddeeff" +
-                "12120a1000112233445566778899aabbccddeeff" +
-                "12120a10ffeeddccbbaa99887766554433221100" +
-                "1a170a016b12120a10ffeeddccbbaa99887766554433221100"
+            "12120a1000112233445566778899aabbccddeeff" +
+            "12120a10ffeeddccbbaa99887766554433221100" +
+            "1a170a016b12120a10ffeeddccbbaa99887766554433221100"
 
         assertEquals(hex, encodeHex(Holder.serializer(), value))
         assertEquals(value, decodeHex(Holder.serializer(), hex))
@@ -47,10 +52,16 @@ class UuidSerializerTest {
     @Test
     fun `nullable field round trips null and a value`() {
         val withValue = "0a120a1000112233445566778899aabbccddeeff" +
-                "22120a10ffeeddccbbaa99887766554433221100"
+            "22120a10ffeeddccbbaa99887766554433221100"
 
-        assertEquals("0a120a1000112233445566778899aabbccddeeff", encodeHex(Holder.serializer(), Holder(a)))
-        assertEquals(Holder(a), decodeHex(Holder.serializer(), "0a120a1000112233445566778899aabbccddeeff"))
+        assertEquals(
+            "0a120a1000112233445566778899aabbccddeeff",
+            encodeHex(Holder.serializer(), Holder(a)),
+        )
+        assertEquals(
+            Holder(a),
+            decodeHex(Holder.serializer(), "0a120a1000112233445566778899aabbccddeeff"),
+        )
         assertEquals(withValue, encodeHex(Holder.serializer(), Holder(a, nullable = b)))
         assertEquals(Holder(a, nullable = b), decodeHex(Holder.serializer(), withValue))
     }

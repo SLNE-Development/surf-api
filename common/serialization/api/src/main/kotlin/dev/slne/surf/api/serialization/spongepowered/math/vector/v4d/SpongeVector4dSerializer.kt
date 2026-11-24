@@ -12,8 +12,10 @@ typealias SerializableVector4d = @Serializable(with = SpongeVector4dSerializer::
 
 object SpongeVector4dSerializer : KSerializer<Vector4d> {
     private val arraySerializer = DoubleArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surf.api.sponge.Vector4d", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surf.api.sponge.Vector4d",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -28,6 +30,7 @@ object SpongeVector4dSerializer : KSerializer<Vector4d> {
     override fun deserialize(decoder: Decoder): Vector4d {
         val array = decoder.decodeSerializableValue(arraySerializer)
         require(array.size == 4) { "Expected array of size 4, got ${array.size}" }
+
         return Vector4d.from(array[0], array[1], array[2], array[3])
     }
 }

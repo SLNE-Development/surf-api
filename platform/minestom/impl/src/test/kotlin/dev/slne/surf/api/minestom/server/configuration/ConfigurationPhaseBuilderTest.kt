@@ -47,7 +47,10 @@ class ConfigurationPhaseBuilderTest {
 
         val ids = builder.ids
         assertEquals(ConfigurationTaskId("first"), ids.first())
-        assertEquals(ConfigurationTaskId("after_brand"), ids[ids.indexOf(ConfigurationTasks.BRAND) + 1])
+        assertEquals(
+            ConfigurationTaskId("after_brand"),
+            ids[ids.indexOf(ConfigurationTasks.BRAND) + 1],
+        )
         assertEquals(custom, ids[ids.indexOf(ConfigurationTasks.JOIN_WORLD) - 1])
     }
 
@@ -66,13 +69,22 @@ class ConfigurationPhaseBuilderTest {
         builder.codeOfConduct { "Be nice" }
 
         val ids = builder.ids
-        assertEquals(ids.indexOf(ConfigurationTasks.AWAIT_SETTINGS) + 1, ids.indexOf(ConfigurationTasks.CODE_OF_CONDUCT))
+        assertEquals(
+            ids.indexOf(ConfigurationTasks.AWAIT_SETTINGS) + 1,
+            ids.indexOf(ConfigurationTasks.CODE_OF_CONDUCT),
+        )
     }
 
     @Test
     fun `an id cannot be used twice`() {
         val builder = ConfigurationPhaseBuilder()
         assertThrows<IllegalArgumentException> { builder.last(ConfigurationTasks.BRAND, noop) }
-        assertThrows<IllegalArgumentException> { builder.before(custom, ConfigurationTaskId("other"), noop) }
+        assertThrows<IllegalArgumentException> {
+            builder.before(
+                custom,
+                ConfigurationTaskId("other"),
+                noop,
+            )
+        }
     }
 }

@@ -8,7 +8,8 @@ import io.nats.client.Message
 import io.nats.client.impl.Headers
 
 /**
- * Builds the headers every outgoing message carries: `Content-Type`, the sender version and `Surf-Origin`.
+ * Builds the headers every outgoing message carries: `Content-Type`, the sender version and
+ * `Surf-Origin`.
  */
 @InternalNatsApi
 internal object NatsHeaders {
@@ -22,21 +23,29 @@ internal object NatsHeaders {
     fun forOrigin(origin: String): Headers {
         val headers = Headers()
         writeBaseNatsHeaders(origin, headers::add)
+
         return headers
     }
 
     /**
-     * Returns the `Surf-Origin` value of [clientName] in this process, in the form `client@instanceId`.
+     * Returns the `Surf-Origin` value of [clientName] in this process, in the form
+     * `client@instanceId`.
      */
-    fun origin(clientName: String) = ProtocolHeaders.origin(clientName, NatsConnectionManager.instanceId)
+    fun origin(clientName: String): String {
+        return ProtocolHeaders.origin(clientName, NatsConnectionManager.instanceId)
+    }
 }
 
 /**
- * Returns the first value of the header [name], or `null` when it is missing or empty. Header names are
- * case-sensitive.
+ * Returns the first value of the header [name], or `null` when it is missing or empty. Header names
+ * are case-sensitive.
  */
-internal fun Message.header(name: String): String? = ProtocolHeaders.valueOrNull(headers?.getFirst(name))
+internal fun Message.header(name: String): String? {
+    return ProtocolHeaders.valueOrNull(headers?.getFirst(name))
+}
 
 internal fun Message.presenceKind(): String? = header(ProtocolHeaders.PRESENCE)
 
-internal fun Message.deadlineMillis(): Long? = ProtocolHeaders.deadlineMillis(header(ProtocolHeaders.DEADLINE))
+internal fun Message.deadlineMillis(): Long? {
+    return ProtocolHeaders.deadlineMillis(header(ProtocolHeaders.DEADLINE))
+}

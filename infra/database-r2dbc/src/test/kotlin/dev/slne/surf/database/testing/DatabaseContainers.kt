@@ -26,10 +26,16 @@ import java.util.concurrent.atomic.AtomicInteger
  * Lazily started, JVM-wide singleton database containers shared by all tests.
  */
 object DatabaseContainers {
-    private val mariadb: MariaDBContainer by lazy { MariaDBContainer("mariadb:12.3").also { it.start() } }
-    private val postgres: PostgreSQLContainer by lazy { PostgreSQLContainer("postgres:18").also { it.start() } }
+    private val mariadb: MariaDBContainer by lazy {
+        MariaDBContainer("mariadb:12.3").also { it.start() }
+    }
+    private val postgres: PostgreSQLContainer by lazy {
+        PostgreSQLContainer("postgres:18").also { it.start() }
+    }
     private val mariadbOutsideUtc: MariaDBContainer by lazy {
-        MariaDBContainer("mariadb:12.3").withCommand("--default-time-zone=$SERVER_TIME_ZONE").also { it.start() }
+        MariaDBContainer("mariadb:12.3")
+            .withCommand("--default-time-zone=$SERVER_TIME_ZONE")
+            .also { it.start() }
     }
     private val postgresOutsideUtc: PostgreSQLContainer by lazy {
         PostgreSQLContainer("postgres:18")
@@ -38,12 +44,14 @@ object DatabaseContainers {
     }
 
     /**
-     * Fixed offset of [mariadbOutsideUtc]'s server time zone; differs from UTC and from the JVM zones of the tests.
+     * Fixed offset of [mariadbOutsideUtc]'s server time zone; differs from UTC and from the JVM
+     * zones of the tests.
      */
     const val SERVER_TIME_ZONE = "+09:30"
 
     /**
-     * Server time zone of [postgresOutsideUtc]; differs from UTC and from the JVM zones of the tests.
+     * Server time zone of [postgresOutsideUtc]; differs from UTC and from the JVM zones of the
+     * tests.
      */
     const val POSTGRES_SERVER_TIME_ZONE = "Pacific/Chatham"
 
@@ -66,14 +74,16 @@ private val isolationCounter = AtomicInteger()
 /**
  * Builds a working [TestDatabase] (R2DBC pool plus JDBC migration data source) for this container.
  *
- * With [fresh] set, a new empty database (MariaDB) or schema (PostgreSQL) is created first, so a test
- * does not see tables of other tests.
+ * With [fresh] set, a new empty database (MariaDB) or schema (PostgreSQL) is created first, so a
+ * test does not see tables of other tests.
  */
-fun JdbcDatabaseContainer<*>.toTestDatabase(fresh: Boolean = false): TestDatabase =
-    connectionDetails(fresh).toTestDatabase()
+fun JdbcDatabaseContainer<*>.toTestDatabase(fresh: Boolean = false): TestDatabase {
+    return connectionDetails(fresh).toTestDatabase()
+}
 
 /**
- * Connection details for this container's default database (MariaDB) or `public` schema (PostgreSQL).
+ * Connection details for this container's default database (MariaDB) or `public` schema
+ * (PostgreSQL).
  *
  * With [fresh] set, they point to a new empty database or schema instead.
  */
@@ -81,7 +91,8 @@ internal fun JdbcDatabaseContainer<*>.connectionDetails(fresh: Boolean = false):
     val isMariaDb = this is MariaDBContainer
     val unique = "t${isolationCounter.incrementAndGet()}_${System.nanoTime()}"
 
-    // MariaDB: root is required to create databases and the test user is only granted on the default one.
+    // MariaDB: root is required to create databases and the test user is only granted on the
+    // default one.
     val username = if (isMariaDb) "root" else username
     var database = databaseName
     var schema = "public"
@@ -107,25 +118,36 @@ internal fun JdbcDatabaseContainer<*>.connectionDetails(fresh: Boolean = false):
         port = IntOr.Default(if (isMariaDb) getMappedPort(3306) else getMappedPort(5432)),
         database = database,
         username = username,
-        password = password
+        password = password,
     )
 }
 
 /**
  * Builds a working [TestDatabase] (R2DBC pool plus JDBC migration data source) for these details.
  *
- * [sessionSetupSql], if set, runs once on every new R2DBC connection, for example to change a session setting.
+ * [sessionSetupSql], if set, runs once on every new R2DBC connection, for example to change a
+ * session setting.
  */
 internal fun ConnectionDetails.toTestDatabase(sessionSetupSql: String? = null): TestDatabase {
     val pool = ConnectionPool(
         ConnectionPoolConfiguration.builder()
-            .connectionFactory(R2dbcConnectionFactories.create(this, Duration.ofMillis(PoolConfig.Timeouts().lockTimeoutMillis)))
+            .connectionFactory(
+                R2dbcConnectionFactories.create(
+                    this,
+                    Duration.ofMillis(PoolConfig.Timeouts().lockTimeoutMillis),
+                ),
+            )
             .maxSize(5)
-            .apply { if (sessionSetupSql != null) postAllocate { it.executeUpdate(sessionSetupSql) } }
-            .build()
+            .apply {
+                if (sessionSetupSql != null) {
+                    postAllocate { it.executeUpdate(sessionSetupSql) }
+                }
+            }
+            .build(),
     )
 
-    // The test database owns this pool, so close() releases its connections to the shared container.
+    // The test database owns this pool, so close() releases its connections to the shared
+    // container.
     return TestDatabase(
         database = DatabaseConnector.connect(
             connectionFactory = pool,
@@ -137,5 +159,6 @@ internal fun ConnectionDetails.toTestDatabase(sessionSetupSql: String? = null): 
     )
 }
 
-private fun Connection.executeUpdate(sql: String): Mono<Void> =
-    Mono.from(createStatement(sql).execute()).flatMap { Mono.from(it.rowsUpdated) }.then()
+private fun Connection.executeUpdate(sql: String): Mono<Void> {
+    return Mono.from(createStatement(sql).execute()).flatMap { Mono.from(it.rowsUpdated) }.then()
+}

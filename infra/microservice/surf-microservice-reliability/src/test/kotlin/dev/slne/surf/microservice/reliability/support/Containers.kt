@@ -8,7 +8,11 @@ import org.testcontainers.postgresql.PostgreSQLContainer
  * Lazily started, JVM-wide containers shared by all tests.
  */
 object Containers {
-    val postgres: PostgreSQLContainer by lazy { PostgreSQLContainer("postgres:18").also { it.start() } }
+    val postgres: PostgreSQLContainer by lazy {
+        PostgreSQLContainer("postgres:18").also { it.start() }
+    }
     val mariadb: MariaDBContainer by lazy { MariaDBContainer("mariadb:12.3").also { it.start() } }
-    val nats: NatsContainer by lazy { NatsContainer("nats:2-alpine").withJetStream().also { it.start() } }
+    val nats: NatsContainer by lazy {
+        NatsContainer("nats:2-alpine").withJetStream().also { it.start() }
+    }
 }

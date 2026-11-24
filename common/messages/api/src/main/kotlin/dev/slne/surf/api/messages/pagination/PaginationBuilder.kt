@@ -7,11 +7,9 @@ import org.jetbrains.annotations.Range
 import kotlin.experimental.ExperimentalTypeInference
 
 interface SuspendPaginationBuilder<T> {
-    // required properties
     var title: Component
     var rowRenderer: SuspendPaginationRowRenderer<T>
 
-    // optional properties
     var width: @Range(from = 3, to = Int.MAX_VALUE.toLong()) Int
     var indent: @Range(from = 0, to = Int.MAX_VALUE.toLong()) Int
     var resultsPerPage: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int
@@ -59,9 +57,12 @@ interface SuspendPaginationBuilder<T> {
     companion object {
         @Suppress("DEPRECATION")
         @OptIn(ExperimentalTypeInference::class)
-        operator fun <T> invoke(@BuilderInference block: SuspendPaginationBuilder<T>.() -> Unit): SuspendPagination<T> {
+        operator fun <T> invoke(
+            @BuilderInference block: SuspendPaginationBuilder<T>.() -> Unit,
+        ): SuspendPagination<T> {
             val builder = InternalPaginationBridge.instance.createPaginationBuilderSuspend<T>()
             builder.block()
+
             return builder.build()
         }
 
@@ -72,11 +73,9 @@ interface SuspendPaginationBuilder<T> {
 }
 
 interface PaginationBuilder<T> {
-    // required properties
     var title: Component
     var rowRenderer: PaginationRowRenderer<T>
 
-    // optional properties
     var width: @Range(from = 3, to = Int.MAX_VALUE.toLong()) Int
     var indent: @Range(from = 0, to = Int.MAX_VALUE.toLong()) Int
     var resultsPerPage: @Range(from = 1, to = Int.MAX_VALUE.toLong()) Int
@@ -124,9 +123,12 @@ interface PaginationBuilder<T> {
     companion object {
         @Suppress("DEPRECATION")
         @OptIn(ExperimentalTypeInference::class)
-        operator fun <T> invoke(@BuilderInference block: PaginationBuilder<T>.() -> Unit): Pagination<T> {
+        operator fun <T> invoke(
+            @BuilderInference block: PaginationBuilder<T>.() -> Unit,
+        ): Pagination<T> {
             val builder = InternalPaginationBridge.instance.createPaginationBuilder<T>()
             builder.block()
+
             return builder.build()
         }
 

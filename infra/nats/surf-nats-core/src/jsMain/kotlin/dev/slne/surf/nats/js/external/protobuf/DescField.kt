@@ -5,8 +5,9 @@ package dev.slne.surf.nats.js.external.protobuf
 /**
  * Binds `DescField`, a field of a message.
  *
- * protobuf-es discriminates the variants by `fieldKind`. The Kotlin side declares them as [DescFieldSingular],
- * [DescFieldList], [DescFieldMap] and their subinterfaces. `FieldShape` maps a field to its variant.
+ * protobuf-es discriminates the variants by `fieldKind`. The Kotlin side declares them as
+ * [DescFieldSingular], [DescFieldList], [DescFieldMap] and their subinterfaces. `FieldShape` maps a
+ * field to its variant.
  */
 internal external interface DescField : AnyDesc {
     val name: String

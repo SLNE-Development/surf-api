@@ -12,7 +12,10 @@ class NatsPersistentLimitsTest {
     fun `public limits match the protocol retention`() {
         assertEquals(ProtocolDefaults.PERSIST_MAX_AGE, NatsPersistentLimits.MESSAGE_MAX_AGE)
         assertEquals(ProtocolDefaults.PERSIST_MAX_AGE, NatsPersistentLimits.DEAD_LETTER_MAX_AGE)
-        assertEquals(ProtocolDefaults.PERSISTENT_PAYLOAD_TTL_SECONDS.seconds, NatsPersistentLimits.MESSAGE_MAX_AGE)
+        assertEquals(
+            ProtocolDefaults.PERSISTENT_PAYLOAD_TTL_SECONDS.seconds,
+            NatsPersistentLimits.MESSAGE_MAX_AGE,
+        )
         assertEquals(14.days, NatsPersistentLimits.REDELIVERY_HORIZON)
     }
 }

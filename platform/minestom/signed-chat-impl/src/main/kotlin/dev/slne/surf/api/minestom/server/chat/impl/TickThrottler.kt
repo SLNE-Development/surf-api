@@ -12,13 +12,16 @@ internal class TickThrottler(private val incrementStep: Int, private val thresho
 
     fun tick() {
         var value: Int
+
         do {
             value = count.get()
             if (value <= 0) return
         } while (!count.compareAndSet(value, value - 1))
     }
 
-    fun isUnderThreshold() = threshold <= 0 || count.get() < threshold
+    fun isUnderThreshold(): Boolean = threshold <= 0 || count.get() < threshold
 
-    fun isIncrementAndUnderThreshold() = threshold <= 0 || count.addAndGet(incrementStep) < threshold
+    fun isIncrementAndUnderThreshold(): Boolean {
+        return threshold <= 0 || count.addAndGet(incrementStep) < threshold
+    }
 }

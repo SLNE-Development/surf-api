@@ -43,28 +43,37 @@ class DialogBaseBuilder {
     fun body(block: DialogBodyBuilder.() -> Unit) {
         val bodies = dialogBody(block)
         if (bodies.isEmpty()) return
+
         val body = body
+
         if (body == null) {
             this.body = bodies
+
             return
         }
+
         body.addAll(bodies)
     }
 
     fun input(block: DialogInputBuilder.() -> Unit) {
         val inputs = dialogInput(block)
         if (inputs.isEmpty()) return
+
         val input = this.inputs
+
         if (input == null) {
             this.inputs = inputs
+
             return
         }
+
         input.addAll(inputs)
     }
 
     internal fun build(): DialogBase {
         val title = title
         require(title != null) { "Dialog base title must not be null" }
+
         val builder = DialogBase.builder(title)
             .pause(false)
         with(builder) {
@@ -79,8 +88,10 @@ class DialogBaseBuilder {
     }
 }
 
-fun dialogBase(block: DialogBaseBuilder.() -> Unit): DialogBase =
-    DialogBaseBuilder().apply(block).build()
+fun dialogBase(block: DialogBaseBuilder.() -> Unit): DialogBase {
+    return DialogBaseBuilder().apply(block).build()
+}
 
-fun DialogBase(block: DialogBaseBuilder.() -> Unit): DialogBase =
-    DialogBaseBuilder().apply(block).build()
+fun DialogBase(block: DialogBaseBuilder.() -> Unit): DialogBase {
+    return DialogBaseBuilder().apply(block).build()
+}

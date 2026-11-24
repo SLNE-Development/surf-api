@@ -36,8 +36,9 @@ internal class RedisPluginContext(
     fun createApi(): RedisApi {
         check(!connectPointPassed) {
             "RedisApi of plugin '$pluginName' was requested after its context refreshed and would never connect; " +
-                    "inject it into a bean instead of looking it up later"
+                "inject it into a bean instead of looking it up later"
         }
+
         return RedisApi.create(pluginName, serializersModule())
     }
 
@@ -55,8 +56,13 @@ internal class RedisPluginContext(
         val api = context.getBean<RedisApi>(REDIS_API_BEAN)
         runBlocking(Dispatchers.IO) {
             withContextClassLoader(RedisPluginContext::class.java.classLoader) {
-                if (!api.isFrozen()) api.freeze()
-                if (!api.isConnected()) api.connect()
+                if (!api.isFrozen()) {
+                    api.freeze()
+                }
+
+                if (!api.isConnected()) {
+                    api.connect()
+                }
             }
         }
     }

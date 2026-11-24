@@ -36,27 +36,29 @@ import java.time.Instant
 internal class PlayerChatHandler(
     private val player: Player,
     private val config: SignedChatSettings,
-): AutoCloseable {
+) : AutoCloseable {
     companion object {
         private val LOGGER = ComponentLogger.logger()
 
-        private val CHAT_VALIDATION_FAILED =
-            translatable("multiplayer.disconnect.chat_validation_failed")
+        private val CHAT_VALIDATION_FAILED = translatable(
+            "multiplayer.disconnect.chat_validation_failed",
+        )
 
-        private val ILLEGAL_CHARACTERS =
-            translatable("multiplayer.disconnect.illegal_characters")
+        private val ILLEGAL_CHARACTERS = translatable("multiplayer.disconnect.illegal_characters")
 
-        private val TOO_MANY_PENDING_CHATS =
-            translatable("multiplayer.disconnect.too_many_pending_chats")
+        private val TOO_MANY_PENDING_CHATS = translatable(
+            "multiplayer.disconnect.too_many_pending_chats",
+        )
 
         private const val MAX_PENDING_CHATS = 4096
 
         fun isAllowedChatCharacter(char: Char): Boolean {
             val code = char.code
+
             return char != '§' && code >= ' '.code && code != 127
         }
 
-        fun isChatMessageIllegal(message: String) = !message.all(::isAllowedChatCharacter)
+        fun isChatMessageIllegal(message: String): Boolean = !message.all(::isAllowedChatCharacter)
     }
 
     private val lastSeenMessages = LastSeenMessagesValidator()
@@ -70,9 +72,8 @@ internal class PlayerChatHandler(
      */
     private var nextChatIndex = 0
 
-    private var signedMessageDecoder: SignedMessageChain.Decoder =
-        SignedMessageChain.Decoder.unsigned(player.uuid) { config.enforceSecureProfile }
-
+    private var signedMessageDecoder: SignedMessageChain.Decoder = SignedMessageChain.Decoder
+        .unsigned(player.uuid) { config.enforceSecureProfile }
 
     /**
      * The validated chat session of the player, or `null` until the client has sent one.
@@ -92,14 +93,16 @@ internal class PlayerChatHandler(
         chatMessageChain.close()
     }
 
-
     /**
      * Validates a chat message and queues [onMessage] on the message chain.
      *
      * The last-seen update and signature are validated immediately in packet order; only the
      * broadcast runs on the chain. Does nothing while the server stops.
      */
-    fun handleChat(packet: ClientChatMessagePacket, onMessage: suspend (PlayerChatMessage) -> Unit) {
+    fun handleChat(
+        packet: ClientChatMessagePacket,
+        onMessage: suspend (PlayerChatMessage) -> Unit,
+    ) {
         if (MinecraftServer.isStopping()) return
 
         val lastSeen = unpackAndApplyLastSeen(LastSeenMessages.Update.fromPacket(packet)) ?: return
@@ -109,6 +112,7 @@ internal class PlayerChatHandler(
                 getSignedMessage(packet, lastSeen)
             } catch (failure: SignedMessageChain.DecodeException) {
                 handleMessageDecodeFailure(failure)
+
                 return@tryHandleChat
             }
 
@@ -125,7 +129,7 @@ internal class PlayerChatHandler(
      */
     fun handleSignedCommandChat(
         packet: ClientSignedCommandChatPacket,
-        onCommand: (String) -> Unit
+        onCommand: (String) -> Unit,
     ) {
         if (MinecraftServer.isStopping()) return
 
@@ -141,7 +145,7 @@ internal class PlayerChatHandler(
 
             if (signedArguments != null) {
                 SignedCommandArguments.withMessages(
-                    signedArguments.mapValues { (_, message) -> message.adventureView() }
+                    signedArguments.mapValues { (_, message) -> message.adventureView() },
                 ) { onCommand(packet.message()) }
             }
 
@@ -157,17 +161,21 @@ internal class PlayerChatHandler(
      */
     fun handleUnsignedCommandChat(command: String, onCommand: (String) -> Unit) {
         tryHandleChat(command, isCommand = true) {
-            if (config.enforceSecureProfile && signableCommandArguments(player, command).isNotEmpty()) {
+            if (config.enforceSecureProfile && signableCommandArguments(
+                    player,
+                    command,
+                ).isNotEmpty()
+            ) {
                 LOGGER.warn(
                     "Received unsigned command packet from {}, but the command requires signable arguments: {}",
                     player.username,
-                    command
+                    command,
                 )
                 player.sendPacket(
                     SystemChatPacket(
                         translatable("chat.disabled.invalid_command_signature", NamedTextColor.RED),
-                        false
-                    )
+                        false,
+                    ),
                 )
             } else {
                 onCommand(command)
@@ -185,17 +193,16 @@ internal class PlayerChatHandler(
                 LOGGER.error(
                     "Failed to validate message acknowledgement offset from {}: {}",
                     player.username,
-                    failure.message
+                    failure.message,
                 )
                 disconnect(CHAT_VALIDATION_FAILED)
             }
         }
     }
 
-
     fun handleChatSessionUpdate(
         packet: ClientChatSessionUpdatePacket,
-        onSessionReset: (RemoteChatSession) -> Unit
+        onSessionReset: (RemoteChatSession) -> Unit,
     ) {
         val newChatSession: ChatSession = packet.chatSession()
         val oldProfileKey = chatSession?.profilePublicKey
@@ -207,6 +214,7 @@ internal class PlayerChatHandler(
                 .isBefore(oldProfileKey.expiresAt())
         ) {
             disconnect(EXPIRED_PROFILE_PUBLIC_KEY)
+
             return
         }
 
@@ -214,7 +222,7 @@ internal class PlayerChatHandler(
             val validated = RemoteChatSession.validate(
                 data = newChatSession,
                 profileId = player.uuid,
-                serviceSignatureValidator = SignatureValidator.YGGDRASIL
+                serviceSignatureValidator = SignatureValidator.YGGDRASIL,
             )
 
             resetPlayerChatState(validated, onSessionReset)
@@ -224,12 +232,12 @@ internal class PlayerChatHandler(
     }
 
     /**
-     * Adopts [session] and starts a new signature chain. [onSessionReset] runs on the message chain,
-     * after the messages queued earlier.
+     * Adopts [session] and starts a new signature chain. [onSessionReset] runs on the message
+     * chain, after the messages queued earlier.
      */
     private fun resetPlayerChatState(
         session: RemoteChatSession,
-        onSessionReset: (RemoteChatSession) -> Unit
+        onSessionReset: (RemoteChatSession) -> Unit,
     ) {
         chatSession = session
         signedMessageDecoder = session.createMessageDecoder(player.uuid)
@@ -239,21 +247,21 @@ internal class PlayerChatHandler(
 
     private fun getSignedMessage(
         packet: ClientChatMessagePacket,
-        lastSeenMessages: LastSeenMessages
+        lastSeenMessages: LastSeenMessages,
     ): PlayerChatMessage {
         val body = SignedMessageBody(
             content = packet.message(),
             timeStamp = Instant.ofEpochMilli(packet.timestamp()),
             salt = packet.salt(),
-            lastSeen = lastSeenMessages
+            lastSeen = lastSeenMessages,
         )
 
         return signedMessageDecoder.unpack(packet.signature(), body)
     }
 
     /**
-     * The message the sender signed for every signable argument of [packet]'s command, keyed by node
-     * name.
+     * The message the sender signed for every signable argument of [packet]'s command, keyed by
+     * node name.
      *
      * Without signature entries, every signable argument is unpacked without a signature, so a
      * player with a profile key, or any player while [SignedChatSettings.enforceSecureProfile] is
@@ -266,23 +274,26 @@ internal class PlayerChatHandler(
      */
     private fun getSignedArguments(
         packet: ClientSignedCommandChatPacket,
-        lastSeenMessages: LastSeenMessages
+        lastSeenMessages: LastSeenMessages,
     ): Map<String, PlayerChatMessage> {
         val entries = packet.signatures().entries()
         val values = signableCommandArguments(player, packet.message())
         val signedArguments = mutableMapOf<String, PlayerChatMessage>()
 
         if (entries.isEmpty()) {
-            values.forEach { (name, value) ->
-                signedArguments[name] =
-                    signedMessageDecoder.unpack(null, SignedMessageBody.unsigned(value))
+            for ((name, value) in values) {
+                signedArguments[name] = signedMessageDecoder.unpack(
+                    null,
+                    SignedMessageBody.unsigned(value),
+                )
             }
 
             return signedArguments
         }
 
-        entries.forEach { entry ->
+        for (entry in entries) {
             val value = values[entry.name()]
+
             if (value == null) {
                 signedMessageDecoder.setChainBroken()
                 throw signedArgumentMismatch(packet, values)
@@ -292,7 +303,7 @@ internal class PlayerChatHandler(
                 content = value,
                 timeStamp = Instant.ofEpochMilli(packet.timestamp()),
                 salt = packet.salt(),
-                lastSeen = lastSeenMessages
+                lastSeen = lastSeenMessages,
             )
 
             signedArguments[entry.name()] = signedMessageDecoder.unpack(entry.signature(), body)
@@ -307,17 +318,19 @@ internal class PlayerChatHandler(
 
     private fun signedArgumentMismatch(
         packet: ClientSignedCommandChatPacket,
-        expected: Map<String, String>
+        expected: Map<String, String>,
     ): SignedMessageChain.DecodeException {
         LOGGER.warn(
             "Signed command mismatch for {} ('{}'): got [{}] from the client, but expected [{}]",
             player.username,
             packet.message(),
             packet.signatures().entries().joinToString { it.name() },
-            expected.keys.joinToString()
+            expected.keys.joinToString(),
         )
 
-        return SignedMessageChain.DecodeException(SignedMessageChain.DecodeException.INVALID_COMMAND_SIGNATURE)
+        return SignedMessageChain.DecodeException(
+            SignedMessageChain.DecodeException.INVALID_COMMAND_SIGNATURE,
+        )
     }
 
     private inline fun tryHandleChat(message: String, isCommand: Boolean, chatHandler: () -> Unit) {
@@ -329,8 +342,8 @@ internal class PlayerChatHandler(
             player.sendPacket(
                 SystemChatPacket(
                     translatable("chat.disabled.options", NamedTextColor.RED),
-                    false
-                )
+                    false,
+                ),
             )
         } else {
             chatHandler()
@@ -345,9 +358,10 @@ internal class PlayerChatHandler(
                 LOGGER.error(
                     "Failed to validate message acknowledgements from {}: {}",
                     player.username,
-                    failure.message
+                    failure.message,
                 )
                 disconnect(CHAT_VALIDATION_FAILED)
+
                 return null
             }
         }
@@ -357,14 +371,14 @@ internal class PlayerChatHandler(
         LOGGER.warn(
             "Failed to update secure chat state for {}: '{}'",
             player.username,
-            failure.component
+            failure.component,
         )
         player.sendPacket(SystemChatPacket(failure.component.color(NamedTextColor.RED), false))
     }
 
     private suspend fun broadcastChatMessage(
         message: PlayerChatMessage,
-        onMessage: suspend (PlayerChatMessage) -> Unit
+        onMessage: suspend (PlayerChatMessage) -> Unit,
     ) {
         val rawMessage = message.signedContent()
 
@@ -374,8 +388,8 @@ internal class PlayerChatHandler(
             player.sendPacket(
                 SystemChatPacket(
                     translatable("chat.cannotSend", NamedTextColor.RED),
-                    false
-                )
+                    false,
+                ),
             )
         } else {
             onMessage(message)
@@ -417,11 +431,12 @@ internal class PlayerChatHandler(
                     message.filterMask,
                     chatType.id,
                     chatType.name,
-                    chatType.targetName
-                )
+                    chatType.targetName,
+                ),
             )
 
             val signature = message.signature ?: return
+
             messageSignatureCache.push(message.signedBody, signature)
 
             val trackedCount = synchronized(lastSeenMessages) {
@@ -443,7 +458,7 @@ internal class PlayerChatHandler(
         if (!acceptsChatMessages()) return
 
         player.sendPacket(
-            DisguisedChatPacket(content, chatType.id, chatType.name, chatType.targetName)
+            DisguisedChatPacket(content, chatType.id, chatType.name, chatType.targetName),
         )
     }
 

@@ -31,7 +31,11 @@ class ProtocolSubjectsTest {
     @Test
     fun eventsRequireProtoNames() {
         for (name in ProtocolVectors.invalidProtoNames) {
-            val error = assertFailsWith<IllegalArgumentException>("event '$name'") { ProtocolSubjects.event(name) }
+            val error = assertFailsWith<IllegalArgumentException>("event '$name'") {
+                ProtocolSubjects.event(
+                    name,
+                )
+            }
             assertEquals("event $name: ${ProtocolNaming.PROTO_NAME_RULE}", error.message)
         }
     }
@@ -87,9 +91,13 @@ class ProtocolSubjectsTest {
     @Test
     fun streamNameEncodingIsInjectiveExhaustively() {
         val byEncoding = HashMap<String, String>()
+
         for (name in allStrings("aB_.", maxLength = 7).filter(ProtocolNaming::isProtoName)) {
             val previous = byEncoding.put(ProtocolStreams.encode(name), name)
-            assertNull(previous, "'$name' and '$previous' encode to ${ProtocolStreams.encode(name)}")
+            assertNull(
+                previous,
+                "'$name' and '$previous' encode to ${ProtocolStreams.encode(name)}",
+            )
         }
     }
 
@@ -132,10 +140,14 @@ class ProtocolSubjectsTest {
         assertEquals(emptyList(), ProtocolResolution.service(ServiceOptions(), longest).problems())
 
         assertEquals(255, ProtocolStreams.PERSIST_PREFIX.length + tooLong.length)
-        val expected = "service $tooLong: its stream name ${ProtocolStreams.persist(tooLong)} has 256 characters, " +
-                "more than 255; shorten the package or the service name"
+        val expected =
+            "service $tooLong: its stream name ${ProtocolStreams.persist(tooLong)} has 256 characters, " +
+            "more than 255; shorten the package or the service name"
         assertEquals(expected, ServiceNames.problem(tooLong))
-        assertEquals(listOf(expected), ProtocolResolution.service(ServiceOptions(), tooLong).problems())
+        assertEquals(
+            listOf(expected),
+            ProtocolResolution.service(ServiceOptions(), tooLong).problems(),
+        )
         val error = assertFailsWith<IllegalArgumentException> { ServiceNames(tooLong) }
         assertEquals(expected, error.message)
     }
@@ -145,8 +157,15 @@ class ProtocolSubjectsTest {
         for (name in ProtocolVectors.invalidProtoNames) {
             val expected = "service $name: ${ProtocolNaming.PROTO_NAME_RULE}"
             assertEquals(expected, ServiceNames.problem(name), "service '$name'")
-            assertEquals(listOf(expected), ProtocolResolution.service(ServiceOptions(), name).problems())
-            val error = assertFailsWith<IllegalArgumentException>("service '$name'") { ServiceNames(name) }
+            assertEquals(
+                listOf(expected),
+                ProtocolResolution.service(ServiceOptions(), name).problems(),
+            )
+            val error = assertFailsWith<IllegalArgumentException>("service '$name'") {
+                ServiceNames(
+                    name,
+                )
+            }
             assertEquals(expected, error.message)
         }
     }
@@ -158,12 +177,25 @@ class ProtocolSubjectsTest {
 
         val dotted = "rpc a.v1.S.A.B: the declared name 'A.B' must not contain '.'"
         assertEquals(dotted, ServiceNames.methodProblem("a.v1.S", "A.B"))
-        assertEquals(dotted, assertFailsWith<IllegalArgumentException> { names.methodSubject("A.B", persistent = true) }.message)
+        assertEquals(
+            dotted,
+            assertFailsWith<IllegalArgumentException> {
+                names.methodSubject(
+                    "A.B",
+                    persistent = true,
+                )
+            }.message,
+        )
 
         for (method in listOf("", "_A", "1A", "A-B", "A*", "A B")) {
             val expected = "rpc a.v1.S.$method: ${ProtocolNaming.PROTO_NAME_RULE}"
             assertEquals(expected, ServiceNames.methodProblem("a.v1.S", method), "rpc '$method'")
-            val error = assertFailsWith<IllegalArgumentException>("rpc '$method'") { names.methodSubject(method, persistent = false) }
+            val error = assertFailsWith<IllegalArgumentException>("rpc '$method'") {
+                names.methodSubject(
+                    method,
+                    persistent = false,
+                )
+            }
             assertEquals(expected, error.message)
         }
     }
@@ -172,8 +204,14 @@ class ProtocolSubjectsTest {
     fun servicesRejectDottedDeclaredNames() {
         val service = ProtocolResolution.service(ServiceOptions(), "a.v1.S.T")
         assertEquals(emptyList(), service.problems())
-        assertEquals(listOf("service a.v1.S.T: the declared name 'S.T' must not contain '.'"), service.problems("S.T"))
-        assertEquals(emptyList(), ProtocolResolution.service(ServiceOptions(), "a.v1.S").problems("S"))
+        assertEquals(
+            listOf("service a.v1.S.T: the declared name 'S.T' must not contain '.'"),
+            service.problems("S.T"),
+        )
+        assertEquals(
+            emptyList(),
+            ProtocolResolution.service(ServiceOptions(), "a.v1.S").problems("S"),
+        )
     }
 
     private fun allStrings(alphabet: String, maxLength: Int): List<String> {
@@ -183,6 +221,7 @@ class ProtocolSubjectsTest {
             previous = previous.flatMap { prefix -> alphabet.map { prefix + it } }
             result += previous
         }
+
         return result
     }
 }

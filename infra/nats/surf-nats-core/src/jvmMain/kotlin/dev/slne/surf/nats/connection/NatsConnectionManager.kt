@@ -6,6 +6,7 @@ import dev.slne.surf.nats.config.natsConfig
 import dev.slne.surf.nats.runtime.ConnectRules
 import dev.slne.surf.nats.runtime.randomId
 import io.nats.client.*
+import io.nats.client.Connection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import org.jetbrains.annotations.Blocking
@@ -18,7 +19,8 @@ import java.util.concurrent.locks.ReentrantLock
 /**
  * Holds the single NATS connection of the process that every client shares.
  *
- * The connection reconnects without limit. [connect] and [disconnect] are idempotent and serialized on this object.
+ * The connection reconnects without limit. [connect] and [disconnect] are idempotent and serialized
+ * on this object.
  */
 @InternalNatsApi
 internal object NatsConnectionManager {
@@ -26,7 +28,8 @@ internal object NatsConnectionManager {
     private val log = logger()
 
     /**
-     * Random identifier of this process, part of the `Surf-Origin` header and of the default connection name.
+     * Random identifier of this process, part of the `Surf-Origin` header and of the default
+     * connection name.
      */
     val instanceId: String = randomId()
 
@@ -41,8 +44,8 @@ internal object NatsConnectionManager {
     /**
      * Connects with the settings of `natsConfig` unless a connection exists.
      *
-     * Blocks until connected. The first call loads and validates the configuration. Throws when the configuration is
-     * invalid or no server is reachable.
+     * Blocks until connected. The first call loads and validates the configuration. Throws when the
+     * configuration is invalid or no server is reachable.
      */
     @Blocking
     fun connect() {
@@ -61,8 +64,8 @@ internal object NatsConnectionManager {
                 .pingInterval(Duration.ofSeconds(ConnectRules.PING_INTERVAL_SECONDS.toLong()))
                 .advancedRequestBehavior()
                 .connectionListener { connection, events ->
-                    val url =
-                        connection.connectedUrl?.also { lastConnectedUrl = it } ?: lastConnectedUrl
+                    val url = connection.connectedUrl?.also { lastConnectedUrl = it }
+                        ?: lastConnectedUrl
                     val at = if (events == ConnectionListener.Events.DISCONNECTED) {
                         log.atWarning()
                     } else {
@@ -71,36 +74,42 @@ internal object NatsConnectionManager {
 
                     at.log("NATS connection %s: %s", events.event, url)
                 }
-                .errorListener(object : ErrorListener {
-                    override fun errorOccurred(conn: Connection, error: String) {
-                        log.atWarning()
-                            .log("NATS error: %s", error)
-                    }
-
-                    override fun exceptionOccurred(conn: Connection, exp: Exception) {
-                        val ioException = exp as? IOException ?: exp.cause as? IOException
-                        if (ioException != null) {
+                .errorListener(
+                    object : ErrorListener {
+                        override fun errorOccurred(conn: Connection, error: String) {
                             log.atWarning()
-                                .withCause(ioException)
-                                .log("NATS I/O error: %s", ioException.message)
-                        } else {
-                            log.atWarning()
-                                .withCause(exp)
-                                .log("NATS exception")
+                                .log("NATS error: %s", error)
                         }
-                    }
 
-                    override fun slowConsumerDetected(conn: Connection, consumer: Consumer) {
-                        log.atWarning()
-                            .log("NATS slow consumer: %s", consumer)
-                    }
-                })
+                        override fun exceptionOccurred(conn: Connection, exp: Exception) {
+                            val ioException = exp as? IOException ?: exp.cause as? IOException
+
+                            if (ioException != null) {
+                                log.atWarning()
+                                    .withCause(ioException)
+                                    .log("NATS I/O error: %s", ioException.message)
+                            } else {
+                                log.atWarning()
+                                    .withCause(exp)
+                                    .log("NATS exception")
+                            }
+                        }
+
+                        override fun slowConsumerDetected(conn: Connection, consumer: Consumer) {
+                            log.atWarning()
+                                .log("NATS slow consumer: %s", consumer)
+                        }
+                    },
+                )
                 .apply {
                     val auth = natsConfig.auth
+
                     when {
                         auth.token != null -> token(auth.token.toCharArray())
                         auth.username != null -> userInfo(auth.username, auth.password!!)
-                        auth.credentialsFile != null -> credentialPath(auth.credentialsFile.toString())
+                        auth.credentialsFile != null -> credentialPath(
+                            auth.credentialsFile.toString(),
+                        )
                     }
                 }
                 .build()
@@ -110,12 +119,14 @@ internal object NatsConnectionManager {
     }
 
     /**
-     * Drains the connection within the configured drain timeout and closes it when the drain fails or times out.
+     * Drains the connection within the configured drain timeout and closes it when the drain fails
+     * or times out.
      */
     @Blocking
     fun disconnect() {
         synchronized(this) {
             val connection = connection ?: return
+
             this.connection = null
 
             val timeout = Duration.ofSeconds(natsConfig.drainTimeout.toLong())
@@ -124,7 +135,9 @@ internal object NatsConnectionManager {
                 .log("Disconnecting from NATS (drain timeout %ds)", timeout.toSeconds())
 
             try {
-                if (!connection.drain(timeout).get()) connection.close()
+                if (!connection.drain(timeout).get()) {
+                    connection.close()
+                }
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
                 connection.close()
@@ -138,13 +151,14 @@ internal object NatsConnectionManager {
     }
 
     /**
-     * Returns the connection. Throws [IllegalStateException] before [connect] and after [disconnect].
+     * Returns the connection. Throws [IllegalStateException] before [connect] and after
+     * [disconnect].
      */
-    fun connection() = checkNotNull(connection) { "NATS is not connected" }
+    fun connection(): Connection = checkNotNull(connection) { "NATS is not connected" }
 
     /**
-     * Flushes the shared connection and fails with a [TimeoutException] after [timeout], including the wait for
-     * the flush lock.
+     * Flushes the shared connection and fails with a [TimeoutException] after [timeout], including
+     * the wait for the flush lock.
      */
     suspend fun flush(timeout: Duration) {
         runInterruptible(Dispatchers.IO) {
@@ -153,23 +167,29 @@ internal object NatsConnectionManager {
     }
 
     /**
-     * Runs [block] under the flush lock of the shared connection and passes it the part of [timeout] that is left.
+     * Runs [block] under the flush lock of the shared connection and passes it the part of
+     * [timeout] that is left.
      *
      * Every operation that pings the server and waits for the pong, such as `Connection.flush` or
-     * `Dispatcher.drain`, must run under this lock: jnats drops the connection of all clients when more pings than
-     * `maxPingsOut` are outstanding. The lock is fair. Throws a [TimeoutException] when the lock is not acquired
-     * within [timeout].
+     * `Dispatcher.drain`, must run under this lock: jnats drops the connection of all clients when
+     * more pings than `maxPingsOut` are outstanding. The lock is fair. Throws a [TimeoutException]
+     * when the lock is not acquired within [timeout].
      */
     @Blocking
     fun <T> withFlushLock(timeout: Duration, block: (remaining: Duration) -> T): T {
         val deadline = System.nanoTime() + timeout.toNanos()
+
         if (!flushLock.tryLock(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
             throw TimeoutException("Timed out after $timeout waiting for the NATS flush lock")
         }
+
         try {
             val remaining = deadline - System.nanoTime()
             // jnats treats a zero timeout as no timeout
-            if (remaining <= 0) throw TimeoutException("No time left of $timeout after acquiring the NATS flush lock")
+            if (remaining <= 0) throw TimeoutException(
+                "No time left of $timeout after acquiring the NATS flush lock",
+            )
+
             return block(Duration.ofNanos(remaining))
         } finally {
             flushLock.unlock()
@@ -181,6 +201,7 @@ internal object NatsConnectionManager {
      */
     fun health(): NatsConnectionHealth? {
         val connection = connection ?: return null
+
         val status = connection.status
 
         return NatsConnectionHealth(

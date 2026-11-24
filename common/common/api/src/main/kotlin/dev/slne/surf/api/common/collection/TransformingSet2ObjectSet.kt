@@ -6,60 +6,72 @@ class TransformingSet2ObjectSet<O, M>(
     private val toTransformer: (O) -> M?,
     private val fromTransformer: (M) -> O?,
 ) : MutableSet<M> {
-    override fun iterator() = object : MutableIterator<M> {
-        private val iterator = fromSet.iterator()
-        private var nextValue: M? = null
-        private var nextComputed: Boolean = false
+    override fun iterator(): MutableIterator<M> {
+        return object : MutableIterator<M> {
+            private val iterator = fromSet.iterator()
+            private var nextValue: M? = null
+            private var nextComputed: Boolean = false
 
-        override fun hasNext(): Boolean {
-            if (nextComputed) {
-                return nextValue != null
-            }
-            while (iterator.hasNext()) {
-                val transformed = transformTo(iterator.next())
-                if (transformed != null) {
-                    nextValue = transformed
-                    nextComputed = true
-                    return true
+            override fun hasNext(): Boolean {
+                if (nextComputed) {
+                    return nextValue != null
                 }
-            }
-            nextValue = null
-            nextComputed = true
-            return false
-        }
 
-        override fun next(): M {
-            if (!hasNext()) {
-                throw NoSuchElementException()
-            }
-            nextComputed = false
-            val result = nextValue
-            nextValue = null
-            @Suppress("UNCHECKED_CAST")
-            return result as M
-        }
+                while (iterator.hasNext()) {
+                    val transformed = transformTo(iterator.next())
 
-        override fun remove() = iterator.remove()
+                    if (transformed != null) {
+                        nextValue = transformed
+                        nextComputed = true
+
+                        return true
+                    }
+                }
+
+                nextValue = null
+                nextComputed = true
+
+                return false
+            }
+
+            override fun next(): M {
+                if (!hasNext()) {
+                    throw NoSuchElementException()
+                }
+
+                nextComputed = false
+                val result = nextValue
+                nextValue = null
+                @Suppress("UNCHECKED_CAST")
+                return result as M
+            }
+
+            override fun remove() = iterator.remove()
+        }
     }
 
     override fun add(element: M): Boolean = transformFrom(element)?.let(fromSet::add) == true
-    override fun remove(element: M) = transformFrom(element)?.let(fromSet::remove) == true
+    override fun remove(element: M): Boolean = transformFrom(element)?.let(fromSet::remove) == true
 
-    override fun addAll(elements: Collection<M>) =
-        fromSet.addAll(elements.mapNotNull(::transformFrom))
+    override fun addAll(elements: Collection<M>): Boolean {
+        return fromSet.addAll(elements.mapNotNull(::transformFrom))
+    }
 
-    override fun removeAll(elements: Collection<M>) =
-        fromSet.removeAll(elements.mapNotNull(::transformFrom).toSet())
+    override fun removeAll(elements: Collection<M>): Boolean {
+        return fromSet.removeAll(elements.mapNotNull(::transformFrom).toSet())
+    }
 
-    override fun retainAll(elements: Collection<M>) =
-        fromSet.retainAll(elements.mapNotNull(::transformFrom).toSet())
+    override fun retainAll(elements: Collection<M>): Boolean {
+        return fromSet.retainAll(elements.mapNotNull(::transformFrom).toSet())
+    }
 
-    override fun clear() = fromSet.clear()
+    override fun clear(): Unit = fromSet.clear()
     override val size: Int get() = fromSet.size
-    override fun isEmpty() = fromSet.isEmpty()
-    override fun contains(element: M) = fromSet.contains(transformFrom(element) as O)
-    override fun containsAll(elements: Collection<M>) =
-        fromSet.containsAll(elements.mapNotNull(::transformFrom))
+    override fun isEmpty(): Boolean = fromSet.isEmpty()
+    override fun contains(element: M): Boolean = fromSet.contains(transformFrom(element) as O)
+    override fun containsAll(elements: Collection<M>): Boolean {
+        return fromSet.containsAll(elements.mapNotNull(::transformFrom))
+    }
 
     private fun transformFrom(element: M) = if (element != null) fromTransformer(element) else null
     private fun transformTo(element: O) = if (element != null) toTransformer(element) else null

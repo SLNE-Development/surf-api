@@ -37,8 +37,8 @@ class Slf4jProviderTest {
         assertEquals(CONFIGURED_PROVIDER, System.getProperty(Slf4jProvider.PROPERTY))
     }
 
-    // Canary for the defect's precondition: fails once the class path no longer holds a second provider, for
-    // example when spark stops bundling slf4j-simple. The pin is then obsolete.
+    // Canary for the defect's precondition: fails once the class path no longer holds a second
+    // provider, for example when spark stops bundling slf4j-simple. The pin is then obsolete.
     @Test
     fun `the class path contains a second provider that SLF4J reports`() {
         val probe = runProbe()
@@ -60,6 +60,7 @@ class Slf4jProviderTest {
     private fun runProbe(vararg args: String): ProbeJvm.Result {
         val result = ProbeJvm.run(Slf4jBindingProbe::class.java, args.asList())
         check(result.exitCode == 0) { "The probe JVM failed: ${result.errorOutput}" }
+
         return result
     }
 

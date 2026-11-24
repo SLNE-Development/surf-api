@@ -12,7 +12,8 @@ import dev.slne.surf.nats.test.proto.v2.VersionedService as VersionedServiceV2
 
 class ServiceProxyClassTest {
 
-    // Request messages, Empty requests, Unit, Answer and the request Everything with every field kind
+    // Request messages, Empty requests, Unit, Answer and the request Everything with every field
+    // kind
     private val services = listOf(
         CalcService::class.java,
         FinderService::class.java,

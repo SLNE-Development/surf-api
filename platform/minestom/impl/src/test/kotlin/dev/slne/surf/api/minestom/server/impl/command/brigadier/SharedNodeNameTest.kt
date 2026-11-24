@@ -21,6 +21,7 @@ class SharedNodeNameTest {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             val received = AtomicReference<CommandArguments>()
             commandTree("send") {

@@ -9,12 +9,15 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-typealias SerializableZonedDateTime = @Serializable(with = ZonedDateTimeSerializer::class) ZonedDateTime
+typealias SerializableZonedDateTime = @Serializable(
+    with = ZonedDateTimeSerializer::class,
+) ZonedDateTime
 
 object ZonedDateTimeSerializer : UtcInstantDateTimeSerializer<ZonedDateTime>(
-    "surf.api.java.datetime.datetime.ZonedDateTime"
+    "surf.api.java.datetime.datetime.ZonedDateTime",
 ) {
     override fun toInstant(value: ZonedDateTime): Instant = value.toInstant()
-    override fun fromInstant(instant: Instant): ZonedDateTime =
-        instant.atZone(ZoneId.systemDefault())
+    override fun fromInstant(instant: Instant): ZonedDateTime {
+        return instant.atZone(ZoneId.systemDefault())
+    }
 }

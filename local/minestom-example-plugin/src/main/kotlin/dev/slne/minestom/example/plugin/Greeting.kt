@@ -22,7 +22,11 @@ class Greeting(private val plugin: ExamplePlugin) : SurfLifecycle {
 
     override suspend fun onLoad() {
         val file = plugin.dataDirectory.createDirectories().resolve("greeting.txt")
-        if (!file.exists()) file.writeText("Welcome to the surf api example server!")
+
+        if (!file.exists()) {
+            file.writeText("Welcome to the surf api example server!")
+        }
+
         loaded = file.readText().trim()
 
         plugin.logger.info("Loaded the greeting from {}", file)

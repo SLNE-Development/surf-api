@@ -6,8 +6,8 @@ import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 /**
  * Checks a singular enum field for presence and normalizes unknown values of incoming messages.
  *
- * protobuf-es stores an unknown value of a closed enum in `$unknown`. The step sets the field to [EnumPlan.zero]
- * unless another member of its oneof is set, and removes those unknown fields.
+ * protobuf-es stores an unknown value of a closed enum in `$unknown`. The step sets the field to
+ * [EnumPlan.zero] unless another member of its oneof is set, and removes those unknown fields.
  */
 internal class EnumStep(
     private val field: DescFieldEnum,
@@ -16,7 +16,9 @@ internal class EnumStep(
 ) : FieldStep(validatesOutgoing = required) {
 
     override fun apply(message: ReflectMessage, direction: Direction): Violation? {
-        if (direction == Direction.INCOMING) normalize(message)
+        if (direction == Direction.INCOMING) {
+            normalize(message)
+        }
 
         return if (required && !message.isSet(field)) {
             Violation.missing(field.localName)
@@ -35,6 +37,7 @@ internal class EnumStep(
 
     private fun replaceUnknownOpenEnumValue(message: ReflectMessage) {
         val value = message.get(field)
+
         if (!enum.isKnown(value)) {
             message.set(field, enum.zero)
         }
@@ -42,17 +45,21 @@ internal class EnumStep(
 
     private fun restoreClosedEnumValueFromUnknownFields(message: ReflectMessage) {
         val unknownFields = message.getUnknown() ?: return
+
         val matchingCount = unknownFields.count { it.no == field.number }
         if (matchingCount == 0) return
 
         val oneof = field.oneof
+
         if (oneof == null || message.oneofCase(oneof) == null) {
             message.set(field, enum.zero)
         }
 
         val remainingCount = unknownFields.size - matchingCount
+
         if (remainingCount == 0) {
             message.setUnknown(undefined)
+
             return
         }
 

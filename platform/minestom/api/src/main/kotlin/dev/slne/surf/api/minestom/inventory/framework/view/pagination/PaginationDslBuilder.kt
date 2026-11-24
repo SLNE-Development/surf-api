@@ -45,8 +45,11 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     internal var sourceType: PaginationSourceType<T>? = null
 
     @PublishedApi
-    internal var elementFactory: PaginationValueConsumer<Context, MinestomItemComponentBuilder, T>? =
-        null
+    internal var elementFactory: PaginationValueConsumer<
+        Context,
+        MinestomItemComponentBuilder,
+        T,
+    >? = null
 
     @PublishedApi
     internal var simpleItemFactory: BiConsumer<MinestomItemComponentBuilder, T>? = null
@@ -56,7 +59,6 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 
     @PublishedApi
     internal var orientation: Pagination.Orientation? = null
-
 
     /**
      * Sets a static pagination source from a pre-populated [Iterable].
@@ -111,7 +113,9 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lazy lambda returning a [CompletableFuture] of items
      */
-    fun lazyAsyncSource(provider: @InventoryFrameworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
+    fun lazyAsyncSource(
+        provider: @InventoryFrameworkDSL (Context) -> CompletableFuture<Iterable<T>>,
+    ) {
         sourceType = PaginationSourceType.LazyAsync(provider)
     }
 
@@ -169,14 +173,21 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     }
 
     /**
-     * Configures a full element factory that receives the [Context], [MinestomItemComponentBuilder],
-     * the zero-based item [index], and the item value [T].
+     * Configures a full element factory that receives the [Context],
+     * [MinestomItemComponentBuilder], the zero-based item [index], and the item value [T].
      *
      * Use this when you need access to the render context or the item index.
      *
      * @param factory the element builder callback
      */
-    fun elementFactory(factory: @InventoryFrameworkDSL (context: Context, builder: MinestomItemComponentBuilder, index: Int, value: T) -> Unit) {
+    fun elementFactory(
+        factory: @InventoryFrameworkDSL (
+            context: Context,
+            builder: MinestomItemComponentBuilder,
+            index: Int,
+            value: T,
+        ) -> Unit,
+    ) {
         this.elementFactory = PaginationValueConsumer { context, builder, index, value ->
             factory(context, builder, index, value)
         }
@@ -222,13 +233,15 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     }
 
     @PublishedApi
-    internal fun applyTo(stateBuilder: PaginationStateBuilder<Context, MinestomItemComponentBuilder, T>) {
+    internal fun applyTo(
+        stateBuilder: PaginationStateBuilder<Context, MinestomItemComponentBuilder, T>,
+    ) {
         when {
             elementFactory != null -> stateBuilder.elementFactory(elementFactory!!)
             simpleItemFactory != null -> stateBuilder.itemFactory(simpleItemFactory!!)
             else -> error(
                 "Pagination item factory must be configured. " +
-                        "Use itemFactory { item -> ... } or elementFactory { ctx, builder, index, item -> ... }"
+                    "Use itemFactory { item -> ... } or elementFactory { ctx, builder, index, item -> ... }",
             )
         }
 

@@ -7,9 +7,9 @@ import kotlin.time.Duration
 /**
  * Base contract for Redis-backed synchronization structures.
  *
- * A [SyncStructure] represents an object that maintains local state and keeps it in sync with Redis.
- * Implementations are expected to be created during application startup and then initialized by the
- * owning API.
+ * A [SyncStructure] represents an object that maintains local state and keeps it in sync with
+ * Redis. Implementations are expected to be created during application startup and then initialized
+ * by the owning API.
  *
  * ## Identity
  * [id] is a logical identifier used by implementations to derive Redis keys and/or channels.

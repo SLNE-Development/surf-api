@@ -1,6 +1,5 @@
 package dev.slne.surf.api.spring.context
 
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.*
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.support.RootBeanDefinition
@@ -32,9 +31,10 @@ fun surfCoroutineScope(
     val handler = CoroutineExceptionHandler { _, failure ->
         log.error("Unhandled exception in a coroutine of '$owner'", failure)
     }
+
     return CoroutineScope(
         SupervisorJob() + dispatcher + CoroutineName("surf-$owner") + handler +
-                ContextClassLoaderElement(classLoader) + elements
+            ContextClassLoaderElement(classLoader) + elements,
     )
 }
 
@@ -42,11 +42,12 @@ fun surfCoroutineScope(
  * The elements of [scope] that lifecycle hooks run with: everything except its job, its
  * dispatcher and its exception handler, so a hook stays part of the caller's coroutine.
  */
-internal fun hookElements(scope: CoroutineScope): CoroutineContext =
-    scope.coroutineContext
+internal fun hookElements(scope: CoroutineScope): CoroutineContext {
+    return scope.coroutineContext
         .minusKey(Job)
         .minusKey(ContinuationInterceptor)
         .minusKey(CoroutineExceptionHandler)
+}
 
 /**
  * Registers [scope] as the context's [CoroutineScope] bean.
@@ -57,7 +58,7 @@ internal fun hookElements(scope: CoroutineScope): CoroutineContext =
 internal fun registerCoroutineScope(
     context: AnnotationConfigApplicationContext,
     scope: CoroutineScope,
-    primary: Boolean
+    primary: Boolean,
 ) {
     val definition = RootBeanDefinition(CoroutineScope::class.java).apply {
         setInstanceSupplier { scope }

@@ -13,8 +13,9 @@ import java.lang.AutoCloseable
 /**
  * Announces a service registration on the presence subject of its service.
  *
- * [start] publishes `join` and then a `beat` every [RpcDefaults.HEARTBEAT_INTERVAL] and in response to every `query`.
- * [close] publishes `leave`. Nothing is published after [close], and failed publishes are only logged.
+ * [start] publishes `join` and then a `beat` every [RpcDefaults.HEARTBEAT_INTERVAL] and in response
+ * to every `query`. [close] publishes `leave`. Nothing is published after [close], and failed
+ * publishes are only logged.
  */
 @InternalNatsApi
 internal class PresenceAnnouncer(
@@ -36,11 +37,16 @@ internal class PresenceAnnouncer(
                 beat()
             }
         }
+
         synchronized(lock) {
             if (closed) return
+
             client.publishPresence(subject, ProtocolHeaders.PRESENCE_JOIN)
         }
-        heartbeat = client.clientScope.launch(Dispatchers.IO + CoroutineName("surf-nats/${client.name}/presence")) {
+
+        heartbeat = client.clientScope.launch(
+            Dispatchers.IO + CoroutineName("surf-nats/${client.name}/presence"),
+        ) {
             while (isActive && !closed) {
                 delay(RpcDefaults.HEARTBEAT_INTERVAL)
                 beat()
@@ -51,14 +57,20 @@ internal class PresenceAnnouncer(
     override fun close() {
         synchronized(lock) {
             if (closed) return
+
             closed = true
             client.publishPresence(subject, ProtocolHeaders.PRESENCE_LEAVE)
         }
+
         heartbeat?.cancel("Presence announcer closed")
     }
 
-    private fun beat() = synchronized(lock) {
-        if (!closed) client.publishPresence(subject, ProtocolHeaders.PRESENCE_BEAT)
+    private fun beat() {
+        synchronized(lock) {
+            if (!closed) {
+                client.publishPresence(subject, ProtocolHeaders.PRESENCE_BEAT)
+            }
+        }
     }
 }
 

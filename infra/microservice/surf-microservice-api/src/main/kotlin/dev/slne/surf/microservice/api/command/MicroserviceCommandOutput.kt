@@ -5,8 +5,8 @@ import dev.slne.surf.microservice.api.InternalMicroserviceApi
 /**
  * Receives the output of one command invocation.
  *
- * Implemented by the runtime: the console logs the lines, and the command socket forwards them to `microservicectl`
- * for each connection.
+ * Implemented by the runtime: the console logs the lines, and the command socket forwards them to
+ * `microservicectl` for each connection.
  */
 @InternalMicroserviceApi
 public interface MicroserviceCommandOutput {

@@ -45,15 +45,20 @@ internal class DeclareCommandsMerger(
             .filterNot { child -> nodes[child].isLiteral() && nodes[child].name in owned }
             .toIntArray()
 
-        roots.forEach { (labels, branches) ->
-            labels.forEach { label ->
+        for ((labels, branches) in roots) {
+            for (label in labels) {
                 val node = DeclareCommandsPacket.Node()
                 node.flags = flagsOf(DeclareCommandsPacket.NodeType.LITERAL, branches.executable)
                 node.name = label
                 nodes += node
 
                 val index = nodes.size - 1
-                node.children = branches.children.values.map { child -> emit(child, nodes) }.toIntArray()
+                node.children = branches.children.values.map { child ->
+                    emit(
+                        child,
+                        nodes,
+                    )
+                }.toIntArray()
                 extraRootChildren.add(index)
             }
         }
@@ -64,9 +69,10 @@ internal class DeclareCommandsMerger(
         return DeclareCommandsPacket(nodes, original.rootIndex())
     }
 
-    private fun DeclareCommandsPacket.Node.isLiteral(): Boolean =
-        flags.toInt() and DeclareCommandsPacket.NODE_TYPE ==
-                DeclareCommandsPacket.NodeType.LITERAL.ordinal
+    private fun DeclareCommandsPacket.Node.isLiteral(): Boolean {
+        return flags.toInt() and DeclareCommandsPacket.NODE_TYPE ==
+            DeclareCommandsPacket.NodeType.LITERAL.ordinal
+    }
 
     private fun emit(source: PendingNode, nodes: MutableList<DeclareCommandsPacket.Node>): Int {
         val node = DeclareCommandsPacket.Node()
@@ -86,12 +92,16 @@ internal class DeclareCommandsMerger(
             node.name = definition.nodeName
             node.parser = declaration.parser
             node.properties = declaration.properties
-            if (suggestionsType != null) node.suggestionsType = suggestionsType
+
+            if (suggestionsType != null) {
+                node.suggestionsType = suggestionsType
+            }
         }
 
         nodes += node
         val index = nodes.size - 1
         node.children = source.children.values.map { child -> emit(child, nodes) }.toIntArray()
+
         return index
     }
 
@@ -114,6 +124,7 @@ internal class DeclareCommandsMerger(
         node.parser = source.parser
         node.properties = source.properties
         node.suggestionsType = source.suggestionsType
+
         return node
     }
 
@@ -122,15 +133,16 @@ internal class DeclareCommandsMerger(
      *
      * Paths sharing a prefix share nodes, as Brigadier merges same-named children. A path is cut at
      * the first argument the sender may not use and contributes only the nodes up to its last
-     * executable depth within the usable prefix. Returns `null` when the sender can execute no
-     * path.
+     * executable depth within the usable prefix.
+     *
+     * @return the merged tree, or `null` when the sender can execute no path.
      */
     private fun treeFor(definition: CommandDefinition, sender: CommandSender): PendingNode? {
         val root = PendingNode(literal = null, definition = null)
         var any = false
 
-        definition.paths.forEach { path ->
-            if (!conditions.canUse(sender, path.permissions, path.requirements)) return@forEach
+        for (path in definition.paths) {
+            if (!conditions.canUse(sender, path.permissions, path.requirements)) continue
 
             val depths = path.executableDepths()
             val usable = path.arguments
@@ -140,15 +152,21 @@ internal class DeclareCommandsMerger(
                 .takeUnless { index -> index == -1 }
                 ?: path.arguments.size
             val last = minOf(usable, depths.last)
-            if (last < depths.first) return@forEach
+            if (last < depths.first) continue
 
             any = true
             var current = root
-            if (0 in depths) root.executable = true
+
+            if (0 in depths) {
+                root.executable = true
+            }
 
             for (index in 0 until last) {
                 current = current.child(path.arguments[index])
-                if (index + 1 in depths) current.executable = true
+
+                if (index + 1 in depths) {
+                    current.executable = true
+                }
             }
         }
 

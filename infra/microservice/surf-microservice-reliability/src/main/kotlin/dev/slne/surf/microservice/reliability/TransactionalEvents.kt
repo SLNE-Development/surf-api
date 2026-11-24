@@ -8,32 +8,37 @@ import kotlinx.coroutines.currentCoroutineContext
 /**
  * Publishes the events of transactional handlers after their transaction commits.
  *
- * The publisher is a bean of the microservice; inject it into the service implementation. Tests get one from
- * `TransactionalHandlerFixture.events`.
+ * The publisher is a bean of the microservice; inject it into the service implementation. Tests get
+ * one from `TransactionalHandlerFixture.events`.
  *
- * [publish] works only in a handler of a `@NatsTransactional` service, including child
- * coroutines the handler starts. The events are held in memory and, once the handler's transaction has committed,
- * published in publish order with [NatsClient.publish][dev.slne.surf.nats.NatsClient.publish] on the client the
- * service is registered on. If the handler fails or its transaction rolls back, they are discarded. A redelivered
- * message whose operation already committed does not run the handler and publishes nothing.
+ * [publish] works only in a handler of a `@NatsTransactional` service, including child coroutines
+ * the handler starts. The events are held in memory and, once the handler's transaction has
+ * committed, published in publish order with
+ * [NatsClient.publish][dev.slne.surf.nats.NatsClient.publish] on the client the service is
+ * registered on. If the handler fails or its transaction rolls back, they are discarded. A
+ * redelivered message whose operation already committed does not run the handler and publishes
+ * nothing.
  *
- * Delivery is best effort, like every core NATS event. If the instance stops between the commit and the publish, or a
- * publish fails, the event is lost and the failure is logged. There is no retry. Each event gets a new random
- * [eventId][dev.slne.surf.nats.event.NatsEventContext.eventId]. Its origin is the origin of the client the service is
- * registered on, so that client's listeners see the event as their own.
+ * Delivery is best effort, like every core NATS event. If the instance stops between the commit and
+ * the publish, or a publish fails, the event is lost and the failure is logged. There is no retry.
+ * Each event gets a new random [eventId][dev.slne.surf.nats.event.NatsEventContext.eventId]. Its
+ * origin is the origin of the client the service is registered on, so that client's listeners see
+ * the event as their own.
  */
 public class TransactionalEvents internal constructor() {
 
     /**
      * Publishes [event] after the transaction of the running handler commits.
      *
-     * Returns immediately. The event is not validated here: an event that is no generated event message or exceeds
-     * the server's payload limit fails to publish after the commit, which is logged.
+     * Returns immediately. The event is not validated here: an event that is no generated event
+     * message or exceeds the server's payload limit fails to publish after the commit, which is
+     * logged.
      *
      * @param event the event to publish
-     * @param aggregateId the id of the entity the event is about, or `null`. Appears in the log if the publish fails
-     * @throws IllegalStateException if the caller does not run in a transactional handler, or runs after the handler
-     * returned
+     * @param aggregateId the id of the entity the event is about, or `null`. Appears in the log if
+     * the publish fails
+     * @throws IllegalStateException if the caller does not run in a transactional handler, or runs
+     * after the handler returned
      */
     public suspend fun publish(event: NatsEvent, aggregateId: String? = null) {
         val operation = checkNotNull(currentCoroutineContext()[ActiveOperation]) {

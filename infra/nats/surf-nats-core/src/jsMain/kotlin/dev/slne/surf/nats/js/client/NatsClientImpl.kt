@@ -9,12 +9,7 @@ import dev.slne.surf.nats.js.api.ProtoMessageInit
 import dev.slne.surf.nats.js.codec.NatsCodec
 import dev.slne.surf.nats.js.codec.NatsHeaders
 import dev.slne.surf.nats.js.connection.NatsConnector
-import dev.slne.surf.nats.js.event.EventDescriptor
-import dev.slne.surf.nats.js.event.EventHandler
-import dev.slne.surf.nats.js.event.EventListener
-import dev.slne.surf.nats.js.event.EventSubscriptions
-import dev.slne.surf.nats.js.event.ListenerSettings
-import dev.slne.surf.nats.js.event.NatsRegistration
+import dev.slne.surf.nats.js.event.*
 import dev.slne.surf.nats.js.external.nats.core.MsgHdrs
 import dev.slne.surf.nats.js.external.nats.core.NatsConnection
 import dev.slne.surf.nats.js.external.nats.core.NatsPublishOptions
@@ -31,10 +26,11 @@ import dev.slne.surf.nats.runtime.randomId
 import kotlinx.coroutines.*
 
 /**
- * One NATS connection of a surf-nats JS client, created by [NatsClientFactory] and exposed as `SurfNatsClient`.
+ * One NATS connection of a surf-nats JS client, created by [NatsClientFactory] and exposed as
+ * `SurfNatsClient`.
  *
- * Owns the event subscriptions, the RPC caller and the payload store of the connection. [clientScope] runs the
- * background work and is cancelled when [close] ends.
+ * Owns the event subscriptions, the RPC caller and the payload store of the connection.
+ * [clientScope] runs the background work and is cancelled when [close] ends.
  */
 internal class NatsClientImpl(
     name: String,
@@ -44,11 +40,11 @@ internal class NatsClientImpl(
 
     internal val clientScope = CoroutineScope(
         CoroutineName("surf-nats/$name") +
-                SupervisorJob() +
-                CoroutineExceptionHandler { context, throwable ->
-                    val coroutine = context[CoroutineName]?.name ?: "surf-nats/$name"
-                    logger.error("Unhandled exception in coroutine '$coroutine'", throwable)
-                }
+            SupervisorJob() +
+            CoroutineExceptionHandler { context, throwable ->
+                val coroutine = context[CoroutineName]?.name ?: "surf-nats/$name"
+                logger.error("Unhandled exception in coroutine '$coroutine'", throwable)
+            },
     )
 
     internal val eventSubscriptions = EventSubscriptions(this)
@@ -70,8 +66,8 @@ internal class NatsClientImpl(
     /**
      * Publishes the event under [eventId], a random UUID if `null`, without waiting for the server.
      *
-     * Events are never offloaded. The connection buffers the message, and [close] drains the buffer before the
-     * connection ends. Every failure is thrown before anything is sent.
+     * Events are never offloaded. The connection buffers the message, and [close] drains the buffer
+     * before the connection ends. Every failure is thrown before anything is sent.
      */
     fun publish(schema: DescMessage, event: ProtoMessageInit?, eventId: String?) {
         checkOpen()
@@ -127,6 +123,7 @@ internal class NatsClientImpl(
             } catch (cleanup: Throwable) {
                 e.addSuppressed(cleanup)
             }
+
             throw e
         }
 
@@ -134,9 +131,14 @@ internal class NatsClientImpl(
     }
 
     /**
-     * Calls every method except `ALL_INSTANCES` methods with a result and returns `undefined` for UNIT methods.
+     * Calls every method except `ALL_INSTANCES` methods with a result and returns `undefined` for
+     * UNIT methods.
      */
-    suspend fun call(method: DescMethod, request: ProtoMessageInit?, options: CallOptions?): ProtoMessage? {
+    suspend fun call(
+        method: DescMethod,
+        request: ProtoMessageInit?,
+        options: CallOptions?,
+    ): ProtoMessage? {
         checkOpen()
         val descriptor = MethodDescriptor.of(method)
         require(descriptor.result != NatsResultKind.ANSWER) {
@@ -149,7 +151,11 @@ internal class NatsClientImpl(
     /**
      * Calls an `ALL_INSTANCES` method with a result.
      */
-    suspend fun callAnswer(method: DescMethod, request: ProtoMessageInit?, options: CallOptions?): Answer {
+    suspend fun callAnswer(
+        method: DescMethod,
+        request: ProtoMessageInit?,
+        options: CallOptions?,
+    ): Answer {
         checkOpen()
         val descriptor = MethodDescriptor.of(method)
         require(descriptor.result == NatsResultKind.ANSWER) {
@@ -159,18 +165,22 @@ internal class NatsClientImpl(
         return rpcCaller.call(descriptor, request, options).unsafeCast<Answer>()
     }
 
-    override fun closeRegistration(registration: NatsRegistration) = registration.close()
+    override fun closeRegistration(registration: NatsRegistration): Unit = registration.close()
 
     /**
-     * Drains the subscriptions, then the connection. Running handlers may still publish and call until the drain
-     * ends. A second call waits for the first.
+     * Drains the subscriptions, then the connection. Running handlers may still publish and call
+     * until the drain ends. A second call waits for the first.
      */
     suspend fun close() {
         if (!lifecycle.beginClose()) return closed.await()
+
         try {
             eventSubscriptions.drain()
             closeRegistrations()
-            if (!connection.isClosed()) connection.drain().await()
+
+            if (!connection.isClosed()) {
+                connection.drain().await()
+            }
         } finally {
             lifecycle.markClosed()
             clientScope.cancel("${lifecycle.label} closed")

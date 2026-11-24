@@ -187,8 +187,8 @@ fun BlockPosition.isSameChunk(other: BlockPosition): Boolean {
  */
 fun Position.isSameBlock(other: Position): Boolean {
     return blockX() == other.blockX() &&
-            blockY() == other.blockY() &&
-            blockZ() == other.blockZ()
+        blockY() == other.blockY() &&
+        blockZ() == other.blockZ()
 }
 
 /**
@@ -221,8 +221,9 @@ fun Position.deltaZ(other: Position): Double = other.z() - z()
  * @param other the target block position
  * @return `other.blockX() - blockX()`
  */
-fun BlockPosition.deltaBlockX(other: BlockPosition): Long =
-    other.blockX().toLong() - blockX().toLong()
+fun BlockPosition.deltaBlockX(other: BlockPosition): Long {
+    return other.blockX().toLong() - blockX().toLong()
+}
 
 /**
  * Calculates the signed block Y-axis offset from this position to [other].
@@ -230,8 +231,9 @@ fun BlockPosition.deltaBlockX(other: BlockPosition): Long =
  * @param other the target block position
  * @return `other.blockY() - blockY()`
  */
-fun BlockPosition.deltaBlockY(other: BlockPosition): Long =
-    other.blockY().toLong() - blockY().toLong()
+fun BlockPosition.deltaBlockY(other: BlockPosition): Long {
+    return other.blockY().toLong() - blockY().toLong()
+}
 
 /**
  * Calculates the signed block Z-axis offset from this position to [other].
@@ -239,8 +241,9 @@ fun BlockPosition.deltaBlockY(other: BlockPosition): Long =
  * @param other the target block position
  * @return `other.blockZ() - blockZ()`
  */
-fun BlockPosition.deltaBlockZ(other: BlockPosition): Long =
-    other.blockZ().toLong() - blockZ().toLong()
+fun BlockPosition.deltaBlockZ(other: BlockPosition): Long {
+    return other.blockZ().toLong() - blockZ().toLong()
+}
 
 /**
  * Checks whether this position lies inside the axis-aligned box defined by
@@ -258,11 +261,11 @@ fun Position.isInside(
     second: Position,
 ): Boolean {
     return x() >= min(first.x(), second.x()) &&
-            x() <= max(first.x(), second.x()) &&
-            y() >= min(first.y(), second.y()) &&
-            y() <= max(first.y(), second.y()) &&
-            z() >= min(first.z(), second.z()) &&
-            z() <= max(first.z(), second.z())
+        x() <= max(first.x(), second.x()) &&
+        y() >= min(first.y(), second.y()) &&
+        y() <= max(first.y(), second.y()) &&
+        z() >= min(first.z(), second.z()) &&
+        z() <= max(first.z(), second.z())
 }
 
 /**
@@ -281,9 +284,9 @@ fun BlockPosition.isWithinCube(
     radius: Int,
 ): Boolean {
     return radius >= 0 &&
-            abs(blockX().toLong() - center.blockX()) <= radius &&
-            abs(blockY().toLong() - center.blockY()) <= radius &&
-            abs(blockZ().toLong() - center.blockZ()) <= radius
+        abs(blockX().toLong() - center.blockX()) <= radius &&
+        abs(blockY().toLong() - center.blockY()) <= radius &&
+        abs(blockZ().toLong() - center.blockZ()) <= radius
 }
 
 /**
@@ -303,8 +306,8 @@ fun BlockPosition.isWithinSquare(
     radius: Int,
 ): Boolean {
     return radius >= 0 &&
-            abs(blockX().toLong() - center.blockX()) <= radius &&
-            abs(blockZ().toLong() - center.blockZ()) <= radius
+        abs(blockX().toLong() - center.blockX()) <= radius &&
+        abs(blockZ().toLong() - center.blockZ()) <= radius
 }
 
 /**
@@ -357,8 +360,8 @@ private const val BLOCK_POSITION_Y_MASK = 0xFFFL
  */
 fun BlockPosition.asLong(): Long {
     return ((blockX().toLong() and BLOCK_POSITION_XZ_MASK) shl 38) or
-            ((blockZ().toLong() and BLOCK_POSITION_XZ_MASK) shl 12) or
-            (blockY().toLong() and BLOCK_POSITION_Y_MASK)
+        ((blockZ().toLong() and BLOCK_POSITION_XZ_MASK) shl 12) or
+        (blockY().toLong() and BLOCK_POSITION_Y_MASK)
 }
 
 /**

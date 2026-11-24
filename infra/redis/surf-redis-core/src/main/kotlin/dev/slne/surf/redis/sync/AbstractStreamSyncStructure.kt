@@ -25,7 +25,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     ttl: Duration,
     scriptRegistry: LuaScriptRegistry,
     structureNamespace: String,
-    private val codecDescriptor: String? = null
+    private val codecDescriptor: String? = null,
 ) : AbstractSyncStructure<L, R>(api, id, ttl) {
     companion object {
         private val log = logger()
@@ -60,7 +60,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     protected val versionCounter: RAtomicLongReactive by lazy {
         api.redissonReactive.getAtomicLong(
-            versionKey
+            versionKey,
         )
     }
     protected val scriptExecutor = LuaScriptExecutor.getInstance(api, scriptRegistry)
@@ -88,8 +88,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                         ttl,
                         stream,
                         versionCounter,
-                        *codecDescriptor?.let { arrayOf(codecBucket) }.orEmpty()
-                    )
+                        *codecDescriptor?.let { arrayOf(codecBucket) }.orEmpty(),
+                    ),
                 )
             }
             .then()
@@ -98,19 +98,23 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     private fun processStreamEvent(type: String, msg: String) {
         // Parse "version<DELIM>origin<DELIM>payload" without allocating an ArrayList per message.
         val firstDelim = msg.indexOf(MESSAGE_DELIMITER)
+
         if (firstDelim < 0) {
             log.atWarning()
                 .log(
                     "Malformed stream message for type %s: expected at least 2 parts but got 1: %s",
                     type,
-                    msg
+                    msg,
                 )
+
             return
         }
+
         val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
+
         if (secondDelim < 0) {
             throw IllegalArgumentException(
-                "Malformed stream message for type '$type': missing payload delimiter in message: $msg"
+                "Malformed stream message for type '$type': missing payload delimiter in message: $msg",
             )
         }
 
@@ -122,8 +126,9 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                 .log(
                     "Malformed stream message for type %s: invalid version in message: %s",
                     type,
-                    msg
+                    msg,
                 )
+
             return
         }
 
@@ -132,8 +137,9 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                 .log(
                     "Malformed stream message for type %s: empty origin part in message: %s",
                     type,
-                    msg
+                    msg,
                 )
+
             return
         }
 
@@ -147,12 +153,16 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
 
     private fun parseVersion(message: String, end: Int): Long? {
         if (end == 0) return null
+
         var result = 0L
+
         for (i in 0 until end) {
             val digit = message[i].code - '0'.code
             if (digit !in 0..9 || result > (Long.MAX_VALUE - digit) / 10L) return null
+
             result = result * 10L + digit
         }
+
         return result
     }
 
@@ -164,8 +174,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                     Mono.error<Void>(
                         IllegalStateException(
                             "Cannot use JSON encoding for synchronized structure '$id': " +
-                                    "existing Redis data uses codec '$actual'"
-                        )
+                                "existing Redis data uses codec '$actual'",
+                        ),
                     ).thenReturn(true)
                 } else {
                     validateCodecDescriptor(expected, actual).thenReturn(true)
@@ -181,22 +191,22 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                                 Mono.error(
                                     IllegalStateException(
                                         "Cannot enable custom codec '$expected' for synchronized structure '$id': " +
-                                                "existing Redis data has no codec metadata"
-                                    )
+                                            "existing Redis data has no codec metadata",
+                                    ),
                                 )
                             } else {
                                 registerCodecDescriptor(codecBucket, expected)
                             }
                         }
                         .thenReturn(true)
-                }
+                },
             )
             .then()
     }
 
     private fun registerCodecDescriptor(
         bucket: RBucketReactive<String>,
-        descriptor: String
+        descriptor: String,
     ): Mono<Void> {
         val register = if (ttl > Duration.ZERO) {
             bucket.setIfAbsent(descriptor, ttl.toJavaDuration())
@@ -206,8 +216,10 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         return register.then(bucket.get())
             .switchIfEmpty(
                 Mono.error(
-                    IllegalStateException("Codec metadata disappeared while initializing '$id' ($codecKey)")
-                )
+                    IllegalStateException(
+                        "Codec metadata disappeared while initializing '$id' ($codecKey)",
+                    ),
+                ),
             )
             .flatMap { actual -> validateCodecDescriptor(descriptor, actual) }
     }
@@ -218,8 +230,8 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         } else {
             Mono.error(
                 IllegalStateException(
-                    "Codec mismatch for synchronized structure '$id': expected '$expected', found '$actual'"
-                )
+                    "Codec mismatch for synchronized structure '$id': expected '$expected', found '$actual'",
+                ),
             )
         }
     }
@@ -229,7 +241,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected fun writeToRemote(
         script: String,
         eventType: String,
-        vararg values: String
+        vararg values: String,
     ) {
         executeWrite(script, eventType, *values)
             .subscribe({}, {})
@@ -274,14 +286,15 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         )
     }
 
-    private fun <T : Any> Mono<T>.resyncOnScriptError(script: String): Mono<T> =
-        doOnError { throwable ->
+    private fun <T : Any> Mono<T>.resyncOnScriptError(script: String): Mono<T> {
+        return doOnError { throwable ->
             log.atWarning()
                 .withCause(throwable)
                 .log("Error executing Lua script '$script' for '$id' ($streamKey)")
 
             requestResync()
         }
+    }
 
     private fun handleWriteVersion(newVersion: Long) {
         when {
@@ -315,7 +328,10 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         } else {
             null
         }
-        if (event != null) applyOwnEvent(eventType, event)
+
+        if (event != null) {
+            applyOwnEvent(eventType, event)
+        }
 
         return RemoteWriteResult(event, raw.getOrNull(2)?.toString())
     }
@@ -339,6 +355,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         if (version <= 0L) return false
 
         applyOwnEvent(eventType, StreamEventData(version, instanceId, payload))
+
         return true
     }
 
@@ -359,12 +376,14 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
      * Reads the remote snapshot and replaces the local view when the snapshot is ahead of the
      * locally applied stream version.
      */
-    protected fun pullRemoteSnapshot(): Mono<R> = loadRemoteSnapshot()
-        .doOnNext { snapshot ->
-            if (snapshot.version > versions.current) {
-                overrideFromRemote(snapshot)
+    protected fun pullRemoteSnapshot(): Mono<R> {
+        return loadRemoteSnapshot()
+            .doOnNext { snapshot ->
+                if (snapshot.version > versions.current) {
+                    overrideFromRemote(snapshot)
+                }
             }
-        }
+    }
 
     protected fun writeBatchToRemote(
         script: String,
@@ -416,10 +435,12 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         )
     }
 
-    private fun Any?.asLongOrZero(): Long = when (this) {
-        is Number -> toLong()
-        null -> 0L
-        else -> toString().toLongOrNull() ?: 0L
+    private fun Any?.asLongOrZero(): Long {
+        return when (this) {
+            is Number -> toLong()
+            null -> 0L
+            else -> toString().toLongOrNull() ?: 0L
+        }
     }
 
     private fun applyVersionRange(first: Long, last: Long) {
@@ -439,39 +460,43 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
         }
     }
 
-    private fun startPolling(): Disposable = stream.pollContinuously(
-        cursorId = cursorId,
-        wakeups = wakeupSink.asFlux(),
-        shouldPoll = { !resyncInFlight.get() },
-    ) {
-        onSuccess { batch ->
-            for ((messageId, fields) in batch) {
-                if (resyncInFlight.get()) {
-                    break
-                }
-
-                val type = fields[STREAM_FIELD_TYPE] ?: continue
-                val msg = fields[STREAM_FIELD_MSG] ?: continue
-
-                try {
-                    processStreamEvent(type, msg)
-                    cursorId.set(messageId)
-
+    private fun startPolling(): Disposable {
+        return stream.pollContinuously(
+            cursorId = cursorId,
+            wakeups = wakeupSink.asFlux(),
+            shouldPoll = { !resyncInFlight.get() },
+        ) {
+            onSuccess { batch ->
+                for ((messageId, fields) in batch) {
                     if (resyncInFlight.get()) {
                         break
                     }
-                } catch (t: Throwable) {
-                    log.atWarning()
-                        .withCause(t)
-                        .log("Error handling stream event for '$id' ($streamKey)")
-                    requestResync()
+
+                    val type = fields[STREAM_FIELD_TYPE] ?: continue
+                    val msg = fields[STREAM_FIELD_MSG] ?: continue
+
+                    try {
+                        processStreamEvent(type, msg)
+                        cursorId.set(messageId)
+
+                        if (resyncInFlight.get()) {
+                            break
+                        }
+                    } catch (t: Throwable) {
+                        log.atWarning()
+                            .withCause(t)
+                            .log("Error handling stream event for '$id' ($streamKey)")
+                        requestResync()
+                    }
                 }
             }
-        }
 
-        onFailure { e ->
-            log.atWarning().withCause(e).log("Stream poll failed for '$id' ($streamKey)")
-            requestResync()
+            onFailure { e ->
+                log.atWarning()
+                    .withCause(e)
+                    .log("Stream poll failed for '$id' ($streamKey)")
+                requestResync()
+            }
         }
     }
 
@@ -484,7 +509,7 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
                     Long.MAX_VALUE,
                     java.time.Duration.ofMillis(100),
                 )
-                    .maxBackoff(java.time.Duration.ofSeconds(5))
+                    .maxBackoff(java.time.Duration.ofSeconds(5)),
             )
             .doFinally {
                 resyncInFlight.set(false)
@@ -511,24 +536,33 @@ abstract class AbstractStreamSyncStructure<L, R : AbstractSyncStructure.Versione
     protected data class StreamEventData(
         val version: Long,
         val origin: String,
-        private val encodedPayload: String
+        private val encodedPayload: String,
     ) {
         fun payload(index: Int): String {
             require(index >= 0) { "Payload index must not be negative: $index" }
+
             var start = 0
             repeat(index) {
                 val delimiter = encodedPayload.indexOf(MESSAGE_DELIMITER, start)
-                if (delimiter < 0) throw IndexOutOfBoundsException("Missing stream payload at index $index")
+                if (delimiter < 0) throw IndexOutOfBoundsException(
+                    "Missing stream payload at index $index",
+                )
                 start = delimiter + 1
             }
             val end = encodedPayload.indexOf(MESSAGE_DELIMITER, start)
-            return if (end < 0) encodedPayload.substring(start) else encodedPayload.substring(start, end)
+
+            return if (end < 0) encodedPayload.substring(start) else encodedPayload.substring(
+                start,
+                end,
+            )
         }
 
-        fun payloadOrNull(index: Int): String? = try {
-            payload(index)
-        } catch (_: IndexOutOfBoundsException) {
-            null
+        fun payloadOrNull(index: Int): String? {
+            return try {
+                payload(index)
+            } catch (_: IndexOutOfBoundsException) {
+                null
+            }
         }
     }
 

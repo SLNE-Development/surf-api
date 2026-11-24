@@ -32,7 +32,11 @@ data class PlayerChatMessageMirror(
     }
 
     @Serializable
-    data class SignedMessageLink(val index: Int, val sender: @Contextual UUID, val sessionId: @Contextual UUID)
+    data class SignedMessageLink(
+        val index: Int,
+        val sender: @Contextual UUID,
+        val sessionId: @Contextual UUID,
+    )
 
     @Serializable
     data class SignedMessageBody(
@@ -65,6 +69,7 @@ data class PlayerChatMessageMirror(
         result = 31 * result + signedBody.hashCode()
         result = 31 * result + (unsignedContent?.hashCode() ?: 0)
         result = 31 * result + filterMask.hashCode()
+
         return result
     }
 }

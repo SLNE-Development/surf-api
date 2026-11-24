@@ -20,9 +20,13 @@ import java.lang.reflect.Type
 annotation class Trimmed {
     companion object {
         internal object Factory : Constraint.Factory<Trimmed, String?> {
-            override fun make(data: Trimmed, type: Type): Constraint<String?> = { value ->
-                if (value != null && value != value.trim()) {
-                    throw SerializationException("String must not have leading or trailing whitespace")
+            override fun make(data: Trimmed, type: Type): Constraint<String?> {
+                return { value ->
+                    if (value != null && value != value.trim()) {
+                        throw SerializationException(
+                            "String must not have leading or trailing whitespace",
+                        )
+                    }
                 }
             }
         }

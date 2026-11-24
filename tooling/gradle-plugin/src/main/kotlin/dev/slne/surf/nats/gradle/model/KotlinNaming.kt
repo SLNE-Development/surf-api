@@ -71,12 +71,14 @@ internal object KotlinNaming {
      * @param enumName the Protobuf enum name
      * @return the uppercase enum value prefix recognized by protobuf-es
      */
-    fun protobufEsEnumValuePrefix(enumName: String): String = buildString {
-        enumName.forEachIndexed { index, char ->
-            if (index > 0 && char in 'A'..'Z') append('_')
-            append(char.uppercaseChar())
+    fun protobufEsEnumValuePrefix(enumName: String): String {
+        return buildString {
+            enumName.forEachIndexed { index, char ->
+                if (index > 0 && char in 'A'..'Z') append('_')
+                append(char.uppercaseChar())
+            }
+            append('_')
         }
-        append('_')
     }
 
     /**
@@ -110,6 +112,7 @@ internal object KotlinNaming {
      */
     fun isIdentifier(name: String): Boolean {
         if (name.isEmpty() || !name.first().isAsciiLetter()) return false
+
         return name.all { it.isAsciiLetter() || it in '0'..'9' || it == '_' }
     }
 

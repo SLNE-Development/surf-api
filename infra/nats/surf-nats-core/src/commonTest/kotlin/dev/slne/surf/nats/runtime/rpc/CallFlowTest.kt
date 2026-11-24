@@ -2,11 +2,7 @@ package dev.slne.surf.nats.runtime.rpc
 
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.protocol.PayloadBucket
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -15,7 +11,10 @@ class CallFlowTest {
 
     @Test
     fun flowsFollowPersistenceAndResult() {
-        for (kind in NatsResultKind.entries) assertEquals(CallFlow.CORE, CallFlow.of(persistent = false, kind))
+        for (kind in NatsResultKind.entries) assertEquals(
+            CallFlow.CORE,
+            CallFlow.of(persistent = false, kind),
+        )
         assertEquals(CallFlow.FIRE, CallFlow.of(persistent = true, NatsResultKind.UNIT))
         assertEquals(CallFlow.PERSISTENT_RPC, CallFlow.of(persistent = true, NatsResultKind.VALUE))
     }

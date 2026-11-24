@@ -43,6 +43,7 @@ internal class MinestomSuggestionListener(
         event.isCancelled = true
 
         val command = StringReader(packet.text)
+
         if (command.canRead() && command.peek() == '/') {
             command.skip()
         }
@@ -70,9 +71,9 @@ internal class MinestomSuggestionListener(
                     limited.list.map { suggestion ->
                         TabCompletePacket.Match(
                             suggestion.text,
-                            suggestion.tooltip?.componentOrNull()
+                            suggestion.tooltip?.componentOrNull(),
                         )
-                    }
+                    },
                 )
             }
 
@@ -124,7 +125,7 @@ internal class MinestomSuggestionListener(
 
         private fun limitTo(
             suggestions: Suggestions,
-            size: Int = MAX_COMMAND_SUGGESTIONS
+            size: Int = MAX_COMMAND_SUGGESTIONS,
         ): Suggestions {
             return if (suggestions.list.size <= size) {
                 suggestions

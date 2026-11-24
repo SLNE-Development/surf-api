@@ -36,10 +36,18 @@ data class Rotation(val yaw: Float, val pitch: Float)
  */
 class PositionArgument(nodeName: String) : Argument<Vec>(nodeName) {
     override val kind = ArgumentKind.Position
-    override val rawType: ArgumentType<Vec> =
-        PositionArgumentType(blockAligned = false, twoDimensional = false)
-    override fun stringify(value: Vec): String =
-        "${value.x().toPlainDecimal()} ${value.y().toPlainDecimal()} ${value.z().toPlainDecimal()}"
+    override val rawType: ArgumentType<Vec> = PositionArgumentType(
+        blockAligned = false,
+        twoDimensional = false,
+    )
+
+    override fun stringify(value: Vec): String {
+        val x = value.x().toPlainDecimal()
+        val y = value.y().toPlainDecimal()
+        val z = value.z().toPlainDecimal()
+
+        return "$x $y $z"
+    }
 }
 
 /**
@@ -50,10 +58,14 @@ class PositionArgument(nodeName: String) : Argument<Vec>(nodeName) {
  */
 class Position2DArgument(nodeName: String) : Argument<Vec>(nodeName) {
     override val kind = ArgumentKind.Position2D
-    override val rawType: ArgumentType<Vec> =
-        PositionArgumentType(blockAligned = false, twoDimensional = true)
-    override fun stringify(value: Vec): String =
-        "${value.x().toPlainDecimal()} ${value.z().toPlainDecimal()}"
+    override val rawType: ArgumentType<Vec> = PositionArgumentType(
+        blockAligned = false,
+        twoDimensional = true,
+    )
+
+    override fun stringify(value: Vec): String {
+        return "${value.x().toPlainDecimal()} ${value.z().toPlainDecimal()}"
+    }
 }
 
 /**
@@ -65,10 +77,14 @@ class Position2DArgument(nodeName: String) : Argument<Vec>(nodeName) {
  */
 class BlockPositionArgument(nodeName: String) : Argument<Vec>(nodeName) {
     override val kind = ArgumentKind.BlockPosition
-    override val rawType: ArgumentType<Vec> =
-        PositionArgumentType(blockAligned = true, twoDimensional = false)
-    override fun stringify(value: Vec): String =
-        "${floor(value.x()).toInt()} ${floor(value.y()).toInt()} ${floor(value.z()).toInt()}"
+    override val rawType: ArgumentType<Vec> = PositionArgumentType(
+        blockAligned = true,
+        twoDimensional = false,
+    )
+
+    override fun stringify(value: Vec): String {
+        return "${floor(value.x()).toInt()} ${floor(value.y()).toInt()} ${floor(value.z()).toInt()}"
+    }
 }
 
 /**
@@ -80,8 +96,9 @@ class BlockPositionArgument(nodeName: String) : Argument<Vec>(nodeName) {
 class RotationArgument(nodeName: String) : Argument<Rotation>(nodeName) {
     override val kind = ArgumentKind.Rotation
     override val rawType: ArgumentType<Rotation> = RotationArgumentType
-    override fun stringify(value: Rotation): String =
-        "${value.yaw.toPlainDecimal()} ${value.pitch.toPlainDecimal()}"
+    override fun stringify(value: Rotation): String {
+        return "${value.yaw.toPlainDecimal()} ${value.pitch.toPlainDecimal()}"
+    }
 }
 
 /**
@@ -102,6 +119,7 @@ class AngleArgument(nodeName: String) : Argument<Float>(nodeName) {
 class AxisArgument(nodeName: String) : Argument<Set<Axis>>(nodeName) {
     override val kind = ArgumentKind.Axis
     override val rawType: ArgumentType<Set<Axis>> = AxisParser
-    override fun stringify(value: Set<Axis>): String =
-        value.joinToString("") { axis -> axis.name.lowercase() }
+    override fun stringify(value: Set<Axis>): String {
+        return value.joinToString("") { axis -> axis.name.lowercase() }
+    }
 }

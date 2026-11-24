@@ -8,12 +8,24 @@ import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.external.protobuf.isMessage
 
 internal fun MessageSchema.asDesc(): DescMessage {
-    require(requireFromJs(this, "schema").kind == "message") { "Expected a protobuf-es message schema (GenMessage)" }
+    require(
+        requireFromJs(
+            this,
+            "schema",
+        ).kind == "message",
+    ) { "Expected a protobuf-es message schema (GenMessage)" }
+
     return unsafeCast<DescMessage>()
 }
 
 internal fun MethodSchema.asDesc(): DescMethod {
-    require(requireFromJs(this, "method").kind == "rpc") { "Expected a protobuf-es service method (Service.method.x)" }
+    require(
+        requireFromJs(
+            this,
+            "method",
+        ).kind == "rpc",
+    ) { "Expected a protobuf-es service method (Service.method.x)" }
+
     return unsafeCast<DescMethod>()
 }
 

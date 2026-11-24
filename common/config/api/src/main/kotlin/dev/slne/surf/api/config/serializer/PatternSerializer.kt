@@ -12,11 +12,19 @@ internal object PatternSerializer : ScalarSerializer.Annotated<Pattern>(Pattern:
         return try {
             Pattern.compile(obj.toString())
         } catch (e: PatternSyntaxException) {
-            throw SerializationException(Pattern::class.java, "$obj($type) is not a valid pattern", e)
+            throw SerializationException(
+                Pattern::class.java,
+                "$obj($type) is not a valid pattern",
+                e,
+            )
         }
     }
 
-    override fun serialize(type: AnnotatedType, item: Pattern, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: Pattern,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.pattern()
     }
 }

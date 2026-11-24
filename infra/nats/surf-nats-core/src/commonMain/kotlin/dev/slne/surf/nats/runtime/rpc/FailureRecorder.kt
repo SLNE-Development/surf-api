@@ -3,7 +3,8 @@ package dev.slne.surf.nats.runtime.rpc
 import dev.slne.surf.nats.InternalNatsApi
 
 /**
- * Records the failures of an `ALL_INSTANCES` call: the first one is thrown, later ones are suppressed in it.
+ * Records the failures of an `ALL_INSTANCES` call: the first one is thrown, later ones are
+ * suppressed in it.
  *
  * Not thread-safe. One call records from one coroutine.
  */

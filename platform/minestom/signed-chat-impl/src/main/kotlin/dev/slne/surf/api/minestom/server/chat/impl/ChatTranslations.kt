@@ -4,8 +4,7 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.translation.GlobalTranslator
 import net.kyori.adventure.translation.TranslationStore
 import java.text.MessageFormat
-import java.util.Locale
-
+import java.util.*
 
 internal object ChatTranslations {
 
@@ -16,6 +15,7 @@ internal object ChatTranslations {
 
     fun register() {
         if (registered) return
+
         registered = true
 
         val store = TranslationStore.messageFormat(STORE_KEY)
@@ -32,7 +32,7 @@ internal object ChatTranslations {
                 "commands.message.display.incoming" to MessageFormat("{0} whispers to you: {1}"),
                 "commands.message.display.outgoing" to MessageFormat("You whisper to {0}: {1}"),
                 "%s" to MessageFormat("{0}"),
-            )
+            ),
         )
 
         GlobalTranslator.translator().addSource(store)

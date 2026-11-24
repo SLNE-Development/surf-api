@@ -9,7 +9,9 @@ import java.util.*
 class SurfStandaloneApiImpl : SurfApiCoreImpl() {
 
     override fun sendPlayerToServer(playerUuid: UUID, server: String) {
-        throw UnsupportedOperationException("sendPlayerToServer is not supported in standalone mode")
+        throw UnsupportedOperationException(
+            "sendPlayerToServer is not supported in standalone mode",
+        )
     }
 
     override fun getPlayer(playerUuid: UUID): Any? {

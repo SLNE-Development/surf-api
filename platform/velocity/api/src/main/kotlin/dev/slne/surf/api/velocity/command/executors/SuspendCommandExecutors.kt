@@ -1,5 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.velocity.command.executors
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
@@ -22,11 +20,13 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 /**
  * Default [CoroutineExceptionHandler] used by [defaultScope].
  *
- * This handler logs any uncaught exception from command coroutines (except [CancellationException]),
- * which can happen when a coroutine fails outside of the explicit try/catch in executor wrappers.
+ * This handler logs any uncaught exception from command coroutines (except
+ * [CancellationException]), which can happen when a coroutine fails outside of the explicit
+ * try/catch in executor wrappers.
  */
 private val defaultScopeExceptionHandler = CoroutineExceptionHandler { _, t ->
     if (t is CancellationException) return@CoroutineExceptionHandler
+
     ComponentLogger.logger("Velocity Command Executor")
         .atError()
         .setCause(t)
@@ -36,18 +36,20 @@ private val defaultScopeExceptionHandler = CoroutineExceptionHandler { _, t ->
 /**
  * Default coroutine scope used for Velocity command executors.
  *
- * Uses a bounded IO dispatcher ([CoroutineDispatcher.limitedParallelism]) with a [SupervisorJob] so one failing
- * command does not cancel others. A [CoroutineName] is applied for easier debugging and logs.
+ * Uses a bounded IO dispatcher ([CoroutineDispatcher.limitedParallelism]) with a [SupervisorJob] so
+ * one failing command does not cancel others. A [CoroutineName] is applied for easier debugging and
+ * logs.
  *
  * This is intended as a safe default when no plugin-managed scope is available.
  */
 @PublishedApi
 @PublishedSurfApi
 internal val defaultScope = CoroutineScope(
-    Dispatchers.IO.limitedParallelism(16) // We are not planning to do blocking work but preparing in case a developer messes up
-            + SupervisorJob()
-            + CoroutineName("Velocity Default Command Executor Scope")
-            + defaultScopeExceptionHandler
+    // We are not planning to do blocking work but preparing in case a developer messes up
+    Dispatchers.IO.limitedParallelism(16)
+        + SupervisorJob()
+        + CoroutineName("Velocity Default Command Executor Scope")
+        + defaultScopeExceptionHandler,
 )
 
 /**
@@ -61,10 +63,12 @@ internal val defaultScope = CoroutineScope(
  */
 inline fun VelocityExecutable<*>.anyExecutorSuspend(
     scope: CoroutineScope = defaultScope,
-    crossinline executor: suspend CoroutineScope.(CommandSource, CommandArguments) -> Unit
-) = anyExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(CommandSource, CommandArguments) -> Unit,
+): VelocityExecutable<*> {
+    return anyExecutor { sender, arguments ->
+        scope.launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
@@ -76,10 +80,12 @@ inline fun VelocityExecutable<*>.anyExecutorSuspend(
  */
 inline fun VelocityExecutable<*>.playerExecutorSuspend(
     scope: CoroutineScope = defaultScope,
-    crossinline executor: suspend CoroutineScope.(Player, CommandArguments) -> Unit
-) = playerExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(Player, CommandArguments) -> Unit,
+): VelocityExecutable<*> {
+    return playerExecutor { sender, arguments ->
+        scope.launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
@@ -91,10 +97,12 @@ inline fun VelocityExecutable<*>.playerExecutorSuspend(
  */
 inline fun VelocityExecutable<*>.consoleExecutorSuspend(
     scope: CoroutineScope = defaultScope,
-    crossinline executor: suspend CoroutineScope.(ConsoleCommandSource, CommandArguments) -> Unit
-) = consoleExecutor { sender, arguments ->
-    scope.launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(ConsoleCommandSource, CommandArguments) -> Unit,
+): VelocityExecutable<*> {
+    return consoleExecutor { sender, arguments ->
+        scope.launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
@@ -111,13 +119,14 @@ inline fun VelocityExecutable<*>.consoleExecutorSuspend(
 @InternalSurfApi
 internal inline fun <S : CommandSource> CoroutineScope.launchCommandExecutor(
     sender: S,
-    crossinline block: suspend CoroutineScope.() -> Unit
+    crossinline block: suspend CoroutineScope.() -> Unit,
 ) {
     launch {
         try {
             block()
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
+
             handleCommandFailure(sender, t)
         }
     }
@@ -160,5 +169,6 @@ internal inline fun handleCommandFailure(sender: CommandSource, t: Throwable) {
 @PublishedSurfApi
 internal fun CommandSource.sendSyntaxMessageOrRethrow(message: String?, t: Throwable) {
     val msg = message ?: throw t
+
     sendMessage(text(msg, Colors.ERROR))
 }

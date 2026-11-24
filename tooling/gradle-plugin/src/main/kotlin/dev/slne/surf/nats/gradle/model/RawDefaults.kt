@@ -20,7 +20,8 @@ internal class RawDefaults {
      *
      * @param location the field's wire-schema source location
      * @param expected the default value parsed by wire-schema
-     * @return the original bytes, or `null` if the literal is missing, invalid, or differs from [expected]
+     * @return the original bytes, or `null` if the literal is missing, invalid, or differs from
+     * [expected]
      */
     fun bytes(location: Location, expected: String): ByteArray? {
         if (location.line < 1 || location.column < 1) return null
@@ -40,6 +41,7 @@ internal class RawDefaults {
      */
     private fun source(file: File): SourceText? {
         if (file in sources) return sources[file]
+
         return (if (file.isFile) SourceText(file.readText(Charsets.UTF_8)) else null)
             .also { sources[file] = it }
     }
@@ -62,6 +64,7 @@ internal class RawDefaults {
         fun offset(line: Int, column: Int): Int? {
             val starts = lineStarts
             if (line > starts.size) return null
+
             return (starts[line - 1] + column - 1).takeIf { it <= text.length }
         }
     }
@@ -105,7 +108,7 @@ internal class RawDefaults {
         text: String,
         start: Int,
         out: ByteArrayOutputStream,
-        wire: StringBuilder
+        wire: StringBuilder,
     ): Int? {
         val quote = text[start]
         val plain = StringBuilder()
@@ -113,9 +116,11 @@ internal class RawDefaults {
 
         while (index < text.length) {
             val char = text[index]
+
             when {
                 char == quote -> {
                     flushPlain(plain, out)
+
                     return index + 1
                 }
 
@@ -140,7 +145,10 @@ internal class RawDefaults {
      * Writes pending unescaped text as UTF-8 bytes and resets the buffer.
      */
     private fun flushPlain(plain: StringBuilder, out: ByteArrayOutputStream) {
-        if (plain.isNotEmpty()) out.write(plain.toString().encodeToByteArray())
+        if (plain.isNotEmpty()) {
+            out.write(plain.toString().encodeToByteArray())
+        }
+
         plain.clear()
     }
 
@@ -156,12 +164,14 @@ internal class RawDefaults {
         text: String,
         start: Int,
         out: ByteArrayOutputStream,
-        wire: StringBuilder
+        wire: StringBuilder,
     ): Int? {
         val (wireValue, end) = wireEscape(text, start + 1) ?: return null
+
         wire.append(wireValue.toChar())
 
         val escape = text[start + 1]
+
         if (escape == 'u' || escape == 'U') {
             return decodeUnicodeEscape(text, end, escape, out, wire)
         }
@@ -172,6 +182,7 @@ internal class RawDefaults {
         } else {
             out.write(escape.toString().encodeToByteArray())
         }
+
         return end
     }
 
@@ -196,6 +207,7 @@ internal class RawDefaults {
 
         out.write(String(Character.toChars(codePoint)).encodeToByteArray())
         wire.append(text, start, end)
+
         return end
     }
 
@@ -236,7 +248,7 @@ internal class RawDefaults {
                     text[index] == '"' || text[index] == '\'' -> skipWireString(
                         text,
                         index,
-                        newline
+                        newline,
                     ) ?: break
 
                     text.startsWith("//", index) -> skipWireLineComment(text, index, newline)
@@ -267,13 +279,18 @@ internal class RawDefaults {
 
             while (index < text.length) {
                 val char = text[index++]
+
                 when (char) {
                     quote -> return index
                     '\n' -> newline(index)
                     '\\' -> {
                         val (decoded, end) = wireEscape(text, index) ?: return null
+
                         index = end
-                        if (decoded == '\n'.code) newline(index)
+
+                        if (decoded == '\n'.code) {
+                            newline(index)
+                        }
                     }
                 }
             }
@@ -292,8 +309,10 @@ internal class RawDefaults {
         fun skipWireLineComment(text: String, start: Int, newline: (Int) -> Unit): Int? {
             val end = text.indexOf('\n', start)
             if (end < 0) return null
+
             val next = end + 1
             newline(next)
+
             return next
         }
 
@@ -311,9 +330,13 @@ internal class RawDefaults {
         fun skipWireBlockComment(text: String, start: Int, newline: (Int) -> Unit): Int? {
             val end = text.indexOf("*/", start + 2)
             if (end < 0) return null
+
             for (position in start + 2 until end) {
-                if (text[position] == '\n') newline(position)
+                if (text[position] == '\n') {
+                    newline(position)
+                }
             }
+
             return end + 2
         }
 
@@ -333,6 +356,7 @@ internal class RawDefaults {
 
             while (index < text.length) {
                 val char = text[index]
+
                 when {
                     char == ';' -> return null
                     char == '[' -> {
@@ -353,6 +377,7 @@ internal class RawDefaults {
                     inOptions && isDefaultKeyword(text, index) -> {
                         val equals = skipBlank(text, index + 7)
                         if (text.getOrNull(equals) == '=') return skipBlank(text, equals + 1)
+
                         index = equals
                     }
 
@@ -370,11 +395,12 @@ internal class RawDefaults {
          * @param index the candidate keyword offset
          * @return `true` if the keyword is not part of a larger identifier
          */
-        fun isDefaultKeyword(text: String, index: Int): Boolean =
-            text.startsWith("default", index) && isWordStart(
+        fun isDefaultKeyword(text: String, index: Int): Boolean {
+            return text.startsWith("default", index) && isWordStart(
                 text,
-                index
+                index,
             ) && !isWordChar(text.getOrNull(index + 7))
+        }
 
         /**
          * Decodes one escape using wire-schema's escape rules.
@@ -388,6 +414,7 @@ internal class RawDefaults {
          */
         fun wireEscape(text: String, index: Int): Pair<Int, Int>? {
             val escape = text.getOrNull(index) ?: return null
+
             return when (escape) {
                 'a' -> 7 to index + 1
                 'b' -> 8 to index + 1
@@ -414,12 +441,15 @@ internal class RawDefaults {
         fun number(text: String, start: Int, radix: Int, maxDigits: Int): Pair<Int, Int>? {
             var index = start
             var value = 0
+
             while (index < text.length && index - start < maxDigits) {
                 val digit = Character.digit(text[index], radix)
                 if (digit < 0) break
+
                 value = value * radix + digit
                 index++
             }
+
             return if (index == start) null else value to index
         }
 
@@ -433,6 +463,7 @@ internal class RawDefaults {
         fun skipString(text: String, start: Int): Int? {
             val quote = text[start]
             var index = start + 1
+
             while (index < text.length) {
                 when (text[index]) {
                     '\\' -> index += 2
@@ -440,6 +471,7 @@ internal class RawDefaults {
                     else -> index++
                 }
             }
+
             return null
         }
 
@@ -453,6 +485,7 @@ internal class RawDefaults {
         fun skipBlank(text: String, start: Int): Int {
             var index = start
             while (index < text.length && text[index].isWhitespace()) index++
+
             return index
         }
 
@@ -471,7 +504,8 @@ internal class RawDefaults {
          * @param char the character to check, or `null` at a text boundary
          * @return `true` for letters, digits, underscores, and periods
          */
-        fun isWordChar(char: Char?): Boolean =
-            char != null && (char.isLetterOrDigit() || char == '_' || char == '.')
+        fun isWordChar(char: Char?): Boolean {
+            return char != null && (char.isLetterOrDigit() || char == '_' || char == '.')
+        }
     }
 }

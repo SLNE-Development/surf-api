@@ -9,9 +9,10 @@ import kotlinx.coroutines.*
 /**
  * Accepts commands from the command socket and the console.
  *
- * [stop] stops the socket server and then the console listener, each of which cancels its running commands and waits
- * for them within its own timeout, so no command runs once [stop] returns unless it ignored cancellation for that
- * long. It does not wait for the console reader, which cannot be interrupted.
+ * [stop] stops the socket server and then the console listener, each of which cancels its running
+ * commands and waits for them within its own timeout, so no command runs once [stop] returns unless
+ * it ignored cancellation for that long. It does not wait for the console reader, which cannot be
+ * interrupted.
  */
 internal class MicroserviceCommandEndpoints(
     private val server: MicroserviceCommandServer,
@@ -22,11 +23,11 @@ internal class MicroserviceCommandEndpoints(
     private val log = logger()
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.Default + CoroutineName("MicroserviceCommandEndpoints") +
-                CoroutineExceptionHandler { context, exception ->
-                    log.atSevere()
-                        .withCause(exception)
-                        .log("Uncaught exception in %s", context[CoroutineName])
-                },
+            CoroutineExceptionHandler { context, exception ->
+                log.atSevere()
+                    .withCause(exception)
+                    .log("Uncaught exception in %s", context[CoroutineName])
+            },
     )
 
     override suspend fun start() {

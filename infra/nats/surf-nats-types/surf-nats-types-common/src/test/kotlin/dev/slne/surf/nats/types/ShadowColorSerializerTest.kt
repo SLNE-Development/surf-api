@@ -8,7 +8,11 @@ class ShadowColorSerializerTest {
 
     @Test
     fun `descriptor is the surf ShadowColor message`() {
-        assertMessageDescriptor(ShadowColorSerializer.descriptor, "surf.types.v1.ShadowColor", "argb" to 1)
+        assertMessageDescriptor(
+            ShadowColorSerializer.descriptor,
+            "surf.types.v1.ShadowColor",
+            "argb" to 1,
+        )
     }
 
     @Test
@@ -35,6 +39,11 @@ class ShadowColorSerializerTest {
 
     @Test
     fun `absent argb is a missing field`() {
-        assertMissingField("surf.types.v1.ShadowColor", "argb") { decodeHex(ShadowColorSerializer, "") }
+        assertMissingField("surf.types.v1.ShadowColor", "argb") {
+            decodeHex(
+                ShadowColorSerializer,
+                "",
+            )
+        }
     }
 }

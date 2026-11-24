@@ -5,7 +5,8 @@ package dev.slne.surf.nats.js.external.nats.jetstream
 import kotlinx.js.JsPlainObject
 
 /**
- * Binds `JetStreamManagerOptions`, the options of `jetstream` plus `checkAPI`. `timeout` is milliseconds.
+ * Binds `JetStreamManagerOptions`, the options of `jetstream` plus `checkAPI`. `timeout` is
+ * milliseconds.
  */
 @JsPlainObject
 internal external interface JetStreamOptions {

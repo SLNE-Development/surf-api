@@ -22,14 +22,14 @@ class SyncValueImpl<T : Any> internal constructor(
     id: String,
     private val valueCodec: SyncValueCodec<T>,
     private val defaultValue: T,
-    ttl: Duration
+    ttl: Duration,
 ) : AbstractStreamSyncStructure<SyncValueChange, SimpleVersionedSnapshot<String?>>(
     api,
     id,
     ttl,
     Registry,
     NAMESPACE,
-    valueCodec.descriptor
+    valueCodec.descriptor,
 ), SyncValue<T> {
 
     companion object {
@@ -56,7 +56,7 @@ class SyncValueImpl<T : Any> internal constructor(
     private val bucket by lazy {
         api.redissonReactive.getBucket<String>(
             dataKey,
-            StringCodec.INSTANCE
+            StringCodec.INSTANCE,
         )
     }
     private val value = AtomicReference(defaultValue)
@@ -70,10 +70,12 @@ class SyncValueImpl<T : Any> internal constructor(
             .then()
     }
 
-    override fun registerListeners0(): List<Mono<Int>> = listOf(
-        bucket.addListener(ExpiredObjectListener { requestResync() }),
-        bucket.addListener(DeletedObjectListener { requestResync() })
-    )
+    override fun registerListeners0(): List<Mono<Int>> {
+        return listOf(
+            bucket.addListener(ExpiredObjectListener { requestResync() }),
+            bucket.addListener(DeletedObjectListener { requestResync() }),
+        )
+    }
 
     override fun unregisterListener(id: Int): Mono<*> = bucket.removeListener(id)
 
@@ -95,7 +97,7 @@ class SyncValueImpl<T : Any> internal constructor(
             SyncValueChange.Updated(
                 newValue,
                 old,
-            )
+            ),
         )
 
         writeToRemoteAwait(
@@ -105,8 +107,9 @@ class SyncValueImpl<T : Any> internal constructor(
         ).awaitSingle()
     }
 
-    override suspend fun compareAndSetRemote(expectedValue: T, newValue: T): Boolean =
-        compareAndSetRemoteEncoded(encodeValue(expectedValue), encodeValue(newValue))
+    override suspend fun compareAndSetRemote(expectedValue: T, newValue: T): Boolean {
+        return compareAndSetRemoteEncoded(encodeValue(expectedValue), encodeValue(newValue))
+    }
 
     override suspend fun getAndSetRemote(newValue: T): T {
         val result = writeToRemoteWithPayloadAwait(
@@ -118,11 +121,13 @@ class SyncValueImpl<T : Any> internal constructor(
         return decodeOrDefault(result.extra)
     }
 
-    override suspend fun updateAndGetRemote(transform: (T) -> T): T =
-        updateRemote(transform).updated
+    override suspend fun updateAndGetRemote(transform: (T) -> T): T {
+        return updateRemote(transform).updated
+    }
 
-    override suspend fun getAndUpdateRemote(transform: (T) -> T): T =
-        updateRemote(transform).previous
+    override suspend fun getAndUpdateRemote(transform: (T) -> T): T {
+        return updateRemote(transform).previous
+    }
 
     private suspend fun updateRemote(transform: (T) -> T): RemoteUpdate<T> {
         while (true) {
@@ -139,19 +144,24 @@ class SyncValueImpl<T : Any> internal constructor(
     private suspend fun compareAndSetRemoteEncoded(
         encodedExpected: String,
         encodedNew: String,
-    ): Boolean = writeToRemoteWithPayloadAwait(
-        COMPARE_AND_SET_SCRIPT,
-        EVENT_SET,
-        encodedExpected,
-        encodedNew,
-        encodedDefault,
-    ).event != null
+    ): Boolean {
+        return writeToRemoteWithPayloadAwait(
+            COMPARE_AND_SET_SCRIPT,
+            EVENT_SET,
+            encodedExpected,
+            encodedNew,
+            encodedDefault,
+        ).event != null
+    }
 
     private fun decodeOrDefault(encoded: String?): T = encoded?.let(::decodeValue) ?: defaultValue
 
-    override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {
-        EVENT_SET -> onSetEvent(data)
-        else -> log.atWarning().log("Unknown message type '$type' received from SyncValue '$id'")
+    override fun onStreamEvent(type: String, data: StreamEventData) {
+        when (type) {
+            EVENT_SET -> onSetEvent(data)
+            else -> log.atWarning()
+                .log("Unknown message type '$type' received from SyncValue '$id'")
+        }
     }
 
     private fun onSetEvent(data: StreamEventData) {
@@ -173,7 +183,7 @@ class SyncValueImpl<T : Any> internal constructor(
                     "0" -> false
                     "1" -> true
                     else -> error(
-                        "Malformed presence flag in SyncValue '$id' snapshot: ${raw[0]}"
+                        "Malformed presence flag in SyncValue '$id' snapshot: ${raw[0]}",
                     )
                 }
 

@@ -16,8 +16,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * One unary method of a [ServiceDescriptor] with its resolved options: persistence, recipients, result kind, timeout
- * and subject.
+ * One unary method of a [ServiceDescriptor] with its resolved options: persistence, recipients,
+ * result kind, timeout and subject.
  */
 internal class MethodDescriptor(
     val desc: DescMethod,
@@ -45,7 +45,10 @@ internal class MethodDescriptor(
 
     val flow: CallFlow = CallFlow.of(persistent, result)
 
-    val subject: String = service.names.methodSubject(protoName, persistent) // surf.rpc|persist.<service>.<rpc>
+    val subject: String = service.names.methodSubject(
+        protoName,
+        persistent,
+    ) // surf.rpc|persist.<service>.<rpc>
 
     // Work queue stream of persistent methods
     val stream: String get() = service.names.stream
@@ -57,6 +60,10 @@ internal class MethodDescriptor(
     }
 
     companion object {
-        fun of(method: DescMethod): MethodDescriptor = ServiceDescriptor.of(method.parent).method(method)
+        fun of(method: DescMethod): MethodDescriptor {
+            return ServiceDescriptor.of(method.parent).method(
+                method,
+            )
+        }
     }
 }

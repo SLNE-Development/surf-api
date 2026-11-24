@@ -19,8 +19,9 @@ internal class WeaverConventionsTest : TestKitSupport() {
         "version" to "weaver.publishing.version.getOrNull()",
     )
 
-    private fun show(environment: Map<String, String> = emptyMap()): Map<String, String> =
-        build.run("show", "-q", environment = environment).shown()
+    private fun show(environment: Map<String, String> = emptyMap()): Map<String, String> {
+        return build.run("show", "-q", environment = environment).shown()
+    }
 
     @Test
     fun `without environment the conventions point at the public registry and the project coordinates`() {
@@ -32,7 +33,7 @@ internal class WeaverConventionsTest : TestKitSupport() {
             group = 'dev.slne.demo'
             version = '1.2.0-SNAPSHOT'
             $showWeaver
-            """
+            """,
         )
 
         val shown = show()
@@ -58,7 +59,7 @@ internal class WeaverConventionsTest : TestKitSupport() {
             group = 'dev.slne.late'
             version = '3.4.5'
             $showWeaver
-            """
+            """,
         )
 
         val shown = show()
@@ -76,7 +77,7 @@ internal class WeaverConventionsTest : TestKitSupport() {
             ${TestBuild.PLUGIN}
             version = '1.0.0'
             $showWeaver
-            """
+            """,
         )
 
         assertEquals("null", show()["group"])
@@ -89,10 +90,15 @@ internal class WeaverConventionsTest : TestKitSupport() {
             """
             ${TestBuild.PLUGIN}
             $showWeaver
-            """
+            """,
         )
 
-        val shown = show(mapOf("WEAVER_URL" to "http://env.example:1234", "WEAVER_TOKEN" to "env-token"))
+        val shown = show(
+            mapOf(
+                "WEAVER_URL" to "http://env.example:1234",
+                "WEAVER_TOKEN" to "env-token",
+            ),
+        )
 
         assertEquals("http://env.example:1234", shown["url"])
         assertEquals("env-token", shown["token"])
@@ -119,10 +125,15 @@ internal class WeaverConventionsTest : TestKitSupport() {
                 }
             }
             $showWeaver
-            """
+            """,
         )
 
-        val shown = show(mapOf("WEAVER_URL" to "http://env.example:1234", "WEAVER_TOKEN" to "env-token"))
+        val shown = show(
+            mapOf(
+                "WEAVER_URL" to "http://env.example:1234",
+                "WEAVER_TOKEN" to "env-token",
+            ),
+        )
 
         assertEquals("http://dsl.example", shown["url"])
         assertEquals("dsl-token", shown["token"])
@@ -157,7 +168,10 @@ internal class WeaverConventionsTest : TestKitSupport() {
     fun `unpublished modules have no default weaver name`() {
         build.settings("a", "b", rootName = "demo-root")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
-        for (project in listOf("a", "b")) build.script("${TestBuild.PLUGIN}\n$showWeaver", project = project)
+        for (project in listOf("a", "b")) build.script(
+            "${TestBuild.PLUGIN}\n$showWeaver",
+            project = project,
+        )
 
         assertEquals("null", build.run(":a:show", "-q").shown()["name"])
         assertEquals("null", build.run(":b:show", "-q").shown()["name"])
@@ -167,7 +181,10 @@ internal class WeaverConventionsTest : TestKitSupport() {
     fun `an unset group in subprojects leaves the weaver group absent instead of the derived default`() {
         build.settings("a", "b:c", rootName = "my-root")
         build.script("allprojects { version = '1.0.0' }")
-        for (project in listOf("a", "b/c")) build.script("${TestBuild.PLUGIN}\n$showWeaver", project = project)
+        for (project in listOf("a", "b/c")) build.script(
+            "${TestBuild.PLUGIN}\n$showWeaver",
+            project = project,
+        )
 
         assertEquals("null", build.run(":a:show", "-q").shown()["group"])
         assertEquals("null", build.run(":b:c:show", "-q").shown()["group"])

@@ -20,7 +20,8 @@ import js.objects.Record
 import js.objects.recordOf
 
 /**
- * Converts protobuf-es messages into the plain values of `toPlain`, reading them through protobuf-es reflection.
+ * Converts protobuf-es messages into the plain values of `toPlain`, reading them through
+ * protobuf-es reflection.
  */
 internal object PlainConverter {
     private const val TIMESTAMP_TYPE = "google.protobuf.Timestamp"
@@ -57,27 +58,34 @@ internal object PlainConverter {
     /**
      * Converts [message]. Only a `google.protobuf.Value` can become `null`.
      */
-    fun message(message: ReflectMessage): JsAny? = when (message.desc.typeName) {
-        TIMESTAMP_TYPE -> timestamp(message)
-        ProtocolFieldRules.UUID_TYPE -> uuidToString(message.message).toJsString()
-        VALUE_TYPE -> jsonValue(message)
-        // Struct holds its map of Values, ListValue its list of Values, a wrapper its value
-        STRUCT_TYPE, LIST_VALUE_TYPE, in WRAPPER_TYPES -> field(
-            message,
-            message.desc.fields.single()
-        )
+    fun message(message: ReflectMessage): JsAny? {
+        return when (message.desc.typeName) {
+            TIMESTAMP_TYPE -> timestamp(message)
+            ProtocolFieldRules.UUID_TYPE -> uuidToString(message.message).toJsString()
+            VALUE_TYPE -> jsonValue(message)
+            // Struct holds its map of Values, ListValue its list of Values, a wrapper its value
+            STRUCT_TYPE, LIST_VALUE_TYPE, in WRAPPER_TYPES -> field(
+                message,
+                message.desc.fields.single(),
+            )
 
-        else -> fields(message)
+            else -> fields(message)
+        }
     }
 
     private fun fields(message: ReflectMessage): Record<JsString, JsAny?> {
         val plain = recordOf<JsString, JsAny?>()
+
         for (field in message.desc.fields) {
-            if (field.oneof == null) plain[field.localName] = field(message, field)
+            if (field.oneof == null) {
+                plain[field.localName] = field(message, field)
+            }
         }
+
         for (oneof in message.desc.oneofs) {
             plain[oneof.localName] = oneof(message, oneof)
         }
+
         return plain
     }
 
@@ -93,7 +101,7 @@ internal object PlainConverter {
 
             is FieldShape.Message -> singular(
                 message,
-                shape.field
+                shape.field,
             ) { message(message.get(shape.field)) }
 
             is FieldShape.ScalarList -> {
@@ -102,7 +110,7 @@ internal object PlainConverter {
                     scalar(
                         list.get(it)!!,
                         shape.field.scalar,
-                        shape.field.longAsString
+                        shape.field.longAsString,
                     )
                 }
             }
@@ -124,7 +132,7 @@ internal object PlainConverter {
                     scalar(
                         map.get(it)!!,
                         shape.field.scalar,
-                        longAsString = false
+                        longAsString = false,
                     )
                 }
             }
@@ -141,11 +149,12 @@ internal object PlainConverter {
         }
     }
 
-    // Fields with explicit presence (proto2 optional and required, message fields) are null while unset
+    // Fields with explicit presence (proto2 optional and required, message fields) are null while
+    // unset
     private inline fun singular(
         message: ReflectMessage,
         field: DescFieldSingular,
-        value: () -> JsAny?
+        value: () -> JsAny?,
     ): JsAny? {
         return if (field.presence != PRESENCE_IMPLICIT && !message.isSet(field)) null else value()
     }
@@ -155,6 +164,7 @@ internal object PlainConverter {
         val selected = message.oneofCase(oneof)
         plain["case"] = selected?.localName?.toJsString()
         plain["value"] = selected?.let { field(message, it) }
+
         return plain
     }
 
@@ -164,27 +174,31 @@ internal object PlainConverter {
 
     private inline fun record(
         keys: JsIterator<Any>,
-        value: (Any) -> JsAny?
+        value: (Any) -> JsAny?,
     ): Record<JsString, JsAny?> {
         val plain = recordOf<JsString, JsAny?>()
-        // Map keys are strings, numbers, booleans or bigints, and their string form is the key of the plain object
+        // Map keys are strings, numbers, booleans or bigints, and their string form is the key of
+        // the plain object
         for (key in keys) plain["$key"] = value(key)
+
         return plain
     }
 
     /**
-     * Returns [value] unchanged, except that a 64-bit integer, a bigint or a decimal string, becomes a number, or a
-     * decimal string if [longAsString] (`jstype = JS_STRING`) is set.
+     * Returns [value] unchanged, except that a 64-bit integer, a bigint or a decimal string,
+     * becomes a number, or a decimal string if [longAsString] (`jstype = JS_STRING`) is set.
      */
     private fun scalar(value: Any, scalarType: Int, longAsString: Boolean): JsAny {
         if (scalarType !in LONG_SCALARS) return value.unsafeCast<JsAny>()
         if (longAsString) return decimal(value).toJsString()
+
         return safeInteger(value).toDouble().toJsNumber()
     }
 
     // An unset kind is JSON null for protobuf-es, like the null_value kind
     private fun jsonValue(value: ReflectMessage): JsAny? {
         val kind = value.oneofCase(value.desc.oneofs.single())
+
         return if (kind == null || kind.localName == NULL_VALUE_FIELD) null else field(value, kind)
     }
 
@@ -196,21 +210,27 @@ internal object PlainConverter {
     private fun safeInteger(value: Any): Long {
         val decimal = decimal(value)
         val long = decimal.toLongOrNull()
+
         if (long == null || long > MAX_SAFE_INTEGER || long < -MAX_SAFE_INTEGER) {
-            throw RangeError("The 64-bit integer $decimal does not fit into a number without losing precision")
+            throw RangeError(
+                "The 64-bit integer $decimal does not fit into a number without losing precision",
+            )
         }
+
         return long
     }
 
     private fun timestamp(timestamp: ReflectMessage): Date {
         val fields = timestamp.desc.fields
-        val seconds =
-            safeInteger(timestamp.get(fields.first { it.localName == "seconds" }.asScalar()))
-        val nanos =
-            timestamp.get(fields.first { it.localName == "nanos" }.asScalar()).unsafeCast<Int>()
+        val seconds = safeInteger(
+            timestamp.get(fields.first { it.localName == "seconds" }.asScalar()),
+        )
+        val nanos = timestamp.get(fields.first { it.localName == "nanos" }.asScalar())
+            .unsafeCast<Int>()
         if (seconds > MAX_DATE_SECONDS || seconds < -MAX_DATE_SECONDS) {
             throw RangeError("The timestamp of $seconds seconds is outside the range of a Date")
         }
+
         return Date((seconds * MILLIS_PER_SECOND + nanos / NANOS_PER_MILLI).toDouble())
     }
 

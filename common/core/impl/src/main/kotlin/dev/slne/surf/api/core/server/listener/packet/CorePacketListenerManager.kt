@@ -7,12 +7,16 @@ object CorePacketListenerManager {
     private val listeners = setOf<PacketListenerCommon>()
 
     fun registerListeners() {
-        listeners.forEach { register(it) }
+        for (listener in listeners) {
+            register(listener)
+        }
     }
 
     fun unregisterListeners() {
         val eventManager = PacketEvents.getAPI().eventManager
-        listeners.forEach { eventManager.unregisterListener(it) }
+        for (listener in listeners) {
+            eventManager.unregisterListener(listener)
+        }
     }
 
     private fun register(listener: PacketListenerCommon) {

@@ -20,7 +20,10 @@ class GeneratedDescriptorsTest {
 
     @Test
     fun `service lookup returns the generated descriptor`() {
-        assertSame(NotifierService.NATS_DESCRIPTOR, GeneratedDescriptors.service(NotifierService::class.java))
+        assertSame(
+            NotifierService.NATS_DESCRIPTOR,
+            GeneratedDescriptors.service(NotifierService::class.java),
+        )
     }
 
     @Test
@@ -34,13 +37,21 @@ class GeneratedDescriptorsTest {
 
     @Test
     fun `inherited descriptor field is rejected`() {
-        assertFailsWith<IllegalArgumentException> { GeneratedDescriptors.event(InheritedDescriptorEvent::class.java) }
+        assertFailsWith<IllegalArgumentException> {
+            GeneratedDescriptors.event(
+                InheritedDescriptorEvent::class.java,
+            )
+        }
     }
 
     @Test
     fun `descriptor of the other kind is rejected`() {
-        assertFailsWith<IllegalArgumentException> { GeneratedDescriptors.event(NotifierService::class.java) }
-        assertFailsWith<IllegalArgumentException> { GeneratedDescriptors.service(Created::class.java) }
+        assertFailsWith<IllegalArgumentException> {
+            GeneratedDescriptors.event(NotifierService::class.java)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            GeneratedDescriptors.service(Created::class.java)
+        }
     }
 
     @Test
@@ -49,7 +60,10 @@ class GeneratedDescriptorsTest {
             GeneratedDescriptors.service(NotifierImpl::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "${NotifierImpl::class.java.name} is not a generated surf-nats service interface")
+        assertContains(
+            message,
+            "${NotifierImpl::class.java.name} is not a generated surf-nats service interface",
+        )
         assertContains(message, "registerService<NotifierService>(implementation)")
         assertContains(message, NotifierService::class.java.name)
     }

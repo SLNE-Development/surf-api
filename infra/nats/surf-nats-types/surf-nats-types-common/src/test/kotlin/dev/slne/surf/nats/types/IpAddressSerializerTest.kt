@@ -22,7 +22,11 @@ class IpAddressSerializerTest {
 
     @Test
     fun `descriptor is the surf IpAddress message`() {
-        assertMessageDescriptor(IpAddressSerializer.descriptor, "surf.types.v1.IpAddress", "address" to 1)
+        assertMessageDescriptor(
+            IpAddressSerializer.descriptor,
+            "surf.types.v1.IpAddress",
+            "address" to 1,
+        )
     }
 
     @Test
@@ -59,8 +63,18 @@ class IpAddressSerializerTest {
 
     @Test
     fun `absent address is a missing field`() {
-        assertMissingField("surf.types.v1.IpAddress", "address") { decodeHex(IpAddressSerializer, "") }
-        assertMissingField("surf.types.v1.IpAddress", "address") { decodeHex(Holder.serializer(), "0a00") }
+        assertMissingField("surf.types.v1.IpAddress", "address") {
+            decodeHex(
+                IpAddressSerializer,
+                "",
+            )
+        }
+        assertMissingField("surf.types.v1.IpAddress", "address") {
+            decodeHex(
+                Holder.serializer(),
+                "0a00",
+            )
+        }
     }
 
     @Test

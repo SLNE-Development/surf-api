@@ -8,7 +8,6 @@ import net.minestom.server.network.NetworkBuffer
 import org.springframework.stereotype.Service
 import java.util.*
 
-
 @Service
 internal class SurfMinestomApiImpl : SurfApiCoreImpl() {
 
@@ -25,7 +24,7 @@ internal class SurfMinestomApiImpl : SurfApiCoreImpl() {
                 NetworkBuffer.makeArray { buffer ->
                     buffer.write(NetworkBuffer.STRING_IO_UTF8, "Connect")
                     buffer.write(NetworkBuffer.STRING_IO_UTF8, server)
-                }
+                },
             )
     }
 

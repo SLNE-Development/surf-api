@@ -8,7 +8,11 @@ class BigIntegerSerializerTest {
 
     @Test
     fun `descriptor is the surf BigInteger message`() {
-        assertMessageDescriptor(BigIntegerSerializer.descriptor, "surf.types.v1.BigInteger", "value" to 1)
+        assertMessageDescriptor(
+            BigIntegerSerializer.descriptor,
+            "surf.types.v1.BigInteger",
+            "value" to 1,
+        )
     }
 
     @Test
@@ -22,7 +26,12 @@ class BigIntegerSerializerTest {
 
     @Test
     fun `absent value is a missing field`() {
-        assertMissingField("surf.types.v1.BigInteger", "value") { decodeHex(BigIntegerSerializer, "") }
+        assertMissingField("surf.types.v1.BigInteger", "value") {
+            decodeHex(
+                BigIntegerSerializer,
+                "",
+            )
+        }
     }
 
     @Test

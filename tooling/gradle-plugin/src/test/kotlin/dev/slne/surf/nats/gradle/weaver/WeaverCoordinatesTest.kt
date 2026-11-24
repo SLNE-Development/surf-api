@@ -22,17 +22,41 @@ class WeaverCoordinatesTest {
     @Test
     fun `valid coordinates have no problems`() {
         assertEquals(emptyList(), problems())
-        assertEquals(emptyList(), problems(group = "dev.slne.surf-demo_2", name = "my.proto-bundle_1"))
+        assertEquals(
+            emptyList(),
+            problems(group = "dev.slne.surf-demo_2", name = "my.proto-bundle_1"),
+        )
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["1", "1.2", "1.2.3", "1.2.3.4", "1.2.3-SNAPSHOT", "1.4.0-rc.1", "10.20.30.40-beta"])
+    @ValueSource(
+        strings = [
+            "1",
+            "1.2",
+            "1.2.3",
+            "1.2.3.4",
+            "1.2.3-SNAPSHOT",
+            "1.4.0-rc.1",
+            "10.20.30.40-beta",
+        ],
+    )
     fun `accepts versions with one to four numeric parts and an optional qualifier`(version: String) {
         assertEquals(emptyList(), problems(version = version))
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["v1", "1.2.3.4.5", "1..2", "1.2.x", "1.2.3-", "-1.0.0", "1.0.0 SNAPSHOT", "1.0.0+build"])
+    @ValueSource(
+        strings = [
+            "v1",
+            "1.2.3.4.5",
+            "1..2",
+            "1.2.x",
+            "1.2.3-",
+            "-1.0.0",
+            "1.0.0 SNAPSHOT",
+            "1.0.0+build",
+        ],
+    )
     fun `rejects malformed versions`(version: String) {
         val problems = problems(version = version)
 
@@ -43,11 +67,24 @@ class WeaverCoordinatesTest {
     @Test
     fun `rejects versions longer than 64 characters`() {
         assertEquals(emptyList(), problems(version = "1.0.0-" + "a".repeat(58)))
-        assertContains(problems(version = "1.0.0-" + "a".repeat(59)).single(), "at most 64 characters")
+        assertContains(
+            problems(version = "1.0.0-" + "a".repeat(59)).single(),
+            "at most 64 characters",
+        )
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["Dev.slne", "dev..slne", ".dev", "dev.slne.", "dev slne", "dev.Slne", "dev/slne"])
+    @ValueSource(
+        strings = [
+            "Dev.slne",
+            "dev..slne",
+            ".dev",
+            "dev.slne.",
+            "dev slne",
+            "dev.Slne",
+            "dev/slne",
+        ],
+    )
     fun `rejects groups that are not lowercase reverse-DNS names`(group: String) {
         assertContains(problems(group = group).single(), "weaver.publishing.group '$group'")
     }
@@ -67,7 +104,10 @@ class WeaverCoordinatesTest {
     @ParameterizedTest
     @ValueSource(strings = ["Bad", "-bad", "bad_repo", "a b"])
     fun `rejects invalid repository names for publishing and lookup`(repository: String) {
-        assertContains(problems(repository = repository).single(), "weaver.publishing.repository '$repository'")
+        assertContains(
+            problems(repository = repository).single(),
+            "weaver.publishing.repository '$repository'",
+        )
         assertContains(
             problems(repositories = listOf("proto-releases-public", repository)).single(),
             "weaver.repositories entry '$repository'",
@@ -87,9 +127,18 @@ class WeaverCoordinatesTest {
 
     @Test
     fun `external dependencies need a group and a version`() {
-        assertEquals("dev.slne.demo:demo:1.0.0", WeaverCoordinates.external("dev.slne.demo", "demo", "1.0.0"))
+        assertEquals(
+            "dev.slne.demo:demo:1.0.0",
+            WeaverCoordinates.external("dev.slne.demo", "demo", "1.0.0"),
+        )
         assertFailsWith<GradleException> { WeaverCoordinates.external(null, "demo", "1.0.0") }
-        assertFailsWith<GradleException> { WeaverCoordinates.external("dev.slne.demo", "demo", null) }
+        assertFailsWith<GradleException> {
+            WeaverCoordinates.external(
+                "dev.slne.demo",
+                "demo",
+                null,
+            )
+        }
         assertFailsWith<GradleException> { WeaverCoordinates.external("", "demo", "1.0.0") }
     }
 }

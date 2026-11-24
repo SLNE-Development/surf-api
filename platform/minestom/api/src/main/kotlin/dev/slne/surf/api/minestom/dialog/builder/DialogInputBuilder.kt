@@ -74,6 +74,7 @@ class DialogInputBuilder {
         protected fun requireLabel(): Component {
             val label = label
             require(label != null) { "Dialog input '$key' must have a label" }
+
             return label
         }
     }
@@ -125,15 +126,17 @@ class DialogInputBuilder {
             multiline = DialogInput.Text.Multiline(maxLines, height)
         }
 
-        internal fun build() = DialogInput.Text(
-            key,
-            width,
-            requireLabel(),
-            labelVisible,
-            initial,
-            maxLength,
-            multiline
-        )
+        internal fun build(): DialogInput.Text {
+            return DialogInput.Text(
+                key,
+                width,
+                requireLabel(),
+                labelVisible,
+                initial,
+                maxLength,
+                multiline,
+            )
+        }
 
         private companion object {
             const val DEFAULT_MAX_LENGTH = 32
@@ -184,7 +187,7 @@ class DialogInputBuilder {
                 start,
                 end,
                 initial,
-                step
+                step,
             )
         }
     }
@@ -222,5 +225,6 @@ class DialogInputBuilder {
     }
 }
 
-fun dialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> =
-    DialogInputBuilder().apply(block).build()
+fun dialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> {
+    return DialogInputBuilder().apply(block).build()
+}

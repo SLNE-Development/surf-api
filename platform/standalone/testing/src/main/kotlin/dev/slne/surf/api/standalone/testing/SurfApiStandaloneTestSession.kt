@@ -13,12 +13,16 @@ import org.junit.platform.launcher.LauncherSessionListener
  * such as config classes, which work only while the root context runs.
  */
 class SurfApiStandaloneTestSession : LauncherSessionListener {
-    override fun launcherSessionOpened(session: LauncherSession) = runBlocking {
-        SurfApiStandaloneBootstrap.bootstrap()
-        SurfApiStandaloneBootstrap.enable(registerShutdownHook = false)
+    override fun launcherSessionOpened(session: LauncherSession) {
+        runBlocking {
+            SurfApiStandaloneBootstrap.bootstrap()
+            SurfApiStandaloneBootstrap.enable(registerShutdownHook = false)
+        }
     }
 
-    override fun launcherSessionClosed(session: LauncherSession) = runBlocking {
-        SurfApiStandaloneBootstrap.shutdown()
+    override fun launcherSessionClosed(session: LauncherSession) {
+        runBlocking {
+            SurfApiStandaloneBootstrap.shutdown()
+        }
     }
 }

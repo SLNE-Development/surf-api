@@ -42,8 +42,8 @@ class KeySerializerTest {
             map = mapOf("k" to Key.key("surf", "other")),
         )
         val hex = "0a0b0a09737572663a74657374" +
-                "12110a0f6d696e6563726166743a73746f6e65" +
-                "1a110a016b120c0a0a737572663a6f74686572"
+            "12110a0f6d696e6563726166743a73746f6e65" +
+            "1a110a016b120c0a0a737572663a6f74686572"
 
         assertEquals(hex, encodeHex(Holder.serializer(), value))
         assertEquals(value, decodeHex(Holder.serializer(), hex))

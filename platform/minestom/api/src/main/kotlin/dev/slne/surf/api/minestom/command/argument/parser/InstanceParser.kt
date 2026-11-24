@@ -24,9 +24,11 @@ internal object InstanceParser : ArgumentType<Instance> {
 
     override fun parse(reader: StringReader): Instance {
         val start = reader.cursor
+
         while (reader.canRead() && isAllowed(reader.peek())) {
             reader.skip()
         }
+
         val input = reader.string.substring(start, reader.cursor)
 
         return resolve(input) ?: run {
@@ -43,11 +45,16 @@ internal object InstanceParser : ArgumentType<Instance> {
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         val instances = MinecraftServer.getInstanceManager().instances
-        val dimensionCounts = instances.groupingBy { instance -> instance.dimensionName }.eachCount()
+        val dimensionCounts = instances.groupingBy { instance -> instance.dimensionName }
+            .eachCount()
 
         val values = mutableListOf<String>()
-        instances.forEach { instance -> values += instance.uuid.toString() }
-        instances.forEach { instance ->
+
+        for (instance in instances) {
+            values += instance.uuid.toString()
+        }
+
+        for (instance in instances) {
             if (dimensionCounts[instance.dimensionName] == 1) {
                 values += instance.dimensionName
             }
@@ -61,11 +68,14 @@ internal object InstanceParser : ArgumentType<Instance> {
         parseDashedUuid(input)?.let { uuid ->
             instances.singleOrNull { instance -> instance.uuid == uuid }?.let { return it }
         }
+
         return instances.singleOrNull { instance -> instance.dimensionName == input }
     }
 
-    private fun isAllowed(character: Char): Boolean = character in '0'..'9' ||
+    private fun isAllowed(character: Char): Boolean {
+        return character in '0'..'9' ||
             character in 'a'..'z' || character in 'A'..'Z' ||
             character == '_' || character == ':' || character == '/' ||
             character == '.' || character == '-'
+    }
 }

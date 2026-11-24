@@ -10,9 +10,10 @@ import me.devnatan.inventoryframework.context.Context
  * Configures pagination for the current [PaginatedSurfViewContext].
  *
  * Builds a [PaginationDslBuilder] from the [block] and stores a factory function in the context
- * that creates the [PaginationStateBuilder] when the view is instantiated. The builder must
- * specify at least one source (via [PaginationDslBuilder.source], [PaginationDslBuilder.computedSource], etc.)
- * and an item factory (via [PaginationDslBuilder.itemFactory] or [PaginationDslBuilder.elementFactory]).
+ * that creates the [PaginationStateBuilder] when the view is instantiated. The builder must specify
+ * at least one source (via [PaginationDslBuilder.source], [PaginationDslBuilder.computedSource],
+ * etc.) and an item factory (via [PaginationDslBuilder.itemFactory] or
+ * [PaginationDslBuilder.elementFactory]).
  *
  * ```kotlin
  * paginatedSurfView("Items") {
@@ -40,8 +41,8 @@ inline fun <T> pagination(block: @InventoryFrameworkDSL PaginationDslBuilder<T>.
 
     val sourceType = requireNotNull(builder.sourceType) {
         "Pagination source must be configured. " +
-                "Use source { }, computedSource { }, asyncSource { }, lazySource { }, " +
-                "suspendSource { }, etc."
+            "Use source { }, computedSource { }, asyncSource { }, lazySource { }, " +
+            "suspendSource { }, etc."
     }
 
     ctx.paginationStateBuilder = { view ->

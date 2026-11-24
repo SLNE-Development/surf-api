@@ -68,7 +68,8 @@ object DialogCallbacks {
     /**
      * Runs the callback registered under [key] with [player] and [payload], consuming one use.
      *
-     * @return `false` when no callback is registered under [key] or it has expired or run out of uses
+     * @return `false` when no callback is registered under [key] or it has expired or run out of
+     * uses
      */
     @ApiStatus.Internal
     @InternalSurfApi
@@ -76,8 +77,10 @@ object DialogCallbacks {
         purgeExpired()
 
         val registration = registrations[key] ?: return false
+
         if (!registration.tryConsume()) {
             registrations.remove(key, registration)
+
             return false
         }
 
@@ -86,6 +89,7 @@ object DialogCallbacks {
         }
 
         registration.callback(DialogCallbackContext(player, payload))
+
         return true
     }
 

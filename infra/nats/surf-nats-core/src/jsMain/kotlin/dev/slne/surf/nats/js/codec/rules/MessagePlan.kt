@@ -16,9 +16,11 @@ internal class MessagePlan private constructor(
     private val outgoingSteps: Array<FieldStep>,
 ) {
 
-    fun isNoOp(direction: Direction): Boolean = when (direction) {
-        Direction.OUTGOING -> outgoingSteps.isEmpty()
-        Direction.INCOMING -> incomingSteps.isEmpty()
+    fun isNoOp(direction: Direction): Boolean {
+        return when (direction) {
+            Direction.OUTGOING -> outgoingSteps.isEmpty()
+            Direction.INCOMING -> incomingSteps.isEmpty()
+        }
     }
 
     fun apply(message: ReflectMessage, direction: Direction): Violation? {
@@ -41,14 +43,17 @@ internal class MessagePlan private constructor(
         private val plans = WeakMap<DescMessage, MessagePlan>()
 
         /**
-         * Nested message types are planned when a walk first reaches them, so recursive types need no special case.
+         * Nested message types are planned when a walk first reaches them, so recursive types need
+         * no special case.
          */
-        fun of(schema: DescMessage): MessagePlan = plans.getOrPut(schema) {
-            val steps = steps(schema)
-            MessagePlan(
-                incomingSteps = steps,
-                outgoingSteps = steps.filter { it.validatesOutgoing }.toTypedArray(),
-            )
+        fun of(schema: DescMessage): MessagePlan {
+            return plans.getOrPut(schema) {
+                val steps = steps(schema)
+                MessagePlan(
+                    incomingSteps = steps,
+                    outgoingSteps = steps.filter { it.validatesOutgoing }.toTypedArray(),
+                )
+            }
         }
 
         private fun steps(schema: DescMessage): Array<FieldStep> {
@@ -57,10 +62,12 @@ internal class MessagePlan private constructor(
             }
 
             val rule = ScalarRule.forType(schema.typeName)
+
             return schema.fields.mapNotNull { field ->
                 when (val shape = FieldShape.of(field)) {
                     is FieldShape.Scalar -> {
                         val required = isRequired(shape.field)
+
                         if (required || rule != null) {
                             ScalarStep(shape.field, required, rule)
                         } else {
@@ -71,14 +78,14 @@ internal class MessagePlan private constructor(
                     is FieldShape.Enum -> EnumStep(
                         shape.field,
                         EnumPlan.of(shape.field.enum),
-                        isRequired(shape.field)
+                        isRequired(shape.field),
                     )
 
                     is FieldShape.Message -> MessageStep(shape.field, isRequired(shape.field))
 
                     is FieldShape.EnumList -> EnumListStep(
                         shape.field,
-                        EnumPlan.of(shape.field.enum)
+                        EnumPlan.of(shape.field.enum),
                     )
 
                     is FieldShape.MessageList -> MessageListStep(shape.field)
@@ -89,6 +96,8 @@ internal class MessagePlan private constructor(
             }.toTypedArray()
         }
 
-        private fun isRequired(field: DescFieldSingular): Boolean = field.presence == PRESENCE_LEGACY_REQUIRED
+        private fun isRequired(field: DescFieldSingular): Boolean {
+            return field.presence == PRESENCE_LEGACY_REQUIRED
+        }
     }
 }

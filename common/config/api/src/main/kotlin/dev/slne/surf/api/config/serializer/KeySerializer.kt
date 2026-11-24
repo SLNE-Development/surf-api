@@ -28,7 +28,11 @@ internal object KeySerializer : Annotated<Key>(Key::class.java) {
     /**
      * Serializes [item] as its canonical string representation.
      */
-    override fun serialize(type: AnnotatedType, item: Key, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: Key,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.asString()
     }
 }

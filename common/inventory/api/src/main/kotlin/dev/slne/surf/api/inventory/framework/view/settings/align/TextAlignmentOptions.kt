@@ -9,7 +9,8 @@ package dev.slne.surf.api.inventory.framework.view.settings.align
  * @property padding horizontal padding (in pixels) applied on each side within the container
  * @property containerWidth the total usable pixel width of the title container area
  * @property charSize the width in pixels of a single character in the title font
- * @property charSpacing the inter-character spacing in pixels (negative = tighter, positive = looser)
+ * @property charSpacing the inter-character spacing in pixels (negative = tighter, positive =
+ * looser)
  * @property charWidths per-code-point pixel width overrides, keyed by Unicode code point, for the
  *   glyphs the title font does not render at [charSize] pixels. Empty by default, which treats the
  *   font as fixed-width. Populate it for a proportional title font, or for characters the font does
@@ -22,5 +23,5 @@ data class TextAlignmentOptions(
     val containerWidth: Int,
     val charSize: Int,
     val charSpacing: Int,
-    val charWidths: Map<Int, Int> = emptyMap()
+    val charWidths: Map<Int, Int> = emptyMap(),
 )

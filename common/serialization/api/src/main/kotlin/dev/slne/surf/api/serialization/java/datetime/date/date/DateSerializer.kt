@@ -13,12 +13,12 @@ typealias SerializableDate = @Serializable(with = DateSerializer::class) Date
 object DateSerializer : KSerializer<Date> {
     override val descriptor = PrimitiveSerialDescriptor(
         "surf.api.java.datetime.date.Date",
-        PrimitiveKind.LONG
+        PrimitiveKind.LONG,
     )
 
     override fun serialize(encoder: Encoder, value: Date) {
         encoder.encodeLong(value.time)
     }
 
-    override fun deserialize(decoder: Decoder) = Date(decoder.decodeLong())
+    override fun deserialize(decoder: Decoder): Date = Date(decoder.decodeLong())
 }

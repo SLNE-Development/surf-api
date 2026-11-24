@@ -51,10 +51,13 @@ class SurfAsyncEventHandlerTest(name: String) : CommandAPICommand(name) {
         subcommand("status") {
             anyExecutor { sender, _ ->
                 val lastEvent = TestAsyncEventListener.getLastEvent()
+
                 if (lastEvent != null) {
                     sender.sendText {
                         appendInfoPrefix()
-                        info("Last event: Player UUID=${lastEvent.playerUuid}, message='${lastEvent.message}'")
+                        info(
+                            "Last event: Player UUID=${lastEvent.playerUuid}, message='${lastEvent.message}'",
+                        )
                     }
                     val handledTime = TestAsyncEventListener.getLastHandledTime()
                     sender.sendText {

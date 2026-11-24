@@ -36,6 +36,7 @@ fun SurfComponentBuilder.appendShiftedComponent(
     append { renderComponent() }
 
     val resetShift = -(textureWidth + positionalShift)
+
     if (resetShift != 0) {
         append { text(ShiftGlyphs.renderShift(resetShift)) }
     }

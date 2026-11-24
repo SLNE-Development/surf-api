@@ -20,8 +20,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "surf-api-gradle-plugin"
 
-// An included build does not read the gradle.properties of the build that includes it, so the properties the build
-// script depends on (group, version, javaVersion, ...) are taken from the main build. Properties given with -P win.
+// An included build does not read the gradle.properties of the build that includes it, so the
+// properties the build script depends on (group, version, javaVersion, ...) are taken from the main
+// build. Properties given with -P win.
 val mainProperties = Properties().apply {
     rootDir.resolve("../../gradle.properties").reader().use(::load)
 }
@@ -29,12 +30,16 @@ val mainProperties = Properties().apply {
 gradle.beforeProject {
     val overrides = gradle.startParameter.projectProperties
 
-    mainProperties.forEach { (key, value) ->
+    for ((key, value) in mainProperties) {
         val name = key as String
-        if (name in overrides) return@forEach
+        if (name in overrides) continue
 
-        // Same as Gradle does for gradle.properties: built-in properties such as group and version are assigned,
-        // all others become extra properties.
-        if (hasProperty(name)) setProperty(name, value) else extensions.extraProperties[name] = value
+        // Same as Gradle does for gradle.properties: built-in properties such as group and version
+        // are assigned, all others become extra properties.
+        if (hasProperty(name)) {
+            setProperty(name, value)
+        } else {
+            extensions.extraProperties[name] = value
+        }
     }
 }

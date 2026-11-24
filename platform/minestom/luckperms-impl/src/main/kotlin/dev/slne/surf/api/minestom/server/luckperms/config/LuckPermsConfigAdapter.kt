@@ -14,7 +14,7 @@ import kotlin.io.path.exists
 
 internal class LuckPermsConfigAdapter(
     private val plugin: LuckPermsPlugin,
-    private val path: Path
+    private val path: Path,
 ) : ConfigurationAdapter {
 
     private val loader = YamlConfigurationLoader.builder()
@@ -43,6 +43,7 @@ internal class LuckPermsConfigAdapter(
 
     override fun getString(path: String, def: String?): String? {
         val node = resolvePath(path)
+
         return if (def != null) node.getString(def) else node.string
     }
 
@@ -56,9 +57,10 @@ internal class LuckPermsConfigAdapter(
 
     override fun getStringList(
         path: String,
-        def: List<String>?
+        def: List<String>?,
     ): List<String>? {
         val node = resolvePath(path)
+
         if (node.virtual() || !node.isList) {
             return def
         }
@@ -68,19 +70,23 @@ internal class LuckPermsConfigAdapter(
 
     override fun getStringMap(
         path: String,
-        def: Map<String, String>?
+        def: Map<String, String>?,
     ): Map<String, String>? {
         val node = resolvePath(path)
+
         if (node.virtual()) {
             return def
         }
+
         val type = object : TypeToken<Map<String, @JvmSuppressWildcards String>>() {}
+
         return if (def == null) node.get(type) else node.get(type, def)
     }
 
     private fun resolvePath(path: String): ConfigurationNode {
         val root = root
         requireNotNull(root) { "Config is not loaded." }
+
         return root.node(*path.split(".").toTypedArray())
     }
 

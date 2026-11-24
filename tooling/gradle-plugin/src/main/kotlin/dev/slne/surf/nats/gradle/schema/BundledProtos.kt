@@ -5,13 +5,13 @@ import java.io.InputStream
 /**
  * Provides the surf protos bundled at the plugin jar root, such as `surf/nats/v1/options.proto`.
  *
- * Sources may import them without declaring a dependency, and must not contain files with the same paths.
- * wire-schema bundles the Google well-known types itself.
+ * Sources may import them without declaring a dependency, and must not contain files with the same
+ * paths. wire-schema bundles the Google well-known types itself.
  */
 object BundledProtos {
     /**
-     * The relative proto-path root under which the schema loader serves the bundled protos. It is the base of their
-     * locations in errors.
+     * The relative proto-path root under which the schema loader serves the bundled protos. It is
+     * the base of their locations in errors.
      */
     const val ROOT = "surf-nats-plugin"
 

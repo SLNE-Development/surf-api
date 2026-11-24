@@ -42,7 +42,9 @@ class EntityTrackerMixinApplyTest {
             "the fast-path injection is not called: $calls"
         }
 
-        assertTrue("dev/slne/surf/api/minestom/server/impl/mixin/duck/EntityTrackerEntryDuck" in entry.interfaces) {
+        assertTrue(
+            "dev/slne/surf/api/minestom/server/impl/mixin/duck/EntityTrackerEntryDuck" in entry.interfaces,
+        ) {
             "EntityTrackerEntry does not implement the duck: ${entry.interfaces}"
         }
         assertTrue(entry.methods.any { it.name == "surf\$lastPosition" }) {

@@ -52,7 +52,7 @@ inline fun title(block: @TitleDsl TitleBuilder.() -> Unit): Title {
  * @return A configured [Title] instance.
  * @see title
  */
-inline fun Title(block: @TitleDsl TitleBuilder.() -> Unit) = title(block)
+inline fun Title(block: @TitleDsl TitleBuilder.() -> Unit): Title = title(block)
 
 /**
  * Creates a [Title.Times] instance using the DSL-style builder.
@@ -92,7 +92,6 @@ class TitleBuilder {
      * The timing settings for the [Title]. Defaults to [Title.DEFAULT_TIMES].
      */
     internal var times: Title.Times = Title.DEFAULT_TIMES
-
 
     /**
      * Sets the main title text using a component builder.
@@ -176,7 +175,6 @@ class TitleTimesBuilder {
      * The fade-out duration before the title disappears.
      */
     internal var fadeOut: JavaDuration = Title.DEFAULT_TIMES.fadeOut()
-
 
     /**
      * Sets the fade-in duration in ticks.

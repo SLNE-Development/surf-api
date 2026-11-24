@@ -36,12 +36,12 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
     /**
      * Returns the configured duration, or [other] if this value is disabled.
      */
-    infix fun or(other: Duration) = value ?: other
+    infix fun or(other: Duration): Duration = value ?: other
 
     /**
      * Returns `true` if this value is configured as `disabled`.
      */
-    fun isDisabled() = value == null
+    fun isDisabled(): Boolean = value == null
 
     companion object {
         private const val DISABLED_VALUE = "disabled"
@@ -56,7 +56,8 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
     /**
      * Configurate serializer for [DurationOrDisabled].
      */
-    internal object Serializer : ScalarSerializer.Annotated<DurationOrDisabled>(DurationOrDisabled::class.java) {
+    internal object Serializer :
+        ScalarSerializer.Annotated<DurationOrDisabled>(DurationOrDisabled::class.java) {
 
         override fun deserialize(type: AnnotatedType, obj: Any): DurationOrDisabled {
             if (obj is String) {
@@ -66,29 +67,35 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
 
                 return try {
                     DurationOrDisabled(
-                        ConfigDuration.Serializer.deserialize(type, obj).asDuration()
+                        ConfigDuration.Serializer.deserialize(type, obj).asDuration(),
                     )
                 } catch (e: Exception) {
                     throw SerializationException(
                         DurationOrDisabled::class.java,
                         "$obj($type) is not a duration or '$DISABLED_VALUE'",
-                        e
+                        e,
                     )
                 }
             }
 
             throw SerializationException(
                 DurationOrDisabled::class.java,
-                "$obj($type) is not a duration or '$DISABLED_VALUE'"
+                "$obj($type) is not a duration or '$DISABLED_VALUE'",
             )
         }
 
         override fun serialize(
             type: AnnotatedType,
             item: DurationOrDisabled,
-            typeSupported: Predicate<Class<*>>
+            typeSupported: Predicate<Class<*>>,
         ): Any {
-            return item.value?.let { ConfigDuration.Serializer.serialize(type, ConfigDuration(it), typeSupported) } ?: DISABLED_VALUE
+            return item.value?.let {
+                ConfigDuration.Serializer.serialize(
+                    type,
+                    ConfigDuration(it),
+                    typeSupported,
+                )
+            } ?: DISABLED_VALUE
         }
     }
 }

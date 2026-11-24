@@ -20,6 +20,7 @@ object BitSetSerializer : KSerializer<BitSet> {
 
     override fun deserialize(decoder: Decoder): BitSet {
         val longArray = longArraySerializer.deserialize(decoder)
+
         return BitSet.valueOf(longArray)
     }
 }

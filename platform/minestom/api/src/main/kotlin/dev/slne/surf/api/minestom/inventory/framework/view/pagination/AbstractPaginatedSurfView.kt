@@ -36,7 +36,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * The initial pagination glyph is updated asynchronously one tick after the pagination state
  * first resolves (via [InitialPaginationStateWatcher]) to work around scheduling constraints.
  *
- * Subclasses are not created directly — use [paginatedSurfView][dev.slne.surf.api.minestom.inventory.framework.view.paginatedSurfView] instead.
+ * Subclasses are not created directly — use
+ * [paginatedSurfView][dev.slne.surf.api.minestom.inventory.framework.view.paginatedSurfView]
+ * instead.
  *
  * @param header the plain-text title rendered in the inventory header
  * @see dev.slne.surf.api.minestom.inventory.framework.view.paginatedSurfView
@@ -55,9 +57,11 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         createPagination()
             .layoutTarget(layoutTarget)
             .apply {
-                onPageSwitch(pageSwitchHandler.prepend { context, _ ->
-                    updatePaginationOverlay(context)
-                })
+                onPageSwitch(
+                    pageSwitchHandler.prepend { context, _ ->
+                        updatePaginationOverlay(context)
+                    },
+                )
             }.build()
     }
 
@@ -69,7 +73,11 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @return a configured [PaginationStateBuilder]
      */
-    protected abstract fun createPagination(): PaginationStateBuilder<Context, MinestomItemComponentBuilder, *>
+    protected abstract fun createPagination(): PaginationStateBuilder<
+        Context,
+        MinestomItemComponentBuilder,
+        *,
+    >
 
     /**
      * Called during [onViewInit] after the container defaults are applied.
@@ -77,7 +85,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @param config the [ViewConfigBuilder] from the inventory framework
      */
-    protected open fun onPaginatedInit(config: ViewConfigBuilder) = Unit
+    protected open fun onPaginatedInit(config: ViewConfigBuilder): Unit = Unit
 
     /**
      * Called during [onViewOpen].
@@ -85,7 +93,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @param open the [OpenContext] from the inventory framework
      */
-    protected open fun onPaginatedOpen(open: OpenContext) = Unit
+    protected open fun onPaginatedOpen(open: OpenContext): Unit = Unit
 
     /**
      * Called during [onViewRender].
@@ -93,7 +101,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @param render the [RenderContext] from the inventory framework
      */
-    protected open fun onPaginatedRender(render: RenderContext) = Unit
+    protected open fun onPaginatedRender(render: RenderContext): Unit = Unit
 
     /**
      * Called during [onViewClick].
@@ -101,7 +109,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @param click the [SlotClickContext] from the inventory framework
      */
-    protected open fun onPaginatedClick(click: SlotClickContext) = Unit
+    protected open fun onPaginatedClick(click: SlotClickContext): Unit = Unit
 
     /**
      * Called during [onViewClose].
@@ -109,7 +117,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @param close the [CloseContext] from the inventory framework
      */
-    protected open fun onPaginatedClose(close: CloseContext) = Unit
+    protected open fun onPaginatedClose(close: CloseContext): Unit = Unit
 
     /**
      * Called during [onViewUpdate].
@@ -117,8 +125,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      *
      * @param update the [Context] from the inventory framework
      */
-    protected open fun onPaginatedUpdate(update: Context) = Unit
-
+    protected open fun onPaginatedUpdate(update: Context): Unit = Unit
 
     /**
      * Re-renders the pagination overlay in the header: the navigation button glyph for the current
@@ -126,13 +133,14 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      */
     private fun updatePaginationOverlay(context: Context) {
         val pagination = paginationState.get(context) ?: return
+
         val row = settings.paginationButtonRow
         val geometry = settings.headerGeometry
 
         val buttonGlyph = PaginationButtonGlyphComponent.getByPaginationState(
             row = row,
             pagination = pagination,
-            geometry = geometry
+            geometry = geometry,
         )
 
         val totalPages = pagination.lastPage().coerceAtLeast(1)
@@ -146,6 +154,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             addChild(buttonGlyph)
 
             removeChildrenOfType<PaginationPageIndicatorComponent>()
+
             if (pageText != null) {
                 addChild(
                     PaginationPageIndicatorComponent(
@@ -154,8 +163,8 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
                         font = settings.rowFont(row),
                         geometry = geometry,
                         defaultColor = settings.headerTextColor,
-                        metrics = settings.rowFontMetrics
-                    )
+                        metrics = settings.rowFontMetrics,
+                    ),
                 )
             }
         }
@@ -174,6 +183,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         for (y in 1..settings.rows.rows) {
             for (x in 0 until 9) {
                 if (y in paginationContentRows && x in 1..7) continue
+
                 blockCell(x, y, settings.headerGeometry)
             }
         }
@@ -198,6 +208,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
      */
     private fun playPageSwitchSound(click: SlotClickContext) {
         val sound = settings.paginationSwitchSound ?: return
+
         click.player.playSound(sound)
     }
 
@@ -228,6 +239,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
 
     final override fun onViewRender(render: RenderContext) {
         val pagination = paginationState.get(render) ?: return
+
         val paginationButtonRow = settings.paginationButtonRow
 
         if (pagination.isStatic) {
@@ -244,6 +256,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             .displayIf(pagination::canBack)
             .onClick { click: SlotClickContext ->
                 if (!pagination.canBack()) return@onClick
+
                 pagination.back()
                 playPageSwitchSound(click)
             }
@@ -254,6 +267,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             .displayIf(pagination::canAdvance)
             .onClick { click: SlotClickContext ->
                 if (!pagination.canAdvance()) return@onClick
+
                 pagination.advance()
                 playPageSwitchSound(click)
             }
@@ -269,11 +283,12 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
         onPaginatedClose(close)
     }
 
-
     final override fun onViewUpdate(update: Context) {
         val pagination = paginationState.get(update)
+
         if (pagination != null && pagination.hasPage(pagination.currentPageIndex())) {
-            pagination.switchTo(pagination.currentPageIndex()) // trigger pagination state update to refresh dynamic elements
+            // trigger pagination state update to refresh dynamic elements
+            pagination.switchTo(pagination.currentPageIndex())
         }
 
         onPaginatedUpdate(update)
@@ -288,7 +303,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             state: State<*>,
             host: StateValueHost,
             internalValue: StateValue,
-            rawValue: Any?
+            rawValue: Any?,
         ) {
         }
 
@@ -296,7 +311,7 @@ abstract class AbstractPaginatedSurfView(header: String) : AbstractSurfView(head
             host: StateValueHost,
             value: StateValue,
             rawOldValue: Any?,
-            rawNewValue: Any?
+            rawNewValue: Any?,
         ) {
             val pagination = value as? Pagination ?: return
             if (pagination.isLoading) return

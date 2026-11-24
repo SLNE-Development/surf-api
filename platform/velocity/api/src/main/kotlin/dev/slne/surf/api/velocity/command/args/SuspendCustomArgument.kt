@@ -31,13 +31,16 @@ import java.util.concurrent.CompletableFuture
  */
 abstract class SuspendCustomArgument<T, B>(
     private val base: Argument<B>,
-    private val scope: CoroutineScope = defaultScope
-) : Argument<Deferred<T>>(base.nodeName, {
-    base.rawType
-}) {
+    private val scope: CoroutineScope = defaultScope,
+) : Argument<Deferred<T>>(
+    base.nodeName,
+    {
+        base.rawType
+    },
+) {
     private val primitiveType by lazy { object : TypeToken<Deferred<T>>(javaClass) {} }
 
-    override fun instance() = this
+    override fun instance(): SuspendCustomArgument<T, B> = this
 
     @Suppress("UNCHECKED_CAST")
     override fun getPrimitiveType(): Class<Deferred<T>> {
@@ -48,12 +51,12 @@ abstract class SuspendCustomArgument<T, B>(
         @Throws(CommandSyntaxException::class)
         abstract suspend fun CoroutineScope.suggest(
             info: SuggestionInfo<CommandSource>,
-            builder: SuggestionsBuilder
+            builder: SuggestionsBuilder,
         )
 
         final override fun suggest(
             info: SuggestionInfo<CommandSource>,
-            builder: SuggestionsBuilder
+            builder: SuggestionsBuilder,
         ): CompletableFuture<Suggestions> {
             return scope.future {
                 suggest(info, builder)
@@ -68,8 +71,9 @@ abstract class SuspendCustomArgument<T, B>(
      * This method is executed inside the provided [CoroutineScope] and may perform
      * suspendable or asynchronous operations such as database lookups or network calls.
      *
-     * Implementations should throw [CommandSyntaxException] / [dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException]
-     * to signal a user-facing parsing error.
+     * Implementations should throw [CommandSyntaxException] /
+     * [dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException] to signal a user-facing
+     * parsing error.
      *
      * @param info Contextual information about the argument being parsed.
      * @return The parsed argument value.
@@ -90,7 +94,7 @@ abstract class SuspendCustomArgument<T, B>(
     final override fun <CommandSourceStack : Any> parseArgument(
         cmdCtx: CommandContext<CommandSourceStack>,
         key: String,
-        previousArgs: CommandArguments
+        previousArgs: CommandArguments,
     ): Deferred<T> {
         val customResult = CommandAPIHandler.getRawArgumentInput(cmdCtx, key)
         val parsedInput = base.parseArgument(cmdCtx, key, previousArgs)
@@ -104,7 +108,9 @@ abstract class SuspendCustomArgument<T, B>(
 
     override fun getArgumentType(): CommandAPIArgumentType = base.argumentType
 
-    protected fun stringCollectionSuspend(suggestions: suspend CoroutineScope.(SuggestionInfo<CommandSource>) -> Collection<String>): ArgumentSuggestions<CommandSource> {
+    protected fun stringCollectionSuspend(
+        suggestions: suspend CoroutineScope.(SuggestionInfo<CommandSource>) -> Collection<String>,
+    ): ArgumentSuggestions<CommandSource> {
         return ArgumentSuggestions.stringCollectionAsync {
             scope.future { suggestions(it) }
         }
@@ -115,7 +121,7 @@ abstract class SuspendCustomArgument<T, B>(
         val sender: CommandSource,
         val previousArgs: CommandArguments,
         val input: String,
-        val currentInput: B
+        val currentInput: B,
     )
 
     companion object {
@@ -123,16 +129,18 @@ abstract class SuspendCustomArgument<T, B>(
 
         private val defaultScopeExceptionHandler = CoroutineExceptionHandler { _, t ->
             if (t is CancellationException) return@CoroutineExceptionHandler
+
             logger.atError()
                 .setCause(t)
                 .log("Uncaught exception in command parsing coroutine")
         }
 
         private val defaultScope = CoroutineScope(
-            Dispatchers.IO.limitedParallelism(16) // We are not planning to do blocking work but preparing in case a developer messes up
-                    + SupervisorJob()
-                    + CoroutineName("Velocity Default Command Parsing Scope")
-                    + defaultScopeExceptionHandler
+            // We are not planning to do blocking work but preparing in case a developer messes up
+            Dispatchers.IO.limitedParallelism(16)
+                + SupervisorJob()
+                + CoroutineName("Velocity Default Command Parsing Scope")
+                + defaultScopeExceptionHandler,
         )
     }
 }

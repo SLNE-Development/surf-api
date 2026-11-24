@@ -60,8 +60,8 @@ internal sealed interface DeferredState<S> {
     class LazySupplier<T>(val computation: Supplier<T>) : DeferredState<State<T>>
 
     /**
-     * Deferred initial state, optionally identified by a string [key].
-     * If [key] is non-null, the state is resolved with the key; otherwise a key-less initial state is created.
+     * Deferred initial state, optionally identified by a string [key]. If [key] is non-null, the
+     * state is resolved with the key; otherwise a key-less initial state is created.
      */
     class Initial<T>(val key: String?) : DeferredState<MutableState<T>>
 }

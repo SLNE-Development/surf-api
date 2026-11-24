@@ -9,8 +9,8 @@ import java.util.*
  * A signed chat message in a form that survives leaving this server.
  *
  * It carries everything a client needs to verify the signature, so a server that never saw the
- * sender can still show the message as signed. A message from a sender without a chat session has no
- * [signature], a nil [sessionId] and is shown as unsigned.
+ * sender can still show the message as signed. A message from a sender without a chat session has
+ * no [signature], a nil [sessionId] and is shown as unsigned.
  *
  * @see ChatSessionHolder.captureSignedMessage
  * @see ChatSessionHolder.sendRemoteSignedMessage

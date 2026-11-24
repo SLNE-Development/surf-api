@@ -5,13 +5,16 @@ import com.squareup.kotlinpoet.TypeSpec
 import dev.slne.surf.nats.gradle.generator.GeneratedVisibility
 
 /**
- * Applies `generatedVisibility` to a class, interface or enum declaration. Members are emitted `public`.
+ * Applies `generatedVisibility` to a class, interface or enum declaration. Members are emitted
+ * `public`.
  */
 internal fun TypeSpec.Builder.applyVisibility(
     visibility: GeneratedVisibility,
-): TypeSpec.Builder = apply {
-    when (visibility) {
-        GeneratedVisibility.PUBLIC -> addModifiers(KModifier.PUBLIC)
-        GeneratedVisibility.INTERNAL -> addModifiers(KModifier.INTERNAL)
+): TypeSpec.Builder {
+    return apply {
+        when (visibility) {
+            GeneratedVisibility.PUBLIC -> addModifiers(KModifier.PUBLIC)
+            GeneratedVisibility.INTERNAL -> addModifiers(KModifier.INTERNAL)
+        }
     }
 }

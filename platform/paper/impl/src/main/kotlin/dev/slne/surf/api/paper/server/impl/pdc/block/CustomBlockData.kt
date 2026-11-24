@@ -45,6 +45,7 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
         val chunkPdc = chunk.persistentDataContainer
         val blockPdc = chunkPdc.get(key, PersistentDataType.TAG_CONTAINER)
         if (blockPdc != null) return blockPdc
+
         return chunkPdc.adapterContext.newPersistentDataContainer()
     }
 
@@ -55,6 +56,7 @@ class CustomBlockData(val block: Block) : CustomBlockPersistentDataContainer {
 
     private fun save() {
         BlockPdcManager.markDirty(this)
+
         if (pdc.isEmpty) {
             chunk.persistentDataContainer.remove(key)
         } else {

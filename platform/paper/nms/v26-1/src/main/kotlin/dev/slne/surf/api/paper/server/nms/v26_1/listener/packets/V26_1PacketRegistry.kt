@@ -30,19 +30,32 @@ object V26_1PacketRegistry {
 
     init {
         // @formatter:off
-        // Serverbound packets
-        registerServerboundPacket(ServerboundSignUpdatePacket::class) { V26_1SignUpdatePacketImpl(it) }
-        registerServerboundPacket(ServerboundRenameItemPacket::class) { V26_1RenameItemPacketImpl(it) }
-        registerServerboundPacket(ServerboundCommandSuggestionPacket::class) { V26_1CommandSuggestionPacketImpl(it) }
-        registerServerboundPacket(ServerboundCustomPayloadPacket::class) { V26_1ServerboundCustomPayloadPacketImpl(it) }
+        registerServerboundPacket(ServerboundSignUpdatePacket::class) {
+            V26_1SignUpdatePacketImpl(it)
+        }
+        registerServerboundPacket(ServerboundRenameItemPacket::class) {
+            V26_1RenameItemPacketImpl(it)
+        }
+        registerServerboundPacket(ServerboundCommandSuggestionPacket::class) {
+            V26_1CommandSuggestionPacketImpl(it)
+        }
+        registerServerboundPacket(ServerboundCustomPayloadPacket::class) {
+            V26_1ServerboundCustomPayloadPacketImpl(it)
+        }
 
-        // Clientbound packets
-        registerClientboundPacket(ClientboundDisconnectPacket::class) { V26_1ClientboundDisconnectPacketImpl(it) }
-        registerClientboundPacket(ClientboundSystemChatPacket::class) { V26_1ClientboundSystemChatPacketImpl(it) }
+        registerClientboundPacket(ClientboundDisconnectPacket::class) {
+            V26_1ClientboundDisconnectPacketImpl(it)
+        }
+        registerClientboundPacket(ClientboundSystemChatPacket::class) {
+            V26_1ClientboundSystemChatPacketImpl(it)
+        }
         // @formatter:on
     }
 
-    private fun <Nms : Packet<out ServerCommonPacketListener>, Api : NmsServerboundPacket> registerServerboundPacket(
+    private fun <
+        Nms : Packet<out ServerCommonPacketListener>,
+        Api : NmsServerboundPacket,
+    > registerServerboundPacket(
         nms: KClass<Nms>,
         factory: ServerboundPacketFactory<Nms, Api>,
     ) {
@@ -52,10 +65,15 @@ object V26_1PacketRegistry {
     @Suppress("UNCHECKED_CAST")
     fun <Nms : Packet<*>> createServerboundPacketOrNull(packet: Nms): NmsServerboundPacket? {
         val factory = SERVERBOUND_PACKETS[packet.javaClass] as? ServerboundPacketFactory<Nms, *>
+
         return factory?.create(packet)
     }
 
-    private fun <Nms : Packet<Listener>, Api : NmsClientboundPacket, Listener : ClientCommonPacketListener> registerClientboundPacket(
+    private fun <
+        Nms : Packet<Listener>,
+        Api : NmsClientboundPacket,
+        Listener : ClientCommonPacketListener,
+    > registerClientboundPacket(
         nms: KClass<Nms>,
         factory: ClientboundPacketFactory<Nms, Api>,
     ) {
@@ -65,6 +83,7 @@ object V26_1PacketRegistry {
     @Suppress("UNCHECKED_CAST")
     fun <Nms : Packet<*>> createClientboundPacketOrNull(packet: Nms): NmsClientboundPacket? {
         val factory = CLIENTBOUND_PACKETS[packet.javaClass] as? ClientboundPacketFactory<Nms, *>
+
         return factory?.create(packet)
     }
 

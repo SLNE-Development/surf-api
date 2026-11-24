@@ -2,11 +2,11 @@ package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
 import dev.slne.surf.api.inventory.framework.internal.TextAlignmentMath
 import dev.slne.surf.api.inventory.framework.internal.layoutViewText
-import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
 import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
@@ -44,7 +44,7 @@ internal class PaginationPageIndicatorComponent(
         charSpacing = metrics.charSpacing,
         uppercase = metrics.uppercase,
         spaceShift = metrics.spaceShift,
-        advance = metrics::advance
+        advance = metrics::advance,
     )
 
     override val textureWidth = laidOut.width
@@ -53,7 +53,7 @@ internal class PaginationPageIndicatorComponent(
         textWidth = textureWidth,
         leftShift = PaginationButtonGlyphComponent.counterAreaShift(geometry),
         padding = 0,
-        containerWidth = PaginationButtonGlyphComponent.COUNTER_AREA_WIDTH
+        containerWidth = PaginationButtonGlyphComponent.COUNTER_AREA_WIDTH,
     )
 
     /**
@@ -86,6 +86,7 @@ internal class PaginationPageIndicatorComponent(
         var result = row
         result = 31 * result + text.hashCode()
         result = 31 * result + font.hashCode()
+
         return result
     }
 }

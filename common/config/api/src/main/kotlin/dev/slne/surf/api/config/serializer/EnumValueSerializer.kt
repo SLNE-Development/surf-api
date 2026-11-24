@@ -14,7 +14,8 @@ import java.util.function.Predicate
  * Enum constants are read using Configurate's enum lookup logic. If no direct match is found,
  * underscores are converted to dashes and lookup is attempted again.
  */
-internal object EnumValueSerializer : ScalarSerializer.Annotated<Enum<*>>(object : TypeToken<Enum<*>>() {}) {
+internal object EnumValueSerializer :
+    ScalarSerializer.Annotated<Enum<*>>(object : TypeToken<Enum<*>>() {}) {
 
     /**
      * Resolves a serialized value to an enum constant of the requested enum type.
@@ -24,14 +25,16 @@ internal object EnumValueSerializer : ScalarSerializer.Annotated<Enum<*>>(object
         val typeClass = GenericTypeReflector.erase(type.type).asSubclass(Enum::class.java)
 
         var foundEnum = EnumLookup.lookupEnum(typeClass, constant)
+
         if (foundEnum == null) {
             foundEnum = EnumLookup.lookupEnum(typeClass, constant.replace("_", "-"))
         }
+
         if (foundEnum == null) {
             val joinedEnumOptions = typeClass.enumConstants.joinToString(limit = 10)
             throw SerializationException(
                 type.type,
-                "Invalid enum constant '$constant' for ${typeClass.simpleName}, expected one of: [$joinedEnumOptions]"
+                "Invalid enum constant '$constant' for ${typeClass.simpleName}, expected one of: [$joinedEnumOptions]",
             )
         }
 
@@ -41,7 +44,11 @@ internal object EnumValueSerializer : ScalarSerializer.Annotated<Enum<*>>(object
     /**
      * Serializes an enum value using its constant name.
      */
-    override fun serialize(type: AnnotatedType, item: Enum<*>, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: Enum<*>,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.name
     }
 }

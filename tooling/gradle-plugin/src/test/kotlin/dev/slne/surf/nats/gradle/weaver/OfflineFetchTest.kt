@@ -19,7 +19,7 @@ internal class OfflineFetchTest : TestKitSupport() {
             ${TestBuild.PLUGIN}
             ${weaverStub()}
             dependencies { weaver 'dev.slne.demo:demo:1.0.0' }
-            """
+            """,
         )
     }
 
@@ -33,7 +33,11 @@ internal class OfflineFetchTest : TestKitSupport() {
             """,
             project = "a",
         )
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto(
+            "surf/a/v1/a.proto",
+            TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"),
+            project = "a",
+        )
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -84,7 +88,10 @@ internal class OfflineFetchTest : TestKitSupport() {
 
         val result = build.runAndFail("--offline", ":b:fetchProtos")
 
-        assertContains(result.output, "surf-nats: weaver dependencies dev.slne.demo:remote:2.0.0 need the network")
+        assertContains(
+            result.output,
+            "surf-nats: weaver dependencies dev.slne.demo:remote:2.0.0 need the network",
+        )
     }
 
     @Test
@@ -99,7 +106,11 @@ internal class OfflineFetchTest : TestKitSupport() {
             """,
             project = "a",
         )
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto(
+            "surf/a/v1/a.proto",
+            TestBuild.contract("message Tag { required string value = 1; }", pkg = "surf.a.v1"),
+            project = "a",
+        )
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -107,7 +118,11 @@ internal class OfflineFetchTest : TestKitSupport() {
             """,
             project = "c",
         )
-        build.proto("surf/c/v1/c.proto", TestBuild.contract("message Code { required string value = 1; }", pkg = "surf.c.v1"), project = "c")
+        build.proto(
+            "surf/c/v1/c.proto",
+            TestBuild.contract("message Code { required string value = 1; }", pkg = "surf.c.v1"),
+            project = "c",
+        )
         build.script(
             """
             ${TestBuild.PLUGIN}

@@ -16,18 +16,20 @@ import java.util.*
  * Serializes a Bukkit [Location] as the protobuf message `surf.types.paper.v1.Location`.
  *
  * The message has the following fields:
- * - `world` (1, optional): the world UID as `surf.types.v1.Uuid`, see [UuidSerializer]. Unset for a location
- *   without a world.
+ * - `world` (1, optional): the world UID as `surf.types.v1.Uuid`, see [UuidSerializer]. Unset for a
+ *   location without a world.
  * - `x` (2), `y` (3) and `z` (4), all required: 64-bit coordinates.
  * - `yaw` (5) and `pitch` (6), both required: 32-bit rotation in degrees.
  *
- * Coordinates and rotation are preserved exactly. Decoding looks the world up by UID with [Bukkit.getWorld], which
- * needs a running server when `world` is set. A world that is not loaded on the reader decodes as a location without
- * a world. Encoding a location whose world was unloaded throws [IllegalArgumentException] from [Location.getWorld].
- * In Paper projects the `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [Location] with this
+ * Coordinates and rotation are preserved exactly. Decoding looks the world up by UID with
+ * [Bukkit.getWorld], which needs a running server when `world` is set. A world that is not loaded
+ * on the reader decodes as a location without a world. Encoding a location whose world was unloaded
+ * throws [IllegalArgumentException] from [Location.getWorld]. In Paper projects the
+ * `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [Location] with this
  * serializer.
  *
- * Decoding throws [kotlinx.serialization.MissingFieldException] when a coordinate or the rotation is absent.
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when a coordinate or the rotation
+ * is absent.
  */
 object LocationSerializer : KSerializer<Location> {
     override val descriptor: SerialDescriptor = LocationProto.serializer().descriptor
@@ -35,7 +37,7 @@ object LocationSerializer : KSerializer<Location> {
     override fun serialize(encoder: Encoder, value: Location) {
         encoder.encodeSerializableValue(
             LocationProto.serializer(),
-            LocationProto(value.world?.uid, value.x, value.y, value.z, value.yaw, value.pitch)
+            LocationProto(value.world?.uid, value.x, value.y, value.z, value.yaw, value.pitch),
         )
     }
 

@@ -30,7 +30,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
     ttl,
     Registry,
     NAMESPACE,
-    CodecDescriptor.of(keyCodec, valueCodec)
+    CodecDescriptor.of(keyCodec, valueCodec),
 ), SyncMap<K, V> {
 
     companion object {
@@ -73,7 +73,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
     private val remoteMap by lazy {
         api.redissonReactive.getMap<String, String>(
             dataKey,
-            StringCodec.INSTANCE
+            StringCodec.INSTANCE,
         )
     }
 
@@ -85,18 +85,20 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
             .then()
     }
 
-    override fun registerListeners0(): List<Mono<Int>> = listOf(
-        remoteMap.addListener(DeletedObjectListener { requestResync() }),
-        remoteMap.addListener(ExpiredObjectListener { requestResync() })
-    )
+    override fun registerListeners0(): List<Mono<Int>> {
+        return listOf(
+            remoteMap.addListener(DeletedObjectListener { requestResync() }),
+            remoteMap.addListener(ExpiredObjectListener { requestResync() }),
+        )
+    }
 
     override fun unregisterListener(id: Int): Mono<*> = remoteMap.removeListener(id)
 
-    override fun snapshot() = lock.read { HashMap(map) }
-    override fun size() = lock.read { map.size }
-    override fun containsKey(key: K) = lock.read { map.containsKey(key) }
+    override fun snapshot(): HashMap<K, V> = lock.read { HashMap(map) }
+    override fun size(): Int = lock.read { map.size }
+    override fun containsKey(key: K): Boolean = lock.read { map.containsKey(key) }
     override fun get(key: K): V? = lock.read { map[key] }
-    override fun isEmpty() = lock.read { map.isEmpty() }
+    override fun isEmpty(): Boolean = lock.read { map.isEmpty() }
 
     override fun put(key: K, value: V): V? {
         val previous = lock.write {
@@ -123,8 +125,10 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         val removedLocal = ArrayList<Pair<K, V>>()
         lock.write {
             val it = map.entries.iterator()
+
             while (it.hasNext()) {
                 val e = it.next()
+
                 if (predicate(e.key, e.value)) {
                     keysToRemove.add(e.key)
                     removedLocal.add(e.key to e.value)
@@ -135,7 +139,10 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         if (keysToRemove.isEmpty()) return false
 
         removeManyRemote(keysToRemove)
-        removedLocal.forEach { (k, v) -> notifyListeners(SyncMapChange.Removed(k, v)) }
+
+        for ((k, v) in removedLocal) {
+            notifyListeners(SyncMapChange.Removed(k, v))
+        }
 
         return true
     }
@@ -169,6 +176,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
                 val values = HashMap<String, String>(payloadSize / 2)
 
                 var index = 0
+
                 while (index < payloadSize) {
                     values[raw[index].toString()] = raw[index + 1].toString()
                     index += 2
@@ -285,11 +293,13 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         key: K,
         expectedValue: V,
         newValue: V,
-    ): Boolean = replaceIfEqualsRemoteEncoded(
-        encodeKey(key),
-        encodeValue(expectedValue),
-        encodeValue(newValue),
-    )
+    ): Boolean {
+        return replaceIfEqualsRemoteEncoded(
+            encodeKey(key),
+            encodeValue(expectedValue),
+            encodeValue(newValue),
+        )
+    }
 
     override suspend fun removeIfEqualsAndAwait(
         key: K,
@@ -315,11 +325,13 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         )
 
         val event = result.event ?: return value
+
         return event.payloadOrNull(2)?.let(::decodeValue)
     }
 
-    override suspend fun putIfAbsentRemote(key: K, value: V): V? =
-        putIfAbsentRemoteEncoded(encodeKey(key), encodeValue(value))?.let(::decodeValue)
+    override suspend fun putIfAbsentRemote(key: K, value: V): V? {
+        return putIfAbsentRemoteEncoded(encodeKey(key), encodeValue(value))?.let(::decodeValue)
+    }
 
     override suspend fun removeRemote(key: K): V? {
         val result = writeToRemoteWithPayloadAwait(
@@ -378,24 +390,28 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         encodedKey: String,
         encodedExpected: String,
         encodedNew: String,
-    ): Boolean = writeToRemoteAndApplyAwait(
-        REPLACE_IF_EQUALS_SCRIPT,
-        EVENT_PUT,
-        encodedKey,
-        encodedExpected,
-        encodedNew,
-        payload = joinPayload(encodedKey, encodedNew, encodedExpected),
-    )
+    ): Boolean {
+        return writeToRemoteAndApplyAwait(
+            REPLACE_IF_EQUALS_SCRIPT,
+            EVENT_PUT,
+            encodedKey,
+            encodedExpected,
+            encodedNew,
+            payload = joinPayload(encodedKey, encodedNew, encodedExpected),
+        )
+    }
 
     private suspend fun removeIfEqualsRemoteEncoded(
         encodedKey: String,
         encodedExpected: String,
-    ): Boolean = writeToRemoteAndApplyAwait(
-        REMOVE_IF_EQUALS_SCRIPT,
-        EVENT_REMOVE,
-        encodedKey,
-        encodedExpected,
-    )
+    ): Boolean {
+        return writeToRemoteAndApplyAwait(
+            REMOVE_IF_EQUALS_SCRIPT,
+            EVENT_REMOVE,
+            encodedKey,
+            encodedExpected,
+        )
+    }
 
     override fun overrideFromRemote(raw: SimpleVersionedSnapshot<Map<String, String>>) {
         val decoded = decodeSnapshot(raw.value)
@@ -410,9 +426,11 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
 
     private fun decodeSnapshot(raw: Map<String, String>): HashMap<K, V> {
         val decoded = HashMap<K, V>(raw.size)
+
         for ((k, v) in raw) {
             decoded[decodeKey(k)] = decodeValue(v)
         }
+
         return decoded
     }
 
@@ -421,11 +439,14 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVE, *encKeys)
     }
 
-    override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {
-        EVENT_PUT -> onPutEvent(data)
-        EVENT_REMOVE -> onRemoveEvent(data)
-        EVENT_CLEAR -> onCleared(data)
-        else -> log.atWarning().log("Unknown message type '$type' received from SyncMap '$id'")
+    override fun onStreamEvent(type: String, data: StreamEventData) {
+        when (type) {
+            EVENT_PUT -> onPutEvent(data)
+            EVENT_REMOVE -> onRemoveEvent(data)
+            EVENT_CLEAR -> onCleared(data)
+            else -> log.atWarning()
+                .log("Unknown message type '$type' received from SyncMap '$id'")
+        }
     }
 
     private fun onPutEvent(data: StreamEventData) {
@@ -459,6 +480,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
         }
 
         if (!ok) return requestResync()
+
         notifyListeners(SyncMapChange.Put(decodedKey, decodedVal, decodedOldVal))
     }
 
@@ -481,6 +503,7 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
             true
         }
         if (!ok) return requestResync()
+
         notifyListeners(SyncMapChange.Removed(decodedKey, decodedOldVal))
     }
 
@@ -492,7 +515,9 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
             h
         }
 
-        if (had) notifyListeners(SyncMapChange.Cleared())
+        if (had) {
+            notifyListeners(SyncMapChange.Cleared())
+        }
     }
 
     private fun encodeKey(key: K): String = keyCodec.encode(key)
@@ -503,11 +528,12 @@ class SyncMapImpl<K : Any, V : Any> internal constructor(
     private object CodecDescriptor {
         fun of(
             keyCodec: SyncValueCodec<*>,
-            valueCodec: SyncValueCodec<*>
+            valueCodec: SyncValueCodec<*>,
         ): String? {
             val key = keyCodec.descriptor
             val value = valueCodec.descriptor
             if (key == null && value == null) return null
+
             return "map:${key ?: "json"}:${value ?: "json"}"
         }
     }

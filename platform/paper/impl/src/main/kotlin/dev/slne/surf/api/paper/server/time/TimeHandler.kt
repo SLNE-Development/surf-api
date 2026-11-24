@@ -23,6 +23,7 @@ object TimeHandler {
         return withContext(surfDispatchers.main) {
             while (true) {
                 val newTime = world.fullTime + step
+
                 if (newTime >= targetTime) {
                     world.fullTime = targetTime
                     skippingWorlds.remove(world.uid)

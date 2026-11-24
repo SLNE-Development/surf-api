@@ -14,36 +14,38 @@ import org.redisson.config.TransportMode
 data class TransportInfo private constructor(
     val ioHandlerFactory: IoHandlerFactory,
     val redissonTransportMode: TransportMode,
-    val transportString: String
+    val transportString: String,
 ) {
 
     companion object {
         val instance: TransportInfo by lazy { detect() }
 
-        private fun detect(): TransportInfo = when {
-            IoUring.isAvailable() -> TransportInfo(
-                ioHandlerFactory = IoUringIoHandler.newFactory(),
-                redissonTransportMode = TransportMode.IO_URING,
-                transportString = "IoUring"
-            )
+        private fun detect(): TransportInfo {
+            return when {
+                IoUring.isAvailable() -> TransportInfo(
+                    ioHandlerFactory = IoUringIoHandler.newFactory(),
+                    redissonTransportMode = TransportMode.IO_URING,
+                    transportString = "IoUring",
+                )
 
-            Epoll.isAvailable() -> TransportInfo(
-                ioHandlerFactory = EpollIoHandler.newFactory(),
-                redissonTransportMode = TransportMode.EPOLL,
-                transportString = "Epoll"
-            )
+                Epoll.isAvailable() -> TransportInfo(
+                    ioHandlerFactory = EpollIoHandler.newFactory(),
+                    redissonTransportMode = TransportMode.EPOLL,
+                    transportString = "Epoll",
+                )
 
-            KQueue.isAvailable() -> TransportInfo(
-                ioHandlerFactory = KQueueIoHandler.newFactory(),
-                redissonTransportMode = TransportMode.KQUEUE,
-                transportString = "KQueue"
-            )
+                KQueue.isAvailable() -> TransportInfo(
+                    ioHandlerFactory = KQueueIoHandler.newFactory(),
+                    redissonTransportMode = TransportMode.KQUEUE,
+                    transportString = "KQueue",
+                )
 
-            else -> TransportInfo(
-                ioHandlerFactory = NioIoHandler.newFactory(),
-                redissonTransportMode = TransportMode.NIO,
-                transportString = "NIO"
-            )
+                else -> TransportInfo(
+                    ioHandlerFactory = NioIoHandler.newFactory(),
+                    redissonTransportMode = TransportMode.NIO,
+                    transportString = "NIO",
+                )
+            }
         }
     }
 }

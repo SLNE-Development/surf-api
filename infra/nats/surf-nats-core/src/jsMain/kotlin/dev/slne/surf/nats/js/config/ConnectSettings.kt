@@ -25,7 +25,7 @@ internal class ConnectSettings(
 
         fun of(options: ConnectOptions): ConnectSettings {
             val name = ProtocolNaming.requireClientName(
-                requireFromJs(options.name, "NATS client name")
+                requireFromJs(options.name, "NATS client name"),
             )
 
             val timeout = options.connectTimeoutMs ?: DEFAULT_CONNECT_TIMEOUT_MS
@@ -38,12 +38,21 @@ internal class ConnectSettings(
             val servers = when (value) {
                 null -> return listOf(ConnectRules.DEFAULT_SERVER)
                 is String -> ConnectRules.parseServers(value)
-                is Array<*> -> ConnectRules.servers(value.map { entry ->
-                    entry as? String
-                        ?: throw IllegalArgumentException("NATS servers must be strings, got ${jsTypeOf(entry)}")
-                })
+                is Array<*> -> ConnectRules.servers(
+                    value.map { entry ->
+                        entry as? String
+                            ?: throw IllegalArgumentException(
+                                "NATS servers must be strings, got ${
+                                    jsTypeOf(
+                                        entry,
+                                    )
+                                }",
+                            )
+                    },
+                )
+
                 else -> throw IllegalArgumentException(
-                    "NATS servers must be a string or an array of strings, got ${jsTypeOf(value)}"
+                    "NATS servers must be a string or an array of strings, got ${jsTypeOf(value)}",
                 )
             }
             require(servers.isNotEmpty()) { "NATS servers must not be empty" }

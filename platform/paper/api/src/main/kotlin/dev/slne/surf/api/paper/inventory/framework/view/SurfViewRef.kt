@@ -24,13 +24,15 @@ abstract class AbstractSurfViewRef @PublishedApi internal constructor() {
     /**
      * Returns the fully constructed [AbstractSurfView] associated with this reference.
      *
-     * @throws IllegalStateException if called before the view is built (i.e. during DSL configuration)
+     * @throws IllegalStateException if called before the view is built (i.e. during DSL
+     * configuration)
      */
     fun getRegisteredView(): AbstractSurfView {
         check(::view.isInitialized) {
             "Cannot access view during DSL configuration. " +
-                    "Only available inside lifecycle callbacks (onFirstRender, onClose, etc.)"
+                "Only available inside lifecycle callbacks (onFirstRender, onClose, etc.)"
         }
+
         return view
     }
 }

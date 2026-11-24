@@ -12,7 +12,8 @@ import org.intellij.lang.annotations.Pattern
 public const val NATS_CLIENT_NAME_PATTERN: String = "^[a-z0-9]+(-[a-z0-9]+)*$"
 
 /**
- * Marks a parameter that takes a client name, so that the IDE checks literals against [NATS_CLIENT_NAME_PATTERN].
+ * Marks a parameter that takes a client name, so that the IDE checks literals against
+ * [NATS_CLIENT_NAME_PATTERN].
  */
 @InternalNatsApi
 @Pattern(NATS_CLIENT_NAME_PATTERN)

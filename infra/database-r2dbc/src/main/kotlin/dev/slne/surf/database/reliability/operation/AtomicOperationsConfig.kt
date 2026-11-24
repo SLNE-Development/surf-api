@@ -9,14 +9,16 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Settings of [AtomicOperations].
  *
- * @property retention How long a stored reply is kept. A repeated request after this period executes again, so it
- * must exceed the longest time a request can be redelivered or retried.
- * @property lockTimeout How long an execution waits for a concurrent execution of the same key before it fails with
- * [AtomicOperationInProgressException]. PostgreSQL truncates it to whole milliseconds, MariaDB rounds it up to whole
- * seconds.
- * @property maxAttempts Executions per call, counting retries after deadlocks, serialization failures and claims
- * that vanished concurrently. Deleting an expired reply does not consume an attempt.
- * @property clock Source of `created_at` and `expires_at`. All processes sharing the tables need synchronized clocks.
+ * @property retention How long a stored reply is kept. A repeated request after this period
+ * executes again, so it must exceed the longest time a request can be redelivered or retried.
+ * @property lockTimeout How long an execution waits for a concurrent execution of the same key
+ * before it fails with [AtomicOperationInProgressException]. PostgreSQL truncates it to whole
+ * milliseconds, MariaDB rounds it up to whole seconds.
+ * @property maxAttempts Executions per call, counting retries after deadlocks, serialization
+ * failures and claims that vanished concurrently. Deleting an expired reply does not consume an
+ * attempt.
+ * @property clock Source of `created_at` and `expires_at`. All processes sharing the tables need
+ * synchronized clocks.
  * @throws IllegalArgumentException if [retention] is not positive, [lockTimeout] is outside 1 ms to
  * [Int.MAX_VALUE] ms (about 24.8 days) or [maxAttempts] is below 1
  */
@@ -51,7 +53,8 @@ data class AtomicOperationsConfig(
         const val DEFAULT_MAX_ATTEMPTS = 3
 
         /**
-         * Shortest [lockTimeout]. PostgreSQL's `lock_timeout` takes whole milliseconds, and `0` disables the wait bound.
+         * Shortest [lockTimeout]. PostgreSQL's `lock_timeout` takes whole milliseconds, and `0`
+         * disables the wait bound.
          */
         private val MIN_LOCK_TIMEOUT: Duration = 1.milliseconds
 

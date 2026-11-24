@@ -10,8 +10,8 @@ import java.util.jar.JarOutputStream
 /**
  * A throw-away Groovy DSL build in `build/tmp/testkit`, run offline through Gradle TestKit.
  *
- * [withSurfApi] decides whether surf-api's Gradle plugins (and with them Shadow, KSP and Kotlin) are on the
- * plugin classpath next to the plugin under test.
+ * [withSurfApi] decides whether surf-api's Gradle plugins (and with them Shadow, KSP and Kotlin)
+ * are on the plugin classpath next to the plugin under test.
  */
 internal class TestBuild private constructor(val dir: File, private val withSurfApi: Boolean) {
 
@@ -19,18 +19,20 @@ internal class TestBuild private constructor(val dir: File, private val withSurf
         val file = dir.resolve(path)
         file.parentFile.mkdirs()
         file.writeText(content.trimIndent() + "\n", Charsets.UTF_8)
+
         return file
     }
 
     fun script(content: String): File = file("build.gradle", content)
 
     /**
-     * Writes `src/main/java/<package>/<Name>.java` for [className], a binary name such as `demo.Launcher`, with [members]
-     * as the class body.
+     * Writes `src/main/java/<package>/<Name>.java` for [className], a binary name such as
+     * `demo.Launcher`, with [members] as the class body.
      */
     fun javaClass(className: String, members: String = ""): File {
         val packageName = className.substringBeforeLast('.', "")
         val simpleName = className.substringAfterLast('.')
+
         return file(
             "src/main/java/${className.replace('.', '/')}.java",
             "package $packageName;\n\npublic class $simpleName {\n$members\n}",
@@ -50,6 +52,7 @@ internal class TestBuild private constructor(val dir: File, private val withSurf
                 jar.closeEntry()
             }
         }
+
         return file
     }
 
@@ -57,19 +60,22 @@ internal class TestBuild private constructor(val dir: File, private val withSurf
 
     fun runAndFail(vararg arguments: String): BuildResult = runner(arguments).buildAndFail()
 
-    private fun runner(arguments: Array<out String>): GradleRunner =
-        GradleRunner.create()
+    private fun runner(arguments: Array<out String>): GradleRunner {
+        return GradleRunner.create()
             .withProjectDir(dir)
             .withPluginClasspath(if (withSurfApi) surfApiClasspath else pluginClasspath)
             .withTestKitDir(TESTKIT_HOME)
             .withArguments(arguments.toList() + listOf("--offline", "--stacktrace"))
+    }
 
     companion object {
         private val TESTKIT_HOME = File("build/tmp/testKit").absoluteFile
 
         private val pluginClasspath: List<File> by lazy {
             val metadata = Properties()
-            val resource = checkNotNull(TestBuild::class.java.getResourceAsStream("/plugin-under-test-metadata.properties")) {
+            val resource = checkNotNull(
+                TestBuild::class.java.getResourceAsStream("/plugin-under-test-metadata.properties"),
+            ) {
                 "plugin-under-test-metadata.properties is missing from the test classpath"
             }
             resource.use { stream -> metadata.load(stream) }
@@ -77,19 +83,26 @@ internal class TestBuild private constructor(val dir: File, private val withSurf
         }
 
         private val surfApiClasspath: List<File> by lazy {
-            val surfApi = checkNotNull(System.getProperty("surf.microservice.test.surfApiClasspath")) {
+            val surfApi = checkNotNull(
+                System.getProperty("surf.microservice.test.surfApiClasspath"),
+            ) {
                 "System property surf.microservice.test.surfApiClasspath is not set; run the tests through Gradle"
             }
             pluginClasspath + surfApi.toFiles()
         }
 
-        private fun String.toFiles(): List<File> = split(File.pathSeparatorChar).filter { it.isNotBlank() }.map(::File)
+        private fun String.toFiles(): List<File> {
+            return split(File.pathSeparatorChar)
+                .filter { it.isNotBlank() }
+                .map(::File)
+        }
 
         fun create(name: String, withSurfApi: Boolean): TestBuild {
             val slug = name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-').take(48)
             val dir = File("build/tmp/testkit-projects").absoluteFile.resolve(slug)
             dir.deleteRecursively()
             dir.mkdirs()
+
             return TestBuild(dir, withSurfApi).apply {
                 file("settings.gradle", "rootProject.name = 'demo'")
             }

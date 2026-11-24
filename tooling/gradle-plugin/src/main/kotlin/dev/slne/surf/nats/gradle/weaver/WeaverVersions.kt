@@ -3,8 +3,9 @@ package dev.slne.surf.nats.gradle.weaver
 /**
  * Version ordering of the weaver registry.
  *
- * Numeric parts compare first, with missing parts treated as 0. At equal numeric parts a release sorts above
- * any qualified version, and qualifiers compare segment by segment (numerically when both segments are numeric).
+ * Numeric parts compare first, with missing parts treated as 0. At equal numeric parts a release
+ * sorts above any qualified version, and qualifiers compare segment by segment (numerically when
+ * both segments are numeric).
  */
 internal object WeaverVersions {
 
@@ -31,8 +32,8 @@ internal object WeaverVersions {
     }
 
     /**
-     * Returns the highest release in [versions] strictly below [projectVersion] without its `-SNAPSHOT` suffix,
-     * or `null` when there is none.
+     * Returns the highest release in [versions] strictly below [projectVersion] without its
+     * `-SNAPSHOT` suffix, or `null` when there is none.
      */
     fun previousRelease(versions: Collection<String>, projectVersion: String): String? {
         val current = projectVersion.removeSuffix(SNAPSHOT_SUFFIX)
@@ -45,6 +46,7 @@ internal object WeaverVersions {
         val dash = version.indexOf('-')
         val core = if (dash == -1) version else version.substring(0, dash)
         val qualifier = if (dash == -1) null else version.substring(dash + 1)
+
         return core.split('.').map { it.toLongOrNull() ?: 0L } to qualifier
     }
 

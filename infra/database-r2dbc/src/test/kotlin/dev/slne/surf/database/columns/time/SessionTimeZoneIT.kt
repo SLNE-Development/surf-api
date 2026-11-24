@@ -15,17 +15,19 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
-import java.util.TimeZone
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * Time columns keep their instants when neither the JVM default zone nor the MariaDB server zone is UTC.
+ * Time columns keep their instants when neither the JVM default zone nor the MariaDB server zone is
+ * UTC.
  *
- * The JVM default zone is global, so each test changes it and restores it afterwards. It is set before the database is
- * created because the PostgreSQL driver would otherwise take its session time zone from it.
+ * The JVM default zone is global, so each test changes it and restores it afterwards. It is set
+ * before the database is created because the PostgreSQL driver would otherwise take its session
+ * time zone from it.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class SessionTimeZoneIT {
@@ -33,7 +35,8 @@ class SessionTimeZoneIT {
     private class Events : Table("tz_events") {
         val id = integer("id")
         val occurredAt = offsetDateTime("occurred_at")
-        val createdAt = offsetDateTime("created_at").defaultExpression(CurrentOffsetDateTime.WithoutUpdate)
+        val createdAt = offsetDateTime("created_at")
+            .defaultExpression(CurrentOffsetDateTime.WithoutUpdate)
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -50,9 +53,12 @@ class SessionTimeZoneIT {
                 occurred_at TIMESTAMPTZ NOT NULL,
                 created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
+            """,
         ) {
-            assertRoundTrip(testDb, epochQuery = "SELECT EXTRACT(EPOCH FROM occurred_at)::BIGINT FROM tz_events")
+            assertRoundTrip(
+                testDb,
+                epochQuery = "SELECT EXTRACT(EPOCH FROM occurred_at)::BIGINT FROM tz_events",
+            )
         }
     }
 
@@ -68,9 +74,12 @@ class SessionTimeZoneIT {
                 occurred_at TIMESTAMP(6) NOT NULL,
                 created_at  DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
             )
-            """
+            """,
         ) {
-            assertRoundTrip(testDb, epochQuery = "SELECT UNIX_TIMESTAMP(occurred_at) FROM tz_events")
+            assertRoundTrip(
+                testDb,
+                epochQuery = "SELECT UNIX_TIMESTAMP(occurred_at) FROM tz_events",
+            )
         }
     }
 
@@ -79,7 +88,11 @@ class SessionTimeZoneIT {
         val container = DatabaseContainers.mariadbOutsideUtc()
         val zone = container.createConnection("").use { connection ->
             connection.createStatement().use { statement ->
-                statement.executeQuery("SELECT @@global.time_zone").use { rows -> rows.next(); rows.getString(1) }
+                statement.executeQuery("SELECT @@global.time_zone").use { rows ->
+                    rows.next(); rows.getString(
+                    1,
+                )
+                }
             }
         }
 
@@ -94,7 +107,10 @@ class SessionTimeZoneIT {
         val row = suspendTransaction(testDb.database) {
             events.insert {
                 it[id] = 1
-                it[occurredAt] = OffsetDateTime.ofInstant(OCCURRED, TimeZone.getDefault().toZoneId())
+                it[occurredAt] = OffsetDateTime.ofInstant(
+                    OCCURRED,
+                    TimeZone.getDefault().toZoneId(),
+                )
             }
             events.selectAll().single()
         }
@@ -118,14 +134,22 @@ class SessionTimeZoneIT {
         migrationDataSource.connection.use { c -> c.createStatement().use { it.execute(sql) } }
     }
 
-    private fun TestDatabase.queryLong(sql: String): Long =
-        migrationDataSource.connection.use { c ->
-            c.createStatement().use { s -> s.executeQuery(sql).use { rows -> rows.next(); rows.getLong(1) } }
+    private fun TestDatabase.queryLong(sql: String): Long {
+        return migrationDataSource.connection.use { c ->
+            c.createStatement().use { s ->
+                s.executeQuery(sql).use { rows ->
+                    rows.next(); rows.getLong(
+                    1,
+                )
+                }
+            }
         }
+    }
 
     private fun withJvmZone(zone: String, block: suspend () -> Unit) {
         val original = TimeZone.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone(zone))
+
         try {
             runBlocking { block() }
         } finally {

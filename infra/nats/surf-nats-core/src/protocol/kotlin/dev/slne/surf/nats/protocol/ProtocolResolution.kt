@@ -3,8 +3,8 @@ package dev.slne.surf.nats.protocol
 /**
  * Values of the `surf.nats.v1.NatsRecipients` proto enum.
  *
- * Entry names are the proto constant names without the `NATS_RECIPIENTS_` prefix. [protoName] is the full constant
- * name and [number] the proto enum number.
+ * Entry names are the proto constant names without the `NATS_RECIPIENTS_` prefix. [protoName] is
+ * the full constant name and [number] the proto enum number.
  */
 internal enum class RecipientsOption(val number: Int, val protoName: String) {
     UNSPECIFIED(0, "NATS_RECIPIENTS_UNSPECIFIED"),
@@ -21,8 +21,8 @@ internal enum class RecipientsOption(val number: Int, val protoName: String) {
         fun ofNumber(number: Int): RecipientsOption? = byNumber[number]
 
         /**
-         * Resolves a full proto constant name such as `NATS_RECIPIENTS_ANY_INSTANCE`, or returns `null` for any other
-         * name, including one without the prefix.
+         * Resolves a full proto constant name such as `NATS_RECIPIENTS_ANY_INSTANCE`, or returns
+         * `null` for any other name, including one without the prefix.
          */
         fun ofName(name: String): RecipientsOption? = byName[name]
     }
@@ -31,21 +31,24 @@ internal enum class RecipientsOption(val number: Int, val protoName: String) {
 /**
  * Inheritance of contract options: method over service over default.
  *
- * An unset option (`null`), a timeout of `0` and [RecipientsOption.UNSPECIFIED] inherit. A `false` that is set on a
- * method overrides `persistent = true` on its service.
+ * An unset option (`null`), a timeout of `0` and [RecipientsOption.UNSPECIFIED] inherit. A `false`
+ * that is set on a method overrides `persistent = true` on its service.
  */
 internal object ProtocolResolution {
 
     /**
      * Resolves the service with the proto full name [protoName].
      */
-    fun service(options: ServiceOptions, protoName: String): ResolvedService = ResolvedService(protoName, options)
+    fun service(options: ServiceOptions, protoName: String): ResolvedService {
+        return ResolvedService(protoName, options)
+    }
 
     /**
      * Resolves the options of an rpc of [service].
      *
-     * [emptyResponse] is whether the response type is `google.protobuf.Empty`. [streaming] is whether the request or
-     * the response is streamed. The result is not validated, see [ResolvedMethod.problems].
+     * [emptyResponse] is whether the response type is `google.protobuf.Empty`. [streaming] is
+     * whether the request or the response is streamed. The result is not validated, see
+     * [ResolvedMethod.problems].
      */
     fun method(
         options: MethodOptions,
@@ -54,11 +57,12 @@ internal object ProtocolResolution {
         streaming: Boolean,
     ): ResolvedMethod {
         val recipients = recipients(options.recipients, service.options.recipients)
+
         return ResolvedMethod(
             persistent = persistent(options.persistent, service.options.persistent),
             callTimeoutSeconds = callTimeoutSeconds(
                 options.callTimeoutSeconds,
-                service.options.callTimeoutSeconds
+                service.options.callTimeoutSeconds,
             ),
             recipients = recipients,
             resultKind = ResultKindOption.of(emptyResponse, recipients),
@@ -81,15 +85,22 @@ internal object ProtocolResolution {
     }
 
     /**
-     * Returns [callTimeoutSeconds], or the default for a persistent or non-persistent rpc when it is `null`.
+     * Returns [callTimeoutSeconds], or the default for a persistent or non-persistent rpc when it
+     * is `null`.
      */
     fun effectiveCallTimeoutSeconds(callTimeoutSeconds: Int?, persistent: Boolean): Int {
-        return callTimeoutSeconds
-            ?: if (persistent) ProtocolDefaults.PERSISTENT_TIMEOUT_SECONDS else ProtocolDefaults.CORE_TIMEOUT_SECONDS
+        if (callTimeoutSeconds != null) return callTimeoutSeconds
+
+        return if (persistent) {
+            ProtocolDefaults.PERSISTENT_TIMEOUT_SECONDS
+        } else {
+            ProtocolDefaults.CORE_TIMEOUT_SECONDS
+        }
     }
 
     /**
-     * Returns the explicit method value, else the explicit service value, else [RecipientsOption.ANY_INSTANCE].
+     * Returns the explicit method value, else the explicit service value, else
+     * [RecipientsOption.ANY_INSTANCE].
      *
      * The result is never [RecipientsOption.UNSPECIFIED].
      */

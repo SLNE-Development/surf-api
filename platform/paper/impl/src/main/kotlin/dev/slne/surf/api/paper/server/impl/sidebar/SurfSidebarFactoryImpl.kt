@@ -12,6 +12,7 @@ class SurfSidebarFactoryImpl : SurfSidebarFactory {
         block: SidebarBuilder.() -> Unit,
     ): SurfViewerSidebar {
         val builder = SidebarBuilderImpl().apply(block)
+
         return SurfViewerSidebarImpl(plugin, builder.definition())
     }
 
@@ -20,6 +21,7 @@ class SurfSidebarFactoryImpl : SurfSidebarFactory {
         block: AutoUpdatingSidebarBuilder.() -> Unit,
     ): SurfAutoUpdatingSidebar {
         val builder = AutoUpdatingSidebarBuilderImpl().apply(block)
+
         return SurfAutoUpdatingSidebarImpl(plugin, builder.definition(), builder.updateInterval)
     }
 
@@ -28,6 +30,7 @@ class SurfSidebarFactoryImpl : SurfSidebarFactory {
         block: AutoUpdatingSidebarBuilder.() -> Unit,
     ): SurfGlobalSidebar {
         val builder = AutoUpdatingSidebarBuilderImpl().apply(block)
+
         return SurfGlobalSidebarImpl(plugin, builder.definition(), builder.updateInterval)
     }
 }

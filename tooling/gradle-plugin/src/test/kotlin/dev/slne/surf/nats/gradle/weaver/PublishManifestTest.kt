@@ -19,7 +19,8 @@ import kotlin.test.assertNotNull
  */
 internal class PublishManifestTest : TestKitSupport() {
 
-    private val common = "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:${SurfNatsPluginVersion.VERSION}"
+    private val common =
+        "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:${SurfNatsPluginVersion.VERSION}"
 
     private fun publishedModule(dependencies: String = "") {
         build.settings()
@@ -31,20 +32,23 @@ internal class PublishManifestTest : TestKitSupport() {
             group = 'dev.slne.demo'
             version = '1.2.0'
             dependencies { $dependencies }
-            ${TestBuild.showTask(
-                "weaverConfiguration" to "configurations.weaver.dependencies.collect { it.group + ':' + it.name + ':' + it.version }",
-                "fetchDependencies" to "tasks.fetchProtos.dependencies.get()",
-            )}
-            """
+            ${
+                TestBuild.showTask(
+                    "weaverConfiguration" to "configurations.weaver.dependencies.collect { it.group + ':' + it.name + ':' + it.version }",
+                    "fetchDependencies" to "tasks.fetchProtos.dependencies.get()",
+                )
+            }
+            """,
         )
         build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
         stub.acceptPublish("dev.slne.demo", "demo", "1.2.0")
         stub.acceptResolve()
     }
 
-    private fun manifestDependencies(request: StubRequest): List<String> =
-        Json.parseToJsonElement(String(assertNotNull(request.part("manifest")))).jsonObject
+    private fun manifestDependencies(request: StubRequest): List<String> {
+        return Json.parseToJsonElement(String(assertNotNull(request.part("manifest")))).jsonObject
             .getValue("dependencies").jsonArray.map { it.jsonPrimitive.content }
+    }
 
     @Test
     fun `the manifest declares the common types and the weaver configuration stays empty`() {
@@ -56,7 +60,11 @@ internal class PublishManifestTest : TestKitSupport() {
         val shown = build.run("show", "-q").shown()
         assertEquals("[]", shown["weaverConfiguration"])
         assertEquals("[]", shown["fetchDependencies"])
-        assertEquals(emptyList(), stub.requests("POST"), "without weaver dependencies nothing is resolved")
+        assertEquals(
+            emptyList(),
+            stub.requests("POST"),
+            "without weaver dependencies nothing is resolved",
+        )
     }
 
     @Test
@@ -69,7 +77,10 @@ internal class PublishManifestTest : TestKitSupport() {
             listOf("dev.slne.demo:other:2.0.0", common),
             manifestDependencies(stub.requests("PUT").single()),
         )
-        assertEquals("[dev.slne.demo:other:2.0.0]", build.run("show", "-q").shown()["weaverConfiguration"])
+        assertEquals(
+            "[dev.slne.demo:other:2.0.0]",
+            build.run("show", "-q").shown()["weaverConfiguration"],
+        )
     }
 
     @Test

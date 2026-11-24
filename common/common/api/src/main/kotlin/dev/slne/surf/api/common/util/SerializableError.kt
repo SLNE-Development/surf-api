@@ -11,13 +11,14 @@ import kotlinx.serialization.Serializable
  *
  * @property type The type or category of the error, describing the nature of the issue.
  * @property message An optional detailed message providing more context about the error.
- * @property cause An optional nested instance of `SerializableError` representing the underlying cause of the error.
+ * @property cause An optional nested instance of `SerializableError` representing the underlying
+ * cause of the error.
  */
 @Serializable
 data class SerializableError(
     val type: String,
     val message: String? = null,
-    val cause: SerializableError? = null
+    val cause: SerializableError? = null,
 ) {
 
     /**
@@ -32,6 +33,7 @@ data class SerializableError(
     fun buildFakeThrowable(): Throwable {
         val throwableMessage = buildString {
             append(type)
+
             if (!message.isNullOrBlank()) {
                 append(": ")
                 append(message)
@@ -50,8 +52,10 @@ data class SerializableError(
  * @return A `SerializableError` containing the type of the `Throwable`, its message,
  *         and recursively serialized causes (if any).
  */
-fun Throwable.toSerializableError(): SerializableError = SerializableError(
-    type = this::class.qualifiedName ?: this::class.simpleName ?: "UnknownThrowable",
-    message = message,
-    cause = cause?.toSerializableError()
-)
+fun Throwable.toSerializableError(): SerializableError {
+    return SerializableError(
+        type = this::class.qualifiedName ?: this::class.simpleName ?: "UnknownThrowable",
+        message = message,
+        cause = cause?.toSerializableError(),
+    )
+}

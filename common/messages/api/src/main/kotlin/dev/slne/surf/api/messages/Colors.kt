@@ -2,6 +2,7 @@ package dev.slne.surf.api.messages
 
 import dev.slne.surf.api.messages.adventure.buildText
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextColor.color
@@ -9,14 +10,13 @@ import net.kyori.adventure.text.format.TextColor.color
 /**
  * Defines the standardized color palette for the Surf system.
  *
- * This interface provides a consistent visual style across all Surf plugins through predefined colors
- * for UI elements, messages, and formatting components. All colors are defined as static fields
- * in the companion object.
+ * This interface provides a consistent visual style across all Surf plugins through predefined
+ * colors for UI elements, messages, and formatting components. All colors are defined as static
+ * fields in the companion object.
  */
 @Suppress("unused")
 interface Colors {
     companion object {
-        // -------------------- Surf Colors -------------------- //
 
         /**
          * Primary brand color (#3b92d1).
@@ -41,9 +41,9 @@ interface Colors {
         val INFO: TextColor = color(0x97B3F7)
 
         /**
-         * Note color (#6EA6D9).
-         * Use for supplemental information, tips, or clarifications that accompany primary messages.
-         * Prefer [INFO] for system messages and [PRIMARY] for branded headings.
+         * Note color (#6EA6D9). Use for supplemental information, tips, or clarifications that
+         * accompany primary messages. Prefer [INFO] for system messages and [PRIMARY] for branded
+         * headings.
          */
         @JvmField
         val NOTE: TextColor = color(0x6EA6D9)
@@ -63,8 +63,8 @@ interface Colors {
         val WARNING: TextColor = color(0xffa64d)
 
         /**
-         * Error message color (#ee3d51).
-         * Use for error messages and critical issues resulting from user actions or system failures.
+         * Error message color (#ee3d51). Use for error messages and critical issues resulting from
+         * user actions or system failures.
          */
         @JvmField
         val ERROR: TextColor = color(0xee3d51)
@@ -77,8 +77,8 @@ interface Colors {
         val VARIABLE_KEY: TextColor = color(0x6B9BD1)
 
         /**
-         * Variable value color (#f9c353).
-         * Use to highlight dynamic values in messages (e.g., "Your property 'PROPERTY' has been sold").
+         * Variable value color (#f9c353). Use to highlight dynamic values in messages (e.g., "Your
+         * property 'PROPERTY' has been sold").
          */
         @JvmField
         val VARIABLE_VALUE: TextColor = color(0xf9c353)
@@ -97,8 +97,6 @@ interface Colors {
         @JvmField
         val DARK_SPACER: TextColor = NamedTextColor.DARK_GRAY
 
-        // -------------------- Prefix -------------------- //
-
         /**
          * Default prefix color (#3b92d1).
          * Applied to all message prefixes for consistency across Surf plugins.
@@ -113,11 +111,13 @@ interface Colors {
         @JvmField
         val PREFIX_CHARACTER = '»'
 
-        private fun buildPrefix(color: TextColor) = buildText {
-            text(PREFIX_CHARACTER, color)
-            appendSpace()
-            darkSpacer("|")
-            appendSpace()
+        private fun buildPrefix(color: TextColor): TextComponent {
+            return buildText {
+                text(PREFIX_CHARACTER, color)
+                appendSpace()
+                darkSpacer("|")
+                appendSpace()
+            }
         }
 
         /**
@@ -149,8 +149,6 @@ interface Colors {
          */
         @JvmField
         val ERROR_PREFIX: Component = buildPrefix(ERROR)
-
-        // -------------------- Default Colors -------------------- //
 
         /**
          * Minecraft black color.

@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test
 
 class PluginLoadOrderTest {
 
-    private fun plugin(id: String, vararg dependencies: PluginDependency) =
-        PluginCandidate(PluginMeta(id, "example.Main", dependencies = dependencies.toList()), jar = null)
+    private fun plugin(id: String, vararg dependencies: PluginDependency) = PluginCandidate(
+        PluginMeta(id, "example.Main", dependencies = dependencies.toList()),
+        jar = null,
+    )
 
     private fun required(id: String) = PluginDependency(id)
     private fun optional(id: String) = PluginDependency(id, optional = true)
@@ -26,7 +28,7 @@ class PluginLoadOrderTest {
                 plugin("lobby", required("chat"), optional("queue")),
                 plugin("core"),
                 plugin("queue"),
-            )
+            ),
         )
 
         val ids = result.ids()
@@ -43,7 +45,7 @@ class PluginLoadOrderTest {
                 plugin("chat", required("core")),
                 plugin("lobby", required("chat")),
                 plugin("standalone", optional("core")),
-            )
+            ),
         )
 
         assertEquals(listOf("standalone"), result.ids())
@@ -57,7 +59,7 @@ class PluginLoadOrderTest {
                 plugin("a", required("b")),
                 plugin("b", required("a")),
                 plugin("c"),
-            )
+            ),
         )
 
         assertEquals(listOf("c"), result.ids())
@@ -79,7 +81,7 @@ class PluginLoadOrderTest {
             listOf(
                 plugin("a", optional("b")),
                 plugin("b", optional("a")),
-            )
+            ),
         )
 
         assertEquals(setOf("a", "b"), result.ids().toSet())
@@ -93,7 +95,7 @@ class PluginLoadOrderTest {
             listOf(
                 plugin("a", optional("b")),
                 plugin("b", required("a")),
-            )
+            ),
         )
 
         assertEquals(listOf("a", "b"), result.ids())
@@ -107,7 +109,7 @@ class PluginLoadOrderTest {
                 plugin("x", optional("a")),
                 plugin("a", required("b")),
                 plugin("b", required("a")),
-            )
+            ),
         )
 
         assertEquals(listOf("x"), result.ids())
@@ -120,7 +122,7 @@ class PluginLoadOrderTest {
             listOf(
                 plugin("x", optional("broken")),
                 plugin("broken", required("missing")),
-            )
+            ),
         )
 
         assertEquals(listOf("x"), result.ids())

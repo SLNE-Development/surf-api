@@ -14,9 +14,13 @@ internal actual class ClientLogger actual constructor(name: String) {
         if (cause == null) console.info(prefix, message) else console.info(prefix, message, cause)
     }
 
-    actual fun warn(message: String, cause: Throwable?) = warn(message, cause as Any?)
+    actual fun warn(message: String, cause: Throwable?) {
+        warn(message, cause as Any?)
+    }
 
-    actual fun error(message: String, cause: Throwable?) = error(message, cause as Any?)
+    actual fun error(message: String, cause: Throwable?) {
+        error(message, cause as Any?)
+    }
 
     /**
      * Logs [detail] as is, e.g. a promise rejection value that is no [Throwable].
@@ -29,6 +33,10 @@ internal actual class ClientLogger actual constructor(name: String) {
      * Logs [detail] as is, e.g. a promise rejection value that is no [Throwable].
      */
     fun error(message: String, detail: Any?) {
-        if (detail == null) console.error(prefix, message) else console.error(prefix, message, detail)
+        if (detail == null) console.error(prefix, message) else console.error(
+            prefix,
+            message,
+            detail,
+        )
     }
 }

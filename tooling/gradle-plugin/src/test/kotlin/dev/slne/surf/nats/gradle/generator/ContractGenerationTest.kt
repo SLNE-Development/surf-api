@@ -14,7 +14,11 @@ class ContractGenerationTest {
     @TempDir
     lateinit var temp: File
 
-    private fun contracts(body: String, protoPackage: String = "surf.test.v1", vararg imports: String): String {
+    private fun contracts(
+        body: String,
+        protoPackage: String = "surf.test.v1",
+        vararg imports: String,
+    ): String {
         return GeneratorHarness(temp).proto(
             "contracts.proto",
             """
@@ -36,7 +40,7 @@ class ContractGenerationTest {
               option (surf.nats.v1.event) = true;
               required double health = 1;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -45,9 +49,15 @@ class ContractGenerationTest {
             "override val natsDescriptor: NatsEventDescriptor<*>\n        get() = NATS_DESCRIPTOR",
             "public companion object {\n        @JvmField\n        public val NATS_DESCRIPTOR: NatsEventDescriptor<PlayerHealthChanged> =",
             "NatsEventDescriptor<PlayerHealthChanged>(\n                    protoName = \"surf.test.v1.PlayerHealthChanged\",\n" +
-                    "                    serializer = serializer(),\n                )",
+                "                    serializer = serializer(),\n                )",
         )
-        assertNotContains(text, "import dev.slne.surf.nats.event.NatsEvent", "subject =", "global =", "majorVersion =")
+        assertNotContains(
+            text,
+            "import dev.slne.surf.nats.event.NatsEvent",
+            "subject =",
+            "global =",
+            "majorVersion =",
+        )
     }
 
     @Test
@@ -72,7 +82,9 @@ class ContractGenerationTest {
 
     @Test
     fun `messages with the event option set to false are not events`() {
-        val text = contracts("message Plain { option (surf.nats.v1.event) = false; required int32 x = 1; }")
+        val text = contracts(
+            "message Plain { option (surf.nats.v1.event) = false; required int32 x = 1; }",
+        )
         assertNotContains(text, "NatsEvent", "NATS_DESCRIPTOR", "companion")
     }
 
@@ -111,7 +123,14 @@ class ContractGenerationTest {
             "responseSerializer = FindServerReply.serializer(),\n                        ),",
             "@JvmField\n        public val NATS_DESCRIPTOR: NatsServiceDescriptor<PlayerService> =",
         )
-        assertNotContains(text, "NatsParameter", "parameters =", "toRequest", "toArguments", "UNCHECKED_CAST")
+        assertNotContains(
+            text,
+            "NatsParameter",
+            "parameters =",
+            "toRequest",
+            "toArguments",
+            "UNCHECKED_CAST",
+        )
     }
 
     @Test
@@ -133,12 +152,12 @@ class ContractGenerationTest {
         val declared = generate(
             "declared",
             "message PlaceRequest { required string note = 3; oneof target { string server = 5; int64 player = 4; } " +
-                    "required int64 id = 1; optional int32 amount = 2 [default = 1]; }",
+                "required int64 id = 1; optional int32 amount = 2 [default = 1]; }",
         )
         val reordered = generate(
             "reordered",
             "message PlaceRequest { optional int32 amount = 2 [default = 1]; required int64 id = 1; " +
-                    "oneof target { int64 player = 4; string server = 5; } required string note = 3; }",
+                "oneof target { int64 player = 4; string server = 5; } required string note = 3; }",
         )
         assertEquals(declared, reordered)
         assertContainsAll(declared, "public suspend fun place(request: PlaceRequest): PlaceReply\n")
@@ -154,7 +173,7 @@ class ContractGenerationTest {
             }
             message Pong { required int64 at = 1; }
             message Hello {}
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -192,7 +211,7 @@ class ContractGenerationTest {
             }
             message Query { required int64 id = 1; }
             message Reply { optional string value = 1; }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -221,23 +240,23 @@ class ContractGenerationTest {
             }
             service PlainService { rpc Get(google.protobuf.Empty) returns (Order); }
             message Order { required int64 id = 1; }
-            """
+            """,
         )
         assertContainsAll(
             text,
             "protoName = \"surf.test.v1.OrderService\",\n                    methods = listOf(",
             "protoName = \"Place\",\n                            kotlinName = \"place\",\n" +
-                    "                            persistent = true,\n                            callTimeoutSeconds = 30,",
+                "                            persistent = true,\n                            callTimeoutSeconds = 30,",
             "protoName = \"Ping\",\n                            kotlinName = \"ping\",\n" +
-                    "                            persistent = false,\n                            callTimeoutSeconds = 30,",
+                "                            persistent = false,\n                            callTimeoutSeconds = 30,",
             "protoName = \"Total\",\n                            kotlinName = \"total\",\n" +
-                    "                            persistent = true,\n                            callTimeoutSeconds = 30,",
+                "                            persistent = true,\n                            callTimeoutSeconds = 30,",
             "protoName = \"Slow\",\n                            kotlinName = \"slow\",\n" +
-                    "                            persistent = true,\n                            callTimeoutSeconds = 300,",
+                "                            persistent = true,\n                            callTimeoutSeconds = 300,",
             "protoName = \"surf.test.v1.PlainService\",",
             "protoName = \"Get\",\n                            kotlinName = \"get\",\n" +
-                    "                            persistent = false,\n                            callTimeoutSeconds = null,\n" +
-                    "                            recipients = Recipients.ANY_INSTANCE,",
+                "                            persistent = false,\n                            callTimeoutSeconds = null,\n" +
+                "                            recipients = Recipients.ANY_INSTANCE,",
         )
     }
 
@@ -254,7 +273,7 @@ class ContractGenerationTest {
         assertContainsAll(
             text,
             "NatsServiceDescriptor<Roles_Api>(\n                    protoName = \"surf.roles.v2.Roles_Api\",\n" +
-                    "                    methods = listOf(",
+                "                    methods = listOf(",
             "protoName = \"lookup_Role\",\n                            kotlinName = \"lookupRole\",",
             "public suspend fun lookupRole()\n",
         )
@@ -269,7 +288,7 @@ class ContractGenerationTest {
               rpc Store(Item) returns (google.protobuf.Empty) { option (surf.nats.v1.method) = { persistent: true call_timeout_seconds: 120 }; }
             }
             message Item { required int64 id = 1; }
-            """
+            """,
         )
         assertContainsAll(text, "callTimeoutSeconds = 120,")
     }
@@ -284,9 +303,15 @@ class ContractGenerationTest {
               rpc Own(Item) returns (Item) { option (surf.nats.v1.method).call_timeout_seconds = 0X1e; }
             }
             message Item { required int64 id = 1; }
-            """
+            """,
         )
-        assertInOrder(text, "kotlinName = \"inherit\",", "callTimeoutSeconds = 16,", "kotlinName = \"own\",", "callTimeoutSeconds = 30,")
+        assertInOrder(
+            text,
+            "kotlinName = \"inherit\",",
+            "callTimeoutSeconds = 16,",
+            "kotlinName = \"own\",",
+            "callTimeoutSeconds = 30,",
+        )
     }
 
     @Test
@@ -294,8 +319,8 @@ class ContractGenerationTest {
         val errors = GeneratorHarness(temp).proto(
             "contracts.proto",
             "$PROTO2\npackage surf.test.v1;\n$OPTIONS_IMPORT\nservice EdgeService {\n" +
-                    "  rpc Own(Item) returns (Item) { option (surf.nats.v1.method).call_timeout_seconds = 010; }\n}\n" +
-                    "message Item { required int64 id = 1; }",
+                "  rpc Own(Item) returns (Item) { option (surf.nats.v1.method).call_timeout_seconds = 010; }\n}\n" +
+                "message Item { required int64 id = 1; }",
         ).errors()
         assertError(errors, "contracts.proto:5:", "invalid option value \"010\" for uint32")
     }

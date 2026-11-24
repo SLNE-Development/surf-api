@@ -37,7 +37,9 @@ class TimeArgument(nodeName: String) : Argument<Duration>(nodeName) {
     override val kind = ArgumentKind.Time
     override val rawType: ArgumentType<Duration> = TimeParser
 
-    override fun stringify(value: Duration): String = "${value.toMillis() / MinecraftServer.TICK_MS}t"
+    override fun stringify(value: Duration): String {
+        return "${value.toMillis() / MinecraftServer.TICK_MS}t"
+    }
 }
 
 /**

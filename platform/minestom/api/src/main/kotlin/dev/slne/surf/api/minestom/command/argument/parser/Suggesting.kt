@@ -11,8 +11,11 @@ import java.util.concurrent.CompletableFuture
 internal fun SuggestionsBuilder.suggestMatching(
     values: Iterable<String>,
 ): CompletableFuture<Suggestions> {
-    values.forEach { value ->
-        if (value.startsWith(remaining, ignoreCase = true)) suggest(value)
+    for (value in values) {
+        if (value.startsWith(remaining, ignoreCase = true)) {
+            suggest(value)
+        }
     }
+
     return buildFuture()
 }

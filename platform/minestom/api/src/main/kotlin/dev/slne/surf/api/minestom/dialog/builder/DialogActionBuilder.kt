@@ -110,7 +110,7 @@ class DialogActionBuilder {
         action(
             DialogCallbacks.dynamicAction(options, additions) { context ->
                 callback(DialogResponseView.of(context.payload), context)
-            }
+            },
         )
     }
 
@@ -139,9 +139,11 @@ class DialogActionBuilder {
     internal fun build(): DialogAction {
         val action = action
         require(action != null) { "DialogAction must be built" }
+
         return action
     }
 }
 
-fun dialogAction(block: DialogActionBuilder.() -> Unit): DialogAction =
-    DialogActionBuilder().apply(block).build()
+fun dialogAction(block: DialogActionBuilder.() -> Unit): DialogAction {
+    return DialogActionBuilder().apply(block).build()
+}

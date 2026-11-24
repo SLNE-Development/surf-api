@@ -53,10 +53,16 @@ class CommandManagerMixinTest {
                 .register()
 
             assertTrue(manager.commandExists("temporary"))
-            assertNull(manager.getCommand("temporary"), "the command is not registered as a Minestom command")
+            assertNull(
+                manager.getCommand("temporary"),
+                "the command is not registered as a Minestom command",
+            )
             assertTrue(CommandAPI.unregister("temporary"))
             assertFalse(manager.commandExists("temporary"))
-            assertEquals(CommandResult.Type.UNKNOWN, manager.execute(manager.consoleSender, "temporary").type)
+            assertEquals(
+                CommandResult.Type.UNKNOWN,
+                manager.execute(manager.consoleSender, "temporary").type,
+            )
         }
     }
 
@@ -65,6 +71,7 @@ class CommandManagerMixinTest {
         val manager = env.process().command()
         val foreign = Command("foreign")
         manager.register(foreign)
+
         try {
             withPlatform(env) {
                 val failure = runCatching {
@@ -92,7 +99,10 @@ class CommandManagerMixinTest {
             val declared = rootChildren.filter { it.name == "declared" }
             assertEquals(1, declared.size)
 
-            val arguments = declared.single().children.map { packet.nodes[it].name }
+            val arguments = declared
+                .single()
+                .children
+                .map { packet.nodes[it].name }
             assertEquals(listOf("amount"), arguments)
         }
     }
@@ -100,6 +110,7 @@ class CommandManagerMixinTest {
     private fun minestomDeclaration(env: Env): DeclareCommandsPacket {
         val instance = env.createFlatInstance()
         val player = env.createPlayer(instance, Pos.ZERO)
+
         try {
             return env.process().command().createDeclareCommandsPacket(player)
         } finally {
@@ -109,8 +120,12 @@ class CommandManagerMixinTest {
     }
 
     private fun withPlatform(env: Env, block: () -> Unit) {
-        val platform = MinestomCommandAPIPlatform(env.process().command(), MinestomCommandOwnership())
+        val platform = MinestomCommandAPIPlatform(
+            env.process().command(),
+            MinestomCommandOwnership(),
+        )
         CommandAPI.installPlatform(platform)
+
         try {
             block()
         } finally {

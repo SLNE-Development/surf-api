@@ -22,8 +22,9 @@ internal object ProtocolDefaults {
     /**
      * Default JetStream duplicate window of the persist streams.
      *
-     * Republished attempts of one persistent request are deduplicated only within this window, so it bounds the
-     * timeout of a persistent rpc without a result and the publish phase of one with a result.
+     * Republished attempts of one persistent request are deduplicated only within this window, so
+     * it bounds the timeout of a persistent rpc without a result and the publish phase of one with
+     * a result.
      */
     const val DEDUPE_WINDOW_SECONDS = 120
 
@@ -62,29 +63,40 @@ internal object ProtocolDefaults {
     /**
      * Returns the `Nats-TTL` of a persistent RPC request in seconds.
      *
-     * The value is [timeout] capped at [PERSIST_MAX_AGE], rounded up to whole seconds and at least 1.
+     * The value is [timeout] capped at [PERSIST_MAX_AGE], rounded up to whole seconds and at
+     * least 1.
      */
     fun natsTtlSeconds(timeout: Duration): Int {
-        val millis = (if (timeout <= PERSIST_MAX_AGE) timeout else PERSIST_MAX_AGE).inWholeMilliseconds
+        val millis = (if (timeout <= PERSIST_MAX_AGE) timeout else PERSIST_MAX_AGE)
+            .inWholeMilliseconds
+
         return ((millis + 999) / 1000).coerceAtLeast(1).toInt()
     }
 
     /**
      * Returns whether a body must be offloaded to the object store.
      *
-     * [headerBytes] and [extraHeaderBytes] are the encoded header sizes, see [headerLineBytes]. The check also reserves
-     * [PAYLOAD_REF_RESERVE] bytes for the `Surf-Payload-Ref` header that an offloaded message carries.
+     * [headerBytes] and [extraHeaderBytes] are the encoded header sizes, see [headerLineBytes]. The
+     * check also reserves [PAYLOAD_REF_RESERVE] bytes for the `Surf-Payload-Ref` header that an
+     * offloaded message carries.
      */
-    fun requiresOffload(bodyBytes: Int, headerBytes: Int, extraHeaderBytes: Int, maxPayload: Long): Boolean {
-        return bodyBytes.toLong() + headerBytes + extraHeaderBytes + PAYLOAD_REF_RESERVE > maxPayload
+    fun requiresOffload(
+        bodyBytes: Int,
+        headerBytes: Int,
+        extraHeaderBytes: Int,
+        maxPayload: Long,
+    ): Boolean {
+        val totalBytes = bodyBytes.toLong() + headerBytes + extraHeaderBytes + PAYLOAD_REF_RESERVE
+
+        return totalBytes > maxPayload
     }
 
     /**
      * Returns the encoded size of one header line.
      *
-     * [separatorBytes] are the bytes the client library writes besides the name and the value: 3 for jnats
-     * (`name:value\r\n`) and 4 for nats.js (`\r\nname: value`). The size counts characters and matches the byte
-     * count only for ASCII names and values.
+     * [separatorBytes] are the bytes the client library writes besides the name and the value: 3
+     * for jnats (`name:value\r\n`) and 4 for nats.js (`\r\nname: value`). The size counts
+     * characters and matches the byte count only for ASCII names and values.
      */
     fun headerLineBytes(name: String, value: String, separatorBytes: Int): Int {
         return name.length + value.length + separatorBytes
@@ -93,13 +105,19 @@ internal object ProtocolDefaults {
     /**
      * Returns the error message for an event that exceeds [maxPayload]. Events are never offloaded.
      */
-    fun eventTooLargeMessage(typeName: String, size: Int, maxPayload: Long, subject: String): String {
+    fun eventTooLargeMessage(
+        typeName: String,
+        size: Int,
+        maxPayload: Long,
+        subject: String,
+    ): String {
         return "Event $typeName is $size bytes, exceeding the NATS max payload of $maxPayload bytes " +
-                "(subject $subject). Large events are not offloaded to the object store."
+            "(subject $subject). Large events are not offloaded to the object store."
     }
 
     /**
-     * Returns [message] truncated to [MAX_ERROR_MESSAGE_LENGTH] characters, or an empty string for `null`.
+     * Returns [message] truncated to [MAX_ERROR_MESSAGE_LENGTH] characters, or an empty string for
+     * `null`.
      */
     fun errorMessage(message: String?): String = message.orEmpty().take(MAX_ERROR_MESSAGE_LENGTH)
 }

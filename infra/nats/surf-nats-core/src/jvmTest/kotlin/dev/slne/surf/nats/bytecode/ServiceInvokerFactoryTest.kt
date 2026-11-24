@@ -29,6 +29,7 @@ class ServiceInvokerFactoryTest {
 
         override suspend fun delayed(request: Request): String {
             delay(10.milliseconds)
+
             return "delayed:${request.value}"
         }
 
@@ -36,13 +37,18 @@ class ServiceInvokerFactoryTest {
             unitValue = request.value
         }
 
-        override suspend fun fails(request: Request): String = throw IllegalStateException(request.value)
+        override suspend fun fails(request: Request): String {
+            return throw IllegalStateException(request.value)
+        }
     }
 
     private val impl = PrivateImpl()
 
     private fun invoker(name: String): ServiceInvoker {
-        return ServiceInvokerFactory.create(impl, Example::class.java.methods.single { it.name == name })
+        return ServiceInvokerFactory.create(
+            impl,
+            Example::class.java.methods.single { it.name == name },
+        )
     }
 
     @Test

@@ -32,6 +32,7 @@ import java.util.function.Supplier
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> state(initialValue: T): StateHandle<State<T>> {
     val index = ctx.stateRegistry.register(DeferredState.Immutable(initialValue))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -47,6 +48,7 @@ fun <T> state(initialValue: T): StateHandle<State<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> mutableState(initialValue: T): StateHandle<MutableState<T>> {
     val index = ctx.stateRegistry.register(DeferredState.Mutable(initialValue))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -61,6 +63,7 @@ fun <T> mutableState(initialValue: T): StateHandle<MutableState<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun mutableState(initialValue: Int): StateHandle<MutableIntState> {
     val index = ctx.stateRegistry.register(DeferredState.MutableInt(initialValue))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -77,6 +80,7 @@ fun mutableState(initialValue: Int): StateHandle<MutableIntState> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> computedState(computation: (Context) -> T): StateHandle<State<T>> {
     val index = ctx.stateRegistry.register(DeferredState.Computed(Function(computation)))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -91,6 +95,7 @@ fun <T> computedState(computation: (Context) -> T): StateHandle<State<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> computedState(computation: () -> T): StateHandle<State<T>> {
     val index = ctx.stateRegistry.register(DeferredState.ComputedSupplier(Supplier(computation)))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -105,11 +110,13 @@ fun <T> computedState(computation: () -> T): StateHandle<State<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> lazyState(computation: (Context) -> T): StateHandle<State<T>> {
     val index = ctx.stateRegistry.register(DeferredState.Lazy(Function(computation)))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
 /**
- * Creates a deferred lazy [State] whose value is computed from a no-argument [computation] on the first access.
+ * Creates a deferred lazy [State] whose value is computed from a no-argument [computation] on the
+ * first access.
  *
  * @param T the type of the state value
  * @receiver the [AbstractSurfViewContext] for the current view DSL scope
@@ -119,6 +126,7 @@ fun <T> lazyState(computation: (Context) -> T): StateHandle<State<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> lazyState(computation: () -> T): StateHandle<State<T>> {
     val index = ctx.stateRegistry.register(DeferredState.LazySupplier(Supplier(computation)))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -136,6 +144,7 @@ fun <T> lazyState(computation: () -> T): StateHandle<State<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> initialState(): StateHandle<MutableState<T>> {
     val index = ctx.stateRegistry.register(DeferredState.Initial<T>(null))
+
     return StateHandle(ctx.stateRegistry, index)
 }
 
@@ -153,5 +162,6 @@ fun <T> initialState(): StateHandle<MutableState<T>> {
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> initialState(key: String): StateHandle<MutableState<T>> {
     val index = ctx.stateRegistry.register(DeferredState.Initial<T>(key))
+
     return StateHandle(ctx.stateRegistry, index)
 }

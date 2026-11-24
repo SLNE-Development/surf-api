@@ -15,7 +15,8 @@ import me.devnatan.inventoryframework.context.*
  * [AbstractPaginatedSurfView]. It also resolves all [DeferredState] entries registered
  * during the DSL block into actual IF state objects at construction time.
  *
- * This class is not intended to be used or subclassed directly; use [paginatedSurfView] or [AbstractPaginatedSurfView] instead.
+ * This class is not intended to be used or subclassed directly; use [paginatedSurfView] or
+ * [AbstractPaginatedSurfView] instead.
  *
  * @param header the plain-text inventory title
  * @param ctx the [PaginatedSurfViewContext] holding lifecycle callbacks and pagination config
@@ -36,7 +37,11 @@ abstract class PaginatedSurfViewDSLImpl @PublishedApi internal constructor(
         ctx.stateRegistry.resolveStates(this)
     }
 
-    override fun createPagination(): PaginationStateBuilder<Context, BukkitItemComponentBuilder, *> {
+    override fun createPagination(): PaginationStateBuilder<
+        Context,
+        BukkitItemComponentBuilder,
+        *,
+    > {
         return ctx.getRegisteredPaginationStateBuilder()(this)
     }
 
@@ -76,6 +81,6 @@ abstract class PaginatedSurfViewDSLImpl @PublishedApi internal constructor(
 
     internal fun modifyContainer0(
         updateContext: Context,
-        block: context(ViewContainerModificationContext) () -> Unit
+        block: context(ViewContainerModificationContext) () -> Unit,
     ) = modifyContainer(updateContext, block)
 }

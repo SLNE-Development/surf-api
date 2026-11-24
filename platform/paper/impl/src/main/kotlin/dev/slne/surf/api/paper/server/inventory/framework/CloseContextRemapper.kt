@@ -24,7 +24,8 @@ import net.bytebuddy.utility.OpenedClassReader
  * expects `InventoryCloseEvent`, causing a `ClassCastException` at runtime.
  *
  * This remapper rewrites the bytecode of both `BukkitElementFactory` and `CloseContext` so that:
- * 1. `BukkitElementFactory.createCloseContext()` no longer casts the origin to `InventoryCloseEvent`.
+ * 1. `BukkitElementFactory.createCloseContext()` no longer casts the origin to
+ *    `InventoryCloseEvent`.
  * 2. `CloseContext`'s constructor accepts `Object` instead of `InventoryCloseEvent`.
  * 3. `CloseContext`'s `closeOrigin` field is typed as `Object` instead of `InventoryCloseEvent`.
  */
@@ -74,14 +75,14 @@ object CloseContextRemapper {
             fields: FieldList<FieldDescription.InDefinedShape?>,
             methods: MethodList<*>,
             writerFlags: Int,
-            readerFlags: Int
+            readerFlags: Int,
         ): ClassVisitor {
             return CloseContextClassVisitor(classVisitor)
         }
     }
 
     private class CloseContextClassVisitor(
-        visitor: ClassVisitor
+        visitor: ClassVisitor,
     ) : ClassVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitField(
@@ -89,10 +90,11 @@ object CloseContextRemapper {
             name: String,
             descriptor: String,
             signature: String?,
-            value: Any?
+            value: Any?,
         ): FieldVisitor? {
             // Change field type: InventoryCloseEvent -> Object
             val remappedDescriptor = remapDescriptor(descriptor)
+
             return super.visitField(access, name, remappedDescriptor, signature, value)
         }
 
@@ -101,17 +103,18 @@ object CloseContextRemapper {
             name: String,
             descriptor: String,
             signature: String?,
-            exceptions: Array<String>?
+            exceptions: Array<String>?,
         ): MethodVisitor {
             // Change method descriptor: replace InventoryCloseEvent with Object
             val remappedDescriptor = remapDescriptor(descriptor)
             val mv = super.visitMethod(access, name, remappedDescriptor, signature, exceptions)
+
             return CloseContextMethodVisitor(mv)
         }
     }
 
     private class CloseContextMethodVisitor(
-        visitor: MethodVisitor
+        visitor: MethodVisitor,
     ) : MethodVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitTypeInsn(opcode: Int, type: String) {
@@ -119,6 +122,7 @@ object CloseContextRemapper {
             if (opcode == Opcodes.CHECKCAST && type == INVENTORY_CLOSE_EVENT_INTERNAL) {
                 return // skip the cast entirely
             }
+
             super.visitTypeInsn(opcode, type)
         }
 
@@ -133,7 +137,7 @@ object CloseContextRemapper {
             owner: String,
             name: String,
             descriptor: String,
-            isInterface: Boolean
+            isInterface: Boolean,
         ) {
             // Remap method invocation descriptors (e.g. constructor calls within CloseContext)
             val remappedDescriptor = remapDescriptor(descriptor)
@@ -149,8 +153,12 @@ object CloseContextRemapper {
     private fun remapBukkitElementFactory() {
         val locator = ClassFileLocator.ForClassLoader.of(javaClass.classLoader)
         val typePool = TypePool.Default.of(locator)
-        val typeDescription =
-            typePool.describe(BUKKIT_ELEMENT_FACTORY_INTERNAL.replace("/", ".")).resolve()
+        val typeDescription = typePool.describe(
+            BUKKIT_ELEMENT_FACTORY_INTERNAL.replace(
+                "/",
+                ".",
+            ),
+        ).resolve()
 
         ByteBuddy()
             .redefine<Any>(typeDescription, locator)
@@ -171,14 +179,14 @@ object CloseContextRemapper {
             fields: FieldList<FieldDescription.InDefinedShape?>,
             methods: MethodList<*>,
             writerFlags: Int,
-            readerFlags: Int
+            readerFlags: Int,
         ): ClassVisitor {
             return BukkitElementFactoryClassVisitor(classVisitor)
         }
     }
 
     private class BukkitElementFactoryClassVisitor(
-        visitor: ClassVisitor
+        visitor: ClassVisitor,
     ) : ClassVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitMethod(
@@ -186,7 +194,7 @@ object CloseContextRemapper {
             name: String,
             descriptor: String,
             signature: String?,
-            exceptions: Array<String>?
+            exceptions: Array<String>?,
         ): MethodVisitor {
             val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
 
@@ -200,7 +208,7 @@ object CloseContextRemapper {
     }
 
     private class BukkitElementFactoryMethodVisitor(
-        visitor: MethodVisitor
+        visitor: MethodVisitor,
     ) : MethodVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitTypeInsn(opcode: Int, type: String) {
@@ -208,6 +216,7 @@ object CloseContextRemapper {
             if (opcode == Opcodes.CHECKCAST && type == INVENTORY_CLOSE_EVENT_INTERNAL) {
                 return // skip the cast entirely
             }
+
             super.visitTypeInsn(opcode, type)
         }
 
@@ -216,7 +225,7 @@ object CloseContextRemapper {
             owner: String,
             name: String,
             descriptor: String,
-            isInterface: Boolean
+            isInterface: Boolean,
         ) {
             // Remap the CloseContext constructor invocation descriptor
             if (owner == CLOSE_CONTEXT_INTERNAL && name == "<init>") {
@@ -234,6 +243,7 @@ object CloseContextRemapper {
     private fun remapDescriptor(descriptor: String): String {
         val closeEventDescriptor = Type.getObjectType(INVENTORY_CLOSE_EVENT_INTERNAL).descriptor
         val objectDescriptor = Type.getObjectType(OBJECT_INTERNAL).descriptor
+
         return descriptor.replace(closeEventDescriptor, objectDescriptor)
     }
 }

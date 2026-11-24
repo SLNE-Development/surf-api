@@ -32,14 +32,17 @@ class LegacyConfigFolder(
     fun resolve(surfApiDataDirectory: Path): Path {
         val folder = surfApiDataDirectory.resolve(folderName)
         val target = folder.resolve(CONFIG_FILE_NAME)
+
         if (!target.exists()) {
             legacyConfig(surfApiDataDirectory)?.let { copy(it, target) }
         }
+
         return folder
     }
 
     private fun legacyConfig(surfApiDataDirectory: Path): Path? {
         val pluginsFolder = surfApiDataDirectory.parent ?: return null
+
         return legacyPluginFolders.asSequence()
             .map { pluginsFolder.resolve(it).resolve(CONFIG_FILE_NAME) }
             .firstOrNull { it.isRegularFile() }

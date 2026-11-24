@@ -5,34 +5,23 @@ package dev.slne.surf.nats.codec
 import dev.slne.surf.nats.TEST_UUID
 import dev.slne.surf.nats.everything
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import dev.slne.surf.nats.test.proto.v1.Color
-import dev.slne.surf.nats.test.proto.v1.ColorHolder
-import dev.slne.surf.nats.test.proto.v1.Created
-import dev.slne.surf.nats.test.proto.v1.Everything
-import dev.slne.surf.nats.test.proto.v1.FindRequest
-import dev.slne.surf.nats.test.proto.v1.Heartbeat
-import dev.slne.surf.nats.test.proto.v1.PlayerEvent
-import dev.slne.surf.nats.test.proto.v1.ProfileUpdated
-import dev.slne.surf.nats.test.proto.v1.Text
-import dev.slne.surf.nats.test.proto.v1.WideColor
-import dev.slne.surf.nats.test.proto.v1.WideColorHolder
+import dev.slne.surf.nats.test.proto.v1.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
-import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
+import kotlin.test.*
 import dev.slne.surf.nats.test.proto.v1.VersionedChanged as VersionedChangedV1
 import dev.slne.surf.nats.test.proto.v2.VersionedChanged as VersionedChangedV2
 
 class NatsCodecTest {
 
     private fun <T> roundtrip(serializer: KSerializer<T>, value: T): T {
-        return NatsCodec.decode(serializer, NatsCodec.encode(serializer, value), ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+        return NatsCodec.decode(
+            serializer,
+            NatsCodec.encode(serializer, value),
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
     }
 
     @Test
@@ -56,7 +45,10 @@ class NatsCodecTest {
     fun `content type parameters and case are ignored`() {
         val bytes = NatsCodec.encode(Created.serializer(), Created(1))
 
-        assertEquals(Created(1), NatsCodec.decode(Created.serializer(), bytes, "Application/Protobuf; charset=binary"))
+        assertEquals(
+            Created(1),
+            NatsCodec.decode(Created.serializer(), bytes, "Application/Protobuf; charset=binary"),
+        )
     }
 
     @Test
@@ -74,9 +66,16 @@ class NatsCodecTest {
 
     @Test
     fun `unknown fields are skipped`() {
-        val newer = NatsCodec.encode(VersionedChangedV2.serializer(), VersionedChangedV2("hello", revision = 3))
+        val newer = NatsCodec.encode(
+            VersionedChangedV2.serializer(),
+            VersionedChangedV2("hello", revision = 3),
+        )
 
-        val decoded = NatsCodec.decode(VersionedChangedV1.serializer(), newer, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+        val decoded = NatsCodec.decode(
+            VersionedChangedV1.serializer(),
+            newer,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
 
         assertEquals(VersionedChangedV1("hello"), decoded)
     }
@@ -84,7 +83,11 @@ class NatsCodecTest {
     @Test
     fun `missing non-null field is a decode error`() {
         assertFailsWith<MissingFieldException> {
-            NatsCodec.decode(Created.serializer(), ByteArray(0), ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+            NatsCodec.decode(
+                Created.serializer(),
+                ByteArray(0),
+                ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+            )
         }
     }
 
@@ -94,7 +97,9 @@ class NatsCodecTest {
         val truncated = byteArrayOf(0x0a, 0x05)
 
         for (serializer in listOf(Text.serializer(), FindRequest.serializer())) {
-            val exception = assertFailsWith<SerializationException>(serializer.descriptor.serialName) {
+            val exception = assertFailsWith<SerializationException>(
+                serializer.descriptor.serialName,
+            ) {
                 NatsCodec.decode(serializer, truncated, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
             }
             assertContains(exception.message.orEmpty(), serializer.descriptor.serialName)
@@ -111,7 +116,11 @@ class NatsCodecTest {
         )
         val bytes = NatsCodec.encode(WideColorHolder.serializer(), wide)
 
-        val decoded = NatsCodec.decode(ColorHolder.serializer(), bytes, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+        val decoded = NatsCodec.decode(
+            ColorHolder.serializer(),
+            bytes,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
 
         val expected = ColorHolder(
             color = Color.UNSPECIFIED,
@@ -127,6 +136,7 @@ class NatsCodecTest {
         for (entry in Color.entries) {
             assertEquals(entry, Color.forNumber(entry.number), "number ${entry.number}")
         }
+
         assertEquals(Color.RED, Color.forNumber(1))
         assertNull(Color.forNumber(999))
         assertNull(Color.forNumber(-1))
@@ -138,7 +148,10 @@ class NatsCodecTest {
 
         val bytes = NatsCodec.encode(ProfileUpdated.serializer(), withoutOptionals)
 
-        assertContentEquals(NatsCodec.encode(PlayerEvent.serializer(), PlayerEvent(TEST_UUID)), bytes)
+        assertContentEquals(
+            NatsCodec.encode(PlayerEvent.serializer(), PlayerEvent(TEST_UUID)),
+            bytes,
+        )
         assertEquals(withoutOptionals, roundtrip(ProfileUpdated.serializer(), withoutOptionals))
     }
 
@@ -153,12 +166,18 @@ class NatsCodecTest {
     fun `uuid is encoded as a 16 byte big-endian message`() {
         val bytes = NatsCodec.encode(PlayerEvent.serializer(), PlayerEvent(TEST_UUID))
 
-        assertEquals("0a120a10123e4567e89b12d3a456426614174000", bytes.joinToString("") { "%02x".format(it) })
+        assertEquals(
+            "0a120a10123e4567e89b12d3a456426614174000",
+            bytes.joinToString("") { "%02x".format(it) },
+        )
     }
 
     @Test
     fun `values equal to their default are not encoded`() {
-        val withDefault = NatsCodec.encode(Everything.serializer(), everything().copy(defaulted = 7))
+        val withDefault = NatsCodec.encode(
+            Everything.serializer(),
+            everything().copy(defaulted = 7),
+        )
         val withOther = NatsCodec.encode(Everything.serializer(), everything().copy(defaulted = 8))
 
         // field 27 as varint: two tag bytes and one value byte

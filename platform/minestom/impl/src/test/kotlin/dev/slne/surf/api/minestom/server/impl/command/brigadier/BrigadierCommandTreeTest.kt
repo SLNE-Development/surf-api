@@ -3,11 +3,7 @@ package dev.slne.surf.api.minestom.server.impl.command.brigadier
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.minestom.command.argument.EnumArgument
-import dev.slne.surf.api.minestom.command.argument.GreedyStringArgument
-import dev.slne.surf.api.minestom.command.argument.IntegerArgument
-import dev.slne.surf.api.minestom.command.argument.LiteralArgument
-import dev.slne.surf.api.minestom.command.argument.StringArgument
+import dev.slne.surf.api.minestom.command.argument.*
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.command.dsl.anyResultingExecutor
 import dev.slne.surf.api.minestom.command.executor.CommandArguments
@@ -145,20 +141,26 @@ class BrigadierCommandTreeTest {
         assertThrows(CommandSyntaxException::class.java) { tree.dispatch(env, "warp fast 99") }
     }
 
-    private enum class Mode { FAST, SLOW }
+    private enum class Mode {
+        FAST,
+        SLOW
+    }
 
-    private fun treeOf(command: CommandAPICommand): BrigadierCommandTree =
-        BrigadierCommandTree().apply {
+    private fun treeOf(command: CommandAPICommand): BrigadierCommandTree {
+        return BrigadierCommandTree().apply {
             register(command.name, listOf(command.name), command.toDefinition())
         }
+    }
 
-    private fun treeOf(command: CommandTree): BrigadierCommandTree =
-        BrigadierCommandTree().apply {
+    private fun treeOf(command: CommandTree): BrigadierCommandTree {
+        return BrigadierCommandTree().apply {
             register(command.name, listOf(command.name), command.toDefinition())
         }
+    }
 
     private fun BrigadierCommandTree.dispatch(env: Env, input: String): Int {
         val sender: CommandSender = env.process().command().consoleSender
+
         return dispatcher.execute(input, sender)
     }
 }

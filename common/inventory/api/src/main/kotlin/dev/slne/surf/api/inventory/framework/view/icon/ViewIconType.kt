@@ -1,7 +1,7 @@
 package dev.slne.surf.api.inventory.framework.view.icon
 
 enum class ViewIconType(
-    val configName: String
+    val configName: String,
 ) {
     ARROW_DOWN("arrow_down"),
     ARROW_UP("arrow_up"),

@@ -8,4 +8,8 @@ import dev.slne.surf.nats.protocol.ResolvedMethod
  *
  * [comment] is the JSDoc text of the `.proto` comment of the rpc, or `null` without one.
  */
-internal class ClientMethod(val desc: DescMethod, val resolved: ResolvedMethod, val comment: String?)
+internal class ClientMethod(
+    val desc: DescMethod,
+    val resolved: ResolvedMethod,
+    val comment: String?,
+)

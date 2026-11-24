@@ -7,7 +7,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.lang.reflect.Proxy
 import java.net.URLClassLoader
 import java.nio.file.Path
-import java.util.Optional
+import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import kotlin.io.path.outputStream
@@ -65,14 +65,18 @@ class VelocityPluginNamesTest {
         val classFile = Marker::class.java.name.replace('.', '/') + ".class"
         JarOutputStream(jar.outputStream()).use { out ->
             out.putNextEntry(JarEntry(classFile))
-            out.write(Marker::class.java.classLoader.getResourceAsStream(classFile)!!.readAllBytes())
+            out.write(
+                Marker::class.java.classLoader.getResourceAsStream(classFile)!!.readAllBytes(),
+            )
             out.closeEntry()
+
             if (descriptor != null) {
                 out.putNextEntry(JarEntry("velocity-plugin.json"))
                 out.write(descriptor.toByteArray())
                 out.closeEntry()
             }
         }
+
         return jar
     }
 

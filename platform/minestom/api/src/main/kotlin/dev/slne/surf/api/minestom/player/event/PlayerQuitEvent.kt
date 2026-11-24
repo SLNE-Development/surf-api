@@ -20,5 +20,5 @@ class PlayerQuitEvent @InternalSurfApi constructor(
     var quitMessage: Component?,
 ) : PlayerEvent {
 
-    override fun getPlayer() = player
+    override fun getPlayer(): Player = player
 }

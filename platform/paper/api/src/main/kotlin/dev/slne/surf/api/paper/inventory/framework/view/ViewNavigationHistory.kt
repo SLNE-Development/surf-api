@@ -2,7 +2,7 @@ package dev.slne.surf.api.paper.inventory.framework.view
 
 import me.devnatan.inventoryframework.View
 import org.bukkit.entity.Player
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayDeque
 
@@ -18,15 +18,17 @@ internal object ViewNavigationHistory {
         deque.addLast(entry)
     }
 
-    fun pushForward(player: Player, entry: NavEntry) = deque(player).addLast(entry)
+    fun pushForward(player: Player, entry: NavEntry): Unit = deque(player).addLast(entry)
 
-    fun markBackNavigation(player: Player) = backNav.add(player.uniqueId)
+    fun markBackNavigation(player: Player): Boolean = backNav.add(player.uniqueId)
 
-    fun consumeBackNavigation(player: Player) = backNav.remove(player.uniqueId)
+    fun consumeBackNavigation(player: Player): Boolean = backNav.remove(player.uniqueId)
 
     fun popToPrevious(player: Player): NavEntry? {
         val deque = paths[player.uniqueId] ?: return null
+
         deque.removeLastOrNull()
+
         return deque.lastOrNull()
     }
 

@@ -17,8 +17,10 @@ class PublishManifestTypeDependenciesTest {
     @TempDir
     lateinit var projectDir: File
 
-    private val common = "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:${SurfNatsPluginVersion.VERSION}"
-    private val paper = "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-paper:${SurfNatsPluginVersion.VERSION}"
+    private val common =
+        "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:${SurfNatsPluginVersion.VERSION}"
+    private val paper =
+        "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-paper:${SurfNatsPluginVersion.VERSION}"
 
     private fun project(vararg plugins: String, dir: File = projectDir): Project {
         val project = ProjectBuilder.builder().withProjectDir(dir)
@@ -27,6 +29,7 @@ class PublishManifestTypeDependenciesTest {
             if (plugin == SurfNatsPlugin.ID) project.pluginManager.apply(SurfNatsPlugin::class.java)
             else project.pluginManager.apply(plugin)
         }
+
         return project
     }
 
@@ -34,7 +37,9 @@ class PublishManifestTypeDependenciesTest {
         get() = (tasks.getByName("publishProtos") as PublishProtosTask).dependencies.get()
 
     private val Project.weaverConfigurationDependencies: List<String>
-        get() = configurations.getByName("weaver").dependencies.map { "${it.group}:${it.name}:${it.version}" }
+        get() = configurations.getByName("weaver").dependencies.map {
+            "${it.group}:${it.name}:${it.version}"
+        }
 
     @Test
     fun `a plain project publishes the common types as a dependency`() {
@@ -45,8 +50,16 @@ class PublishManifestTypeDependenciesTest {
 
     @Test
     fun `paper projects also publish the paper types as a dependency`() {
-        val plugins = listOf("dev.slne.surf.api.gradle.paper-plugin", "dev.slne.surf.api.gradle.paper-raw")
-        val orders = plugins.flatMap { listOf(listOf(it, SurfNatsPlugin.ID), listOf(SurfNatsPlugin.ID, it)) }
+        val plugins = listOf(
+            "dev.slne.surf.api.gradle.paper-plugin",
+            "dev.slne.surf.api.gradle.paper-raw",
+        )
+        val orders = plugins.flatMap {
+            listOf(
+                listOf(it, SurfNatsPlugin.ID),
+                listOf(SurfNatsPlugin.ID, it),
+            )
+        }
         orders.forEachIndexed { index, order ->
             val project = project(*order.toTypedArray(), dir = projectDir.resolve(index.toString()))
 
@@ -67,7 +80,10 @@ class PublishManifestTypeDependenciesTest {
 
         assertEquals(listOf(common, paper), project.manifestDependencies)
         assertEquals(emptyList(), project.weaverConfigurationDependencies)
-        assertEquals(emptyList(), (project.tasks.getByName("fetchProtos") as FetchProtosTask).dependencies.get())
+        assertEquals(
+            emptyList(),
+            (project.tasks.getByName("fetchProtos") as FetchProtosTask).dependencies.get(),
+        )
     }
 
     @Test
@@ -82,11 +98,17 @@ class PublishManifestTypeDependenciesTest {
     @Test
     fun `a types module declared by the user replaces the automatic version instead of duplicating it`() {
         val project = project(SurfNatsPlugin.ID)
-        project.dependencies.add("weaver", "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:9.9.9")
+        project.dependencies.add(
+            "weaver",
+            "${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:9.9.9",
+        )
 
         val dependencies = project.manifestDependencies
 
-        assertEquals(listOf("${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:9.9.9"), dependencies)
+        assertEquals(
+            listOf("${SurfNatsPluginVersion.GROUP}:surf-api-nats-types-common:9.9.9"),
+            dependencies,
+        )
         assertTrue(common !in dependencies)
     }
 }

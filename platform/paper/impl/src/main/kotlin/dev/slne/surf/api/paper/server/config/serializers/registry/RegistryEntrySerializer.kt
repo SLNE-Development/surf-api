@@ -20,7 +20,7 @@ abstract class RegistryEntrySerializer<T, R : Keyed> : ScalarSerializer.Annotate
     protected constructor(
         type: TypeToken<T>,
         registryKey: RegistryKey<R>,
-        omitMinecraftNamespace: Boolean
+        omitMinecraftNamespace: Boolean,
     ) : super(type) {
         this.registryKey = registryKey
         this.omitMinecraftNamespace = omitMinecraftNamespace
@@ -29,7 +29,7 @@ abstract class RegistryEntrySerializer<T, R : Keyed> : ScalarSerializer.Annotate
     protected constructor(
         type: Class<T>,
         registryKey: RegistryKey<R>,
-        omitMinecraftNamespace: Boolean
+        omitMinecraftNamespace: Boolean,
     ) : super(type) {
         this.registryKey = registryKey
         this.omitMinecraftNamespace = omitMinecraftNamespace
@@ -49,6 +49,7 @@ abstract class RegistryEntrySerializer<T, R : Keyed> : ScalarSerializer.Annotate
 
     override fun serialize(type: AnnotatedType, item: T, typeSupported: Predicate<Class<*>>): Any {
         val key = this.convertToResourceKey(item)
+
         return if (this.omitMinecraftNamespace && key.namespace() == Key.MINECRAFT_NAMESPACE) {
             key.value()
         } else {

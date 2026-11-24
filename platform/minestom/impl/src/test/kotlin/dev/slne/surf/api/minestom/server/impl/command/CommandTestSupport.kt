@@ -35,20 +35,23 @@ internal fun runCommand(sender: CommandSender, input: String): Boolean = try {
  * Runs [input] as [sender] through [CommandAPIHook], as the command manager does, reporting a
  * rejection to [sender], and returns whether a command executed.
  */
-internal fun runCommandReporting(sender: CommandSender, input: String): Boolean =
-    CommandAPIHook.execute(sender, input)?.type == CommandResult.Type.SUCCESS
+internal fun runCommandReporting(sender: CommandSender, input: String): Boolean {
+    return CommandAPIHook.execute(sender, input)?.type == CommandResult.Type.SUCCESS
+}
 
 /**
  * Runs [input] as [sender] and returns the executed command's result value.
  */
-internal fun runCommandForResult(sender: CommandSender, input: String): Int =
-    CommandAPI.execute(sender, input)
+internal fun runCommandForResult(sender: CommandSender, input: String): Int {
+    return CommandAPI.execute(sender, input)
+}
 
 /**
  * Parses [input] with this argument's raw parser.
  */
-internal fun <T> ArgumentDefinition<T>.read(sender: CommandSender, input: String): T =
-    rawType.parse(StringReader(input), sender)
+internal fun <T> ArgumentDefinition<T>.read(sender: CommandSender, input: String): T {
+    return rawType.parse(StringReader(input), sender)
+}
 
 /**
  * The node declaration a client receives for this argument.
@@ -58,8 +61,9 @@ internal fun ArgumentDefinition<*>.declaration(): NodeDeclaration = NodeDeclarat
 /**
  * The command tree sent to [player]: Minestom's commands with the CommandAPI's merged in.
  */
-internal fun declaredCommands(env: Env, player: Player): DeclareCommandsPacket =
-    env.process().command().createDeclareCommandsPacket(player)
+internal fun declaredCommands(env: Env, player: Player): DeclareCommandsPacket {
+    return env.process().command().createDeclareCommandsPacket(player)
+}
 
 /**
  * A player holding exactly [grantedPermissions], resolved through [MinestomPermissions].
@@ -77,5 +81,7 @@ internal class TestPermissionPlayer(
 }
 
 private val TEST_PERMISSIONS = PermissionProvider { player, permission ->
-    TriState.byBoolean((player as? TestPermissionPlayer)?.grantedPermissions?.contains(permission) == true)
+    TriState.byBoolean(
+        (player as? TestPermissionPlayer)?.grantedPermissions?.contains(permission) == true,
+    )
 }

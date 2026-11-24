@@ -173,7 +173,7 @@ class ListenerInvokerFactoryTest {
         assertFailsWith<IllegalArgumentException> {
             invokerFor(
                 RecordingListener(),
-                "returnsValue"
+                "returnsValue",
             )
         }
     }

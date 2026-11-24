@@ -9,6 +9,7 @@ class RedisUtf8StringTest {
     @Test
     fun `round trips ascii and multi-byte text without a temporary buffer`() {
         val buffer = Unpooled.buffer()
+
         try {
             buffer.writeString("surf-redis")
             buffer.writeString("Greetings 🌊")
@@ -24,6 +25,7 @@ class RedisUtf8StringTest {
     @Test
     fun `enforces character limit before writing`() {
         val buffer = Unpooled.buffer()
+
         try {
             assertFailsWith<Exception> {
                 buffer.writeString("too long", maxLength = 3)
@@ -39,6 +41,7 @@ class RedisUtf8StringTest {
         val value = "a".repeat(1024)
         val encodedSize = 2 + value.length // two-byte VarInt length prefix plus ASCII payload
         val buffer = Unpooled.buffer(encodedSize, encodedSize * 3)
+
         try {
             buffer.writeString(value, maxLength = value.length)
 
@@ -52,6 +55,7 @@ class RedisUtf8StringTest {
     @Test
     fun `container readers reject attacker-controlled allocation sizes`() {
         val buffer = Unpooled.buffer()
+
         try {
             buffer.writeVarInt(Int.MAX_VALUE)
             assertFailsWith<Exception> {

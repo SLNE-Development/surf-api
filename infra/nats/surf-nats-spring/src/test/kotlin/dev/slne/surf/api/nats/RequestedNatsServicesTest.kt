@@ -7,7 +7,7 @@ import org.springframework.beans.factory.ObjectFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
-import java.util.Optional
+import java.util.*
 import kotlin.test.assertEquals
 
 @Suppress("unused", "UNUSED_PARAMETER")
@@ -86,15 +86,22 @@ class RequestedNatsServicesTest {
     fun `constructor parameter`() = assertEquals(notifier, requestedBy(ByConstructor::class.java))
 
     @Test
-    fun `nullable Kotlin constructor parameter`() =
-        assertEquals(notifier, requestedBy(ByNullableConstructor::class.java))
+    fun `nullable Kotlin constructor parameter`() = assertEquals(
+        notifier,
+        requestedBy(ByNullableConstructor::class.java),
+    )
 
     @Test
-    fun `Kotlin primary constructor with a default value`() =
-        assertEquals(notifier, requestedBy(ByDefaultedConstructor::class.java))
+    fun `Kotlin primary constructor with a default value`() = assertEquals(
+        notifier,
+        requestedBy(ByDefaultedConstructor::class.java),
+    )
 
     @Test
-    fun `only the constructor Spring uses counts`() = assertEquals(notifier, requestedBy(ByAutowiredConstructor::class.java))
+    fun `only the constructor Spring uses counts`() = assertEquals(
+        notifier,
+        requestedBy(ByAutowiredConstructor::class.java),
+    )
 
     @Test
     fun `autowired field`() = assertEquals(notifier, requestedBy(ByField::class.java))
@@ -103,34 +110,61 @@ class RequestedNatsServicesTest {
     fun `autowired setter`() = assertEquals(notifier, requestedBy(BySetter::class.java))
 
     @Test
-    fun `autowired field of a superclass`() = assertEquals(notifier, requestedBy(BySuperclassField::class.java))
-
-
-    @Test
-    fun `generic members of a superclass resolve against the bean class`() =
-        assertEquals(notifier, requestedBy(BoundGenericHolder::class.java))
+    fun `autowired field of a superclass`() = assertEquals(
+        notifier,
+        requestedBy(BySuperclassField::class.java),
+    )
 
     @Test
-    fun `a generic member that the bean class leaves unbound is not reported`() =
-        assertEquals(emptySet(), requestedBy(UnboundGenericHolder::class.java))
+    fun `generic members of a superclass resolve against the bean class`() = assertEquals(
+        notifier,
+        requestedBy(BoundGenericHolder::class.java),
+    )
+
+    @Test
+    fun `a generic member that the bean class leaves unbound is not reported`() = assertEquals(
+        emptySet(),
+        requestedBy(UnboundGenericHolder::class.java),
+    )
 
     @Test
     fun `the constructors of a factory method's result are skipped on request`() {
-        assertEquals(emptySet(), RequestedNatsServices.requestedBy(ByConstructor::class.java, includeConstructors = false))
-        assertEquals(notifier, RequestedNatsServices.requestedBy(ByField::class.java, includeConstructors = false))
+        assertEquals(
+            emptySet(),
+            RequestedNatsServices.requestedBy(
+                ByConstructor::class.java,
+                includeConstructors = false,
+            ),
+        )
+        assertEquals(
+            notifier,
+            RequestedNatsServices.requestedBy(ByField::class.java, includeConstructors = false),
+        )
     }
-    @Test
-    fun `parameter of a bean method`() = assertEquals(notifier, requestedBy(ByBeanMethod::class.java))
 
     @Test
-    fun `ObjectProvider type argument`() = assertEquals(notifier, requestedBy(ByObjectProvider::class.java))
+    fun `parameter of a bean method`() = assertEquals(
+        notifier,
+        requestedBy(ByBeanMethod::class.java),
+    )
 
     @Test
-    fun `wildcard ObjectProvider type argument`() =
-        assertEquals(notifier, requestedBy(ByWildcardObjectProvider::class.java))
+    fun `ObjectProvider type argument`() = assertEquals(
+        notifier,
+        requestedBy(ByObjectProvider::class.java),
+    )
 
     @Test
-    fun `ObjectFactory type argument`() = assertEquals(notifier, requestedBy(ByObjectFactory::class.java))
+    fun `wildcard ObjectProvider type argument`() = assertEquals(
+        notifier,
+        requestedBy(ByWildcardObjectProvider::class.java),
+    )
+
+    @Test
+    fun `ObjectFactory type argument`() = assertEquals(
+        notifier,
+        requestedBy(ByObjectFactory::class.java),
+    )
 
     @Test
     fun `Optional type argument`() = assertEquals(notifier, requestedBy(ByOptional::class.java))
@@ -142,10 +176,14 @@ class RequestedNatsServicesTest {
     )
 
     @Test
-    fun `other types and collections are not reported`() =
-        assertEquals(emptySet(), requestedBy(ByNothing::class.java))
+    fun `other types and collections are not reported`() = assertEquals(
+        emptySet(),
+        requestedBy(ByNothing::class.java),
+    )
 
     @Test
-    fun `members without an injection annotation are not reported`() =
-        assertEquals(emptySet(), requestedBy(UnannotatedMembers::class.java))
+    fun `members without an injection annotation are not reported`() = assertEquals(
+        emptySet(),
+        requestedBy(UnannotatedMembers::class.java),
+    )
 }

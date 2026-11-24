@@ -25,5 +25,5 @@ class PlayerToggleFlightEvent @InternalSurfApi constructor(
         cancelled = cancel
     }
 
-    override fun getPlayer() = player
+    override fun getPlayer(): Player = player
 }

@@ -15,10 +15,11 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 
 /**
- * The subscriptions of one client: one per subject and queue group, shared by every listener registered for it.
+ * The subscriptions of one client: one per subject and queue group, shared by every listener
+ * registered for it.
  *
- * A subject belongs to the first schema object registered for it. Listeners of another schema object for the same
- * subject are rejected. After [drain] no listener can be added.
+ * A subject belongs to the first schema object registered for it. Listeners of another schema
+ * object for the same subject are rejected. After [drain] no listener can be added.
  */
 internal class EventSubscriptions(private val client: NatsClientImpl) {
 
@@ -37,9 +38,11 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     private var closed = false
 
     /**
-     * Adds [listener] to the subscription of its subject and queue group, subscribing when none is open.
+     * Adds [listener] to the subscription of its subject and queue group, subscribing when none is
+     * open.
      *
-     * @throws IllegalStateException after [drain] or when another schema object already owns the subject
+     * @throws IllegalStateException after [drain] or when another schema object already owns the
+     * subject
      */
     fun add(listener: EventListener) {
         check(!closed) { "NatsClient[${client.name}] is closed" }
@@ -50,14 +53,17 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
             if (otherKey.subject != key.subject) continue
             check(other.descriptor.schema === listener.descriptor.schema) {
                 "Subject '${key.subject}' is already used by ${other.descriptor.typeName}, " +
-                        "cannot register a listener for ${listener.descriptor.typeName}"
+                    "cannot register a listener for ${listener.descriptor.typeName}"
             }
         }
 
-        // nats.js closes a subscription after reporting an error for it, so the next listener subscribes again
+        // nats.js closes a subscription after reporting an error for it, so the next listener
+        // subscribes again
         val existing = entries[key]
+
         if (existing != null && !existing.subscription.isClosed()) {
             existing.targets += listener
+
             return
         }
 
@@ -81,23 +87,29 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
         if (entry.targets.isEmpty()) {
             entries.remove(key)
-            if (!entry.subscription.isClosed()) entry.subscription.unsubscribe()
+
+            if (!entry.subscription.isClosed()) {
+                entry.subscription.unsubscribe()
+            }
         }
     }
 
     /**
-     * Stops every subscription after the messages it already received are dispatched, then waits for the running
-     * handlers up to [JsRuntimeDefaults.drainTimeout].
+     * Stops every subscription after the messages it already received are dispatched, then waits
+     * for the running handlers up to [JsRuntimeDefaults.drainTimeout].
      */
     suspend fun drain() {
         if (closed) return
+
         closed = true
 
         val drained = entries.values.toList()
         entries.clear()
 
-        val drains =
-            drained.filterNot { it.subscription.isClosed() }.map { it.subscription.drain() }
+        val drains = drained.filterNot { it.subscription.isClosed() }.map {
+            it.subscription.drain()
+        }
+
         for (drain in drains) {
             try {
                 drain.await()
@@ -105,30 +117,36 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
                 if (e is CancellationException) {
                     currentCoroutineContext().ensureActive()
                 }
+
                 client.logger.warn("Failed to drain a listener subscription", e)
             }
         }
 
         val timeout = JsRuntimeDefaults.drainTimeout
+
         if (!runningHandlers.awaitIdle(timeout)) {
             client.logger.warn(
-                "${runningHandlers.count} listener handlers are still running after $timeout, closing anyway"
+                "${runningHandlers.count} listener handlers are still running after $timeout, closing anyway",
             )
         }
     }
 
     /**
-     * Decodes [message] once and calls every target of [entry], skipping own events for listeners that ignore them.
+     * Decodes [message] once and calls every target of [entry], skipping own events for listeners
+     * that ignore them.
      *
-     * Undecodable messages are dropped with a warning. Handler results are tracked so [drain] can wait for them.
+     * Undecodable messages are dropped with a warning. Handler results are tracked so [drain] can
+     * wait for them.
      */
     private fun dispatch(entry: Entry, error: Throwable?, message: Msg) {
         val descriptor = entry.descriptor
+
         if (error != null) {
             client.logger.warn(
                 "Listener subscription for ${descriptor.typeName} on ${entry.key.subject} stopped",
-                error
+                error,
             )
+
             return
         }
 
@@ -136,8 +154,8 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         val contentType = message.header(ProtocolHeaders.CONTENT_TYPE)
 
         val fromThisClient = origin == client.origin
-        val targets =
-            entry.targets // a handler may close its registration while the targets are dispatched
+        // a handler may close its registration while the targets are dispatched
+        val targets = entry.targets
 
         if (fromThisClient && targets.all { it.ignoreFromThisClient }) return
 
@@ -146,13 +164,14 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
                 descriptor.schema,
                 message.data,
                 contentType,
-                "event on ${message.subject}"
+                "event on ${message.subject}",
             )
         } catch (e: Throwable) {
             client.logger.warn(
                 "Dropping undecodable ${descriptor.typeName} on ${message.subject}",
-                e
+                e,
             )
+
             return
         }
 
@@ -164,6 +183,7 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
 
         for (target in targets) {
             if (fromThisClient && target.ignoreFromThisClient) continue
+
             val result = try {
                 target.handler(event, context)
             } catch (e: Throwable) {
@@ -177,9 +197,11 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     private fun logListenerFailure(descriptor: EventDescriptor, message: Msg, error: Any?) {
         client.logger.error(
             "Listener for ${descriptor.typeName} failed on ${message.subject}",
-            error
+            error,
         )
     }
 
-    private fun keyOf(listener: EventListener): Key = Key(listener.descriptor.subject, listener.queueGroup)
+    private fun keyOf(listener: EventListener): Key {
+        return Key(listener.descriptor.subject, listener.queueGroup)
+    }
 }

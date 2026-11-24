@@ -31,7 +31,9 @@ object EntityViewerLookup {
     @JvmStatic
     fun useDirectScan(candidateCount: Int, chunkRange: Int): Boolean {
         if (chunkRange <= 0) return false
+
         val side = 2L * chunkRange + 1L
+
         return candidateCount * DIRECT_SCAN_COST_FACTOR < side * side
     }
 
@@ -83,6 +85,7 @@ object EntityViewerLookup {
         val maxX = chunkX + chunkRange
         val minZ = chunkZ - chunkRange
         val maxZ = chunkZ + chunkRange
+
         for (x in minX..maxX) {
             for (z in minZ..maxZ) {
                 consumer.accept(x, z)

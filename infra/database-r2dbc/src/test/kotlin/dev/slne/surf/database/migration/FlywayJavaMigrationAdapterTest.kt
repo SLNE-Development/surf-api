@@ -27,8 +27,10 @@ class FlywayJavaMigrationAdapterTest {
         }
     }
 
-    private fun adapt(migration: SurfMigration, block: (FlywayJavaMigrationAdapter) -> Unit) =
-        withOfflineDatabase { database -> block(FlywayJavaMigrationAdapter(database, migration)) }
+    private fun adapt(
+        migration: SurfMigration,
+        block: (FlywayJavaMigrationAdapter) -> Unit,
+    ) = withOfflineDatabase { database -> block(FlywayJavaMigrationAdapter(database, migration)) }
 
     @Test
     fun exposesVersionAndDescription() = adapt(Checksummed()) { adapter ->
@@ -72,7 +74,7 @@ class FlywayJavaMigrationAdapterTest {
         val migration = Recording()
         val connection = Proxy.newProxyInstance(
             javaClass.classLoader,
-            arrayOf(Connection::class.java)
+            arrayOf(Connection::class.java),
         ) { _, _, _ -> null } as Connection
         val context = object : Context {
             override fun getConfiguration(): Configuration = FluentConfiguration()

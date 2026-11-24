@@ -32,7 +32,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException as BrigadierComman
 @EnvTest
 class CompositeArgumentIntegrationTest {
     @Test
-    fun `custom mapped filtered and list arguments execute with converted values and exact raw input`(env: Env) {
+    fun `custom mapped filtered and list arguments execute with converted values and exact raw input`(
+        env: Env,
+    ) {
         withPlatform(env) { manager ->
             val firstId = UUID.fromString("79d40754-7772-4ab4-a7c6-f21df121db4a")
             val secondId = UUID.fromString("3b91a87f-82d2-4e85-ad47-3315f0021420")
@@ -44,7 +46,13 @@ class CompositeArgumentIntegrationTest {
             CommandAPICommand("compose")
                 .withArguments(
                     CustomArgument(StringArgument("user")) { info ->
-                        customInfo.set(CustomSnapshot(info.sender, info.currentInput, info.baseValue))
+                        customInfo.set(
+                            CustomSnapshot(
+                                info.sender,
+                                info.currentInput,
+                                info.baseValue,
+                            ),
+                        )
                         users[info.currentInput]
                             ?: CommandAPI.failWithString("Unknown user ${info.currentInput}")
                     },
@@ -106,7 +114,7 @@ class CompositeArgumentIntegrationTest {
             modes.rawType.parse(StringReader("mode-low, mode-high"), sender),
         )
 
-        listOf(greedy, modes).forEach { definition ->
+        for (definition in listOf(greedy, modes)) {
             val declaration = declarations.of(definition)
             assertEquals(ArgumentParserType.STRING, declaration.parser)
             assertArrayEquals(byteArrayOf(2), declaration.properties)
@@ -123,7 +131,13 @@ class CompositeArgumentIntegrationTest {
                 3
             }
             val doubled = CustomArgument(base) { info ->
-                defaultInfo.set(CustomSnapshot(info.sender, info.currentInput, info.baseValue.toString()))
+                defaultInfo.set(
+                    CustomSnapshot(
+                        info.sender,
+                        info.currentInput,
+                        info.baseValue.toString(),
+                    ),
+                )
                 info.baseValue * 2
             }
             val definition = doubled.toDefinition()
@@ -190,6 +204,7 @@ class CompositeArgumentIntegrationTest {
             if (info.baseValue == 3) {
                 throw CommandSyntaxException(styled, input = "reserved-three")
             }
+
             info.baseValue
         }.toDefinition()
 
@@ -242,7 +257,9 @@ class CompositeArgumentIntegrationTest {
     }
 
     @Test
-    fun `custom argument wrapping a position kind still fails registration despite the bypassed guard`(env: Env) {
+    fun `custom argument wrapping a position kind still fails registration despite the bypassed guard`(
+        env: Env,
+    ) {
         withPlatform(env) { manager ->
             val argument = CustomArgument(PositionArgument("pos")) { info -> info.baseValue }
                 .replaceSuggestions(ArgumentSuggestions.strings("~ ~ ~"))
@@ -383,24 +400,28 @@ class CompositeArgumentIntegrationTest {
                 },
             )
 
-            listOf(
+            val falseDefinitions = listOf(
                 commandFalse.toDefinition(),
                 treeFalse.toDefinition(),
                 childFalse.toDefinition(),
-            ).forEach { definition ->
+            )
+            for (definition in falseDefinitions) {
                 val argument = definition.paths.single().arguments.last()
                 assertFalse(argument.optional)
                 assertNull(argument.defaultValue)
             }
-            listOf(
+
+            val trueDefinitions = listOf(
                 commandTrue.toDefinition(),
                 treeTrue.toDefinition(),
                 childTrue.toDefinition(),
-            ).forEach { definition ->
+            )
+            for (definition in trueDefinitions) {
                 val argument = definition.paths.single().arguments.last()
                 assertTrue(argument.optional)
                 assertNull(argument.defaultValue)
             }
+
             commandFalse.register()
             commandTrue.register()
             treeFalse.register()
@@ -408,20 +429,24 @@ class CompositeArgumentIntegrationTest {
             childFalse.register()
             childTrue.register()
 
-            listOf(
+            val falseInputs = listOf(
                 "dsl-command-false",
                 "dsl-tree-false",
                 "dsl-child-false prefix",
-            ).forEach { input ->
+            )
+            for (input in falseInputs) {
                 assertFalse(runCommand(manager.consoleSender, input))
             }
-            listOf(
+
+            val trueInputs = listOf(
                 "dsl-command-true",
                 "dsl-tree-true",
                 "dsl-child-true prefix",
-            ).forEach { input ->
+            )
+            for (input in trueInputs) {
                 assertTrue(runCommand(manager.consoleSender, input))
             }
+
             assertEquals(
                 mapOf(
                     "command-true" to null,
@@ -440,6 +465,7 @@ class CompositeArgumentIntegrationTest {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             block(manager)
         } finally {

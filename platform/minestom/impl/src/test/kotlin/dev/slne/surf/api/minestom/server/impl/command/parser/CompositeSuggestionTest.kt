@@ -14,7 +14,10 @@ import org.junit.jupiter.api.Test
  */
 @EnvTest
 class CompositeSuggestionTest {
-    private enum class Mode { LOW, HIGH }
+    private enum class Mode {
+        LOW,
+        HIGH
+    }
 
     private val context = CommandDispatcher<Any>().parse("", Any()).context.build("")
 
@@ -34,7 +37,10 @@ class CompositeSuggestionTest {
 
     @Test
     fun `a list argument completes the element being typed and replaces only it`(env: Env) {
-        val parser = ListArgument("modes", EnumArgument("mode", Mode.entries)).toDefinition().rawType
+        val parser = ListArgument(
+            "modes",
+            EnumArgument("mode", Mode.entries),
+        ).toDefinition().rawType
 
         val suggestions = suggest(parser, "low,HI")
 

@@ -21,14 +21,14 @@ class SyncSetImpl<T : Any> internal constructor(
     api: RedisApi,
     id: String,
     ttl: Duration,
-    private val elementCodec: SyncValueCodec<T>
+    private val elementCodec: SyncValueCodec<T>,
 ) : AbstractStreamSyncStructure<SyncSetChange, SimpleVersionedSnapshot<Set<String>>>(
     api,
     id,
     ttl,
     Scripts,
     NAMESPACE,
-    elementCodec.descriptor
+    elementCodec.descriptor,
 ),
     SyncSet<T> {
 
@@ -62,7 +62,7 @@ class SyncSetImpl<T : Any> internal constructor(
     private val remoteSet by lazy {
         api.redissonReactive.getSet<String>(
             dataKey,
-            StringCodec.INSTANCE
+            StringCodec.INSTANCE,
         )
     }
 
@@ -74,16 +74,18 @@ class SyncSetImpl<T : Any> internal constructor(
             .then()
     }
 
-    override fun registerListeners0(): List<Mono<Int>> = listOf(
-        remoteSet.addListener(DeletedObjectListener { requestResync() }),
-        remoteSet.addListener(ExpiredObjectListener { requestResync() })
-    )
+    override fun registerListeners0(): List<Mono<Int>> {
+        return listOf(
+            remoteSet.addListener(DeletedObjectListener { requestResync() }),
+            remoteSet.addListener(ExpiredObjectListener { requestResync() }),
+        )
+    }
 
     override fun unregisterListener(id: Int): Mono<*> = remoteSet.removeListener(id)
 
-    override fun snapshot() = lock.read { HashSet(set) }
-    override fun size() = lock.read { set.size }
-    override fun contains(element: T) = lock.read { set.contains(element) }
+    override fun snapshot(): HashSet<T> = lock.read { HashSet(set) }
+    override fun size(): Int = lock.read { set.size }
+    override fun contains(element: T): Boolean = lock.read { set.contains(element) }
 
     override fun add(element: T): Boolean {
         val added = lock.write { set.add(element) }
@@ -101,6 +103,7 @@ class SyncSetImpl<T : Any> internal constructor(
 
         writeToRemote(REMOVE_SCRIPT, EVENT_REMOVED, encodeValue(element))
         notifyListeners(SyncSetChange.Removed(element))
+
         return true
     }
 
@@ -120,8 +123,10 @@ class SyncSetImpl<T : Any> internal constructor(
         val removedElements = lock.write {
             val removed = HashSet<T>()
             val iterator = set.iterator()
+
             while (iterator.hasNext()) {
                 val element = iterator.next()
+
                 if (predicate(element)) {
                     iterator.remove()
                     removed.add(element)
@@ -137,9 +142,11 @@ class SyncSetImpl<T : Any> internal constructor(
         val encoded = Array(removedElements.size) { encodeValue(iter.next()) }
 
         removeRemoteMany(encoded)
-        removedElements.forEach { element ->
+
+        for (element in removedElements) {
             notifyListeners(SyncSetChange.Removed(element))
         }
+
         return true
     }
 
@@ -243,19 +250,23 @@ class SyncSetImpl<T : Any> internal constructor(
         ).awaitSingle()
     }
 
-    override suspend fun containsRemote(element: T): Boolean =
-        remoteSet.contains(encodeValue(element)).awaitSingle()
+    override suspend fun containsRemote(element: T): Boolean {
+        return remoteSet.contains(encodeValue(element)).awaitSingle()
+    }
 
     override suspend fun sizeRemote(): Int = remoteSet.size().awaitSingle()
 
-    override suspend fun snapshotRemote(): HashSet<T> =
-        decodeSnapshot(pullRemoteSnapshot().awaitSingle().value)
+    override suspend fun snapshotRemote(): HashSet<T> {
+        return decodeSnapshot(pullRemoteSnapshot().awaitSingle().value)
+    }
 
-    override suspend fun addRemote(element: T): Boolean =
-        writeToRemoteAndApplyAwait(ADD_SCRIPT, EVENT_ADDED, encodeValue(element))
+    override suspend fun addRemote(element: T): Boolean {
+        return writeToRemoteAndApplyAwait(ADD_SCRIPT, EVENT_ADDED, encodeValue(element))
+    }
 
-    override suspend fun removeRemote(element: T): Boolean =
-        writeToRemoteAndApplyAwait(REMOVE_SCRIPT, EVENT_REMOVED, encodeValue(element))
+    override suspend fun removeRemote(element: T): Boolean {
+        return writeToRemoteAndApplyAwait(REMOVE_SCRIPT, EVENT_REMOVED, encodeValue(element))
+    }
 
     override suspend fun clearRemote() {
         writeToRemoteAndApplyAwait(CLEAR_SCRIPT, EVENT_CLEARED)
@@ -265,11 +276,14 @@ class SyncSetImpl<T : Any> internal constructor(
         writeBatchToRemote(REMOVE_MANY_SCRIPT, EVENT_REMOVED, *encodedValues)
     }
 
-    override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {
-        EVENT_ADDED -> onAddedEvent(data)
-        EVENT_REMOVED -> onDeletedEvent(data)
-        EVENT_CLEARED -> onClearEvent(data)
-        else -> log.atWarning().log("Unknown event type '$type' for SyncSet '$id'")
+    override fun onStreamEvent(type: String, data: StreamEventData) {
+        when (type) {
+            EVENT_ADDED -> onAddedEvent(data)
+            EVENT_REMOVED -> onDeletedEvent(data)
+            EVENT_CLEARED -> onClearEvent(data)
+            else -> log.atWarning()
+                .log("Unknown event type '$type' for SyncSet '$id'")
+        }
     }
 
     private fun onAddedEvent(data: StreamEventData) {
@@ -279,6 +293,7 @@ class SyncSetImpl<T : Any> internal constructor(
         val added = lock.write { set.add(decoded) }
 
         if (!added) return requestResync()
+
         notifyListeners(SyncSetChange.Added(decoded))
     }
 
@@ -289,6 +304,7 @@ class SyncSetImpl<T : Any> internal constructor(
         val removed = lock.write { set.remove(decoded) }
 
         if (!removed) return requestResync()
+
         notifyListeners(SyncSetChange.Removed(decoded))
     }
 
@@ -332,8 +348,9 @@ class SyncSetImpl<T : Any> internal constructor(
         super.overrideFromRemote(raw)
     }
 
-    private fun decodeSnapshot(raw: Set<String>): HashSet<T> =
-        raw.mapTo(HashSet(raw.size), ::decodeValue)
+    private fun decodeSnapshot(raw: Set<String>): HashSet<T> {
+        return raw.mapTo(HashSet(raw.size), ::decodeValue)
+    }
 
     private fun encodeValue(value: T) = elementCodec.encode(value)
     private fun decodeValue(value: String) = elementCodec.decode(value)

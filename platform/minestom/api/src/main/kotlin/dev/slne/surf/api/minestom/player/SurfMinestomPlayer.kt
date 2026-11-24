@@ -64,6 +64,7 @@ open class SurfMinestomPlayer(
         if (!super.setGameMode(gameMode)) return false
 
         completeGameModeSwitch(previousGameMode)
+
         return true
     }
 
@@ -100,9 +101,9 @@ open class SurfMinestomPlayer(
                 PlayerInfoUpdatePacket.Entry(
                     entry.uuid(), entry.username(), entry.properties(), entry.listed(),
                     entry.latency(), entry.gameMode(), entry.displayName(), session,
-                    entry.listOrder(), entry.displayHat()
+                    entry.listOrder(), entry.displayHat(),
                 )
-            }
+            },
         )
     }
 

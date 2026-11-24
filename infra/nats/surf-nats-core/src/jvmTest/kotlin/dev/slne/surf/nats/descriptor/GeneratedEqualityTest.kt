@@ -6,11 +6,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
 /**
- * Generated content-aware `equals`/`hashCode` (messages with bytes fields) keep data class semantics for floats.
+ * Generated content-aware `equals`/`hashCode` (messages with bytes fields) keep data class
+ * semantics for floats.
  */
 class GeneratedEqualityTest {
-    private fun measurement(value: Double, ratio: Float = 1f, previous: Double? = null) =
-        Measurement(data = byteArrayOf(1, 2, 3), value = value, ratio = ratio, previous = previous)
+    private fun measurement(
+        value: Double,
+        ratio: Float = 1f,
+        previous: Double? = null,
+    ) = Measurement(data = byteArrayOf(1, 2, 3), value = value, ratio = ratio, previous = previous)
 
     @Test
     fun `NaN equals itself like in a data class`() {

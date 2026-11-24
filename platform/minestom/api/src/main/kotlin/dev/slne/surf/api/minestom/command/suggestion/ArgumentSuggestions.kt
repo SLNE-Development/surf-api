@@ -15,8 +15,9 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
  * Providers run in a coroutine on the server's asynchronous scope, not on the network thread, and
  * may suspend. An exception thrown by a provider is logged and the provider contributes no entries.
  *
- * Register a provider with [dev.slne.surf.api.minestom.command.argument.Argument.replaceSuggestions]
- * or [dev.slne.surf.api.minestom.command.argument.Argument.includeSuggestions].
+ * Register a provider with
+ * [dev.slne.surf.api.minestom.command.argument.Argument.replaceSuggestions] or
+ * [dev.slne.surf.api.minestom.command.argument.Argument.includeSuggestions].
  */
 fun interface ArgumentSuggestions {
     /**
@@ -46,6 +47,7 @@ fun interface ArgumentSuggestions {
          */
         fun strings(values: Collection<String>): ArgumentSuggestions {
             val copy = values.toList()
+
             return ArgumentSuggestions { copy.map(::withoutTooltip) }
         }
 
@@ -61,7 +63,9 @@ fun interface ArgumentSuggestions {
         /**
          * Alias of [strings] for a provider.
          */
-        fun stringCollection(provider: (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
+        fun stringCollection(
+            provider: (SuggestionInfo) -> Collection<String>,
+        ): ArgumentSuggestions {
             return strings(provider)
         }
 
@@ -69,7 +73,9 @@ fun interface ArgumentSuggestions {
          * Returns a provider that suggests the strings the suspending [provider] returns for each
          * request.
          */
-        fun stringsAsync(provider: suspend (SuggestionInfo) -> Collection<String>): ArgumentSuggestions {
+        fun stringsAsync(
+            provider: suspend (SuggestionInfo) -> Collection<String>,
+        ): ArgumentSuggestions {
             return ArgumentSuggestions { info ->
                 provider(info).map(::withoutTooltip)
             }
@@ -78,55 +84,72 @@ fun interface ArgumentSuggestions {
         /**
          * Alias of [stringsAsync].
          */
-        fun stringCollectionAsync(provider: suspend (SuggestionInfo) -> Collection<String>): ArgumentSuggestions =
-            stringsAsync(provider)
+        fun stringCollectionAsync(
+            provider: suspend (SuggestionInfo) -> Collection<String>,
+        ): ArgumentSuggestions {
+            return stringsAsync(provider)
+        }
 
         /**
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
-        fun stringsWithTooltips(vararg values: StringTooltip): ArgumentSuggestions =
-            stringsWithTooltips(listOf(*values))
+        fun stringsWithTooltips(vararg values: StringTooltip): ArgumentSuggestions {
+            return stringsWithTooltips(listOf(*values))
+        }
 
         /**
          * Returns a provider that suggests the fixed [values] with their tooltips.
          */
         fun stringsWithTooltips(values: Collection<StringTooltip>): ArgumentSuggestions {
             val copy = values.toList()
+
             return ArgumentSuggestions { copy }
         }
 
         /**
          * Returns a provider that suggests the entries [provider] returns for each request.
          */
-        fun stringsWithTooltips(provider: (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
+        fun stringsWithTooltips(
+            provider: (SuggestionInfo) -> Collection<StringTooltip>,
+        ): ArgumentSuggestions {
             return ArgumentSuggestions { info -> provider(info).toList() }
         }
 
         /**
          * Alias of [stringsWithTooltips] for a provider.
          */
-        fun stringsWithTooltipsCollection(provider: (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions =
-            stringsWithTooltips(provider)
+        fun stringsWithTooltipsCollection(
+            provider: (SuggestionInfo) -> Collection<StringTooltip>,
+        ): ArgumentSuggestions {
+            return stringsWithTooltips(provider)
+        }
 
         /**
          * Returns a provider that suggests the entries the suspending [provider] returns for each
          * request.
          */
-        fun stringsWithTooltipsAsync(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
+        fun stringsWithTooltipsAsync(
+            provider: suspend (SuggestionInfo) -> Collection<StringTooltip>,
+        ): ArgumentSuggestions {
             return ArgumentSuggestions { info -> provider(info).toList() }
         }
 
         /**
          * Alias of [stringsWithTooltipsAsync].
          */
-        fun stringsWithTooltipsCollectionAsync(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions =
-            stringsWithTooltipsAsync(provider)
+        fun stringsWithTooltipsCollectionAsync(
+            provider: suspend (SuggestionInfo) -> Collection<StringTooltip>,
+        ): ArgumentSuggestions {
+            return stringsWithTooltipsAsync(provider)
+        }
 
         /**
          * Returns a provider whose entries are offered without prefix filtering
          * ([SuggestionFilter.NONE]).
          */
-        fun unfiltered(provider: suspend (SuggestionInfo) -> Collection<StringTooltip>): ArgumentSuggestions {
+        fun unfiltered(
+            provider: suspend (SuggestionInfo) -> Collection<StringTooltip>,
+        ): ArgumentSuggestions {
             return object : ArgumentSuggestions {
                 override val filterPolicy = SuggestionFilter.NONE
 
@@ -146,6 +169,7 @@ fun interface ArgumentSuggestions {
          */
         fun merge(vararg providers: ArgumentSuggestions): ArgumentSuggestions {
             val copy = providers.toList()
+
             return ArgumentSuggestions { info ->
                 coroutineScope {
                     copy.map { provider -> async { suggestOrEmpty(provider, info) } }
@@ -162,28 +186,35 @@ fun interface ArgumentSuggestions {
          * Yields no entries when the branch has no provider for the current position or rejects a
          * previous value, see [SuggestionsBranch.getNextSuggestion].
          */
-        fun branch(branch: SuggestionsBranch): ArgumentSuggestions = ArgumentSuggestions { info ->
-            val next = try {
-                branch.getNextSuggestion(info.sender, *info.previousArgs.rawArguments().toTypedArray())
-            } catch (_: CommandSyntaxException) {
-                null
-            }
+        fun branch(branch: SuggestionsBranch): ArgumentSuggestions {
+            return ArgumentSuggestions { info ->
+                val next = try {
+                    branch.getNextSuggestion(
+                        info.sender,
+                        *info.previousArgs.rawArguments().toTypedArray(),
+                    )
+                } catch (_: CommandSyntaxException) {
+                    null
+                }
 
-            next?.suggest(info)?.toList().orEmpty()
+                next?.suggest(info)?.toList().orEmpty()
+            }
         }
 
         private suspend fun suggestOrEmpty(
             provider: ArgumentSuggestions,
             info: SuggestionInfo,
-        ): List<StringTooltip> = try {
-            provider.suggest(info)
-        } catch (failure: Throwable) {
-            val ownTimeout = failure is TimeoutCancellationException &&
+        ): List<StringTooltip> {
+            return try {
+                provider.suggest(info)
+            } catch (failure: Throwable) {
+                val ownTimeout = failure is TimeoutCancellationException &&
                     currentCoroutineContext().isActive
-            if (failure is CancellationException && !ownTimeout) throw failure
+                if (failure is CancellationException && !ownTimeout) throw failure
 
-            LOGGER.error("Suggestion provider failed and contributes no entries", failure)
-            emptyList()
+                LOGGER.error("Suggestion provider failed and contributes no entries", failure)
+                emptyList()
+            }
         }
 
         private fun withoutTooltip(value: String) = StringTooltip(value, null)

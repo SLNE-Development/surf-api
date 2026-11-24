@@ -29,8 +29,8 @@ class V26_1PlayerNmsScoreboardImpl(player: Player) : PlayerNmsScoreboard(player)
             packets.add(
                 ClientboundSetObjectivePacket(
                     objective,
-                    ClientboundSetObjectivePacket.METHOD_ADD
-                )
+                    ClientboundSetObjectivePacket.METHOD_ADD,
+                ),
             )
             packets.add(ClientboundSetDisplayObjectivePacket(DisplaySlot.SIDEBAR, objective))
         }
@@ -40,43 +40,50 @@ class V26_1PlayerNmsScoreboardImpl(player: Player) : PlayerNmsScoreboard(player)
         return V26_1PacketOperationImpl.simple {
             ClientboundSetObjectivePacket(
                 objective(title),
-                ClientboundSetObjectivePacket.METHOD_CHANGE
+                ClientboundSetObjectivePacket.METHOD_CHANGE,
             )
         }
     }
 
-    override fun removeObjective(): PacketOperation = V26_1PacketOperationImpl.simple {
-        ClientboundSetObjectivePacket(
-            objective(Component.empty()),
-            ClientboundSetObjectivePacket.METHOD_REMOVE
-        )
+    override fun removeObjective(): PacketOperation {
+        return V26_1PacketOperationImpl.simple {
+            ClientboundSetObjectivePacket(
+                objective(Component.empty()),
+                ClientboundSetObjectivePacket.METHOD_REMOVE,
+            )
+        }
     }
 
-    override fun setScore(owner: String, score: Int, line: SidebarLine): PacketOperation =
-        V26_1PacketOperationImpl.simple {
+    override fun setScore(owner: String, score: Int, line: SidebarLine): PacketOperation {
+        return V26_1PacketOperationImpl.simple {
             val format = line.score?.let { FixedFormat(it.toNms()) } ?: BlankFormat.INSTANCE
             ClientboundSetScorePacket(
                 owner,
                 id,
                 score,
                 Optional.of(line.text.toNms()),
-                Optional.of(format)
+                Optional.of(format),
             )
         }
-
-    override fun resetScore(owner: String): PacketOperation = V26_1PacketOperationImpl.simple {
-        ClientboundResetScorePacket(owner, id)
     }
 
-    private fun objective(title: Component) = Objective(
-        scoreboard,
-        id,
-        ObjectiveCriteria.DUMMY,
-        title.toNms(),
-        ObjectiveCriteria.RenderType.INTEGER,
-        false,
-        null
-    )
+    override fun resetScore(owner: String): PacketOperation {
+        return V26_1PacketOperationImpl.simple {
+            ClientboundResetScorePacket(owner, id)
+        }
+    }
+
+    private fun objective(title: Component): Objective {
+        return Objective(
+            scoreboard,
+            id,
+            ObjectiveCriteria.DUMMY,
+            title.toNms(),
+            ObjectiveCriteria.RenderType.INTEGER,
+            false,
+            null,
+        )
+    }
 
     companion object {
         private val scoreboard = Scoreboard()

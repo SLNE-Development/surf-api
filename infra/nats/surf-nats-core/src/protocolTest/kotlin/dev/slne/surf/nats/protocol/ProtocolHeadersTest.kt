@@ -39,18 +39,42 @@ class ProtocolHeadersTest {
         assertNull(ProtocolHeaders.eventIdProblem("0f8fad5b-d9cb-469f-a165-70867728950e"))
         assertNull(ProtocolHeaders.eventIdProblem("x".repeat(ProtocolHeaders.MAX_EVENT_ID_LENGTH)))
 
-        for (invalid in listOf("", "x".repeat(ProtocolHeaders.MAX_EVENT_ID_LENGTH + 1), "a b", "line\r\n", "ü")) {
-            assertTrue(ProtocolHeaders.eventIdProblem(invalid) != null, "'$invalid' must be rejected")
+        for (invalid in listOf(
+            "",
+            "x".repeat(ProtocolHeaders.MAX_EVENT_ID_LENGTH + 1),
+            "a b",
+            "line\r\n",
+            "ü",
+        )) {
+            assertTrue(
+                ProtocolHeaders.eventIdProblem(invalid) != null,
+                "'$invalid' must be rejected",
+            )
         }
     }
 
     @Test
     fun idempotencyKeysAreVisibleAsciiOfBoundedLength() {
-        assertNull(ProtocolHeaders.idempotencyKeyProblem("ban:0f8fad5b-d9cb-469f-a165-70867728950e"))
-        assertNull(ProtocolHeaders.idempotencyKeyProblem("x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH)))
+        assertNull(
+            ProtocolHeaders.idempotencyKeyProblem("ban:0f8fad5b-d9cb-469f-a165-70867728950e"),
+        )
+        assertNull(
+            ProtocolHeaders.idempotencyKeyProblem(
+                "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH),
+            ),
+        )
 
-        for (invalid in listOf("", "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1), "a b", "line\r\n", "ü")) {
-            assertTrue(ProtocolHeaders.idempotencyKeyProblem(invalid) != null, "'$invalid' must be rejected")
+        for (invalid in listOf(
+            "",
+            "x".repeat(ProtocolHeaders.MAX_IDEMPOTENCY_KEY_LENGTH + 1),
+            "a b",
+            "line\r\n",
+            "ü",
+        )) {
+            assertTrue(
+                ProtocolHeaders.idempotencyKeyProblem(invalid) != null,
+                "'$invalid' must be rejected",
+            )
         }
     }
 
@@ -64,8 +88,12 @@ class ProtocolHeadersTest {
             "application/protobuf;proto=surf.punish.v1.PlayerBanned",
             "application/protobuf ; charset=binary",
         )
+
         for (contentType in accepted) {
-            assertTrue(ProtocolHeaders.isProtobufContentType(contentType), "content type '$contentType'")
+            assertTrue(
+                ProtocolHeaders.isProtobufContentType(contentType),
+                "content type '$contentType'",
+            )
             ProtocolHeaders.requireProtobufContentType(contentType)
         }
     }
@@ -81,8 +109,12 @@ class ProtocolHeadersTest {
             "application/protobuffer",
             "application/proto buf",
         )
+
         for (contentType in rejected) {
-            assertFalse(ProtocolHeaders.isProtobufContentType(contentType), "content type '$contentType'")
+            assertFalse(
+                ProtocolHeaders.isProtobufContentType(contentType),
+                "content type '$contentType'",
+            )
             val error = assertFailsWith<IllegalArgumentException>("content type '$contentType'") {
                 ProtocolHeaders.requireProtobufContentType(contentType)
             }
@@ -93,7 +125,11 @@ class ProtocolHeadersTest {
     @Test
     fun missingContentTypeIsRejected() {
         assertFalse(ProtocolHeaders.isProtobufContentType(null))
-        val error = assertFailsWith<IllegalArgumentException> { ProtocolHeaders.requireProtobufContentType(null) }
+        val error = assertFailsWith<IllegalArgumentException> {
+            ProtocolHeaders.requireProtobufContentType(
+                null,
+            )
+        }
         assertTrue("application/protobuf" in error.message.orEmpty(), error.message)
     }
 

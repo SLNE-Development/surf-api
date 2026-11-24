@@ -4,15 +4,12 @@ import dev.slne.surf.nats.js.descriptor.ProtocolOptionReader
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.external.protobuf.DescService
 import dev.slne.surf.nats.js.interop.getOrPut
-import dev.slne.surf.nats.protocol.ProtocolFieldRules
-import dev.slne.surf.nats.protocol.ProtocolNaming
-import dev.slne.surf.nats.protocol.ProtocolResolution
-import dev.slne.surf.nats.protocol.ResolvedService
-import dev.slne.surf.nats.protocol.ServiceNames
+import dev.slne.surf.nats.protocol.*
 import js.collections.WeakMap
 
 /**
- * A surf-nats service resolved from its protobuf-es descriptor, with all of its methods validated at once.
+ * A surf-nats service resolved from its protobuf-es descriptor, with all of its methods validated
+ * at once.
  *
  * Subjects and streams derive from the service full name ([names]).
  */
@@ -39,7 +36,7 @@ internal class ServiceDescriptor private constructor(
             )
 
             val methodProblems = listOfNotNull(ServiceNames.methodProblem(typeName, method.name)) +
-                    resolved.problems("$typeName.${method.name}")
+                resolved.problems("$typeName.${method.name}")
             if (methodProblems.isEmpty()) {
                 MethodDescriptor(method, this, resolved)
             } else {
@@ -60,12 +57,22 @@ internal class ServiceDescriptor private constructor(
     companion object {
         private val descriptors = WeakMap<DescService, ServiceDescriptor>()
 
-        fun of(service: DescService): ServiceDescriptor = descriptors.getOrPut(service) { resolve(service) }
+        fun of(service: DescService): ServiceDescriptor {
+            return descriptors.getOrPut(service) {
+                resolve(
+                    service,
+                )
+            }
+        }
 
         private fun resolve(service: DescService): ServiceDescriptor {
-            val resolved = ProtocolResolution.service(ProtocolOptionReader.service(service), service.typeName)
+            val resolved = ProtocolResolution.service(
+                ProtocolOptionReader.service(service),
+                service.typeName,
+            )
             val problems = resolved.problems(service.name)
             require(problems.isEmpty()) { problems.joinToString("; ") }
+
             ProtocolNaming.majorVersion(service.file.proto.`package`, service.typeName)
 
             return ServiceDescriptor(service, resolved)

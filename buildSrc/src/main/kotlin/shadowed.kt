@@ -10,7 +10,8 @@ import org.gradle.kotlin.dsl.named
  * For modules that publish only their shaded jar: code compiled against their published coordinate
  * sees the packages that jar relocates, and inside this build it has to see the same ones.
  */
-fun Project.shadowed(dependency: ProjectDependency): ModuleDependency =
-    dependency.copy().attributes {
+fun Project.shadowed(dependency: ProjectDependency): ModuleDependency {
+    return dependency.copy().attributes {
         attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.SHADOWED))
     }
+}

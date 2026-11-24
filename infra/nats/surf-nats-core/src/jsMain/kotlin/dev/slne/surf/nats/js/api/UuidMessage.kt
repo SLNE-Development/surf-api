@@ -7,7 +7,8 @@ import js.typedarrays.Uint8Array
 import kotlinx.js.JsPlainObject
 
 /**
- * A `surf.types.v1.Uuid` message: 16 bytes, most significant half first (big-endian), as the JVM writes it.
+ * A `surf.types.v1.Uuid` message: 16 bytes, most significant half first (big-endian), as the JVM
+ * writes it.
  */
 @JsExport
 @JsPlainObject

@@ -8,8 +8,8 @@ import kotlin.time.Duration
 /**
  * Runs [probe] with [timeout] and reports the outcome as a [Health].
  *
- * A timeout or any [Throwable] from [probe], [Error]s included, yields a down status with the reason in the `error`
- * detail. Cancellation of the caller propagates.
+ * A timeout or any [Throwable] from [probe], [Error]s included, yields a down status with the
+ * reason in the `error` detail. Cancellation of the caller propagates.
  */
 internal suspend fun checkDatabaseHealth(timeout: Duration, probe: suspend () -> Unit): Health {
     val completed = try {
@@ -20,7 +20,8 @@ internal suspend fun checkDatabaseHealth(timeout: Duration, probe: suspend () ->
         return down(exception.message?.takeIf(String::isNotBlank) ?: exception.javaClass.name)
     }
 
-    return if (completed) Health.up().build() else down("Database health check timed out after $timeout")
+    return if (completed) Health.up()
+        .build() else down("Database health check timed out after $timeout")
 }
 
 private fun down(error: String): Health = Health.down().withDetail("error", error).build()

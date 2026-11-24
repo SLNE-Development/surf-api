@@ -9,8 +9,10 @@ import org.bukkit.inventory.ItemStack
 
 object ItemStackSerializer : KSerializer<ItemStack> {
     private val arraySerializer = ByteArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surfapi.bukkit.ItemStack", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surfapi.bukkit.ItemStack",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -19,6 +21,7 @@ object ItemStackSerializer : KSerializer<ItemStack> {
         encoder.encodeSerializableValue(arraySerializer, value.serializeAsBytes())
     }
 
-    override fun deserialize(decoder: Decoder) =
-        ItemStack.deserializeBytes(decoder.decodeSerializableValue(arraySerializer))
+    override fun deserialize(decoder: Decoder): ItemStack {
+        return ItemStack.deserializeBytes(decoder.decodeSerializableValue(arraySerializer))
+    }
 }

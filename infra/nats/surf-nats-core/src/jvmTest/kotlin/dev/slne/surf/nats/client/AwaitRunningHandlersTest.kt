@@ -19,7 +19,9 @@ import kotlin.time.measureTimedValue
 // Real time: the wait blocks the calling thread until a monotonic deadline
 class AwaitRunningHandlersTest {
 
-    private val handlers = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
+    private val handlers = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> },
+    )
 
     // Runs the waiting call only: a helper launched into handlers would count as a handler
     private val background = CoroutineScope(Dispatchers.IO)
@@ -90,6 +92,7 @@ class AwaitRunningHandlersTest {
         val release = CompletableDeferred<Unit>()
         val cancelling = handlers.launch {
             started.complete(Unit)
+
             try {
                 awaitCancellation()
             } finally {
@@ -183,7 +186,8 @@ class AwaitRunningHandlersTest {
         assertTrue(handler.isActive, "the interrupt cancelled the handler")
     }
 
-    // An interrupted dispatcher drain restores the interrupt flag, so a drain can call the wait with the flag set
+    // An interrupted dispatcher drain restores the interrupt flag, so a drain can call the wait
+    // with the flag set
     @Test
     fun `returns null and keeps the interrupt flag when no handler is running`() {
         val wait = awaitWithInterruptFlagSet(TimeSource.Monotonic.markNow())
@@ -211,8 +215,8 @@ class AwaitRunningHandlersTest {
     }
 
     /**
-     * Runs the wait on a thread of its own with the interrupt flag set, so that the flag cannot leak into the JUnit
-     * worker.
+     * Runs the wait on a thread of its own with the interrupt flag set, so that the flag cannot
+     * leak into the JUnit worker.
      */
     private fun awaitWithInterruptFlagSet(deadline: TimeMark): InterruptedWait {
         val wait = CompletableDeferred<InterruptedWait>()
@@ -221,15 +225,19 @@ class AwaitRunningHandlersTest {
             val result = runCatching { awaitRunningHandlers(handlers, deadline) }
             wait.complete(InterruptedWait(result, Thread.currentThread().isInterrupted))
         }
+
         return wait.within(2.seconds)
     }
 
     /**
-     * Gives the call started by [awaitInBackground] time to take its snapshot of the running handlers.
+     * Gives the call started by [awaitInBackground] time to take its snapshot of the running
+     * handlers.
      */
     private fun letTheWaitStart() = Thread.sleep(100)
 
-    private fun <T> Deferred<T>.within(timeout: Duration): T = runBlocking { withTimeout(timeout) { await() } }
+    private fun <T> Deferred<T>.within(timeout: Duration): T {
+        return runBlocking { withTimeout(timeout) { await() } }
+    }
 
     private class InterruptedWait(val result: Result<Int?>, val flagStillSet: Boolean)
 }

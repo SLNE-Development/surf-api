@@ -3,7 +3,6 @@ package dev.slne.surf.api.paper.server.coroutine
 import dev.slne.surf.api.paper.coroutine.PaperDispatchers
 import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.server.plugin
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 
 /**

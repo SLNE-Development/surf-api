@@ -6,14 +6,15 @@ import dev.slne.surf.nats.InternalNatsApi
  * Holds the encoded reply of a persistent method in a form that can be stored and sent again later.
  *
  * Store [format] and [bytes] together and recreate the reply with [restore]. Replies come from
- * [NatsPersistentCall.proceed], [error] or [restore]. A reply whose kind does not fit the result of the method, such
- * as a stored reply of another method, is rejected: a fire call is moved to the dead-letter stream without another
- * delivery, and the caller of a persistent RPC receives a [NatsRemoteException]. A stored reply of another method
- * with a fitting kind is not detected, so key stored replies by method as well as by message ID.
+ * [NatsPersistentCall.proceed], [error] or [restore]. A reply whose kind does not fit the result of
+ * the method, such as a stored reply of another method, is rejected: a fire call is moved to the
+ * dead-letter stream without another delivery, and the caller of a persistent RPC receives a
+ * [NatsRemoteException]. A stored reply of another method with a fitting kind is not detected, so
+ * key stored replies by method as well as by message ID.
  *
  * @property format an opaque, versioned ASCII identifier of the reply kind.
- * @property bytes the encoded response as sent to the caller. Neither the reply nor [restore] copies the array, so do
- * not modify it.
+ * @property bytes the encoded response as sent to the caller. Neither the reply nor [restore]
+ * copies the array, so do not modify it.
  */
 public class NatsPersistentReply private constructor(
     public val format: String,
@@ -42,14 +43,16 @@ public class NatsPersistentReply private constructor(
      */
     @InternalNatsApi
     public val errorType: String?
-        get() = if (kind == Kind.ERROR) bytes.decodeToString().substringBefore(ERROR_SEPARATOR) else null
+        get() = if (kind == Kind.ERROR) bytes.decodeToString()
+            .substringBefore(ERROR_SEPARATOR) else null
 
     /**
      * The remote exception message of an error reply, or `null` for other replies.
      */
     @InternalNatsApi
     public val errorMessage: String?
-        get() = if (kind == Kind.ERROR) bytes.decodeToString().substringAfter(ERROR_SEPARATOR) else null
+        get() = if (kind == Kind.ERROR) bytes.decodeToString()
+            .substringAfter(ERROR_SEPARATOR) else null
 
     override fun toString(): String = "NatsPersistentReply(format=$format, size=${bytes.size})"
 
@@ -82,25 +85,32 @@ public class NatsPersistentReply private constructor(
         }
 
         /**
-         * Creates an error reply that the caller receives as a [NatsRemoteException] with the class name and message
-         * of [error].
+         * Creates an error reply that the caller receives as a [NatsRemoteException] with the class
+         * name and message of [error].
          *
-         * The message is truncated to 4096 characters. Returned for a fire call, it moves the message to the
-         * dead-letter stream without another delivery.
+         * The message is truncated to 4096 characters. Returned for a fire call, it moves the
+         * message to the dead-letter stream without another delivery.
          */
         public fun error(error: Throwable): NatsPersistentReply {
             val message = error.message.orEmpty().take(MAX_ERROR_MESSAGE_LENGTH)
             val text = error.javaClass.name + ERROR_SEPARATOR + message
+
             return NatsPersistentReply(Kind.ERROR.format, text.encodeToByteArray())
         }
 
         @InternalNatsApi
-        public fun empty(): NatsPersistentReply = NatsPersistentReply(Kind.EMPTY.format, ByteArray(0))
+        public fun empty(): NatsPersistentReply {
+            return NatsPersistentReply(Kind.EMPTY.format, ByteArray(0))
+        }
 
         @InternalNatsApi
-        public fun value(bytes: ByteArray): NatsPersistentReply = NatsPersistentReply(Kind.VALUE.format, bytes)
+        public fun value(bytes: ByteArray): NatsPersistentReply {
+            return NatsPersistentReply(Kind.VALUE.format, bytes)
+        }
 
         @InternalNatsApi
-        public fun unknownAnswer(): NatsPersistentReply = NatsPersistentReply(Kind.UNKNOWN_ANSWER.format, ByteArray(0))
+        public fun unknownAnswer(): NatsPersistentReply {
+            return NatsPersistentReply(Kind.UNKNOWN_ANSWER.format, ByteArray(0))
+        }
     }
 }

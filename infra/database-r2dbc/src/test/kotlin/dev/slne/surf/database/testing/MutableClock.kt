@@ -9,7 +9,8 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 /**
- * A UTC clock that only moves when [advance] is called. Starts at microsecond precision, like the database columns.
+ * A UTC clock that only moves when [advance] is called. Starts at microsecond precision, like the
+ * database columns.
  */
 class MutableClock(start: Instant = Instant.now().truncatedTo(ChronoUnit.MICROS)) : Clock() {
     @Volatile

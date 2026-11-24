@@ -20,16 +20,16 @@ private val NATS_CONFIGURATIONS = listOf(
 )
 
 /**
- * Adds `surf-api-microservice-reliability` to `implementation` and its test fixtures to `testImplementation` while
- * reliability is enabled.
+ * Adds `surf-api-microservice-reliability` to `implementation` and its test fixtures to
+ * `testImplementation` while reliability is enabled.
  *
- * [explicitChoice] holds the value set through the DSL or the Gradle property, if any. Without it, reliability is
- * enabled while [database] is enabled and surf-nats is present. The decision is made in `withDependencies`, when a
- * configuration built from `implementation` or `testImplementation` resolves, because surf-nats may be declared in
- * `implementation` itself.
+ * [explicitChoice] holds the value set through the DSL or the Gradle property, if any. Without it,
+ * reliability is enabled while [database] is enabled and surf-nats is present. The decision is made
+ * in `withDependencies`, when a configuration built from `implementation` or `testImplementation`
+ * resolves, because surf-nats may be declared in `implementation` itself.
  *
- * Requires `java-library`. Resolution fails with a [GradleException] if reliability is enabled explicitly while the
- * database is disabled or surf-nats is missing.
+ * Requires `java-library`. Resolution fails with a [GradleException] if reliability is enabled
+ * explicitly while the database is disabled or surf-nats is missing.
  */
 internal fun Project.addReliabilityDependencies(
     database: MicroserviceDatabaseExtension,
@@ -58,26 +58,31 @@ private fun Project.reliabilityEnabled(
 
     if (choice && !databaseEnabled) {
         throw reliabilityRequirementMissing(
-            "the database integration is disabled. Enable it with surfMicroservice { database { enabled = true } }"
+            "the database integration is disabled. Enable it with surfMicroservice { database { enabled = true } }",
         )
     }
+
     if (choice && !natsPresent) {
         throw reliabilityRequirementMissing(
-            "surf-nats is missing. Apply the '$NATS_PLUGIN' plugin or add $NATS_GROUP:$NATS_SPRING"
+            "surf-nats is missing. Apply the '$NATS_PLUGIN' plugin or add $NATS_GROUP:$NATS_SPRING",
         )
     }
+
     return choice
 }
 
-private fun Project.reliabilityRequirementMissing(reason: String) = GradleException(
-    "Project '$path' enables surf-api-microservice-reliability (surfMicroservice { reliability { enabled = true } } " +
+private fun Project.reliabilityRequirementMissing(reason: String): GradleException {
+    return GradleException(
+        "Project '$path' enables surf-api-microservice-reliability (surfMicroservice { reliability { enabled = true } } " +
             "or Gradle property '${MicroservicePlugin.RELIABILITY_ENABLED_PROPERTY}'), but $reason, or disable " +
-            "reliability."
-)
+            "reliability.",
+    )
+}
 
-private fun Project.hasSurfNats(): Boolean =
-    pluginManager.hasPlugin(NATS_PLUGIN) || NATS_CONFIGURATIONS.any { name ->
+private fun Project.hasSurfNats(): Boolean {
+    return pluginManager.hasPlugin(NATS_PLUGIN) || NATS_CONFIGURATIONS.any { name ->
         configurations.findByName(name)?.dependencies.orEmpty().any { it.isSurfNatsSpring() }
     }
+}
 
 private fun Dependency.isSurfNatsSpring(): Boolean = group == NATS_GROUP && name == NATS_SPRING

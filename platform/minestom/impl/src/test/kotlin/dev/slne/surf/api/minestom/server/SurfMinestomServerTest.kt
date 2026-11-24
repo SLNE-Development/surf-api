@@ -4,7 +4,6 @@ import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.dsl.anyExecutor
 import dev.slne.surf.api.minestom.permission.MinestomPermissions
 import dev.slne.surf.api.minestom.permission.PermissionProvider
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import net.kyori.adventure.util.TriState
 import net.minestom.server.thread.TickThread
@@ -18,7 +17,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 
 @EnvTest
-@OptIn(InternalSurfApi::class)
 class SurfMinestomServerTest {
 
     @Test
@@ -82,12 +80,14 @@ class SurfMinestomServerTest {
         val configuredProvider = PermissionProvider { _, _ -> TriState.TRUE }
 
         val api = surfMinestomServer {
-            install(object : SurfMinestomFeature {
-                override val id = "permissions"
-                override fun load(api: SurfMinestomServer) {
-                    MinestomPermissions.installProvider(featureProvider)
-                }
-            })
+            install(
+                object : SurfMinestomFeature {
+                    override val id = "permissions"
+                    override fun load(api: SurfMinestomServer) {
+                        MinestomPermissions.installProvider(featureProvider)
+                    }
+                },
+            )
             permissions(configuredProvider)
         }
 
@@ -119,22 +119,26 @@ class SurfMinestomServerTest {
 
         val failure = assertThrows<IllegalStateException> {
             surfMinestomServer {
-                install(object : SurfMinestomFeature {
-                    override val id = "first"
-                    override fun load(api: SurfMinestomServer) {
-                        calls += "load:first"
-                    }
+                install(
+                    object : SurfMinestomFeature {
+                        override val id = "first"
+                        override fun load(api: SurfMinestomServer) {
+                            calls += "load:first"
+                        }
 
-                    override fun disable(api: SurfMinestomServer) {
-                        calls += "disable:first"
-                    }
-                })
-                install(object : SurfMinestomFeature {
-                    override val id = "broken"
-                    override fun load(api: SurfMinestomServer) {
-                        throw IllegalStateException("broken load")
-                    }
-                })
+                        override fun disable(api: SurfMinestomServer) {
+                            calls += "disable:first"
+                        }
+                    },
+                )
+                install(
+                    object : SurfMinestomFeature {
+                        override val id = "broken"
+                        override fun load(api: SurfMinestomServer) {
+                            throw IllegalStateException("broken load")
+                        }
+                    },
+                )
             }
         }
 
@@ -143,6 +147,7 @@ class SurfMinestomServerTest {
         assertThrows<IllegalStateException> { SurfMinestomServer.instance }
 
         val api = surfMinestomServer()
+
         try {
             assertSame(api, SurfMinestomServer.instance)
         } finally {
@@ -156,26 +161,30 @@ class SurfMinestomServerTest {
 
         val failure = assertThrows<IllegalStateException> {
             surfMinestomServer {
-                install(object : SurfMinestomFeature {
-                    override val id = "first"
-                    override fun enable(api: SurfMinestomServer) {
-                        calls += "enable:first"
-                    }
+                install(
+                    object : SurfMinestomFeature {
+                        override val id = "first"
+                        override fun enable(api: SurfMinestomServer) {
+                            calls += "enable:first"
+                        }
 
-                    override fun disable(api: SurfMinestomServer) {
-                        calls += "disable:first"
-                    }
-                })
-                install(object : SurfMinestomFeature {
-                    override val id = "broken"
-                    override fun enable(api: SurfMinestomServer) {
-                        throw IllegalStateException("broken enable")
-                    }
+                        override fun disable(api: SurfMinestomServer) {
+                            calls += "disable:first"
+                        }
+                    },
+                )
+                install(
+                    object : SurfMinestomFeature {
+                        override val id = "broken"
+                        override fun enable(api: SurfMinestomServer) {
+                            throw IllegalStateException("broken enable")
+                        }
 
-                    override fun disable(api: SurfMinestomServer) {
-                        calls += "disable:broken"
-                    }
-                })
+                        override fun disable(api: SurfMinestomServer) {
+                            calls += "disable:broken"
+                        }
+                    },
+                )
             }
         }
 
@@ -189,18 +198,22 @@ class SurfMinestomServerTest {
         val calls = mutableListOf<String>()
 
         val api = surfMinestomServer {
-            install(object : SurfMinestomFeature {
-                override val id = "first"
-                override fun disable(api: SurfMinestomServer) {
-                    calls += "disable:first"
-                }
-            })
-            install(object : SurfMinestomFeature {
-                override val id = "second"
-                override fun disable(api: SurfMinestomServer) {
-                    throw IllegalStateException("broken disable")
-                }
-            })
+            install(
+                object : SurfMinestomFeature {
+                    override val id = "first"
+                    override fun disable(api: SurfMinestomServer) {
+                        calls += "disable:first"
+                    }
+                },
+            )
+            install(
+                object : SurfMinestomFeature {
+                    override val id = "second"
+                    override fun disable(api: SurfMinestomServer) {
+                        throw IllegalStateException("broken disable")
+                    }
+                },
+            )
         }
 
         api.shutdown()
@@ -210,6 +223,7 @@ class SurfMinestomServerTest {
         assertThrows<IllegalStateException> { SurfMinestomServer.instance }
 
         val restarted = surfMinestomServer()
+
         try {
             assertNotSame(api, restarted)
         } finally {
@@ -222,12 +236,14 @@ class SurfMinestomServerTest {
         val calls = mutableListOf<String>()
 
         val api = surfMinestomServer {
-            install(object : SurfMinestomFeature {
-                override val id = "feature"
-                override fun disable(api: SurfMinestomServer) {
-                    calls += "disable"
-                }
-            })
+            install(
+                object : SurfMinestomFeature {
+                    override val id = "feature"
+                    override fun disable(api: SurfMinestomServer) {
+                        calls += "disable"
+                    }
+                },
+            )
             onShutdown { calls += "first action" }
             onShutdown { throw IllegalStateException("broken action") }
             onShutdown { calls += "last action" }
@@ -285,10 +301,12 @@ class SurfMinestomServerTest {
     fun `stopping the server from within the start fails the start`(env: Env) {
         val failure = assertThrows<IllegalStateException> {
             surfMinestomServer {
-                install(object : SurfMinestomFeature {
-                    override val id = "stopping"
-                    override fun enable(api: SurfMinestomServer) = api.stop()
-                })
+                install(
+                    object : SurfMinestomFeature {
+                        override val id = "stopping"
+                        override fun enable(api: SurfMinestomServer) = api.stop()
+                    },
+                )
             }
         }
 
@@ -304,17 +322,21 @@ class SurfMinestomServerTest {
 
         val failure = assertThrows<IllegalStateException> {
             surfMinestomServer {
-                install(object : SurfMinestomFeature {
-                    override val id = "concurrent"
-                    override fun enable(api: SurfMinestomServer) {
-                        shutdownThread = Thread.ofPlatform().start(api::shutdown)
-                        awaitWaiting(shutdownThread)
-                    }
-                })
+                install(
+                    object : SurfMinestomFeature {
+                        override val id = "concurrent"
+                        override fun enable(api: SurfMinestomServer) {
+                            shutdownThread = Thread.ofPlatform().start(api::shutdown)
+                            awaitWaiting(shutdownThread)
+                        }
+                    },
+                )
             }
         }
         assertEquals("The surf api was shut down while it started", failure.message)
-        assertThrows<IllegalStateException>("the failed start left the api running") { SurfMinestomServer.instance }
+        assertThrows<IllegalStateException>("the failed start left the api running") {
+            SurfMinestomServer.instance
+        }
 
         shutdownThread.join()
         surfMinestomServer().shutdown()
@@ -344,8 +366,10 @@ class SurfMinestomServerTest {
      */
     private fun awaitWaiting(thread: Thread) {
         val deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos()
+
         while (thread.state != Thread.State.WAITING) {
             check(System.nanoTime() < deadline) { "${thread.name} never started waiting" }
+
             Thread.sleep(1)
         }
     }

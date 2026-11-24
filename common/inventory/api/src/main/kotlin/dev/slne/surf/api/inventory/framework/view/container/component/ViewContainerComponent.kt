@@ -25,7 +25,8 @@ import dev.slne.surf.api.messages.builder.SurfComponentBuilder
  * works as expected in [ViewContainer].
  *
  * @property positionalShift the pixel offset applied before rendering the component
- * @property textureWidth the width in pixels of the rendered texture; used to calculate the reset shift
+ * @property textureWidth the width in pixels of the rendered texture; used to calculate the reset
+ * shift
  * @property hasExactWidth whether [textureWidth] is guaranteed to match the rendered advance
  * @see ViewContainer
  */

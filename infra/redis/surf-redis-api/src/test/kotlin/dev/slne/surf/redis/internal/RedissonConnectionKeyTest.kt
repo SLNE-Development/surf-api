@@ -30,7 +30,10 @@ class RedissonConnectionKeyTest {
 
         assertEquals(plain, withPassword, "precondition: RedisURI equality ignores credentials")
         assertNotEquals(RedissonConnectionKey.of(plain), RedissonConnectionKey.of(withPassword))
-        assertNotEquals(RedissonConnectionKey.of(withPassword), RedissonConnectionKey.of(otherPassword))
+        assertNotEquals(
+            RedissonConnectionKey.of(withPassword),
+            RedissonConnectionKey.of(otherPassword),
+        )
         assertNotEquals(RedissonConnectionKey.of(withPassword), RedissonConnectionKey.of(withUser))
     }
 
@@ -50,6 +53,9 @@ class RedissonConnectionKeyTest {
 
         assertEquals("rediss://user:***@redis.internal:6379", rendered)
         assertFalse(rendered.contains("secret"))
-        assertEquals("redis://redis.internal:6379", RedissonConnectionKey.of(RedisURI("redis://redis.internal:6379")).toString())
+        assertEquals(
+            "redis://redis.internal:6379",
+            RedissonConnectionKey.of(RedisURI("redis://redis.internal:6379")).toString(),
+        )
     }
 }

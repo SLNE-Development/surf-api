@@ -18,8 +18,8 @@ import dev.slne.surf.nats.js.external.nats.jetstream.jetstreamWithConsumers
 import dev.slne.surf.nats.js.external.nats.obj.ObjectStoreMeta
 import dev.slne.surf.nats.js.external.nats.obj.ObjectStoreOptions
 import dev.slne.surf.nats.js.external.nats.obj.ObjectStoreStatus
-import dev.slne.surf.nats.js.external.nats.obj.ObjmAdmin
 import dev.slne.surf.nats.js.external.nats.obj.Objm
+import dev.slne.surf.nats.js.external.nats.obj.ObjmAdmin
 import dev.slne.surf.nats.js.external.protobuf.DescMessage
 import dev.slne.surf.nats.js.external.protobuf.create
 import dev.slne.surf.nats.js.external.protobuf.fromBinary
@@ -38,9 +38,13 @@ import node.crypto.randomUUID
 internal class RawNats(val connection: NatsConnection) {
 
     fun subscribe(subject: String, queue: String? = null, handler: (Msg) -> Unit): Subscription {
-        val options = SubscriptionOptions(queue = queue, callback = { error, message ->
-            if (error == null) handler(message)
-        })
+        val options = SubscriptionOptions(
+            queue = queue,
+            callback = { error, message ->
+                if (error == null) handler(message)
+            },
+        )
+
         return connection.subscribe(subject, options)
     }
 
@@ -50,7 +54,9 @@ internal class RawNats(val connection: NatsConnection) {
         connection.publish(subject, data, NatsPublishOptions(headers = headers))
     }
 
-    fun encode(schema: DescMessage, init: ProtoMessageInit): Uint8Array<*> = toBinary(schema, create(schema, init))
+    fun encode(schema: DescMessage, init: ProtoMessageInit): Uint8Array<*> {
+        return toBinary(schema, create(schema, init))
+    }
 
     fun decode(schema: DescMessage, data: Uint8Array<*>): ProtoMessage = fromBinary(schema, data)
 
@@ -58,7 +64,10 @@ internal class RawNats(val connection: NatsConnection) {
      * Headers of a JVM response or event: content type, origin and sender version.
      */
     fun jvmHeaders(origin: String = "jvm-responder@instance"): MsgHdrs {
-        return protobufHeaders(ProtocolHeaders.ORIGIN to origin, ProtocolHeaders.SENDER_VERSION to "jvm")
+        return protobufHeaders(
+            ProtocolHeaders.ORIGIN to origin,
+            ProtocolHeaders.SENDER_VERSION to "jvm",
+        )
     }
 
     fun respond(request: Msg, data: Uint8Array<*>, headers: MsgHdrs = jvmHeaders()) {
@@ -66,10 +75,11 @@ internal class RawNats(val connection: NatsConnection) {
     }
 
     /**
-     * Recreates the work-queue stream of [names] and its durable consumer with the JVM `JetStreamProvisioner`
-     * settings; the DLQ stream is deleted.
+     * Recreates the work-queue stream of [names] and its durable consumer with the JVM
+     * `JetStreamProvisioner` settings; the DLQ stream is deleted.
      *
-     * With [noAck] the stream stores and deduplicates publishes but never acknowledges them (lost PubAcks).
+     * With [noAck] the stream stores and deduplicates publishes but never acknowledges them (lost
+     * PubAcks).
      */
     suspend fun addPersistentStreams(names: ServiceNames, noAck: Boolean = false) {
         deletePersistentStreams(names)
@@ -84,7 +94,7 @@ internal class RawNats(val connection: NatsConnection) {
                 max_age = ProtocolDefaults.PERSIST_MAX_AGE_SECONDS * NANOS_PER_SECOND,
                 duplicate_window = ProtocolDefaults.DEDUPE_WINDOW_SECONDS * NANOS_PER_SECOND,
                 no_ack = noAck,
-            )
+            ),
         ).await()
         manager.consumers.add(
             names.stream,
@@ -99,6 +109,7 @@ internal class RawNats(val connection: NatsConnection) {
      */
     suspend fun deletePersistentStreams(names: ServiceNames) {
         val streams = jetstreamManager(connection).await().streams
+
         for (stream in listOf(names.stream, names.dlqStream)) {
             try {
                 streams.delete(stream).await()
@@ -112,11 +123,17 @@ internal class RawNats(val connection: NatsConnection) {
      * Returns the next message of the durable consumer of [names], or `null` after [expiresMs].
      */
     suspend fun nextPersistent(names: ServiceNames, expiresMs: Int = 5000): JsMsg? {
-        val consumer = jetstreamWithConsumers(connection).consumers.get(names.stream, names.durable).await()
+        val consumer = jetstreamWithConsumers(connection).consumers.get(
+            names.stream,
+            names.durable,
+        ).await()
+
         return consumer.next(NextOptions(expires = expiresMs)).await()
     }
 
-    suspend fun streamMessages(stream: String): Int = jetstreamManager(connection).await().streams.info(stream).await().state.messages
+    suspend fun streamMessages(stream: String): Int {
+        return jetstreamManager(connection).await().streams.info(stream).await().state.messages
+    }
 
     /**
      * Creates [bucket] like the JS `PayloadStore` when it does not exist yet.
@@ -128,7 +145,9 @@ internal class RawNats(val connection: NatsConnection) {
         ).await()
     }
 
-    suspend fun bucketStatus(bucket: String): ObjectStoreStatus = ObjmAdmin(connection).open(bucket).await().status().await()
+    suspend fun bucketStatus(bucket: String): ObjectStoreStatus {
+        return ObjmAdmin(connection).open(bucket).await().status().await()
+    }
 
     suspend fun getBlob(bucket: String, name: String): Uint8Array<*>? {
         return Objm(connection).open(bucket).await().getBlob(name).await()
@@ -138,6 +157,7 @@ internal class RawNats(val connection: NatsConnection) {
         val name = randomUUID()
         val store = Objm(connection).open(bucket).await()
         store.putBlob(ObjectStoreMeta(name = name), data).await()
+
         return name
     }
 
@@ -150,6 +170,8 @@ internal class RawNats(val connection: NatsConnection) {
 
 internal fun header(message: Msg, name: String): String? = message.header(name)
 
-internal fun header(message: JsMsg, name: String): String? = message.headers?.get(name)?.takeIf { it.isNotEmpty() }
+internal fun header(message: JsMsg, name: String): String? {
+    return message.headers?.get(name)?.takeIf { it.isNotEmpty() }
+}
 
 internal suspend fun rawNats(): RawNats = RawNats(TestNats.rawConnection())

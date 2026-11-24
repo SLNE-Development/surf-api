@@ -33,7 +33,9 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import dev.slne.surf.nats.js.external.nats.core.connect as natsConnect
 
-internal fun asyncTest(block: suspend CoroutineScope.() -> Unit): Promise<Unit> = GlobalScope.promise { block() }
+internal fun asyncTest(block: suspend CoroutineScope.() -> Unit): Promise<Unit> {
+    return GlobalScope.promise { block() }
+}
 
 private var uniqueCounter = 0
 
@@ -42,6 +44,7 @@ private var uniqueCounter = 0
  */
 internal fun uniqueName(prefix: String): String {
     uniqueCounter++
+
     return "$prefix-${epochMillis() % 1_000_000}-$uniqueCounter"
 }
 
@@ -50,20 +53,24 @@ internal fun callOptions(timeoutMs: Int): CallOptions = CallOptions(timeoutMs = 
 internal fun bytes(vararg values: Int): Uint8Array<*> {
     val array = Uint8Array<ArrayBuffer>(values.size)
     for (index in values.indices) array[index] = values[index].toUByte().toJsUByte()
+
     return array
 }
 
 internal fun bytesOfSize(size: Int, seed: Int = 7): Uint8Array<*> {
     val array = Uint8Array<ArrayBuffer>(size)
     for (index in 0 until size) array[index] = ((index * 31 + seed) % 251).toUByte().toJsUByte()
+
     return array
 }
 
 internal fun Uint8Array<*>.contentEquals(other: Uint8Array<*>?): Boolean {
     if (other == null || length != other.length) return false
+
     for (index in 0 until length) {
         if (this[index] != other[index]) return false
     }
+
     return true
 }
 
@@ -75,7 +82,11 @@ private external interface FakeMsg : Msg {
     override var headers: MsgHdrs?
 }
 
-internal fun fakeMessage(data: Uint8Array<*>, headers: MsgHdrs? = null, subject: String = "test.subject"): Msg {
+internal fun fakeMessage(
+    data: Uint8Array<*>,
+    headers: MsgHdrs? = null,
+    subject: String = "test.subject",
+): Msg {
     return unsafeJso<FakeMsg> {
         this.subject = subject
         this.data = data
@@ -87,13 +98,16 @@ internal fun protobufHeaders(vararg entries: Pair<String, String>): MsgHdrs {
     val result = headers()
     result.set("Content-Type", "application/protobuf")
     for ((key, value) in entries) result.set(key, value)
+
     return result
 }
 
 internal suspend fun eventually(timeout: Duration = 5.seconds, condition: () -> Boolean) {
     val deadline = epochMillis() + timeout.inWholeMilliseconds
+
     while (!condition()) {
         if (epochMillis() > deadline) throw AssertionError("Condition not met within $timeout")
+
         delay(20.milliseconds)
     }
 }
@@ -106,11 +120,13 @@ internal external object JsObject {
 /**
  * NATS server of the e2e tests, started by the `startNatsJsTestServer` Gradle task.
  *
- * Returns `null` when the e2e tests are disabled (`-Psurf.nats.js.e2e=false`), so the e2e tests skip.
+ * Returns `null` when the e2e tests are disabled (`-Psurf.nats.js.e2e=false`), so the e2e tests
+ * skip.
  */
 internal object TestNats {
     private val url: String? by lazy {
         val file = process.env["SURF_NATS_JS_TEST_URL_FILE"] ?: return@lazy null
+
         readFileSync(file, ReadFileSyncBufferOptions()).decodeToString().trim()
     }
 
@@ -119,13 +135,18 @@ internal object TestNats {
     // tokenUrl, token, userUrl, user, pass of the authenticating servers
     private val auth: Map<String, String>? by lazy {
         val file = process.env["SURF_NATS_JS_TEST_AUTH_FILE"] ?: return@lazy null
+
         readFileSync(file, ReadFileSyncBufferOptions()).decodeToString().lines()
             .map(String::trim)
             .filter { '=' in it }
             .associate { it.substringBefore('=') to it.substringAfter('=') }
     }
 
-    fun auth(key: String): String = checkNotNull(auth?.get(key)) { "NATS e2e auth server setting $key is not configured" }
+    fun auth(key: String): String {
+        return checkNotNull(auth?.get(key)) {
+            "NATS e2e auth server setting $key is not configured"
+        }
+    }
 
     suspend fun rawConnection(): NatsConnection {
         val server = checkNotNull(url) { "NATS e2e server is not configured" }
@@ -147,15 +168,21 @@ internal object TestNats {
     suspend fun clientImpl(name: String): NatsClientImpl {
         rawConnection().close().await()
         val options = ConnectOptions(name = name, servers = arrayOf(checkNotNull(url)))
+
         return NatsClientFactory.create(options)
     }
 }
 
-internal fun e2eTest(block: suspend CoroutineScope.(url: String) -> Unit): Promise<Unit> = asyncTest {
-    val url = TestNats.urlOrNull()
-    if (url == null) {
-        console.log("Skipping NATS e2e test: SURF_NATS_JS_TEST_URL_FILE is not set")
-        return@asyncTest
+internal fun e2eTest(block: suspend CoroutineScope.(url: String) -> Unit): Promise<Unit> {
+    return asyncTest {
+        val url = TestNats.urlOrNull()
+
+        if (url == null) {
+            console.log("Skipping NATS e2e test: SURF_NATS_JS_TEST_URL_FILE is not set")
+
+            return@asyncTest
+        }
+
+        block(url)
     }
-    block(url)
 }

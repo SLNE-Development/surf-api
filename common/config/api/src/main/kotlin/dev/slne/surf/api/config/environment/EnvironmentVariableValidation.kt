@@ -10,7 +10,7 @@ class EnvironmentVariableValidation<T> internal constructor(
     private val variableName: String,
     private val rawValue: String?,
     private val sensitive: Boolean,
-    private val value: T
+    private val value: T,
 ) {
     /**
      * Requires [predicate] to accept the resolved value.
@@ -28,7 +28,7 @@ class EnvironmentVariableValidation<T> internal constructor(
         } catch (exception: Exception) {
             throw failure(
                 exception.message ?: "the validation rule threw ${exception::class.simpleName}",
-                exception
+                exception,
             )
         }
 
@@ -39,14 +39,14 @@ class EnvironmentVariableValidation<T> internal constructor(
 
     internal fun failure(
         message: String,
-        cause: Throwable? = null
+        cause: Throwable? = null,
     ): EnvironmentVariableValidationException {
         return EnvironmentVariableValidationException(
             variableName = variableName,
             reason = message,
             rawValue = rawValue.takeUnless { sensitive },
             sensitive = sensitive,
-            cause = cause
+            cause = cause,
         )
     }
 }

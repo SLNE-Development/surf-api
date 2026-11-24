@@ -19,8 +19,9 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 /**
  * Exposes a [SurfMigration] to Flyway as a [JavaMigration].
  *
- * A [JdbcMigration] runs on Flyway's JDBC connection inside Flyway's transaction. An [ExposedMigration] runs outside
- * of Flyway's transaction, in its own `suspendTransaction` on [database].
+ * A [JdbcMigration] runs on Flyway's JDBC connection inside Flyway's transaction. An
+ * [ExposedMigration] runs outside of Flyway's transaction, in its own `suspendTransaction` on
+ * [database].
  */
 internal class FlywayJavaMigrationAdapter(
     private val database: R2dbcDatabase,
@@ -33,28 +34,32 @@ internal class FlywayJavaMigrationAdapter(
 
     override fun getChecksum(): Int? = migration.checksum
 
-    override fun canExecuteInTransaction(): Boolean = when (migration) {
-        is JdbcMigration -> true
-        is ExposedMigration -> false
+    override fun canExecuteInTransaction(): Boolean {
+        return when (migration) {
+            is JdbcMigration -> true
+            is ExposedMigration -> false
+        }
     }
 
     /**
-     * Same as Flyway's default, but records the class name of the wrapped migration (instead of this adapter) as the
-     * script in the history table.
+     * Same as Flyway's default, but records the class name of the wrapped migration (instead of
+     * this adapter) as the script in the history table.
      */
     override fun getResolvedMigration(
         config: Configuration,
-        statementInterceptor: StatementInterceptor?
-    ): ResolvedMigration = ResolvedMigrationImpl(
-        version,
-        description,
-        migration.javaClass.name,
-        checksum,
-        null,
-        type,
-        ClassUtils.getLocationOnDisk(migration.javaClass),
-        JavaMigrationExecutor(this, statementInterceptor)
-    )
+        statementInterceptor: StatementInterceptor?,
+    ): ResolvedMigration {
+        return ResolvedMigrationImpl(
+            version,
+            description,
+            migration.javaClass.name,
+            checksum,
+            null,
+            type,
+            ClassUtils.getLocationOnDisk(migration.javaClass),
+            JavaMigrationExecutor(this, statementInterceptor),
+        )
+    }
 
     override fun migrate(context: Context) {
         when (migration) {

@@ -19,18 +19,27 @@ import java.lang.reflect.Type
 annotation class MaxLength(val max: Int) {
     companion object {
         internal object Factory : Constraint.Factory<MaxLength, String?> {
-            override fun make(data: MaxLength, type: Type): Constraint<String?> = { value ->
-                if (value != null && value.length > data.max) {
-                    throw SerializationException("String is too long: ${value.length}, expected <= ${data.max}")
+            override fun make(data: MaxLength, type: Type): Constraint<String?> {
+                return { value ->
+                    if (value != null && value.length > data.max) {
+                        throw SerializationException(
+                            "String is too long: ${value.length}, expected <= ${data.max}",
+                        )
+                    }
                 }
             }
         }
 
         internal object FactoryStringOrDefault : Constraint.Factory<MaxLength, StringOrDefault?> {
-            override fun make(data: MaxLength, type: Type): Constraint<StringOrDefault?> = { stringOrDefault ->
-                val value = stringOrDefault?.value
-                if (value != null && value.length > data.max) {
-                    throw SerializationException("String is too long: ${value.length}, expected <= ${data.max}")
+            override fun make(data: MaxLength, type: Type): Constraint<StringOrDefault?> {
+                return { stringOrDefault ->
+                    val value = stringOrDefault?.value
+
+                    if (value != null && value.length > data.max) {
+                        throw SerializationException(
+                            "String is too long: ${value.length}, expected <= ${data.max}",
+                        )
+                    }
                 }
             }
         }

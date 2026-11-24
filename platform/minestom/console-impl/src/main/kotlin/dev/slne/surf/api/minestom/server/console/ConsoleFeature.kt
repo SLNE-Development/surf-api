@@ -49,7 +49,10 @@ class ConsoleFeature internal constructor(
     override val id: String = ID
 
     override fun enable(api: SurfMinestomServer) {
-        val console = Thread(SurfTerminalConsole(settings.onShutdown)::start, settings.threadName).apply {
+        val console = Thread(
+            SurfTerminalConsole(settings.onShutdown)::start,
+            settings.threadName,
+        ).apply {
             isDaemon = true
         }
 
@@ -71,7 +74,7 @@ class ConsoleFeature internal constructor(
             commandManager.execute(commandManager.consoleSender, command)
         }
 
-        override fun shutdown() = shutdownHandler()
+        override fun shutdown(): Unit = shutdownHandler()
     }
 
     companion object {

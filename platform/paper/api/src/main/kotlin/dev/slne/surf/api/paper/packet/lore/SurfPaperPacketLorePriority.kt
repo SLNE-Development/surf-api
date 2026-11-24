@@ -4,7 +4,6 @@ import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLorePriority.FIRST
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLorePriority.LAST
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLorePriority.NORMAL
 
-
 /**
  * Predefined priority constants for [SurfPaperPacketLoreHandler]s.
  *

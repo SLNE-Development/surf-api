@@ -38,7 +38,10 @@ internal object PluginDiscovery {
     /**
      * Every jar in [directory] that carries a `minestom-plugin.json`.
      */
-    fun fromDirectory(directory: Path, failures: MutableMap<String, String> = mutableMapOf()): List<PluginCandidate> {
+    fun fromDirectory(
+        directory: Path,
+        failures: MutableMap<String, String> = mutableMapOf(),
+    ): List<PluginCandidate> {
         if (!directory.isDirectory()) return emptyList()
 
         return directory.listDirectoryEntries()
@@ -47,27 +50,45 @@ internal object PluginDiscovery {
             .mapNotNull { jar -> fromJar(jar, failures) }
     }
 
-    fun fromJar(jar: Path, failures: MutableMap<String, String> = mutableMapOf()): PluginCandidate? = try {
-        JarFile(jar.toFile()).use { file ->
-            val entry = file.getJarEntry(PluginMeta.FILE_NAME)
-            if (entry == null) {
-                LOGGER.warn("{} is no plugin, it carries no {}", jar.fileName, PluginMeta.FILE_NAME)
-                return null
-            }
+    fun fromJar(
+        jar: Path,
+        failures: MutableMap<String, String> = mutableMapOf(),
+    ): PluginCandidate? {
+        return try {
+            JarFile(jar.toFile()).use { file ->
+                val entry = file.getJarEntry(PluginMeta.FILE_NAME)
 
-            val content = file.getInputStream(entry).use { it.readBytes().decodeToString() }
-            PluginCandidate(parse(content), jar)
+                if (entry == null) {
+                    LOGGER.warn(
+                        "{} is no plugin, it carries no {}",
+                        jar.fileName,
+                        PluginMeta.FILE_NAME,
+                    )
+
+                    return null
+                }
+
+                val content = file.getInputStream(entry).use { it.readBytes().decodeToString() }
+                PluginCandidate(parse(content), jar)
+            }
+        } catch (failure: Exception) {
+            LOGGER.error("Could not read the plugin {}", jar.fileName, failure)
+            failures[jar.fileName.toString()] = "its description could not be read: ${
+                describe(
+                    failure,
+                )
+            }"
+            null
         }
-    } catch (failure: Exception) {
-        LOGGER.error("Could not read the plugin {}", jar.fileName, failure)
-        failures[jar.fileName.toString()] = "its description could not be read: ${describe(failure)}"
-        null
     }
 
     /**
      * The plugins shaded into the server itself, listed in [PluginMeta.CLASSPATH_INDEX].
      */
-    fun fromClassPath(classLoader: ClassLoader, failures: MutableMap<String, String> = mutableMapOf()): List<PluginCandidate> {
+    fun fromClassPath(
+        classLoader: ClassLoader,
+        failures: MutableMap<String, String> = mutableMapOf(),
+    ): List<PluginCandidate> {
         val mainClasses = classLoader.getResources(PluginMeta.CLASSPATH_INDEX).asSequence()
             .flatMap { url -> url.openStream().use { it.readBytes().decodeToString() }.lines() }
             .map { line -> line.substringBefore('#').trim() }
@@ -78,9 +99,11 @@ internal object PluginDiscovery {
         return mainClasses.mapNotNull { mainClass ->
             val path = "${PluginMeta.CLASSPATH_DIRECTORY}$mainClass.json"
             val resource = classLoader.getResource(path)
+
             if (resource == null) {
                 LOGGER.error("The plugin {} on the class path has no {}", mainClass, path)
                 failures[mainClass] = "its description $path is missing"
+
                 return@mapNotNull null
             }
 
@@ -97,6 +120,8 @@ internal object PluginDiscovery {
 
     fun parse(content: String): PluginMeta = json.decodeFromString(PluginMeta.serializer(), content)
 
-    private fun describe(failure: Throwable): String =
-        failure.message?.let { "${failure.javaClass.simpleName}: $it" } ?: failure.javaClass.simpleName
+    private fun describe(failure: Throwable): String {
+        return failure.message?.let { "${failure.javaClass.simpleName}: $it" }
+            ?: failure.javaClass.simpleName
+    }
 }

@@ -17,12 +17,12 @@ import org.spongepowered.math.vector.Vector3d
 interface SurfVisualizerArea : SurfVisualizer {
 
     /**
-     * Represents an unmodifiable set of corner locations associated with the visualizer area.
-     * These locations define the boundaries or reference points for the visualizer's area of operation.
+     * Represents an unmodifiable set of corner locations associated with the visualizer area. These
+     * locations define the boundaries or reference points for the visualizer's area of operation.
      *
-     * The set is unmodifiable, meaning any attempts to modify it directly will result in an exception.
-     * Modifications can only be done through specific methods provided by the containing interface,
-     * such as `addCornerLocation`, `removeCornerLocation`, or `clearCornerLocations`.
+     * The set is unmodifiable, meaning any attempts to modify it directly will result in an
+     * exception. Modifications can only be done through specific methods provided by the containing
+     * interface, such as `addCornerLocation`, `removeCornerLocation`, or `clearCornerLocations`.
      *
      * This property is part of the experimental API and may be subject to changes in the future.
      */

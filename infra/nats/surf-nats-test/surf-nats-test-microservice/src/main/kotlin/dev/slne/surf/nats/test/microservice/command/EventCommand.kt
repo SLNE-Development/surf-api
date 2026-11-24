@@ -7,7 +7,8 @@ import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import org.springframework.stereotype.Component
 
 /**
- * `event <message>`: publishes a [TestChatEvent] that every listener of the test applications receives.
+ * `event <message>`: publishes a [TestChatEvent] that every listener of the test applications
+ * receives.
  */
 @Component
 class EventCommand(private val client: NatsClient) : MicroserviceCommand("event") {

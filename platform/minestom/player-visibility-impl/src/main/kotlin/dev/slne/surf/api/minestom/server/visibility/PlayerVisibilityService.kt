@@ -190,8 +190,8 @@ internal class PlayerVisibilityService(
         val range = ServerProperties.ENTITY_VIEW_DISTANCE.get()
 
         return position.chunkX() >= origin.chunkX() - range &&
-                position.chunkX() <= origin.chunkX() + range &&
-                position.chunkZ() >= origin.chunkZ() - range &&
-                position.chunkZ() <= origin.chunkZ() + range
+            position.chunkX() <= origin.chunkX() + range &&
+            position.chunkZ() >= origin.chunkZ() - range &&
+            position.chunkZ() <= origin.chunkZ() + range
     }
 }

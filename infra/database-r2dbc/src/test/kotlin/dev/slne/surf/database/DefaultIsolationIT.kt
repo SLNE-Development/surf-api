@@ -24,6 +24,7 @@ class DefaultIsolationIT {
         val details = DatabaseContainers.mariadb().connectionDetails(fresh = true)
         val writer = details.toTestDatabase()
         val reader = details.toTestDatabase()
+
         try {
             ReliabilityVendor.MARIADB.execute(writer, "CREATE TABLE items (id INT PRIMARY KEY)")
             val inserted = CompletableDeferred<Unit>()
@@ -53,9 +54,15 @@ class DefaultIsolationIT {
     @Test
     fun postgresTransactionsRunReadCommitted() = runBlocking {
         val testDb = DatabaseContainers.postgres().toTestDatabase(fresh = true)
+
         try {
             val level = suspendTransaction(db = testDb.database) {
-                exec("SELECT current_setting('transaction_isolation')") { it.get(0, String::class.java) }!!.single()
+                exec("SELECT current_setting('transaction_isolation')") {
+                    it.get(
+                        0,
+                        String::class.java,
+                    )
+                }!!.single()
             }
 
             assertEquals("read committed", level)

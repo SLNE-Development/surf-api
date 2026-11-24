@@ -3,18 +3,18 @@ package dev.slne.surf.api.nats
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.isNatsTransactional
 import org.springframework.aop.framework.AopProxyUtils
-import org.springframework.aop.support.AopUtils
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 
 /**
- * Records the [NatsClient] beans of one plugin context and validates and records its `@NatsService` and
- * `@NatsListener` beans.
+ * Records the [NatsClient] beans of one plugin context and validates and records its `@NatsService`
+ * and `@NatsListener` beans.
  *
- * Installed on the bean factory before the context refreshes, so it runs ahead of the post-processors that create
- * proxies and sees the user class of the bean. A client is handed to [NatsPluginContext.clientCreated], which
- * connects it when the context already passed its connect point. The recorded bean names are resolved again when the plugin is
- * enabled, which yields the final bean, proxies included.
+ * Installed on the bean factory before the context refreshes, so it runs ahead of the
+ * post-processors that create proxies and sees the user class of the bean. A client is handed to
+ * [NatsPluginContext.clientCreated], which connects it when the context already passed its connect
+ * point. The recorded bean names are resolved again when the plugin is enabled, which yields the
+ * final bean, proxies included.
  */
 internal class NatsBeanPostProcessor(
     private val nats: NatsPluginContext,

@@ -19,7 +19,7 @@ import kotlin.math.min
 open class CommandExceptionBuilder(
     private val detailErrorMessage: String?,
     private val input: String?,
-    private val cursor: Int
+    private val cursor: Int,
 ) {
     /**
      * Builds the command exception message with the default prefix ([Colors.ERROR_PREFIX]).
@@ -46,6 +46,7 @@ open class CommandExceptionBuilder(
             builder.append(Component.text(detailErrorMessage, Colors.WARNING))
 
             builder.appendNewline()
+
             if (prefix != null) {
                 builder.append(prefix)
             }

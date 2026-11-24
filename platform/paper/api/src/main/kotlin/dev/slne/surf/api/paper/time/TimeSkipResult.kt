@@ -11,7 +11,7 @@ enum class TimeSkipResult(
      * This variable is a boolean value indicating whether the time skip operation was successful or
      * not.
      */
-    private val success: Boolean
+    private val success: Boolean,
 ) {
     /**
      * Represents the result of a time skip operation, indicating a successful operation.

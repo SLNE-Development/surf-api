@@ -5,7 +5,6 @@ import dev.slne.surf.api.core.server.spring.SurfEventHandlerBeans
 import dev.slne.surf.api.event.SurfEventBus
 import dev.slne.surf.api.minestom.command.CommandAPICommand
 import dev.slne.surf.api.minestom.command.CommandTree
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.util.FailureCollector
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
@@ -23,9 +22,10 @@ import org.springframework.context.ConfigurableApplicationContext
  * itself count, never those of its ancestors.
  *
  * Commands are attributed to the plugin that is current on the calling thread, so [register] has to
- * run while the plugin's lifecycle runs. What [register] did stays recorded when it fails halfway, so
- * that [unregister] still removes it. Commands are removed by the plugin manager together with the
- * plugin's other commands. Not thread-safe; the plugin manager calls it from one thread at a time.
+ * run while the plugin's lifecycle runs. What [register] did stays recorded when it fails halfway,
+ * so that [unregister] still removes it. Commands are removed by the plugin manager together with
+ * the plugin's other commands. Not thread-safe; the plugin manager calls it from one thread at a
+ * time.
  *
  * Minestom's commands are surf's own, not CommandAPI's, so they are registered here rather than
  * through `CommandApiCommandBeans` of the core module.
@@ -63,20 +63,30 @@ internal class PluginRegistrations(private val pluginNode: EventNode<Event>) {
         }
 
         step { SurfEventHandlerBeans.unregister(listeners) }
-        nodes.forEach { node -> step { pluginNode.removeChild(node) } }
+
+        for (node in nodes) {
+            step { pluginNode.removeChild(node) }
+        }
+
         failures.throwIfAny()
     }
 
     private fun attachEventNodes(context: ApplicationContext) {
-        context.getBeansOfType<EventNode<*>>().values.forEach { node ->
+        for (node in context.getBeansOfType<EventNode<*>>().values) {
             pluginNode.addChild(node)
             attachedNodes += node
         }
     }
 
     private fun registerCommands(context: ApplicationContext) {
-        context.getBeansOfType<CommandAPICommand>().values.forEach { it.register() }
-        context.getBeansOfType<CommandTree>().values.forEach { it.register() }
+        for (command in context.getBeansOfType<CommandAPICommand>().values) {
+            command.register()
+        }
+
+        for (tree in context.getBeansOfType<CommandTree>().values) {
+            tree.register()
+        }
+
         context.getBeansOfType<CommandRegistrar>().values.forEach(CommandRegistrar::register)
     }
 }

@@ -1,29 +1,27 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination
 
-import dev.slne.surf.api.messages.pagination.PageButton
-import dev.slne.surf.api.messages.pagination.Pagination
-import dev.slne.surf.api.messages.pagination.PaginationBuilder
-import dev.slne.surf.api.messages.pagination.PaginationClickEventProvider
-import dev.slne.surf.api.messages.pagination.PaginationRenderer
-import dev.slne.surf.api.messages.pagination.PaginationRowRenderer
+import dev.slne.surf.api.messages.pagination.*
 import net.kyori.adventure.text.Component
 
 open class PaginationBuilderImpl<T> : PaginationBuilder<T> {
     override var width: Int = Pagination.DEFAULT_WIDTH
         set(value) {
             require(value >= 3) { "Width must be at least 3" }
+
             field = value
         }
 
     override var indent: Int = Pagination.DEFAULT_INDENT
         set(value) {
             require(value >= 0) { "Indent must be at least 0" }
+
             field = value
         }
 
     override var resultsPerPage: Int = Pagination.DEFAULT_RESULTS_PER_PAGE
         set(value) {
             require(value > 0) { "Results per page must be greater than 0" }
+
             field = value
         }
 
@@ -51,19 +49,21 @@ open class PaginationBuilderImpl<T> : PaginationBuilder<T> {
     override var nextPageButton: PageButton = Pagination.DEFAULT_NEXT_PAGE_BUTTON
     override var lastPageButton: PageButton = Pagination.DEFAULT_LAST_PAGE_BUTTON
 
-    override fun build(): Pagination<T> = PaginationImpl(
-        width = width,
-        indent = indent,
-        resultsPerPage = resultsPerPage,
-        renderer = renderer,
-        title = title,
-        rowRenderer = rowRenderer,
-        firstPageButton = firstPageButton,
-        previousPageButton = previousPageButton,
-        nextPageButton = nextPageButton,
-        lastPageButton = lastPageButton,
-        clickEventProvider = clickEventProvider
-    )
+    override fun build(): Pagination<T> {
+        return PaginationImpl(
+            width = width,
+            indent = indent,
+            resultsPerPage = resultsPerPage,
+            renderer = renderer,
+            title = title,
+            rowRenderer = rowRenderer,
+            firstPageButton = firstPageButton,
+            previousPageButton = previousPageButton,
+            nextPageButton = nextPageButton,
+            lastPageButton = lastPageButton,
+            clickEventProvider = clickEventProvider,
+        )
+    }
 
     override fun toString(): String {
         return "PaginationBuilderImpl(width=$width, indent=$indent, resultsPerPage=$resultsPerPage, renderer=$renderer, _title=$_title, _rowRenderer=$_rowRenderer, clickEventProvider=$clickEventProvider, firstPageButton=$firstPageButton, previousPageButton=$previousPageButton, nextPageButton=$nextPageButton, lastPageButton=$lastPageButton)"

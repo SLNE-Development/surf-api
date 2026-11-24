@@ -12,7 +12,8 @@ internal external interface DescFieldScalarList : DescFieldList {
     val scalar: Int
 
     /**
-     * Whether 64-bit integers are represented as `string` instead of `bigint` (`jstype = JS_STRING`).
+     * Whether 64-bit integers are represented as `string` instead of `bigint`
+     * (`jstype = JS_STRING`).
      */
     val longAsString: Boolean
 }

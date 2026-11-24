@@ -22,7 +22,10 @@ object CommandApiCommandBeans {
     }
 
     private fun registerCommands(context: ApplicationContext) {
-        context.getBeansOfType<ExecutableCommand<*, *>>().values.forEach { it.register() }
+        for (command in context.getBeansOfType<ExecutableCommand<*, *>>().values) {
+            command.register()
+        }
+
         context.getBeansOfType<CommandRegistrar>().values.forEach(CommandRegistrar::register)
     }
 }

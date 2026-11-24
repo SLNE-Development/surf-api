@@ -80,7 +80,9 @@ class CoordinateParsersTest {
     @Test
     fun `block positions reject a decimal absolute value`() {
         val blockPosition = BlockPositionArgument("pos").toDefinition().rawType
-        assertThrows(CommandSyntaxException::class.java) { blockPosition.parse(StringReader("1.5 2 3")) }
+        assertThrows(CommandSyntaxException::class.java) {
+            blockPosition.parse(StringReader("1.5 2 3"))
+        }
     }
 
     @Test
@@ -117,13 +119,17 @@ class CoordinateParsersTest {
     fun `a sourced parse resolves tilde and caret positions against that sender, not the origin`(env: Env) {
         val instance = env.createEmptyInstance()
         val player = connect(env, instance, Pos(10.0, 20.0, 30.0, 0f, 0f))
+
         try {
             val position = PositionArgument("pos").toDefinition().rawType
             assertEquals(Vec(11.0, 22.0, 33.0), position.parse(StringReader("~1 ~2 ~3"), player))
             assertVecEquals(Vec(10.0, 20.0, 31.0), position.parse(StringReader("^0 ^0 ^1"), player))
 
             val blockPosition = BlockPositionArgument("pos").toDefinition().rawType
-            assertEquals(Vec(11.5, 20.0, 30.0), blockPosition.parse(StringReader("~1.5 ~0 ~0"), player))
+            assertEquals(
+                Vec(11.5, 20.0, 30.0),
+                blockPosition.parse(StringReader("~1.5 ~0 ~0"), player),
+            )
         } finally {
             player.remove()
             env.destroyInstance(instance)
@@ -131,9 +137,12 @@ class CoordinateParsersTest {
     }
 
     @Test
-    fun `a sourced parse resolves a relative rotation against that sender's view, not the origin's`(env: Env) {
+    fun `a sourced parse resolves a relative rotation against that sender's view, not the origin's`(
+        env: Env,
+    ) {
         val instance = env.createEmptyInstance()
         val player = connect(env, instance, Pos(0.0, 0.0, 0.0, 45f, 10f))
+
         try {
             val rotation = RotationArgument("look").toDefinition().rawType
             assertEquals(Rotation(55f, 5f), rotation.parse(StringReader("~10 ~-5"), player))
@@ -161,6 +170,7 @@ class CoordinateParsersTest {
         check(env.tickWhile({ player.instance !== instance }, Duration.ofSeconds(1))) {
             "Player was not spawned in the requested test instance"
         }
+
         return player
     }
 }

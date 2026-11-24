@@ -32,7 +32,13 @@ abstract class PreparePatchedRepo : DefaultTask() {
         if (!repoDir.resolve(".git").isDirectory) {
             repoDir.mkdirs()
             commands += listOf("git", "init", "--quiet")
-            commands += listOf("git", "remote", "add", "origin", this.upstream.get().asFile.absolutePath)
+            commands += listOf(
+                "git",
+                "remote",
+                "add",
+                "origin",
+                this.upstream.get().asFile.absolutePath,
+            )
         }
 
         commands += listOf("git", "config", "commit.gpgsign", "false")

@@ -27,10 +27,13 @@ import kotlin.io.path.isWritable
 annotation class WritablePath {
     companion object {
         internal object Factory : Constraint.Factory<WritablePath, Any?> {
-            override fun make(data: WritablePath, type: Type): Constraint<Any?> = Constraint { value ->
-                val path = value.asPathOrNull() ?: return@Constraint
-                if (path.exists() && !path.isWritable()) {
-                    throw SerializationException("Path must be writable: $path")
+            override fun make(data: WritablePath, type: Type): Constraint<Any?> {
+                return Constraint { value ->
+                    val path = value.asPathOrNull() ?: return@Constraint
+
+                    if (path.exists() && !path.isWritable()) {
+                        throw SerializationException("Path must be writable: $path")
+                    }
                 }
             }
         }

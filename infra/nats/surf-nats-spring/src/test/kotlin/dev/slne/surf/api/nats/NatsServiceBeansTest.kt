@@ -58,7 +58,10 @@ class NatsServiceBeansTest {
 
     @Test
     fun `without a value the bean serves every generated interface it implements`() {
-        assertEquals(listOf<Class<*>>(NotifierService::class.java), served(AllInterfaces::class.java))
+        assertEquals(
+            listOf<Class<*>>(NotifierService::class.java),
+            served(AllInterfaces::class.java),
+        )
         assertEquals(
             setOf<Class<*>>(NotifierService::class.java, OrderService::class.java),
             served(Both::class.java)?.toSet(),
@@ -72,7 +75,10 @@ class NatsServiceBeansTest {
 
     @Test
     fun `the annotation of a superclass applies`() {
-        assertEquals(listOf<Class<*>>(NotifierService::class.java), served(InheritsAnnotation::class.java))
+        assertEquals(
+            listOf<Class<*>>(NotifierService::class.java),
+            served(InheritsAnnotation::class.java),
+        )
     }
 
     @Test
@@ -84,7 +90,9 @@ class NatsServiceBeansTest {
 
     @Test
     fun `a listed interface that the class does not implement is rejected`() {
-        val failure = assertFailsWith<IllegalStateException> { served(ListsUnimplemented::class.java) }
+        val failure = assertFailsWith<IllegalStateException> {
+            served(ListsUnimplemented::class.java)
+        }
 
         assertContains(failure.message.orEmpty(), "does not implement")
     }
@@ -112,7 +120,9 @@ class NatsServiceBeansTest {
 
     @Test
     fun `a class that cannot be reflected because of a missing class does not use NATS`() {
-        val type = HidingClassLoader(SignatureNeedsHidden::class.java).loadClass(SignatureNeedsHidden::class.java.name)
+        val type = HidingClassLoader(SignatureNeedsHidden::class.java).loadClass(
+            SignatureNeedsHidden::class.java.name,
+        )
         assertFailsWith<NoClassDefFoundError> { type.declaredMethods }
 
         assertFalse(NatsServiceBeans.isNatsComponent(type))

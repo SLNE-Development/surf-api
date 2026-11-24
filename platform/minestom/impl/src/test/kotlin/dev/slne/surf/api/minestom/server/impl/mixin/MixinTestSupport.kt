@@ -30,6 +30,7 @@ object MixinTestSupport {
         }.bufferedReader().use { JsonParser.parseReader(it).asJsonObject }
 
         val mixinPackage = json.get("package").asString
+
         return listOf("mixins", "server", "client").flatMap { section ->
             json.getAsJsonArray(section)?.map { "$mixinPackage.${it.asString}" }.orEmpty()
         }
@@ -41,6 +42,7 @@ object MixinTestSupport {
     fun interfacesOf(mixin: String): List<String> {
         val node = ClassNode(Opcodes.ASM9)
         ClassReader(originalBytes(mixin)).accept(node, ClassReader.SKIP_CODE)
+
         return node.interfaces.orEmpty()
     }
 

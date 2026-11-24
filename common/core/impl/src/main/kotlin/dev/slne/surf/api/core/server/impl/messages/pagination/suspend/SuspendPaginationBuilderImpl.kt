@@ -1,30 +1,27 @@
 package dev.slne.surf.api.core.server.impl.messages.pagination.suspend
 
-import dev.slne.surf.api.messages.pagination.PageButton
-import dev.slne.surf.api.messages.pagination.Pagination
-import dev.slne.surf.api.messages.pagination.SuspendPagination
-import dev.slne.surf.api.messages.pagination.SuspendPaginationBuilder
-import dev.slne.surf.api.messages.pagination.SuspendPaginationClickEventProvider
-import dev.slne.surf.api.messages.pagination.SuspendPaginationRenderer
-import dev.slne.surf.api.messages.pagination.SuspendPaginationRowRenderer
+import dev.slne.surf.api.messages.pagination.*
 import net.kyori.adventure.text.Component
 
 class SuspendPaginationBuilderImpl<T> : SuspendPaginationBuilder<T> {
     override var width: Int = Pagination.DEFAULT_WIDTH
         set(value) {
             require(value >= 3) { "Width must be at least 3" }
+
             field = value
         }
 
     override var indent: Int = Pagination.DEFAULT_INDENT
         set(value) {
             require(value >= 0) { "Indent must be at least 0" }
+
             field = value
         }
 
     override var resultsPerPage: Int = Pagination.DEFAULT_RESULTS_PER_PAGE
         set(value) {
             require(value > 0) { "Results per page must be greater than 0" }
+
             field = value
         }
 
@@ -52,22 +49,23 @@ class SuspendPaginationBuilderImpl<T> : SuspendPaginationBuilder<T> {
     override var nextPageButton: PageButton = Pagination.DEFAULT_NEXT_PAGE_BUTTON
     override var lastPageButton: PageButton = Pagination.DEFAULT_LAST_PAGE_BUTTON
 
-    override fun build(): SuspendPagination<T> = SuspendPaginationImpl(
-        width = width,
-        indent = indent,
-        resultsPerPage = resultsPerPage,
-        renderer = renderer,
-        title = title,
-        rowRenderer = rowRenderer,
-        firstPageButton = firstPageButton,
-        previousPageButton = previousPageButton,
-        nextPageButton = nextPageButton,
-        lastPageButton = lastPageButton,
-        clickEventProvider = clickEventProvider
-    )
+    override fun build(): SuspendPagination<T> {
+        return SuspendPaginationImpl(
+            width = width,
+            indent = indent,
+            resultsPerPage = resultsPerPage,
+            renderer = renderer,
+            title = title,
+            rowRenderer = rowRenderer,
+            firstPageButton = firstPageButton,
+            previousPageButton = previousPageButton,
+            nextPageButton = nextPageButton,
+            lastPageButton = lastPageButton,
+            clickEventProvider = clickEventProvider,
+        )
+    }
 
     override fun toString(): String {
         return "SuspendPaginationBuilderImpl(width=$width, indent=$indent, resultsPerPage=$resultsPerPage, _title=$_title, _rowRenderer=$_rowRenderer, renderer=$renderer, clickEventProvider=$clickEventProvider, firstPageButton=$firstPageButton, previousPageButton=$previousPageButton, nextPageButton=$nextPageButton, lastPageButton=$lastPageButton)"
     }
-
 }

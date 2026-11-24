@@ -20,5 +20,5 @@ class PlayerJoinEvent @InternalSurfApi constructor(
     var joinMessage: Component?,
 ) : PlayerInstanceEvent {
 
-    override fun getPlayer() = player
+    override fun getPlayer(): Player = player
 }

@@ -57,8 +57,9 @@ configurations {
     }
 }
 
-// The shaded jar bundles Spring unrelocated, so it must not be published under the module's coordinate.
-// shadowJar and the shadowRuntimeElements configuration remain for in-build consumers and release assets.
+// The shaded jar bundles Spring unrelocated, so it must not be published under the module's
+// coordinate. shadowJar and the shadowRuntimeElements configuration remain for in-build consumers
+// and release assets.
 shadow {
     addShadowVariantIntoJavaComponent = false
 }
@@ -72,9 +73,9 @@ tasks.withType<org.gradle.jvm.tasks.Jar>().configureEach {
 tasks {
     shadowJar {
         mergeServiceFiles()
-        // Shadow defaults to EXCLUDE, which drops every later copy of a path before the transformer runs, so only the
-        // first jar's service file would survive. Several bundled jars ship the same one, such as the
-        // ContextContributor registrations.
+        // Shadow defaults to EXCLUDE, which drops every later copy of a path before the transformer
+        // runs, so only the first jar's service file would survive. Several bundled jars ship the
+        // same one, such as the ContextContributor registrations.
         filesMatching("META-INF/services/**") { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
 
         val relocationPrefix = project.findProperty("relocationPrefix") as String

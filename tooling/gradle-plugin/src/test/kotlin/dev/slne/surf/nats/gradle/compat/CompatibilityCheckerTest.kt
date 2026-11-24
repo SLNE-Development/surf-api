@@ -25,7 +25,8 @@ class CompatibilityCheckerTest {
     }
 
     /**
-     * Writes [baseline] and [current] as `demo/v1/contract.proto` and returns the violations as text.
+     * Writes [baseline] and [current] as `demo/v1/contract.proto` and returns the violations as
+     * text.
      */
     private fun check(baseline: String, current: String): List<String> {
         return report(baseline, current).violations.map { it.toString() }
@@ -34,36 +35,55 @@ class CompatibilityCheckerTest {
     private fun report(baseline: String, current: String): CompatibilityReport {
         write(baselineDir, CONTRACT, baseline)
         write(currentDir, CONTRACT, current)
+
         return CompatibilityChecker.check(listOf(baselineDir), listOf(currentDir), emptyList())
     }
 
     /**
      * Returns the warnings of a compatible change as text.
      */
-    private fun warnings(baseline: String, current: String, imports: String = OPTIONS_IMPORT): List<String> {
+    private fun warnings(
+        baseline: String,
+        current: String,
+        imports: String = OPTIONS_IMPORT,
+    ): List<String> {
         val report = report(proto(baseline, imports), proto(current, imports))
-        assertTrue(report.violations.isEmpty(), "expected no violations, got:\n${report.violations.joinToString("\n")}")
+        assertTrue(
+            report.violations.isEmpty(),
+            "expected no violations, got:\n${report.violations.joinToString("\n")}",
+        )
+
         return report.warnings.map { it.toString() }
     }
 
-    private fun proto(body: String, imports: String = OPTIONS_IMPORT): String = """
+    private fun proto(body: String, imports: String = OPTIONS_IMPORT): String {
+        return """
         |$PROTO2
         |package surf.demo.v1;
         |$imports
         |${body.trimIndent()}
     """.trimMargin()
+    }
 
     private fun assertCompatible(baseline: String, current: String) {
         val violations = check(proto(baseline), proto(current))
-        assertTrue(violations.isEmpty(), "expected no violations, got:\n${violations.joinToString("\n")}")
+        assertTrue(
+            violations.isEmpty(),
+            "expected no violations, got:\n${violations.joinToString("\n")}",
+        )
     }
 
-    private fun assertViolation(baseline: String, current: String, vararg fragments: String): List<String> {
+    private fun assertViolation(
+        baseline: String,
+        current: String,
+        vararg fragments: String,
+    ): List<String> {
         val violations = check(proto(baseline), proto(current))
         assertTrue(
             violations.any { violation -> fragments.all { it in violation } },
             "no violation contains ${fragments.toList()}; violations:\n${violations.joinToString("\n")}",
         )
+
         return violations
     }
 
@@ -107,10 +127,28 @@ class CompatibilityCheckerTest {
     @Test
     fun `removing an optional field requires its number and name to be reserved`() {
         val baseline = "message Player { required int64 id = 1; optional string name = 2; }"
-        assertViolation(baseline, "message Player { required int64 id = 1; }", "Player.name", "add `reserved 2;` `reserved \"name\";`")
-        assertViolation(baseline, "message Player { required int64 id = 1; reserved 2; }", "Player.name", "add `reserved \"name\";` to")
-        assertViolation(baseline, "message Player { required int64 id = 1; reserved \"name\"; }", "Player.name", "add `reserved 2;` to")
-        assertCompatible(baseline, "message Player { required int64 id = 1; reserved 2; reserved \"name\"; }")
+        assertViolation(
+            baseline,
+            "message Player { required int64 id = 1; }",
+            "Player.name",
+            "add `reserved 2;` `reserved \"name\";`",
+        )
+        assertViolation(
+            baseline,
+            "message Player { required int64 id = 1; reserved 2; }",
+            "Player.name",
+            "add `reserved \"name\";` to",
+        )
+        assertViolation(
+            baseline,
+            "message Player { required int64 id = 1; reserved \"name\"; }",
+            "Player.name",
+            "add `reserved 2;` to",
+        )
+        assertCompatible(
+            baseline,
+            "message Player { required int64 id = 1; reserved 2; reserved \"name\"; }",
+        )
     }
 
     @Test
@@ -259,9 +297,14 @@ class CompatibilityCheckerTest {
             "surf.demo.v1.PlayerService.Count: rpc Count was removed or renamed",
             "surf.demo.v1.AdminService: service surf.demo.v1.AdminService was removed or renamed",
         )
+
         for (fragment in expected) {
-            assertTrue(violations.any { fragment in it && it.startsWith("baseline $CONTRACT:") }, "missing $fragment in\n$violations")
+            assertTrue(
+                violations.any { fragment in it && it.startsWith("baseline $CONTRACT:") },
+                "missing $fragment in\n$violations",
+            )
         }
+
         assertEquals(expected.size, violations.size, violations.joinToString("\n"))
     }
 
@@ -286,10 +329,26 @@ class CompatibilityCheckerTest {
     @Test
     fun `enum values must not be removed without reserving number and name`() {
         val baseline = "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; RANK_MOD = 2; }"
-        assertViolation(baseline, "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; }", "surf.demo.v1.Rank.RANK_MOD", "`reserved 2;` `reserved \"RANK_MOD\";`")
-        assertViolation(baseline, "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; reserved 2; }", "Rank.RANK_MOD", "was removed")
-        assertCompatible(baseline, "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; reserved 2; reserved \"RANK_MOD\"; }")
-        assertCompatible(baseline, "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; RANK_MOD = 2; RANK_OWNER = 3; }")
+        assertViolation(
+            baseline,
+            "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; }",
+            "surf.demo.v1.Rank.RANK_MOD",
+            "`reserved 2;` `reserved \"RANK_MOD\";`",
+        )
+        assertViolation(
+            baseline,
+            "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; reserved 2; }",
+            "Rank.RANK_MOD",
+            "was removed",
+        )
+        assertCompatible(
+            baseline,
+            "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; reserved 2; reserved \"RANK_MOD\"; }",
+        )
+        assertCompatible(
+            baseline,
+            "enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; RANK_MOD = 2; RANK_OWNER = 3; }",
+        )
     }
 
     @Test
@@ -337,7 +396,10 @@ class CompatibilityCheckerTest {
             "message PlayerJoined { option (surf.nats.v1.event) = false; }",
             "surf.demo.v1.PlayerJoined", "is no longer an event",
         )
-        assertCompatible("message PlayerJoined { }", "message PlayerJoined { option (surf.nats.v1.event) = true; }")
+        assertCompatible(
+            "message PlayerJoined { }",
+            "message PlayerJoined { option (surf.nats.v1.event) = true; }",
+        )
         assertCompatible(
             "message PlayerJoined { option (surf.nats.v1.event) = false; }",
             "message PlayerJoined { option (surf.nats.v1.event) = true; }",
@@ -355,7 +417,8 @@ class CompatibilityCheckerTest {
         assertViolation(
             "$message service PlayerService { rpc Call(A) returns (A); }",
             "$message service Players { rpc Call(A) returns (A); }",
-            "surf.demo.v1.PlayerService", "service surf.demo.v1.PlayerService was removed or renamed",
+            "surf.demo.v1.PlayerService",
+            "service surf.demo.v1.PlayerService was removed or renamed",
         )
     }
 
@@ -375,7 +438,7 @@ class CompatibilityCheckerTest {
         assertCompatible(
             "$message service S { rpc Call(A) returns (A); }",
             "$message service S { option (surf.nats.v1.service) = { persistent: true }; " +
-                    "rpc Call(A) returns (A) { option (surf.nats.v1.method) = { persistent: false }; } }",
+                "rpc Call(A) returns (A) { option (surf.nats.v1.method) = { persistent: false }; } }",
         )
         assertViolation(
             "$message service S { rpc Call(A) returns (A); }",
@@ -394,7 +457,7 @@ class CompatibilityCheckerTest {
         assertCompatible(
             "$message service S { rpc Call(A) returns (A); }",
             "$message service S { option (surf.nats.v1.service) = { call_timeout_seconds: 30 }; " +
-                    "rpc Call(A) returns (A) { option (surf.nats.v1.method) = { call_timeout_seconds: 10 }; } }",
+                "rpc Call(A) returns (A) { option (surf.nats.v1.method) = { call_timeout_seconds: 10 }; } }",
         )
     }
 
@@ -408,22 +471,52 @@ class CompatibilityCheckerTest {
             "demo/v2/contract.proto",
             "$PROTO2\npackage surf.demo.v2;\nmessage Player { required string id = 1; required string name = 2; }\n",
         )
-        assertEquals(emptyList(), CompatibilityChecker.check(listOf(baselineDir), listOf(currentDir), emptyList()).violations)
+        assertEquals(
+            emptyList(),
+            CompatibilityChecker.check(
+                listOf(baselineDir),
+                listOf(currentDir),
+                emptyList(),
+            ).violations,
+        )
     }
 
     @Test
     fun `dropping a major version reports its elements as removed`() {
         write(baselineDir, CONTRACT, proto("message Player { required int64 id = 1; }"))
-        write(currentDir, "demo/v2/contract.proto", "$PROTO2\npackage surf.demo.v2;\nmessage Player { required int64 id = 1; }\n")
-        val violations = CompatibilityChecker.check(listOf(baselineDir), listOf(currentDir), emptyList()).violations.map { it.toString() }
-        assertEquals(listOf("baseline $CONTRACT:4:1: surf.demo.v1.Player: message surf.demo.v1.Player was removed or renamed"), violations)
+        write(
+            currentDir,
+            "demo/v2/contract.proto",
+            "$PROTO2\npackage surf.demo.v2;\nmessage Player { required int64 id = 1; }\n",
+        )
+        val violations = CompatibilityChecker.check(
+            listOf(baselineDir),
+            listOf(currentDir),
+            emptyList(),
+        ).violations.map { it.toString() }
+        assertEquals(
+            listOf(
+                "baseline $CONTRACT:4:1: surf.demo.v1.Player: message surf.demo.v1.Player was removed or renamed",
+            ),
+            violations,
+        )
     }
 
     @Test
     fun `without current sources every baseline element is removed`() {
-        write(baselineDir, CONTRACT, proto("message Player { required int64 id = 1; } service S { rpc Call(Player) returns (Player); }"))
+        write(
+            baselineDir,
+            CONTRACT,
+            proto(
+                "message Player { required int64 id = 1; } service S { rpc Call(Player) returns (Player); }",
+            ),
+        )
         currentDir.mkdirs()
-        val violations = CompatibilityChecker.check(listOf(baselineDir), listOf(currentDir), emptyList()).violations
+        val violations = CompatibilityChecker.check(
+            listOf(baselineDir),
+            listOf(currentDir),
+            emptyList(),
+        ).violations
         assertEquals(listOf("surf.demo.v1.Player", "surf.demo.v1.S"), violations.map { it.element })
     }
 
@@ -434,13 +527,13 @@ class CompatibilityCheckerTest {
                 """
                 message Player { required int64 id = 1; required string name = 2; }
                 enum Rank { RANK_UNSPECIFIED = 0; RANK_ADMIN = 1; }
-                """
+                """,
             ),
             proto(
                 """
                 message Player { required int32 id = 3; required string nickname = 4; }
                 enum Rank { RANK_UNSPECIFIED = 0; }
-                """
+                """,
             ),
         )
         val elements = violations.map { it.substringAfter(": ").substringBefore(": ") }
@@ -466,8 +559,9 @@ class CompatibilityCheckerTest {
         assertViolation(
             "message Value { required int64 id = 1; } message Player { map<string, Value> values = 1; }",
             "message Value { required int64 id = 1; } message Player { map<string, Value> values = 1; " +
-                    "enum Value { VALUE_UNSPECIFIED = 0; } }",
-            "surf.demo.v1.Player.values", "type changed from map<string, surf.demo.v1.Value> to map<string, surf.demo.v1.Player.Value>",
+                "enum Value { VALUE_UNSPECIFIED = 0; } }",
+            "surf.demo.v1.Player.values",
+            "type changed from map<string, surf.demo.v1.Value> to map<string, surf.demo.v1.Player.Value>",
         )
     }
 
@@ -487,14 +581,20 @@ class CompatibilityCheckerTest {
     @Test
     fun `a changed java_package is incompatible`() {
         val violations = check(
-            proto("message Player { required int64 id = 1; } service S { rpc Call(Player) returns (Player); }",
-                "$OPTIONS_IMPORT\noption java_package = \"dev.slne.demo.v1\";"),
-            proto("message Player { required int64 id = 1; } service S { rpc Call(Player) returns (Player); }",
-                "$OPTIONS_IMPORT\noption java_package = \"dev.slne.other.v1\";"),
+            proto(
+                "message Player { required int64 id = 1; } service S { rpc Call(Player) returns (Player); }",
+                "$OPTIONS_IMPORT\noption java_package = \"dev.slne.demo.v1\";",
+            ),
+            proto(
+                "message Player { required int64 id = 1; } service S { rpc Call(Player) returns (Player); }",
+                "$OPTIONS_IMPORT\noption java_package = \"dev.slne.other.v1\";",
+            ),
         )
         assertEquals(
             listOf("surf.demo.v1.Player", "surf.demo.v1.S"),
-            violations.filter { "java_package changed the Kotlin package from 'dev.slne.demo.v1' to 'dev.slne.other.v1'" in it }
+            violations.filter {
+                "java_package changed the Kotlin package from 'dev.slne.demo.v1' to 'dev.slne.other.v1'" in it
+            }
                 .map { it.substringAfter(": ").substringBefore(": ") },
             violations.joinToString("\n"),
         )
@@ -532,10 +632,19 @@ class CompatibilityCheckerTest {
               optional string third = 3 [default = "Third"];
             }
         """
-        assertViolation(baseline, baseline.replace("\"Bye\"", "\"Ciao\""), "Greeting.farewell", "[default] changed from Bye to Ciao")
+        assertViolation(
+            baseline,
+            baseline.replace("\"Bye\"", "\"Ciao\""),
+            "Greeting.farewell",
+            "[default] changed from Bye to Ciao",
+        )
 
         val violations = check(proto(baseline), proto(baseline.replace("\"Third\"", "\"Drei\"")))
-        assertEquals(listOf("surf.demo.v1.Greeting.third"), violations.map { it.substringAfter(": ").substringBefore(": ") }, violations.joinToString("\n"))
+        assertEquals(
+            listOf("surf.demo.v1.Greeting.third"),
+            violations.map { it.substringAfter(": ").substringBefore(": ") },
+            violations.joinToString("\n"),
+        )
     }
 
     @Test
@@ -544,7 +653,7 @@ class CompatibilityCheckerTest {
         val warnings = warnings(
             "message BanRequest { required string player = 1; optional string reason = 3; } $service",
             "message BanRequest { required string player = 1; optional string moderator = 2; " +
-                    "optional string reason = 3; } $service",
+                "optional string reason = 3; } $service",
             imports = "$OPTIONS_IMPORT\nimport \"google/protobuf/empty.proto\";",
         )
         val warning = warnings.single()
@@ -577,17 +686,24 @@ class CompatibilityCheckerTest {
 
     @Test
     fun `new members that keep the parameter order do not warn`() {
-        val baseline = "message Target { required string name = 1; oneof where { string server = 2; string region = 10; } }"
+        val baseline =
+            "message Target { required string name = 1; oneof where { string server = 2; string region = 10; } }"
         assertEquals(
             emptyList(),
-            warnings(baseline, "message Target { required string name = 1; oneof where { string server = 2; string region = 10; } " +
-                    "optional int32 level = 11 [default = 1]; repeated string tags = 12; }"),
+            warnings(
+                baseline,
+                "message Target { required string name = 1; oneof where { string server = 2; string region = 10; } " +
+                    "optional int32 level = 11 [default = 1]; repeated string tags = 12; }",
+            ),
         )
         // Below the maximum 10, but behind every existing parameter
         assertEquals(
             emptyList(),
-            warnings(baseline, "message Target { required string name = 1; oneof where { string server = 2; string region = 10; } " +
-                    "optional int32 level = 5 [default = 1]; }"),
+            warnings(
+                baseline,
+                "message Target { required string name = 1; oneof where { string server = 2; string region = 10; } " +
+                    "optional int32 level = 5 [default = 1]; }",
+            ),
         )
         // A new lowest case that stays behind name
         assertEquals(
@@ -605,7 +721,11 @@ class CompatibilityCheckerTest {
             "message Target { required string name = 1; required int32 level = 4; }",
             "message Target { required string name = 1; oneof where { string server = 2; string region = 3; } required int32 level = 4; }",
         ).single()
-        assertContainsAll(warning, "new oneof 'where' = 2 is numbered below the baseline maximum 4", "'level' moves from position 2 to 3")
+        assertContainsAll(
+            warning,
+            "new oneof 'where' = 2 is numbered below the baseline maximum 4",
+            "'level' moves from position 2 to 3",
+        )
     }
 
     private companion object {

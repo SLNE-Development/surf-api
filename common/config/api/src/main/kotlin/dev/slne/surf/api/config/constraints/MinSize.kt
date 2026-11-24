@@ -18,10 +18,15 @@ import java.lang.reflect.Type
 annotation class MinSize(val min: Int) {
     companion object {
         internal object Factory : Constraint.Factory<MinSize, Any?> {
-            override fun make(data: MinSize, type: Type): Constraint<Any?> = { value ->
-                val size = value.configSizeOrNull()
-                if (size != null && size < data.min) {
-                    throw SerializationException("Collection size is too small: $size, expected >= ${data.min}")
+            override fun make(data: MinSize, type: Type): Constraint<Any?> {
+                return { value ->
+                    val size = value.configSizeOrNull()
+
+                    if (size != null && size < data.min) {
+                        throw SerializationException(
+                            "Collection size is too small: $size, expected >= ${data.min}",
+                        )
+                    }
                 }
             }
         }

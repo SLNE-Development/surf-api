@@ -20,21 +20,30 @@ object SidebarRegistry : Listener {
     }
 
     fun closeAll() {
-        sidebars.toList().forEach { it.close() }
+        for (sidebar in sidebars.toList()) {
+            sidebar.close()
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        sidebars.forEach { it.onPlayerJoin(event.player) }
+        for (sidebar in sidebars) {
+            sidebar.onPlayerJoin(event.player)
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        sidebars.forEach { it.onPlayerQuit(event.player) }
+        for (sidebar in sidebars) {
+            sidebar.onPlayerQuit(event.player)
+        }
     }
 
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {
-        sidebars.filter { it.plugin === event.plugin }.forEach { it.close() }
+        val pluginSidebars = sidebars.filter { it.plugin === event.plugin }
+        for (sidebar in pluginSidebars) {
+            sidebar.close()
+        }
     }
 }

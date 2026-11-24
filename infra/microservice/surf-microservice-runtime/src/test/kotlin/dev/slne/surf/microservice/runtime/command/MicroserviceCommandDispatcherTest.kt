@@ -24,13 +24,23 @@ import kotlin.test.assertTrue
 class MicroserviceCommandDispatcherTest {
     private val output = RecordingCommandOutput()
     private val commands = mutableListOf<MicroserviceCommand>()
-    private val dispatcher = MicroserviceCommandDispatcher { label -> commands.firstOrNull { it.matches(label) } }
+    private val dispatcher = MicroserviceCommandDispatcher { label ->
+        commands.firstOrNull {
+            it.matches(
+                label,
+            )
+        }
+    }
 
     @Test
     fun `runs the command with the tokenized arguments`() = runTest {
         command("echo", "say") { args -> sendLine(args.joinToString("|")) }
 
-        val dispatch = dispatcher.dispatch("SAY \"hello world\" again", MicroserviceCommandSource.CONSOLE, output)
+        val dispatch = dispatcher.dispatch(
+            "SAY \"hello world\" again",
+            MicroserviceCommandSource.CONSOLE,
+            output,
+        )
 
         assertEquals(MicroserviceCommandResult.Success, dispatch.result)
         assertEquals(listOf("hello world|again"), output.lines)
@@ -87,7 +97,10 @@ class MicroserviceCommandDispatcherTest {
 
         val dispatch = dispatcher.dispatch("broken", MicroserviceCommandSource.CONSOLE, output)
 
-        assertEquals(MicroserviceCommandResult.Failure("Command 'broken' failed: boom"), dispatch.result)
+        assertEquals(
+            MicroserviceCommandResult.Failure("Command 'broken' failed: boom"),
+            dispatch.result,
+        )
     }
 
     @Test
@@ -97,7 +110,9 @@ class MicroserviceCommandDispatcherTest {
         val dispatch = dispatcher.dispatch("todo", MicroserviceCommandSource.CONSOLE, output)
 
         assertEquals(
-            MicroserviceCommandResult.Failure("Command 'todo' failed: An operation is not implemented: later"),
+            MicroserviceCommandResult.Failure(
+                "Command 'todo' failed: An operation is not implemented: later",
+            ),
             dispatch.result,
         )
     }
@@ -133,7 +148,13 @@ class MicroserviceCommandDispatcherTest {
     fun `propagates the cancellation of the caller`() = runTest {
         command("waits") { awaitCancellation() }
         var dispatch: CommandDispatch? = null
-        val job = launch { dispatch = dispatcher.dispatch("waits", MicroserviceCommandSource.CONSOLE, output) }
+        val job = launch {
+            dispatch = dispatcher.dispatch(
+                "waits",
+                MicroserviceCommandSource.CONSOLE,
+                output,
+            )
+        }
         runCurrent()
 
         job.cancel()
@@ -162,8 +183,20 @@ class MicroserviceCommandDispatcherTest {
         command("exit") { requestShutdown() }
         command("noop") {}
 
-        assertTrue(dispatcher.dispatch("exit", MicroserviceCommandSource.CONSOLE, output).shutdownRequested)
-        assertFalse(dispatcher.dispatch("noop", MicroserviceCommandSource.CONSOLE, output).shutdownRequested)
+        assertTrue(
+            dispatcher.dispatch(
+                "exit",
+                MicroserviceCommandSource.CONSOLE,
+                output,
+            ).shutdownRequested,
+        )
+        assertFalse(
+            dispatcher.dispatch(
+                "noop",
+                MicroserviceCommandSource.CONSOLE,
+                output,
+            ).shutdownRequested,
+        )
     }
 
     @Test
@@ -182,7 +215,9 @@ class MicroserviceCommandDispatcherTest {
         block: suspend MicroserviceCommandContext.(List<String>) -> Unit,
     ) {
         commands += object : MicroserviceCommand(name, *aliases) {
-            override suspend fun MicroserviceCommandContext.execute(args: List<String>) = block(args)
+            override suspend fun MicroserviceCommandContext.execute(args: List<String>) {
+                block(args)
+            }
         }
     }
 }

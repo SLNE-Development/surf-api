@@ -44,12 +44,13 @@ class SearchDialogTest {
         assertEquals("Search", plain(dialog.metadata().title()))
         assertEquals(
             listOf(DialogBody.PlainMessage(Component.text("Who are you looking for?"), 200)),
-            dialog.metadata().body()
+            dialog.metadata().body(),
         )
     }
 
-    private fun plain(component: Component) =
-        PlainTextComponentSerializer.plainText().serialize(component)
+    private fun plain(component: Component) = PlainTextComponentSerializer.plainText().serialize(
+        component,
+    )
 
     @Test
     fun `a search dialog stays open until a button is pressed`() {

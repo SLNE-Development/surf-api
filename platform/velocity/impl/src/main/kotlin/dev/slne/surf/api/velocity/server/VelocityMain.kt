@@ -32,7 +32,11 @@ import java.util.concurrent.ExecutorService
     version = BuildConfig.VERSION,
     description = "The Surf API Velocity plugin.",
     authors = ["twisti", "SLNE Development Team"],
-    dependencies = [Dependency(id = "packetevents"), Dependency(id = "commandapi"), Dependency(id = "luckperms")]
+    dependencies = [
+        Dependency(id = "packetevents"),
+        Dependency(id = "commandapi"),
+        Dependency(id = "luckperms"),
+    ],
 )
 class VelocityMain @Inject constructor(
     val server: ProxyServer,
@@ -40,7 +44,7 @@ class VelocityMain @Inject constructor(
     val pluginContainer: PluginContainer,
     @param:DataDirectory val dataDirectory: Path,
     val executorService: ExecutorService,
-    private val metricsFactory: Metrics.Factory
+    private val metricsFactory: Metrics.Factory,
 ) : CoreInstance() {
 
     lateinit var bstats: Metrics
@@ -61,7 +65,7 @@ class VelocityMain @Inject constructor(
         NatsPlatform.install(dataDirectory)
         RedisPlatform.install(
             dataDirectory,
-            VelocityPluginNames { server.pluginManager.plugins }::nameOf
+            VelocityPluginNames { server.pluginManager.plugins }::nameOf,
         )
 
         runBlocking {

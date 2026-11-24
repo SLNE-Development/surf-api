@@ -26,7 +26,6 @@ paper {
     apiVersion = "1.21"
     foliaSupported = true
 
-    // The plugin's bootstrap context is built on top of surf-api's root bootstrap context.
     bootstrapDependencies {
         register("SurfPaperAPI") {
             required = true

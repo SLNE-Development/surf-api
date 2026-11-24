@@ -5,7 +5,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 
 /**
- * Base class of tests that run Gradle builds: provides a fresh [build] per test and a lazily started [stub].
+ * Base class of tests that run Gradle builds: provides a fresh [build] per test and a lazily
+ * started [stub].
  */
 internal abstract class TestKitSupport {
 

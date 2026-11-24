@@ -1,12 +1,14 @@
 package dev.slne.surf.database.reliability.operation
 
 /**
- * Encoded reply of an operation, stored with the operation and returned unchanged for every repeated execution.
+ * Encoded reply of an operation, stored with the operation and returned unchanged for every
+ * repeated execution.
  *
- * The library treats both values as opaque. Two replies are equal if [format] and the content of [bytes] are equal.
- * The array is not copied: do not modify it after passing it in.
+ * The library treats both values as opaque. Two replies are equal if [format] and the content of
+ * [bytes] are equal. The array is not copied: do not modify it after passing it in.
  *
- * @property format Caller-defined name of the encoding, at most 255 characters, for example a content type.
+ * @property format Caller-defined name of the encoding, at most 255 characters, for example a
+ * content type.
  * @property bytes Encoded reply.
  * @throws IllegalArgumentException if [format] is blank or longer than 255 characters
  */
@@ -36,6 +38,7 @@ class StoredReply(
     override fun hashCode(): Int {
         var result = format.hashCode()
         result = 31 * result + bytes.contentHashCode()
+
         return result
     }
 

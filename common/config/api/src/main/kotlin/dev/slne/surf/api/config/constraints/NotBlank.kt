@@ -18,9 +18,11 @@ import java.lang.reflect.Type
 annotation class NotBlank {
     companion object {
         internal object Factory : Constraint.Factory<NotBlank, String?> {
-            override fun make(data: NotBlank, type: Type): Constraint<String?> = { value ->
-                if (value != null && value.isBlank()) {
-                    throw SerializationException("String must not be blank")
+            override fun make(data: NotBlank, type: Type): Constraint<String?> {
+                return { value ->
+                    if (value != null && value.isBlank()) {
+                        throw SerializationException("String must not be blank")
+                    }
                 }
             }
         }

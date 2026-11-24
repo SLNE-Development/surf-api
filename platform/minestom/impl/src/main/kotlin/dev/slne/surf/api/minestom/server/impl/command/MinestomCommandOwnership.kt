@@ -22,8 +22,9 @@ internal class MinestomCommandOwnership {
 
     internal fun claim(names: Collection<String>, registration: CompiledRegistration) {
         val claimed = ArrayList<String>(names.size)
+
         try {
-            names.forEach { rawName ->
+            for (rawName in names) {
                 val name = normalize(rawName)
                 val previous = registrations.putIfAbsent(name, registration)
 
@@ -31,16 +32,21 @@ internal class MinestomCommandOwnership {
                     "Command name '$name' is already owned"
                 }
 
-                if (previous == null) claimed += name
+                if (previous == null) {
+                    claimed += name
+                }
             }
         } catch (failure: Throwable) {
-            claimed.forEach { name -> registrations.remove(name, registration) }
+            for (name in claimed) {
+                registrations.remove(name, registration)
+            }
+
             throw failure
         }
     }
 
     internal fun release(registration: CompiledRegistration) {
-        registration.names.forEach { rawName ->
+        for (rawName in registration.names) {
             registrations.remove(normalize(rawName), registration)
         }
     }

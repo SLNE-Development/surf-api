@@ -34,7 +34,9 @@ interface ContextPhaseListener {
  * Runs [ContextPhaseListener.afterEnable] of every listener defined in this context itself.
  */
 internal suspend fun ApplicationContext.runAfterEnable() {
-    getBeansOfType<ContextPhaseListener>().values.forEach { it.afterEnable() }
+    for (listener in getBeansOfType<ContextPhaseListener>().values) {
+        listener.afterEnable()
+    }
 }
 
 /**
@@ -47,7 +49,11 @@ internal suspend fun ApplicationContext.runBeforeDisable(owner: String) {
     ) { it.beforeDisable() }
 }
 
-private fun logBeforeDisableFailure(listener: ContextPhaseListener, owner: String, exception: Throwable) {
+private fun logBeforeDisableFailure(
+    listener: ContextPhaseListener,
+    owner: String,
+    exception: Throwable,
+) {
     LogFactory.getLog(ContextPhaseListener::class.java)
         .error("beforeDisable of ${listener.javaClass.name} in '$owner' failed", exception)
 }

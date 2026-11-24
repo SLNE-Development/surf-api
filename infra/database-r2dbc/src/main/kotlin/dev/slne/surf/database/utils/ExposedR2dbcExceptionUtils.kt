@@ -41,7 +41,9 @@ inline fun <reified E : R2dbcException> ExposedR2dbcException.causeAs(): E = unw
  * @return true if the cause is a data integrity violation, false otherwise
  * @see R2dbcDataIntegrityViolationException
  */
-fun ExposedR2dbcException.isDataIntegrityViolation() = cause is R2dbcDataIntegrityViolationException
+fun ExposedR2dbcException.isDataIntegrityViolation(): Boolean {
+    return cause is R2dbcDataIntegrityViolationException
+}
 
 /**
  * Unwraps and returns the underlying exception as a data integrity violation.
@@ -50,7 +52,9 @@ fun ExposedR2dbcException.isDataIntegrityViolation() = cause is R2dbcDataIntegri
  * @throws ExposedR2dbcException if the cause is not a data integrity violation
  * @see R2dbcDataIntegrityViolationException
  */
-fun ExposedR2dbcException.asDataIntegrityViolation() = unwrap<R2dbcDataIntegrityViolationException>()
+fun ExposedR2dbcException.asDataIntegrityViolation(): R2dbcDataIntegrityViolationException {
+    return unwrap<R2dbcDataIntegrityViolationException>()
+}
 
 /**
  * Checks if the underlying cause is a bad grammar exception.
@@ -58,7 +62,7 @@ fun ExposedR2dbcException.asDataIntegrityViolation() = unwrap<R2dbcDataIntegrity
  * @return true if the cause is a bad grammar exception, false otherwise
  * @see R2dbcBadGrammarException
  */
-fun ExposedR2dbcException.isBadGrammar() = cause is R2dbcBadGrammarException
+fun ExposedR2dbcException.isBadGrammar(): Boolean = cause is R2dbcBadGrammarException
 
 /**
  * Unwraps and returns the underlying exception as a bad grammar exception.
@@ -67,7 +71,9 @@ fun ExposedR2dbcException.isBadGrammar() = cause is R2dbcBadGrammarException
  * @throws ExposedR2dbcException if the cause is not a bad grammar exception
  * @see R2dbcBadGrammarException
  */
-fun ExposedR2dbcException.asBadGrammar() = unwrap<R2dbcBadGrammarException>()
+fun ExposedR2dbcException.asBadGrammar(): R2dbcBadGrammarException {
+    return unwrap<R2dbcBadGrammarException>()
+}
 
 /**
  * Checks if the underlying cause is a non-transient resource exception.
@@ -75,7 +81,9 @@ fun ExposedR2dbcException.asBadGrammar() = unwrap<R2dbcBadGrammarException>()
  * @return true if the cause is a non-transient resource exception, false otherwise
  * @see R2dbcNonTransientResourceException
  */
-fun ExposedR2dbcException.isNonTransientResourceException() = cause is R2dbcNonTransientResourceException
+fun ExposedR2dbcException.isNonTransientResourceException(): Boolean {
+    return cause is R2dbcNonTransientResourceException
+}
 
 /**
  * Unwraps and returns the underlying exception as a non-transient resource exception.
@@ -84,7 +92,9 @@ fun ExposedR2dbcException.isNonTransientResourceException() = cause is R2dbcNonT
  * @throws ExposedR2dbcException if the cause is not a non-transient resource exception
  * @see R2dbcNonTransientResourceException
  */
-fun ExposedR2dbcException.asNonTransientResourceException() = unwrap<R2dbcNonTransientResourceException>()
+fun ExposedR2dbcException.asNonTransientResourceException(): R2dbcNonTransientResourceException {
+    return unwrap<R2dbcNonTransientResourceException>()
+}
 
 /**
  * Checks if the underlying cause is a permission denied exception.
@@ -92,7 +102,7 @@ fun ExposedR2dbcException.asNonTransientResourceException() = unwrap<R2dbcNonTra
  * @return true if the cause is a permission denied exception, false otherwise
  * @see R2dbcPermissionDeniedException
  */
-fun ExposedR2dbcException.isPermissionDenied() = cause is R2dbcPermissionDeniedException
+fun ExposedR2dbcException.isPermissionDenied(): Boolean = cause is R2dbcPermissionDeniedException
 
 /**
  * Unwraps and returns the underlying exception as a permission denied exception.
@@ -101,7 +111,9 @@ fun ExposedR2dbcException.isPermissionDenied() = cause is R2dbcPermissionDeniedE
  * @throws ExposedR2dbcException if the cause is not a permission denied exception
  * @see R2dbcPermissionDeniedException
  */
-fun ExposedR2dbcException.asPermissionDenied() = unwrap<R2dbcPermissionDeniedException>()
+fun ExposedR2dbcException.asPermissionDenied(): R2dbcPermissionDeniedException {
+    return unwrap<R2dbcPermissionDeniedException>()
+}
 
 /**
  * Checks if the underlying cause is a rollback exception.
@@ -109,7 +121,7 @@ fun ExposedR2dbcException.asPermissionDenied() = unwrap<R2dbcPermissionDeniedExc
  * @return true if the cause is a rollback exception, false otherwise
  * @see R2dbcRollbackException
  */
-fun ExposedR2dbcException.isRollbackException() = cause is R2dbcRollbackException
+fun ExposedR2dbcException.isRollbackException(): Boolean = cause is R2dbcRollbackException
 
 /**
  * Unwraps and returns the underlying exception as a rollback exception.
@@ -118,7 +130,9 @@ fun ExposedR2dbcException.isRollbackException() = cause is R2dbcRollbackExceptio
  * @throws ExposedR2dbcException if the cause is not a rollback exception
  * @see R2dbcRollbackException
  */
-fun ExposedR2dbcException.asRollbackException() = unwrap<R2dbcRollbackException>()
+fun ExposedR2dbcException.asRollbackException(): R2dbcRollbackException {
+    return unwrap<R2dbcRollbackException>()
+}
 
 /**
  * Checks if the underlying cause is a timeout exception.
@@ -126,7 +140,7 @@ fun ExposedR2dbcException.asRollbackException() = unwrap<R2dbcRollbackException>
  * @return true if the cause is a timeout exception, false otherwise
  * @see R2dbcTimeoutException
  */
-fun ExposedR2dbcException.isTimeoutException() = cause is R2dbcTimeoutException
+fun ExposedR2dbcException.isTimeoutException(): Boolean = cause is R2dbcTimeoutException
 
 /**
  * Unwraps and returns the underlying exception as a timeout exception.
@@ -135,7 +149,9 @@ fun ExposedR2dbcException.isTimeoutException() = cause is R2dbcTimeoutException
  * @throws ExposedR2dbcException if the cause is not a timeout exception
  * @see R2dbcTimeoutException
  */
-fun ExposedR2dbcException.asTimeoutException() = unwrap<R2dbcTimeoutException>()
+fun ExposedR2dbcException.asTimeoutException(): R2dbcTimeoutException {
+    return unwrap<R2dbcTimeoutException>()
+}
 
 /**
  * Checks if the underlying cause is a transient resource exception.
@@ -143,7 +159,9 @@ fun ExposedR2dbcException.asTimeoutException() = unwrap<R2dbcTimeoutException>()
  * @return true if the cause is a transient resource exception, false otherwise
  * @see R2dbcTransientResourceException
  */
-fun ExposedR2dbcException.isTransientResourceException() = cause is R2dbcTransientResourceException
+fun ExposedR2dbcException.isTransientResourceException(): Boolean {
+    return cause is R2dbcTransientResourceException
+}
 
 /**
  * Unwraps and returns the underlying exception as a transient resource exception.
@@ -152,4 +170,6 @@ fun ExposedR2dbcException.isTransientResourceException() = cause is R2dbcTransie
  * @throws ExposedR2dbcException if the cause is not a transient resource exception
  * @see R2dbcTransientResourceException
  */
-fun ExposedR2dbcException.asTransientResourceException() = unwrap<R2dbcTransientResourceException>()
+fun ExposedR2dbcException.asTransientResourceException(): R2dbcTransientResourceException {
+    return unwrap<R2dbcTransientResourceException>()
+}

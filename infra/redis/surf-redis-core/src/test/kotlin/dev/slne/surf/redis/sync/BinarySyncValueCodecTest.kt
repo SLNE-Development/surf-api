@@ -27,14 +27,17 @@ class BinarySyncValueCodecTest {
 
     @Test
     fun `decode rejects unread trailing bytes with context`() {
-        val codec = BinarySyncValueCodec(object : RedisCodec<Int> {
-            override fun encode(buffer: ByteBuf, value: Int) {
-                buffer.writeInt(value)
-                buffer.writeByte(1)
-            }
+        val codec = BinarySyncValueCodec(
+            object : RedisCodec<Int> {
+                override fun encode(buffer: ByteBuf, value: Int) {
+                    buffer.writeInt(value)
+                    buffer.writeByte(1)
+                }
 
-            override fun decode(buffer: ByteBuf): Int = buffer.readInt()
-        }, "SyncList 'numbers' element")
+                override fun decode(buffer: ByteBuf): Int = buffer.readInt()
+            },
+            "SyncList 'numbers' element",
+        )
 
         val failure = assertFailsWith<RedisCodecException> {
             codec.decode(codec.encode(5))

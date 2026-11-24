@@ -48,12 +48,30 @@ class ProtocolResolutionTest {
     @Test
     fun recipientsResolveMethodOverServiceAndUnspecifiedInherits() {
         assertEquals(ANY_INSTANCE, ProtocolResolution.recipients(method = null, service = null))
-        assertEquals(ANY_INSTANCE, ProtocolResolution.recipients(method = UNSPECIFIED, service = UNSPECIFIED))
-        assertEquals(ALL_INSTANCES, ProtocolResolution.recipients(method = null, service = ALL_INSTANCES))
-        assertEquals(ALL_INSTANCES, ProtocolResolution.recipients(method = UNSPECIFIED, service = ALL_INSTANCES))
-        assertEquals(ALL_INSTANCES, ProtocolResolution.recipients(method = ALL_INSTANCES, service = UNSPECIFIED))
-        assertEquals(ANY_INSTANCE, ProtocolResolution.recipients(method = ANY_INSTANCE, service = ALL_INSTANCES))
-        assertEquals(ALL_INSTANCES, ProtocolResolution.recipients(method = ALL_INSTANCES, service = null))
+        assertEquals(
+            ANY_INSTANCE,
+            ProtocolResolution.recipients(method = UNSPECIFIED, service = UNSPECIFIED),
+        )
+        assertEquals(
+            ALL_INSTANCES,
+            ProtocolResolution.recipients(method = null, service = ALL_INSTANCES),
+        )
+        assertEquals(
+            ALL_INSTANCES,
+            ProtocolResolution.recipients(method = UNSPECIFIED, service = ALL_INSTANCES),
+        )
+        assertEquals(
+            ALL_INSTANCES,
+            ProtocolResolution.recipients(method = ALL_INSTANCES, service = UNSPECIFIED),
+        )
+        assertEquals(
+            ANY_INSTANCE,
+            ProtocolResolution.recipients(method = ANY_INSTANCE, service = ALL_INSTANCES),
+        )
+        assertEquals(
+            ALL_INSTANCES,
+            ProtocolResolution.recipients(method = ALL_INSTANCES, service = null),
+        )
     }
 
     @Test
@@ -65,6 +83,7 @@ class ProtocolResolutionTest {
         assertNull(RecipientsOption.ofNumber(-1))
         assertEquals(ANY_INSTANCE, RecipientsOption.ofName("NATS_RECIPIENTS_ANY_INSTANCE"))
         assertEquals(ProtocolVectors.recipientsConstants.size, RecipientsOption.entries.size)
+
         for ((protoName, number) in ProtocolVectors.recipientsConstants) {
             val option = assertNotNull(RecipientsOption.ofName(protoName), protoName)
             assertEquals(number, option.number, protoName)
@@ -72,6 +91,7 @@ class ProtocolResolutionTest {
             assertEquals("NATS_RECIPIENTS_${option.name}", protoName)
             assertEquals(option, RecipientsOption.ofNumber(number), protoName)
         }
+
         for (name in ProtocolVectors.invalidRecipientsNames) {
             assertNull(RecipientsOption.ofName(name), "'$name'")
         }
@@ -86,7 +106,10 @@ class ProtocolResolutionTest {
         assertEquals("surf-nats-payloads", ProtocolDefaults.TRANSIENT_PAYLOAD_BUCKET)
         assertEquals(600, ProtocolDefaults.TRANSIENT_PAYLOAD_TTL_SECONDS)
         assertEquals("surf-nats-persistent-payloads", ProtocolDefaults.PERSISTENT_PAYLOAD_BUCKET)
-        assertEquals(ProtocolDefaults.PERSIST_MAX_AGE_SECONDS, ProtocolDefaults.PERSISTENT_PAYLOAD_TTL_SECONDS)
+        assertEquals(
+            ProtocolDefaults.PERSIST_MAX_AGE_SECONDS,
+            ProtocolDefaults.PERSISTENT_PAYLOAD_TTL_SECONDS,
+        )
         assertEquals(128, ProtocolDefaults.PAYLOAD_REF_RESERVE)
         assertEquals(4096, ProtocolDefaults.MAX_ERROR_MESSAGE_LENGTH)
         assertEquals(5, ProtocolDefaults.PRESENCE_HEARTBEAT_SECONDS)
@@ -110,15 +133,35 @@ class ProtocolResolutionTest {
     fun offloadThresholdIncludesHeadersAndReserve() {
         assertFalse(ProtocolDefaults.requiresOffload(100, 40, 10, maxPayload = 278))
         assertTrue(ProtocolDefaults.requiresOffload(100, 40, 10, maxPayload = 277))
-        assertTrue(ProtocolDefaults.requiresOffload(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE.toLong()))
-        assertFalse(ProtocolDefaults.requiresOffload(Int.MAX_VALUE, Int.MAX_VALUE, Int.MAX_VALUE, Long.MAX_VALUE))
+        assertTrue(
+            ProtocolDefaults.requiresOffload(
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE.toLong(),
+            ),
+        )
+        assertFalse(
+            ProtocolDefaults.requiresOffload(
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Int.MAX_VALUE,
+                Long.MAX_VALUE,
+            ),
+        )
     }
 
     @Test
     fun offloadThresholdCountsHeaderLines() {
         // jnats writes `name:value\r\n`, nats.js `\r\nname: value`
-        assertEquals(20 + 13 + 3, ProtocolDefaults.headerLineBytes("Nats-Expected-Stream", "1700000005000", 3))
-        assertEquals(20 + 13 + 4, ProtocolDefaults.headerLineBytes("Nats-Expected-Stream", "1700000005000", 4))
+        assertEquals(
+            20 + 13 + 3,
+            ProtocolDefaults.headerLineBytes("Nats-Expected-Stream", "1700000005000", 3),
+        )
+        assertEquals(
+            20 + 13 + 4,
+            ProtocolDefaults.headerLineBytes("Nats-Expected-Stream", "1700000005000", 4),
+        )
 
         val line = ProtocolDefaults.headerLineBytes(ProtocolHeaders.DEADLINE, "1700000005000", 3)
         val maxPayload = 1_048_576L
@@ -130,9 +173,18 @@ class ProtocolResolutionTest {
     @Test
     fun payloadBucketsUseTheProtocolNamesAndTtls() {
         assertEquals(ProtocolDefaults.TRANSIENT_PAYLOAD_BUCKET, PayloadBucket.TRANSIENT.bucketName)
-        assertEquals(ProtocolDefaults.TRANSIENT_PAYLOAD_TTL_SECONDS.seconds, PayloadBucket.TRANSIENT.ttl)
-        assertEquals(ProtocolDefaults.PERSISTENT_PAYLOAD_BUCKET, PayloadBucket.PERSISTENT.bucketName)
-        assertEquals(ProtocolDefaults.PERSISTENT_PAYLOAD_TTL_SECONDS.seconds, PayloadBucket.PERSISTENT.ttl)
+        assertEquals(
+            ProtocolDefaults.TRANSIENT_PAYLOAD_TTL_SECONDS.seconds,
+            PayloadBucket.TRANSIENT.ttl,
+        )
+        assertEquals(
+            ProtocolDefaults.PERSISTENT_PAYLOAD_BUCKET,
+            PayloadBucket.PERSISTENT.bucketName,
+        )
+        assertEquals(
+            ProtocolDefaults.PERSISTENT_PAYLOAD_TTL_SECONDS.seconds,
+            PayloadBucket.PERSISTENT.ttl,
+        )
         assertEquals(
             "Payload of 5 bytes must be offloaded, but its lifetime 11m exceeds the TTL of 10m (bucket surf-nats-payloads)",
             PayloadBucket.TRANSIENT.lifetimeExceededMessage(5, 660.seconds),
@@ -148,13 +200,21 @@ class ProtocolResolutionTest {
         assertEquals("surf.punish.v1.PlayerStats", service.protoName)
         assertEquals(emptyList(), service.problems())
 
-        val inherited = ProtocolResolution.method(MethodOptions(), service, emptyResponse = false, streaming = false)
+        val inherited = ProtocolResolution.method(
+            MethodOptions(),
+            service,
+            emptyResponse = false,
+            streaming = false,
+        )
         assertTrue(inherited.persistent)
         assertEquals(30, inherited.callTimeoutSeconds)
         assertEquals(30, inherited.effectiveCallTimeoutSeconds)
         assertEquals(ALL_INSTANCES, inherited.recipients)
         assertEquals(ResultKindOption.ANSWER, inherited.resultKind)
-        assertEquals(listOf("rpc a.FindPlayer: persistent methods cannot address ALL_INSTANCES"), inherited.problems("a.FindPlayer"))
+        assertEquals(
+            listOf("rpc a.FindPlayer: persistent methods cannot address ALL_INSTANCES"),
+            inherited.problems("a.FindPlayer"),
+        )
 
         val own = ProtocolResolution.method(
             MethodOptions(persistent = false, callTimeoutSeconds = 0, recipients = ANY_INSTANCE),
@@ -170,29 +230,58 @@ class ProtocolResolutionTest {
 
     @Test
     fun resultKindsFollowTheResponseAndRecipients() {
-        assertEquals(ResultKindOption.UNIT, ResultKindOption.of(emptyResponse = true, recipients = ALL_INSTANCES))
-        assertEquals(ResultKindOption.UNIT, ResultKindOption.of(emptyResponse = true, recipients = ANY_INSTANCE))
-        assertEquals(ResultKindOption.ANSWER, ResultKindOption.of(emptyResponse = false, recipients = ALL_INSTANCES))
-        assertEquals(ResultKindOption.VALUE, ResultKindOption.of(emptyResponse = false, recipients = ANY_INSTANCE))
+        assertEquals(
+            ResultKindOption.UNIT,
+            ResultKindOption.of(emptyResponse = true, recipients = ALL_INSTANCES),
+        )
+        assertEquals(
+            ResultKindOption.UNIT,
+            ResultKindOption.of(emptyResponse = true, recipients = ANY_INSTANCE),
+        )
+        assertEquals(
+            ResultKindOption.ANSWER,
+            ResultKindOption.of(emptyResponse = false, recipients = ALL_INSTANCES),
+        )
+        assertEquals(
+            ResultKindOption.VALUE,
+            ResultKindOption.of(emptyResponse = false, recipients = ANY_INSTANCE),
+        )
     }
 
     @Test
     fun methodProblems() {
         val core = ProtocolResolution.service(ServiceOptions(), "a.v1.S")
-        fun problems(options: MethodOptions, emptyResponse: Boolean = true, streaming: Boolean = false) =
-            ProtocolResolution.method(options, core, emptyResponse, streaming).problems("A")
+        fun problems(
+            options: MethodOptions,
+            emptyResponse: Boolean = true,
+            streaming: Boolean = false,
+        ) = ProtocolResolution.method(options, core, emptyResponse, streaming).problems("A")
 
         assertEquals(
             listOf("rpc A: streaming rpcs are not supported"),
-            problems(MethodOptions(persistent = true, recipients = ALL_INSTANCES), streaming = true),
+            problems(
+                MethodOptions(persistent = true, recipients = ALL_INSTANCES),
+                streaming = true,
+            ),
         )
         assertEquals(emptyList(), problems(MethodOptions()))
-        assertEquals(emptyList(), problems(MethodOptions(persistent = true, callTimeoutSeconds = 120)))
         assertEquals(
-            listOf("rpc A: the call timeout of a persistent fire method (121s) must not exceed the 120s duplicate window"),
+            emptyList(),
+            problems(MethodOptions(persistent = true, callTimeoutSeconds = 120)),
+        )
+        assertEquals(
+            listOf(
+                "rpc A: the call timeout of a persistent fire method (121s) must not exceed the 120s duplicate window",
+            ),
             problems(MethodOptions(persistent = true, callTimeoutSeconds = 121)),
         )
-        assertEquals(emptyList(), problems(MethodOptions(persistent = true, callTimeoutSeconds = 121), emptyResponse = false))
+        assertEquals(
+            emptyList(),
+            problems(
+                MethodOptions(persistent = true, callTimeoutSeconds = 121),
+                emptyResponse = false,
+            ),
+        )
     }
 
     @Test

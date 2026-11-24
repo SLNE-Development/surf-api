@@ -33,7 +33,10 @@ internal object ConfigurationPhase {
         tasks: List<Pair<ConfigurationTaskId, ConfigurationTask>>,
         node: EventNode<Event>,
     ) {
-        tasks.forEach { (_, task) -> task.install(node) }
+        for ((_, task) in tasks) {
+            task.install(node)
+        }
+
         this.tasks = tasks
     }
 
@@ -63,10 +66,12 @@ internal object ConfigurationPhase {
     internal fun run(
         manager: ConnectionManagerDuck,
         player: Player,
-        isFirstConfig: Boolean
+        isFirstConfig: Boolean,
     ): Boolean {
         val tasks = tasks ?: return false
+
         configure(manager, player, isFirstConfig, tasks)
+
         return true
     }
 
@@ -105,8 +110,9 @@ internal object ConfigurationPhase {
 }
 
 @Suppress("CAST_NEVER_SUCCEEDS", "NOTHING_TO_INLINE")
-private inline fun net.minestom.server.network.ConnectionManager.duck() =
-    this as ConnectionManagerDuck
+private inline fun net.minestom.server.network.ConnectionManager.duck(): ConnectionManagerDuck {
+    return this as ConnectionManagerDuck
+}
 
 /**
  * Entry point of `ConnectionManagerMixin`.
@@ -122,6 +128,7 @@ object ConfigurationPhaseHook {
      */
     @Blocking
     @JvmStatic
-    fun configure(manager: ConnectionManagerDuck, player: Player, isFirstConfig: Boolean): Boolean =
-        ConfigurationPhase.run(manager, player, isFirstConfig)
+    fun configure(manager: ConnectionManagerDuck, player: Player, isFirstConfig: Boolean): Boolean {
+        return ConfigurationPhase.run(manager, player, isFirstConfig)
+    }
 }

@@ -16,9 +16,10 @@ import java.io.Serial
 class WrapperCommandExceptionComponent(errorMessage: Component) : WrapperCommandSyntaxException(
     CommandSyntaxException(
         SimpleCommandExceptionType(
-            ComponentMessage(errorMessage)
-        ), ComponentMessage(errorMessage)
-    )
+            ComponentMessage(errorMessage),
+        ),
+        ComponentMessage(errorMessage),
+    ),
 ) {
     override val message: String?
         get() = rawMessage.string

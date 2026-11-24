@@ -43,8 +43,8 @@ data class PaginationImpl<T>(
                     pages,
                     value,
                     index,
-                    rowRenderer
-                )
+                    rowRenderer,
+                ),
             )
         }
 
@@ -57,8 +57,8 @@ data class PaginationImpl<T>(
                 firstPageButton,
                 previousPageButton,
                 nextPageButton,
-                lastPageButton
-            ) { page -> clickEventProvider.getCallback(page, this, content) }
+                lastPageButton,
+            ) { page -> clickEventProvider.getCallback(page, this, content) },
         )
 
         return results
@@ -83,8 +83,8 @@ data class PaginationImpl<T>(
                 }
             } else {
                 val iterator = content.iterator()
-                // Skip previous pages
                 repeat(start) { iterator.next() }
+
                 for (i in start until end.coerceAtMost(size)) {
                     consumer(iterator.next(), i)
                 }

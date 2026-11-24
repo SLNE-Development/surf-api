@@ -14,15 +14,16 @@ import kotlin.math.roundToInt
 
 interface SuspendPaginationRenderer {
     suspend fun CoroutineScope.renderEmpty(): Component = PaginationRenderer.DEFAULT.renderEmpty()
-    suspend fun CoroutineScope.renderUnknownPage(page: Int, pages: Int): Component =
-        PaginationRenderer.DEFAULT.renderUnknownPage(page, pages)
+    suspend fun CoroutineScope.renderUnknownPage(page: Int, pages: Int): Component {
+        return PaginationRenderer.DEFAULT.renderUnknownPage(page, pages)
+    }
 
     suspend fun CoroutineScope.renderHeader(
         width: Int,
         indent: Int,
         title: Component,
         page: Int,
-        pages: Int
+        pages: Int,
     ): Component = PaginationRenderer.DEFAULT.renderHeader(width, indent, title, page, pages)
 
     suspend fun <T> CoroutineScope.renderRow(
@@ -33,9 +34,11 @@ interface SuspendPaginationRenderer {
         value: T,
         contentIndex: Int,
         renderer: SuspendPaginationRowRenderer<T>,
-    ): Collection<Component> = renderer.run {
-        renderRow(value, contentIndex)
-            .map { text(" ".repeat(indent)).append(it) }
+    ): Collection<Component> {
+        return renderer.run {
+            renderRow(value, contentIndex)
+                .map { text(" ".repeat(indent)).append(it) }
+        }
     }
 
     suspend fun CoroutineScope.renderFooter(
@@ -48,44 +51,56 @@ interface SuspendPaginationRenderer {
         nextPage: PageButton,
         lastPage: PageButton,
         changePageEvent: suspend CoroutineScope.(Int) -> ClickEvent<*>?,
-    ): Component = buildText {
-        if (page == 1 && pages == 1) {
-            append(renderFooterSingle(width))
-        } else {
-            appendNewline()
+    ): Component {
+        return buildText {
+            if (page == 1 && pages == 1) {
+                append(renderFooterSingle(width))
+            } else {
+                appendNewline()
 
-            val nav = buildText {
-                val first =
-                    async { renderPreviousPageButton(firstPage, changePageEvent(1), page > 1) }
-                val prev = async {
-                    renderPreviousPageButton(
-                        previousPage,
-                        changePageEvent(page - 1),
-                        page > 1
-                    )
-                }
-                val next = async {
-                    renderNextPageButton(
-                        nextPage,
-                        changePageEvent(page + 1),
-                        page < pages
-                    )
-                }
-                val last =
-                    async { renderNextPageButton(lastPage, changePageEvent(pages), page < pages) }
+                val nav = buildText {
+                    val first = async {
+                        renderPreviousPageButton(
+                            firstPage,
+                            changePageEvent(1),
+                            page > 1,
+                        )
+                    }
+                    val prev = async {
+                        renderPreviousPageButton(
+                            previousPage,
+                            changePageEvent(page - 1),
+                            page > 1,
+                        )
+                    }
+                    val next = async {
+                        renderNextPageButton(
+                            nextPage,
+                            changePageEvent(page + 1),
+                            page < pages,
+                        )
+                    }
+                    val last = async {
+                        renderNextPageButton(
+                            lastPage,
+                            changePageEvent(pages),
+                            page < pages,
+                        )
+                    }
 
-                append(first.await())
-                append(prev.await())
-                append {
-                    info(page)
-                    spacer("/")
-                    info(pages)
+                    append(first.await())
+                    append(prev.await())
+                    append {
+                        info(page)
+                        spacer("/")
+                        info(pages)
+                    }
+                    append(next.await())
+                    append(last.await())
                 }
-                append(next.await())
-                append(last.await())
+
+                append(renderFooterLine(width, nav))
             }
-
-            append(renderFooterLine(width, nav))
         }
     }
 
@@ -106,26 +121,31 @@ interface SuspendPaginationRenderer {
 
 interface PaginationRenderer {
 
-    fun renderEmpty(): Component = buildText {
-        appendInfoPrefix()
-        info("Es wurden keine Ergebnisse gefunden.")
-    }
-
-    fun renderUnknownPage(page: Int, pages: Int): Component = buildText {
-        appendErrorPrefix()
-        error("Unbekannte Seite: ")
-        variableValue(page)
-        error(". Es gibt nur ")
-        variableValue(pages)
-        if (pages == 1) {
-            error(" Seite.")
-        } else {
-            error(" Seiten.")
+    fun renderEmpty(): Component {
+        return buildText {
+            appendInfoPrefix()
+            info("Es wurden keine Ergebnisse gefunden.")
         }
     }
 
-    fun renderHeader(width: Int, indent: Int, title: Component, page: Int, pages: Int): Component =
-        buildText {
+    fun renderUnknownPage(page: Int, pages: Int): Component {
+        return buildText {
+            appendErrorPrefix()
+            error("Unbekannte Seite: ")
+            variableValue(page)
+            error(". Es gibt nur ")
+            variableValue(pages)
+
+            if (pages == 1) {
+                error(" Seite.")
+            } else {
+                error(" Seiten.")
+            }
+        }
+    }
+
+    fun renderHeader(width: Int, indent: Int, title: Component, page: Int, pages: Int): Component {
+        return buildText {
             darkSpacer("*" + "-".repeat(width - 2) + "*", TextDecoration.STRIKETHROUGH)
             appendNewline {
                 text(" ".repeat(indent))
@@ -134,6 +154,7 @@ interface PaginationRenderer {
             }
             appendNewline()
         }
+    }
 
     fun <T> renderRow(
         width: Int,
@@ -143,8 +164,10 @@ interface PaginationRenderer {
         value: T,
         contentIndex: Int,
         renderer: PaginationRowRenderer<T>,
-    ): Collection<Component> = renderer.renderRow(value, contentIndex)
-        .map { text(" ".repeat(indent)).append(it) }
+    ): Collection<Component> {
+        return renderer.renderRow(value, contentIndex)
+            .map { text(" ".repeat(indent)).append(it) }
+    }
 
     fun renderFooter(
         width: Int,
@@ -156,25 +179,33 @@ interface PaginationRenderer {
         nextPage: PageButton,
         lastPage: PageButton,
         changePageEvent: (Int) -> ClickEvent<*>?,
-    ): Component = buildText {
-        if (page == 1 && pages == 1) {
-            append(renderFooterSingle(width))
-        } else {
-            appendNewline()
+    ): Component {
+        return buildText {
+            if (page == 1 && pages == 1) {
+                append(renderFooterSingle(width))
+            } else {
+                appendNewline()
 
-            val nav = buildText {
-                append(renderPreviousPageButton(firstPage, changePageEvent(1), page > 1))
-                append(renderPreviousPageButton(previousPage, changePageEvent(page - 1), page > 1))
-                append {
-                    info(page)
-                    spacer("/")
-                    info(pages)
+                val nav = buildText {
+                    append(renderPreviousPageButton(firstPage, changePageEvent(1), page > 1))
+                    append(
+                        renderPreviousPageButton(
+                            previousPage,
+                            changePageEvent(page - 1),
+                            page > 1,
+                        ),
+                    )
+                    append {
+                        info(page)
+                        spacer("/")
+                        info(pages)
+                    }
+                    append(renderNextPageButton(nextPage, changePageEvent(page + 1), page < pages))
+                    append(renderNextPageButton(lastPage, changePageEvent(pages), page < pages))
                 }
-                append(renderNextPageButton(nextPage, changePageEvent(page + 1), page < pages))
-                append(renderNextPageButton(lastPage, changePageEvent(pages), page < pages))
-            }
 
-            append(renderFooterLine(width, nav))
+                append(renderFooterLine(width, nav))
+            }
         }
     }
 
@@ -182,47 +213,59 @@ interface PaginationRenderer {
         button: PageButton,
         clickEvent: ClickEvent<*>?,
         enabled: Boolean,
-    ): Component = buildText {
-        appendSpace()
-        if (enabled) {
-            append(Component.text(button.text, button.enabledStyle.clickEvent(clickEvent)))
-        } else {
-            append(Component.text(button.text, button.disabledStyle))
+    ): Component {
+        return buildText {
+            appendSpace()
+
+            if (enabled) {
+                append(Component.text(button.text, button.enabledStyle.clickEvent(clickEvent)))
+            } else {
+                append(Component.text(button.text, button.disabledStyle))
+            }
+
+            appendSpace()
         }
-        appendSpace()
     }
 
     fun renderNextPageButton(
         button: PageButton,
         clickEvent: ClickEvent<*>?,
         enabled: Boolean,
-    ): Component = buildText {
-        appendSpace()
-        if (enabled) {
-            append(Component.text(button.text, button.enabledStyle.clickEvent(clickEvent)))
-        } else {
-            append(Component.text(button.text, button.disabledStyle))
+    ): Component {
+        return buildText {
+            appendSpace()
+
+            if (enabled) {
+                append(Component.text(button.text, button.enabledStyle.clickEvent(clickEvent)))
+            } else {
+                append(Component.text(button.text, button.disabledStyle))
+            }
+
+            appendSpace()
         }
-        appendSpace()
     }
 
     data object DEFAULT : PaginationRenderer
 }
 
-private fun renderFooterSingle(width: Int): Component = buildText {
-    appendNewline()
-    darkSpacer("*" + "-".repeat(width - 2) + "*", TextDecoration.STRIKETHROUGH)
+private fun renderFooterSingle(width: Int): Component {
+    return buildText {
+        appendNewline()
+        darkSpacer("*" + "-".repeat(width - 2) + "*", TextDecoration.STRIKETHROUGH)
+    }
 }
 
-private fun renderFooterLine(width: Int, nav: Component): Component = buildText {
-    val dashPx = DefaultFontInfo.MINUS.length + 1
-    val navPx = DefaultFontInfo.pixelWidth(nav.plain())
-    val linePx = (width - 2) * dashPx
-    val sidePx = linePx - navPx
-    val left = (sidePx / 2.0 / dashPx).roundToInt()
-    val right = ((sidePx - left * dashPx.toDouble()) / dashPx).roundToInt()
+private fun renderFooterLine(width: Int, nav: Component): Component {
+    return buildText {
+        val dashPx = DefaultFontInfo.MINUS.length + 1
+        val navPx = DefaultFontInfo.pixelWidth(nav.plain())
+        val linePx = (width - 2) * dashPx
+        val sidePx = linePx - navPx
+        val left = (sidePx / 2.0 / dashPx).roundToInt()
+        val right = ((sidePx - left * dashPx.toDouble()) / dashPx).roundToInt()
 
-    darkSpacer("*" + "-".repeat(left), TextDecoration.STRIKETHROUGH)
-    append(nav)
-    darkSpacer("-".repeat(right) + "*", TextDecoration.STRIKETHROUGH)
+        darkSpacer("*" + "-".repeat(left), TextDecoration.STRIKETHROUGH)
+        append(nav)
+        darkSpacer("-".repeat(right) + "*", TextDecoration.STRIKETHROUGH)
+    }
 }

@@ -35,12 +35,13 @@ import java.util.concurrent.atomic.AtomicReference
 class EntityArgumentIntegrationTest {
     @Test
     fun `entity selectors declare the vanilla entity parser and entity type asks the client`() {
-        listOf(
+        val cases = listOf(
             PlayerArgument("player").toDefinition() to byteArrayOf(3),
             PlayersArgument("players").toDefinition() to byteArrayOf(2),
             EntityArgument("entity").toDefinition() to byteArrayOf(1),
             EntitiesArgument("entities").toDefinition() to byteArrayOf(0),
-        ).forEach { (definition, properties) ->
+        )
+        for ((definition, properties) in cases) {
             val declaration = definition.declaration()
             assertEquals(ArgumentParserType.ENTITY, declaration.parser, definition.nodeName)
             assertArrayEquals(properties, declaration.properties, definition.nodeName)
@@ -71,7 +72,7 @@ class EntityArgumentIntegrationTest {
             .map(EntityType::name)
             .includeSuggestions(ArgumentSuggestions.strings("minecraft:zombie"))
 
-        listOf(unsafe, safe, mapped).forEach { argument ->
+        for (argument in listOf(unsafe, safe, mapped)) {
             val failure = assertThrows(CommandValidationException::class.java) {
                 MinestomCommandCompiler().compile(
                     CommandAPICommand("entity-type-include")
@@ -286,7 +287,8 @@ class EntityArgumentIntegrationTest {
                 ),
                 child.paths.map { path -> path.arguments.map { it.nodeName } },
             )
-            listOf(tree, child).forEach { definition ->
+
+            for (definition in listOf(tree, child)) {
                 val last = definition.paths.single { path ->
                     path.arguments.last().nodeName == "type"
                 }.arguments.last()
@@ -295,9 +297,18 @@ class EntityArgumentIntegrationTest {
             }
 
             assertEquals("Alpha", PlayerArgument("player").toDefinition().stringify(alpha))
-            assertEquals("Alpha,Bravo", PlayersArgument("players").toDefinition().stringify(listOf(alpha, bravo)))
-            assertEquals(zombie.uuid.toString(), EntityArgument("entity").toDefinition().stringify(zombie))
-            assertEquals("minecraft:zombie", EntityTypeArgument("type").toDefinition().stringify(EntityType.ZOMBIE))
+            assertEquals(
+                "Alpha,Bravo",
+                PlayersArgument("players").toDefinition().stringify(listOf(alpha, bravo)),
+            )
+            assertEquals(
+                zombie.uuid.toString(),
+                EntityArgument("entity").toDefinition().stringify(zombie),
+            )
+            assertEquals(
+                "minecraft:zombie",
+                EntityTypeArgument("type").toDefinition().stringify(EntityType.ZOMBIE),
+            )
         }
     }
 
@@ -319,6 +330,7 @@ class EntityArgumentIntegrationTest {
         var bravo: Player? = null
         var zombie: Entity? = null
         CommandAPI.installPlatform(platform)
+
         try {
             val connectedAlpha = connect(alphaConnection, instance)
             alpha = connectedAlpha
@@ -343,6 +355,7 @@ class EntityArgumentIntegrationTest {
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.destroyInstance(instance)
         }
     }
@@ -354,13 +367,15 @@ class EntityArgumentIntegrationTest {
                 .onSuccess(connected::complete)
                 .onFailure(connected::completeExceptionally)
         }
+
         return connected.join()
     }
 
     private fun profile(name: String) = GameProfile(UUID.randomUUID(), name)
 
-    private fun plain(component: Component): String =
-        PlainTextComponentSerializer.plainText().serialize(component)
+    private fun plain(component: Component): String {
+        return PlainTextComponentSerializer.plainText().serialize(component)
+    }
 
     private class PlayerArguments(arguments: CommandArguments) {
         val target: Player by arguments

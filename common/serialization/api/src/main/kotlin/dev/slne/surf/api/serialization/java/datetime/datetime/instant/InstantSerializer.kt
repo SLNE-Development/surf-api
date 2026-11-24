@@ -13,7 +13,7 @@ typealias SerializableInstant = @Serializable(with = InstantSerializer::class) I
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor = PrimitiveSerialDescriptor(
         "surf.api.java.datetime.datetime.Instant",
-        PrimitiveKind.LONG
+        PrimitiveKind.LONG,
     )
 
     override fun serialize(
@@ -23,6 +23,5 @@ object InstantSerializer : KSerializer<Instant> {
         encoder.encodeLong(value.toEpochMilli())
     }
 
-    override fun deserialize(decoder: Decoder): Instant =
-        Instant.ofEpochMilli(decoder.decodeLong())
+    override fun deserialize(decoder: Decoder): Instant = Instant.ofEpochMilli(decoder.decodeLong())
 }

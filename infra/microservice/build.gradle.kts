@@ -2,7 +2,6 @@ import dev.slne.surf.api.gradle.util.slneReleases
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
-    // Puts the surf plugin classes on this script's classpath for the imports above.
     id("dev.slne.surf.api.gradle.core") apply false
 }
 

@@ -9,8 +9,8 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Reports whether [probe] completes within [timeout], 2.5 seconds by default.
  *
- * [health] blocks the calling thread until the probe finished and reacts to interruption, so the caller can enforce
- * its own deadline.
+ * [health] blocks the calling thread until the probe finished and reacts to interruption, so the
+ * caller can enforce its own deadline.
  */
 internal class DatabaseHealthIndicator(
     private val timeout: Duration = DEFAULT_TIMEOUT,

@@ -64,7 +64,9 @@ class PositionArgumentIntegrationTest {
     }
 
     @Test
-    fun `two dimensional positions require exactly two components and stop at the argument boundary`(env: Env) {
+    fun `two dimensional positions require exactly two components and stop at the argument boundary`(
+        env: Env,
+    ) {
         withPlayerPlatform(env, Pos(10.0, 20.0, 30.0, 0f, 0f)) { player ->
             val compiled = Position2DArgument("pos").toDefinition()
 
@@ -119,7 +121,12 @@ class PositionArgumentIntegrationTest {
             assertEquals(-115f, compiled.read(player, "~200"))
 
             assertThrows(CommandSyntaxException::class.java) { compiled.read(player, "~-") }
-            assertThrows(CommandSyntaxException::class.java) { compiled.read(player, "not-a-number") }
+            assertThrows(CommandSyntaxException::class.java) {
+                compiled.read(
+                    player,
+                    "not-a-number",
+                )
+            }
             assertThrows(CommandSyntaxException::class.java) { compiled.read(player, "") }
 
             assertEquals(ArgumentParserType.ANGLE, compiled.declaration().parser)
@@ -178,12 +185,27 @@ class PositionArgumentIntegrationTest {
     ) {
         withPlayerPlatform(env) {
             val rejectedCases = listOf(
-                "Position" to PositionArgument("pos").replaceSuggestions(ArgumentSuggestions.strings("~ ~ ~")),
-                "Position2D" to Position2DArgument("pos").replaceSuggestions(ArgumentSuggestions.strings("~ ~")),
-                "BlockPosition" to BlockPositionArgument("pos").replaceSuggestions(ArgumentSuggestions.strings("~ ~ ~")),
-                "Rotation" to RotationArgument("look").replaceSuggestions(ArgumentSuggestions.strings("~ ~")),
+                "Position" to PositionArgument("pos").replaceSuggestions(
+                    ArgumentSuggestions.strings(
+                        "~ ~ ~",
+                    ),
+                ),
+                "Position2D" to Position2DArgument("pos").replaceSuggestions(
+                    ArgumentSuggestions.strings(
+                        "~ ~",
+                    ),
+                ),
+                "BlockPosition" to BlockPositionArgument("pos").replaceSuggestions(
+                    ArgumentSuggestions.strings("~ ~ ~"),
+                ),
+                "Rotation" to RotationArgument("look").replaceSuggestions(
+                    ArgumentSuggestions.strings(
+                        "~ ~",
+                    ),
+                ),
             )
-            rejectedCases.forEach { (kind, argument) ->
+
+            for ((kind, argument) in rejectedCases) {
                 val commandName = "reject-${kind.lowercase()}"
                 val failure = assertThrows(CommandValidationException::class.java) {
                     CommandAPICommand(commandName)
@@ -199,11 +221,20 @@ class PositionArgumentIntegrationTest {
             }
 
             CommandAPICommand("allow-angle")
-                .withArguments(AngleArgument("angle").replaceSuggestions(ArgumentSuggestions.strings("0", "90")))
+                .withArguments(
+                    AngleArgument("angle").replaceSuggestions(
+                        ArgumentSuggestions.strings(
+                            "0",
+                            "90",
+                        ),
+                    ),
+                )
                 .anyExecutor { _, _ -> }
                 .register()
             CommandAPICommand("allow-axis")
-                .withArguments(AxisArgument("axes").includeSuggestions(ArgumentSuggestions.strings("xyz")))
+                .withArguments(
+                    AxisArgument("axes").includeSuggestions(ArgumentSuggestions.strings("xyz")),
+                )
                 .anyExecutor { _, _ -> }
                 .register()
 
@@ -272,9 +303,18 @@ class PositionArgumentIntegrationTest {
             child.paths.map { path -> path.arguments.map { it.nodeName } },
         )
 
-        assertEquals("1.0 2.0 3.0", PositionArgument("pos").toDefinition().stringify(Vec(1.0, 2.0, 3.0)))
-        assertEquals("45.0 10.0", RotationArgument("look").toDefinition().stringify(Rotation(45f, 10f)))
-        assertEquals("xy", AxisArgument("axes").toDefinition().stringify(linkedSetOf(Axis.X, Axis.Y)))
+        assertEquals(
+            "1.0 2.0 3.0",
+            PositionArgument("pos").toDefinition().stringify(Vec(1.0, 2.0, 3.0)),
+        )
+        assertEquals(
+            "45.0 10.0",
+            RotationArgument("look").toDefinition().stringify(Rotation(45f, 10f)),
+        )
+        assertEquals(
+            "xy",
+            AxisArgument("axes").toDefinition().stringify(linkedSetOf(Axis.X, Axis.Y)),
+        )
         assertEquals(
             "1 2 3",
             BlockPositionArgument("blockPos").toDefinition().stringify(Vec(1.9, 2.1, 3.0)),
@@ -296,12 +336,20 @@ class PositionArgumentIntegrationTest {
         spawnPos: Pos = Pos.ZERO,
         block: (Player) -> Unit,
     ) {
-        val platform = MinestomCommandAPIPlatform(env.process().command(), MinestomCommandOwnership())
+        val platform = MinestomCommandAPIPlatform(
+            env.process().command(),
+            MinestomCommandOwnership(),
+        )
         val instance = env.createEmptyInstance()
         var player: Player? = null
         CommandAPI.installPlatform(platform)
+
         try {
-            val connected = connect(env.createConnection(profile("Pos-${UUID.randomUUID()}")), instance, spawnPos)
+            val connected = connect(
+                env.createConnection(profile("Pos-${UUID.randomUUID()}")),
+                instance,
+                spawnPos,
+            )
             player = connected
             check(env.tickWhile({ connected.instance !== instance }, Duration.ofSeconds(1))) {
                 "Player was not spawned in the requested test instance"
@@ -309,11 +357,15 @@ class PositionArgumentIntegrationTest {
             block(connected)
         } finally {
             try {
-                if (player?.isRemoved == false) player.remove()
+                if (player?.isRemoved == false) {
+                    player.remove()
+                }
+
                 platform.close()
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.destroyInstance(instance)
         }
     }
@@ -325,6 +377,7 @@ class PositionArgumentIntegrationTest {
                 .onSuccess(connected::complete)
                 .onFailure(connected::completeExceptionally)
         }
+
         return connected.join()
     }
 

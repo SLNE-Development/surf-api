@@ -25,9 +25,9 @@ import kotlin.time.toJavaDuration
 /**
  * Provisions the JetStream streams and consumer settings of persistent service methods.
  *
- * Provisioned streams are remembered per connection object, which survives reconnects, and the cache is never
- * invalidated at runtime. A stream deleted on the server while the process runs is therefore not recreated. Restart
- * the affected services after deleting a stream.
+ * Provisioned streams are remembered per connection object, which survives reconnects, and the
+ * cache is never invalidated at runtime. A stream deleted on the server while the process runs is
+ * therefore not recreated. Restart the affected services after deleting a stream.
  */
 @InternalNatsApi
 internal object JetStreamProvisioner {
@@ -38,7 +38,8 @@ internal object JetStreamProvisioner {
     /**
      * Creates or updates the work-queue and dead-letter streams of [streams] once per connection.
      *
-     * Throws [IllegalStateException] when JetStream is disabled or a stream of that name exists for other subjects.
+     * Throws [IllegalStateException] when JetStream is disabled or a stream of that name exists for
+     * other subjects.
      */
     suspend fun ensureStreams(streams: ServiceNames) {
         val connection = NatsConnectionManager.connection()
@@ -53,7 +54,8 @@ internal object JetStreamProvisioner {
             withContext(Dispatchers.IO) {
                 val jetStreamManagement = connection.jetStreamManagement()
                 addOrUpdate(
-                    jetStreamManagement, StreamConfiguration.builder()
+                    jetStreamManagement,
+                    StreamConfiguration.builder()
                         .name(streams.stream)
                         .subjects(streams.streamFilter)
                         .retentionPolicy(RetentionPolicy.WorkQueue)
@@ -61,16 +63,17 @@ internal object JetStreamProvisioner {
                         .allowMessageTtl()
                         .maxAge(NatsPersistentLimits.MESSAGE_MAX_AGE.toJavaDuration())
                         .duplicateWindow(RuntimeDefaults.dedupeWindow.toJavaDuration())
-                        .build()
+                        .build(),
                 )
                 addOrUpdate(
-                    jetStreamManagement, StreamConfiguration.builder()
+                    jetStreamManagement,
+                    StreamConfiguration.builder()
                         .name(streams.dlqStream)
                         .subjects(streams.dlqSubject)
                         .retentionPolicy(RetentionPolicy.Limits)
                         .storageType(StorageType.File)
                         .maxAge(NatsPersistentLimits.DEAD_LETTER_MAX_AGE.toJavaDuration())
-                        .build()
+                        .build(),
                 )
             }
             provisioned[streams.stream] = connection
@@ -78,10 +81,11 @@ internal object JetStreamProvisioner {
     }
 
     /**
-     * Forgets that the streams of [streams] were provisioned, so the next [ensureStreams] creates them again after
-     * they were deleted on the server.
+     * Forgets that the streams of [streams] were provisioned, so the next [ensureStreams] creates
+     * them again after they were deleted on the server.
      *
-     * Does not take the provisioning lock: an [ensureStreams] running at the same time may record the streams again.
+     * Does not take the provisioning lock: an [ensureStreams] running at the same time may record
+     * the streams again.
      */
     @TestOnly
     fun invalidate(streams: ServiceNames) {
@@ -106,20 +110,26 @@ internal object JetStreamProvisioner {
         }
     }
 
-    private fun collisionMessage(stream: String, existing: List<String>, requested: List<String>): String {
+    private fun collisionMessage(
+        stream: String,
+        existing: List<String>,
+        requested: List<String>,
+    ): String {
         return "Stream $stream already exists for subjects $existing and cannot be used for $requested. " +
-                "It was created by another tool or with an older subject filter; delete it to let surf-nats recreate it."
+            "It was created by another tool or with an older subject filter; delete it to let surf-nats recreate it."
     }
 
     /**
-     * Returns the configuration of the durable consumer [durable]: explicit acks, the persistent ack wait and
-     * delivery limit, and at most 256 unacknowledged messages.
+     * Returns the configuration of the durable consumer [durable]: explicit acks, the persistent
+     * ack wait and delivery limit, and at most 256 unacknowledged messages.
      */
-    fun consumerConfig(durable: String): ConsumerConfiguration = ConsumerConfiguration.builder()
-        .durable(durable)
-        .ackPolicy(AckPolicy.Explicit)
-        .ackWait(RpcDefaults.ACK_WAIT.toJavaDuration())
-        .maxDeliver(RpcDefaults.MAX_DELIVER.toLong())
-        .maxAckPending(256)
-        .build()
+    fun consumerConfig(durable: String): ConsumerConfiguration {
+        return ConsumerConfiguration.builder()
+            .durable(durable)
+            .ackPolicy(AckPolicy.Explicit)
+            .ackWait(RpcDefaults.ACK_WAIT.toJavaDuration())
+            .maxDeliver(RpcDefaults.MAX_DELIVER.toLong())
+            .maxAckPending(256)
+            .build()
+    }
 }

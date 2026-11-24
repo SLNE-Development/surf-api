@@ -73,17 +73,21 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     /**
      * Convenience operator for [add].
      */
-    operator fun plusAssign(element: T) = add(element)
+    operator fun plusAssign(element: T) {
+        add(element)
+    }
 
     /**
-     * Removes one occurrence of [element] from the local list and propagates the change through Redis.
+     * Removes one occurrence of [element] from the local list and propagates the change through
+     * Redis.
      *
      * @return `true` if an element was removed locally, `false` otherwise
      */
     fun remove(element: T): Boolean
 
     /**
-     * Removes one occurrence of [element] locally and waits until the mutation has been committed to Redis.
+     * Removes one occurrence of [element] locally and waits until the mutation has been committed
+     * to Redis.
      *
      * @return `true` if an element was removed locally, `false` otherwise
      */
@@ -104,7 +108,8 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     operator fun set(index: Int, element: T): T
 
     /**
-     * Replaces the element at [index] locally and waits until the mutation has been committed to Redis.
+     * Replaces the element at [index] locally and waits until the mutation has been committed to
+     * Redis.
      *
      * @return the previous element at [index]
      */
@@ -118,7 +123,8 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     fun removeAt(index: Int): T
 
     /**
-     * Removes the element at [index] locally and waits until the mutation has been committed to Redis.
+     * Removes the element at [index] locally and waits until the mutation has been committed to
+     * Redis.
      *
      * @return the removed element
      */
@@ -135,7 +141,8 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     fun removeIf(predicate: (T) -> Boolean): Boolean
 
     /**
-     * Removes all locally matching elements and waits until the batched Redis mutation has completed.
+     * Removes all locally matching elements and waits until the batched Redis mutation has
+     * completed.
      */
     suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean
 
@@ -203,7 +210,8 @@ interface SyncList<T : Any> : SyncStructure<SyncListChange<T>> {
     suspend fun removeAtRemote(index: Int): T?
 
     /**
-     * Clears the Redis list regardless of the local view and waits until the clear has been committed.
+     * Clears the Redis list regardless of the local view and waits until the clear has been
+     * committed.
      *
      * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
      */

@@ -10,7 +10,10 @@ import java.time.Instant
 import java.util.*
 import kotlin.enums.enumEntries
 
-private val MAX_CONTAINER_ELEMENTS = java.lang.Long.getLong("surf.redis.max-container-elements", 1_000_000)
+private val MAX_CONTAINER_ELEMENTS = java.lang.Long.getLong(
+    "surf.redis.max-container-elements",
+    1_000_000,
+)
 
 private fun checkContainerSize(type: String, size: Int) {
     checkDecoding(size >= 0) { "$type size must not be negative: $size" }
@@ -54,15 +57,22 @@ fun <T> ByteBuf.writeNullable(value: T?, writer: (ByteBuf, T) -> Unit) {
 
 fun <T> ByteBuf.readNullable(reader: (ByteBuf) -> T): T? {
     if (!readBoolean()) return null
+
     return reader(this)
 }
 
 fun <T> ByteBuf.writeCollection(collection: Collection<T>, writer: (ByteBuf, T) -> Unit) {
     writeVarInt(collection.size)
-    collection.forEach { writer(this, it) }
+
+    for (element in collection) {
+        writer(this, element)
+    }
 }
 
-fun <T, C : MutableCollection<T>> ByteBuf.readCollection(creator: (Int) -> C, reader: (ByteBuf) -> T): C {
+fun <T, C : MutableCollection<T>> ByteBuf.readCollection(
+    creator: (Int) -> C,
+    reader: (ByteBuf) -> T,
+): C {
     val size = readVarInt()
     checkContainerSize("Collection", size)
 
@@ -70,6 +80,7 @@ fun <T, C : MutableCollection<T>> ByteBuf.readCollection(creator: (Int) -> C, re
     repeat(size) {
         collection.add(reader(this))
     }
+
     return collection
 }
 
@@ -77,7 +88,10 @@ fun <T> ByteBuf.readList(reader: (ByteBuf) -> T): ArrayList<T> = readCollection(
 
 fun <T> ByteBuf.writeArray(array: Array<T>, writer: (ByteBuf, T) -> Unit) {
     writeVarInt(array.size)
-    array.forEach { writer(this, it) }
+
+    for (element in array) {
+        writer(this, element)
+    }
 }
 
 fun <T> ByteBuf.readArray(type: Class<T>, reader: (ByteBuf) -> T): Array<T> {
@@ -101,13 +115,14 @@ inline fun <reified T> ByteBuf.readArray(noinline reader: (ByteBuf) -> T): Array
 private fun ByteBuf.readPrimitiveArrayLength(type: String): Int {
     val length = readVarInt()
     checkContainerSize(type, length)
+
     return length
 }
 
 private fun ByteBuf.checkReadableArrayBytes(
     type: String,
     length: Int,
-    bytesPerElement: Int
+    bytesPerElement: Int,
 ) {
     val neededBytes = length.toLong() * bytesPerElement
 
@@ -131,6 +146,7 @@ fun ByteBuf.readByteArray(): ByteArray {
 
     val array = ByteArray(length)
     readBytes(array)
+
     return array
 }
 
@@ -280,7 +296,7 @@ fun ByteBuf.readInstant(): Instant {
 fun <K, V> ByteBuf.writeMap(
     map: Map<K, V>,
     keyWriter: (ByteBuf, K) -> Unit,
-    valueWriter: (ByteBuf, V) -> Unit
+    valueWriter: (ByteBuf, V) -> Unit,
 ) {
     writeVarInt(map.size)
 
@@ -293,7 +309,7 @@ fun <K, V> ByteBuf.writeMap(
 fun <K, V, M : MutableMap<K, V>> ByteBuf.readMap(
     creator: (Int) -> M,
     keyReader: (ByteBuf) -> K,
-    valueReader: (ByteBuf) -> V
+    valueReader: (ByteBuf) -> V,
 ): M {
     val size = readVarInt()
     checkContainerSize("Map", size)
@@ -311,7 +327,7 @@ fun <K, V, M : MutableMap<K, V>> ByteBuf.readMap(
 
 fun <K, V> ByteBuf.readMap(
     keyReader: (ByteBuf) -> K,
-    valueReader: (ByteBuf) -> V
+    valueReader: (ByteBuf) -> V,
 ): HashMap<K, V> {
     return readMap(::HashMap, keyReader, valueReader)
 }
@@ -391,6 +407,7 @@ fun ByteBuf.readFixedBitSet(size: Int): BitSet {
     val byteSize = (size + Byte.SIZE_BITS - 1) / Byte.SIZE_BITS
     val bytes = ByteArray(byteSize)
     readBytes(bytes)
+
     return BitSet.valueOf(bytes)
 }
 
@@ -414,7 +431,7 @@ fun <T> ByteBuf.readById(resolver: (Int) -> T): T {
 fun ByteBuf.writeVarIntList(list: List<Int>) {
     writeVarInt(list.size)
 
-    list.forEach { value ->
+    for (value in list) {
         writeVarInt(value)
     }
 }

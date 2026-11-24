@@ -38,10 +38,12 @@ value class DialogResponseView(val payload: CompoundBinaryTag) {
      * @param key the key the control was declared under
      * @return whether the control is on, or `null` if the dialog holds no boolean under that key
      */
-    fun getBoolean(key: String): Boolean? = when (val tag: BinaryTag? = payload[key]) {
-        is ByteBinaryTag -> tag.value() != ZERO
-        is StringBinaryTag -> tag.value().toBooleanStrictOrNull()
-        else -> null
+    fun getBoolean(key: String): Boolean? {
+        return when (val tag: BinaryTag? = payload[key]) {
+            is ByteBinaryTag -> tag.value() != ZERO
+            is StringBinaryTag -> tag.value().toBooleanStrictOrNull()
+            else -> null
+        }
     }
 
     companion object {
@@ -58,7 +60,8 @@ value class DialogResponseView(val payload: CompoundBinaryTag) {
          * @param payload what the client sent along with the click
          * @return the values, or [EMPTY] if the client sent something else
          */
-        fun of(payload: BinaryTag?): DialogResponseView =
-            if (payload is CompoundBinaryTag) DialogResponseView(payload) else EMPTY
+        fun of(payload: BinaryTag?): DialogResponseView {
+            return if (payload is CompoundBinaryTag) DialogResponseView(payload) else EMPTY
+        }
     }
 }

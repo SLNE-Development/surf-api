@@ -6,8 +6,8 @@ import dev.slne.surf.api.spring.PluginApi
  * The contract the providing plugin exports for another plugin to inject.
  *
  * It is declared here, in the providing plugin's own jar, and nowhere else. A consumer reaches it
- * only through Paper's plugin class loader group, so the `Class` object the consumer casts to is the
- * one this jar's loader defined.
+ * only through Paper's plugin class loader group, so the `Class` object the consumer casts to is
+ * the one this jar's loader defined.
  */
 @PluginApi
 interface SharedGreeting {

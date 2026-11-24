@@ -11,15 +11,15 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Runs command invocations against the commands that [findCommand] resolves.
  *
- * A [MicroserviceCommandException] becomes a [MicroserviceCommandResult.Failure] with its message. Any other
- * exception or error, except a [VirtualMachineError], is logged with its stack trace and reported as a failure, so
- * the caller always receives a response. A [CancellationException] propagates only if the calling coroutine was
- * cancelled. One thrown by the command itself, such as a timeout, is a failure. An invocation completes after all
- * coroutines it started in its context.
+ * A [MicroserviceCommandException] becomes a [MicroserviceCommandResult.Failure] with its message.
+ * Any other exception or error, except a [VirtualMachineError], is logged with its stack trace and
+ * reported as a failure, so the caller always receives a response. A [CancellationException]
+ * propagates only if the calling coroutine was cancelled. One thrown by the command itself, such as
+ * a timeout, is a failure. An invocation completes after all coroutines it started in its context.
  *
- * The console passes whole lines, which the first [dispatch] overload splits. The command socket receives the
- * arguments already split by `microservicectl` and uses the second overload, so the quoting rules of the console do
- * not apply there.
+ * The console passes whole lines, which the first [dispatch] overload splits. The command socket
+ * receives the arguments already split by `microservicectl` and uses the second overload, so the
+ * quoting rules of the console do not apply there.
  */
 internal class MicroserviceCommandDispatcher(
     private val findCommand: (label: String) -> MicroserviceCommand? = MicroserviceCommands::find,
@@ -59,6 +59,7 @@ internal class MicroserviceCommandDispatcher(
         output: MicroserviceCommandOutput,
     ): CommandDispatch {
         val command = findCommand(label) ?: return failed("Unknown command '$label'. $HELP_HINT")
+
         val shutdownRequested = AtomicBoolean()
 
         val result = try {
@@ -69,7 +70,10 @@ internal class MicroserviceCommandDispatcher(
         } catch (error: VirtualMachineError) {
             throw error
         } catch (exception: Throwable) {
-            if (exception is CancellationException) currentCoroutineContext().ensureActive()
+            if (exception is CancellationException) {
+                currentCoroutineContext().ensureActive()
+            }
+
             val message =
                 "Command '${command.name}' failed: ${exception.message ?: exception.javaClass.name}"
             log.atSevere()
@@ -87,9 +91,16 @@ internal class MicroserviceCommandDispatcher(
         source: MicroserviceCommandSource,
         output: MicroserviceCommandOutput,
         requestShutdown: () -> Unit,
-    ) = coroutineScope {
-        val context = MicroserviceCommandContext(coroutineContext, source, output, requestShutdown)
-        with(command) { context.execute(args) }
+    ) {
+        coroutineScope {
+            val context = MicroserviceCommandContext(
+                coroutineContext,
+                source,
+                output,
+                requestShutdown,
+            )
+            with(command) { context.execute(args) }
+        }
     }
 
     private fun failed(message: String): CommandDispatch {

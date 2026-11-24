@@ -23,7 +23,7 @@ internal class PublishWiringTest : TestKitSupport() {
             group = 'dev.slne.demo'
             version = '1.2.0-SNAPSHOT'
             $extra
-            """
+            """,
         )
     }
 
@@ -34,7 +34,10 @@ internal class PublishWiringTest : TestKitSupport() {
     private fun assertBefore(plan: List<String>, first: String, second: String) {
         assertContains(plan, first)
         assertContains(plan, second)
-        assertTrue(plan.indexOf(first) < plan.indexOf(second), "$first must run before $second in $plan")
+        assertTrue(
+            plan.indexOf(first) < plan.indexOf(second),
+            "$first must run before $second in $plan",
+        )
     }
 
     @Test
@@ -56,7 +59,10 @@ internal class PublishWiringTest : TestKitSupport() {
 
         val alone = build.plan(publishTask)
         assertContains(alone, publishTask)
-        assertFalse(":publishProtos" in alone, "publishing to Maven alone does not publish protos: $alone")
+        assertFalse(
+            ":publishProtos" in alone,
+            "publishing to Maven alone does not publish protos: $alone",
+        )
 
         val reversed = build.plan(publishTask, "publishProtos")
         assertBefore(reversed, ":publishProtos", publishTask)
@@ -83,7 +89,7 @@ internal class PublishWiringTest : TestKitSupport() {
             ${TestBuild.PLUGIN}
             apply plugin: 'maven-publish'
             publishing { publications { m(MavenPublication) { } } }
-            """
+            """,
         )
 
         val plan = build.plan("publish")
@@ -101,7 +107,7 @@ internal class PublishWiringTest : TestKitSupport() {
             apply plugin: 'maven-publish'
             publishing { publications { m(MavenPublication) { } } }
             afterEvaluate { publishing { repositories { maven { name = 'late'; url = uri('build/late') } } } }
-            """
+            """,
         )
 
         val plan = build.plan("publish")
@@ -135,8 +141,12 @@ internal class PublishWiringTest : TestKitSupport() {
         assertTrue(tasks.indexOf(":publishProtos") < tasks.indexOf(publishTask), tasks.toString())
 
         val upload = stub.requests("PUT").single()
-        assertEquals("/api/v1/repos/proto-releases-public/artifacts/dev.slne.demo/demo/1.2.0-SNAPSHOT", upload.path)
-        val manifest = Json.parseToJsonElement(String(assertNotNull(upload.part("manifest")))).jsonObject
+        assertEquals(
+            "/api/v1/repos/proto-releases-public/artifacts/dev.slne.demo/demo/1.2.0-SNAPSHOT",
+            upload.path,
+        )
+        val manifest = Json.parseToJsonElement(String(assertNotNull(upload.part("manifest"))))
+            .jsonObject
         assertEquals("dev.slne.demo", manifest.getValue("group").jsonPrimitive.content)
         assertEquals("demo", manifest.getValue("name").jsonPrimitive.content)
         assertEquals("1.2.0-SNAPSHOT", manifest.getValue("version").jsonPrimitive.content)
@@ -148,7 +158,10 @@ internal class PublishWiringTest : TestKitSupport() {
     fun `a rejected upload fails publish before anything reaches Maven`() {
         publishedModule()
         contract()
-        stub.route("PUT", "/api/v1/repos/proto-releases-public/artifacts/dev.slne.demo/demo/1.2.0-SNAPSHOT") {
+        stub.route(
+            "PUT",
+            "/api/v1/repos/proto-releases-public/artifacts/dev.slne.demo/demo/1.2.0-SNAPSHOT",
+        ) {
             StubResponse(
                 422,
                 """{"error":{"code":"validation_failed","message":"rejected","details":{"issues":[{"path":"a.proto","line":3,"message":"nope"}]}}}""",
@@ -159,7 +172,11 @@ internal class PublishWiringTest : TestKitSupport() {
 
         assertEquals(TaskOutcome.FAILED, result.outcome(":publishProtos"))
         assertContains(result.output, "validation_failed: rejected")
-        assertEquals(null, result.task(publishTask), "the Maven publication must not start after a failed upload")
+        assertEquals(
+            null,
+            result.task(publishTask),
+            "the Maven publication must not start after a failed upload",
+        )
         assertFalse(build.resolve("build/repo").exists())
     }
 
@@ -168,10 +185,15 @@ internal class PublishWiringTest : TestKitSupport() {
         publishedModule(
             """
             weaver { publishing { snapshotRepository = 'proto-snapshots' } }
-            """
+            """,
         )
         contract()
-        stub.acceptPublish("dev.slne.demo", "demo", "1.2.0-SNAPSHOT", repository = "proto-snapshots")
+        stub.acceptPublish(
+            "dev.slne.demo",
+            "demo",
+            "1.2.0-SNAPSHOT",
+            repository = "proto-snapshots",
+        )
 
         build.run("publishProtos")
 
@@ -193,7 +215,11 @@ internal class PublishWiringTest : TestKitSupport() {
             """,
             project = "a",
         )
-        build.proto("surf/a/v1/a.proto", TestBuild.contract("message A { required int64 id = 1; }", pkg = "surf.a.v1"), project = "a")
+        build.proto(
+            "surf/a/v1/a.proto",
+            TestBuild.contract("message A { required int64 id = 1; }", pkg = "surf.a.v1"),
+            project = "a",
+        )
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -203,7 +229,11 @@ internal class PublishWiringTest : TestKitSupport() {
             """,
             project = "b",
         )
-        build.proto("surf/b/v1/b.proto", TestBuild.contract("message B { required int64 id = 1; }", pkg = "surf.b.v1"), project = "b")
+        build.proto(
+            "surf/b/v1/b.proto",
+            TestBuild.contract("message B { required int64 id = 1; }", pkg = "surf.b.v1"),
+            project = "b",
+        )
 
         val plan = build.plan("publish", "--parallel")
         assertBefore(plan, ":a:publishProtos", ":b:publishProtos")

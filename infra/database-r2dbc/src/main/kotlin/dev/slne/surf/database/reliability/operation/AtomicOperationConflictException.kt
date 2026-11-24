@@ -3,8 +3,8 @@ package dev.slne.surf.database.reliability.operation
 import java.io.Serial
 
 /**
- * Thrown when [key] was already executed with a different request fingerprint, so the stored reply does not belong
- * to this request.
+ * Thrown when [key] was already executed with a different request fingerprint, so the stored reply
+ * does not belong to this request.
  */
 class AtomicOperationConflictException(
     val key: OperationKey,

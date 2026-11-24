@@ -11,33 +11,34 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-
 internal data class PlayerChatMessage(
     val link: SignedMessageLink,
     val signature: MessageSignature?,
     val signedBody: SignedMessageBody,
     val unsignedContent: Component?,
-    val filterMask: FilterMask
+    val filterMask: FilterMask,
 ) {
     companion object {
         private val SYSTEM_SENDER = NIL_UUID
 
         val MESSAGE_EXPIRES_AFTER_SERVER: Duration = Duration.ofMinutes(5L)
 
-        fun system(content: String) = unsigned(SYSTEM_SENDER, content)
+        fun system(content: String): PlayerChatMessage = unsigned(SYSTEM_SENDER, content)
 
-        fun unsigned(sender: UUID, content: String) = PlayerChatMessage(
-            link = SignedMessageLink.unsigned(sender),
-            signature = null,
-            signedBody = SignedMessageBody.unsigned(content),
-            unsignedContent = null,
-            filterMask = FILTER_MASK_PASS_THROUGH
-        )
+        fun unsigned(sender: UUID, content: String): PlayerChatMessage {
+            return PlayerChatMessage(
+                link = SignedMessageLink.unsigned(sender),
+                signature = null,
+                signedBody = SignedMessageBody.unsigned(content),
+                unsignedContent = null,
+                filterMask = FILTER_MASK_PASS_THROUGH,
+            )
+        }
 
         fun updateSignature(
             output: SignatureUpdater.Output,
             link: SignedMessageLink,
-            body: SignedMessageBody
+            body: SignedMessageBody,
         ) {
             output.update(Ints.toByteArray(1))
             link.updateSignature(output)
@@ -45,38 +46,47 @@ internal data class PlayerChatMessage(
         }
     }
 
-    fun withUnsignedContent(content: Component) =
-        copy(unsignedContent = if (content != Component.text(signedContent())) content else null)
+    fun withUnsignedContent(content: Component): PlayerChatMessage {
+        return copy(
+            unsignedContent = if (content != Component.text(
+                    signedContent(),
+                )
+            ) content else null,
+        )
+    }
 
-    fun verify(signatureValidator: SignatureValidator): Boolean =
-        signature != null && signature.verify(signatureValidator) { output ->
+    fun verify(signatureValidator: SignatureValidator): Boolean {
+        return signature != null && signature.verify(signatureValidator) { output ->
             updateSignature(output, link, signedBody)
         }
+    }
 
-    fun signedContent() = signedBody.content
+    fun signedContent(): String = signedBody.content
 
     fun decoratedContent(): Component = unsignedContent ?: Component.text(signedContent())
 
-    fun timeStamp() = signedBody.timeStamp
+    fun timeStamp(): Instant = signedBody.timeStamp
 
-    fun salt() = signedBody.salt
+    fun salt(): Long = signedBody.salt
 
-    fun hasExpiredServer(now: Instant): Boolean =
-        now.isAfter(timeStamp().plus(MESSAGE_EXPIRES_AFTER_SERVER))
+    fun hasExpiredServer(now: Instant): Boolean {
+        return now.isAfter(timeStamp().plus(MESSAGE_EXPIRES_AFTER_SERVER))
+    }
 
-    fun sender() = link.sender
+    fun sender(): UUID = link.sender
 
-    fun isSystem() = sender() == SYSTEM_SENDER
+    fun isSystem(): Boolean = sender() == SYSTEM_SENDER
 
-    fun adventureView() = AdventureView()
+    fun adventureView(): PlayerChatMessage.AdventureView = AdventureView()
 
     inner class AdventureView : SignedMessage {
         override fun timestamp(): Instant = this@PlayerChatMessage.timeStamp()
 
         override fun salt(): Long = this@PlayerChatMessage.salt()
 
-        override fun signature(): SignedMessage.Signature? =
-            this@PlayerChatMessage.signature?.adventure()
+        override fun signature(): SignedMessage.Signature? {
+            return this@PlayerChatMessage.signature?.adventure()
+        }
 
         override fun unsignedContent(): Component? = this@PlayerChatMessage.unsignedContent
 

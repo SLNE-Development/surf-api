@@ -95,6 +95,7 @@ class ViewButtonHandle<T> internal constructor(
 
         val from = session.current
         if (!session.advance(step)) return
+
         val to = session.current
 
         // Repaint before the callbacks run: they are allowed to navigate away, which would leave
@@ -107,6 +108,7 @@ class ViewButtonHandle<T> internal constructor(
 
     internal fun handleClose(context: CloseContext) {
         val handler = spec.closeChangedHandler ?: return
+
         val session = session(context)
 
         if (!session.hasChanged) return

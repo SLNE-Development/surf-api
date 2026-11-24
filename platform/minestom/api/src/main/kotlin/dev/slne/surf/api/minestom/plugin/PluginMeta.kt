@@ -58,7 +58,8 @@ data class PluginMeta(
          *
          * A service file, so that it survives when several plugins are shaded into one server jar.
          */
-        const val CLASSPATH_INDEX = "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin"
+        const val CLASSPATH_INDEX =
+            "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin"
 
         /**
          * Where a plugin on the system class path keeps its [PluginMeta], as `<main class>.json`.

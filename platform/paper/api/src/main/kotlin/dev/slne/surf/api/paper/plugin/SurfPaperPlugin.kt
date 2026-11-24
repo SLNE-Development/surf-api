@@ -14,9 +14,9 @@ import org.bukkit.plugin.java.JavaPlugin
  */
 abstract class SurfPaperPlugin : JavaPlugin() {
 
-    final override fun onLoad() = SurfPaperPluginRuntime.get().load(this)
+    final override fun onLoad(): Unit = SurfPaperPluginRuntime.get().load(this)
 
-    final override fun onEnable() = SurfPaperPluginRuntime.get().enable(this)
+    final override fun onEnable(): Unit = SurfPaperPluginRuntime.get().enable(this)
 
-    final override fun onDisable() = SurfPaperPluginRuntime.get().disable(this)
+    final override fun onDisable(): Unit = SurfPaperPluginRuntime.get().disable(this)
 }

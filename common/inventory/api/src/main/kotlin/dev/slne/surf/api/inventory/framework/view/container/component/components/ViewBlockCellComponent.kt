@@ -1,10 +1,10 @@
 package dev.slne.surf.api.inventory.framework.view.container.component.components
 
 import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
-import dev.slne.surf.api.messages.Colors
-import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 
 /**
  * A [ViewContainerComponent] that renders a single inventory cell block overlay at the given
@@ -47,6 +47,7 @@ class ViewBlockCellComponent(
 
     override fun SurfComponentBuilder.renderComponent() {
         val blockRow = BlockRow.fromRow(row) ?: return
+
         text(blockRow.glyph)
         color(Colors.WHITE)
     }
@@ -64,6 +65,7 @@ class ViewBlockCellComponent(
     override fun hashCode(): Int {
         var result = column
         result = 31 * result + row
+
         return result
     }
 
@@ -78,13 +80,14 @@ class ViewBlockCellComponent(
         fun forSlot(
             slot: Int,
             geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
-        ): ViewBlockCellComponent = ViewBlockCellComponent(
-            column = ViewSlotGeometry.columnOf(slot),
-            row = ViewSlotGeometry.rowOf(slot),
-            geometry = geometry
-        )
+        ): ViewBlockCellComponent {
+            return ViewBlockCellComponent(
+                column = ViewSlotGeometry.columnOf(slot),
+                row = ViewSlotGeometry.rowOf(slot),
+                geometry = geometry,
+            )
+        }
     }
-
 
     /**
      * Maps a row number to its corresponding block-cell glyph character.
@@ -97,7 +100,7 @@ class ViewBlockCellComponent(
      */
     internal enum class BlockRow(
         val glyph: Char,
-        val row: Int
+        val row: Int,
     ) {
         ONE('ꐱ', 1),
         TWO('ꐲ', 2),

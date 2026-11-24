@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
 import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.plus
@@ -61,7 +60,6 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     @PublishedApi
     internal var orientation: Pagination.Orientation? = null
 
-
     /**
      * Sets a static pagination source from a pre-populated [Iterable].
      *
@@ -115,7 +113,9 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param provider lazy lambda returning a [CompletableFuture] of items
      */
-    fun lazyAsyncSource(provider: @InventoryFrameworkDSL (Context) -> CompletableFuture<Iterable<T>>) {
+    fun lazyAsyncSource(
+        provider: @InventoryFrameworkDSL (Context) -> CompletableFuture<Iterable<T>>,
+    ) {
         sourceType = PaginationSourceType.LazyAsync(provider)
     }
 
@@ -145,7 +145,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     fun suspendSource(
         plugin: Plugin,
         provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
-    ) = suspendSource(scope = serverThreadScope(plugin), provider = provider)
+    ): Unit = suspendSource(scope = serverThreadScope(plugin), provider = provider)
 
     /**
      * Sets a lazy suspend-based pagination source. The [provider] is evaluated only once
@@ -172,7 +172,7 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     fun lazySuspendSource(
         plugin: Plugin,
         provider: @InventoryFrameworkDSL suspend CoroutineScope.(Context) -> Iterable<T>,
-    ) = lazySuspendSource(scope = serverThreadScope(plugin), provider = provider)
+    ): Unit = lazySuspendSource(scope = serverThreadScope(plugin), provider = provider)
 
     /**
      * Configures a simple item factory that receives a [BukkitItemComponentBuilder] and the
@@ -202,7 +202,14 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
      *
      * @param factory the element builder callback
      */
-    fun elementFactory(factory: @InventoryFrameworkDSL (context: Context, builder: BukkitItemComponentBuilder, index: Int, value: T) -> Unit) {
+    fun elementFactory(
+        factory: @InventoryFrameworkDSL (
+            context: Context,
+            builder: BukkitItemComponentBuilder,
+            index: Int,
+            value: T,
+        ) -> Unit,
+    ) {
         this.elementFactory = PaginationValueConsumer { context, builder, index, value ->
             factory(context, builder, index, value)
         }
@@ -248,13 +255,15 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
     }
 
     @PublishedApi
-    internal fun applyTo(stateBuilder: PaginationStateBuilder<Context, BukkitItemComponentBuilder, T>) {
+    internal fun applyTo(
+        stateBuilder: PaginationStateBuilder<Context, BukkitItemComponentBuilder, T>,
+    ) {
         when {
             elementFactory != null -> stateBuilder.elementFactory(elementFactory!!)
             simpleItemFactory != null -> stateBuilder.itemFactory(simpleItemFactory!!)
             else -> error(
                 "Pagination item factory must be configured. " +
-                        "Use itemFactory { item -> ... } or elementFactory { ctx, builder, index, item -> ... }"
+                    "Use itemFactory { item -> ... } or elementFactory { ctx, builder, index, item -> ... }",
             )
         }
 
@@ -264,11 +273,11 @@ class PaginationDslBuilder<T> @PublishedApi internal constructor() {
 }
 
 /**
- * The scope of [plugin] on its main dispatcher: the inventory framework renders a page on the thread
- * that completes the page's source.
+ * The scope of [plugin] on its main dispatcher: the inventory framework renders a page on the
+ * thread that completes the page's source.
  */
-@OptIn(InternalSurfApi::class)
 private fun serverThreadScope(plugin: Plugin): CoroutineScope {
     val runtime = SurfPaperPluginRuntime.get()
+
     return runtime.coroutineScope(plugin) + runtime.dispatchers(plugin).main
 }

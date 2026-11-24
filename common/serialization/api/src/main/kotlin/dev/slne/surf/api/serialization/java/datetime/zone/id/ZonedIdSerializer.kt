@@ -11,8 +11,10 @@ import java.time.ZoneId
 typealias SerializableZoneId = @Serializable(with = ZonedIdSerializer::class) ZoneId
 
 object ZonedIdSerializer : KSerializer<ZoneId> {
-    override val descriptor =
-        PrimitiveSerialDescriptor("surf.api.java.datetime.zone.ZoneId", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor(
+        "surf.api.java.datetime.zone.ZoneId",
+        PrimitiveKind.STRING,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -21,6 +23,5 @@ object ZonedIdSerializer : KSerializer<ZoneId> {
         encoder.encodeString(value.id)
     }
 
-    override fun deserialize(decoder: Decoder): ZoneId =
-        ZoneId.of(decoder.decodeString())
+    override fun deserialize(decoder: Decoder): ZoneId = ZoneId.of(decoder.decodeString())
 }

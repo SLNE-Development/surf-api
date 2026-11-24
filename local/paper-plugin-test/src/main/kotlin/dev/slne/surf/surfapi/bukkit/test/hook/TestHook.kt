@@ -30,14 +30,17 @@ class TestHook : SurfLifecycle {
     private val log = logger()
 
     override suspend fun onLoad() {
-        log.atInfo().log("TestHook loaded")
+        log.atInfo()
+            .log("TestHook loaded")
     }
 
     override suspend fun onEnable() {
-        log.atInfo().log("TestHook enabled")
+        log.atInfo()
+            .log("TestHook enabled")
     }
 
     override suspend fun onDisable() {
-        log.atInfo().log("TestHook disabled")
+        log.atInfo()
+            .log("TestHook disabled")
     }
 }

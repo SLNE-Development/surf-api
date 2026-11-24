@@ -30,7 +30,9 @@ class ConfiguredMixinsApplyTest {
             targets.map { target ->
                 dynamicTest("${mixin.substringAfterLast('.')} -> $target") {
                     val transformed = MixinTestSupport.transform(target)
-                    assertTrue(transformed.isMergedFrom(mixin)) { "$mixin left no trace in $target" }
+                    assertTrue(transformed.isMergedFrom(mixin)) {
+                        "$mixin left no trace in $target"
+                    }
                 }
             }
         }
@@ -40,13 +42,23 @@ class ConfiguredMixinsApplyTest {
         val interfaces = MixinTestSupport.interfacesOf(mixin)
         if (interfaces.isNotEmpty() && this.interfaces.containsAll(interfaces)) return true
 
-        val annotations = methods.flatMap { it.invisibleAnnotations.orEmpty() + it.visibleAnnotations.orEmpty() } +
-                fields.flatMap { it.invisibleAnnotations.orEmpty() + it.visibleAnnotations.orEmpty() }
+        val methodAnnotations = methods.flatMap { method ->
+            method.invisibleAnnotations.orEmpty() + method.visibleAnnotations.orEmpty()
+        }
+        val fieldAnnotations = fields.flatMap { field ->
+            field.invisibleAnnotations.orEmpty() + field.visibleAnnotations.orEmpty()
+        }
+        val annotations = methodAnnotations + fieldAnnotations
+
         return annotations.any { it.desc == MERGED && it.value("mixin") == mixin }
     }
 
-    private fun AnnotationNode.value(key: String): Any? =
-        values.orEmpty().chunked(2).firstOrNull { (name, _) -> name == key }?.get(1)
+    private fun AnnotationNode.value(key: String): Any? {
+        return values.orEmpty()
+            .chunked(2)
+            .firstOrNull { (name, _) -> name == key }
+            ?.get(1)
+    }
 
     private companion object {
         val MERGED: String = Type.getDescriptor(MixinMerged::class.java)

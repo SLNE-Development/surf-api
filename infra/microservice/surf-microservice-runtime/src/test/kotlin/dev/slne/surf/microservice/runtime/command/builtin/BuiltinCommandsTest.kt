@@ -1,20 +1,16 @@
 package dev.slne.surf.microservice.runtime.command.builtin
 
-import dev.slne.surf.microservice.api.command.MicroserviceCommand
-import dev.slne.surf.microservice.api.command.MicroserviceCommandContext
-import dev.slne.surf.microservice.api.command.MicroserviceCommandResult
-import dev.slne.surf.microservice.api.command.MicroserviceCommandSource
-import dev.slne.surf.microservice.api.command.MicroserviceCommands
+import dev.slne.surf.microservice.api.command.*
 import dev.slne.surf.microservice.runtime.command.MicroserviceCommandDispatcher
 import dev.slne.surf.microservice.runtime.command.RecordingCommandOutput
-import dev.slne.surf.microservice.runtime.health.HealthCheckResult
 import dev.slne.surf.microservice.runtime.health.MicroserviceHealth
-import org.springframework.boot.health.contributor.CompositeHealthContributor
-import org.springframework.boot.health.contributor.Health
-import org.springframework.boot.health.contributor.HealthContributors
-import org.springframework.boot.health.contributor.HealthIndicator
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import org.springframework.boot.health.contributor.CompositeHealthContributor
+import org.springframework.boot.health.contributor.Health
+import org.springframework.boot.health.contributor.HealthContributor
+import org.springframework.boot.health.contributor.HealthContributors
+import org.springframework.boot.health.contributor.HealthIndicator
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -59,12 +55,24 @@ class BuiltinCommandsTest {
 
     @Test
     fun `health fails with every unhealthy check`() = runBlocking {
-        val database = CompositeHealthContributor.fromMap(mapOf("main" to HealthIndicator { Health.down().withDetail("error", "connection refused").build() }))
+        val database = CompositeHealthContributor.fromMap(
+            mapOf(
+                "main" to HealthIndicator {
+                    Health.down().withDetail(
+                        "error",
+                        "connection refused",
+                    ).build()
+                },
+            ),
+        )
         val health = HealthCommand(health("nats" to up(), "database" to database))
 
         val dispatch = dispatch(health, "health")
 
-        assertEquals(MicroserviceCommandResult.Failure("unhealthy\n- database[main]: connection refused"), dispatch.result)
+        assertEquals(
+            MicroserviceCommandResult.Failure("unhealthy\n- database[main]: connection refused"),
+            dispatch.result,
+        )
     }
 
     @Test
@@ -81,16 +89,24 @@ class BuiltinCommandsTest {
         assertNotNull(MicroserviceCommands.find("registration-free"))
     }
 
-    private fun command(name: String, vararg aliases: String): MicroserviceCommand = object : MicroserviceCommand(name, *aliases) {
-        override suspend fun MicroserviceCommandContext.execute(args: List<String>) = Unit
+    private fun command(name: String, vararg aliases: String): MicroserviceCommand {
+        return object :
+            MicroserviceCommand(name, *aliases) {
+            override suspend fun MicroserviceCommandContext.execute(args: List<String>) = Unit
+        }
     }
 
-    private suspend fun dispatch(command: MicroserviceCommand, line: String) =
-        MicroserviceCommandDispatcher { label -> command.takeIf { it.matches(label) } }
-            .dispatch(line, MicroserviceCommandSource.CONSOLE, output)
+    private suspend fun dispatch(
+        command: MicroserviceCommand,
+        line: String,
+    ) = MicroserviceCommandDispatcher { label -> command.takeIf { it.matches(label) } }
+        .dispatch(line, MicroserviceCommandSource.CONSOLE, output)
 
-    private fun health(vararg contributors: Pair<String, org.springframework.boot.health.contributor.HealthContributor>) =
-        MicroserviceHealth({ HealthContributors.of(CompositeHealthContributor.fromMap(contributors.toMap())) })
+    private fun health(
+        vararg contributors: Pair<String, HealthContributor>,
+    ) = MicroserviceHealth(
+        { HealthContributors.of(CompositeHealthContributor.fromMap(contributors.toMap())) },
+    )
 
     private fun up() = HealthIndicator { Health.up().build() }
 }

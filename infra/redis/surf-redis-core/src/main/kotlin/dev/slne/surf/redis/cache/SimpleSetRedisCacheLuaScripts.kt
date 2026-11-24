@@ -23,13 +23,15 @@ import reactor.util.retry.Retry
  * Scripts included:
  * 1. `UPSERT`: Adds or updates a value in the cache with optional TTL and maintains indexes.
  * 2. `REMOVE_BY_ID`: Removes a value (and its associated indexes) from the cache by its ID.
- * 3. `REMOVE_BY_INDEX`: Removes all values associated with a specific index name and value from the cache.
+ * 3. `REMOVE_BY_INDEX`: Removes all values associated with a specific index name and value from the
+ *    cache.
  */
 enum class SimpleSetRedisCacheLuaScripts(val script: String) {
 
     /**
-     * A Lua script string designed to perform an "upsert" operation in Redis. The script handles the insertion or updating
-     * of a value, along with maintaining associated indices and metadata, while ensuring expiration policies are applied.
+     * A Lua script string designed to perform an "upsert" operation in Redis. The script handles
+     * the insertion or updating of a value, along with maintaining associated indices and metadata,
+     * while ensuring expiration policies are applied.
      *
      * - Input parameters via `ARGV`:
      *   1. `prefix`: The prefix used for all keys to create isolation for the dataset.
@@ -149,16 +151,16 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
           res[#res + 1] = t
         end
         return res
-    """.trimIndent()
+    """.trimIndent(),
     ),
-
 
     /**
      * A Lua script for removing an entry by its ID in a Redis store while updating related indices.
      *
-     * The `REMOVE_BY_ID` script is designed to delete a value associated with a given ID,
-     * remove the ID from the main set of IDs, and update all associated indices by removing the references
-     * to the ID. If an index becomes empty as a result of removing the ID, the index is also deleted.
+     * The `REMOVE_BY_ID` script is designed to delete a value associated with a given ID, remove
+     * the ID from the main set of IDs, and update all associated indices by removing the references
+     * to the ID. If an index becomes empty as a result of removing the ID, the index is also
+     * deleted.
      *
      * ARGV:
      * 1: The prefix used to construct Redis keys.
@@ -167,8 +169,10 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
      * 4..: The names of the indices to update (one argument for each index).
      *
      * Returns:
-     * - [1] `removed`: A flag indicating whether the entry was removed (`1` if removed, `0` otherwise).
-     * - [2..] `touched`: A list of index entries in the format `indexName<0>indexValue` that were affected by the removal.
+     * - [1] `removed`: A flag indicating whether the entry was removed (`1` if removed, `0`
+     *   otherwise).
+     * - [2..] `touched`: A list of index entries in the format `indexName<0>indexValue` that were
+     *   affected by the removal.
      *
      * The script ensures that all keys and values related to the specified ID are deleted, and
      * any references to the ID in other Redis structures (such as indices) are cleaned up.
@@ -176,8 +180,10 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
      * Key structure:
      * - IDs are stored in a Redis set with a key constructed as `{prefix}:__ids__`.
      * - The value associated with the ID is stored in a key formatted as `{prefix}:__val__:{id}`.
-     * - Metadata related to the indices is stored under keys following the pattern `{prefix}:__meta__:{id}:{indexName}`.
-     * - Index entries are maintained under keys formatted as `{prefix}:__idx__:{indexName}:{indexValue}`.
+     * - Metadata related to the indices is stored under keys following the pattern
+     *   `{prefix}:__meta__:{id}:{indexName}`.
+     * - Index entries are maintained under keys formatted as
+     *   `{prefix}:__idx__:{indexName}:{indexValue}`.
      */
     @Language("Lua")
     REMOVE_BY_ID(
@@ -237,23 +243,25 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
           res[#res + 1] = t
         end
         return res
-    """.trimIndent()
+    """.trimIndent(),
     ),
 
-
     /**
-     * A Lua script stored as a string constant. It is used for removing entries by a specific index in Redis.
+     * A Lua script stored as a string constant. It is used for removing entries by a specific index
+     * in Redis.
      *
      * The script performs the following operations:
      * - Deletes the values associated with the specified index key.
-     * - Removes the IDs from all relevant Redis sets and cleans up meta-data associated with the IDs.
+     * - Removes the IDs from all relevant Redis sets and cleans up meta-data associated with the
+     *   IDs.
      * - Ensures that any empty index or meta-data keys are also deleted for cleanup purposes.
      *
      * Arguments (ARGV) passed to the script:
      * - ARGV[1]: `prefix` - The key prefix used to identify the data in Redis.
      * - ARGV[2]: `targetIndexName` - The name of the target index to match for deletion.
      * - ARGV[3]: `targetIndexValue` - The value of the target index to match for deletion.
-     * - ARGV[4]: `indexCount` - The number of additional indexes to clean up for the IDs being removed.
+     * - ARGV[4]: `indexCount` - The number of additional indexes to clean up for the IDs being
+     *   removed.
      * - ARGV[5..]: Names of the additional indexes to clean up.
      *
      * Return value:
@@ -357,7 +365,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
         
         return removedCount
         --]]
-    """.trimIndent()
+    """.trimIndent(),
     ),
 
     @Language("Lua")
@@ -401,14 +409,12 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
         end
     
         return 1
-    """.trimIndent()
+    """.trimIndent(),
     );
-
 
     companion object {
         private val scriptShas = Caffeine.newBuilder()
             .asCache<SimpleSetRedisCacheLuaScripts, String>()
-
 
         fun <R : Any> executeReactive(
             script: RScriptReactive,
@@ -417,11 +423,12 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
             returnType: RScript.ReturnType,
             keys: List<Any>,
             vararg values: Any,
-            tries: Int = 3
+            tries: Int = 3,
         ): Mono<R> {
             val sha = mono {
                 scriptShas.get(lua) {
-                    script.scriptLoad(lua.script).awaitSingleOrNull() ?: error("Failed to load Lua script")
+                    script.scriptLoad(lua.script).awaitSingleOrNull()
+                        ?: error("Failed to load Lua script")
                 }
             }
 
@@ -430,7 +437,7 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
                 .doOnError(RedisNoScriptException::class.java) { scriptShas.invalidate(lua) }
                 .retryWhen(
                     Retry.max(tries.toLong())
-                        .filter { it is RedisNoScriptException }
+                        .filter { it is RedisNoScriptException },
                 )
         }
 
@@ -441,9 +448,17 @@ enum class SimpleSetRedisCacheLuaScripts(val script: String) {
             returnType: RScript.ReturnType,
             keys: List<Any>,
             vararg values: Any,
-            tries: Int = 3
+            tries: Int = 3,
         ): R {
-            return executeReactive<R>(script, mode, lua, returnType, keys, *values, tries = tries).awaitSingle()
+            return executeReactive<R>(
+                script,
+                mode,
+                lua,
+                returnType,
+                keys,
+                *values,
+                tries = tries,
+            ).awaitSingle()
         }
     }
 }

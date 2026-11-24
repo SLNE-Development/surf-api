@@ -6,10 +6,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * An [RpcCaller] that creates its [RpcCallerImpl] on the first call, so creating the proxy needs no connection.
+ * An [RpcCaller] that creates its [RpcCallerImpl] on the first call, so creating the proxy needs no
+ * connection.
  *
- * The first call starts the delegate on [Dispatchers.IO], because starting a service with presence creates a
- * dispatcher on the connection. Later calls go straight to the delegate. Thread-safe.
+ * The first call starts the delegate on [Dispatchers.IO], because starting a service with presence
+ * creates a dispatcher on the connection. Later calls go straight to the delegate. Thread-safe.
  */
 @InternalNatsApi
 internal class LazyRpcCaller(
@@ -25,13 +26,16 @@ internal class LazyRpcCaller(
     override suspend fun call(index: Int, request: Any): Any? {
         client.checkOpen()
         val caller = delegate ?: withContext(Dispatchers.IO) { start() }
+
         return caller.call(index, request)
     }
 
-    private fun start(): RpcCallerImpl = synchronized(startLock) {
-        delegate ?: RpcCallerImpl(client, service).also {
-            it.start()
-            delegate = it
+    private fun start(): RpcCallerImpl {
+        return synchronized(startLock) {
+            delegate ?: RpcCallerImpl(client, service).also {
+                it.start()
+                delegate = it
+            }
         }
     }
 }

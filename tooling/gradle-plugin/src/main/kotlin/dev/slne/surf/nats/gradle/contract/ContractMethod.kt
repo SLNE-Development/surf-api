@@ -4,7 +4,8 @@ import com.squareup.wire.schema.Rpc
 import dev.slne.surf.nats.protocol.ResolvedMethod
 
 /**
- * An rpc the generator emits. Streaming rpcs and rpcs whose request or response cannot be resolved have none.
+ * An rpc the generator emits. Streaming rpcs and rpcs whose request or response cannot be resolved
+ * have none.
  */
 internal class ContractMethod(
     val rpc: Rpc,

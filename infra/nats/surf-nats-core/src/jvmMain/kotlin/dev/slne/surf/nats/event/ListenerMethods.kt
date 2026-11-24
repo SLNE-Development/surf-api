@@ -31,15 +31,16 @@ internal object ListenerMethods {
     /**
      * Returns the `@NatsListener` methods that [scanType] and its superclasses declare.
      *
-     * A listener method takes exactly one generated event and returns `Unit`, and may suspend. An overridden method
-     * counts once, by its most specific declaration. Overriding an annotated method without the annotation is an
-     * error.
+     * A listener method takes exactly one generated event and returns `Unit`, and may suspend. An
+     * overridden method counts once, by its most specific declaration. Overriding an annotated
+     * method without the annotation is an error.
      *
-     * [scanType] defaults to the class of [listener]. A proxied bean passes the class behind its proxy: the methods
-     * are then invoked on the proxy, so private and final methods, which a proxy cannot intercept, are rejected.
+     * [scanType] defaults to the class of [listener]. A proxied bean passes the class behind its
+     * proxy: the methods are then invoked on the proxy, so private and final methods, which a proxy
+     * cannot intercept, are rejected.
      *
-     * Throws [IllegalArgumentException] listing every invalid method, when [listener] is not an instance of
-     * [scanType], or when [scanType] has no listener method.
+     * Throws [IllegalArgumentException] listing every invalid method, when [listener] is not an
+     * instance of [scanType], or when [scanType] has no listener method.
      */
     fun findListenerMethods(
         listener: Any,
@@ -58,6 +59,7 @@ internal object ListenerMethods {
         val unannotated = HashSet<Signature>()
 
         var currentClass: Class<*>? = scanType
+
         while (currentClass != null) {
             for (method in currentClass.declaredMethods) {
                 if (method.isBridge || method.isSynthetic) continue
@@ -65,29 +67,40 @@ internal object ListenerMethods {
                 val annotation = method.getAnnotation(NatsListener::class.java)
 
                 val modifiers = method.modifiers
+
                 if (!Modifier.isPrivate(modifiers) && !Modifier.isStatic(modifiers)) {
                     val signature = Signature(method.name, method.parameterTypes.toList())
+
                     if (!seen.add(signature)) {
                         if (annotation != null && unannotated.remove(signature)) {
                             problems.add(
                                 "${method.name}: overrides the @NatsListener method of " +
-                                        "${currentClass.name} without @NatsListener"
+                                    "${currentClass.name} without @NatsListener",
                             )
                         }
+
                         continue
                     }
-                    if (annotation == null) unannotated.add(signature)
+
+                    if (annotation == null) {
+                        unannotated.add(signature)
+                    }
                 }
 
                 if (annotation == null) continue
 
                 val problem = validate(method) ?: if (proxied) proxyProblem(method) else null
+
                 if (problem != null) {
                     problems.add("${method.name}: $problem")
                     continue
                 }
 
-                val listenerProblem = ListenerRules.problem(annotation.recipients, annotation.ignoreFromThisClient)
+                val listenerProblem = ListenerRules.problem(
+                    annotation.recipients,
+                    annotation.ignoreFromThisClient,
+                )
+
                 if (listenerProblem != null) {
                     problems.add("${method.name}: $listenerProblem")
                     continue
@@ -106,7 +119,7 @@ internal object ListenerMethods {
                     method,
                     descriptor,
                     annotation.recipients,
-                    annotation.ignoreFromThisClient
+                    annotation.ignoreFromThisClient,
                 )
             }
 
@@ -115,7 +128,7 @@ internal object ListenerMethods {
 
         require(problems.isEmpty()) {
             "Invalid @NatsListener methods in ${scanType.name}:\n" +
-                    problems.joinToString("\n") { " - $it" }
+                problems.joinToString("\n") { " - $it" }
         }
 
         require(methods.isNotEmpty()) {
@@ -127,6 +140,7 @@ internal object ListenerMethods {
 
     private fun proxyProblem(method: Method): String? {
         val modifiers = method.modifiers
+
         return when {
             Modifier.isStatic(modifiers) -> null
             Modifier.isPrivate(modifiers) -> "must not be private on a proxied bean"
@@ -144,19 +158,25 @@ internal object ListenerMethods {
             parameterTypes.size != expectedParameterCount -> "must take exactly one event parameter"
             !suspend && method.returnType != Void.TYPE -> "must return Unit"
             suspend && !returnsUnitWhenSuspending(method) -> "must return Unit"
-            !NatsEvent::class.java.isAssignableFrom(parameterTypes[0]) -> "parameter ${parameterTypes[0].name} is not a generated surf-nats event"
+            !NatsEvent::class.java.isAssignableFrom(
+                parameterTypes[0],
+            ) -> "parameter ${parameterTypes[0].name} is not a generated surf-nats event"
+
             else -> null
         }
     }
 
     /**
-     * Checks for `Continuation<? super Unit>`. A raw `Continuation` parameter carries no return type and passes.
+     * Checks for `Continuation<? super Unit>`. A raw `Continuation` parameter carries no return
+     * type and passes.
      */
     private fun returnsUnitWhenSuspending(method: Method): Boolean {
         val continuation = method.genericParameterTypes.last() as? ParameterizedType ?: return true
         if (continuation.rawType != Continuation::class.java) return false
 
-        val argument = continuation.actualTypeArguments.singleOrNull() as? WildcardType ?: return false
+        val argument = continuation.actualTypeArguments.singleOrNull() as? WildcardType
+            ?: return false
+
         return argument.lowerBounds.singleOrNull() == Unit::class.java
     }
 }

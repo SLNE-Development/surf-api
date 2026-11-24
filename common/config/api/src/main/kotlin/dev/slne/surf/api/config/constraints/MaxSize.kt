@@ -18,10 +18,15 @@ import java.lang.reflect.Type
 annotation class MaxSize(val max: Int) {
     companion object {
         internal object Factory : Constraint.Factory<MaxSize, Any?> {
-            override fun make(data: MaxSize, type: Type): Constraint<Any?> = { value ->
-                val size = value.configSizeOrNull()
-                if (size != null && size > data.max) {
-                    throw SerializationException("Collection size is too large: $size, expected <= ${data.max}")
+            override fun make(data: MaxSize, type: Type): Constraint<Any?> {
+                return { value ->
+                    val size = value.configSizeOrNull()
+
+                    if (size != null && size > data.max) {
+                        throw SerializationException(
+                            "Collection size is too large: $size, expected <= ${data.max}",
+                        )
+                    }
                 }
             }
         }

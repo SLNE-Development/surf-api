@@ -5,11 +5,12 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 
 /**
- * Configures the surf microservice plugin. The extension is registered as `surfMicroservice` in the project.
+ * Configures the surf microservice plugin. The extension is registered as `surfMicroservice` in the
+ * project.
  *
- * Every setting has a default, so the block is optional. [mainClass] names the entry point. The other settings sit in
- * three nested blocks: [database] for the database integration, [reliability] for the transactional services and
- * [docker] for the generated Dockerfile.
+ * Every setting has a default, so the block is optional. [mainClass] names the entry point. The
+ * other settings sit in three nested blocks: [database] for the database integration, [reliability]
+ * for the transactional services and [docker] for the generated Dockerfile.
  *
  * ```kotlin
  * plugins {
@@ -28,19 +29,20 @@ import org.gradle.api.tasks.Nested
  * }
  * ```
  *
- * Values are read lazily and may be set at any point of the build script. A value set in the block takes precedence
- * over the Gradle property of the same setting, which in turn replaces the built-in default. The Gradle properties
- * are listed in [MicroservicePlugin].
+ * Values are read lazily and may be set at any point of the build script. A value set in the block
+ * takes precedence over the Gradle property of the same setting, which in turn replaces the
+ * built-in default. The Gradle properties are listed in [MicroservicePlugin].
  */
 abstract class MicroserviceExtension {
     /**
      * Binary name of the main class that starts the microservice, for example `com.example.MainKt`.
      *
-     * Optional. Without a value the plugin takes the single class with a `public static void main(String[])` from the
-     * compiled classes of the main source set, and the build fails if there are none or several. The value becomes the
-     * `Main-Class` of the shadow jar. With the `application` plugin, `application.mainClass` serves as this value
-     * when it is set and this one is not. Setting `shadowJar.mainClass` in the build script takes precedence and
-     * skips the detection.
+     * Optional. Without a value the plugin takes the single class with a
+     * `public static void main(String[])` from the compiled classes of the main source set, and the
+     * build fails if there are none or several. The value becomes the `Main-Class` of the shadow
+     * jar. With the `application` plugin, `application.mainClass` serves as this value when it is
+     * set and this one is not. Setting `shadowJar.mainClass` in the build script takes precedence
+     * and skips the detection.
      *
      * A Kotlin microservice declares the class next to its `@SpringBootApplication` class:
      * ```kotlin

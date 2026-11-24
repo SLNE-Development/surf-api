@@ -21,22 +21,24 @@ import java.io.File
 /**
  * Generates Kotlin contracts from Protobuf source files.
  *
- * The same sources and settings always produce the same files. Every problem is collected before any file is
- * written, so a failed run leaves the output directory unchanged. Instances hold no state and can be reused.
+ * The same sources and settings always produce the same files. Every problem is collected before
+ * any file is written, so a failed run leaves the output directory unchanged. Instances hold no
+ * state and can be reused.
  */
 class SurfNatsGenerator {
 
     /**
      * Generates the contracts of [input] into [outputDir].
      *
-     * Replaces the contents of [outputDir] only when generation reports no problem. Without `.proto` sources,
-     * [outputDir] is emptied.
+     * Replaces the contents of [outputDir] only when generation reports no problem. Without
+     * `.proto` sources, [outputDir] is emptied.
      *
      * @param input The sources, type mappings and visibility.
-     * @param outputDir The directory that receives one Kotlin file per `.proto` file with generated declarations.
+     * @param outputDir The directory that receives one Kotlin file per `.proto` file with generated
+     * declarations.
      * @return The generated files, sorted by path.
-     * @throws SurfNatsGeneratorException when a schema cannot be loaded, a type mapping is invalid, or the sources
-     *   violate the contract rules. It lists every problem found.
+     * @throws SurfNatsGeneratorException when a schema cannot be loaded, a type mapping is invalid,
+     *   or the sources violate the contract rules. It lists every problem found.
      */
     fun generate(input: GeneratorInput, outputDir: File): GenerationResult {
         val problems = Problems()
@@ -46,6 +48,7 @@ class SurfNatsGenerator {
             problems.throwIfAny()
             outputDir.deleteRecursively()
             outputDir.mkdirs()
+
             return GenerationResult(emptyList())
         }
 
@@ -58,8 +61,8 @@ class SurfNatsGenerator {
     /**
      * Loads the schema and builds the Kotlin files in source order without writing them.
      *
-     * File rules, type registration and contract resolution report to [problems] in that order. Emission reports
-     * nothing.
+     * File rules, type registration and contract resolution report to [problems] in that order.
+     * Emission reports nothing.
      */
     private fun generateFileSpecs(
         input: GeneratorInput,
@@ -70,6 +73,7 @@ class SurfNatsGenerator {
         val sourceFiles = loaded.sourceFiles
 
         val rules = FileRules(problems)
+
         for (file in sourceFiles) {
             rules.check(file)
         }
@@ -87,25 +91,27 @@ class SurfNatsGenerator {
     /**
      * Resolves the explicit type mappings over the platform defaults.
      *
-     * The last mapping of a Protobuf type wins. Explicit mappings of `google.protobuf.Empty` are reported, because
-     * that type is always `kotlin.Unit`. Mappings with invalid class names are reported and left out.
+     * The last mapping of a Protobuf type wins. Explicit mappings of `google.protobuf.Empty` are
+     * reported, because that type is always `kotlin.Unit`. Mappings with invalid class names are
+     * reported and left out.
      */
     private fun mappings(input: GeneratorInput, problems: Problems): Map<ProtoType, MappedClass> {
         if (input.typeMappings.any { it.protoType == ProtoType.EMPTY }) {
             problems.error(
                 "mapType(${ProtoType.EMPTY})",
-                "${ProtoType.EMPTY} is always kotlin.Unit and cannot be remapped"
+                "${ProtoType.EMPTY} is always kotlin.Unit and cannot be remapped",
             )
         }
 
-        val effective =
-            (input.defaultTypeMappings + input.typeMappings.filter { it.protoType != ProtoType.EMPTY })
-                .associateBy { it.protoType }
+        val explicitMappings = input.typeMappings.filter { it.protoType != ProtoType.EMPTY }
+        val effective = (input.defaultTypeMappings + explicitMappings).associateBy { it.protoType }
 
         val result = LinkedHashMap<ProtoType, MappedClass>()
+
         for ((protoType, mapping) in effective) {
             val kotlinClass = className(mapping.kotlinClass, protoType, problems) ?: continue
             val serializer = className(mapping.serializerClass, protoType, problems) ?: continue
+
             result[protoType] = MappedClass(kotlinClass, serializer)
         }
 
@@ -113,7 +119,8 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Returns the class [name] of the mapping of [protoType], or `null` after reporting an invalid name.
+     * Returns the class [name] of the mapping of [protoType], or `null` after reporting an invalid
+     * name.
      */
     private fun className(name: String, protoType: ProtoType, problems: Problems): ClassName? {
         return try {
@@ -121,15 +128,15 @@ class SurfNatsGenerator {
         } catch (_: IllegalArgumentException) {
             problems.error(
                 "mapType($protoType)",
-                "'$name' is not a fully qualified Kotlin class name"
+                "'$name' is not a fully qualified Kotlin class name",
             )
             null
         }
     }
 
     /**
-     * Builds the Kotlin file of [file]: its types, then its services, with a header comment naming the source and
-     * a file-level opt-in.
+     * Builds the Kotlin file of [file]: its types, then its services, with a header comment naming
+     * the source and a file-level opt-in.
      *
      * @return The file, or `null` when [file] has no generated declaration.
      */
@@ -155,7 +162,8 @@ class SurfNatsGenerator {
     }
 
     /**
-     * Returns `@file:OptIn` for `NatsGeneratedApi` and `ExperimentalSerializationApi`, which generated code uses.
+     * Returns `@file:OptIn` for `NatsGeneratedApi` and `ExperimentalSerializationApi`, which
+     * generated code uses.
      */
     private fun generatedApiOptIn(): AnnotationSpec {
         return AnnotationSpec.builder(ClassName("kotlin", "OptIn"))

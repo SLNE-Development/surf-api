@@ -4,8 +4,8 @@ import java.io.Serial
 
 /**
  * Thrown when [key] stayed locked by a concurrent execution for longer than
- * [AtomicOperationsConfig.lockTimeout]. The operation was not executed; a later attempt receives the reply of the
- * concurrent execution once it has committed.
+ * [AtomicOperationsConfig.lockTimeout]. The operation was not executed; a later attempt receives
+ * the reply of the concurrent execution once it has committed.
  */
 class AtomicOperationInProgressException(
     val key: OperationKey,

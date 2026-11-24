@@ -7,13 +7,14 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 
 /**
- * Makes every `@NatsService`, `@NatsTransactional` and `@NatsListener` bean definition of the context eager, whatever
- * `@Lazy` or `spring.main.lazy-initialization` says.
+ * Makes every `@NatsService`, `@NatsTransactional` and `@NatsListener` bean definition of the
+ * context eager, whatever `@Lazy` or `spring.main.lazy-initialization` says.
  *
- * [NatsPluginContext] only serves the beans that exist when the plugin is enabled. The definition is made explicitly
- * non-lazy, which Spring Boot's lazy-initialization post-processor respects. A bean's type is predicted without
- * creating it, so a bean built by a `@Bean` method is recognized by the declared return type only. A bean whose type
- * cannot be determined, because a class it needs is missing, is skipped.
+ * [NatsPluginContext] only serves the beans that exist when the plugin is enabled. The definition
+ * is made explicitly non-lazy, which Spring Boot's lazy-initialization post-processor respects. A
+ * bean's type is predicted without creating it, so a bean built by a `@Bean` method is recognized
+ * by the declared return type only. A bean whose type cannot be determined, because a class it
+ * needs is missing, is skipped.
  */
 internal class NatsEagerComponents : BeanFactoryPostProcessor {
 
@@ -22,9 +23,11 @@ internal class NatsEagerComponents : BeanFactoryPostProcessor {
     override fun postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory) {
         for (name in beanFactory.beanDefinitionNames) {
             val definition = beanFactory.getBeanDefinition(name)
-            if (definition.isAbstract || definition.role == BeanDefinition.ROLE_INFRASTRUCTURE) continue
+            val isInfrastructure = definition.role == BeanDefinition.ROLE_INFRASTRUCTURE
+            if (definition.isAbstract || isInfrastructure) continue
 
             val beanType = beanClassOrNull(beanFactory, name) ?: continue
+
             if (NatsServiceBeans.isNatsComponent(beanType)) {
                 definition.isLazyInit = false
             }
@@ -34,21 +37,25 @@ internal class NatsEagerComponents : BeanFactoryPostProcessor {
     private fun beanClassOrNull(
         beanFactory: ConfigurableListableBeanFactory,
         name: String,
-    ): Class<*>? = try {
-        beanFactory.getType(name, false)
-    } catch (failure: BeansException) {
-        skip(name, failure)
-    } catch (failure: IllegalStateException) {
-        if (failure.cause !is LinkageError) throw failure
-        skip(name, failure)
-    } catch (failure: LinkageError) {
-        skip(name, failure)
+    ): Class<*>? {
+        return try {
+            beanFactory.getType(name, false)
+        } catch (failure: BeansException) {
+            skip(name, failure)
+        } catch (failure: IllegalStateException) {
+            if (failure.cause !is LinkageError) throw failure
+
+            skip(name, failure)
+        } catch (failure: LinkageError) {
+            skip(name, failure)
+        }
     }
 
     private fun skip(name: String, failure: Throwable): Nothing? {
         log.atFine()
             .withCause(failure)
             .log("Skipping bean %s: its type cannot be determined", name)
+
         return null
     }
 }

@@ -62,7 +62,10 @@ class DialogTypeBuilder {
         block: DialogMultiActionTypeBuilder.() -> Unit = {},
     ) {
         type = DialogMultiActionTypeBuilder().apply {
-            actions.forEach { action(it) }
+            for (actionBuilder in actions) {
+                action(actionBuilder)
+            }
+
             block()
         }.build()
     }
@@ -81,6 +84,7 @@ class DialogTypeBuilder {
     internal fun build(): DialogType {
         val type = type
         require(type != null) { "Dialog type must be built" }
+
         return type
     }
 
@@ -120,7 +124,7 @@ class DialogTypeBuilder {
 
         fun dialog(key: TypedKey<Dialog>) {
             dialogs.add(
-                RegistryAccess.registryAccess().getRegistry(RegistryKey.DIALOG).getOrThrow(key)
+                RegistryAccess.registryAccess().getRegistry(RegistryKey.DIALOG).getOrThrow(key),
             )
         }
 
@@ -128,7 +132,7 @@ class DialogTypeBuilder {
             dialogs.addAll(
                 keys.map {
                     RegistryAccess.registryAccess().getRegistry(RegistryKey.DIALOG).getOrThrow(it)
-                }
+                },
             )
         }
 
@@ -139,6 +143,7 @@ class DialogTypeBuilder {
                 columns?.let { columns(it) }
                 buttonWidth?.let { buttonWidth(it) }
             }
+
             return builder.build()
         }
     }
@@ -168,6 +173,7 @@ class DialogTypeBuilder {
             val no = no
             require(yes != null) { "Yes action must not be null" }
             require(no != null) { "No action must not be null" }
+
             return DialogType.confirmation(yes, no)
         }
     }
@@ -203,6 +209,7 @@ class DialogTypeBuilder {
                 exitAction?.let { exitAction(it) }
                 columns?.let { columns(it) }
             }
+
             return builder.build()
         }
     }
@@ -234,8 +241,10 @@ class DialogTypeBuilder {
     }
 }
 
-fun DialogType(block: DialogTypeBuilder.() -> Unit): DialogType =
-    DialogTypeBuilder().apply(block).build()
+fun DialogType(block: DialogTypeBuilder.() -> Unit): DialogType {
+    return DialogTypeBuilder().apply(block).build()
+}
 
-fun dialogType(block: DialogTypeBuilder.() -> Unit): DialogType =
-    DialogTypeBuilder().apply(block).build()
+fun dialogType(block: DialogTypeBuilder.() -> Unit): DialogType {
+    return DialogTypeBuilder().apply(block).build()
+}

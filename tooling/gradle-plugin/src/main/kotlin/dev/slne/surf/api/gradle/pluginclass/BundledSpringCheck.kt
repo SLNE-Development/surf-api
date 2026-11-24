@@ -26,25 +26,32 @@ internal object BundledSpring {
      * Returns the entries of [modules] (`group:name:version`) that belong to Spring or a
      * Spring project (`org.springframework`, `org.springframework.boot`, ...).
      */
-    fun find(modules: Collection<String>): List<String> = modules.filter { module ->
-        val group = module.substringBefore(':')
-        group == SPRING_GROUP || group.startsWith("$SPRING_GROUP.")
-    }.sorted()
+    fun find(modules: Collection<String>): List<String> {
+        return modules.filter { module ->
+            val group = module.substringBefore(':')
+            group == SPRING_GROUP || group.startsWith("$SPRING_GROUP.")
+        }.sorted()
+    }
 
     /**
      * Returns the file names of the [artifacts] that contain unrelocated Spring classes or
      * resources, whatever coordinate they were resolved under.
      *
-     * Only jar and zip archives are read. An entry counts when it lies under `org/springframework/`,
-     * either at the root or in a multi-release directory; a relocated copy does not.
+     * Only jar and zip archives are read. An entry counts when it lies under
+     * `org/springframework/`, either at the root or in a multi-release directory; a relocated copy
+     * does not.
      */
-    fun findInArtifacts(artifacts: Iterable<File>): List<String> = artifacts
-        .filter { it.isFile && it.extension in ARCHIVE_EXTENSIONS && it.containsSpring() }
-        .map { it.name }
-        .sorted()
+    fun findInArtifacts(artifacts: Iterable<File>): List<String> {
+        return artifacts
+            .filter { it.isFile && it.extension in ARCHIVE_EXTENSIONS && it.containsSpring() }
+            .map { it.name }
+            .sorted()
+    }
 
-    private fun File.containsSpring(): Boolean = ZipFile(this).use { archive ->
-        archive.stream().anyMatch { isSpringEntry(it.name) }
+    private fun File.containsSpring(): Boolean {
+        return ZipFile(this).use { archive ->
+            archive.stream().anyMatch { isSpringEntry(it.name) }
+        }
     }
 
     private fun isSpringEntry(name: String): Boolean {
@@ -53,6 +60,7 @@ internal object BundledSpring {
         } else {
             name
         }
+
         return path.startsWith(SPRING_PACKAGE_PATH)
     }
 }
@@ -85,18 +93,29 @@ abstract class CheckNoBundledSpringTask : VerificationTask() {
     fun check() {
         val springModules = BundledSpring.find(bundledModules.get())
         val springArtifacts = BundledSpring.findInArtifacts(bundledArtifacts)
+
         if (springModules.isNotEmpty() || springArtifacts.isNotEmpty()) {
             throw GradleException(
                 "The plugin jar bundles Spring: ${describe(springModules, springArtifacts)}. " +
-                        "surf-api provides Spring at runtime; declare it as compileOnly instead of shading it, " +
-                        "or set allowBundledSpring = true in the surf extension."
+                    "surf-api provides Spring at runtime; declare it as compileOnly instead of shading it, " +
+                    "or set allowBundledSpring = true in the surf extension.",
             )
         }
+
         markPassed()
     }
 
-    private fun describe(springModules: List<String>, springArtifacts: List<String>): String = buildList {
-        if (springModules.isNotEmpty()) add("modules ${springModules.joinToString()}")
-        if (springArtifacts.isNotEmpty()) add("org/springframework classes in ${springArtifacts.joinToString()}")
-    }.joinToString("; ")
+    private fun describe(springModules: List<String>, springArtifacts: List<String>): String {
+        return buildList {
+            if (springModules.isNotEmpty()) {
+                add("modules ${springModules.joinToString()}")
+            }
+
+            if (springArtifacts.isNotEmpty()) {
+                add(
+                    "org/springframework classes in ${springArtifacts.joinToString()}",
+                )
+            }
+        }.joinToString("; ")
+    }
 }

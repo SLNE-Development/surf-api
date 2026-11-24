@@ -4,7 +4,8 @@ import dev.slne.surf.nats.js.external.protobuf.DescFieldMessageList
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 
 /**
- * Applies the plan of the element type to every message of a list and reports the path with the index.
+ * Applies the plan of the element type to every message of a list and reports the path with the
+ * index.
  */
 internal class MessageListStep(
     private val field: DescFieldMessageList,
@@ -15,8 +16,10 @@ internal class MessageListStep(
         if (plan.isNoOp(direction)) return null
 
         val list = message.get(field)
+
         for (index in 0 until list.size) {
             val violation = plan.apply(list.get(index)!!, direction)
+
             if (violation != null) {
                 return violation.under("${field.localName}[$index]")
             }

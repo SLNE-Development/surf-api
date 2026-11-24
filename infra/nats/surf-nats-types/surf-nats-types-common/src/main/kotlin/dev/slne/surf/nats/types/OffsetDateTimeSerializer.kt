@@ -21,12 +21,13 @@ import java.time.ZoneOffset
  * - `nanos` (2, optional, default 0): nanosecond of the second, 0 to 999,999,999.
  * - `offset_seconds` (3, required): the UTC offset in seconds, -64,800 to 64,800.
  *
- * Instant and offset are preserved exactly, so the decoded value equals the original. The `dev.slne.surf.nats` Gradle
- * plugin maps fields of this message type to [OffsetDateTime] with this serializer.
+ * Instant and offset are preserved exactly, so the decoded value equals the original. The
+ * `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [OffsetDateTime] with this
+ * serializer.
  *
- * Decoding throws [kotlinx.serialization.MissingFieldException] when `seconds` or `offset_seconds` is absent and
- * [kotlinx.serialization.SerializationException] when `nanos` or the offset is out of range or the instant lies
- * outside the range of [OffsetDateTime].
+ * Decoding throws [kotlinx.serialization.MissingFieldException] when `seconds` or `offset_seconds`
+ * is absent and [kotlinx.serialization.SerializationException] when `nanos` or the offset is out of
+ * range or the instant lies outside the range of [OffsetDateTime].
  */
 object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
     private const val MAX_NANOS = 999_999_999
@@ -36,14 +37,17 @@ object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
     override fun serialize(encoder: Encoder, value: OffsetDateTime) {
         encoder.encodeSerializableValue(
             OffsetDateTimeProto.serializer(),
-            OffsetDateTimeProto(value.toEpochSecond(), value.nano, value.offset.totalSeconds)
+            OffsetDateTimeProto(value.toEpochSecond(), value.nano, value.offset.totalSeconds),
         )
     }
 
     override fun deserialize(decoder: Decoder): OffsetDateTime {
         val proto = decoder.decodeSerializableValue(OffsetDateTimeProto.serializer())
+
         if (proto.nanos !in 0..MAX_NANOS) {
-            throw SerializationException("${descriptor.serialName}.nanos must be in 0..$MAX_NANOS, was ${proto.nanos}")
+            throw SerializationException(
+                "${descriptor.serialName}.nanos must be in 0..$MAX_NANOS, was ${proto.nanos}",
+            )
         }
 
         val offset = try {
@@ -51,16 +55,19 @@ object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
         } catch (e: DateTimeException) {
             throw SerializationException(
                 "${descriptor.serialName}.offset_seconds ${proto.offsetSeconds} is not a valid offset",
-                e
+                e,
             )
         }
 
         return try {
-            OffsetDateTime.ofInstant(Instant.ofEpochSecond(proto.seconds, proto.nanos.toLong()), offset)
+            OffsetDateTime.ofInstant(
+                Instant.ofEpochSecond(proto.seconds, proto.nanos.toLong()),
+                offset,
+            )
         } catch (e: DateTimeException) {
             throw SerializationException(
                 "${descriptor.serialName}.seconds ${proto.seconds} is outside the java.time.OffsetDateTime range",
-                e
+                e,
             )
         }
     }

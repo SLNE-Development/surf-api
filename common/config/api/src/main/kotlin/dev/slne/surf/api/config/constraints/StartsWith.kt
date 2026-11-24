@@ -18,19 +18,23 @@ import java.lang.reflect.Type
 annotation class StartsWith(val prefix: String) {
     companion object {
         internal object Factory : Constraint.Factory<StartsWith, String?> {
-            override fun make(data: StartsWith, type: Type): Constraint<String?> = { value ->
-                if (value != null && !value.startsWith(data.prefix)) {
-                    throw SerializationException("String must start with '${data.prefix}'")
+            override fun make(data: StartsWith, type: Type): Constraint<String?> {
+                return { value ->
+                    if (value != null && !value.startsWith(data.prefix)) {
+                        throw SerializationException("String must start with '${data.prefix}'")
+                    }
                 }
             }
         }
 
         internal object FactoryStringOrDefault : Constraint.Factory<StartsWith, StringOrDefault?> {
-            override fun make(data: StartsWith, type: Type): Constraint<StringOrDefault?> = { stringOrDefault ->
-                val value = stringOrDefault?.value
+            override fun make(data: StartsWith, type: Type): Constraint<StringOrDefault?> {
+                return { stringOrDefault ->
+                    val value = stringOrDefault?.value
 
-                if (value != null && !value.startsWith(data.prefix)) {
-                    throw SerializationException("String must start with '${data.prefix}'")
+                    if (value != null && !value.startsWith(data.prefix)) {
+                        throw SerializationException("String must start with '${data.prefix}'")
+                    }
                 }
             }
         }

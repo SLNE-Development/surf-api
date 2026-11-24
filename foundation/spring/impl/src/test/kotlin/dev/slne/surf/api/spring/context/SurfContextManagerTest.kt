@@ -1,6 +1,5 @@
 package dev.slne.surf.api.spring.context
 
-import dev.slne.surf.api.spring.PluginPresence
 import dev.slne.surf.api.spring.context.fixture.Greeting
 import dev.slne.surf.api.spring.context.fixture.Journal
 import dev.slne.surf.api.spring.context.fixture.ambiguousoptional.OptionalGreetingUser
@@ -46,13 +45,24 @@ class SurfContextManagerTest {
     private val contributions = mutableListOf<Pair<String, List<Class<*>>>>()
     private val root = AnnotationConfigApplicationContext().apply {
         registerCoroutineScope(this, rootScope, primary = false)
-        beanFactory.registerSingleton("testContributor", ContextContributor { context, plugin ->
-            contributions += plugin.name to findAnnotatedClasses(context, plugin, Contributed::class.java)
-        })
+        beanFactory.registerSingleton(
+            "testContributor",
+            ContextContributor { context, plugin ->
+                contributions += plugin.name to findAnnotatedClasses(
+                    context,
+                    plugin,
+                    Contributed::class.java,
+                )
+            },
+        )
         refresh()
     }
     private val manager = SurfContextManager(root) { name -> name == "Present" }
-    private val pluginLoader = URLClassLoader(PLUGIN_LOADER_NAME, emptyArray(), javaClass.classLoader)
+    private val pluginLoader = URLClassLoader(
+        PLUGIN_LOADER_NAME,
+        emptyArray(),
+        javaClass.classLoader,
+    )
 
     @BeforeEach
     fun clearJournal() = Journal.clear()
@@ -115,7 +125,10 @@ class SurfContextManagerTest {
             start("ambiguous", "ambiguous", dependencies = listOf("provider", "second"))
         }
 
-        assertTrue(failure.hasCause<NoUniqueBeanDefinitionException>(), failure.stackTraceToString())
+        assertTrue(
+            failure.hasCause<NoUniqueBeanDefinitionException>(),
+            failure.stackTraceToString(),
+        )
         assertNull(manager.find("ambiguous"))
     }
 
@@ -125,7 +138,10 @@ class SurfContextManagerTest {
         start("second", "second")
         val consumer = start("qualified", "qualified", dependencies = listOf("provider", "second"))
 
-        assertEquals("hello from second", consumer.context.getBean(QualifiedConsumer::class.java).greeting.greet())
+        assertEquals(
+            "hello from second",
+            consumer.context.getBean(QualifiedConsumer::class.java).greeting.greet(),
+        )
     }
 
     @Test
@@ -184,11 +200,17 @@ class SurfContextManagerTest {
     fun `getIfUnique of two providers' type finds nothing, a programmatic lookup fails`() {
         start("provider", "provider")
         start("second", "second")
-        val consumer = start("ambiguousoptional", "ambiguousoptional", dependencies = listOf("provider", "second"))
+        val consumer = start(
+            "ambiguousoptional",
+            "ambiguousoptional",
+            dependencies = listOf("provider", "second"),
+        )
 
         val user = consumer.context.getBean(OptionalGreetingUser::class.java)
         assertNull(user.greeting.ifUnique)
-        assertFailsWith<NoUniqueBeanDefinitionException> { consumer.context.getBean(Greeting::class.java) }
+        assertFailsWith<NoUniqueBeanDefinitionException> {
+            consumer.context.getBean(Greeting::class.java)
+        }
     }
 
     @Test
@@ -198,7 +220,10 @@ class SurfContextManagerTest {
 
         manager.close("provider")
         assertEquals(listOf("provider.init"), Journal.entries)
-        assertEquals("hello from provider", consumer.context.getBean(GreetingConsumer::class.java).greeting.greet())
+        assertEquals(
+            "hello from provider",
+            consumer.context.getBean(GreetingConsumer::class.java).greeting.greet(),
+        )
 
         manager.close("consumer")
         assertEquals(listOf("provider.init", "provider.destroy"), Journal.entries)
@@ -206,10 +231,16 @@ class SurfContextManagerTest {
 
     @Test
     fun `a dependency declared under an alias resolves to its plugin`() {
-        manager.start(descriptor("provider", "provider", aliases = listOf("ProviderAlias")), pluginScope("provider"))
+        manager.start(
+            descriptor("provider", "provider", aliases = listOf("ProviderAlias")),
+            pluginScope("provider"),
+        )
         val consumer = start("consumer", "consumer", dependencies = listOf("ProviderAlias"))
 
-        assertEquals("hello from provider", consumer.context.getBean(GreetingConsumer::class.java).greeting.greet())
+        assertEquals(
+            "hello from provider",
+            consumer.context.getBean(GreetingConsumer::class.java).greeting.greet(),
+        )
     }
 
     @Test
@@ -223,7 +254,9 @@ class SurfContextManagerTest {
     fun `ConditionalOnPlugin accepts any of its names and requires every repetition`() {
         val plugin = start("conditionalnames", "conditionalnames")
 
-        val registered = plugin.context.beanDefinitionNames.filter { it.endsWith("Bean") }.toSet()
+        val registered = plugin.context.beanDefinitionNames
+            .filter { it.endsWith("Bean") }
+            .toSet()
         assertEquals(setOf("alternativeNameBean", "everyRepetitionBean"), registered)
     }
 
@@ -231,7 +264,10 @@ class SurfContextManagerTest {
     fun `root contributors see each full context and find the plugin's annotated classes`() {
         val plugin = start("contributed", "contributed")
 
-        assertEquals(listOf("contributed" to listOf<Class<*>>(ContributedSettings::class.java)), contributions)
+        assertEquals(
+            listOf("contributed" to listOf<Class<*>>(ContributedSettings::class.java)),
+            contributions,
+        )
         assertTrue(plugin.context.getBeansOfType(ContributedSettings::class.java).isEmpty())
     }
 
@@ -242,7 +278,10 @@ class SurfContextManagerTest {
         plugin.enable()
         plugin.disable()
 
-        assertEquals(listOf("enable:hook", "afterEnable", "beforeDisable", "disable:hook"), Journal.entries)
+        assertEquals(
+            listOf("enable:hook", "afterEnable", "beforeDisable", "disable:hook"),
+            Journal.entries,
+        )
     }
 
     @Test
@@ -260,7 +299,10 @@ class SurfContextManagerTest {
 
         plugin.enable()
 
-        assertEquals("surf-scope", plugin.context.getBean(ScopeUser::class.java).enableCoroutineName)
+        assertEquals(
+            "surf-scope",
+            plugin.context.getBean(ScopeUser::class.java).enableCoroutineName,
+        )
     }
 
     @Test
@@ -296,7 +338,12 @@ class SurfContextManagerTest {
     fun `a plugin on surf-api's class loader inside surf-api's package is rejected`() {
         val descriptor = rootLoaderDescriptor("$FIXTURE_PACKAGE.provider")
 
-        assertFailsWith<IllegalArgumentException> { manager.start(descriptor, pluginScope("shaded")) }
+        assertFailsWith<IllegalArgumentException> {
+            manager.start(
+                descriptor,
+                pluginScope("shaded"),
+            )
+        }
         assertFailsWith<IllegalArgumentException> { manager.bootstrap(descriptor) }
     }
 
@@ -304,7 +351,12 @@ class SurfContextManagerTest {
     fun `a plugin on surf-api's class loader scanning a parent of surf-api's package is rejected`() {
         val descriptor = rootLoaderDescriptor("dev.slne.surf")
 
-        assertFailsWith<IllegalArgumentException> { manager.start(descriptor, pluginScope("shaded")) }
+        assertFailsWith<IllegalArgumentException> {
+            manager.start(
+                descriptor,
+                pluginScope("shaded"),
+            )
+        }
     }
 
     @Test
@@ -318,7 +370,13 @@ class SurfContextManagerTest {
         val consumer = start("lazyconsumer", "lazyconsumer", dependencies = listOf("lazyprovider"))
         val importName = "${PluginExport.IMPORT_PREFIX}lazyprovider/lazyGreeting"
 
-        assertContains(BeanFactoryUtils.beanNamesForTypeIncludingAncestors(consumer.context, Greeting::class.java), importName)
+        assertContains(
+            BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
+                consumer.context,
+                Greeting::class.java,
+            ),
+            importName,
+        )
         assertTrue(consumer.context.isTypeMatch(importName, Greeting::class.java))
         assertEquals(LazyGreeting::class.java, consumer.context.getType(importName))
         assertTrue("lazy.created" !in Journal.entries, "type checks must not create the export")
@@ -372,27 +430,50 @@ class SurfContextManagerTest {
         provider.context.close()
 
         repeat(2) {
-            val failure = assertFailsWith<IllegalStateException> { consumer.context.getBean(Greeting::class.java) }
+            val failure = assertFailsWith<IllegalStateException> {
+                consumer.context.getBean(Greeting::class.java)
+            }
             assertContains(failure.message.orEmpty(), "is closed")
         }
     }
 
     @Test
     fun `a dependency declared under its name and an alias is imported once`() {
-        manager.start(descriptor("provider", "provider", aliases = listOf("ProviderAlias")), pluginScope("provider"))
-        val consumer = start("consumer", "consumer", dependencies = listOf("provider", "ProviderAlias"))
+        manager.start(
+            descriptor("provider", "provider", aliases = listOf("ProviderAlias")),
+            pluginScope("provider"),
+        )
+        val consumer = start(
+            "consumer",
+            "consumer",
+            dependencies = listOf("provider", "ProviderAlias"),
+        )
 
-        assertEquals("hello from provider", consumer.context.getBean(GreetingConsumer::class.java).greeting.greet())
+        assertEquals(
+            "hello from provider",
+            consumer.context.getBean(GreetingConsumer::class.java).greeting.greet(),
+        )
     }
 
     @Test
     fun `two exports under one import name fail the import context`() {
         val first = providerOfGreeting()
         val second = providerOfGreeting()
-        try {
-            val exports = collectExports("p", first, pluginLoader) + collectExports("p", second, pluginLoader)
 
-            val failure = assertFailsWith<IllegalStateException> { createImportContext("consumer", root, exports) }
+        try {
+            val exports = collectExports("p", first, pluginLoader) + collectExports(
+                "p",
+                second,
+                pluginLoader,
+            )
+
+            val failure = assertFailsWith<IllegalStateException> {
+                createImportContext(
+                    "consumer",
+                    root,
+                    exports,
+                )
+            }
 
             assertContains(failure.message.orEmpty(), "${PluginExport.IMPORT_PREFIX}p/greeting")
         } finally {
@@ -417,7 +498,11 @@ class SurfContextManagerTest {
         scope: CoroutineScope = pluginScope(name),
     ) = manager.start(descriptor(name, fixture, dependencies), scope)
 
-    private fun pluginScope(name: String) = surfCoroutineScope(name, pluginLoader, Dispatchers.Unconfined)
+    private fun pluginScope(name: String) = surfCoroutineScope(
+        name,
+        pluginLoader,
+        Dispatchers.Unconfined,
+    )
 
     private fun descriptor(
         name: String,
@@ -440,14 +525,17 @@ class SurfContextManagerTest {
         basePackages = listOf(basePackage),
     )
 
-    private inline fun <reified T : Throwable> Throwable.hasCause(): Boolean =
-        generateSequence(this) { it.cause }.any { it is T }
+    private inline fun <reified T : Throwable> Throwable.hasCause(): Boolean {
+        return generateSequence(this) { it.cause }.any { it is T }
+    }
 
     private companion object {
         const val PLUGIN_LOADER_NAME = "test-plugin-loader"
         const val FIXTURE_PACKAGE = "dev.slne.surf.api.spring.context.fixture"
         const val CONCURRENT_LOOKUPS = 8
 
-        val testClasses: Path = Path.of(Journal::class.java.protectionDomain.codeSource.location.toURI())
+        val testClasses: Path = Path.of(
+            Journal::class.java.protectionDomain.codeSource.location.toURI(),
+        )
     }
 }

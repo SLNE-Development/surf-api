@@ -16,7 +16,11 @@ internal object UriSerializer : ScalarSerializer.Annotated<URI>(URI::class.java)
         }
     }
 
-    override fun serialize(type: AnnotatedType, item: URI, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: URI,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.toString()
     }
 }

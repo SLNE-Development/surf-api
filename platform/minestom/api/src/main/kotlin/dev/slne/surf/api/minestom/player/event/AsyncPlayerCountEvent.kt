@@ -70,7 +70,7 @@ class AsyncPlayerCountEvent @InternalSurfApi constructor(
         this.kickMessage = kickMessage
     }
 
-    override fun getPlayer() = player
+    override fun getPlayer(): Player = player
 
     enum class Result {
         ALLOWED,

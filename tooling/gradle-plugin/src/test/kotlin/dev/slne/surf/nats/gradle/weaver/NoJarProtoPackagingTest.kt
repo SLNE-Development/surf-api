@@ -26,7 +26,7 @@ internal class NoJarProtoPackagingTest : TestKitSupport() {
         build.script(
             """
             plugins { id 'java'; id 'dev.slne.surf.api.gradle.nats' }
-            """
+            """,
         )
         build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
         build.file("src/main/resources/app.properties", "key=value")
@@ -34,7 +34,12 @@ internal class NoJarProtoPackagingTest : TestKitSupport() {
         build.run("jar")
 
         val jar = build.resolve("build/libs").listFiles().orEmpty().single { it.extension == "jar" }
-        val entries = ZipFile(jar).use { zip -> zip.entries().asSequence().map { it.name }.toList() }
+        val entries = ZipFile(jar).use { zip ->
+            zip.entries()
+                .asSequence()
+                .map { it.name }
+                .toList()
+        }
         assertTrue("app.properties" in entries, entries.toString())
         assertFalse(entries.any { it.startsWith("META-INF/surf-nats") }, entries.toString())
         assertFalse(entries.any { it.endsWith(".proto") }, entries.toString())
@@ -47,12 +52,15 @@ internal class NoJarProtoPackagingTest : TestKitSupport() {
         build.script(
             """
             plugins { id 'java'; id 'dev.slne.surf.api.gradle.nats' }
-            """
+            """,
         )
 
         val plan = build.plan("jar")
 
-        assertFalse(plan.any { it.endsWith("packProtos") || it.endsWith(SurfNatsPlugin.STAGE_TASK) }, plan.toString())
+        assertFalse(
+            plan.any { it.endsWith("packProtos") || it.endsWith(SurfNatsPlugin.STAGE_TASK) },
+            plan.toString(),
+        )
     }
 
     @Test
@@ -62,9 +70,17 @@ internal class NoJarProtoPackagingTest : TestKitSupport() {
 
         assertNull(project.configurations.findByName("surfNatsProtoPath"))
         assertNull(project.configurations.findByName("surfNatsCompatibilityBaseline"))
-        assertFailsWith<ClassNotFoundException> { Class.forName("dev.slne.surf.nats.gradle.tasks.ProtoArchives") }
-        assertFailsWith<ClassNotFoundException> { Class.forName("dev.slne.surf.nats.gradle.tasks.ProtoArchiveTransform") }
-        assertEquals("weaver", project.tasks.getByName("packProtos").group, "packProtos is weaver's own task")
+        assertFailsWith<ClassNotFoundException> {
+            Class.forName("dev.slne.surf.nats.gradle.tasks.ProtoArchives")
+        }
+        assertFailsWith<ClassNotFoundException> {
+            Class.forName("dev.slne.surf.nats.gradle.tasks.ProtoArchiveTransform")
+        }
+        assertEquals(
+            "weaver",
+            project.tasks.getByName("packProtos").group,
+            "packProtos is weaver's own task",
+        )
         assertTrue(project.tasks.getByName("packProtos") is Tar)
     }
 }

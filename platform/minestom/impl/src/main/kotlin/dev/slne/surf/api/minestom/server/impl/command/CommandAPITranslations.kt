@@ -21,6 +21,7 @@ object CommandAPITranslations {
 
     fun register() {
         if (registered) return
+
         registered = true
 
         val store = TranslationStore.messageFormat(STORE_KEY)
@@ -30,7 +31,7 @@ object CommandAPITranslations {
             Locale.US,
             mapOf(
                 "command.unknown.command" to
-                        MessageFormat("Unknown or incomplete command. See below for error"),
+                    MessageFormat("Unknown or incomplete command. See below for error"),
                 "command.unknown.argument" to MessageFormat("Incorrect argument for command"),
                 "command.context.here" to MessageFormat("<--[HERE]"),
             ),

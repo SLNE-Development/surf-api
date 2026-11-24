@@ -59,7 +59,8 @@ object SurfViewSettingsDefaults {
     val DEFAULT_HEADER_FONT = key("minecraft", "default")
 
     /**
-     * The Adventure [Key] of the ascended copy of the vanilla font (`surf:menu_font_normal_ascended`).
+     * The Adventure [Key] of the ascended copy of the vanilla font
+     * (`surf:menu_font_normal_ascended`).
      *
      * Renders text one line below the title row. Pass it to
      * [font][dev.slne.surf.api.paper.inventory.framework.view.settings.builder.SurfViewSettingsBuilder.font]
@@ -163,7 +164,7 @@ object SurfViewSettingsDefaults {
         key("minecraft", "item.book.page_turn"),
         Sound.Source.PLAYER,
         1f,
-        1f
+        1f,
     )
 
     /**
@@ -183,6 +184,7 @@ object SurfViewSettingsDefaults {
      * Default [SurfViewSettings.rowFonts]: the [rowFont] of every slot row a chest inventory can
      * have, keyed by its one-based row number.
      */
-    val DEFAULT_ROW_FONTS: Map<Int, Key> =
-        (1..ViewSlotGeometry.MAX_ROWS).associateWith { rowFont(it) }
+    val DEFAULT_ROW_FONTS: Map<Int, Key> = (1..ViewSlotGeometry.MAX_ROWS).associateWith {
+        rowFont(it)
+    }
 }

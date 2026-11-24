@@ -44,7 +44,12 @@ class LocalDateSerializerTest {
 
     @Test
     fun `absent fields are missing`() {
-        assertMissingField("surf.types.v1.LocalDate", "year", "month", "day") { decodeHex(LocalDateSerializer, "") }
+        assertMissingField("surf.types.v1.LocalDate", "year", "month", "day") {
+            decodeHex(
+                LocalDateSerializer,
+                "",
+            )
+        }
     }
 
     @Test

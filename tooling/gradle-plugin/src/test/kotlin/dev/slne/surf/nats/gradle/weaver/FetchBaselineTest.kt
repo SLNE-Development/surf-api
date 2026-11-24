@@ -17,7 +17,11 @@ internal class FetchBaselineTest : TestKitSupport() {
     private val baselineDir get() = build.resolve("build/surf-nats/baseline")
     private val recordedVersion get() = baselineDir.resolve("version.txt").readText()
 
-    private fun module(extra: String = "", published: Boolean = true, version: String = "1.2.0-SNAPSHOT") {
+    private fun module(
+        extra: String = "",
+        published: Boolean = true,
+        version: String = "1.2.0-SNAPSHOT",
+    ) {
         build.settings()
         build.script(
             """
@@ -27,28 +31,41 @@ internal class FetchBaselineTest : TestKitSupport() {
             group = '$group'
             version = '$version'
             $extra
-            """
+            """,
         )
         build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
     }
 
-    private fun serveArchive(version: String, entries: Map<String, String>, sha256: String? = null) {
+    private fun serveArchive(
+        version: String,
+        entries: Map<String, String>,
+        sha256: String? = null,
+    ) {
         val bytes = TarGz.create(entries)
         stub.archive(group, name, version, bytes, sha256 = sha256 ?: WeaverStub.sha256(bytes))
     }
 
-    private fun baselineContract(version: String) =
-        mapOf(CONTRACT_PATH to TestBuild.contract("message Player { required int64 id = 1; } // baseline $version"))
+    private fun baselineContract(version: String): Map<String, String> {
+        return mapOf(
+            CONTRACT_PATH to TestBuild.contract(
+                "message Player { required int64 id = 1; } // baseline $version",
+            ),
+        )
+    }
 
     private fun baselineFile(): File = baselineDir.resolve("protos/$CONTRACT_PATH")
 
     private fun extractedFiles(): Set<String> {
         val root = baselineDir.resolve("protos")
-        return root.walkTopDown().filter { it.isFile }.map { it.relativeTo(root).invariantSeparatorsPath }.toSet()
+        return root.walkTopDown()
+            .filter { it.isFile }
+            .map { it.relativeTo(root).invariantSeparatorsPath }
+            .toSet()
     }
 
     /**
-     * Gradle's own tar reader rejects such names before the task's check runs; either message is a rejection.
+     * Gradle's own tar reader rejects such names before the task's check runs; either message is a
+     * rejection.
      */
     private fun assertRejectedAsUnsafe(output: String) {
         assertTrue(
@@ -67,7 +84,10 @@ internal class FetchBaselineTest : TestKitSupport() {
             "0.9.0" to false, "1.0.0" to false, "1.1.0" to false, "1.1.5-SNAPSHOT" to true,
             "1.2.0" to false, "1.3.0" to false, "2.0.0" to false,
         )
-        for (version in listOf("0.9.0", "1.0.0", "1.1.0", "1.3.0")) serveArchive(version, baselineContract(version))
+        for (version in listOf("0.9.0", "1.0.0", "1.1.0", "1.3.0")) serveArchive(
+            version,
+            baselineContract(version),
+        )
 
         val result = build.run("fetchSurfNatsBaseline")
 
@@ -121,7 +141,10 @@ internal class FetchBaselineTest : TestKitSupport() {
         assertEquals(TaskOutcome.SUCCESS, result.outcome(task))
         assertEquals(TaskOutcome.SKIPPED, result.outcome(":checkSurfNatsCompatibility"))
         assertEquals("none", recordedVersion)
-        assertContains(result.output, "no earlier release of $group:$name in ${WeaverStub.REPOSITORY}")
+        assertContains(
+            result.output,
+            "no earlier release of $group:$name in ${WeaverStub.REPOSITORY}",
+        )
         assertEquals(listOf("GET $versionsPath"), paths())
     }
 
@@ -186,7 +209,10 @@ internal class FetchBaselineTest : TestKitSupport() {
     fun `an archive entry that escapes the baseline directory is rejected`() {
         module()
         stub.versions(group, name, "1.1.0" to false)
-        serveArchive("1.1.0", baselineContract("1.1.0") + ("../evil.proto" to "syntax = \"proto2\";"))
+        serveArchive(
+            "1.1.0",
+            baselineContract("1.1.0") + ("../evil.proto" to "syntax = \"proto2\";"),
+        )
 
         val result = build.runAndFail("fetchSurfNatsBaseline", "--stacktrace")
 
@@ -212,12 +238,26 @@ internal class FetchBaselineTest : TestKitSupport() {
     fun `only proto files are extracted and files of an earlier baseline are removed`() {
         module()
         stub.versions(group, name, "1.1.0" to false)
-        serveArchive("1.1.0", baselineContract("1.1.0") + mapOf("README.txt" to "x", "surf/demo/v1/old.proto" to "syntax = \"proto2\";"))
+        serveArchive(
+            "1.1.0",
+            baselineContract("1.1.0") + mapOf(
+                "README.txt" to "x",
+                "surf/demo/v1/old.proto" to "syntax = \"proto2\";",
+            ),
+        )
         build.run("fetchSurfNatsBaseline")
         assertEquals(setOf(CONTRACT_PATH, "surf/demo/v1/old.proto"), extractedFiles())
 
-        // Incompressible and therefore larger than the first archive, so a leftover download file cannot matter.
-        serveArchive("1.1.0", mapOf(CONTRACT_PATH to TestBuild.contract("message Player { required int64 id = 1; } // $NOISE")))
+        // Incompressible and therefore larger than the first archive, so a leftover download file
+        // cannot matter.
+        serveArchive(
+            "1.1.0",
+            mapOf(
+                CONTRACT_PATH to TestBuild.contract(
+                    "message Player { required int64 id = 1; } // $NOISE",
+                ),
+            ),
+        )
         build.run("fetchSurfNatsBaseline")
 
         assertEquals(setOf(CONTRACT_PATH), extractedFiles())
@@ -227,7 +267,14 @@ internal class FetchBaselineTest : TestKitSupport() {
     fun `a smaller archive downloaded after a larger one is not corrupted by the earlier download`() {
         module()
         stub.versions(group, name, "1.1.0" to false)
-        serveArchive("1.1.0", mapOf(CONTRACT_PATH to TestBuild.contract("message Player { required int64 id = 1; } // $NOISE")))
+        serveArchive(
+            "1.1.0",
+            mapOf(
+                CONTRACT_PATH to TestBuild.contract(
+                    "message Player { required int64 id = 1; } // $NOISE",
+                ),
+            ),
+        )
         build.run("fetchSurfNatsBaseline")
 
         serveArchive("1.1.0", baselineContract("1.1.0"))
@@ -244,7 +291,10 @@ internal class FetchBaselineTest : TestKitSupport() {
         val result = build.run("--offline", "fetchSurfNatsBaseline")
 
         assertEquals(TaskOutcome.SUCCESS, result.outcome(task))
-        assertContains(result.output, "Gradle runs with --offline, skipping the compatibility check against weaver")
+        assertContains(
+            result.output,
+            "Gradle runs with --offline, skipping the compatibility check against weaver",
+        )
         assertEquals("none", recordedVersion)
         assertEquals(emptyList(), stub.requests.toList())
     }
@@ -268,7 +318,10 @@ internal class FetchBaselineTest : TestKitSupport() {
         build.run("fetchSurfNatsBaseline", environment = mapOf("WEAVER_TOKEN" to "env-secret"))
 
         assertEquals(2, stub.requests.size)
-        assertEquals(listOf("Bearer env-secret"), stub.requests.map { it.header("authorization") }.distinct())
+        assertEquals(
+            listOf("Bearer env-secret"),
+            stub.requests.map { it.header("authorization") }.distinct(),
+        )
     }
 
     @Test
@@ -279,7 +332,10 @@ internal class FetchBaselineTest : TestKitSupport() {
 
         build.run("fetchSurfNatsBaseline", environment = mapOf("WEAVER_TOKEN" to "env-secret"))
 
-        assertEquals(listOf("Bearer dsl-secret"), stub.requests.map { it.header("authorization") }.distinct())
+        assertEquals(
+            listOf("Bearer dsl-secret"),
+            stub.requests.map { it.header("authorization") }.distinct(),
+        )
     }
 
     @Test
@@ -299,11 +355,15 @@ internal class FetchBaselineTest : TestKitSupport() {
         module(
             extra = """
                 weaver { publishing { repository = 'private-releases'; group = 'dev.slne.other'; name = 'custom' } }
-            """
+            """,
         )
         stub.versions("dev.slne.other", "custom", "1.1.0" to false, repository = "private-releases")
         stub.archive(
-            "dev.slne.other", "custom", "1.1.0", TarGz.create(baselineContract("1.1.0")), repository = "private-releases",
+            "dev.slne.other",
+            "custom",
+            "1.1.0",
+            TarGz.create(baselineContract("1.1.0")),
+            repository = "private-releases",
         )
 
         build.run("fetchSurfNatsBaseline")
@@ -392,10 +452,13 @@ internal class FetchBaselineTest : TestKitSupport() {
 
     private companion object {
         /**
-         * Incompressible text, so that an archive containing it is larger than one without it after gzip.
+         * Incompressible text, so that an archive containing it is larger than one without it after
+         * gzip.
          */
-        val NOISE: String = java.util.Base64.getEncoder().encodeToString(java.util.Random(42).let { random ->
-            ByteArray(3000).also(random::nextBytes)
-        })
+        val NOISE: String = java.util.Base64.getEncoder().encodeToString(
+            java.util.Random(42).let { random ->
+                ByteArray(3000).also(random::nextBytes)
+            },
+        )
     }
 }

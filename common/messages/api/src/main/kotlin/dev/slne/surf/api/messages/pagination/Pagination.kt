@@ -16,9 +16,12 @@ interface SuspendPagination<T> {
     companion object {
         @Suppress("DEPRECATION")
         @OptIn(ExperimentalTypeInference::class)
-        operator fun <T> invoke(@BuilderInference block: SuspendPaginationBuilder<T>.() -> Unit): SuspendPagination<T> {
+        operator fun <T> invoke(
+            @BuilderInference block: SuspendPaginationBuilder<T>.() -> Unit,
+        ): SuspendPagination<T> {
             val builder = InternalPaginationBridge.instance.createPaginationBuilderSuspend<T>()
             builder.block()
+
             return builder.build()
         }
     }
@@ -41,43 +44,46 @@ interface Pagination<T> {
             "[<<]",
             Style.style(
                 Colors.SUCCESS,
-                HoverEvent.showText(Component.text("Erste Seite", Colors.INFO))
+                HoverEvent.showText(Component.text("Erste Seite", Colors.INFO)),
             ),
-            Style.style(Colors.GRAY)
+            Style.style(Colors.GRAY),
         )
 
         val DEFAULT_PREVIOUS_PAGE_BUTTON = PageButton(
             "[<]",
             Style.style(
                 Colors.SUCCESS,
-                HoverEvent.showText(Component.text("Vorherige Seite", Colors.INFO))
+                HoverEvent.showText(Component.text("Vorherige Seite", Colors.INFO)),
             ),
-            Style.style(Colors.GRAY)
+            Style.style(Colors.GRAY),
         )
 
         val DEFAULT_NEXT_PAGE_BUTTON = PageButton(
             "[>]",
             Style.style(
                 Colors.SUCCESS,
-                HoverEvent.showText(Component.text("Nächste Seite", Colors.INFO))
+                HoverEvent.showText(Component.text("Nächste Seite", Colors.INFO)),
             ),
-            Style.style(Colors.GRAY)
+            Style.style(Colors.GRAY),
         )
 
         val DEFAULT_LAST_PAGE_BUTTON = PageButton(
             "[>>]",
             Style.style(
                 Colors.SUCCESS,
-                HoverEvent.showText(Component.text("Letzte Seite", Colors.INFO))
+                HoverEvent.showText(Component.text("Letzte Seite", Colors.INFO)),
             ),
-            Style.style(Colors.GRAY)
+            Style.style(Colors.GRAY),
         )
 
         @Suppress("DEPRECATION")
         @OptIn(ExperimentalTypeInference::class)
-        operator fun <T> invoke(@BuilderInference block: PaginationBuilder<T>.() -> Unit): Pagination<T> {
+        operator fun <T> invoke(
+            @BuilderInference block: PaginationBuilder<T>.() -> Unit,
+        ): Pagination<T> {
             val builder = InternalPaginationBridge.instance.createPaginationBuilder<T>()
             builder.block()
+
             return builder.build()
         }
     }

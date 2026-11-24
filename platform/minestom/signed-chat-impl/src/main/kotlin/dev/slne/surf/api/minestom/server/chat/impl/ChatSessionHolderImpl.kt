@@ -6,7 +6,6 @@ import dev.slne.surf.api.minestom.chat.RemoteSignedMessage
 import dev.slne.surf.api.minestom.extension.ConnectionManager
 import dev.slne.surf.api.minestom.server.chat.SignedChatSettings
 import dev.slne.surf.api.minestom.server.chat.impl.signature.*
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.kyori.adventure.chat.SignedMessage
 import net.kyori.adventure.text.Component
 import net.minestom.server.crypto.ChatSession
@@ -39,8 +38,10 @@ internal class ChatSessionHolderImpl(
         unsignedContent: Component?,
     ) {
         val signed = (message as? PlayerChatMessage.AdventureView)?.playerChatMessage
+
         if (signed == null) {
             player.sendMessage(unsignedContent ?: Component.text(message.message()))
+
             return
         }
 
@@ -66,7 +67,7 @@ internal class ChatSessionHolderImpl(
             timestamp = signed.signedBody.timeStamp,
             salt = signed.signedBody.salt,
             lastSeen = signed.signedBody.lastSeen.entries,
-            unsignedContent = unsignedContent
+            unsignedContent = unsignedContent,
         )
     }
 
@@ -84,27 +85,37 @@ internal class ChatSessionHolderImpl(
                 message.content,
                 message.timestamp,
                 message.salt,
-                LastSeenMessages(message.lastSeen)
+                LastSeenMessages(message.lastSeen),
             ),
             unsignedContent = message.unsignedContent,
-            filterMask = FILTER_MASK_PASS_THROUGH
+            filterMask = FILTER_MASK_PASS_THROUGH,
         )
 
         // A sender unknown to this server gets a temporary tab-list entry, so the client can
         // resolve and verify the message; the entry is removed again after the message.
         val announce = ConnectionManager.getOnlinePlayerByUuid(sender.uuid) == null
-        if (announce) player.sendPacket(remoteSenderInfoPacket(sender))
+
+        if (announce) {
+            player.sendPacket(remoteSenderInfoPacket(sender))
+        }
 
         handler.sendPlayerChatMessage(signed, BoundChatType(SurfChatTypes.raw, boundName))
 
-        if (announce) player.sendPacket(PlayerInfoRemovePacket(sender.uuid))
+        if (announce) {
+            player.sendPacket(PlayerInfoRemovePacket(sender.uuid))
+        }
     }
 
-    override fun deleteMessage(signature: SignedMessage.Signature) = deleteMessage(player, signature)
+    override fun deleteMessage(signature: SignedMessage.Signature) {
+        deleteMessage(player, signature)
+    }
 
     private fun remoteSenderInfoPacket(sender: RemoteChatSender): PlayerInfoUpdatePacket {
         val actions = EnumSet.of(PlayerInfoUpdatePacket.Action.ADD_PLAYER)
-        if (sender.session != null) actions.add(PlayerInfoUpdatePacket.Action.INITIALIZE_CHAT)
+
+        if (sender.session != null) {
+            actions.add(PlayerInfoUpdatePacket.Action.INITIALIZE_CHAT)
+        }
 
         return PlayerInfoUpdatePacket(
             actions,
@@ -118,17 +129,18 @@ internal class ChatSessionHolderImpl(
                 null,
                 sender.session,
                 0,
-                false
-            )
+                false,
+            ),
         )
     }
 
-    @OptIn(InternalSurfApi::class)
     companion object : ChatSessionHolder.Provider {
         private val holders = ConcurrentHashMap<UUID, ChatSessionHolderImpl>()
 
-        override fun fromPlayer(player: Player): ChatSessionHolderImpl? = holders[player.uuid]
-            ?.takeIf { it.player === player }
+        override fun fromPlayer(player: Player): ChatSessionHolderImpl? {
+            return holders[player.uuid]
+                ?.takeIf { it.player === player }
+        }
 
         override fun fromUuid(uuid: UUID): ChatSessionHolderImpl? = holders[uuid]
 
@@ -156,7 +168,9 @@ internal class ChatSessionHolderImpl(
          */
         fun remove(player: Player): ChatSessionHolderImpl? {
             val holder = holders[player.uuid]?.takeIf { it.player === player } ?: return null
+
             holders.remove(player.uuid, holder)
+
             return holder
         }
 
@@ -164,7 +178,10 @@ internal class ChatSessionHolderImpl(
          * Closes the handlers of all holders and removes them.
          */
         fun clear() {
-            holders.values.forEach { holder -> holder.handler.close() }
+            for (holder in holders.values) {
+                holder.handler.close()
+            }
+
             holders.clear()
         }
     }

@@ -11,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
 object MinestomDispatchers {
 
     val Blocking: CoroutineDispatcher = Executors.newThreadPerTaskExecutor(
-        Thread.ofVirtual().name("surf-blocking-", 0).factory()
+        Thread.ofVirtual().name("surf-blocking-", 0).factory(),
     ).asCoroutineDispatcher()
 
     @OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
@@ -22,7 +22,7 @@ object MinestomDispatchers {
 
         override fun scheduleResumeAfterDelay(
             timeMillis: Long,
-            continuation: CancellableContinuation<Unit>
+            continuation: CancellableContinuation<Unit>,
         ) {
             val task = schedule(timeMillis) {
                 with(continuation) {
@@ -38,7 +38,7 @@ object MinestomDispatchers {
         override fun invokeOnTimeout(
             timeMillis: Long,
             block: Runnable,
-            context: CoroutineContext
+            context: CoroutineContext,
         ): DisposableHandle {
             val task = schedule(timeMillis, block)
 
@@ -56,7 +56,7 @@ object MinestomDispatchers {
             return SchedulerManager.scheduleTask(
                 block,
                 delay,
-                TaskSchedule.stop()
+                TaskSchedule.stop(),
             )
         }
 

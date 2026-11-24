@@ -39,6 +39,7 @@ object BlockPdcManager {
 
     fun isDirty(block: Block): Boolean {
         val entry = getEntry(block)
+
         return dirtyBlocks.contains(entry)
     }
 
@@ -55,6 +56,7 @@ object BlockPdcManager {
     private fun getEntry(block: Block): Pair<UUID, BlockPosition> {
         val uuid = block.world.uid
         val position = block.location.toBlock()
+
         return uuid to position
     }
 

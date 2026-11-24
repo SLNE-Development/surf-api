@@ -27,10 +27,9 @@ class SurfPlayerProvidersTest {
     }
 
     @Test
-    fun `players are created with the factory of the server`(env: Env) =
-        withApi({ playerFactory(::CustomPlayer) }) {
-            assertInstanceOf(CustomPlayer::class.java, env.spawnPlayer())
-        }
+    fun `players are created with the factory of the server`(env: Env) = withApi({ playerFactory(::CustomPlayer) }) {
+        assertInstanceOf(CustomPlayer::class.java, env.spawnPlayer())
+    }
 
     @Test
     fun `Minestom refuses another player provider while the api runs`(env: Env) = withApi {
@@ -61,6 +60,7 @@ class SurfPlayerProvidersTest {
         withApi {}
 
         connections.setPlayerProvider(::CustomPlayer)
+
         try {
             assertInstanceOf(CustomPlayer::class.java, env.spawnPlayer())
         } finally {
@@ -73,6 +73,7 @@ class SurfPlayerProvidersTest {
         block: () -> Unit,
     ) {
         val api = surfMinestomServer(configure)
+
         try {
             block()
         } finally {

@@ -17,9 +17,11 @@ internal class EventDescriptor(
 ) {
     companion object {
         /**
-         * Reads the generated descriptor of [type] and derives its subject from the proto full name.
+         * Reads the generated descriptor of [type] and derives its subject from the proto full
+         * name.
          *
-         * Throws [IllegalArgumentException] when [type] is no generated event or its proto name is invalid.
+         * Throws [IllegalArgumentException] when [type] is no generated event or its proto name is
+         * invalid.
          */
         @Suppress("UNCHECKED_CAST")
         fun of(type: Class<*>): EventDescriptor {

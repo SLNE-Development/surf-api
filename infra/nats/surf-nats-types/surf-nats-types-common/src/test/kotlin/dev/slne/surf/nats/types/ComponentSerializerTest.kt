@@ -12,16 +12,30 @@ class ComponentSerializerTest {
     @Serializable
     private data class Holder(
         @ProtoNumber(1) val single: @Serializable(ComponentSerializer::class) Component,
-        @ProtoNumber(2) val list: List<@Serializable(ComponentSerializer::class) Component> = emptyList(),
-        @ProtoNumber(3) val map: Map<String, @Serializable(ComponentSerializer::class) Component> = emptyMap(),
+        @ProtoNumber(2) val list: List<
+            @Serializable(
+                ComponentSerializer::class,
+            ) Component,
+            > = emptyList(),
+        @ProtoNumber(3) val map: Map<
+            String,
+            @Serializable(
+                ComponentSerializer::class,
+            ) Component,
+            > = emptyMap(),
     )
 
     private val red = Component.text("hi", NamedTextColor.RED)
-    private val redHex = "0a1b" + "7b22636f6c6f72223a22726564222c2274657874223a226869227d" // {"color":"red","text":"hi"}
+    // {"color":"red","text":"hi"}
+    private val redHex = "0a1b" + "7b22636f6c6f72223a22726564222c2274657874223a226869227d"
 
     @Test
     fun `descriptor is the surf Component message`() {
-        assertMessageDescriptor(ComponentSerializer.descriptor, "surf.types.v1.Component", "json" to 1)
+        assertMessageDescriptor(
+            ComponentSerializer.descriptor,
+            "surf.types.v1.Component",
+            "json" to 1,
+        )
     }
 
     @Test
@@ -40,7 +54,10 @@ class ComponentSerializerTest {
     fun `components are compacted before encoding`() {
         val nested = Component.text().append(Component.text("a")).build()
 
-        assertEquals(encodeHex(ComponentSerializer, Component.text("a")), encodeHex(ComponentSerializer, nested))
+        assertEquals(
+            encodeHex(ComponentSerializer, Component.text("a")),
+            encodeHex(ComponentSerializer, nested),
+        )
     }
 
     @Test
@@ -51,8 +68,8 @@ class ComponentSerializerTest {
             map = mapOf("k" to Component.text("a")),
         )
         val hex = "0a1d" + redHex +
-                "12060a0422686922" +
-                "1a0a0a016b12050a03226122"
+            "12060a0422686922" +
+            "1a0a0a016b12050a03226122"
 
         assertEquals(hex, encodeHex(Holder.serializer(), value))
         assertEquals(value, decodeHex(Holder.serializer(), hex))
@@ -61,7 +78,12 @@ class ComponentSerializerTest {
     @Test
     fun `absent json is a missing field`() {
         assertMissingField("surf.types.v1.Component", "json") { decodeHex(ComponentSerializer, "") }
-        assertMissingField("surf.types.v1.Component", "json") { decodeHex(Holder.serializer(), "0a00") }
+        assertMissingField("surf.types.v1.Component", "json") {
+            decodeHex(
+                Holder.serializer(),
+                "0a00",
+            )
+        }
     }
 
     @Test

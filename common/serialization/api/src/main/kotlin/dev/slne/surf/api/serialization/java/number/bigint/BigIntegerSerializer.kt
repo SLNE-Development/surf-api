@@ -11,12 +11,14 @@ import java.math.BigInteger
 typealias SerializableBigInteger = @Serializable(with = BigIntegerSerializer::class) BigInteger
 
 object BigIntegerSerializer : KSerializer<BigInteger> {
-    override val descriptor =
-        PrimitiveSerialDescriptor("surfapi.java.number.BigInteger", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor(
+        "surfapi.java.number.BigInteger",
+        PrimitiveKind.STRING,
+    )
 
     override fun serialize(
         encoder: Encoder,
-        value: BigInteger
+        value: BigInteger,
     ) {
         encoder.encodeString(value.toString())
     }

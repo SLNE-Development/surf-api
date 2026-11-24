@@ -11,8 +11,12 @@ class AtomicOperationsConfigTest {
 
     @Test
     fun rejectsLockTimeoutsBelowOneMillisecond() {
-        assertFailsWith<IllegalArgumentException> { AtomicOperationsConfig(lockTimeout = 999.microseconds) }
-        assertFailsWith<IllegalArgumentException> { AtomicOperationsConfig(lockTimeout = 0.milliseconds) }
+        assertFailsWith<IllegalArgumentException> {
+            AtomicOperationsConfig(lockTimeout = 999.microseconds)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            AtomicOperationsConfig(lockTimeout = 0.milliseconds)
+        }
     }
 
     @Test
@@ -22,7 +26,13 @@ class AtomicOperationsConfigTest {
 
     @Test
     fun acceptsLockTimeoutsWithinBounds() {
-        assertEquals(1.milliseconds, AtomicOperationsConfig(lockTimeout = 1.milliseconds).lockTimeout)
-        assertEquals(Int.MAX_VALUE.milliseconds, AtomicOperationsConfig(lockTimeout = Int.MAX_VALUE.milliseconds).lockTimeout)
+        assertEquals(
+            1.milliseconds,
+            AtomicOperationsConfig(lockTimeout = 1.milliseconds).lockTimeout,
+        )
+        assertEquals(
+            Int.MAX_VALUE.milliseconds,
+            AtomicOperationsConfig(lockTimeout = Int.MAX_VALUE.milliseconds).lockTimeout,
+        )
     }
 }

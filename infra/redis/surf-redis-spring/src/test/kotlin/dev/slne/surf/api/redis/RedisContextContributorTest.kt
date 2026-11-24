@@ -38,7 +38,7 @@ class RedisContextContributorTest {
             REDISSON_REACTIVE_CLIENT_BEAN to RedissonReactiveClient::class.java,
         )
 
-        expectedTypes.forEach { (name, type) ->
+        for ((name, type) in expectedTypes) {
             val definition = context.getBeanDefinition(name)
             assertTrue(definition.isLazyInit, "$name is lazy")
             assertTrue(definition.isFallback, "$name is a fallback")
@@ -88,11 +88,14 @@ class RedisContextContributorTest {
     fun `a client proxy requested after the refresh fails the same way`() {
         context.refresh()
 
-        val failure = assertFailsWith<BeanCreationException> { context.getBean(RedissonClient::class.java) }
+        val failure = assertFailsWith<BeanCreationException> {
+            context.getBean(RedissonClient::class.java)
+        }
 
         assertContains(rootCauseOf(failure).message.orEmpty(), "would never connect")
     }
 
-    private fun rootCauseOf(failure: Throwable): Throwable =
-        generateSequence(failure) { it.cause }.last()
+    private fun rootCauseOf(failure: Throwable): Throwable {
+        return generateSequence(failure) { it.cause }.last()
+    }
 }

@@ -14,8 +14,9 @@ data class StringTooltip(
     val tooltip: Component?,
 ) {
     companion object {
-        fun ofString(suggestion: String, tooltip: Component? = null) =
-            StringTooltip(suggestion, tooltip)
+        fun ofString(suggestion: String, tooltip: Component? = null): StringTooltip {
+            return StringTooltip(suggestion, tooltip)
+        }
     }
 }
 

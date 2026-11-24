@@ -27,7 +27,7 @@ class DialogBuilderTest {
         assertEquals(Component.text("Title"), notice.metadata().title())
         assertEquals(
             listOf(DialogBody.PlainMessage(Component.text("Notice"), 200)),
-            notice.metadata().body()
+            notice.metadata().body(),
         )
     }
 
@@ -208,7 +208,7 @@ class DialogBuilderTest {
         var seen: DialogResponseView? = null
 
         val action = assertIs<DialogAction.DynamicCustom>(
-            dialogAction { customPlayerClick { response, _ -> seen = response } }
+            dialogAction { customPlayerClick { response, _ -> seen = response } },
         )
 
         val payload = CompoundBinaryTag.builder()
@@ -231,7 +231,7 @@ class DialogBuilderTest {
         var seen: DialogResponseView? = null
 
         val action = assertIs<DialogAction.DynamicCustom>(
-            dialogAction { customPlayerClick { response, _ -> seen = response } }
+            dialogAction { customPlayerClick { response, _ -> seen = response } },
         )
 
         assertTrue(DialogCallbacks.dispatch(env.createPlayer(), action.key(), null))
@@ -273,7 +273,7 @@ class DialogBuilderTest {
         val player = env.createPlayer()
         var runs = 0
         val key = DialogCallbacks.register(
-            DialogCallbackOptions(uses = DialogCallbackOptions.UNLIMITED_USES)
+            DialogCallbackOptions(uses = DialogCallbackOptions.UNLIMITED_USES),
         ) { runs++ }
 
         repeat(3) { assertTrue(DialogCallbacks.dispatch(player, key, null)) }

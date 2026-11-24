@@ -25,14 +25,16 @@ internal data class NodeDeclaration(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is NodeDeclaration) return false
+
         return parser == other.parser &&
-                properties.contentEquals(other.properties) &&
-                suggestionsType == other.suggestionsType
+            properties.contentEquals(other.properties) &&
+            suggestionsType == other.suggestionsType
     }
 
     override fun hashCode(): Int {
         var result = parser.hashCode()
         result = 31 * result + properties.contentHashCode()
+
         return 31 * result + suggestionsType.hashCode()
     }
 }
@@ -58,9 +60,11 @@ internal class NodeDeclarations {
     fun of(definition: ArgumentDefinition<*>): NodeDeclaration {
         val base = baseDeclarationOf(definition)
         val server = definition.suggestions != SuggestionMode.BuiltIns ||
-                computesSuggestions(definition.kind)
+            computesSuggestions(definition.kind)
 
-        return if (server) base.copy(suggestionsType = SuggestionType.ASK_SERVER.identifier) else base
+        return if (server) base.copy(
+            suggestionsType = SuggestionType.ASK_SERVER.identifier,
+        ) else base
     }
 
     /**
@@ -68,26 +72,28 @@ internal class NodeDeclarations {
      *
      * These kinds are declared as `ask_server` even without a suggestion provider.
      */
-    private fun computesSuggestions(kind: ArgumentKind<*>): Boolean = when (kind.baseKind()) {
-        ArgumentKind.Sound,
-        ArgumentKind.PotionEffect,
-        ArgumentKind.Biome,
-        ArgumentKind.Enchantment,
-        is ArgumentKind.Resource<*>,
-        ArgumentKind.Instance,
-        ArgumentKind.Player,
-        is ArgumentKind.Players,
-        ArgumentKind.Entity,
-        is ArgumentKind.Entities,
-        is ArgumentKind.MultiLiteral,
-        is ArgumentKind.Enum<*>,
-            -> true
+    private fun computesSuggestions(kind: ArgumentKind<*>): Boolean {
+        return when (kind.baseKind()) {
+            ArgumentKind.Sound,
+            ArgumentKind.PotionEffect,
+            ArgumentKind.Biome,
+            ArgumentKind.Enchantment,
+            is ArgumentKind.Resource<*>,
+            ArgumentKind.Instance,
+            ArgumentKind.Player,
+            is ArgumentKind.Players,
+            ArgumentKind.Entity,
+            is ArgumentKind.Entities,
+            is ArgumentKind.MultiLiteral,
+            is ArgumentKind.Enum<*>,
+                -> true
 
-        else -> false
+            else -> false
+        }
     }
 
-    private fun baseDeclarationOf(definition: ArgumentDefinition<*>): NodeDeclaration =
-        when (val kind = definition.kind) {
+    private fun baseDeclarationOf(definition: ArgumentDefinition<*>): NodeDeclaration {
+        return when (val kind = definition.kind) {
             // Declared directly because the native Minestom argument would name a different parser.
             ArgumentKind.Rotation -> NodeDeclaration(ArgumentParserType.ROTATION, null)
             ArgumentKind.Angle -> NodeDeclaration(ArgumentParserType.ANGLE, null)
@@ -107,6 +113,7 @@ internal class NodeDeclarations {
                 )
             }
         }
+    }
 
     private fun nativeFor(definition: ArgumentDefinition<*>): Argument<*> {
         val name = definition.nodeName
@@ -129,13 +136,20 @@ internal class NodeDeclarations {
             ArgumentKind.Uuid -> ArgumentType.UUID(name)
             ArgumentKind.IntegerRange -> ArgumentType.IntRange(name)
             ArgumentKind.FloatRange -> ArgumentType.FloatRange(name)
-            // Minestom's command argument has no parser to declare; the raw type is a greedy string.
+            // Minestom's command argument has no parser to declare; the raw type is a greedy
+            // string.
             ArgumentKind.Command -> ArgumentType.StringArray(name)
 
             ArgumentKind.Player -> ArgumentType.Entity(name).singleEntity(true).onlyPlayers(true)
-            is ArgumentKind.Players -> ArgumentType.Entity(name).singleEntity(false).onlyPlayers(true)
+            is ArgumentKind.Players -> ArgumentType.Entity(name).singleEntity(false).onlyPlayers(
+                true,
+            )
+
             ArgumentKind.Entity -> ArgumentType.Entity(name).singleEntity(true).onlyPlayers(false)
-            is ArgumentKind.Entities -> ArgumentType.Entity(name).singleEntity(false).onlyPlayers(false)
+            is ArgumentKind.Entities -> ArgumentType.Entity(name).singleEntity(false).onlyPlayers(
+                false,
+            )
+
             ArgumentKind.EntityType -> ArgumentType.EntityType(name)
 
             ArgumentKind.Position -> ArgumentType.RelativeVec3(name)

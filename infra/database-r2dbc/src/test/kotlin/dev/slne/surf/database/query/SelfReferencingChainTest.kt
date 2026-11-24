@@ -44,7 +44,8 @@ abstract class SelfReferencingChainTest {
     protected abstract fun container(): JdbcDatabaseContainer<*>
     protected open val schemaName: String? = null
 
-    // Built after connecting: Exposed quotes identifiers with the dialect that is current at creation.
+    // Built after connecting: Exposed quotes identifiers with the dialect that is current at
+    // creation.
     private lateinit var nodes: ChainNodes
 
     private lateinit var testDb: TestDatabase
@@ -60,14 +61,18 @@ abstract class SelfReferencingChainTest {
 
     @BeforeAll
     fun setUp(): Unit = runBlocking {
-        // A fresh database (MariaDB) / schema (PostgreSQL) per class: each gets its own name, which Exposed's
-        // JVM-wide identifier-quoting cache is keyed on.
+        // A fresh database (MariaDB) / schema (PostgreSQL) per class: each gets its own name, which
+        // Exposed's JVM-wide identifier-quoting cache is keyed on.
         testDb = container().toTestDatabase(fresh = true)
         database = testDb.database
 
         suspendTransaction(database) {
             val schemaName = schemaName
-            if (schemaName != null) SchemaUtils.createSchema(Schema(schemaName))
+
+            if (schemaName != null) {
+                SchemaUtils.createSchema(Schema(schemaName))
+            }
+
             nodes = ChainNodes(if (schemaName != null) "$schemaName.chain_nodes" else "chain_nodes")
             SchemaUtils.create(nodes)
 
@@ -86,7 +91,9 @@ abstract class SelfReferencingChainTest {
     @AfterAll
     fun tearDown() {
         // The shared containers outlive this class; only the connection pool is released.
-        if (::testDb.isInitialized) testDb.close()
+        if (::testDb.isInitialized) {
+            testDb.close()
+        }
     }
 
     private suspend fun insert(parent: Long?): Long = nodes.insertAndGetId { row ->
@@ -130,17 +137,35 @@ abstract class SelfReferencingChainTest {
 
     @Test
     fun `rejects a non-positive max depth`() {
-        assertFailsWith<IllegalArgumentException> { nodes.selfReferencingChain(nodes.parent, leaf, maxDepth = 0) }
+        assertFailsWith<IllegalArgumentException> {
+            nodes.selfReferencingChain(
+                nodes.parent,
+                leaf,
+                maxDepth = 0,
+            )
+        }
     }
 
     @Test
     fun `rejects a parent column of another table`() {
-        assertFailsWith<IllegalArgumentException> { nodes.selfReferencingChain(OtherNodes.parent, leaf, maxDepth = 5) }
+        assertFailsWith<IllegalArgumentException> {
+            nodes.selfReferencingChain(
+                OtherNodes.parent,
+                leaf,
+                maxDepth = 5,
+            )
+        }
     }
 
     @Test
     fun `rejects a column that references another table`() {
-        assertFailsWith<IllegalArgumentException> { OtherNodes.selfReferencingChain(OtherNodes.parent, leaf, maxDepth = 5) }
+        assertFailsWith<IllegalArgumentException> {
+            OtherNodes.selfReferencingChain(
+                OtherNodes.parent,
+                leaf,
+                maxDepth = 5,
+            )
+        }
     }
 
     @Test

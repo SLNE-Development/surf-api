@@ -266,7 +266,7 @@ class SidebarLinesBuilder internal constructor() {
      */
     inline fun buildScoredLine(
         text: SurfComponentBuilder.() -> Unit,
-        score: SurfComponentBuilder.() -> Unit
+        score: SurfComponentBuilder.() -> Unit,
     ) {
         line(SurfComponentBuilder(text), SurfComponentBuilder(score))
     }

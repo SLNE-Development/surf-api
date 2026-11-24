@@ -13,11 +13,13 @@ internal fun <T : Any> requireFromJs(value: T?, name: String): T {
     contract {
         returns() implies (value != null)
     }
+
     return requireNotNull(value) { "$name is required" }
 }
 
 internal fun positiveTimeoutOrNull(timeoutMs: Int?, name: String): Duration? {
     if (timeoutMs == null) return null
     require(timeoutMs > 0) { "$name must be positive, was $timeoutMs ms" }
+
     return timeoutMs.milliseconds
 }

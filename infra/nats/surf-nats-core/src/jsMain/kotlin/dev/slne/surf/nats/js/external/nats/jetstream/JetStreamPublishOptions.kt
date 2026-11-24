@@ -8,9 +8,9 @@ import kotlinx.js.JsPlainObject
 /**
  * Binds `Partial<JetStreamPublishOptions>`.
  *
- * `msgID` is sent as the `Nats-Msg-Id` header, which the stream uses to detect duplicates. `timeout` is the
- * milliseconds to wait for the `PubAck`. `ttl` is a per-message TTL such as `1h` and applies only to streams that allow
- * message TTLs.
+ * `msgID` is sent as the `Nats-Msg-Id` header, which the stream uses to detect duplicates.
+ * `timeout` is the milliseconds to wait for the `PubAck`. `ttl` is a per-message TTL such as `1h`
+ * and applies only to streams that allow message TTLs.
  */
 @JsPlainObject
 internal external interface JetStreamPublishOptions {

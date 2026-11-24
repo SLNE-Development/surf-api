@@ -27,7 +27,7 @@ fun interface ConfigurationTask {
      * Registers whatever listeners the step needs, once, when the configuration phase is
      * installed.
      */
-    fun install(node: EventNode<Event>) = Unit
+    fun install(node: EventNode<Event>): Unit = Unit
 }
 
 /**
@@ -62,7 +62,7 @@ class ConfigurationContext internal constructor(
     var event: AsyncPlayerConfigurationEvent
         get() = checkNotNull(configurationEvent) {
             "The configuration event has not been called yet; " +
-                    "this step has to run after ${ConfigurationTasks.CONFIGURATION_EVENT}"
+                "this step has to run after ${ConfigurationTasks.CONFIGURATION_EVENT}"
         }
         set(value) {
             configurationEvent = value

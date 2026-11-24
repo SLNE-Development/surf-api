@@ -15,7 +15,7 @@ import net.minestom.server.entity.Player
  */
 data class SearchDialogAction(
     var label: SurfComponentBuilder.() -> Unit,
-    var tooltip: SurfComponentBuilder.() -> Unit
+    var tooltip: SurfComponentBuilder.() -> Unit,
 )
 
 /**
@@ -32,7 +32,7 @@ data class SearchInput(
         text("Suche")
     },
     var initialValue: String = "",
-    var inputModifier: DialogInputBuilder.TextInputBuilder.() -> Unit = {}
+    var inputModifier: DialogInputBuilder.TextInputBuilder.() -> Unit = {},
 )
 
 /**
@@ -87,62 +87,64 @@ fun searchDialog(
     },
     searchInput: SearchInput.() -> Unit,
     canCloseWithEscape: Boolean = false,
-    afterAction: DialogAfterAction = DialogAfterAction.NONE
-): Dialog = dialog {
-    val input = SearchInput().apply(searchInput)
+    afterAction: DialogAfterAction = DialogAfterAction.NONE,
+): Dialog {
+    return dialog {
+        val input = SearchInput().apply(searchInput)
 
-    val search = SearchDialogAction(
-        label = { },
-        tooltip = { }
-    ).apply(searchButton)
+        val search = SearchDialogAction(
+            label = { },
+            tooltip = { },
+        ).apply(searchButton)
 
-    val cancel = SearchDialogAction(
-        label = { },
-        tooltip = { }
-    ).apply(cancelButton)
+        val cancel = SearchDialogAction(
+            label = { },
+            tooltip = { },
+        ).apply(cancelButton)
 
-    base {
-        title(title)
-        externalTitle(externalTitle)
-        canCloseWithEscape(canCloseWithEscape)
-        afterAction(afterAction)
+        base {
+            title(title)
+            externalTitle(externalTitle)
+            canCloseWithEscape(canCloseWithEscape)
+            afterAction(afterAction)
 
-        body(body)
+            body(body)
 
-        input {
-            text(input.key) {
-                label(input.label)
-                initial(input.initialValue)
+            input {
+                text(input.key) {
+                    label(input.label)
+                    initial(input.initialValue)
 
-                input.inputModifier(this)
-            }
-        }
-    }
-
-    type {
-        confirmation {
-            no {
-                label(search.label)
-                tooltip(search.tooltip)
-
-                action {
-                    customPlayerClick { response, player ->
-                        player.closeDialog()
-
-                        onSearch(player, response.getText(input.key) ?: "")
-                    }
+                    input.inputModifier(this)
                 }
             }
+        }
 
-            yes {
-                label(cancel.label)
-                tooltip(cancel.tooltip)
+        type {
+            confirmation {
+                no {
+                    label(search.label)
+                    tooltip(search.tooltip)
 
-                action {
-                    customPlayerClick { response, player ->
-                        player.closeDialog()
+                    action {
+                        customPlayerClick { response, player ->
+                            player.closeDialog()
 
-                        onClose(player, response.getText(input.key) ?: "")
+                            onSearch(player, response.getText(input.key) ?: "")
+                        }
+                    }
+                }
+
+                yes {
+                    label(cancel.label)
+                    tooltip(cancel.tooltip)
+
+                    action {
+                        customPlayerClick { response, player ->
+                            player.closeDialog()
+
+                            onClose(player, response.getText(input.key) ?: "")
+                        }
                     }
                 }
             }

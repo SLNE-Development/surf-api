@@ -3,7 +3,8 @@
 package dev.slne.surf.nats.js.external.nats.core
 
 /**
- * Binds the members of `ServerInfo` that surf-nats reads, named as in the `INFO` message of the server.
+ * Binds the members of `ServerInfo` that surf-nats reads, named as in the `INFO` message of the
+ * server.
  */
 internal external interface ServerInfo {
     /**

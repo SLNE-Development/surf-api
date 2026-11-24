@@ -25,8 +25,14 @@ class MicroservicePluginTest {
     fun `standalone projects get api and runtime with the plugin major version`(info: TestInfo) {
         val dependencies = standaloneBuild(info).run(SHOW_DEPENDENCIES).dependencies()
 
-        assertContains(dependencies, "api dev.slne.surf.api:surf-api-microservice-api:$MICROSERVICE_VERSION")
-        assertContains(dependencies, "implementation dev.slne.surf.api:surf-api-microservice-runtime:$MICROSERVICE_VERSION")
+        assertContains(
+            dependencies,
+            "api dev.slne.surf.api:surf-api-microservice-api:$MICROSERVICE_VERSION",
+        )
+        assertContains(
+            dependencies,
+            "implementation dev.slne.surf.api:surf-api-microservice-runtime:$MICROSERVICE_VERSION",
+        )
     }
 
     @Test
@@ -40,8 +46,14 @@ class MicroservicePluginTest {
     fun `database is enabled by default`(info: TestInfo) {
         val dependencies = standaloneBuild(info).run(SHOW_DEPENDENCIES).dependencies()
 
-        assertContains(dependencies, "implementation dev.slne.surf.api:surf-api-microservice-database:$MICROSERVICE_VERSION")
-        assertContains(dependencies, "implementation dev.slne.surf.api:surf-api-database-r2dbc:$MICROSERVICE_VERSION")
+        assertContains(
+            dependencies,
+            "implementation dev.slne.surf.api:surf-api-microservice-database:$MICROSERVICE_VERSION",
+        )
+        assertContains(
+            dependencies,
+            "implementation dev.slne.surf.api:surf-api-database-r2dbc:$MICROSERVICE_VERSION",
+        )
     }
 
     @Test
@@ -50,7 +62,10 @@ class MicroservicePluginTest {
 
         val dependencies = build.run(SHOW_DEPENDENCIES).dependencies()
 
-        assertContains(dependencies, "implementation dev.slne.surf.api:surf-api-database-r2dbc:2.4.0")
+        assertContains(
+            dependencies,
+            "implementation dev.slne.surf.api:surf-api-database-r2dbc:2.4.0",
+        )
     }
 
     @Test
@@ -95,17 +110,32 @@ class MicroservicePluginTest {
             .run(SHOW_DEPENDENCIES, "-Psurf.database.version=2.4.1")
             .dependencies()
 
-        assertContains(dependencies, "implementation dev.slne.surf.api:surf-api-database-r2dbc:2.4.1")
+        assertContains(
+            dependencies,
+            "implementation dev.slne.surf.api:surf-api-database-r2dbc:2.4.1",
+        )
     }
 
     @Test
     fun `DSL disables the database`(info: TestInfo) {
-        val dependencies = standaloneBuild(info, "surfMicroservice { database { enabled = false } }")
+        val dependencies = standaloneBuild(
+            info,
+            "surfMicroservice { database { enabled = false } }",
+        )
             .run(SHOW_DEPENDENCIES)
             .dependencies()
 
-        assertTrue(dependencies.none { "surf-api-microservice-database" in it || "surf-api-database-r2dbc" in it }, "$dependencies")
-        assertContains(dependencies, "api dev.slne.surf.api:surf-api-microservice-api:$MICROSERVICE_VERSION")
+        assertTrue(
+            dependencies.none { dependency ->
+                "surf-api-microservice-database" in dependency ||
+                    "surf-api-database-r2dbc" in dependency
+            },
+            "$dependencies",
+        )
+        assertContains(
+            dependencies,
+            "api dev.slne.surf.api:surf-api-microservice-api:$MICROSERVICE_VERSION",
+        )
     }
 
     @Test
@@ -119,25 +149,43 @@ class MicroservicePluginTest {
 
     @Test
     fun `invalid database property fails the build`(info: TestInfo) {
-        val result = standaloneBuild(info).runAndFail(SHOW_DEPENDENCIES, "-Psurf.microservice.database.enabled=yes")
+        val result = standaloneBuild(info).runAndFail(
+            SHOW_DEPENDENCIES,
+            "-Psurf.microservice.database.enabled=yes",
+        )
 
-        assertContains(result.output, "'surf.microservice.database.enabled' must be 'true' or 'false', was 'yes'")
+        assertContains(
+            result.output,
+            "'surf.microservice.database.enabled' must be 'true' or 'false', was 'yes'",
+        )
     }
 
     @Test
     fun `reliability is enabled by default with the surf-nats plugin`(info: TestInfo) {
-        val dependencies = reliabilityBuild(info, withNatsPlugin = true).run(SHOW_RESOLVED).resolvedDependencies()
+        val dependencies = reliabilityBuild(
+            info,
+            withNatsPlugin = true,
+        ).run(SHOW_RESOLVED).resolvedDependencies()
 
         assertContains(dependencies, "compileClasspath $RELIABILITY:$MICROSERVICE_VERSION")
-        assertContains(dependencies, "testCompileClasspath $RELIABILITY:$MICROSERVICE_VERSION [feature 'test-fixtures']")
+        assertContains(
+            dependencies,
+            "testCompileClasspath $RELIABILITY:$MICROSERVICE_VERSION [feature 'test-fixtures']",
+        )
     }
 
     @Test
     fun `reliability is enabled by default with surf-api-nats-spring declared`(info: TestInfo) {
-        val dependencies = reliabilityBuild(info, DECLARE_NATS).run(SHOW_RESOLVED).resolvedDependencies()
+        val dependencies = reliabilityBuild(
+            info,
+            DECLARE_NATS,
+        ).run(SHOW_RESOLVED).resolvedDependencies()
 
         assertContains(dependencies, "compileClasspath $RELIABILITY:$MICROSERVICE_VERSION")
-        assertContains(dependencies, "testCompileClasspath $RELIABILITY:$MICROSERVICE_VERSION [feature 'test-fixtures']")
+        assertContains(
+            dependencies,
+            "testCompileClasspath $RELIABILITY:$MICROSERVICE_VERSION [feature 'test-fixtures']",
+        )
     }
 
     @Test
@@ -145,12 +193,18 @@ class MicroservicePluginTest {
         val dependencies = reliabilityBuild(info).run(SHOW_RESOLVED).resolvedDependencies()
 
         assertTrue(dependencies.none { RELIABILITY in it }, "$dependencies")
-        assertContains(dependencies, "compileClasspath dev.slne.surf.api:surf-api-microservice-database:$MICROSERVICE_VERSION")
+        assertContains(
+            dependencies,
+            "compileClasspath dev.slne.surf.api:surf-api-microservice-database:$MICROSERVICE_VERSION",
+        )
     }
 
     @Test
     fun `reliability stays disabled by default without the database`(info: TestInfo) {
-        val build = reliabilityBuild(info, "$DECLARE_NATS\nsurfMicroservice { database { enabled = false } }")
+        val build = reliabilityBuild(
+            info,
+            "$DECLARE_NATS\nsurfMicroservice { database { enabled = false } }",
+        )
 
         val dependencies = build.run(SHOW_RESOLVED).resolvedDependencies()
 
@@ -159,7 +213,10 @@ class MicroservicePluginTest {
 
     @Test
     fun `DSL disables reliability`(info: TestInfo) {
-        val build = reliabilityBuild(info, "$DECLARE_NATS\nsurfMicroservice { reliability { enabled = false } }")
+        val build = reliabilityBuild(
+            info,
+            "$DECLARE_NATS\nsurfMicroservice { reliability { enabled = false } }",
+        )
 
         val dependencies = build.run(SHOW_RESOLVED).resolvedDependencies()
 
@@ -212,12 +269,18 @@ class MicroservicePluginTest {
         val result = build.runAndFail(SHOW_RESOLVED)
 
         assertContains(result.output, "enables surf-api-microservice-reliability")
-        assertContains(result.output, "surf-nats is missing. Apply the 'dev.slne.surf.api.gradle.nats' plugin")
+        assertContains(
+            result.output,
+            "surf-nats is missing. Apply the 'dev.slne.surf.api.gradle.nats' plugin",
+        )
     }
 
     @Test
     fun `reliability enabled by Gradle property without the database fails the build`(info: TestInfo) {
-        val build = reliabilityBuild(info, "$DECLARE_NATS\nsurfMicroservice { database { enabled = false } }")
+        val build = reliabilityBuild(
+            info,
+            "$DECLARE_NATS\nsurfMicroservice { database { enabled = false } }",
+        )
 
         val result = build.runAndFail(SHOW_RESOLVED, "-Psurf.microservice.reliability.enabled=true")
 
@@ -230,7 +293,10 @@ class MicroservicePluginTest {
         val result = reliabilityBuild(info, DECLARE_NATS)
             .runAndFail(SHOW_RESOLVED, "-Psurf.microservice.reliability.enabled=on")
 
-        assertContains(result.output, "'surf.microservice.reliability.enabled' must be 'true' or 'false', was 'on'")
+        assertContains(
+            result.output,
+            "'surf.microservice.reliability.enabled' must be 'true' or 'false', was 'on'",
+        )
     }
 
     @Test
@@ -267,7 +333,11 @@ class MicroservicePluginTest {
 
         val result = build.run("shadowJar")
 
-        assertEquals(null, result.task(":detectMicroserviceMainClass"), "the detection must not run")
+        assertEquals(
+            null,
+            result.task(":detectMicroserviceMainClass"),
+            "the detection must not run",
+        )
         assertEquals("demo.Custom", build.mainClassOfShadowJar())
     }
 
@@ -280,7 +350,10 @@ class MicroservicePluginTest {
 
         assertContains(result.output, "Execution failed for task ':detectMicroserviceMainClass'")
         assertContains(result.output, "No main class found in the compiled classes of ':'")
-        assertContains(result.output, "fun main(args: Array<String>) { runMicroservice<App>(args) }")
+        assertContains(
+            result.output,
+            "fun main(args: Array<String>) { runMicroservice<App>(args) }",
+        )
         assertContains(result.output, "surfMicroservice { mainClass = \"...\" }")
     }
 
@@ -367,7 +440,12 @@ class MicroservicePluginTest {
         JarFile(build.shadowJarFile()).use { jar ->
             val factories = jar.properties("META-INF/spring.factories")
             assertEquals(
-                setOf("demo.OwnInitializer", "first.Initializer", "second.Initializer", "second.Other"),
+                setOf(
+                    "demo.OwnInitializer",
+                    "first.Initializer",
+                    "second.Initializer",
+                    "second.Other",
+                ),
                 factories.values("org.springframework.context.ApplicationContextInitializer"),
             )
             assertEquals(setOf("first.Only"), factories.values("org.first.Only"))
@@ -375,24 +453,36 @@ class MicroservicePluginTest {
 
             assertEquals(
                 setOf("first.Hints", "second.Hints"),
-                jar.properties("META-INF/spring/aot.factories").values("org.springframework.aot.hint.RuntimeHintsRegistrar"),
+                jar.properties("META-INF/spring/aot.factories")
+                    .values("org.springframework.aot.hint.RuntimeHintsRegistrar"),
             )
 
-            val autoConfigurations =
-                jar.lines("META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports")
+            val autoConfigurations = jar.lines(
+                "META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports",
+            )
             assertEquals(
                 listOf("first.AutoA", "first.AutoB", "second.AutoC", "shared.Auto"),
                 autoConfigurations.filterNot { it.startsWith("#") }.sorted(),
             )
-            assertEquals(listOf("second.Custom"), jar.lines("META-INF/spring/org.example.Custom.imports"))
-            assertEquals(setOf("first.Impl", "second.Impl"), jar.lines("META-INF/services/demo.Service").toSet())
+            assertEquals(
+                listOf("second.Custom"),
+                jar.lines("META-INF/spring/org.example.Custom.imports"),
+            )
+            assertEquals(
+                setOf("first.Impl", "second.Impl"),
+                jar.lines("META-INF/services/demo.Service").toSet(),
+            )
             assertEquals(
                 setOf("first.Handler", "second.Handler"),
-                jar.properties("META-INF/spring.handlers").values("http://first.example/schema", "http://second.example/schema"),
+                jar.properties("META-INF/spring.handlers").values(
+                    "http://first.example/schema",
+                    "http://second.example/schema",
+                ),
             )
             assertEquals(
                 "first.SharedHandler",
-                jar.properties("META-INF/spring.handlers").getProperty("http://shared.example/schema"),
+                jar.properties("META-INF/spring.handlers")
+                    .getProperty("http://shared.example/schema"),
                 "a handler key keeps one class name instead of a comma-joined list",
             )
             assertEquals(
@@ -413,25 +503,37 @@ class MicroservicePluginTest {
             """,
         )
         build.dir.resolve("libs").mkdirs()
-        writeJar(build.dir.resolve("libs/core.jar"), LOG4J_PLUGIN_CACHE to pluginCache("core.Console" to "Appender"))
-        writeJar(build.dir.resolve("libs/boot.jar"), LOG4J_PLUGIN_CACHE to pluginCache("boot.Factory" to "ConfigurationFactory"))
+        writeJar(
+            build.dir.resolve("libs/core.jar"),
+            LOG4J_PLUGIN_CACHE to pluginCache("core.Console" to "Appender"),
+        )
+        writeJar(
+            build.dir.resolve("libs/boot.jar"),
+            LOG4J_PLUGIN_CACHE to pluginCache("boot.Factory" to "ConfigurationFactory"),
+        )
 
         build.run("shadowJar")
 
         JarFile(build.shadowJarFile()).use { jar ->
             val classes = jar.pluginClasses(LOG4J_PLUGIN_CACHE)
-            assertEquals(setOf("core.Console", "boot.Factory"), classes, "each jar keeps the plugins of its own cache")
+            assertEquals(
+                setOf("core.Console", "boot.Factory"),
+                classes,
+                "each jar keeps the plugins of its own cache",
+            )
         }
     }
 
     /**
-     * Writes a log4j plugin cache in the format of `PluginCache`: the number of categories, then per category its
-     * name, the number of its plugins and each plugin's key, class name, name, printable flag and defer flag.
+     * Writes a log4j plugin cache in the format of `PluginCache`: the number of categories, then
+     * per category its name, the number of its plugins and each plugin's key, class name, name,
+     * printable flag and defer flag.
      */
     private fun pluginCache(vararg plugins: Pair<String, String>): ByteArray {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             out.writeInt(plugins.size)
+
             for ((className, category) in plugins) {
                 out.writeUTF(category.lowercase())
                 out.writeInt(1)
@@ -442,6 +544,7 @@ class MicroservicePluginTest {
                 out.writeBoolean(false)
             }
         }
+
         return bytes.toByteArray()
     }
 
@@ -486,7 +589,11 @@ class MicroservicePluginTest {
         )
         assertContains(dockerfile, "STOPSIGNAL SIGTERM")
         assertContains(dockerfile, "./gradlew :prepareMicroserviceDockerArtifact --no-daemon")
-        assertEquals(null, result.task(":shadowJar"), "generating the Dockerfile must not build the jar")
+        assertEquals(
+            null,
+            result.task(":shadowJar"),
+            "generating the Dockerfile must not build the jar",
+        )
     }
 
     @Test
@@ -504,15 +611,18 @@ class MicroservicePluginTest {
         assertContains(
             dockerfile,
             "'exec java -XX:+UseG1GC -XX:+UseCompactObjectHeaders -XX:MaxRAMPercentage=60.0 " +
-                    "-XX:ActiveProcessorCount=2 -XX:G1PeriodicGCInterval=60000 -XX:TrimNativeHeapInterval=60000 " +
-                    "-XX:+ExitOnOutOfMemoryError \$budget \$JAVA_OPTS -jar /app/app.jar \"\$@\"'",
+                "-XX:ActiveProcessorCount=2 -XX:G1PeriodicGCInterval=60000 -XX:TrimNativeHeapInterval=60000 " +
+                "-XX:+ExitOnOutOfMemoryError \$budget \$JAVA_OPTS -jar /app/app.jar \"\$@\"'",
         )
         assertContains(dockerfile, """ENTRYPOINT ["/usr/local/bin/microservice-entrypoint"]""")
     }
 
     @Test
     fun `adding a JVM option keeps the defaults`(info: TestInfo) {
-        val build = shadowBuild(info, "surfMicroservice { docker { jvmOptions.add('-Xlog:gc*:stdout') } }")
+        val build = shadowBuild(
+            info,
+            "surfMicroservice { docker { jvmOptions.add('-Xlog:gc*:stdout') } }",
+        )
 
         build.run("generateMicroserviceDockerfile")
 
@@ -536,11 +646,17 @@ class MicroservicePluginTest {
 
     @Test
     fun `JVM option with shell metacharacters fails the generation`(info: TestInfo) {
-        val build = shadowBuild(info, "surfMicroservice { docker { jvmOptions = ['-Dvalue=\$(id)'] } }")
+        val build = shadowBuild(
+            info,
+            "surfMicroservice { docker { jvmOptions = ['-Dvalue=\$(id)'] } }",
+        )
 
         val result = build.runAndFail("generateMicroserviceDockerfile")
 
-        assertContains(result.output, "surfMicroservice.docker.jvmOptions: '-Dvalue=\$(id)' must start with '-'")
+        assertContains(
+            result.output,
+            "surfMicroservice.docker.jvmOptions: '-Dvalue=\$(id)' must start with '-'",
+        )
     }
 
     @Test
@@ -549,7 +665,10 @@ class MicroservicePluginTest {
 
         val result = build.runAndFail("generateMicroserviceDockerfile")
 
-        assertContains(result.output, "surfMicroservice.docker.memoryBudget: '1 GB' is no memory size")
+        assertContains(
+            result.output,
+            "surfMicroservice.docker.memoryBudget: '1 GB' is no memory size",
+        )
     }
 
     @Test
@@ -611,7 +730,7 @@ class MicroservicePluginTest {
                 id 'java-library'
             }
             $DROP_SURF_DEPENDENCIES
-            """
+            """,
         )
         build.javaClass("demo.Launcher", "public static void main(String[] args) {}")
 
@@ -623,8 +742,13 @@ class MicroservicePluginTest {
     }
 
     @Test
-    fun `application plugin applied after the microservice plugin keeps the detected main class`(info: TestInfo) {
-        val build = applicationBuild(info, plugins = listOf("com.gradleup.shadow", MICROSERVICE_PLUGIN, "application"))
+    fun `application plugin applied after the microservice plugin keeps the detected main class`(
+        info: TestInfo,
+    ) {
+        val build = applicationBuild(
+            info,
+            plugins = listOf("com.gradleup.shadow", MICROSERVICE_PLUGIN, "application"),
+        )
         build.javaClass("demo.Launcher", "public static void main(String[] args) {}")
 
         build.run("shadowJar")
@@ -633,8 +757,13 @@ class MicroservicePluginTest {
     }
 
     @Test
-    fun `application plugin applied before the microservice plugin keeps the detected main class`(info: TestInfo) {
-        val build = applicationBuild(info, plugins = listOf("application", "com.gradleup.shadow", MICROSERVICE_PLUGIN))
+    fun `application plugin applied before the microservice plugin keeps the detected main class`(
+        info: TestInfo,
+    ) {
+        val build = applicationBuild(
+            info,
+            plugins = listOf("application", "com.gradleup.shadow", MICROSERVICE_PLUGIN),
+        )
         build.javaClass("demo.Launcher", "public static void main(String[] args) {}")
 
         build.run("shadowJar")
@@ -661,14 +790,20 @@ class MicroservicePluginTest {
     fun `standalone projects with Shadow register the main class detection`(info: TestInfo) {
         val result = standaloneBuild(info).run("tasks", "--all")
 
-        assertContains(result.output, "detectMicroserviceMainClass - Resolves the main class of the microservice.")
+        assertContains(
+            result.output,
+            "detectMicroserviceMainClass - Resolves the main class of the microservice.",
+        )
     }
 
     @Test
     fun `runMicroservice is registered in the application group`(info: TestInfo) {
         val result = standaloneBuild(info).run("tasks", "--group", "application")
 
-        assertContains(result.output, "runMicroservice - Builds the microservice jar and runs it in run/.")
+        assertContains(
+            result.output,
+            "runMicroservice - Builds the microservice jar and runs it in run/.",
+        )
     }
 
     @Test
@@ -682,18 +817,21 @@ class MicroservicePluginTest {
             }
             surfMicroservice { docker { overwrite = true } }
             $SHOW_DEPENDENCIES_TASK
-            """
+            """,
         )
 
         val result = build.run(SHOW_DEPENDENCIES, "tasks", "--all")
 
-        assertContains(result.dependencies(), "api dev.slne.surf.api:surf-api-microservice-api:$MICROSERVICE_VERSION")
+        assertContains(
+            result.dependencies(),
+            "api dev.slne.surf.api:surf-api-microservice-api:$MICROSERVICE_VERSION",
+        )
         assertFalse("generateMicroserviceDockerfile" in result.output)
         assertFalse("runMicroservice" in result.output)
     }
 
-    private fun standaloneBuild(info: TestInfo, configuration: String = ""): TestBuild =
-        TestBuild.create(info.displayName, withSurfApi = true).apply {
+    private fun standaloneBuild(info: TestInfo, configuration: String = ""): TestBuild {
+        return TestBuild.create(info.displayName, withSurfApi = true).apply {
             script(
                 """
                 plugins {
@@ -703,19 +841,24 @@ class MicroservicePluginTest {
                 $configuration
                 $SHOW_DEPENDENCIES_TASK
                 $SHOW_ALL_DEPENDENCIES_TASK
-                """
+                """,
             )
         }
+    }
 
     /**
-     * A plain `java-library` project; [withNatsPlugin] applies a no-op plugin with the surf-nats plugin id.
+     * A plain `java-library` project; [withNatsPlugin] applies a no-op plugin with the surf-nats
+     * plugin id.
      */
     private fun reliabilityBuild(
         info: TestInfo,
         configuration: String = "",
         withNatsPlugin: Boolean = false,
     ): TestBuild = TestBuild.create(info.displayName, withSurfApi = false).apply {
-        if (withNatsPlugin) fakeNatsPlugin()
+        if (withNatsPlugin) {
+            fakeNatsPlugin()
+        }
+
         script(
             """
             plugins {
@@ -725,7 +868,7 @@ class MicroservicePluginTest {
             }
             $configuration
             $SHOW_RESOLVED_TASK
-            """
+            """,
         )
     }
 
@@ -760,10 +903,11 @@ class MicroservicePluginTest {
     }
 
     /**
-     * A plain Java project with Shadow whose surf dependencies are dropped, so its jar builds offline.
+     * A plain Java project with Shadow whose surf dependencies are dropped, so its jar builds
+     * offline.
      */
-    private fun shadowBuild(info: TestInfo, configuration: String = ""): TestBuild =
-        TestBuild.create(info.displayName, withSurfApi = true).apply {
+    private fun shadowBuild(info: TestInfo, configuration: String = ""): TestBuild {
+        return TestBuild.create(info.displayName, withSurfApi = true).apply {
             script(
                 """
                 plugins {
@@ -773,15 +917,20 @@ class MicroservicePluginTest {
                 }
                 $DROP_SURF_DEPENDENCIES
                 $configuration
-                """
+                """,
             )
         }
+    }
 
     /**
      * A plain Java project that applies [plugins] in the given order, one of them `application`.
      */
-    private fun applicationBuild(info: TestInfo, plugins: List<String>, configuration: String = ""): TestBuild =
-        TestBuild.create(info.displayName, withSurfApi = true).apply {
+    private fun applicationBuild(
+        info: TestInfo,
+        plugins: List<String>,
+        configuration: String = "",
+    ): TestBuild {
+        return TestBuild.create(info.displayName, withSurfApi = true).apply {
             val pluginIds = plugins.joinToString(separator = "; ") { "id '$it'" }
             script(
                 """
@@ -791,36 +940,58 @@ class MicroservicePluginTest {
                 }
                 $DROP_SURF_DEPENDENCIES
                 $configuration
-                """
+                """,
             )
         }
+    }
 
     private fun TestBuild.shadowJarFile() = dir.resolve("build/libs/demo-all.jar")
 
-    private fun TestBuild.mainClassOfShadowJar(): String? =
-        JarFile(shadowJarFile()).use { jar -> jar.manifest.mainAttributes.getValue("Main-Class") }
+    private fun TestBuild.mainClassOfShadowJar(): String? {
+        return JarFile(shadowJarFile()).use { jar ->
+            jar.manifest.mainAttributes.getValue("Main-Class")
+        }
+    }
 
-    private fun JarFile.lines(entry: String): List<String> = readEntry(entry).lines().filter { it.isNotBlank() }
+    private fun JarFile.lines(entry: String): List<String> {
+        return readEntry(entry).lines().filter { it.isNotBlank() }
+    }
 
-    private fun JarFile.properties(entry: String): Properties =
-        Properties().apply { load(readEntry(entry).reader()) }
+    private fun JarFile.properties(entry: String): Properties {
+        return Properties().apply { load(readEntry(entry).reader()) }
+    }
 
-    private fun Properties.values(vararg keys: String): Set<String> =
-        keys.flatMap { key -> getProperty(key).split(',') }.toSet()
+    private fun Properties.values(vararg keys: String): Set<String> {
+        return keys
+            .flatMap { key -> getProperty(key).split(',') }
+            .toSet()
+    }
 
     private fun JarFile.readEntry(entry: String): String {
         val jarEntry = checkNotNull(getJarEntry(entry)) { "$entry is missing from ${name}" }
+
         return getInputStream(jarEntry).use { it.readBytes().decodeToString() }
     }
 
-    private fun BuildResult.dependencies(): List<String> =
-        output.lines().filter { it.startsWith(DEPENDENCY_PREFIX) }.map { it.removePrefix(DEPENDENCY_PREFIX) }
+    private fun BuildResult.dependencies(): List<String> {
+        return output.lines().filter { it.startsWith(DEPENDENCY_PREFIX) }.map {
+            it.removePrefix(
+                DEPENDENCY_PREFIX,
+            )
+        }
+    }
 
-    private fun BuildResult.resolvedDependencies(): List<String> =
-        output.lines().filter { it.startsWith(RESOLVED_PREFIX) }.map { it.removePrefix(RESOLVED_PREFIX) }
+    private fun BuildResult.resolvedDependencies(): List<String> {
+        return output.lines().filter { it.startsWith(RESOLVED_PREFIX) }.map {
+            it.removePrefix(
+                RESOLVED_PREFIX,
+            )
+        }
+    }
 
     private companion object {
-        const val LOG4J_PLUGIN_CACHE = "META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat"
+        const val LOG4J_PLUGIN_CACHE =
+            "META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat"
 
         const val MICROSERVICE_VERSION = Constants.SURF_MICROSERVICE_VERSION
         const val MICROSERVICE_PLUGIN = "dev.slne.surf.api.gradle.microservice"
@@ -830,11 +1001,12 @@ class MicroservicePluginTest {
         const val SHOW_RESOLVED = "showResolvedDependencies"
         const val RESOLVED_PREFIX = "[resolved-dependency] "
         const val RELIABILITY = "dev.slne.surf.api:surf-api-microservice-reliability"
-        const val DECLARE_NATS = "dependencies { implementation 'dev.slne.surf.api:surf-api-nats-spring:1.0.0' }"
+        const val DECLARE_NATS =
+            "dependencies { implementation 'dev.slne.surf.api:surf-api-nats-spring:1.0.0' }"
 
         /**
-         * Prints the dependencies of both compile classpaths after their `withDependencies` actions ran, without
-         * resolving the graph; requested capabilities follow in brackets.
+         * Prints the dependencies of both compile classpaths after their `withDependencies` actions
+         * ran, without resolving the graph; requested capabilities follow in brackets.
          */
         const val SHOW_RESOLVED_TASK = """
             tasks.register('showResolvedDependencies') {

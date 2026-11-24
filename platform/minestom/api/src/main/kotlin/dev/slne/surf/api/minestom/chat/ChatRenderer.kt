@@ -25,7 +25,7 @@ fun interface ChatRenderer {
         source: Player,
         sourceDisplayName: Component,
         message: Component,
-        viewer: Audience
+        viewer: Audience,
     ): Component
 
     /**
@@ -50,7 +50,11 @@ fun interface ChatRenderer {
          * @return a rendered chat message
          */
         @ApiStatus.OverrideOnly
-        suspend fun render(source: Player, sourceDisplayName: Component, message: Component): Component
+        suspend fun render(
+            source: Player,
+            sourceDisplayName: Component,
+            message: Component,
+        ): Component
     }
 
     companion object {
@@ -59,10 +63,11 @@ fun interface ChatRenderer {
          * Creates the default renderer, which formats messages with the vanilla `chat.type.text`
          * translation.
          */
-        fun defaultRenderer(): ChatRenderer =
-            ViewerUnawareChatRenderer.Default { _, sourceDisplayName, message ->
+        fun defaultRenderer(): ChatRenderer {
+            return ViewerUnawareChatRenderer.Default { _, sourceDisplayName, message ->
                 Component.translatable("chat.type.text", sourceDisplayName, message)
             }
+        }
 
         /**
          * Creates a [ChatRenderer] that renders the message once and shows the result to every
@@ -70,7 +75,10 @@ fun interface ChatRenderer {
          *
          * @param renderer the viewer-independent renderer
          */
-        fun viewerUnaware(renderer: ViewerUnaware): ChatRenderer =
-            ViewerUnawareChatRenderer.Impl(renderer)
+        fun viewerUnaware(renderer: ViewerUnaware): ChatRenderer {
+            return ViewerUnawareChatRenderer.Impl(
+                renderer,
+            )
+        }
     }
 }

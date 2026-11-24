@@ -11,14 +11,20 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 
 /**
- * Checks that [SurfDatabaseAutoConfiguration] validates a [DatabaseConfig] bean of the application. The start fails
- * before a pool is opened, so nothing here connects to a database.
+ * Checks that [SurfDatabaseAutoConfiguration] validates a [DatabaseConfig] bean of the application.
+ * The start fails before a pool is opened, so nothing here connects to a database.
  */
 class SurfDatabaseAutoConfigurationValidationTest {
 
     @Test
     fun `an application config with a lock timeout outside the valid range fails the start`() {
-        val invalid = DatabaseConfig(pool = PoolConfig(timeouts = PoolConfig.Timeouts(lockTimeoutMillis = 0)))
+        val invalid = DatabaseConfig(
+            pool = PoolConfig(
+                timeouts = PoolConfig.Timeouts(
+                    lockTimeoutMillis = 0,
+                ),
+            ),
+        )
 
         val failure = assertFailsWith<BeanCreationException> {
             AnnotationConfigApplicationContext().apply {

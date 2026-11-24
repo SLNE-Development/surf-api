@@ -11,8 +11,17 @@ class TimestampSerializerTest {
     @Serializable
     private data class Holder(
         @ProtoNumber(1) val single: @Serializable(TimestampSerializer::class) Instant,
-        @ProtoNumber(2) val list: List<@Serializable(TimestampSerializer::class) Instant> = emptyList(),
-        @ProtoNumber(3) val map: Map<String, @Serializable(TimestampSerializer::class) Instant> = emptyMap(),
+        @ProtoNumber(2) val list: List<
+            @Serializable(
+                TimestampSerializer::class,
+            ) Instant,
+            > = emptyList(),
+        @ProtoNumber(3) val map: Map<
+            String,
+            @Serializable(
+                TimestampSerializer::class,
+            ) Instant,
+            > = emptyMap(),
         @ProtoNumber(4) val nullable: @Serializable(TimestampSerializer::class) Instant? = null,
     )
 
@@ -22,7 +31,7 @@ class TimestampSerializerTest {
             TimestampSerializer.descriptor,
             "google.protobuf.Timestamp",
             "seconds" to 1,
-            "nanos" to 2
+            "nanos" to 2,
         )
     }
 

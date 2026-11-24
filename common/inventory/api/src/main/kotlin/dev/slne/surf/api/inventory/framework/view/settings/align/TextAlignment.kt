@@ -5,8 +5,8 @@ import dev.slne.surf.api.inventory.framework.internal.TextAlignmentMath
 /**
  * Defines the horizontal alignment of title text within the inventory header container area.
  *
- * Each entry implements [calculateShift] to return the pixel offset that positions the text
- * at the correct horizontal position given the container geometry described by [TextAlignmentOptions].
+ * Each entry implements [calculateShift] to return the pixel offset that positions the text at the
+ * correct horizontal position given the container geometry described by [TextAlignmentOptions].
  *
  * Alignment is driven by the **rendered** pixel width of the title rather than by its character
  * count, so uppercasing, per-character width overrides and the leading spacing glyph are all
@@ -18,11 +18,13 @@ import dev.slne.surf.api.inventory.framework.internal.TextAlignmentMath
  */
 enum class TextAlignment {
     /**
-     * Aligns the title to the left edge of the container area (plus [TextAlignmentOptions.padding]).
+     * Aligns the title to the left edge of the container area (plus
+     * [TextAlignmentOptions.padding]).
      */
     LEFT {
-        override fun calculateShift(textWidth: Int, options: TextAlignmentOptions): Int =
-            TextAlignmentMath.leftAlignedShift(options.leftShift, options.padding)
+        override fun calculateShift(textWidth: Int, options: TextAlignmentOptions): Int {
+            return TextAlignmentMath.leftAlignedShift(options.leftShift, options.padding)
+        }
     },
 
     /**
@@ -31,13 +33,15 @@ enum class TextAlignment {
     RIGHT {
         override fun calculateShift(
             textWidth: Int,
-            options: TextAlignmentOptions
-        ): Int = TextAlignmentMath.rightAlignedShift(
-            textWidth,
-            options.leftShift,
-            options.padding,
-            options.containerWidth
-        )
+            options: TextAlignmentOptions,
+        ): Int {
+            return TextAlignmentMath.rightAlignedShift(
+                textWidth,
+                options.leftShift,
+                options.padding,
+                options.containerWidth,
+            )
+        }
     },
 
     /**
@@ -46,13 +50,15 @@ enum class TextAlignment {
     CENTER {
         override fun calculateShift(
             textWidth: Int,
-            options: TextAlignmentOptions
-        ): Int = TextAlignmentMath.centerAlignedShift(
-            textWidth,
-            options.leftShift,
-            options.padding,
-            options.containerWidth
-        )
+            options: TextAlignmentOptions,
+        ): Int {
+            return TextAlignmentMath.centerAlignedShift(
+                textWidth,
+                options.leftShift,
+                options.padding,
+                options.containerWidth,
+            )
+        }
     },
     ;
 
@@ -81,12 +87,13 @@ enum class TextAlignment {
          * @param options the character size and spacing options
          * @return the total pixel width of the text
          */
-        fun calculateTextWidth(text: String, options: TextAlignmentOptions): Int =
-            TextAlignmentMath.textWidth(
+        fun calculateTextWidth(text: String, options: TextAlignmentOptions): Int {
+            return TextAlignmentMath.textWidth(
                 text,
                 options.charSize,
                 options.charSpacing,
-                options.charWidths
+                options.charWidths,
             )
+        }
     }
 }

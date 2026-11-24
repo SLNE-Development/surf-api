@@ -22,7 +22,9 @@ object PlayerLimit {
     var maxPlayers: Int?
         get() = limit
         set(value) {
-            require(value == null || value > 0) { "maxPlayers must be greater than zero, was $value" }
+            require(value == null || value > 0) {
+                "maxPlayers must be greater than zero, was $value"
+            }
             limit = value
         }
 

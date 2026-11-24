@@ -21,16 +21,17 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 /**
- * Serves `microservicectl` on a Unix domain socket at [socketPath], restricted to its owner where the file system
- * supports POSIX permissions.
+ * Serves `microservicectl` on a Unix domain socket at [socketPath], restricted to its owner where
+ * the file system supports POSIX permissions.
  *
- * Each connection carries one request and receives the command output followed by an exit code: `0` on success,
- * `1` on a failed command and `2` on a malformed request. A shutdown requested by a command is passed to
- * [requestShutdown] only after the exit code was written.
+ * Each connection carries one request and receives the command output followed by an exit code: `0`
+ * on success, `1` on a failed command and `2` on a malformed request. A shutdown requested by a
+ * command is passed to [requestShutdown] only after the exit code was written.
  *
- * [start] and [stop] must not run concurrently. [stop] closes the socket, cancels running invocations and closes every
- * open connection, so a response write blocked by a client that stops reading fails instead of blocking the
- * shutdown. It then waits up to [stopTimeout] for the invocations to finish and deletes the socket file.
+ * [start] and [stop] must not run concurrently. [stop] closes the socket, cancels running
+ * invocations and closes every open connection, so a response write blocked by a client that stops
+ * reading fails instead of blocking the shutdown. It then waits up to [stopTimeout] for the
+ * invocations to finish and deletes the socket file.
  */
 internal class MicroserviceCommandServer(
     private val dispatcher: MicroserviceCommandDispatcher,
@@ -67,7 +68,10 @@ internal class MicroserviceCommandServer(
         acceptJob = null
         connections?.cancel()
         clients.forEach(::closeQuietly)
-        connections?.let { awaitConnections(it) }
+
+        if (connections != null) {
+            awaitConnections(connections)
+        }
 
         withContext(Dispatchers.IO) { Files.deleteIfExists(socketPath) }
     }
@@ -84,9 +88,11 @@ internal class MicroserviceCommandServer(
         Files.deleteIfExists(socketPath)
 
         val channel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
+
         try {
             channel.bind(UnixDomainSocketAddress.of(socketPath))
             restrictToOwner(socketPath)
+
             return channel
         } catch (exception: Throwable) {
             channel.close()
@@ -96,29 +102,32 @@ internal class MicroserviceCommandServer(
     }
 
     /**
-     * Serves each connection in its own child. A connection that fails does not end the loop, and its channel is
-     * closed even if the child is cancelled before it starts.
+     * Serves each connection in its own child. A connection that fails does not end the loop, and
+     * its channel is closed even if the child is cancelled before it starts.
      *
-     * A channel is tracked before its child is launched. [stop] cancels this loop before closing the tracked channels,
-     * so a channel tracked after that sweep belongs to a child that never runs and is closed on its completion.
+     * A channel is tracked before its child is launched. [stop] cancels this loop before closing
+     * the tracked channels, so a channel tracked after that sweep belongs to a child that never
+     * runs and is closed on its completion.
      */
-    private suspend fun acceptConnections(server: ServerSocketChannel) = supervisorScope {
-        while (isActive) {
-            val client = try {
-                runInterruptible(Dispatchers.IO) {
-                    server.accept()
+    private suspend fun acceptConnections(server: ServerSocketChannel) {
+        supervisorScope {
+            while (isActive) {
+                val client = try {
+                    runInterruptible(Dispatchers.IO) {
+                        server.accept()
+                    }
+                } catch (_: ClosedChannelException) {
+                    return@supervisorScope
                 }
-            } catch (_: ClosedChannelException) {
-                return@supervisorScope
-            }
 
-            clients.add(client)
-            val connectionJob = launch(CoroutineName("MicroserviceCommandConnection")) {
-                handleClient(client)
-            }
-            connectionJob.invokeOnCompletion {
-                clients.remove(client)
-                closeQuietly(client)
+                clients.add(client)
+                val connectionJob = launch(CoroutineName("MicroserviceCommandConnection")) {
+                    handleClient(client)
+                }
+                connectionJob.invokeOnCompletion {
+                    clients.remove(client)
+                    closeQuietly(client)
+                }
             }
         }
     }
@@ -126,15 +135,15 @@ internal class MicroserviceCommandServer(
     private suspend fun handleClient(client: SocketChannel) {
         val input = DataInputStream(
             BufferedInputStream(
-                Channels.newInputStream(client)
-            )
+                Channels.newInputStream(client),
+            ),
         )
         val output = SocketCommandOutput(
             DataOutputStream(
                 BufferedOutputStream(
-                    Channels.newOutputStream(client)
-                )
-            )
+                    Channels.newOutputStream(client),
+                ),
+            ),
         )
 
         val request = try {
@@ -144,6 +153,7 @@ internal class MicroserviceCommandServer(
         } catch (exception: IOException) {
             output.sendError(exception.message ?: "Invalid command request.")
             output.complete(EXIT_INVALID_REQUEST)
+
             return
         }
 
@@ -151,7 +161,7 @@ internal class MicroserviceCommandServer(
             request.label,
             request.args,
             MicroserviceCommandSource.LOCAL_SOCKET,
-            output
+            output,
         )
 
         withContext(Dispatchers.IO) {
@@ -173,13 +183,14 @@ internal class MicroserviceCommandServer(
         try {
             Files.setPosixFilePermissions(
                 path,
-                setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE)
+                setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE),
             )
         } catch (_: UnsupportedOperationException) {
-            log.atInfo().log(
-                "The file system does not support POSIX permissions; %s keeps the default ones.",
-                path
-            )
+            log.atInfo()
+                .log(
+                    "The file system does not support POSIX permissions; %s keeps the default ones.",
+                    path,
+                )
         }
     }
 
@@ -187,12 +198,15 @@ internal class MicroserviceCommandServer(
         try {
             client.close()
         } catch (exception: IOException) {
-            log.atFine().withCause(exception).log("Failed to close a command connection")
+            log.atFine()
+                .withCause(exception)
+                .log("Failed to close a command connection")
         }
     }
 
     /**
-     * Writes response frames. After the first I/O error, for example a disconnected client, it drops all output.
+     * Writes response frames. After the first I/O error, for example a disconnected client, it
+     * drops all output.
      */
     private class SocketCommandOutput(private val output: DataOutputStream) :
         MicroserviceCommandOutput {
@@ -201,16 +215,22 @@ internal class MicroserviceCommandServer(
         @Volatile
         private var failed = false
 
-        override fun sendLine(message: String) = write {
-            MicroserviceCommandProtocol.writeStandardOutput(output, message)
+        override fun sendLine(message: String) {
+            write {
+                MicroserviceCommandProtocol.writeStandardOutput(output, message)
+            }
         }
 
-        override fun sendError(message: String) = write {
-            MicroserviceCommandProtocol.writeStandardError(output, message)
+        override fun sendError(message: String) {
+            write {
+                MicroserviceCommandProtocol.writeStandardError(output, message)
+            }
         }
 
-        fun complete(exitCode: Int) = write {
-            MicroserviceCommandProtocol.writeCompleted(output, exitCode)
+        fun complete(exitCode: Int) {
+            write {
+                MicroserviceCommandProtocol.writeCompleted(output, exitCode)
+            }
         }
 
         private inline fun write(block: () -> Unit) {
@@ -218,6 +238,7 @@ internal class MicroserviceCommandServer(
 
             synchronized(writeLock) {
                 if (failed) return
+
                 try {
                     block()
                     output.flush()

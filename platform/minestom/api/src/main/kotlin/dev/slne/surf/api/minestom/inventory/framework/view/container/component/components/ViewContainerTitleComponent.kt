@@ -1,12 +1,12 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container.component.components
 
 import dev.slne.surf.api.inventory.framework.internal.layoutViewText
-import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
-import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -20,9 +20,9 @@ import net.kyori.adventure.text.format.TextColor
  * above the slot grid.
  *
  * Since the title is positioned by shifting the render cursor, its width has to be known up front,
- * and that width comes from [metrics]: the proportional widths of the client font by default, or the
- * cell width, spacing and casing of a fixed-width resource-pack font. [metrics] is also what applies
- * that spacing and casing to the text, so it has to describe the font passed as [font].
+ * and that width comes from [metrics]: the proportional widths of the client font by default, or
+ * the cell width, spacing and casing of a fixed-width resource-pack font. [metrics] is also what
+ * applies that spacing and casing to the text, so it has to describe the font passed as [font].
  *
  * @param title the inventory title, rendered as-is apart from what [metrics] transforms
  * @param font the Adventure [Key] of the font to render the title in; defaults to the vanilla
@@ -60,14 +60,14 @@ class ViewContainerTitleComponent(
         charSpacing = metrics.charSpacing,
         uppercase = metrics.uppercase,
         spaceShift = metrics.spaceShift,
-        advance = metrics::advance
+        advance = metrics::advance,
     )
 
     override val textureWidth = laidOut.width
 
     override val positionalShift = textAlignment.calculateShift(
         textureWidth,
-        geometry.titleOptions(metrics.charWidths, metrics.charSize, metrics.charSpacing)
+        geometry.titleOptions(metrics.charWidths, metrics.charSize, metrics.charSpacing),
     )
 
     /**
@@ -100,6 +100,7 @@ class ViewContainerTitleComponent(
         var result = title.hashCode()
         result = 31 * result + font.hashCode()
         result = 31 * result + textAlignment.hashCode()
+
         return result
     }
 }

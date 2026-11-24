@@ -31,8 +31,8 @@ object PaginatedDialogTest {
                 PaginationEntry(
                     id = i,
                     name = "Eintrag $i",
-                    displayName = Component.text("Eintrag $i")
-                )
+                    displayName = Component.text("Eintrag $i"),
+                ),
             )
         }
     }
@@ -67,22 +67,22 @@ object PaginatedDialogTest {
                     when (searchType) {
                         SearchType.EQUALS -> entryName.equals(
                             normalizedSearch,
-                            ignoreCase = true
+                            ignoreCase = true,
                         )
 
                         SearchType.CONTAINS -> entryName.contains(
                             normalizedSearch,
-                            ignoreCase = true
+                            ignoreCase = true,
                         )
 
                         SearchType.STARTS_WITH -> entryName.startsWith(
                             normalizedSearch,
-                            ignoreCase = true
+                            ignoreCase = true,
                         )
 
                         SearchType.ENDS_WITH -> entryName.endsWith(
                             normalizedSearch,
-                            ignoreCase = true
+                            ignoreCase = true,
                         )
 
                         null -> true
@@ -116,19 +116,21 @@ object PaginatedDialogTest {
  * Adds the `paginated` subcommand; [pluginScope] keeps the dialog's page buttons working after the
  * command has finished.
  */
-fun CommandAPICommand.paginationDialogTestCommand(pluginScope: CoroutineScope) = subcommand("paginated") {
-    playerExecutorSuspend { player, _ ->
-        paginatedDialog(
-            player = player,
-            query = PaginatedDialogTest.PaginatedEntryQuery,
-            searchable = true,
-            itemBuilder = { entry ->
-                buildText {
-                    text(entry.name)
-                } to entry.dialog
-            },
-            scope = pluginScope
-        )
+fun CommandAPICommand.paginationDialogTestCommand(pluginScope: CoroutineScope): CommandAPICommand {
+    return subcommand("paginated") {
+        playerExecutorSuspend { player, _ ->
+            paginatedDialog(
+                player = player,
+                query = PaginatedDialogTest.PaginatedEntryQuery,
+                searchable = true,
+                itemBuilder = { entry ->
+                    buildText {
+                        text(entry.name)
+                    } to entry.dialog
+                },
+                scope = pluginScope,
+            )
+        }
     }
 }
 
@@ -151,17 +153,19 @@ data class PaginationEntry(
 
             type {
                 multiAction {
-                    action(actionButton {
-                        label {
-                            text("Schließen")
-                        }
-
-                        action {
-                            playerCallback {
-                                it.clearDialogs()
+                    action(
+                        actionButton {
+                            label {
+                                text("Schließen")
                             }
-                        }
-                    })
+
+                            action {
+                                playerCallback {
+                                    it.clearDialogs()
+                                }
+                            }
+                        },
+                    )
                 }
             }
         }

@@ -42,23 +42,38 @@ interface CommandExecutable<SELF : CommandExecutable<SELF>> {
     @PublishedSurfApi
     fun addExecutor(definition: ExecutorDefinition): SELF
 
-    fun executes(executor: (CommandSender, CommandArguments) -> Unit): SELF = addExecutor(
-        ExecutorDefinition.Normal(ExecutorType.ANY) { info -> executor(info.sender, info.args) },
-    )
+    fun executes(executor: (CommandSender, CommandArguments) -> Unit): SELF {
+        return addExecutor(
+            ExecutorDefinition.Normal(ExecutorType.ANY) { info ->
+                executor(
+                    info.sender,
+                    info.args,
+                )
+            },
+        )
+    }
 
-    fun executesPlayer(executor: (Player, CommandArguments) -> Unit): SELF = addExecutor(
-        ExecutorDefinition.Normal(ExecutorType.PLAYER) { info ->
-            val player = info.sender
-            check(player is Player) { "PLAYER executor received ${player::class.qualifiedName}" }
-            executor(player, info.args)
-        },
-    )
+    fun executesPlayer(executor: (Player, CommandArguments) -> Unit): SELF {
+        return addExecutor(
+            ExecutorDefinition.Normal(ExecutorType.PLAYER) { info ->
+                val player = info.sender
+                check(player is Player) {
+                    "PLAYER executor received ${player::class.qualifiedName}"
+                }
+                executor(player, info.args)
+            },
+        )
+    }
 
-    fun executesConsole(executor: (ConsoleSender, CommandArguments) -> Unit): SELF = addExecutor(
-        ExecutorDefinition.Normal(ExecutorType.CONSOLE) { info ->
-            val console = info.sender
-            check(console is ConsoleSender) { "CONSOLE executor received ${console::class.qualifiedName}" }
-            executor(console, info.args)
-        },
-    )
+    fun executesConsole(executor: (ConsoleSender, CommandArguments) -> Unit): SELF {
+        return addExecutor(
+            ExecutorDefinition.Normal(ExecutorType.CONSOLE) { info ->
+                val console = info.sender
+                check(console is ConsoleSender) {
+                    "CONSOLE executor received ${console::class.qualifiedName}"
+                }
+                executor(console, info.args)
+            },
+        )
+    }
 }

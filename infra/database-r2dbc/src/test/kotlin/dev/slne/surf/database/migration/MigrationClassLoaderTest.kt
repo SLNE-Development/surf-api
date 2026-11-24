@@ -6,8 +6,7 @@ import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.URL
-import java.util.Collections
-import java.util.Enumeration
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -24,18 +23,25 @@ class MigrationClassLoaderTest {
      */
     private class PluginLoader(
         private val resources: Map<String, List<URL>> = emptyMap(),
-        private val classes: Map<String, Class<*>> = emptyMap()
+        private val classes: Map<String, Class<*>> = emptyMap(),
     ) : ClassLoader(null) {
-        override fun findClass(name: String): Class<*> = classes[name] ?: throw ClassNotFoundException(name)
+        override fun findClass(name: String): Class<*> {
+            return classes[name]
+                ?: throw ClassNotFoundException(name)
+        }
+
         override fun findResource(name: String): URL? = resources[name]?.firstOrNull()
-        override fun findResources(name: String): Enumeration<URL> =
-            Collections.enumeration(resources[name].orEmpty())
+        override fun findResources(name: String): Enumeration<URL> {
+            return Collections.enumeration(resources[name].orEmpty())
+        }
     }
 
     private val pluginUrl = URI("file:/plugin/V1__init.sql").toURL()
 
-    private fun migrationLoader(plugin: ClassLoader, vararg sqlPaths: String) =
-        MigrationClassLoader(plugin, sqlPaths.toList())
+    private fun migrationLoader(
+        plugin: ClassLoader,
+        vararg sqlPaths: String,
+    ) = MigrationClassLoader(plugin, sqlPaths.toList())
 
     @Test
     fun parentIsTheLibraryClassLoader() {
@@ -44,14 +50,18 @@ class MigrationClassLoaderTest {
 
     @Test
     fun loadsLibraryClassesFromTheLibrary() {
-        val loader = migrationLoader(PluginLoader(classes = mapOf(Flyway::class.java.name to String::class.java)))
+        val loader = migrationLoader(
+            PluginLoader(classes = mapOf(Flyway::class.java.name to String::class.java)),
+        )
 
         assertSame(Flyway::class.java, loader.loadClass(Flyway::class.java.name))
     }
 
     @Test
     fun fallsBackToThePluginForUnknownClasses() {
-        val loader = migrationLoader(PluginLoader(classes = mapOf("plugin.Only" to String::class.java)))
+        val loader = migrationLoader(
+            PluginLoader(classes = mapOf("plugin.Only" to String::class.java)),
+        )
 
         assertSame(String::class.java, loader.loadClass("plugin.Only"))
     }
@@ -67,12 +77,23 @@ class MigrationClassLoaderTest {
     fun findsResourcesOfTheLibrary() {
         val loader = migrationLoader(PluginLoader())
 
-        assertEquals(library.getResource("migrations/plugin_a"), loader.getResource("migrations/plugin_a"))
+        assertEquals(
+            library.getResource("migrations/plugin_a"),
+            loader.getResource("migrations/plugin_a"),
+        )
     }
 
     @Test
     fun findsResourcesOfThePlugin() {
-        val loader = migrationLoader(PluginLoader(resources = mapOf("plugin/V1__init.sql" to listOf(pluginUrl))))
+        val loader = migrationLoader(
+            PluginLoader(
+                resources = mapOf(
+                    "plugin/V1__init.sql" to listOf(
+                        pluginUrl,
+                    ),
+                ),
+            ),
+        )
 
         assertEquals(pluginUrl, loader.getResource("plugin/V1__init.sql"))
         assertEquals(listOf(pluginUrl), loader.getResources("plugin/V1__init.sql").toList())
@@ -97,9 +118,13 @@ class MigrationClassLoaderTest {
     fun pluginSharingTheLibraryResourcesDoesNotDuplicateThem() {
         val expected = library.getResources("migrations/plugin_a").toList()
 
-        listOf(object : ClassLoader(library) {}, library).forEach { plugin ->
-            assertEquals(expected, migrationLoader(plugin).getResources("migrations/plugin_a").toList())
+        for (plugin in listOf(object : ClassLoader(library) {}, library)) {
+            assertEquals(
+                expected,
+                migrationLoader(plugin).getResources("migrations/plugin_a").toList(),
+            )
         }
+
         assertEquals(1, expected.size)
     }
 
@@ -107,7 +132,10 @@ class MigrationClassLoaderTest {
     fun sqlResourcesComeOnlyFromThePlugin() {
         val name = "migrations/plugin_a/V1__init.sql"
         assertNotNull(library.getResource(name))
-        val loader = migrationLoader(PluginLoader(resources = mapOf(name to listOf(pluginUrl))), "migrations/plugin_a")
+        val loader = migrationLoader(
+            PluginLoader(resources = mapOf(name to listOf(pluginUrl))),
+            "migrations/plugin_a",
+        )
 
         assertEquals(pluginUrl, loader.getResource(name))
         assertEquals(listOf(pluginUrl), loader.getResources(name).toList())
@@ -125,6 +153,9 @@ class MigrationClassLoaderTest {
     fun sqlLocationMatchesWholePathSegments() {
         val loader = migrationLoader(PluginLoader(), "migrations/plugin")
 
-        assertEquals(library.getResource("migrations/plugin_a"), loader.getResource("migrations/plugin_a"))
+        assertEquals(
+            library.getResource("migrations/plugin_a"),
+            loader.getResource("migrations/plugin_a"),
+        )
     }
 }

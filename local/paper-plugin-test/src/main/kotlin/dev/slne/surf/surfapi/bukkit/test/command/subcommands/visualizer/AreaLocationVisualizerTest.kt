@@ -9,7 +9,6 @@ import dev.slne.surf.api.paper.util.toVector3d
 import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.surfBean
 import org.bukkit.Location
 import org.bukkit.block.BlockType
@@ -44,8 +43,8 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                         loc1.toVector3d(),
                         loc2.toVector3d(),
                         loc3.toVector3d(),
-                        loc4.toVector3d()
-                    )
+                        loc4.toVector3d(),
+                    ),
                 ).apply {
                     addViewer(sender)
                     startVisualizing()
@@ -56,7 +55,9 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
 
         subcommand("changeEdges") {
             uuidArgument("uid") {
-                includeSuggestions(ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } })
+                includeSuggestions(
+                    ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } },
+                )
             }
             locationArgument("loc1", LocationType.BLOCK_POSITION, true)
             locationArgument("loc2", LocationType.BLOCK_POSITION, true)
@@ -76,8 +77,8 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                             loc1.toVector3d(),
                             loc2.toVector3d(),
                             loc3.toVector3d(),
-                            loc4.toVector3d()
-                        )
+                            loc4.toVector3d(),
+                        ),
                     )
                     println("Visualizer edges updated for UID: $uid")
                 } ?: run {
@@ -88,11 +89,14 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
 
         subcommand("delete") {
             uuidArgument("uid") {
-                includeSuggestions(ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } })
+                includeSuggestions(
+                    ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } },
+                )
             }
 
             anyExecutor { sender, args ->
                 val uid: UUID by args
+
                 if (visualizers.remove(uid) != null) {
                     println("Visualizer with UID $uid deleted successfully.")
                 } else {
@@ -103,5 +107,4 @@ class AreaLocationVisualizerTest(name: String) : CommandAPICommand(name) {
     }
 }
 
-@OptIn(InternalSurfApi::class)
 private val visualizerApi by surfBean<SurfPaperVisualizerApi>()

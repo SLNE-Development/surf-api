@@ -65,9 +65,13 @@ class EntitySelectorParserTest {
             val far = Entity(EntityType.ZOMBIE)
             near.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
             far.setInstance(instance, Pos(20.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntitiesArgument("targets").toDefinition().rawType
-                val result = raw.parse(StringReader("@e[type=minecraft:zombie,sort=nearest]"), players[0])
+                val result = raw.parse(
+                    StringReader("@e[type=minecraft:zombie,sort=nearest]"),
+                    players[0],
+                )
                 assertEquals(listOf(near, far), result)
             } finally {
                 near.remove()
@@ -107,7 +111,10 @@ class EntitySelectorParserTest {
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader(input), players[0])
             }
-            assertTrue(failure.message?.contains("unsupported", ignoreCase = true) == true, failure.message)
+            assertTrue(
+                failure.message?.contains("unsupported", ignoreCase = true) == true,
+                failure.message,
+            )
             assertEquals(input.indexOf("nbt"), failure.cursor)
         }
     }
@@ -125,6 +132,7 @@ class EntitySelectorParserTest {
         withPlayers(env, 1) { instance, players ->
             val zombie = Entity(EntityType.ZOMBIE)
             zombie.setInstance(instance, Pos(3.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntityArgument("target").toDefinition().rawType
                 assertSame(zombie, raw.parse(StringReader(zombie.uuid.toString()), players[0]))
@@ -158,10 +166,16 @@ class EntitySelectorParserTest {
     fun `tag option matches nothing when no entity carries it and everything for an empty tag`(env: Env) {
         withPlayers(env, 2) { _, players ->
             val allowEmpty = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
-            assertEquals(emptyList<Entity>(), allowEmpty.parse(StringReader("@e[tag=foo]"), players[0]))
+            assertEquals(
+                emptyList<Entity>(),
+                allowEmpty.parse(StringReader("@e[tag=foo]"), players[0]),
+            )
 
             val required = EntitiesArgument("targets").toDefinition().rawType
-            assertEquals(players.toSet(), required.parse(StringReader("@e[tag=]"), players[0]).toSet())
+            assertEquals(
+                players.toSet(),
+                required.parse(StringReader("@e[tag=]"), players[0]).toSet(),
+            )
         }
     }
 
@@ -180,9 +194,13 @@ class EntitySelectorParserTest {
             val outsideBlock = Entity(EntityType.ZOMBIE)
             inBlock.setInstance(instance, Pos(0.5, 0.0, 0.5)).join()
             outsideBlock.setInstance(instance, Pos(5.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntitiesArgument("targets").toDefinition().rawType
-                val result = raw.parse(StringReader("@e[type=minecraft:zombie,dx=0,dy=0,dz=0]"), players[0])
+                val result = raw.parse(
+                    StringReader("@e[type=minecraft:zombie,dx=0,dy=0,dz=0]"),
+                    players[0],
+                )
                 assertEquals(listOf(inBlock), result)
             } finally {
                 inBlock.remove()
@@ -198,9 +216,13 @@ class EntitySelectorParserTest {
             val far = Entity(EntityType.ZOMBIE)
             near.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
             far.setInstance(instance, Pos(20.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntitiesArgument("targets").toDefinition().rawType
-                val result = raw.parse(StringReader("@e[type=minecraft:zombie,distance=..5]"), players[0])
+                val result = raw.parse(
+                    StringReader("@e[type=minecraft:zombie,distance=..5]"),
+                    players[0],
+                )
                 assertEquals(listOf(near), result)
 
                 val input = "@e[type=minecraft:zombie,distance=5..1]"
@@ -220,10 +242,14 @@ class EntitySelectorParserTest {
         withPlayers(env, 1) { instance, players ->
             val zombie = Entity(EntityType.ZOMBIE)
             zombie.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntitiesArgument("targets").toDefinition().rawType
 
-                val excludingZombies = raw.parse(StringReader("@e[type=!minecraft:zombie]"), players[0])
+                val excludingZombies = raw.parse(
+                    StringReader("@e[type=!minecraft:zombie]"),
+                    players[0],
+                )
                 assertEquals(players.toSet(), excludingZombies.toSet())
 
                 val everyone = buildSet<Entity> {
@@ -246,7 +272,10 @@ class EntitySelectorParserTest {
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader(input), players[0])
             }
-            assertTrue(failure.message?.contains("unsupported", ignoreCase = true) == true, failure.message)
+            assertTrue(
+                failure.message?.contains("unsupported", ignoreCase = true) == true,
+                failure.message,
+            )
             assertEquals(input.indexOf("scores"), failure.cursor)
         }
     }
@@ -258,19 +287,27 @@ class EntitySelectorParserTest {
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader("@e[scores={foo=bar}]"), players[0])
             }
-            assertFalse(failure.message?.contains("unsupported", ignoreCase = true) == true, failure.message)
+            assertFalse(
+                failure.message?.contains("unsupported", ignoreCase = true) == true,
+                failure.message,
+            )
         }
     }
 
     @Test
-    fun `advancements option consumes its grammar, including nested criteria, then is rejected as unsupported`(env: Env) {
+    fun `advancements option consumes its grammar, including nested criteria, then is rejected as unsupported`(
+        env: Env,
+    ) {
         withPlayers(env, 1) { _, players ->
             val raw = EntitiesArgument("targets").toDefinition().rawType
             val input = "@e[advancements={story/root={met_villager=true}}]"
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader(input), players[0])
             }
-            assertTrue(failure.message?.contains("unsupported", ignoreCase = true) == true, failure.message)
+            assertTrue(
+                failure.message?.contains("unsupported", ignoreCase = true) == true,
+                failure.message,
+            )
             assertEquals(input.indexOf("advancements"), failure.cursor)
         }
     }
@@ -282,7 +319,10 @@ class EntitySelectorParserTest {
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader("@e[advancements={story/root true}]"), players[0])
             }
-            assertFalse(failure.message?.contains("unsupported", ignoreCase = true) == true, failure.message)
+            assertFalse(
+                failure.message?.contains("unsupported", ignoreCase = true) == true,
+                failure.message,
+            )
         }
     }
 
@@ -294,7 +334,10 @@ class EntitySelectorParserTest {
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 raw.parse(StringReader(input), players[0])
             }
-            assertTrue(failure.message?.contains("unsupported", ignoreCase = true) == true, failure.message)
+            assertTrue(
+                failure.message?.contains("unsupported", ignoreCase = true) == true,
+                failure.message,
+            )
             assertEquals(input.indexOf("predicate"), failure.cursor)
         }
     }
@@ -351,6 +394,7 @@ class EntitySelectorParserTest {
             val nearOrigin = Entity(EntityType.ZOMBIE)
             nearSender.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
             nearOrigin.setInstance(instance, Pos(100.0, 0.0, 100.0)).join()
+
             try {
                 val raw = EntitiesArgument("targets").toDefinition().rawType
                 val nearest = raw.parse(
@@ -378,9 +422,13 @@ class EntitySelectorParserTest {
             val clear = Entity(EntityType.ZOMBIE)
             overlapping.setInstance(instance, Pos(1.25, 0.0, 0.5)).join()
             clear.setInstance(instance, Pos(1.5, 0.0, 0.5)).join()
+
             try {
                 val raw = EntitiesArgument("targets").toDefinition().rawType
-                val result = raw.parse(StringReader("@e[type=minecraft:zombie,dx=0,dy=0,dz=0]"), players[0])
+                val result = raw.parse(
+                    StringReader("@e[type=minecraft:zombie,dx=0,dy=0,dz=0]"),
+                    players[0],
+                )
                 assertEquals(listOf(overlapping), result)
             } finally {
                 overlapping.remove()
@@ -393,7 +441,13 @@ class EntitySelectorParserTest {
     fun `negative distance and level bounds are rejected at the value's start`(env: Env) {
         withPlayers(env, 1) { _, players ->
             val raw = EntitiesArgument("targets").toDefinition().rawType
-            listOf("distance=..-1", "distance=-5..5", "level=-3..", "level=..-1").forEach { option ->
+            val options = listOf(
+                "distance=..-1",
+                "distance=-5..5",
+                "level=-3..",
+                "level=..-1",
+            )
+            for (option in options) {
                 val input = "@e[$option]"
                 val failure = assertThrows(CommandSyntaxException::class.java) {
                     raw.parse(StringReader(input), players[0])
@@ -413,11 +467,15 @@ class EntitySelectorParserTest {
             val far = Entity(EntityType.ZOMBIE)
             near.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
             far.setInstance(instance, Pos(20.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntityArgument("target").toDefinition().rawType
                 assertSame(players[0], raw.parse(StringReader("@n"), players[0]))
                 assertSame(near, raw.parse(StringReader("@n[type=minecraft:zombie]"), players[0]))
-                assertSame(far, raw.parse(StringReader("@n[type=minecraft:zombie,x=20]"), players[0]))
+                assertSame(
+                    far,
+                    raw.parse(StringReader("@n[type=minecraft:zombie,x=20]"), players[0]),
+                )
             } finally {
                 near.remove()
                 far.remove()
@@ -431,10 +489,17 @@ class EntitySelectorParserTest {
             val dead = LivingEntity(EntityType.ZOMBIE)
             dead.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
             dead.kill()
+
             try {
                 val raw = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
-                assertEquals(emptyList<Entity>(), raw.parse(StringReader("@e[type=minecraft:zombie]"), players[0]))
-                assertEquals(emptyList<Entity>(), raw.parse(StringReader("@n[type=minecraft:zombie]"), players[0]))
+                assertEquals(
+                    emptyList<Entity>(),
+                    raw.parse(StringReader("@e[type=minecraft:zombie]"), players[0]),
+                )
+                assertEquals(
+                    emptyList<Entity>(),
+                    raw.parse(StringReader("@n[type=minecraft:zombie]"), players[0]),
+                )
             } finally {
                 dead.remove()
             }
@@ -446,14 +511,30 @@ class EntitySelectorParserTest {
         withPlayers(env, 1) { instance, players ->
             val zombie = Entity(EntityType.ZOMBIE)
             zombie.setInstance(instance, Pos(2.0, 0.0, 0.0, 270f, 30f)).join()
+
             try {
                 val raw = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
                 val prefix = "@e[type=minecraft:zombie,"
-                assertEquals(listOf(zombie), raw.parse(StringReader(prefix + "y_rotation=-135..-45]"), players[0]))
-                assertEquals(emptyList<Entity>(), raw.parse(StringReader(prefix + "y_rotation=45..135]"), players[0]))
-                assertEquals(listOf(zombie), raw.parse(StringReader(prefix + "x_rotation=20..40]"), players[0]))
-                assertEquals(emptyList<Entity>(), raw.parse(StringReader(prefix + "x_rotation=..10]"), players[0]))
-                assertEquals(listOf(zombie), raw.parse(StringReader(prefix + "y_rotation=200..]"), players[0]))
+                assertEquals(
+                    listOf(zombie),
+                    raw.parse(StringReader(prefix + "y_rotation=-135..-45]"), players[0]),
+                )
+                assertEquals(
+                    emptyList<Entity>(),
+                    raw.parse(StringReader(prefix + "y_rotation=45..135]"), players[0]),
+                )
+                assertEquals(
+                    listOf(zombie),
+                    raw.parse(StringReader(prefix + "x_rotation=20..40]"), players[0]),
+                )
+                assertEquals(
+                    emptyList<Entity>(),
+                    raw.parse(StringReader(prefix + "x_rotation=..10]"), players[0]),
+                )
+                assertEquals(
+                    listOf(zombie),
+                    raw.parse(StringReader(prefix + "y_rotation=200..]"), players[0]),
+                )
             } finally {
                 zombie.remove()
             }
@@ -467,19 +548,32 @@ class EntitySelectorParserTest {
             val zombie = Entity(EntityType.ZOMBIE)
             skeleton.setInstance(instance, Pos(2.0, 0.0, 0.0)).join()
             zombie.setInstance(instance, Pos(3.0, 0.0, 0.0)).join()
+
             try {
                 val raw = EntitiesArgument("targets", allowEmpty = true).toDefinition().rawType
-                assertEquals(listOf(skeleton), raw.parse(StringReader("@e[type=#minecraft:skeletons]"), players[0]))
+                assertEquals(
+                    listOf(skeleton),
+                    raw.parse(StringReader("@e[type=#minecraft:skeletons]"), players[0]),
+                )
                 assertEquals(
                     setOf(zombie, players[0]),
                     raw.parse(StringReader("@e[type=!#minecraft:skeletons]"), players[0]).toSet(),
                 )
-                assertEquals(emptyList<Entity>(), raw.parse(StringReader("@e[type=#minecraft:no_such_tag]"), players[0]))
+                assertEquals(
+                    emptyList<Entity>(),
+                    raw.parse(StringReader("@e[type=#minecraft:no_such_tag]"), players[0]),
+                )
                 assertThrows(CommandSyntaxException::class.java) {
-                    raw.parse(StringReader("@e[type=minecraft:zombie,type=#minecraft:skeletons]"), players[0])
+                    raw.parse(
+                        StringReader("@e[type=minecraft:zombie,type=#minecraft:skeletons]"),
+                        players[0],
+                    )
                 }
                 assertThrows(CommandSyntaxException::class.java) {
-                    raw.parse(StringReader("@e[type=#minecraft:skeletons,type=#minecraft:skeletons]"), players[0])
+                    raw.parse(
+                        StringReader("@e[type=#minecraft:skeletons,type=#minecraft:skeletons]"),
+                        players[0],
+                    )
                 }
             } finally {
                 skeleton.remove()
@@ -515,6 +609,7 @@ class EntitySelectorParserTest {
     private fun withPlayers(env: Env, count: Int, block: (Instance, List<Player>) -> Unit) {
         val instance = env.createEmptyInstance()
         val players = mutableListOf<Player>()
+
         try {
             repeat(count) { index ->
                 val player = connect(env.createConnection(profile("Player$index")), instance)
@@ -537,6 +632,7 @@ class EntitySelectorParserTest {
                 .onSuccess(connected::complete)
                 .onFailure(connected::completeExceptionally)
         }
+
         return connected.join()
     }
 

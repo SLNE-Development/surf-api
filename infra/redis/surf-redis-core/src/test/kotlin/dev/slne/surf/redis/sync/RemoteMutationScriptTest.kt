@@ -79,6 +79,7 @@ class RemoteMutationScriptTest {
 
     private fun read(path: String): String {
         val stream = assertNotNull(javaClass.getResourceAsStream(path), path)
+
         return stream.bufferedReader().use { it.readText() }
     }
 }

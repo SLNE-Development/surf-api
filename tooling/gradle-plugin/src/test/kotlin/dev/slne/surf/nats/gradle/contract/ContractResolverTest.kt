@@ -19,7 +19,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * What [ContractResolver] decides for valid declarations, read from the contract instead of generated text.
+ * What [ContractResolver] decides for valid declarations, read from the contract instead of
+ * generated text.
  */
 class ContractResolverTest {
     @TempDir
@@ -40,11 +41,13 @@ class ContractResolverTest {
 
     private fun generated(vararg simpleNames: String) = ClassName(PACKAGE, *simpleNames)
 
-    private fun ContractHarness.member(message: String, name: String): MessageMember =
-        members("$PACKAGE.$message").single { it.name == name }
+    private fun ContractHarness.member(message: String, name: String): MessageMember {
+        return members("$PACKAGE.$message").single { it.name == name }
+    }
 
-    private fun ContractHarness.field(message: String, name: String): FieldMember =
-        member(message, name) as FieldMember
+    private fun ContractHarness.field(message: String, name: String): FieldMember {
+        return member(message, name) as FieldMember
+    }
 
     private fun assertProperty(member: MessageMember, type: TypeName, default: String?) {
         assertEquals(type, member.type, "type of ${member.name}")
@@ -71,18 +74,44 @@ class ContractResolverTest {
             }
             """,
             mappings = listOf(
-                TypeMapping(ProtoType.get("$PACKAGE.Level"), level.canonicalName, levelSerializer.canonicalName),
+                TypeMapping(
+                    ProtoType.get("$PACKAGE.Level"),
+                    level.canonicalName,
+                    levelSerializer.canonicalName,
+                ),
             ),
         )
-        val mappedLevel = level.copy(annotations = listOf(KotlinTypes.serializableWith(levelSerializer)))
+        val mappedLevel = level.copy(
+            annotations = listOf(
+                KotlinTypes.serializableWith(
+                    levelSerializer,
+                ),
+            ),
+        )
         val part = generated("Part")
 
         assertProperty(contract.member("Labels", "requiredInt"), INT, default = null)
-        assertProperty(contract.member("Labels", "optionalInt"), INT.copy(nullable = true), default = "null")
+        assertProperty(
+            contract.member("Labels", "optionalInt"),
+            INT.copy(nullable = true),
+            default = "null",
+        )
         assertProperty(contract.member("Labels", "hexDefault"), INT, default = "16")
-        assertProperty(contract.member("Labels", "color"), generated("Color"), default = "$PACKAGE.Color.UNSPECIFIED")
-        assertProperty(contract.member("Labels", "level"), mappedLevel.copy(nullable = true), default = "null")
-        assertProperty(contract.member("Labels", "optionalPart"), part.copy(nullable = true), default = "null")
+        assertProperty(
+            contract.member("Labels", "color"),
+            generated("Color"),
+            default = "$PACKAGE.Color.UNSPECIFIED",
+        )
+        assertProperty(
+            contract.member("Labels", "level"),
+            mappedLevel.copy(nullable = true),
+            default = "null",
+        )
+        assertProperty(
+            contract.member("Labels", "optionalPart"),
+            part.copy(nullable = true),
+            default = "null",
+        )
         assertProperty(contract.member("Labels", "requiredPart"), part, default = null)
     }
 
@@ -97,7 +126,7 @@ class ContractResolverTest {
               map<fixed32, string> labels = 4;
               map<string, int32> counts = 5;
             }
-            """
+            """,
         )
 
         val deltas = contract.field("Collections", "deltas")
@@ -127,7 +156,7 @@ class ContractResolverTest {
               optional double score = 5;
               required int32 count = 6;
             }
-            """
+            """,
         )
 
         assertEquals(
@@ -167,12 +196,13 @@ class ContractResolverTest {
     @Test
     fun `enum entries drop the value prefix and keep declaration order`() {
         val contract = contract(
-            "enum ResultKind { RESULT_KIND_UNSPECIFIED = 0; RESULT_KIND_VALUE = 2; RESULT_KIND_ANSWER = 1; }"
+            "enum ResultKind { RESULT_KIND_UNSPECIFIED = 0; RESULT_KIND_VALUE = 2; RESULT_KIND_ANSWER = 1; }",
         )
 
         assertEquals(
             listOf("UNSPECIFIED" to 0, "VALUE" to 2, "ANSWER" to 1),
-            contract.entries("$PACKAGE.ResultKind").map { (name, constant) -> name to constant.tag },
+            contract.entries("$PACKAGE.ResultKind")
+                .map { (name, constant) -> name to constant.tag },
         )
     }
 
@@ -197,7 +227,7 @@ class ContractResolverTest {
             service PlainService { rpc Get(google.protobuf.Empty) returns (Reply); }
             message Query { required int64 id = 1; }
             message Reply { optional string value = 1; }
-            """
+            """,
         )
         val query = generated("Query")
 
@@ -214,7 +244,12 @@ class ContractResolverTest {
             finder.map { it.resolution.recipients },
         )
         assertEquals(
-            listOf(ResultKindOption.ANSWER, ResultKindOption.UNIT, ResultKindOption.VALUE, ResultKindOption.ANSWER),
+            listOf(
+                ResultKindOption.ANSWER,
+                ResultKindOption.UNIT,
+                ResultKindOption.VALUE,
+                ResultKindOption.ANSWER,
+            ),
             finder.map { it.resolution.resultKind },
         )
 

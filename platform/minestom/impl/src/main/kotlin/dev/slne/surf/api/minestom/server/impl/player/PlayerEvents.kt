@@ -102,7 +102,11 @@ internal object PlayerEvents {
             player = player,
             playerCount = playerCount,
             maxPlayers = maxPlayers,
-            result = if (full) AsyncPlayerCountEvent.Result.KICK_FULL else AsyncPlayerCountEvent.Result.ALLOWED,
+            result = if (full) {
+                AsyncPlayerCountEvent.Result.KICK_FULL
+            } else {
+                AsyncPlayerCountEvent.Result.ALLOWED
+            },
             kickMessage = SERVER_FULL,
         )
         EventDispatcher.call(event)
@@ -110,6 +114,7 @@ internal object PlayerEvents {
         if (event.isAllowed) return true
 
         player.kick(event.kickMessage)
+
         return false
     }
 
@@ -158,7 +163,13 @@ internal object PlayerEvents {
         for (player in ConnectionManager.onlinePlayers) {
             player.sendMessage(message)
         }
-        Audiences.console().sendMessage(GlobalTranslator.render(message, MinestomAdventure.getDefaultLocale()))
+
+        Audiences.console().sendMessage(
+            GlobalTranslator.render(
+                message,
+                MinestomAdventure.getDefaultLocale(),
+            ),
+        )
     }
 
     private fun reportPlayerCount(event: ServerListPingEvent) {
@@ -170,7 +181,7 @@ internal object PlayerEvents {
                 Status.PlayerInfo.builder(playerInfo)
                     .onlinePlayers(PlayerLimit.playerCount)
                     .maxPlayers(maxPlayers)
-                    .build()
+                    .build(),
             )
             .build()
     }
@@ -180,6 +191,7 @@ internal object PlayerEvents {
      */
     private fun registerTranslations() {
         if (translationsRegistered) return
+
         translationsRegistered = true
 
         val store = TranslationStore.messageFormat(Key.key("surf", "player"))

@@ -10,5 +10,5 @@ data class PageResult<T>(
 data class CursorResult<T>(
     val items: List<T>,
     val nextCursor: String?,
-    val hasMore: Boolean
+    val hasMore: Boolean,
 )

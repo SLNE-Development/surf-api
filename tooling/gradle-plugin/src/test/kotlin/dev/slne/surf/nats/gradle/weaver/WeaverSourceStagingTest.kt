@@ -21,8 +21,12 @@ internal class WeaverSourceStagingTest : TestKitSupport() {
 
     private val staged get() = build.resolve("build/surf-nats/weaver-source")
 
-    private fun stagedFiles(): Set<String> =
-        staged.walkTopDown().filter { it.isFile }.map { it.relativeTo(staged).invariantSeparatorsPath }.toSet()
+    private fun stagedFiles(): Set<String> {
+        return staged.walkTopDown()
+            .filter { it.isFile }
+            .map { it.relativeTo(staged).invariantSeparatorsPath }
+            .toSet()
+    }
 
     private fun twoSourceDirectories() {
         build.settings()
@@ -30,11 +34,14 @@ internal class WeaverSourceStagingTest : TestKitSupport() {
             """
             ${TestBuild.PLUGIN}
             surfNats { protoSourceDirs.from('src/extra/proto') }
-            """
+            """,
         )
         build.proto(CONTRACT_PATH, TestBuild.contract("message Main { required string a = 1; }"))
         build.file("src/main/proto/README.txt", "not a proto")
-        build.file("src/extra/proto/surf/extra/v1/extra.proto", TestBuild.contract("message Extra { required string a = 1; }"))
+        build.file(
+            "src/extra/proto/surf/extra/v1/extra.proto",
+            TestBuild.contract("message Extra { required string a = 1; }"),
+        )
         build.file("src/extra/proto/notes.md", "not a proto")
     }
 
@@ -67,7 +74,7 @@ internal class WeaverSourceStagingTest : TestKitSupport() {
             ${TestBuild.PLUGIN}
             surfNats { protoSourceDirs.from('src/extra/proto') }
             ${TestBuild.showTask("source" to "weaver.publishing.source.get().asFile.absolutePath")}
-            """
+            """,
         )
 
         val shown = build.run("show", "-q").shown()
@@ -87,9 +94,27 @@ internal class WeaverSourceStagingTest : TestKitSupport() {
         project.pluginManager.apply(SurfNatsPlugin::class.java)
         val weaver = project.extensions.getByType(WeaverExtension::class.java)
 
-        assertFailsWith<IllegalStateException> { weaver.publishing.source.set(projectDir.resolve("other")) }
-        assertFailsWith<IllegalStateException> { weaver.publishing.source.fileValue(projectDir.resolve("other")) }
-        assertTrue(weaver.publishing.source.get().asFile.path.replace('\\', '/').endsWith("build/surf-nats/weaver-source"))
-        assertFalse(weaver.publishing.source.get().asFile.path.replace('\\', '/').endsWith("src/main/proto"))
+        assertFailsWith<IllegalStateException> {
+            weaver.publishing.source.set(projectDir.resolve("other"))
+        }
+        assertFailsWith<IllegalStateException> {
+            weaver.publishing.source.fileValue(
+                projectDir.resolve(
+                    "other",
+                ),
+            )
+        }
+        assertTrue(
+            weaver.publishing.source.get().asFile.path.replace(
+                '\\',
+                '/',
+            ).endsWith("build/surf-nats/weaver-source"),
+        )
+        assertFalse(
+            weaver.publishing.source.get().asFile.path.replace(
+                '\\',
+                '/',
+            ).endsWith("src/main/proto"),
+        )
     }
 }

@@ -34,7 +34,7 @@ class RedisConfigLocationTest {
 
     @Test
     fun `the configuration of the retired Minestom plugin is copied`() {
-        listOf("surf-api-redis-minestom", "surf-redis-minestom").forEach { legacy ->
+        for (legacy in listOf("surf-api-redis-minestom", "surf-redis-minestom")) {
             val pluginsFolder = plugins.resolve("for-$legacy")
             writeConfig(pluginsFolder.resolve(legacy), "host: $legacy")
 

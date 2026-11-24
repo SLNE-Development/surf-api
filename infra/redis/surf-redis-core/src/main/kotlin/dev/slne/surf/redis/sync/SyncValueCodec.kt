@@ -16,7 +16,7 @@ internal interface SyncValueCodec<T : Any> {
 
 internal class JsonSyncValueCodec<T : Any>(
     private val api: RedisApi,
-    private val serializer: KSerializer<T>
+    private val serializer: KSerializer<T>,
 ) : SyncValueCodec<T> {
     override val descriptor: String? = null
 
@@ -26,29 +26,32 @@ internal class JsonSyncValueCodec<T : Any>(
 
 internal class BinarySyncValueCodec<T : Any>(
     private val codec: RedisCodec<T>,
-    private val context: String
+    private val context: String,
 ) : SyncValueCodec<T> {
     override val descriptor: String = codecDescriptor(codec)
 
     override fun encode(value: T): String {
         val raw = Unpooled.buffer(DEFAULT_INITIAL_CAPACITY)
+
         try {
             codec.encode(raw, value)
             val size = raw.readableBytes()
+
             if (size > MAX_BINARY_VALUE_SIZE) {
                 throw RedisCodecException(
-                    "Codec '${codec.codecId}' produced $size bytes for $context; maximum is $MAX_BINARY_VALUE_SIZE"
+                    "Codec '${codec.codecId}' produced $size bytes for $context; maximum is $MAX_BINARY_VALUE_SIZE",
                 )
             }
 
             val bytes = ByteBufUtil.getBytes(raw, raw.readerIndex(), size, false)
+
             return BASE64_ENCODER.encodeToString(bytes)
         } catch (e: RedisCodecException) {
             throw e
         } catch (e: Exception) {
             throw RedisCodecException(
                 "Codec '${codec.codecId}' failed to encode a value for $context",
-                e
+                e,
             )
         } finally {
             raw.release()
@@ -58,7 +61,7 @@ internal class BinarySyncValueCodec<T : Any>(
     override fun decode(value: String): T {
         if (value.length > MAX_BASE64_VALUE_SIZE) {
             throw RedisCodecException(
-                "Encoded value for $context is ${value.length} characters; maximum is $MAX_BASE64_VALUE_SIZE"
+                "Encoded value for $context is ${value.length} characters; maximum is $MAX_BASE64_VALUE_SIZE",
             )
         }
 
@@ -67,24 +70,27 @@ internal class BinarySyncValueCodec<T : Any>(
         } catch (e: IllegalArgumentException) {
             throw RedisCodecException(
                 "Invalid binary value for $context using codec '${codec.codecId}'",
-                e
+                e,
             )
         }
         val decoded = Unpooled.wrappedBuffer(bytes)
+
         try {
             val result = codec.decode(decoded)
+
             if (decoded.isReadable) {
                 throw RedisCodecException(
-                    "Codec '${codec.codecId}' left ${decoded.readableBytes()} unread bytes while decoding $context"
+                    "Codec '${codec.codecId}' left ${decoded.readableBytes()} unread bytes while decoding $context",
                 )
             }
+
             return result
         } catch (e: RedisCodecException) {
             throw e
         } catch (e: Exception) {
             throw RedisCodecException(
                 "Codec '${codec.codecId}' failed to decode a value for $context",
-                e
+                e,
             )
         } finally {
             decoded.release()
@@ -103,7 +109,10 @@ internal class BinarySyncValueCodec<T : Any>(
 internal fun codecDescriptor(codec: RedisCodec<*>): String {
     val id = codec.codecId
     require(id.isNotBlank()) { "Redis codec ID must not be blank" }
-    require(id.length <= 512) { "Redis codec ID is too long (${id.length}); maximum is 512 characters" }
+    require(id.length <= 512) {
+        "Redis codec ID is too long (${id.length}); maximum is 512 characters"
+    }
     require(codec.version > 0) { "Redis codec version must be positive: ${codec.version}" }
+
     return "surf-codec-v1:${id.length}:$id:${codec.version}"
 }

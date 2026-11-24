@@ -25,7 +25,7 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
         return object : Decoder {
             override fun unpack(
                 signature: MessageSignature?,
-                body: SignedMessageBody
+                body: SignedMessageBody,
             ): PlayerChatMessage {
                 if (signature == null) {
                     throw DecodeException(DecodeException.MISSING_PROFILE_KEY)
@@ -49,7 +49,7 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
                     signature = signature,
                     signedBody = body,
                     unsignedContent = null,
-                    filterMask = FILTER_MASK_PASS_THROUGH
+                    filterMask = FILTER_MASK_PASS_THROUGH,
                 )
 
                 if (!unpacked.verify(signatureValidator)) {
@@ -60,11 +60,12 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
                 if (unpacked.hasExpiredServer(Instant.now())) {
                     LOGGER.warn(
                         "Received expired chat: '{}'. Is the client/server system time unsynchronized?",
-                        body.content
+                        body.content,
                     )
                 }
 
                 nextLink = link.advance()
+
                 return unpacked
             }
 
@@ -84,8 +85,9 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
             val EXPIRED_PROFILE_KEY: Component = translatable("chat.disabled.expiredProfileKey")
             val INVALID_SIGNATURE: Component = translatable("chat.disabled.invalid_signature")
             val OUT_OF_ORDER_CHAT: Component = translatable("chat.disabled.out_of_order_chat")
-            val INVALID_COMMAND_SIGNATURE: Component =
-                translatable("chat.disabled.invalid_command_signature")
+            val INVALID_COMMAND_SIGNATURE: Component = translatable(
+                "chat.disabled.invalid_command_signature",
+            )
         }
     }
 
@@ -95,14 +97,18 @@ internal class SignedMessageChain(profileId: UUID, sessionId: UUID) {
         fun setChainBroken() {}
 
         companion object {
-            fun unsigned(profileId: UUID, enforcesSecureChat: BooleanSupplier) =
-                Decoder { _, body ->
+            fun unsigned(
+                profileId: UUID,
+                enforcesSecureChat: BooleanSupplier,
+            ): SignedMessageChain.Decoder {
+                return Decoder { _, body ->
                     if (enforcesSecureChat.asBoolean) {
                         throw DecodeException(DecodeException.MISSING_PROFILE_KEY)
                     }
 
                     PlayerChatMessage.unsigned(profileId, body.content)
                 }
+            }
         }
     }
 }

@@ -25,12 +25,13 @@ sealed class DisplaySettings : Cloneable {
     var billboardConstraints: Billboard = Billboard.FIXED
 
     abstract fun build(): DisplaySettings
-    public override fun clone() = super.clone() as DisplaySettings
+    public override fun clone(): DisplaySettings = super.clone() as DisplaySettings
 
     companion object {
         @Suppress("UNCHECKED_CAST")
         inline fun <T : DisplaySettings> buildSettings(builder: T, block: T.() -> Unit): T {
             builder.apply(block)
+
             return builder.build() as T
         }
     }
@@ -44,8 +45,9 @@ class ItemDisplaySettings : DisplaySettings() {
     override fun build(): ItemDisplaySettings = this
 
     companion object {
-        fun create(block: ItemDisplaySettings.() -> Unit) =
-            buildSettings(ItemDisplaySettings(), block)
+        fun create(block: ItemDisplaySettings.() -> Unit): ItemDisplaySettings {
+            return buildSettings(ItemDisplaySettings(), block)
+        }
     }
 }
 
@@ -59,8 +61,9 @@ class TextDisplaySettings : DisplaySettings() {
     override fun build(): TextDisplaySettings = this
 
     companion object {
-        fun create(block: TextDisplaySettings.() -> Unit) =
-            buildSettings(TextDisplaySettings(), block)
+        fun create(block: TextDisplaySettings.() -> Unit): TextDisplaySettings {
+            return buildSettings(TextDisplaySettings(), block)
+        }
     }
 }
 
@@ -69,11 +72,12 @@ class BlockDisplaySettings : DisplaySettings() {
     var blockData: BlockData = Material.AIR.createBlockData()
 
     override fun build(): BlockDisplaySettings = this
-    override fun clone() = super.clone() as BlockDisplaySettings
+    override fun clone(): BlockDisplaySettings = super.clone() as BlockDisplaySettings
 
     companion object {
-        fun create(block: BlockDisplaySettings.() -> Unit) =
-            buildSettings(BlockDisplaySettings(), block)
+        fun create(block: BlockDisplaySettings.() -> Unit): BlockDisplaySettings {
+            return buildSettings(BlockDisplaySettings(), block)
+        }
 
         operator fun invoke(block: BlockDisplaySettings.() -> Unit): BlockDisplaySettings {
             return create(block)
@@ -90,8 +94,9 @@ class SignBlockUpdateSettings {
         if (front) frontText = text else backText = text
     }
 
-    override fun toString(): String =
-        "SignBlockUpdateSettings(frontText=$frontText, backText=$backText)"
+    override fun toString(): String {
+        return "SignBlockUpdateSettings(frontText=$frontText, backText=$backText)"
+    }
 
     @SettingsDsl
     class SignText {
@@ -100,8 +105,9 @@ class SignBlockUpdateSettings {
         var line3: Component = Component.empty()
         var line4: Component = Component.empty()
 
-        override fun toString(): String =
-            "SignText(line1=$line1, line2=$line2, line3=$line3, line4=$line4)"
+        override fun toString(): String {
+            return "SignText(line1=$line1, line2=$line2, line3=$line3, line4=$line4)"
+        }
 
         companion object {
             fun empty(): SignText = SignText()

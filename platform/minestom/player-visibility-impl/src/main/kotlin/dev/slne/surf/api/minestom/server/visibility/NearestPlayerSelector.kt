@@ -31,9 +31,15 @@ internal class NearestPlayerSelector(
 ) {
     init {
         require(maxVisible > 0) { "maxVisible must be greater than 0" }
-        require(activateAt >= maxVisible) { "activateAt must be greater than or equal to maxVisible" }
-        require(deactivateBelow in 1..maxVisible && deactivateBelow < activateAt) { "deactivateBelow must be between 1 and maxVisible, and less than activateAt" }
-        require(retentionDistanceFactor > 0.0 && retentionDistanceFactor <= 1.0) { "retentionDistanceFactor must be between 0.0 and 1.0" }
+        require(activateAt >= maxVisible) {
+            "activateAt must be greater than or equal to maxVisible"
+        }
+        require(deactivateBelow in 1..maxVisible && deactivateBelow < activateAt) {
+            "deactivateBelow must be between 1 and maxVisible, and less than activateAt"
+        }
+        require(retentionDistanceFactor > 0.0 && retentionDistanceFactor <= 1.0) {
+            "retentionDistanceFactor must be between 0.0 and 1.0"
+        }
     }
 
     /**
@@ -68,7 +74,8 @@ internal class NearestPlayerSelector(
      * be selected. The selector keeps the array by reference, never modifies it, and may return it
      * from [finish]. The caller must not modify it until [finish] returns.
      *
-     * @param previouslyVisible Previously selected entity IDs in ascending order, or an empty array.
+     * @param previouslyVisible Previously selected entity IDs in ascending order, or an empty
+     * array.
      * @param wasLimited Whether limiting was active in the previous pass.
      */
     fun begin(previouslyVisible: IntArray, wasLimited: Boolean) {
@@ -259,9 +266,11 @@ internal class NearestPlayerSelector(
     private fun worse(
         scoreA: Double, retainedA: Boolean, idA: Int,
         scoreB: Double, retainedB: Boolean, idB: Int,
-    ): Boolean = when {
-        scoreA != scoreB -> scoreA > scoreB
-        retainedA != retainedB -> !retainedA
-        else -> idA > idB
+    ): Boolean {
+        return when {
+            scoreA != scoreB -> scoreA > scoreB
+            retainedA != retainedB -> !retainedA
+            else -> idA > idB
+        }
     }
 }

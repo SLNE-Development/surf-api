@@ -28,7 +28,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Forces real conflicts between concurrent transactions and checks which of them [retryingTransaction] repeats.
+ * Forces real conflicts between concurrent transactions and checks which of them
+ * [retryingTransaction] repeats.
  */
 class RetryingTransactionIT {
 
@@ -52,7 +53,11 @@ class RetryingTransactionIT {
     @EnumSource(Vendor::class)
     fun `the last attempt rethrows the conflict`(vendor: Vendor) = withAccounts(vendor) { testDb ->
         val results = supervisorScope {
-            crossTransfers(testDb, AtomicInteger(), maxAttempts = 1).map { runCatching { it.await() } }
+            crossTransfers(
+                testDb,
+                AtomicInteger(),
+                maxAttempts = 1,
+            ).map { runCatching { it.await() } }
         }
 
         val failures = results.mapNotNull { it.exceptionOrNull() }
@@ -62,7 +67,9 @@ class RetryingTransactionIT {
 
     @ParameterizedTest
     @EnumSource(Vendor::class)
-    fun `a write conflict under repeatable read runs again on a new snapshot`(vendor: Vendor) = withAccounts(vendor) { testDb ->
+    fun `a write conflict under repeatable read runs again on a new snapshot`(vendor: Vendor) = withAccounts(
+        vendor,
+    ) { testDb ->
         val attempts = AtomicInteger()
         val snapshotTaken = CompletableDeferred<Unit>()
         val concurrentUpdateCommitted = CompletableDeferred<Unit>()
@@ -71,15 +78,19 @@ class RetryingTransactionIT {
             testDb.database.retryingTransaction(IsolationLevel.REPEATABLE_READ) {
                 val attempt = attempts.incrementAndGet()
                 balanceOf(1)
+
                 if (attempt == 1) {
                     snapshotTaken.complete(Unit)
                     concurrentUpdateCommitted.await()
                 }
+
                 exec("UPDATE accounts SET balance = balance + 1 WHERE id = 1")
             }
         }
         snapshotTaken.await()
-        suspendTransaction(testDb.database) { exec("UPDATE accounts SET balance = balance + 10 WHERE id = 1") }
+        suspendTransaction(testDb.database) {
+            exec("UPDATE accounts SET balance = balance + 10 WHERE id = 1")
+        }
         concurrentUpdateCommitted.complete(Unit)
         reader.await()
 
@@ -111,27 +122,40 @@ class RetryingTransactionIT {
     }
 
     /**
-     * Starts two transfers that lock the two accounts in opposite order; both wait until each holds its first lock on
-     * their first attempt, so exactly one of them becomes the deadlock victim.
+     * Starts two transfers that lock the two accounts in opposite order; both wait until each holds
+     * its first lock on their first attempt, so exactly one of them becomes the deadlock victim.
      */
-    private fun CoroutineScope.crossTransfers(testDb: TestDatabase, attempts: AtomicInteger, maxAttempts: Int) =
-        listOf(1 to 2, 2 to 1).let { orders ->
-            val firstLocks = orders.map { CompletableDeferred<Unit>() }
-            orders.mapIndexed { index, (from, to) ->
-                async(Dispatchers.Default) {
-                    testDb.database.retryingTransaction(maxAttempts = maxAttempts) {
-                        val attempt = attempts.incrementAndGet()
-                        exec("UPDATE accounts SET balance = balance - 1 WHERE id = $from")
-                        if (firstLocks[index].complete(Unit)) firstLocks.forEach { it.await() }
-                        exec("UPDATE accounts SET balance = balance + 1 WHERE id = $to")
-                        attempt
+    private fun CoroutineScope.crossTransfers(
+        testDb: TestDatabase,
+        attempts: AtomicInteger,
+        maxAttempts: Int,
+    ) = listOf(1 to 2, 2 to 1).let { orders ->
+        val firstLocks = orders.map { CompletableDeferred<Unit>() }
+        orders.mapIndexed { index, (from, to) ->
+            async(Dispatchers.Default) {
+                testDb.database.retryingTransaction(maxAttempts = maxAttempts) {
+                    val attempt = attempts.incrementAndGet()
+                    exec("UPDATE accounts SET balance = balance - 1 WHERE id = $from")
+
+                    if (firstLocks[index].complete(Unit)) {
+                        for (firstLock in firstLocks) {
+                            firstLock.await()
+                        }
                     }
+
+                    exec("UPDATE accounts SET balance = balance + 1 WHERE id = $to")
+                    attempt
                 }
             }
         }
+    }
 
-    private fun withAccounts(vendor: Vendor, block: suspend CoroutineScope.(TestDatabase) -> Unit) = runBlocking {
+    private fun withAccounts(
+        vendor: Vendor,
+        block: suspend CoroutineScope.(TestDatabase) -> Unit,
+    ) = runBlocking {
         val testDb = vendor.container().connectionDetails(fresh = true).toTestDatabase()
+
         try {
             suspendTransaction(testDb.database) {
                 exec("CREATE TABLE accounts (id INT PRIMARY KEY, balance INT NOT NULL)")
@@ -143,10 +167,23 @@ class RetryingTransactionIT {
         }
     }
 
-    private suspend fun balances(testDb: TestDatabase): List<Int> = suspendTransaction(testDb.database) {
-        assertNotNull(exec("SELECT balance FROM accounts ORDER BY id") { (it.get(0) as Number).toInt() }).toList().requireNoNulls()
+    private suspend fun balances(testDb: TestDatabase): List<Int> {
+        return suspendTransaction(testDb.database) {
+            val balances = exec("SELECT balance FROM accounts ORDER BY id") { row ->
+                (row.get(0) as Number).toInt()
+            }
+            assertNotNull(balances)
+                .toList()
+                .requireNoNulls()
+        }
     }
 
-    private suspend fun R2dbcTransaction.balanceOf(id: Int): Int =
-        assertNotNull(exec("SELECT balance FROM accounts WHERE id = $id") { (it.get(0) as Number).toInt() }).toList().requireNoNulls().single()
+    private suspend fun R2dbcTransaction.balanceOf(id: Int): Int {
+        return assertNotNull(
+            exec("SELECT balance FROM accounts WHERE id = $id") { (it.get(0) as Number).toInt() },
+        )
+            .toList()
+            .requireNoNulls()
+            .single()
+    }
 }

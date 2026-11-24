@@ -7,10 +7,10 @@ import kotlin.time.Duration
 /**
  * Represents a packet-based sidebar displayed to a collection of viewers.
  *
- * Titles and lines are rendered asynchronously on a background dispatcher for each viewer
- * whenever the sidebar is updated. Renderers may suspend. Code that requires access to the
- * viewer's region thread should switch to it using
- * `withContext(dispatchers.entity(viewer))` with the plugin's [dev.slne.surf.api.paper.coroutine.PaperDispatchers].
+ * Titles and lines are rendered asynchronously on a background dispatcher for each viewer whenever
+ * the sidebar is updated. Renderers may suspend. Code that requires access to the viewer's region
+ * thread should switch to it using `withContext(dispatchers.entity(viewer))` with the plugin's
+ * [dev.slne.surf.api.paper.coroutine.PaperDispatchers].
  *
  * Rendering for the same viewer never overlaps. If additional updates are requested while a
  * render is already in progress, they are coalesced into a single follow-up render. Only content

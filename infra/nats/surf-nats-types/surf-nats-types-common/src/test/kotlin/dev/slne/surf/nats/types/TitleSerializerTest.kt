@@ -48,7 +48,12 @@ class TitleSerializerTest {
 
     @Test
     fun `absent fields are missing`() {
-        assertMissingField("surf.types.v1.Title", "title", "subtitle") { decodeHex(TitleSerializer, "") }
+        assertMissingField("surf.types.v1.Title", "title", "subtitle") {
+            decodeHex(
+                TitleSerializer,
+                "",
+            )
+        }
         assertMissingField("surf.types.v1.Title.Times", "fadeIn", "stay", "fadeOut") {
             decodeHex(TitleSerializer, texts + "1a00")
         }

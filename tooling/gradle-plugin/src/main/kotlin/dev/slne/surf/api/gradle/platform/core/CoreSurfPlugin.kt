@@ -12,7 +12,7 @@ internal abstract class AbstractCoreSurfPlugin<E : CoreSurfExtension>(
         relocatePackage(
             from = "net.kyori.adventure.nbt",
             to = "kyori.nbt",
-            excludes = listOf("net.kyori.adventure.nbt.api.**")
+            excludes = listOf("net.kyori.adventure.nbt.api.**"),
         )
     }
 
@@ -31,7 +31,7 @@ internal class CoreSurfPlugin :
     override fun Project.platformTestDependencies(extension: CoreSurfExtension) {
         dependencies.add(
             SurfTestingConfigurer.TEST_RUNTIME_ONLY,
-            SurfApiPlatform.STANDALONE.dependency
+            SurfApiPlatform.STANDALONE.dependency,
         )
     }
 }

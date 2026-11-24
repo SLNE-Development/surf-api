@@ -47,6 +47,11 @@ class ZonedDateTimeSerializerTest {
 
     @Test
     fun `unknown zone is rejected`() {
-        assertInvalid { decodeHex(ZonedDateTimeSerializer, "0a0f08c78ba7d7061080cab5ee0118901c" + "1203416263") } // "Abc"
+        assertInvalid {
+            decodeHex(
+                ZonedDateTimeSerializer,
+                "0a0f08c78ba7d7061080cab5ee0118901c" + "1203416263",
+            )
+        } // "Abc"
     }
 }

@@ -10,7 +10,8 @@ import net.kyori.adventure.text.minimessage.tag.Modifying
 import net.kyori.adventure.text.minimessage.tag.Tag
 
 /**
- * Holds a preconfigured [MiniMessage] instance with custom color tags and prefix support for the Surf API.
+ * Holds a preconfigured [MiniMessage] instance with custom color tags and prefix support for the
+ * Surf API.
  *
  * This object provides a centralized MiniMessage parser that includes custom tags for consistent
  * color theming throughout the application. All custom tags are registered at initialization and
@@ -69,7 +70,7 @@ object SurfMiniMessageHolder {
                 "prefix_color" to Colors.PREFIX_COLOR,
             )
 
-            tags.forEach { (tag, color) ->
+            for ((tag, color) in tags) {
                 tagBuilder.tag(tag) { _, _ -> colorTag(color) }
             }
 
@@ -104,7 +105,7 @@ object SurfMiniMessageHolder {
      *
      * @return The MiniMessage parser with custom Surf API tags
      */
-    fun miniMessage() = minimessage
+    fun miniMessage(): MiniMessage = minimessage
 
     private class SmallCapsTag : Modifying {
         override fun apply(current: Component, depth: Int): Component {
@@ -112,6 +113,7 @@ object SurfMiniMessageHolder {
                 return current.content(current.content().toSmallCaps())
                     .children(emptyList())
             }
+
             return current.children(emptyList())
         }
     }

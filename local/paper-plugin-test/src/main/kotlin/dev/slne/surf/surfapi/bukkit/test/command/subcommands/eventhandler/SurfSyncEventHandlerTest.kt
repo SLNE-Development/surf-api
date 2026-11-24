@@ -46,10 +46,13 @@ class SurfSyncEventHandlerTest(name: String) : CommandAPICommand(name) {
         subcommand("status") {
             anyExecutor { sender, _ ->
                 val lastEvent = PlayerAfkStateChangeEventListener.getLastEvent()
+
                 if (lastEvent != null) {
                     sender.sendText {
                         appendInfoPrefix()
-                        info("Last event: Player UUID=${lastEvent.playerUuid}, fromState=${lastEvent.fromState}, toState=${lastEvent.toState}")
+                        info(
+                            "Last event: Player UUID=${lastEvent.playerUuid}, fromState=${lastEvent.fromState}, toState=${lastEvent.toState}",
+                        )
                     }
                 } else {
                     sender.sendText {

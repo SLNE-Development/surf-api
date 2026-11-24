@@ -25,13 +25,15 @@ import org.springframework.context.annotation.Bean
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Provides the runtime of a microservice that [runMicroservice][dev.slne.surf.microservice.runtime.runMicroservice]
- * started: the command endpoints, the built-in commands, spark and the health checks.
+ * Provides the runtime of a microservice that
+ * [runMicroservice][dev.slne.surf.microservice.runtime.runMicroservice] started: the command
+ * endpoints, the built-in commands, spark and the health checks.
  *
- * The built-in commands, unless a registered command already uses one of their labels, and every `MicroserviceCommand`
- * bean are registered in [MicroserviceCommands] once all singletons exist. spark starts before surf-api's hooks run;
- * the console and the command socket start after them and stop before them, so commands only run while the
- * application is enabled. The health checks run every `HealthIndicator` bean.
+ * The built-in commands, unless a registered command already uses one of their labels, and every
+ * `MicroserviceCommand` bean are registered in [MicroserviceCommands] once all singletons exist.
+ * spark starts before surf-api's hooks run; the console and the command socket start after them and
+ * stop before them, so commands only run while the application is enabled. The health checks run
+ * every `HealthIndicator` bean.
  */
 @AutoConfiguration
 @ConditionalOnBean(MicroserviceInfo::class)
@@ -40,7 +42,9 @@ class MicroserviceAutoConfiguration {
     private val log = logger()
 
     @Bean(HEALTH_BEAN)
-    internal fun microserviceHealth(registry: ObjectProvider<HealthContributorRegistry>): MicroserviceHealth {
+    internal fun microserviceHealth(
+        registry: ObjectProvider<HealthContributorRegistry>,
+    ): MicroserviceHealth {
         return MicroserviceHealth({ registry.ifAvailable })
     }
 
@@ -48,26 +52,40 @@ class MicroserviceAutoConfiguration {
     internal fun microserviceSpark(info: MicroserviceInfo) = MicroserviceSpark(info.dataPath)
 
     @Bean(SPARK_LIFECYCLE_BEAN)
-    internal fun microserviceSparkLifecycle(spark: MicroserviceSpark) = RuntimeComponentLifecycle(spark, SPARK_PHASE)
+    internal fun microserviceSparkLifecycle(spark: MicroserviceSpark): RuntimeComponentLifecycle {
+        return RuntimeComponentLifecycle(spark, SPARK_PHASE)
+    }
 
     @Bean(COMMAND_REGISTRATION_BEAN)
     internal fun microserviceCommandRegistration(
         health: MicroserviceHealth,
         spark: MicroserviceSpark,
         commands: ObjectProvider<MicroserviceCommand>,
-    ) = SmartInitializingSingleton {
-        registerBuiltinCommands(builtinCommands(health, spark)).forEach { (command, takenLabel) ->
-            log.atWarning().log(
-                "Built-in command '%s' is not registered: the label '%s' is already taken",
-                command.name,
-                takenLabel,
+    ): SmartInitializingSingleton {
+        return SmartInitializingSingleton {
+            val conflicts = registerBuiltinCommands(
+                builtinCommands(
+                    health,
+                    spark,
+                ),
             )
+            for ((command, takenLabel) in conflicts) {
+                log.atWarning()
+                    .log(
+                        "Built-in command '%s' is not registered: the label '%s' is already taken",
+                        command.name,
+                        takenLabel,
+                    )
+            }
+
+            commands.orderedStream().forEach(MicroserviceCommands::register)
         }
-        commands.orderedStream().forEach(MicroserviceCommands::register)
     }
 
     @Bean(COMMAND_ENDPOINTS_BEAN)
-    internal fun microserviceCommandEndpoints(shutdown: MicroserviceShutdown): RuntimeComponentLifecycle {
+    internal fun microserviceCommandEndpoints(
+        shutdown: MicroserviceShutdown,
+    ): RuntimeComponentLifecycle {
         val dispatcher = MicroserviceCommandDispatcher()
         val endpoints = MicroserviceCommandEndpoints(
             server = MicroserviceCommandServer(
@@ -76,8 +94,13 @@ class MicroserviceAutoConfiguration {
                 socketPath = MicroserviceCommandSocket.resolvePath(),
                 stopTimeout = COMMAND_STOP_TIMEOUT,
             ),
-            console = MicroserviceConsoleListener(dispatcher, shutdown::request, COMMAND_STOP_TIMEOUT),
+            console = MicroserviceConsoleListener(
+                dispatcher,
+                shutdown::request,
+                COMMAND_STOP_TIMEOUT,
+            ),
         )
+
         return RuntimeComponentLifecycle(endpoints, COMMAND_ENDPOINTS_PHASE)
     }
 

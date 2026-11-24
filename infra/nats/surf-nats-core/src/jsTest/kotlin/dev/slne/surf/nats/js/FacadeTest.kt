@@ -11,6 +11,10 @@ import js.typedarrays.Uint8Array
 import js.typedarrays.toUByteArray
 import kotlinx.coroutines.await
 import kotlin.test.*
+import dev.slne.surf.nats.js.fixtures.NatsCallTimeoutError as KotlinCallTimeoutError
+import dev.slne.surf.nats.js.fixtures.NatsNoRespondersError as KotlinNoRespondersError
+import dev.slne.surf.nats.js.fixtures.NatsRemoteError as KotlinRemoteError
+import dev.slne.surf.nats.js.fixtures.NatsRpcError as KotlinRpcError
 import dev.slne.surf.nats.js.fixtures.facade.NatsCallTimeoutError as FacadeCallTimeoutError
 import dev.slne.surf.nats.js.fixtures.facade.NatsNoRespondersError as FacadeNoRespondersError
 import dev.slne.surf.nats.js.fixtures.facade.NatsRemoteError as FacadeRemoteError
@@ -18,10 +22,6 @@ import dev.slne.surf.nats.js.fixtures.facade.NatsRpcError as FacadeRpcError
 import dev.slne.surf.nats.js.fixtures.facade.connect as facadeConnect
 import dev.slne.surf.nats.js.fixtures.facade.uuidFromString as facadeUuidFromString
 import dev.slne.surf.nats.js.fixtures.facade.uuidToString as facadeUuidToString
-import dev.slne.surf.nats.js.fixtures.NatsCallTimeoutError as KotlinCallTimeoutError
-import dev.slne.surf.nats.js.fixtures.NatsNoRespondersError as KotlinNoRespondersError
-import dev.slne.surf.nats.js.fixtures.NatsRemoteError as KotlinRemoteError
-import dev.slne.surf.nats.js.fixtures.NatsRpcError as KotlinRpcError
 
 class FacadeTest {
 
@@ -49,7 +49,14 @@ class FacadeTest {
 
     @Test
     fun connectRejectsABlankServerString() = asyncTest {
-        val error = assertFailsWith<IllegalArgumentException> { facadeConnect(facadeOptions("surf-panel", " , ")).await() }
+        val error = assertFailsWith<IllegalArgumentException> {
+            facadeConnect(
+                facadeOptions(
+                    "surf-panel",
+                    " , ",
+                ),
+            ).await()
+        }
         assertTrue(error.message!!.contains("must not be empty"), error.message)
     }
 
@@ -63,6 +70,7 @@ class FacadeTest {
     fun connectAcceptsACommaSeparatedServerString() = e2eTest { url ->
         TestNats.rawConnection().close().await()
         val client = facadeConnect(facadeOptions(uniqueName("facade"), "$url, $url")).await()
+
         try {
             assertFalse(client.isClosed)
         } finally {
@@ -75,7 +83,10 @@ class FacadeTest {
         // The vector of the JVM UuidSerializerTest: msb then lsb, big-endian
         val uuid = facadeUuidFromString("00112233-4455-6677-8899-AABBCCDDEEFF")
 
-        assertEquals("0a1000112233445566778899aabbccddeeff", hex(toBinary(UuidSchema, create(UuidSchema, uuid))))
+        assertEquals(
+            "0a1000112233445566778899aabbccddeeff",
+            hex(toBinary(UuidSchema, create(UuidSchema, uuid))),
+        )
         assertEquals("00112233445566778899aabbccddeeff", hex(assertNotNull(uuid.value)))
         assertEquals("surf.types.v1.Uuid", uuid.`$typeName`)
         assertEquals("00112233-4455-6677-8899-aabbccddeeff", facadeUuidToString(uuid))
@@ -86,7 +97,12 @@ class FacadeTest {
 
     @Test
     fun uuidHelpersRejectMalformedInput() {
-        for (value in listOf("00112233445566778899aabbccddeeff", "00112233-4455-6677-8899-aabbccddeef", "g0112233-4455-6677-8899-aabbccddeeff", null)) {
+        for (value in listOf(
+            "00112233445566778899aabbccddeeff",
+            "00112233-4455-6677-8899-aabbccddeef",
+            "g0112233-4455-6677-8899-aabbccddeeff",
+            null,
+        )) {
             val error = assertFails { facadeUuidFromString(value) }
             assertTrue(error.message!!.startsWith("Invalid UUID"), error.message)
         }
@@ -95,9 +111,13 @@ class FacadeTest {
         assertFails { facadeUuidToString(null) }
     }
 
-    private fun hex(bytes: Uint8Array<*>): String = bytes.toUByteArray().joinToString("") { it.toString(16).padStart(2, '0') }
+    private fun hex(bytes: Uint8Array<*>): String {
+        return bytes.toUByteArray().joinToString("") { it.toString(16).padStart(2, '0') }
+    }
 
-    private val isInstance: (Any?, Any) -> Boolean = js("(function (value, type) { return value instanceof type; })")
+    private val isInstance: (Any?, Any) -> Boolean = js(
+        "(function (value, type) { return value instanceof type; })",
+    )
 }
 
 @JsName("Error")

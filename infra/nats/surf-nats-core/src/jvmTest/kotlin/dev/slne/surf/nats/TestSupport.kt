@@ -13,7 +13,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
- * Polls [condition] every 50 ms and fails the test with [message] if it does not hold within [timeout].
+ * Polls [condition] every 50 ms and fails the test with [message] if it does not hold within
+ * [timeout].
  */
 suspend fun eventually(
     message: String,
@@ -21,8 +22,12 @@ suspend fun eventually(
     condition: suspend () -> Boolean,
 ) {
     val start = TimeSource.Monotonic.markNow()
+
     while (!condition()) {
-        if (start.elapsedNow() > timeout) fail("$message (waited $timeout)")
+        if (start.elapsedNow() > timeout) {
+            fail("$message (waited $timeout)")
+        }
+
         delay(50.milliseconds)
     }
 }
@@ -44,8 +49,10 @@ fun requestReply(
     timeout: java.time.Duration = java.time.Duration.ofSeconds(5),
 ): Message {
     val reply = NatsConnectionManager.connection().request(subject, headers, body, timeout)
+
     if (reply == null || reply is RequestFailureMessage) {
         fail("No reply on $subject: ${(reply as? RequestFailureMessage)?.reason ?: "timeout"}")
     }
+
     return reply
 }

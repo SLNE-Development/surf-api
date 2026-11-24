@@ -2,10 +2,10 @@ package dev.slne.surf.api.paper.inventory.framework.view.settings.builder
 
 import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
-import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
 import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
+import dev.slne.surf.api.paper.inventory.framework.view.settings.PaginatedViewSettings
 import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.sound.Sound
 
@@ -92,8 +92,8 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
     }
 
     /**
-     * The [PaginationButtonPosition] controlling whether navigation buttons are at the top or bottom.
-     * Defaults to [SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION].
+     * The [PaginationButtonPosition] controlling whether navigation buttons are at the top or
+     * bottom. Defaults to [SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION].
      */
     var paginationButtonPosition: PaginationButtonPosition =
         SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION
@@ -144,8 +144,7 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
      * to play none. Defaults to [SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND], the
      * vanilla book page-turn sound.
      */
-    var paginationSwitchSound: Sound? =
-        SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND
+    var paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND
         private set
 
     /**
@@ -179,26 +178,28 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
     }
 
     @PublishedApi
-    override fun build(): PaginatedViewSettings = PaginatedViewSettings(
-        font = font,
-        headerTextAlignment = headerTextAlignment,
-        headerTextColor = headerTextColor,
-        headerFontMetrics = headerFontMetrics,
-        rowFontMetrics = rowFontMetrics,
-        headerGeometry = headerGeometry,
-        backgroundGlyph = backgroundGlyph,
-        rowFonts = rowFonts,
-        cancelOnClick = cancelOnClick,
-        cancelOnDrag = cancelOnDrag,
-        cancelOnDrop = cancelOnDrop,
-        cancelOnPickup = cancelOnPickup,
-        navigateBackOnOutsideClick = navigateBackOnOutsideClick,
-        paginationViewRows = paginationViewRows,
-        paginationEmptyRows = paginationEmptyRows,
-        paginationButtonPosition = paginationButtonPosition,
-        paginationPageIndicator = paginationPageIndicator,
-        paginationSwitchSound = paginationSwitchSound,
-    )
+    override fun build(): PaginatedViewSettings {
+        return PaginatedViewSettings(
+            font = font,
+            headerTextAlignment = headerTextAlignment,
+            headerTextColor = headerTextColor,
+            headerFontMetrics = headerFontMetrics,
+            rowFontMetrics = rowFontMetrics,
+            headerGeometry = headerGeometry,
+            backgroundGlyph = backgroundGlyph,
+            rowFonts = rowFonts,
+            cancelOnClick = cancelOnClick,
+            cancelOnDrag = cancelOnDrag,
+            cancelOnDrop = cancelOnDrop,
+            cancelOnPickup = cancelOnPickup,
+            navigateBackOnOutsideClick = navigateBackOnOutsideClick,
+            paginationViewRows = paginationViewRows,
+            paginationEmptyRows = paginationEmptyRows,
+            paginationButtonPosition = paginationButtonPosition,
+            paginationPageIndicator = paginationPageIndicator,
+            paginationSwitchSound = paginationSwitchSound,
+        )
+    }
 }
 
 /**
@@ -214,5 +215,8 @@ class PaginatedViewSettingsBuilder @PublishedApi internal constructor() :
  * @param block configuration block applied to a [PaginatedViewSettingsBuilder]
  * @return the built [PaginatedViewSettings]
  */
-inline fun paginatedViewSettings(block: PaginatedViewSettingsBuilder.() -> Unit): PaginatedViewSettings =
-    PaginatedViewSettingsBuilder().apply(block).build()
+inline fun paginatedViewSettings(
+    block: PaginatedViewSettingsBuilder.() -> Unit,
+): PaginatedViewSettings {
+    return PaginatedViewSettingsBuilder().apply(block).build()
+}

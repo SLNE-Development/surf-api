@@ -28,8 +28,10 @@ import java.util.concurrent.CompletableFuture
  */
 class PlayerArgument(nodeName: String) : Argument<Player>(nodeName) {
     override val kind = ArgumentKind.Player
-    override val rawType: ArgumentType<Player> =
-        SingleTargetType(maxResults = 1, playersOnly = true) { entities -> entities.filterIsInstance<Player>().singleOrNull() }
+    override val rawType: ArgumentType<Player> = SingleTargetType(
+        maxResults = 1,
+        playersOnly = true,
+    ) { entities -> entities.filterIsInstance<Player>().singleOrNull() }
 
     override fun stringify(value: Player): String = value.username
 }
@@ -52,8 +54,9 @@ class PlayersArgument(
         allowEmpty = allowEmpty,
     ) { entities -> entities.filterIsInstance<Player>() }
 
-    override fun stringify(value: List<Player>): String =
-        value.joinToString(",", transform = Player::getUsername)
+    override fun stringify(value: List<Player>): String {
+        return value.joinToString(",", transform = Player::getUsername)
+    }
 }
 
 /**
@@ -65,8 +68,10 @@ class PlayersArgument(
  */
 class EntityArgument(nodeName: String) : Argument<Entity>(nodeName) {
     override val kind = ArgumentKind.Entity
-    override val rawType: ArgumentType<Entity> =
-        SingleTargetType(maxResults = 1, playersOnly = false) { entities -> entities.singleOrNull() }
+    override val rawType: ArgumentType<Entity> = SingleTargetType(
+        maxResults = 1,
+        playersOnly = false,
+    ) { entities -> entities.singleOrNull() }
 
     override fun stringify(value: Entity): String = value.uuid.toString()
 }
@@ -89,8 +94,9 @@ class EntitiesArgument(
         allowEmpty = allowEmpty,
     ) { entities -> entities }
 
-    override fun stringify(value: List<Entity>): String =
-        value.joinToString(",") { entity -> entity.uuid.toString() }
+    override fun stringify(value: List<Entity>): String {
+        return value.joinToString(",") { entity -> entity.uuid.toString() }
+    }
 }
 
 /**
@@ -98,8 +104,11 @@ class EntitiesArgument(
  */
 class EntityTypeArgument(nodeName: String) : Argument<EntityType>(nodeName) {
     override val kind = ArgumentKind.EntityType
-    override val rawType: ArgumentType<EntityType> =
-        RegistryParser("entity type") { key -> EntityType.fromKey(key) }
+    override val rawType: ArgumentType<EntityType> = RegistryParser("entity type") { key ->
+        EntityType.fromKey(
+            key,
+        )
+    }
 
     override fun stringify(value: EntityType): String = value.key().asString()
 }
@@ -108,7 +117,9 @@ private val SELECTOR_NEEDS_SENDER = SimpleCommandExceptionType(
     LiteralMessage("An entity selector requires a command source to resolve"),
 )
 private val NO_MATCH = SimpleCommandExceptionType(LiteralMessage("No entity matched the selector"))
-private val NO_MATCHES = SimpleCommandExceptionType(LiteralMessage("No entities matched the selector"))
+private val NO_MATCHES = SimpleCommandExceptionType(
+    LiteralMessage("No entities matched the selector"),
+)
 
 /**
  * Parses an entity selector and resolves the matched entities to a value of type [R].
@@ -129,7 +140,11 @@ private abstract class TargetType<R : Any>(
      */
     protected abstract fun resolve(entities: List<Entity>): R?
 
-    override fun parse(reader: StringReader): R = throw SELECTOR_NEEDS_SENDER.createWithContext(reader)
+    override fun parse(reader: StringReader): R {
+        return throw SELECTOR_NEEDS_SENDER.createWithContext(
+            reader,
+        )
+    }
 
     override fun <S> parse(reader: StringReader, source: S): R {
         val start = reader.cursor
@@ -176,6 +191,7 @@ private class MultiTargetType<T : Entity>(
     private val allowEmpty: Boolean,
     private val select: (List<Entity>) -> List<T>,
 ) : TargetType<List<T>>(maxResults, playersOnly, NO_MATCHES) {
-    override fun resolve(entities: List<Entity>): List<T>? =
-        select(entities).takeIf { results -> allowEmpty || results.isNotEmpty() }
+    override fun resolve(entities: List<Entity>): List<T>? {
+        return select(entities).takeIf { results -> allowEmpty || results.isNotEmpty() }
+    }
 }

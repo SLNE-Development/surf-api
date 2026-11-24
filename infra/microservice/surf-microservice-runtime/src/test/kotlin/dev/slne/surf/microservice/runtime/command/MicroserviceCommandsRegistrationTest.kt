@@ -13,7 +13,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 /**
- * Checks that registering a command only if its labels are free cannot be raced by another registration.
+ * Checks that registering a command only if its labels are free cannot be raced by another
+ * registration.
  */
 class MicroserviceCommandsRegistrationTest {
 
@@ -35,6 +36,7 @@ class MicroserviceCommandsRegistrationTest {
             val label = "race-$race"
             val start = CyclicBarrier(CONTENDERS)
             val executor = Executors.newFixedThreadPool(CONTENDERS)
+
             try {
                 val results = List(CONTENDERS) { command(label) }.map { contender ->
                     executor.submit<Map<MicroserviceCommand, String>> {
@@ -51,10 +53,11 @@ class MicroserviceCommandsRegistrationTest {
         }
     }
 
-    private fun command(name: String, vararg aliases: String): MicroserviceCommand =
-        object : MicroserviceCommand(name, *aliases) {
+    private fun command(name: String, vararg aliases: String): MicroserviceCommand {
+        return object : MicroserviceCommand(name, *aliases) {
             override suspend fun MicroserviceCommandContext.execute(args: List<String>) = Unit
         }
+    }
 
     private companion object {
         const val RACES = 50

@@ -19,7 +19,9 @@ internal object ParticleParser : ArgumentType<Particle> {
     }
 
     private val UNSUPPORTED = DynamicCommandExceptionType { value ->
-        LiteralMessage("Unsupported particle '$value'; it requires options this argument cannot express")
+        LiteralMessage(
+            "Unsupported particle '$value'; it requires options this argument cannot express",
+        )
     }
 
     override fun parse(reader: StringReader): Particle {

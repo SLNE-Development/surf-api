@@ -1,6 +1,5 @@
 package dev.slne.surf.nats.test.microservice.command
 
-import dev.slne.surf.api.core.SurfApiCore
 import dev.slne.surf.microservice.api.command.MicroserviceCommand
 import dev.slne.surf.microservice.api.command.MicroserviceCommandContext
 import dev.slne.surf.nats.NatsClient
@@ -13,21 +12,23 @@ import dev.slne.surf.nats.test.common.proto.v1.PaperTestService
 import org.springframework.stereotype.Component
 
 /**
- * `bench <find|echo> [iterations] [warmup] [concurrency]`: measures the latency of a service call over NATS.
+ * `bench <find|echo> [iterations] [warmup] [concurrency]`: measures the latency of a service call
+ * over NATS.
  *
- * `echo` calls this microservice's own service through the client, so the call travels over NATS like a call from
- * another application; `find` calls the test Paper servers.
+ * `echo` calls this microservice's own service through the client, so the call travels over NATS
+ * like a call from another application; `find` calls the test Paper servers.
  */
 @Component
 class BenchCommand(
     private val client: NatsClient,
     private val paper: PaperTestService,
 ) : MicroserviceCommand("bench") {
-    override val description = "Benchmarks a service call: bench <find|echo> [iterations] [warmup] [concurrency]"
+    override val description =
+        "Benchmarks a service call: bench <find|echo> [iterations] [warmup] [concurrency]"
 
     /**
-     * Resolved on first use: the client connects only after the context started, and a service call needs the
-     * connection.
+     * Resolved on first use: the client connects only after the context started, and a service call
+     * needs the connection.
      */
     private val self by lazy { client.service<MicroserviceTestService>() }
 
@@ -42,7 +43,9 @@ class BenchCommand(
             else -> FindPlayerRequest("nobody").let { request -> { paper.findPlayer(request) } }
         }
 
-        sendLine("bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...")
+        sendLine(
+            "bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...",
+        )
         Benchmark.run("microservice -> $kind", warmup, iterations, concurrency, call)
             .lines()
             .forEach(::sendLine)

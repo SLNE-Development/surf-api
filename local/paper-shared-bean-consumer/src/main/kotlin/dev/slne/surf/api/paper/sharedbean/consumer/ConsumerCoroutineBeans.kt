@@ -83,7 +83,12 @@ class ConsumerCoroutineProbe(
             job.cancelAndJoin()
         } != null
 
-        log.atInfo().log("%s disableJoin=%s", SharedBeanReport.SPIKE_MARKER, if (joined) "returned" else "timeout")
+        log.atInfo()
+            .log(
+                "%s disableJoin=%s",
+                SharedBeanReport.SPIKE_MARKER,
+                if (joined) "returned" else "timeout",
+            )
     }
 
     private companion object {
@@ -98,7 +103,8 @@ class ConsumerCoroutineProbe(
  * console and reads where its executor ran.
  */
 @Service
-class SpikeScopeCommand(private val pluginScope: CoroutineScope) : CommandAPICommand(SharedBeanReport.SCOPE_COMMAND) {
+class SpikeScopeCommand(private val pluginScope: CoroutineScope) :
+    CommandAPICommand(SharedBeanReport.SCOPE_COMMAND) {
 
     private val log = logger()
 
@@ -113,13 +119,16 @@ class SpikeScopeCommand(private val pluginScope: CoroutineScope) : CommandAPICom
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun CoroutineScope.logExecutorOrigin() {
         val consumerJob = pluginScope.coroutineContext.job
-        val belongsToConsumer = generateSequence(coroutineContext.job) { it.parent }.any { it === consumerJob }
+        val belongsToConsumer = generateSequence(coroutineContext.job) { it.parent }.any {
+            it === consumerJob
+        }
 
-        log.atInfo().log(
-            "%s commandScope=%s commandThread=%s",
-            SharedBeanReport.SPIKE_MARKER,
-            if (belongsToConsumer) "consumer" else "foreign",
-            if (Bukkit.isPrimaryThread()) "main" else "other",
-        )
+        log.atInfo()
+            .log(
+                "%s commandScope=%s commandThread=%s",
+                SharedBeanReport.SPIKE_MARKER,
+                if (belongsToConsumer) "consumer" else "foreign",
+                if (Bukkit.isPrimaryThread()) "main" else "other",
+            )
     }
 }

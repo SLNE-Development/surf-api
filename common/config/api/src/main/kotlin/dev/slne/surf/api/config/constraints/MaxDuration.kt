@@ -20,19 +20,28 @@ import java.lang.reflect.Type
 annotation class MaxDuration(val seconds: Long) {
     companion object {
         internal object Factory : Constraint.Factory<MaxDuration, ConfigDuration?> {
-            override fun make(data: MaxDuration, type: Type): Constraint<ConfigDuration?> = { value ->
-                if (value != null && value.value.inWholeSeconds > data.seconds) {
-                    throw SerializationException("Duration is too long: ${value.value}, expected <= ${data.seconds}s")
+            override fun make(data: MaxDuration, type: Type): Constraint<ConfigDuration?> {
+                return { value ->
+                    if (value != null && value.value.inWholeSeconds > data.seconds) {
+                        throw SerializationException(
+                            "Duration is too long: ${value.value}, expected <= ${data.seconds}s",
+                        )
+                    }
                 }
             }
         }
 
-        internal object FactoryDurationOrDisabled : Constraint.Factory<MaxDuration, DurationOrDisabled?> {
-            override fun make(data: MaxDuration, type: Type): Constraint<DurationOrDisabled?> = { durationOrDisabled ->
-                val value = durationOrDisabled?.value
+        internal object FactoryDurationOrDisabled :
+            Constraint.Factory<MaxDuration, DurationOrDisabled?> {
+            override fun make(data: MaxDuration, type: Type): Constraint<DurationOrDisabled?> {
+                return { durationOrDisabled ->
+                    val value = durationOrDisabled?.value
 
-                if (value != null && value.inWholeSeconds > data.seconds) {
-                    throw SerializationException("Duration is too long: ${value}, expected <= ${data.seconds}s")
+                    if (value != null && value.inWholeSeconds > data.seconds) {
+                        throw SerializationException(
+                            "Duration is too long: ${value}, expected <= ${data.seconds}s",
+                        )
+                    }
                 }
             }
         }

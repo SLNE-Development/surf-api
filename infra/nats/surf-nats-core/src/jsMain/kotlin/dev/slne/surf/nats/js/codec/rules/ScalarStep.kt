@@ -4,7 +4,8 @@ import dev.slne.surf.nats.js.external.protobuf.DescFieldScalar
 import dev.slne.surf.nats.js.external.protobuf.reflect.ReflectMessage
 
 /**
- * Checks a singular scalar field for presence and applies the [ScalarRule] of its message type to a set value.
+ * Checks a singular scalar field for presence and applies the [ScalarRule] of its message type to a
+ * set value.
  */
 internal class ScalarStep(
     private val field: DescFieldScalar,
@@ -18,6 +19,7 @@ internal class ScalarStep(
         }
 
         val problem = rule?.problem(message.get(field)) ?: return null
+
         return Violation.invalid(field.localName, problem)
     }
 }

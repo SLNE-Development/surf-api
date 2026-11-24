@@ -34,8 +34,12 @@ object InventoryViewRemapper {
 
         val locator = ClassFileLocator.ForClassLoader.of(javaClass.classLoader)
         val typePool = TypePool.Default.of(locator)
-        val typeDescription =
-            typePool.describe(INVENTORY_UPDATE_INTERNAL.replace("/", ".")).resolve()
+        val typeDescription = typePool.describe(
+            INVENTORY_UPDATE_INTERNAL.replace(
+                "/",
+                ".",
+            ),
+        ).resolve()
 
         ByteBuddy()
             .redefine<Any>(typeDescription, locator)
@@ -56,14 +60,14 @@ object InventoryViewRemapper {
             fields: FieldList<FieldDescription.InDefinedShape?>,
             methods: MethodList<*>,
             writerFlags: Int,
-            readerFlags: Int
+            readerFlags: Int,
         ): ClassVisitor {
             return InventoryViewClassVisitor(classVisitor)
         }
     }
 
     private class InventoryViewClassVisitor(
-        visitor: ClassVisitor
+        visitor: ClassVisitor,
     ) : ClassVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitMethod(
@@ -71,15 +75,16 @@ object InventoryViewRemapper {
             name: String,
             descriptor: String,
             signature: String?,
-            exceptions: Array<String>?
+            exceptions: Array<String>?,
         ): MethodVisitor {
             val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
+
             return InventoryViewMethodVisitor(mv)
         }
     }
 
     private class InventoryViewMethodVisitor(
-        visitor: MethodVisitor
+        visitor: MethodVisitor,
     ) : MethodVisitor(OpenedClassReader.ASM_API, visitor) {
 
         override fun visitMethodInsn(
@@ -87,7 +92,7 @@ object InventoryViewRemapper {
             owner: String,
             name: String,
             descriptor: String,
-            isInterface: Boolean
+            isInterface: Boolean,
         ) {
             if (opcode == Opcodes.INVOKEVIRTUAL && owner == INVENTORY_VIEW_INTERNAL) {
                 super.visitMethodInsn(
@@ -95,7 +100,7 @@ object InventoryViewRemapper {
                     owner,
                     name,
                     descriptor,
-                    true
+                    true,
                 )
             } else {
                 super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)

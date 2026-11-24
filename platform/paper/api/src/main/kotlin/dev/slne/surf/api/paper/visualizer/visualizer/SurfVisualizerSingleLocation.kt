@@ -45,7 +45,8 @@ interface SurfVisualizerSingleLocation : SurfVisualizer {
      * Configures the `BlockDisplaySettings` using the provided lambda.
      * Allows customization of display settings for a block within the visualizer.
      *
-     * @param consumer A lambda with a receiver of `BlockDisplaySettings`, used to define or modify the settings.
+     * @param consumer A lambda with a receiver of `BlockDisplaySettings`, used to define or modify
+     * the settings.
      */
     fun settings(consumer: BlockDisplaySettings.() -> Unit)
 }

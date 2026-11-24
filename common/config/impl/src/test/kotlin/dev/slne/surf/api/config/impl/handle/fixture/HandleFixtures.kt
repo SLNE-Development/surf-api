@@ -23,6 +23,7 @@ data class ShopConfig(val discount: Double = 0.5, val currency: String = "coins"
 object RenameDiscount : ConfigMigration {
     override fun migrate(node: ConfigurationNode) {
         val old = node.node("price-discount")
+
         if (!old.virtual()) {
             node.node("discount").set(old.raw())
             old.raw(null)

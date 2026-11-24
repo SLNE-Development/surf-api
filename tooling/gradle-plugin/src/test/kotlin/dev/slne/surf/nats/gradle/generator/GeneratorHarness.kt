@@ -15,6 +15,7 @@ class GeneratorHarness(private val root: File) {
         val file = sourceDir.resolve(path)
         file.parentFile.mkdirs()
         file.writeText(content.trimIndent() + "\n")
+
         return this
     }
 
@@ -29,15 +30,25 @@ class GeneratorHarness(private val root: File) {
         protoPathDirs,
         mappings,
         visibility,
-        if (paperTypes) DefaultTypeMappings.common + DefaultTypeMappings.paper else DefaultTypeMappings.common,
+        if (paperTypes) {
+            DefaultTypeMappings.common + DefaultTypeMappings.paper
+        } else {
+            DefaultTypeMappings.common
+        },
     )
 
     /**
      * Returns the generated files keyed by their path relative to [outputDir].
      */
-    fun generate(input: GeneratorInput = input(), outputDir: File = this.outputDir): Map<String, String> {
+    fun generate(
+        input: GeneratorInput = input(),
+        outputDir: File = this.outputDir,
+    ): Map<String, String> {
         val result = SurfNatsGenerator().generate(input, outputDir)
-        return result.files.associate { it.relativeTo(outputDir).invariantSeparatorsPath to it.readText() }
+
+        return result.files.associate {
+            it.relativeTo(outputDir).invariantSeparatorsPath to it.readText()
+        }
     }
 
     fun errors(input: GeneratorInput = input()): List<String> {
@@ -46,6 +57,7 @@ class GeneratorHarness(private val root: File) {
         } catch (e: SurfNatsGeneratorException) {
             return e.errors
         }
+
         fail("expected a SurfNatsGeneratorException")
     }
 
@@ -72,9 +84,13 @@ fun assertContainsAll(text: String, vararg fragments: String) {
 
 fun assertInOrder(text: String, vararg fragments: String) {
     var from = 0
+
     for (fragment in fragments) {
         val index = text.indexOf(fragment, from)
-        assertTrue(index >= 0, "expected fragment not found after index $from:\n$fragment\n--- in ---\n$text")
+        assertTrue(
+            index >= 0,
+            "expected fragment not found after index $from:\n$fragment\n--- in ---\n$text",
+        )
         from = index + fragment.length
     }
 }

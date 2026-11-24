@@ -19,7 +19,10 @@ internal object KotlinTypes {
     val K_SERIALIZER = ClassName(SERIALIZATION, "KSerializer")
     val EXPERIMENTAL_SERIALIZATION_API = ClassName(SERIALIZATION, "ExperimentalSerializationApi")
     val SERIAL_DESCRIPTOR = ClassName("$SERIALIZATION.descriptors", "SerialDescriptor")
-    val PRIMITIVE_SERIAL_DESCRIPTOR = ClassName("$SERIALIZATION.descriptors", "PrimitiveSerialDescriptor")
+    val PRIMITIVE_SERIAL_DESCRIPTOR = ClassName(
+        "$SERIALIZATION.descriptors",
+        "PrimitiveSerialDescriptor",
+    )
     val PRIMITIVE_KIND = ClassName("$SERIALIZATION.descriptors", "PrimitiveKind")
     val ENCODER = ClassName("$SERIALIZATION.encoding", "Encoder")
     val DECODER = ClassName("$SERIALIZATION.encoding", "Decoder")

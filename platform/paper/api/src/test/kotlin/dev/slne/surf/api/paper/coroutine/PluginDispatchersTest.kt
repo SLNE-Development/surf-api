@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Proxy
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -34,7 +35,9 @@ class PluginDispatchersTest {
     private val scheduler = FakeScheduler()
     private val dispatchers = PluginDispatchers("test", scheduler)
     private val failures = ConcurrentLinkedQueue<Throwable>()
-    private val scope = CoroutineScope(SupervisorJob() + CoroutineExceptionHandler { _, failure -> failures += failure })
+    private val scope = CoroutineScope(
+        SupervisorJob() + CoroutineExceptionHandler { _, failure -> failures += failure },
+    )
 
     @AfterEach
     fun close() {
@@ -128,7 +131,9 @@ class PluginDispatchersTest {
         val entity = fakeEntity()
         var ran = false
 
-        val call = scope.async(PaperDispatchersElement(dispatchers)) { entity.withEntity { ran = true } }
+        val call = scope.async(PaperDispatchersElement(dispatchers)) {
+            entity.withEntity { ran = true }
+        }
         awaitQueued(1)
         scheduler.retire(entity)
 
@@ -141,7 +146,9 @@ class PluginDispatchersTest {
         dispatchers.enable()
         val entity = fakeEntity()
 
-        val call = scope.async(PaperDispatchersElement(dispatchers)) { entity.withEntity { "done" } }
+        val call = scope.async(PaperDispatchersElement(dispatchers)) {
+            entity.withEntity { "done" }
+        }
         awaitQueued(1)
         scheduler.drain()
 
@@ -168,7 +175,9 @@ class PluginDispatchersTest {
     @Test
     fun `an enable hook can wait for work parked during load`() {
         scheduler.globalThread = Thread.currentThread()
-        val parked = runBlocking(Dispatchers.Default) { scope.async(dispatchers.main) { Thread.currentThread() } }
+        val parked = runBlocking(Dispatchers.Default) {
+            scope.async(dispatchers.main) { Thread.currentThread() }
+        }
         assertFalse(parked.isCompleted)
         assertEquals(0, scheduler.queued)
 
@@ -189,7 +198,9 @@ class PluginDispatchersTest {
         awaitQueued(1)
         scheduler.globalThread = Thread.currentThread()
 
-        val ranOn = runBlocking { dispatchers.lifecycle { withTimeout(TIMEOUT) { handedOver.await() } } }
+        val ranOn = runBlocking {
+            dispatchers.lifecycle { withTimeout(TIMEOUT) { handedOver.await() } }
+        }
 
         assertSame(scheduler.globalThread, ranOn)
     }
@@ -242,7 +253,9 @@ class PluginDispatchersTest {
             dispatchers.lifecycle {
                 // Removed after the work is routed into the loop, but before the loop runs it.
                 val job = withContext(Dispatchers.Default) {
-                    scope.launch(dispatchers.entity(entity)) { ran = true }.also { scheduler.retiredBeforehand += entity }
+                    scope.launch(dispatchers.entity(entity)) { ran = true }.also {
+                        scheduler.retiredBeforehand += entity
+                    }
                 }
                 withTimeout(TIMEOUT) { job.join() }
                 assertTrue(job.isCancelled)
@@ -260,7 +273,10 @@ class PluginDispatchersTest {
         val runs = AtomicInteger()
 
         val jobs = List(RACE_ROUNDS) {
-            scope.launch(dispatchers.entity(entity), CoroutineStart.DEFAULT) { runs.incrementAndGet() }
+            scope.launch(
+                dispatchers.entity(entity),
+                CoroutineStart.DEFAULT,
+            ) { runs.incrementAndGet() }
                 .also { job -> job.invokeOnCompletion { completions.incrementAndGet() } }
         }
         awaitQueued(RACE_ROUNDS)
@@ -273,7 +289,11 @@ class PluginDispatchersTest {
         racers.forEach(Thread::start)
         racers.forEach(Thread::join)
 
-        withTimeout(TIMEOUT) { jobs.forEach { it.join() } }
+        withTimeout(TIMEOUT) {
+            for (job in jobs) {
+                job.join()
+            }
+        }
         assertTrue(failures.isEmpty(), "a block ran or was rejected twice: ${failures.toList()}")
         assertEquals(RACE_ROUNDS, completions.get())
         assertEquals(RACE_ROUNDS, runs.get() + jobs.count { it.isCancelled })
@@ -281,15 +301,22 @@ class PluginDispatchersTest {
 
     private fun awaitQueued(count: Int) {
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(TIMEOUT)
+
         while (scheduler.queued < count) {
-            check(System.nanoTime() < deadline) { "only ${scheduler.queued} of $count tasks were scheduled" }
+            check(System.nanoTime() < deadline) {
+                "only ${scheduler.queued} of $count tasks were scheduled"
+            }
             Thread.onSpinWait()
         }
     }
 
     private fun fakeEntity(): Entity {
         val identity = Any()
-        return Proxy.newProxyInstance(Entity::class.java.classLoader, arrayOf(Entity::class.java)) { proxy, method, args ->
+
+        return Proxy.newProxyInstance(
+            Entity::class.java.classLoader,
+            arrayOf(Entity::class.java),
+        ) { proxy, method, args ->
             when (method.name) {
                 "hashCode" -> identity.hashCode()
                 "equals" -> proxy === args?.get(0)
@@ -315,6 +342,7 @@ class PluginDispatchersTest {
 
         fun await(): Thread? {
             latch.await(TIMEOUT, TimeUnit.MILLISECONDS)
+
             return thread
         }
     }
@@ -326,7 +354,7 @@ class PluginDispatchersTest {
     private class FakeScheduler : TaskScheduler {
         private val tasks = ConcurrentLinkedQueue<Scheduled>()
 
-        val retiredBeforehand: MutableSet<Entity> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+        val retiredBeforehand: MutableSet<Entity> = ConcurrentHashMap.newKeySet()
 
         @Volatile
         var globalThread: Thread? = null
@@ -344,7 +372,11 @@ class PluginDispatchersTest {
 
         override fun isGlobalTickThread() = Thread.currentThread() === globalThread
 
-        override fun isOwnedByCurrentRegion(world: World, chunkX: Int, chunkZ: Int) = isGlobalTickThread()
+        override fun isOwnedByCurrentRegion(
+            world: World,
+            chunkX: Int,
+            chunkZ: Int,
+        ) = isGlobalTickThread()
 
         override fun isOwnedByCurrentRegion(entity: Entity) = isGlobalTickThread()
 
@@ -352,12 +384,15 @@ class PluginDispatchersTest {
 
         override fun runGlobal(task: Runnable) = schedule(Scheduled(task, null, null))
 
-        override fun runRegion(world: World, chunkX: Int, chunkZ: Int, task: Runnable) =
-            schedule(Scheduled(task, null, null))
+        override fun runRegion(world: World, chunkX: Int, chunkZ: Int, task: Runnable) = schedule(
+            Scheduled(task, null, null),
+        )
 
         override fun runEntity(entity: Entity, task: Runnable, retired: Runnable): Boolean {
             if (entity in retiredBeforehand) return false
+
             schedule(Scheduled(task, retired, entity))
+
             return true
         }
 
@@ -367,13 +402,16 @@ class PluginDispatchersTest {
 
         fun retire(entity: Entity) {
             retiringThread = Thread.currentThread()
-            tasks.filter { it.entity == entity }.forEach { scheduled ->
+            val entityTasks = tasks.filter { it.entity == entity }
+            for (scheduled in entityTasks) {
                 if (tasks.remove(scheduled)) scheduled.retired?.run()
             }
         }
 
         private fun schedule(scheduled: Scheduled) {
-            if (refuse) throw IllegalStateException("Plugin attempted to register task while disabled")
+            if (refuse) throw IllegalStateException(
+                "Plugin attempted to register task while disabled",
+            )
             tasks += scheduled
         }
 

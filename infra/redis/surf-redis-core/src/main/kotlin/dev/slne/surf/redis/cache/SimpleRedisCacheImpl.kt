@@ -29,7 +29,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
     private val serializer: KSerializer<V>,
     private val keyToString: (K) -> String = { it.toString() },
     private val ttl: Duration,
-    private val api: RedisApi
+    private val api: RedisApi,
 ) : SimpleRedisCache<K, V>, DisposableAware() {
     private companion object {
         private val log = logger()
@@ -70,6 +70,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
 
     init {
         require(n.isNotBlank()) { "Namespace must not be blank" }
+
         requireNoNul(n, "Namespace")
         require(!n.contains('{') && !n.contains('}')) { "Namespace must not contain '{' or '}'" }
     }
@@ -101,7 +102,6 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         .maximumSize(100_000)
         .build<String, Unit>()
 
-
     private val lastVersion = AtomicLong(0L)
     private val cursorId = AtomicReference(StreamMessageId(0, 0))
 
@@ -132,31 +132,35 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         clearNearCacheOnly()
     }
 
-    private fun startPolling() = stream.pollContinuously(
-        cursorId = cursorId,
-        wakeups = Flux.never(),
-        pollInterval = 250.milliseconds,
-    ) {
-        onSuccess { batch ->
-            for ((messageId, fields) in batch) {
-                val type = fields[STREAM_FIELD_TYPE] ?: continue
-                val msg = fields[STREAM_FIELD_MSG] ?: continue
-                try {
-                    processStreamMessage(type, msg)
-                    cursorId.set(messageId)
-                } catch (t: Throwable) {
-                    log.atWarning().withCause(t)
-                        .log("Error processing stream event in cache '$namespace' ($streamKey)")
-                    handleStreamFault()
+    private fun startPolling(): Disposable {
+        return stream.pollContinuously(
+            cursorId = cursorId,
+            wakeups = Flux.never(),
+            pollInterval = 250.milliseconds,
+        ) {
+            onSuccess { batch ->
+                for ((messageId, fields) in batch) {
+                    val type = fields[STREAM_FIELD_TYPE] ?: continue
+                    val msg = fields[STREAM_FIELD_MSG] ?: continue
+
+                    try {
+                        processStreamMessage(type, msg)
+                        cursorId.set(messageId)
+                    } catch (t: Throwable) {
+                        log.atWarning()
+                            .withCause(t)
+                            .log("Error processing stream event in cache '$namespace' ($streamKey)")
+                        handleStreamFault()
+                    }
                 }
             }
-        }
 
-        onFailure { e ->
-            log.atWarning()
-                .withCause(e)
-                .log("Error polling stream for cache '$namespace' ($streamKey)")
-            handleStreamFault()
+            onFailure { e ->
+                log.atWarning()
+                    .withCause(e)
+                    .log("Error polling stream for cache '$namespace' ($streamKey)")
+                handleStreamFault()
+            }
         }
     }
 
@@ -172,10 +176,14 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
     private fun processStreamMessage(type: String, msg: String) {
         // version<NUL>origin<NUL>payload — parse without allocating an ArrayList per message.
         val firstDelim = msg.indexOf(MESSAGE_DELIMITER)
+
         if (firstDelim < 0) {
-            log.atWarning().log("Malformed stream message in cache '$namespace': $msg")
+            log.atWarning()
+                .log("Malformed stream message in cache '$namespace': $msg")
+
             return
         }
+
         val secondDelim = msg.indexOf(MESSAGE_DELIMITER, firstDelim + 1)
         val versionStr = msg.substring(0, firstDelim)
         val originId: String
@@ -190,9 +198,11 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
         val version = versionStr.toLongOrNull()
+
         if (version == null) {
             log.atWarning()
                 .log("Invalid version '$versionStr' in stream message for cache '$namespace'")
+
             return
         }
 
@@ -205,10 +215,14 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
         val shouldInvalidate = oldVersion != 0L && version > oldVersion + 1
+
         if (shouldInvalidate) {
             log.atWarning()
-                .log("Version gap detected in cache '$namespace': last=$oldVersion, new=$version. Clearing near-cache.")
+                .log(
+                    "Version gap detected in cache '$namespace': last=$oldVersion, new=$version. Clearing near-cache.",
+                )
             clearNearCacheOnly()
+
             return
         }
 
@@ -227,7 +241,8 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             }
 
             else -> {
-                log.atWarning().log("Unknown event type '$type' in stream for cache '$namespace'")
+                log.atWarning()
+                    .log("Unknown event type '$type' in stream for cache '$namespace'")
             }
         }
     }
@@ -238,11 +253,13 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         when (val entry = nearCache.getIfPresent(localKey)) {
             is CacheEntry.Value -> {
                 refreshTtl(localKey)
+
                 return entry.value
             }
 
             CacheEntry.Null -> {
                 refreshTtl(localKey)
+
                 return null
             }
 
@@ -263,6 +280,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
         nearCache.put(localKey, entry)
+
         return (entry as? CacheEntry.Value)?.value
     }
 
@@ -285,7 +303,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             OP_VAL,
             localKey,
             raw,
-            keyPrefix
+            keyPrefix,
         ).awaitSingle()
 
         nearCache.put(localKey, CacheEntry.Value(value))
@@ -295,13 +313,14 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         getCached(key)?.let { return it }
         val loaded = loader()
         put(key, loaded)
+
         return loaded
     }
 
     override suspend fun cachedOrLoadNullable(
         key: K,
         cacheNull: Boolean,
-        loader: suspend () -> V?
+        loader: suspend () -> V?,
     ): V? {
         val localKey = localKey(key)
 
@@ -311,7 +330,6 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             null -> Unit
         }
 
-
         val bucket = api.redissonReactive.getBucket<String>(redisKeyOf(localKey), StringCodec)
         val raw = bucket.get().awaitSingleOrNull()
 
@@ -319,6 +337,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             if (!refreshTtl(localKey)) {
                 bucket.expire(ttl.toJavaDuration()).awaitSingleOrNull()
             }
+
             return if (raw == NULL_MARKER) {
                 nearCache.put(localKey, CacheEntry.Null)
                 null
@@ -330,6 +349,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
         }
 
         val loaded = loader()
+
         when {
             loaded != null -> put(key, loaded)
             cacheNull -> putNull(key)
@@ -355,7 +375,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             STREAM_FIELD_MSG,
             OP_VAL,
             localKey,
-            keyPrefix
+            keyPrefix,
         ).awaitSingle()
         nearCache.put(localKey, CacheEntry.Null)
     }
@@ -377,7 +397,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             STREAM_FIELD_MSG,
             OP_VAL,
             localKey,
-            keyPrefix
+            keyPrefix,
         ).awaitSingle()
 
         if (removed > 0) {
@@ -401,7 +421,7 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             STREAM_FIELD_TYPE,
             STREAM_FIELD_MSG,
             OP_ALL,
-            keyPrefix
+            keyPrefix,
         ).awaitSingle()
         clearNearCacheOnly()
 
@@ -423,14 +443,16 @@ class SimpleRedisCacheImpl<K : Any, V : Any>(
             keys = touchScriptKeys,
             /* argv */ ttlMillisStr,
             localKey,
-            keyPrefix
+            keyPrefix,
         ).subscribe(
             { /* result isn't used */ },
             { e ->
                 log.atWarning()
                     .withCause(e)
-                    .log("Failed to refresh TTL for key ${redisKeyOf(localKey)} in cache '$namespace'")
-            }
+                    .log(
+                        "Failed to refresh TTL for key ${redisKeyOf(localKey)} in cache '$namespace'",
+                    )
+            },
         )
 
         return true

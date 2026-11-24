@@ -19,34 +19,38 @@ internal object ReliabilitySchema {
     /**
      * Result of `SELECT VERSION()`, empty if the server returns none.
      */
-    suspend fun serverVersion(database: R2dbcDatabase): String = database.readCommittedTransaction {
-        val result = exec("SELECT VERSION()") { row ->
-            row.get(0, String::class.java)
-        }
+    suspend fun serverVersion(database: R2dbcDatabase): String {
+        return database.readCommittedTransaction {
+            val result = exec("SELECT VERSION()") { row ->
+                row.get(0, String::class.java)
+            }
 
-        result?.toList()?.singleOrNull()
-    }.orEmpty()
+            result?.toList()?.singleOrNull()
+        }.orEmpty()
+    }
 
     /**
      * MariaDB storage engine per reliability table, `null` for a missing table.
      */
     suspend fun mariaDbTableEngines(
-        database: R2dbcDatabase
-    ): Map<String, String?> = database.readCommittedTransaction {
-        val placeholders = tables.joinToString { "?" }
-        val result = exec(
-            "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES " +
+        database: R2dbcDatabase,
+    ): Map<String, String?> {
+        return database.readCommittedTransaction {
+            val placeholders = tables.joinToString { "?" }
+            val result = exec(
+                "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES " +
                     "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ($placeholders)",
-            tables.map { VarCharColumnType() to it }
-        ) { row ->
-            row.get(0, String::class.java)!! to row.get(1, String::class.java)
+                tables.map { VarCharColumnType() to it },
+            ) { row ->
+                row.get(0, String::class.java)!! to row.get(1, String::class.java)
+            }
+
+            val found = result?.toList()
+                .orEmpty()
+                .filterNotNull()
+                .toMap()
+
+            tables.associateWith { found[it] }
         }
-
-        val found = result?.toList()
-            .orEmpty()
-            .filterNotNull()
-            .toMap()
-
-        tables.associateWith { found[it] }
     }
 }

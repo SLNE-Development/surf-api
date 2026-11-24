@@ -13,7 +13,7 @@ typealias SerializableLocalTime = @Serializable(with = LocalTimeSerializer::clas
 object LocalTimeSerializer : KSerializer<LocalTime> {
     override val descriptor = PrimitiveSerialDescriptor(
         "surf.api.java.datetime.time.LocalTime",
-        PrimitiveKind.LONG
+        PrimitiveKind.LONG,
     )
 
     override fun serialize(

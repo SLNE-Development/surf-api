@@ -25,7 +25,7 @@ import java.lang.reflect.AnnotatedType
  * during serialization.
  */
 internal class MapSerializer(
-    private val clearInvalids: Boolean
+    private val clearInvalids: Boolean,
 ) : TypeSerializer.Annotated<Map<*, *>> {
     companion object {
         private val logger = ComponentLogger.logger()
@@ -35,6 +35,7 @@ internal class MapSerializer(
          */
         val TYPE = object : TypeToken<Map<*, *>>() {}
     }
+
     private val fallback = requireNotNull(TypeSerializerCollection.defaults().get(TYPE)) {
         "Could not find default Map<?, ?> serializer"
     }
@@ -61,6 +62,7 @@ internal class MapSerializer(
         }
 
         val args = type.annotatedActualTypeArguments
+
         if (args.size != 2) {
             throw SerializationException(rawType, "Map expected two type arguments!")
         }
@@ -69,10 +71,16 @@ internal class MapSerializer(
         val valueType = args[1]
 
         val keySerializer = node.options().serializers().get(keyType)
-            ?: throw SerializationException(rawType, "No type serializer available for key type $keyType")
+            ?: throw SerializationException(
+                rawType,
+                "No type serializer available for key type $keyType",
+            )
 
         val valueSerializer = node.options().serializers().get(valueType)
-            ?: throw SerializationException(rawType, "No type serializer available for value type $valueType")
+            ?: throw SerializationException(
+                rawType,
+                "No type serializer available for value type $valueType",
+            )
 
         val writeKeyBack = keyType.isAnnotationPresent(WriteKeyBack::class.java)
         val keyNode = BasicConfigurationNode.root(node.options())
@@ -84,7 +92,7 @@ internal class MapSerializer(
                 keySerializer,
                 "key",
                 keyNode.set(rawKey),
-                node.path()
+                node.path(),
             )
 
             val deserializedValue = deserializePart(
@@ -92,7 +100,7 @@ internal class MapSerializer(
                 valueSerializer,
                 "value",
                 valueNode,
-                valueNode.path()
+                valueNode.path(),
             )
 
             if (deserializedKey == null || deserializedValue == null) {
@@ -106,7 +114,7 @@ internal class MapSerializer(
                     deserializedKey,
                     "key",
                     keyNode,
-                    node.path()
+                    node.path(),
                 )
 
                 val writtenKey = requireNotNull(keyNode.raw()) { "Key must not be null!" }
@@ -138,6 +146,7 @@ internal class MapSerializer(
     override fun serialize(type: AnnotatedType, obj: Map<*, *>?, node: ConfigurationNode) {
         if (type.isAnnotationPresent(ThrowExceptions::class.java)) {
             fallback.serialize(type, obj, node)
+
             return
         }
 
@@ -148,6 +157,7 @@ internal class MapSerializer(
         }
 
         val args = type.annotatedActualTypeArguments
+
         if (args.size != 2) {
             throw SerializationException(rawType, "Map expected two type arguments!")
         }
@@ -156,13 +166,20 @@ internal class MapSerializer(
         val valueType = args[1]
 
         val keySerializer = node.options().serializers().get(keyType)
-            ?: throw SerializationException(rawType, "No type serializer available for key type $keyType")
+            ?: throw SerializationException(
+                rawType,
+                "No type serializer available for key type $keyType",
+            )
 
         val valueSerializer = node.options().serializers().get(valueType)
-            ?: throw SerializationException(rawType, "No type serializer available for value type $valueType")
+            ?: throw SerializationException(
+                rawType,
+                "No type serializer available for value type $valueType",
+            )
 
         if (obj.isNullOrEmpty()) {
             node.set(emptyMap<Any, Any>())
+
             return
         }
 
@@ -211,7 +228,7 @@ internal class MapSerializer(
         serializer: TypeSerializer<*>,
         mapPart: String,
         node: ConfigurationNode,
-        path: Any
+        path: Any,
     ): Any? {
         return try {
             serializer.deserialize(type, node)
@@ -223,7 +240,7 @@ internal class MapSerializer(
                 node.raw(),
                 type,
                 path,
-                e.rawMessage()
+                e.rawMessage(),
             )
             null
         }
@@ -236,7 +253,7 @@ internal class MapSerializer(
         obj: Any?,
         mapPart: String,
         node: ConfigurationNode,
-        path: Any
+        path: Any,
     ): Boolean {
         return try {
             (serializer as TypeSerializer<Any?>).serialize(type, obj, node)
@@ -249,7 +266,7 @@ internal class MapSerializer(
                 obj,
                 type,
                 path,
-                e.rawMessage()
+                e.rawMessage(),
             )
             false
         }

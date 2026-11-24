@@ -23,14 +23,14 @@ class SyncListImpl<T : Any> internal constructor(
     api: RedisApi,
     id: String,
     ttl: Duration,
-    private val elementCodec: SyncValueCodec<T>
+    private val elementCodec: SyncValueCodec<T>,
 ) : AbstractStreamSyncStructure<SyncListChange<T>, SimpleVersionedSnapshot<List<String>>>(
     api,
     id,
     ttl,
     Scripts,
     NAMESPACE,
-    elementCodec.descriptor
+    elementCodec.descriptor,
 ), SyncList<T> {
 
     companion object {
@@ -70,7 +70,6 @@ class SyncListImpl<T : Any> internal constructor(
         }
     }
 
-
     private val list = ArrayList<T>()
 
     // Counter for unique removal tombstones.
@@ -78,7 +77,7 @@ class SyncListImpl<T : Any> internal constructor(
     private val remoteList by lazy {
         api.redissonReactive.getList<String>(
             dataKey,
-            StringCodec.INSTANCE
+            StringCodec.INSTANCE,
         )
     }
 
@@ -90,14 +89,16 @@ class SyncListImpl<T : Any> internal constructor(
             .then()
     }
 
-    override fun registerListeners0(): List<Mono<Int>> = listOf(
-        remoteList.addListener(DeletedObjectListener { requestResync() }),
-        remoteList.addListener(ExpiredObjectListener { requestResync() })
-    )
+    override fun registerListeners0(): List<Mono<Int>> {
+        return listOf(
+            remoteList.addListener(DeletedObjectListener { requestResync() }),
+            remoteList.addListener(ExpiredObjectListener { requestResync() }),
+        )
+    }
 
     override fun unregisterListener(id: Int): Mono<*> = remoteList.removeListener(id)
 
-    override fun snapshot() = lock.read { ArrayList(list) }
+    override fun snapshot(): ArrayList<T> = lock.read { ArrayList(list) }
     override fun size(): Int = lock.read { list.size }
     override fun get(index: Int): T = lock.read { list[index] }
     override fun contains(element: T): Boolean = lock.read { list.contains(element) }
@@ -227,7 +228,7 @@ class SyncListImpl<T : Any> internal constructor(
 
         if (version < 0L) {
             throw ConcurrentModificationException(
-                "Remote SyncList '$id' no longer matched local state at index $index"
+                "Remote SyncList '$id' no longer matched local state at index $index",
             )
         }
 
@@ -272,7 +273,7 @@ class SyncListImpl<T : Any> internal constructor(
 
         if (version < 0L) {
             throw ConcurrentModificationException(
-                "Remote SyncList '$id' no longer matched local state at index $index"
+                "Remote SyncList '$id' no longer matched local state at index $index",
             )
         }
 
@@ -387,6 +388,7 @@ class SyncListImpl<T : Any> internal constructor(
 
     override suspend fun getRemote(index: Int): T? {
         requireNonNegative(index)
+
         return remoteList.get(index).awaitSingleOrNull()?.let(::decodeValue)
     }
 
@@ -442,27 +444,33 @@ class SyncListImpl<T : Any> internal constructor(
         require(index >= 0) { "Index must not be negative: $index" }
     }
 
-    override fun onStreamEvent(type: String, data: StreamEventData) = when (type) {
-        EVENT_ADDED -> onAdded(data)
-        EVENT_REMOVED -> onRemoved(data)
-        EVENT_REMOVED_AT -> onRemovedAt(data)
-        EVENT_SET_AT -> onSetAt(data)
-        EVENT_CLEARED -> onCleared(data)
-        else -> log.atWarning().log("Unknown message type '$type' received from SyncList '$id'")
+    override fun onStreamEvent(type: String, data: StreamEventData) {
+        when (type) {
+            EVENT_ADDED -> onAdded(data)
+            EVENT_REMOVED -> onRemoved(data)
+            EVENT_REMOVED_AT -> onRemovedAt(data)
+            EVENT_SET_AT -> onSetAt(data)
+            EVENT_CLEARED -> onCleared(data)
+            else -> log.atWarning()
+                .log("Unknown message type '$type' received from SyncList '$id'")
+        }
     }
 
     private fun onAdded(data: StreamEventData) {
         val idx = data.payload(0).toIntOrNull() ?: return
+
         val encoded = data.payload(1)
 
         val element = decodeValue(encoded)
         val ok = lock.write {
             if (idx < 0 || idx > list.size) return@write false
+
             list.add(idx, element)
             true
         }
 
         if (!ok) return requestResync()
+
         notifyListeners(SyncListChange.Added(idx, element))
     }
 
@@ -473,28 +481,34 @@ class SyncListImpl<T : Any> internal constructor(
         val removed = lock.write { list.remove(element) }
 
         if (!removed) return requestResync()
+
         notifyListeners(SyncListChange.Removed(element))
     }
 
     private fun onRemovedAt(data: StreamEventData) {
         val idx = data.payload(0).toIntOrNull() ?: return
+
         val oldEncoded = data.payload(1)
 
         val old = decodeValue(oldEncoded)
         val ok = lock.write {
             if (idx < 0 || idx >= list.size) return@write false
+
             val cur = list[idx]
             if (cur != old) return@write false
+
             list.removeAt(idx)
             true
         }
 
         if (!ok) return requestResync()
+
         notifyListeners(SyncListChange.RemovedAt(idx, old))
     }
 
     private fun onSetAt(data: StreamEventData) {
         val idx = data.payload(0).toIntOrNull() ?: return
+
         val oldEnc = data.payload(1)
         val newEnc = data.payload(2)
 
@@ -503,13 +517,16 @@ class SyncListImpl<T : Any> internal constructor(
 
         val ok = lock.write {
             if (idx < 0 || idx >= list.size) return@write false
+
             val cur = list[idx]
             if (cur != oldVal) return@write false
+
             list[idx] = newVal
             true
         }
 
         if (!ok) return requestResync()
+
         notifyListeners(SyncListChange.Updated(idx, newVal, oldVal))
     }
 

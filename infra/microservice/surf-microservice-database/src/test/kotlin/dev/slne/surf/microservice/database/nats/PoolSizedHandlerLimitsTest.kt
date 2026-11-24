@@ -31,14 +31,19 @@ class PoolSizedHandlerLimitsTest {
 
     @Test
     fun `keeps the surf-nats defaults when the surf-nats version cannot take them`() {
-        val incompatible = PoolSizedHandlerLimits({ true }) { throw NoSuchMethodError("setDefaults(II)V") }
+        val incompatible = PoolSizedHandlerLimits({ true }) {
+            throw NoSuchMethodError("setDefaults(II)V")
+        }
 
         incompatible.apply(poolMaxSize = 10)
     }
 
     @Test
     fun `does not link surf-nats when it is missing from the class path`() {
-        assertFalse(isSurfNatsPresent(), "surf-nats must not be on the test runtime class path of this module")
+        assertFalse(
+            isSurfNatsPresent(),
+            "surf-nats must not be on the test runtime class path of this module",
+        )
 
         PoolSizedHandlerLimits().apply(poolMaxSize = 10)
     }

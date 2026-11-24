@@ -28,11 +28,17 @@ internal object NatsCodec {
     /**
      * Decodes [bytes] with [deserializer].
      *
-     * Throws [IllegalArgumentException] when [contentType] is `null` or its media type is not `application/protobuf`,
-     * ignoring case and parameters. Throws [SerializationException] when the payload is malformed.
+     * Throws [IllegalArgumentException] when [contentType] is `null` or its media type is not
+     * `application/protobuf`, ignoring case and parameters. Throws [SerializationException] when
+     * the payload is malformed.
      */
-    fun <T> decode(deserializer: DeserializationStrategy<T>, bytes: ByteArray, contentType: String?): T {
+    fun <T> decode(
+        deserializer: DeserializationStrategy<T>,
+        bytes: ByteArray,
+        contentType: String?,
+    ): T {
         ProtocolHeaders.requireProtobufContentType(contentType)
+
         return try {
             protoBuf.decodeFromByteArray(deserializer, bytes)
         } catch (e: SerializationException) {
@@ -41,7 +47,7 @@ internal object NatsCodec {
             // kotlinx-protobuf reports truncated input as IndexOutOfBoundsException
             throw SerializationException(
                 "Malformed protobuf payload for ${deserializer.descriptor.serialName}: ${e.message}",
-                e
+                e,
             )
         }
     }

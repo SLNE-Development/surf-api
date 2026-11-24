@@ -14,6 +14,7 @@ import kotlinx.coroutines.Deferred
  */
 suspend inline fun <T> CommandArguments.awaitingOrNull(nodeName: String): T? {
     val deferred = getUnchecked<Deferred<T>>(nodeName) ?: return null
+
     return deferred.await()
 }
 

@@ -28,7 +28,7 @@ private const val UNKNOWN_ARGUMENT_KEY = "command.unknown.argument"
 internal fun reportSyntaxFailure(
     sender: CommandSender,
     input: String,
-    failure: CommandSyntaxException
+    failure: CommandSyntaxException,
 ) {
     val raw = failure.rawMessage
     val message = raw?.componentOrNull()
@@ -42,8 +42,9 @@ internal fun reportSyntaxFailure(
 /**
  * Reports an input that no command registry resolved, marking the whole input as the failing part.
  */
-internal fun reportUnknownCommand(sender: CommandSender, input: String) =
+internal fun reportUnknownCommand(sender: CommandSender, input: String) {
     report(sender, input, cursor = 0, message = null)
+}
 
 private fun report(
     sender: CommandSender,
@@ -54,9 +55,11 @@ private fun report(
     val heading = if (cursor > 0) UNKNOWN_ARGUMENT_KEY else UNKNOWN_COMMAND_KEY
 
     val body = text().append(translatable(heading, NamedTextColor.RED))
+
     if (message != null) {
         body.append(text(": ", NamedTextColor.RED)).append(message)
     }
+
     body.appendNewline().append(contextOf(input, cursor))
 
     sender.sendTranslated(body.build())
@@ -72,10 +75,14 @@ private fun contextOf(input: String, cursor: Int): Component {
         .color(NamedTextColor.GRAY)
         .clickEvent(ClickEvent.suggestCommand("/$input"))
 
-    if (clamped > CONTEXT_LENGTH) context.append(text("..."))
+    if (clamped > CONTEXT_LENGTH) {
+        context.append(text("..."))
+    }
+
     context.append(
         text(input.substring((clamped - CONTEXT_LENGTH).coerceAtLeast(0), clamped)),
     )
+
     if (clamped < input.length) {
         context.append(
             text(input.substring(clamped))
@@ -83,6 +90,7 @@ private fun contextOf(input: String, cursor: Int): Component {
                 .decorate(TextDecoration.UNDERLINED),
         )
     }
+
     context.append(
         translatable(HERE_KEY)
             .color(NamedTextColor.RED)

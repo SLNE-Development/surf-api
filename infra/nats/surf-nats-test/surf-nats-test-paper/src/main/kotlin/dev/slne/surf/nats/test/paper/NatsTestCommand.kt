@@ -20,8 +20,8 @@ import kotlin.time.measureTimedValue
 import org.springframework.stereotype.Component as SpringComponent
 
 /**
- * `/natstest`: publishes the test event, calls the services of the test microservice and of every test paper server,
- * and benchmarks those calls.
+ * `/natstest`: publishes the test event, calls the services of the test microservice and of every
+ * test paper server, and benchmarks those calls.
  *
  * Each call replies with its result and duration, or with the failure.
  */
@@ -33,8 +33,8 @@ class NatsTestCommand(
     private val log = logger()
 
     /**
-     * A [PaperTestService] injected here would be this plugin's own implementation, so the call to the test paper
-     * servers goes through the client, which sends it over NATS.
+     * A [PaperTestService] injected here would be this plugin's own implementation, so the call to
+     * the test paper servers goes through the client, which sends it over NATS.
      */
     private val paper by lazy { client.service<PaperTestService>() }
 
@@ -104,12 +104,23 @@ class NatsTestCommand(
                 val concurrency = args.getUnchecked<Int>("concurrency") ?: DEFAULT_CONCURRENCY
                 val kilobytes = args.getUnchecked<Int>("kilobytes") ?: DEFAULT_KILOBYTES
 
-                sender.reply("bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...")
+                sender.reply(
+                    "bench $kind: warmup $warmup, iterations $iterations, concurrency $concurrency ...",
+                )
+
                 try {
                     val call = benchmarkCall(kind, kilobytes)
-                    Benchmark.run("paper -> $kind", warmup, iterations, concurrency, call).lines().forEach {
-                        log.atInfo().log("%s", it)
-                        sender.reply(it, NamedTextColor.GREEN)
+                    val report = Benchmark.run(
+                        "paper -> $kind",
+                        warmup,
+                        iterations,
+                        concurrency,
+                        call,
+                    )
+                    for (line in report.lines()) {
+                        log.atInfo()
+                            .log("%s", line)
+                        sender.reply(line, NamedTextColor.GREEN)
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -123,16 +134,25 @@ class NatsTestCommand(
     /**
      * Returns the call that the benchmark [kind] measures, with its request already built.
      */
-    private fun benchmarkCall(kind: String, kilobytes: Int): suspend () -> Unit = when (kind) {
-        "echo" -> EchoRequest("ping").let { request -> { microservice.echo(request) } }
-        "persistent" -> StoredCountRequest().let { request -> { microservice.storedCount(request) } }
-        "payload" -> SizeRequest(ByteArray(kilobytes * BYTES_PER_KILOBYTE)).let { request -> { microservice.size(request) } }
-        else -> FindPlayerRequest("nobody").let { request -> { paper.findPlayer(request) } }
+    private fun benchmarkCall(kind: String, kilobytes: Int): suspend () -> Unit {
+        return when (kind) {
+            "echo" -> EchoRequest("ping").let { request -> { microservice.echo(request) } }
+            "persistent" -> StoredCountRequest().let { request -> { microservice.storedCount(request) } }
+            "payload" -> SizeRequest(ByteArray(kilobytes * BYTES_PER_KILOBYTE)).let { request ->
+                {
+                    microservice.size(
+                        request,
+                    )
+                }
+            }
+
+            else -> FindPlayerRequest("nobody").let { request -> { paper.findPlayer(request) } }
+        }
     }
 
     /**
-     * Adds the subcommand [name] with the arguments declared by [arguments]. It runs [call] off the server thread and
-     * replies with its result and duration.
+     * Adds the subcommand [name] with the arguments declared by [arguments]. It runs [call] off the
+     * server thread and replies with its result and duration.
      */
     private fun callSubcommand(
         name: String,
@@ -143,12 +163,19 @@ class NatsTestCommand(
             arguments()
             anyExecutorSuspend { sender, args ->
                 try {
-                    val (result, took) = withContext(Dispatchers.Default) { measureTimedValue { call(args) } }
+                    val (result, took) = withContext(Dispatchers.Default) {
+                        measureTimedValue {
+                            call(
+                                args,
+                            )
+                        }
+                    }
                     sender.reply("$name -> $result ($took)")
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    log.atWarning().log("natstest %s failed: %s", name, e)
+                    log.atWarning()
+                        .log("natstest %s failed: %s", name, e)
                     sender.replyFailure(name, e)
                 }
             }
@@ -164,8 +191,10 @@ class NatsTestCommand(
     }
 }
 
-private fun CommandSender.reply(message: String, color: NamedTextColor = NamedTextColor.GRAY) =
+private fun CommandSender.reply(message: String, color: NamedTextColor = NamedTextColor.GRAY) {
     sendMessage(Component.text(message, color))
+}
 
-private fun CommandSender.replyFailure(name: String, failure: Exception) =
+private fun CommandSender.replyFailure(name: String, failure: Exception) {
     reply("$name failed: ${failure.javaClass.simpleName}: ${failure.message}", NamedTextColor.RED)
+}

@@ -22,19 +22,22 @@ import org.springframework.core.env.get
 import kotlin.io.path.Path
 
 /**
- * Makes the application context of a microservice surf-api's root context, before anything else initializes it.
+ * Makes the application context of a microservice surf-api's root context, before anything else
+ * initializes it.
  *
- * Resolves the [MicroserviceInfo] and registers it, together with [shutdown], as a bean. Publishes the name as
- * `spring.application.name` and the data folder as [SurfProperties.CONFIG_DIRECTORY], ahead of every other property
- * source, so that surf modules read the same values. Registers the listeners that turn the close of the context into
- * a shutdown request, with the exit code of `SpringApplication.exit`, so the process ends however the context closes,
- * and registers the bean that the context destroys last, which tells [shutdown] that the close is over.
- * Then hands the context to [SurfApiStandaloneBootstrap.adopt], with the application's package as the package of the
- * hosted application.
+ * Resolves the [MicroserviceInfo] and registers it, together with [shutdown], as a bean. Publishes
+ * the name as `spring.application.name` and the data folder as [SurfProperties.CONFIG_DIRECTORY],
+ * ahead of every other property source, so that surf modules read the same values. Registers the
+ * listeners that turn the close of the context into a shutdown request, with the exit code of
+ * `SpringApplication.exit`, so the process ends however the context closes, and registers the bean
+ * that the context destroys last, which tells [shutdown] that the close is over. Then hands the
+ * context to [SurfApiStandaloneBootstrap.adopt], with the application's package as the package of
+ * the hosted application.
  *
- * Also listens for the failure of the application run. An initializer that runs after this one may throw, which leaves
- * surf-api adopted on a context that never refreshes and so never destroys its beans; the listener then releases
- * surf-api. A context that did refresh stops surf-api through its own lifecycle.
+ * Also listens for the failure of the application run. An initializer that runs after this one may
+ * throw, which leaves surf-api adopted on a context that never refreshes and so never destroys its
+ * beans; the listener then releases surf-api. A context that did refresh stops surf-api through its
+ * own lifecycle.
  */
 internal class MicroserviceContextInitializer(
     private val application: Class<*>,
@@ -67,7 +70,9 @@ internal class MicroserviceContextInitializer(
         )
         context.beanFactory.registerSingleton(INFO_BEAN, info)
         context.beanFactory.registerSingleton(SHUTDOWN_BEAN, shutdown)
-        context.addApplicationListener(ApplicationListener<ExitCodeEvent> { shutdown.exitCode = it.exitCode })
+        context.addApplicationListener(
+            ApplicationListener<ExitCodeEvent> { shutdown.exitCode = it.exitCode },
+        )
         context.addApplicationListener(
             ApplicationListener<ContextClosedEvent> { event ->
                 if (event.applicationContext === context) shutdown.request()
@@ -91,28 +96,37 @@ internal class MicroserviceContextInitializer(
             ?: environment[SurfProperties.APPLICATION_NAME]
             ?: defaultName()
         val dataPath = Path(
-            environment[MicroserviceInfo.CONFIG_DIR_ENVIRONMENT_VARIABLE] ?: SurfProperties.DEFAULT_CONFIG_DIRECTORY,
+            environment[MicroserviceInfo.CONFIG_DIR_ENVIRONMENT_VARIABLE]
+                ?: SurfProperties.DEFAULT_CONFIG_DIRECTORY,
         )
+
         return MicroserviceInfo(MicroserviceNames.requireValid(name), dataPath)
     }
 
     /**
-     * The class name without an `Application` or `Microservice` suffix, in kebab case: `PunishApplication` becomes
-     * `punish`.
+     * The class name without an `Application` or `Microservice` suffix, in kebab case:
+     * `PunishApplication` becomes `punish`.
      */
     private fun defaultName(): String {
-        val simpleName = NAME_SUFFIXES.fold(application.simpleName) { name, suffix -> name.removeSuffix(suffix) }
+        val simpleName = NAME_SUFFIXES.fold(application.simpleName) { name, suffix ->
+            name.removeSuffix(
+                suffix,
+            )
+        }
             .ifEmpty { application.simpleName }
+
         return simpleName.replace(WORD_BOUNDARY, "-").lowercase()
     }
 
-    private fun descriptor(info: MicroserviceInfo) = PluginDescriptor(
-        name = info.name,
-        classLoader = application.classLoader,
-        source = null,
-        basePackages = listOf(application.packageName),
-        dataDirectory = info.dataPath,
-    )
+    private fun descriptor(info: MicroserviceInfo): PluginDescriptor {
+        return PluginDescriptor(
+            name = info.name,
+            classLoader = application.classLoader,
+            source = null,
+            basePackages = listOf(application.packageName),
+            dataDirectory = info.dataPath,
+        )
+    }
 
     private companion object {
 

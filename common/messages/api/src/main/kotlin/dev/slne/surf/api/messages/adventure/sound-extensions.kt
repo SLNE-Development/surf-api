@@ -35,6 +35,6 @@ inline fun sound(block: @SoundDsl Sound.Builder.() -> Unit): Sound {
  * @param block The configuration block for building the sound.
  * @return A configured [Sound] instance.
  */
-inline fun Sound(block: @SoundDsl Sound.Builder.() -> Unit) = sound(block)
+inline fun Sound(block: @SoundDsl Sound.Builder.() -> Unit): Sound = sound(block)
 
 typealias AdventureSound = Sound

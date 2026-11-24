@@ -32,6 +32,7 @@ object CommandAPI {
     @InternalSurfApi
     fun register(definition: CommandDefinition, namespace: String?): RegisteredCommand {
         validateNamespace(namespace)
+
         return installedPlatform().register(definition, namespace)
     }
 
@@ -48,24 +49,32 @@ object CommandAPI {
      *
      * [input] carries no leading slash. Callers that must not throw check ownership first.
      *
-     * @throws com.mojang.brigadier.exceptions.CommandSyntaxException when the command is unknown, an
-     * argument is rejected, or input remains after a complete syntax.
+     * @throws com.mojang.brigadier.exceptions.CommandSyntaxException when the command is unknown,
+     * an argument is rejected, or input remains after a complete syntax.
      */
-    fun execute(sender: CommandSender, input: String): Int =
-        installedPlatform().execute(sender, input)
+    fun execute(sender: CommandSender, input: String): Int {
+        return installedPlatform().execute(
+            sender,
+            input,
+        )
+    }
 
     /**
-     * Aborts the running command with a [CommandSyntaxException] whose message is the plain text [message].
+     * Aborts the running command with a [CommandSyntaxException] whose message is the plain text
+     * [message].
      */
     fun failWithString(message: String): Nothing = failWithMessage(Component.text(message))
 
     /**
-     * Aborts the running command with a [CommandSyntaxException] that carries [message] as its component.
+     * Aborts the running command with a [CommandSyntaxException] that carries [message] as its
+     * component.
      */
     fun failWithMessage(message: Component): Nothing = throw CommandSyntaxException(message)
 
-    private fun installedPlatform(): CommandAPIPlatform = checkNotNull(platform.get()) {
-        "The CommandAPI platform has not been installed; register commands after server startup"
+    private fun installedPlatform(): CommandAPIPlatform {
+        return checkNotNull(platform.get()) {
+            "The CommandAPI platform has not been installed; register commands after server startup"
+        }
     }
 
     private fun validateNamespace(namespace: String?) {

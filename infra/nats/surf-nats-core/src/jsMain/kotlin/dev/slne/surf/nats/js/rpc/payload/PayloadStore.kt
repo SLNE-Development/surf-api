@@ -23,9 +23,11 @@ import kotlinx.coroutines.ensureActive
 import kotlin.time.Duration
 
 /**
- * Offloads bodies above the server max payload to the payload buckets and resolves `Surf-Payload-Ref` bodies.
+ * Offloads bodies above the server max payload to the payload buckets and resolves
+ * `Surf-Payload-Ref` bodies.
  *
- * A missing bucket is created with the TTL and file storage of the JVM runtime. An existing one is used as is.
+ * A missing bucket is created with the TTL and file storage of the JVM runtime. An existing one is
+ * used as is.
  */
 internal class PayloadStore(
     private val connection: NatsConnection,
@@ -38,9 +40,9 @@ internal class PayloadStore(
     /**
      * Offloads [body] if larger than the supported max payload and returns the body to send.
      *
-     * [extraHeaderBytes] accounts for headers that are added after this call, such as the JetStream publish options.
-     * With [stampDeadline], `Surf-Deadline` (now + [lifetime]) is added after a possible upload and counted in the
-     * size check.
+     * [extraHeaderBytes] accounts for headers that are added after this call, such as the JetStream
+     * publish options. With [stampDeadline], `Surf-Deadline` (now + [lifetime]) is added after a
+     * possible upload and counted in the size check.
      */
     suspend fun offload(
         headers: MsgHdrs,
@@ -61,16 +63,19 @@ internal class PayloadStore(
             writeHeader = headers::set,
             upload = { name -> store(bucket).putBlob(ObjectStoreMeta(name = name), body).await() },
         )
+
         return if (offloaded) NatsHeaders.EMPTY_BODY else body
     }
 
     /**
-     * Returns the body of [message], loaded from [bucket] when the message carries `Surf-Payload-Ref`.
+     * Returns the body of [message], loaded from [bucket] when the message carries
+     * `Surf-Payload-Ref`.
      *
      * With [delete], removes the object afterwards. A failed deletion is only logged.
      */
     suspend fun resolve(message: Msg, bucket: PayloadBucket, delete: Boolean): Uint8Array<*> {
         val name = message.header(ProtocolHeaders.PAYLOAD_REF) ?: return message.data
+
         val store = store(bucket)
         val data = store.getBlob(name).await()
             ?: error("Offloaded payload $name not found in bucket ${bucket.bucketName}")
@@ -89,6 +94,7 @@ internal class PayloadStore(
             if (e is CancellationException) {
                 currentCoroutineContext().ensureActive()
             }
+
             console.warn("surf-nats: failed to delete offloaded payload $name", e)
         }
     }
@@ -99,6 +105,7 @@ internal class PayloadStore(
     private suspend fun store(bucket: PayloadBucket): ObjectStore {
         val existing = stores[bucket]?.takeUnless { it.isCancelled }
         val store = existing ?: createStore(bucket).also { stores[bucket] = it }
+
         return store.await()
     }
 

@@ -11,13 +11,15 @@ import dev.slne.surf.nats.gradle.validate.Problems
 internal class EnumResolver(private val problems: Problems) {
 
     /**
-     * Returns the Kotlin entry names of [type] with their constants in declaration order and reports enum and
-     * value names that cannot be generated. The first constant per Kotlin name is kept.
+     * Returns the Kotlin entry names of [type] with their constants in declaration order and
+     * reports enum and value names that cannot be generated. The first constant per Kotlin name is
+     * kept.
      */
     fun resolve(type: EnumType): Map<String, EnumConstant> {
         val prefix = KotlinNaming.enumValuePrefix(type.name)
 
         validateEnum(type, prefix)
+
         return enumEntries(type, prefix)
     }
 
@@ -28,29 +30,34 @@ internal class EnumResolver(private val problems: Problems) {
      */
     private fun validateEnum(type: EnumType, prefix: String) {
         val esPrefix = KotlinNaming.protobufEsEnumValuePrefix(type.name)
+
         if (esPrefix != prefix) {
             problems.error(
                 type.location,
                 "enum ${type.name}: protobuf-es derives the value prefix $esPrefix from the enum name, not $prefix, " +
-                        "so TypeScript would keep the full value names; rename the enum to " +
-                        "${KotlinNaming.enumNameForPrefix(prefix)} (abbreviations as one word, no '_')",
+                    "so TypeScript would keep the full value names; rename the enum to " +
+                    "${KotlinNaming.enumNameForPrefix(prefix)} (abbreviations as one word, no '_')",
             )
         }
+
         if (type.allowAlias()) {
             problems.error(type.location, "enum ${type.name}: allow_alias is not supported")
         }
+
         val first = type.constants.firstOrNull()
         val zeroNames = listOf(prefix + "UNSPECIFIED", prefix + "UNKNOWN")
+
         if (first == null || first.tag != 0 || first.name !in zeroNames) {
             problems.error(
                 type.location,
-                "enum ${type.name} must declare ${zeroNames.joinToString(" or ")} = 0 as its first value"
+                "enum ${type.name} must declare ${zeroNames.joinToString(" or ")} = 0 as its first value",
             )
         }
     }
 
     /**
-     * Collects valid enum entries in declaration order, retaining the first entry for each Kotlin name.
+     * Collects valid enum entries in declaration order, retaining the first entry for each Kotlin
+     * name.
      *
      * Duplicate names are reported. Entries with invalid prefixes, identifiers or reserved
      * names are omitted. Negative numeric values are reported but retained where otherwise valid.
@@ -59,15 +66,18 @@ internal class EnumResolver(private val problems: Problems) {
      */
     private fun enumEntries(type: EnumType, prefix: String): Map<String, EnumConstant> {
         val entries = LinkedHashMap<String, EnumConstant>()
+
         for (constant in type.constants) {
             val kotlinName = enumEntryName(constant, prefix) ?: continue
+
             entries.putIfAbsent(kotlinName, constant)?.let { previous ->
                 problems.error(
                     constant.location,
-                    "enum values ${previous.name} and ${constant.name} both map to the Kotlin entry $kotlinName"
+                    "enum values ${previous.name} and ${constant.name} both map to the Kotlin entry $kotlinName",
                 )
             }
         }
+
         return entries
     }
 
@@ -82,37 +92,46 @@ internal class EnumResolver(private val problems: Problems) {
         if (constant.tag < 0) {
             problems.error(
                 constant.location,
-                "enum value ${constant.name} has a negative number ${constant.tag}"
+                "enum value ${constant.name} has a negative number ${constant.tag}",
             )
         }
+
         if (!constant.name.startsWith(prefix)) {
             problems.error(
                 constant.location,
-                "enum value ${constant.name} must start with the prefix $prefix"
+                "enum value ${constant.name} must start with the prefix $prefix",
             )
+
             return null
         }
+
         val kotlinName = constant.name.removePrefix(prefix)
+
         if (!KotlinNaming.isIdentifier(kotlinName)) {
             problems.error(
                 constant.location,
                 "enum value ${constant.name} without its prefix ($kotlinName) must start with a letter and contain only letters, digits and '_'",
             )
+
             return null
         }
+
         if (kotlinName in RESERVED_ENTRY_NAMES) {
             problems.error(
                 constant.location,
-                "enum value ${constant.name} maps to the reserved Kotlin entry name $kotlinName"
+                "enum value ${constant.name} maps to the reserved Kotlin entry name $kotlinName",
             )
+
             return null
         }
+
         return kotlinName
     }
 
     private companion object {
         /**
-         * Members of Kotlin enums and of the generated enum class that an entry name must not shadow.
+         * Members of Kotlin enums and of the generated enum class that an entry name must not
+         * shadow.
          */
         val RESERVED_ENTRY_NAMES = setOf(
             "name",

@@ -4,15 +4,7 @@ import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.js.event.EventDescriptor
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
 import dev.slne.surf.nats.js.external.protobuf.DescService
-import dev.slne.surf.nats.js.fixtures.AuditService
-import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
-import dev.slne.surf.nats.js.fixtures.OptedOutMessageSchema
-import dev.slne.surf.nats.js.fixtures.PlainMessageSchema
-import dev.slne.surf.nats.js.fixtures.PlayerJoinedSchema
-import dev.slne.surf.nats.js.fixtures.PlayerService
-import dev.slne.surf.nats.js.fixtures.RegistryService
-import dev.slne.surf.nats.js.fixtures.ServerStartedSchema
-import dev.slne.surf.nats.js.fixtures.StreamingService
+import dev.slne.surf.nats.js.fixtures.*
 import dev.slne.surf.nats.js.rpc.MethodDescriptor
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.rpc.Recipients
@@ -28,22 +20,35 @@ import dev.slne.surf.nats.js.fixtures.v2.PlayerService as PlayerServiceV2
 
 class DescriptorsTest {
 
-    private fun desc(service: DescService, localName: String): DescMethod = service.methods.first { it.localName == localName }
+    private fun desc(service: DescService, localName: String): DescMethod {
+        return service.methods.first { it.localName == localName }
+    }
 
-    private fun method(service: DescService, localName: String): MethodDescriptor = MethodDescriptor.of(desc(service, localName))
+    private fun method(service: DescService, localName: String): MethodDescriptor {
+        return MethodDescriptor.of(desc(service, localName))
+    }
 
     @Test
     fun eventSubjectIsTheMessageFullName() {
         val descriptor = EventDescriptor.of(PlayerJoinedSchema)
         assertEquals("surf.natsjs.test.v1.PlayerJoined", descriptor.typeName)
         assertEquals("surf.evt.surf.natsjs.test.v1.PlayerJoined", descriptor.subject)
-        assertEquals("surf.evt.surf.natsjs.test.v1.ChatMessage", EventDescriptor.of(ChatMessageSchema).subject)
-        assertEquals("surf.evt.surf.natsjs.test.v1.ServerStarted", EventDescriptor.of(ServerStartedSchema).subject)
+        assertEquals(
+            "surf.evt.surf.natsjs.test.v1.ChatMessage",
+            EventDescriptor.of(ChatMessageSchema).subject,
+        )
+        assertEquals(
+            "surf.evt.surf.natsjs.test.v1.ServerStarted",
+            EventDescriptor.of(ServerStartedSchema).subject,
+        )
     }
 
     @Test
     fun majorVersionsOfAnEventHaveDistinctSubjects() {
-        assertEquals("surf.evt.surf.natsjs.test.v2.PlayerJoined", EventDescriptor.of(PlayerJoinedV2Schema).subject)
+        assertEquals(
+            "surf.evt.surf.natsjs.test.v2.PlayerJoined",
+            EventDescriptor.of(PlayerJoinedV2Schema).subject,
+        )
     }
 
     @Test
@@ -104,7 +109,8 @@ class DescriptorsTest {
         assertTrue(query.persistent)
         assertEquals(NatsResultKind.VALUE, query.result)
 
-        // persistent = false on the method overrides the service, timeout 0 inherits the service's 10 s
+        // persistent = false on the method overrides the service, timeout 0 inherits the service's
+        // 10 s
         val ping = method(AuditService, "ping")
         assertFalse(ping.persistent)
         assertEquals(10.seconds, ping.timeout)

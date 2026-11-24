@@ -117,8 +117,8 @@ class DoubleArgument(
  * The formatter defaults to the lowercase constant name. Parsing is case-sensitive; suggestions
  * match case-insensitively.
  *
- * @throws IllegalArgumentException when [values] is empty, or the formatted values are blank, contain
- * a character Brigadier does not read in an unquoted word, or are not unique
+ * @throws IllegalArgumentException when [values] is empty, or the formatted values are blank,
+ * contain a character Brigadier does not read in an unquoted word, or are not unique
  */
 class EnumArgument<E : Enum<E>>(
     nodeName: String,
@@ -135,11 +135,17 @@ class EnumArgument<E : Enum<E>>(
 
         val formattedValues = this.values.map(formatter)
 
-        require(formattedValues.all(String::isNotBlank)) { "Formatted enum values must not be blank" }
-        require(formattedValues.all { value -> value.all(StringReader::isAllowedInUnquotedString) }) {
+        require(formattedValues.all(String::isNotBlank)) {
+            "Formatted enum values must not be blank"
+        }
+        require(
+            formattedValues.all { value -> value.all(StringReader::isAllowedInUnquotedString) },
+        ) {
             "Formatted enum values may only contain letters, digits, '_', '-', '.' and '+'"
         }
-        require(formattedValues.distinct().size == formattedValues.size) { "Formatted enum values must be unique" }
+        require(formattedValues.distinct().size == formattedValues.size) {
+            "Formatted enum values must be unique"
+        }
     }
 
     override fun stringify(value: E): String = formatter(value)
@@ -178,9 +184,11 @@ class FloatRangeArgument(nodeName: String) : Argument<Range.Float>(nodeName) {
     override fun stringify(value: Range.Float): String = stringifyRange(value.min(), value.max())
 }
 
-private fun stringifyRange(min: Number?, max: Number?): String = when {
-    min != null && min == max -> min.toPlainDecimal()
-    else -> "${min.orEmpty()}..${max.orEmpty()}"
+private fun stringifyRange(min: Number?, max: Number?): String {
+    return when {
+        min != null && min == max -> min.toPlainDecimal()
+        else -> "${min.orEmpty()}..${max.orEmpty()}"
+    }
 }
 
 private fun Number?.orEmpty(): String = this?.toPlainDecimal().orEmpty()
@@ -193,5 +201,6 @@ private fun Number?.orEmpty(): String = this?.toPlainDecimal().orEmpty()
  */
 internal fun Number.toPlainDecimal(): String {
     val text = toString()
+
     return if ('E' in text) BigDecimal(text).toPlainString() else text
 }

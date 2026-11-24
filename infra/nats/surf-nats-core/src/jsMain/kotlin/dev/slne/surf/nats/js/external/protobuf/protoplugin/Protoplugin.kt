@@ -7,8 +7,8 @@ import dev.slne.surf.nats.js.external.protobuf.DescService
 /**
  * Binds the namespace of `@bufbuild/protoplugin`.
  *
- * The package is loaded with `import()` instead of a static `@file:JsModule`, so that the client runtime never loads
- * the TypeScript compiler. `JsAny` is the bound of the `import()` wrapper.
+ * The package is loaded with `import()` instead of a static `@file:JsModule`, so that the client
+ * runtime never loads the TypeScript compiler. `JsAny` is the bound of the `import()` wrapper.
  */
 @OptIn(ExperimentalWasmJsInterop::class)
 internal external interface Protoplugin : JsAny {

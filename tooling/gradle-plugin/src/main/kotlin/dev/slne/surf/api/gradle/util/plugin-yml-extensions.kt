@@ -2,6 +2,7 @@ package dev.slne.surf.api.gradle.util
 
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
+import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.kotlin.dsl.NamedDomainObjectContainerScope
 
 /**
@@ -15,10 +16,12 @@ fun NamedDomainObjectContainerScope<DependencyDefinition>.registerSoft(
     name: String,
     joinClassPath: Boolean = true,
     loadOrder: RelativeLoadOrder = RelativeLoadOrder.BEFORE,
-) = register(name) {
-    this.required = false
-    this.joinClasspath = joinClassPath
-    this.load = loadOrder
+): NamedDomainObjectProvider<DependencyDefinition> {
+    return register(name) {
+        this.required = false
+        this.joinClasspath = joinClassPath
+        this.load = loadOrder
+    }
 }
 
 /**
@@ -32,8 +35,10 @@ fun NamedDomainObjectContainerScope<DependencyDefinition>.registerRequired(
     name: String,
     joinClassPath: Boolean = true,
     loadOrder: RelativeLoadOrder = RelativeLoadOrder.BEFORE,
-) = register(name) {
-    this.required = true
-    this.joinClasspath = joinClassPath
-    this.load = loadOrder
+): NamedDomainObjectProvider<DependencyDefinition> {
+    return register(name) {
+        this.required = true
+        this.joinClasspath = joinClassPath
+        this.load = loadOrder
+    }
 }

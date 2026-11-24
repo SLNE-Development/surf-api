@@ -10,8 +10,8 @@ public enum class MicroserviceCommandSource {
     CONSOLE,
 
     /**
-     * The local command socket, used by `microservicectl`. Output goes to the standard output and standard error of
-     * `microservicectl`.
+     * The local command socket, used by `microservicectl`. Output goes to the standard output and
+     * standard error of `microservicectl`.
      */
     LOCAL_SOCKET,
 }

@@ -16,7 +16,6 @@ import dev.slne.surf.api.minestom.server.chat.impl.SurfChatTypes
 import dev.slne.surf.api.minestom.server.chat.impl.signature.PlayerChatMessage
 import dev.slne.surf.api.minestom.server.chat.impl.signature.RemoteChatSession
 import dev.slne.surf.api.minestom.server.impl.command.SignedCommandArguments
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.crypto.ChatSession
 import net.minestom.server.entity.GameMode
 import net.minestom.server.entity.Player
@@ -47,8 +46,8 @@ class SignedChatSettings internal constructor() {
      * Vanilla's `chat-spam-threshold-seconds`.
      *
      * Each chat message adds 20 to a counter that drains by 1 per tick. The player is kicked with
-     * the `disconnect.spam` message once the counter reaches 20 times this value. 0 or less disables
-     * the check.
+     * the `disconnect.spam` message once the counter reaches 20 times this value. 0 or less
+     * disables the check.
      */
     var chatSpamThresholdSeconds: Int = 10
 
@@ -68,7 +67,6 @@ class SignedChatSettings internal constructor() {
  * pass through [AsyncPlayerChatEvent] off the tick thread, in the order they were received per
  * player. The secure chat state of a player is available through [ChatSessionHolder.fromPlayer].
  */
-@OptIn(InternalSurfApi::class)
 class SignedChatFeature internal constructor(
     private val settings: SignedChatSettings,
 ) : SurfMinestomFeature {
@@ -82,7 +80,9 @@ class SignedChatFeature internal constructor(
         registerPacketListeners()
 
         SignedCommandArguments.unsignedFactory = { sender, content ->
-            (sender?.let { PlayerChatMessage.unsigned(it, content) } ?: PlayerChatMessage.system(content))
+            (sender?.let { PlayerChatMessage.unsigned(it, content) } ?: PlayerChatMessage.system(
+                content,
+            ))
                 .adventureView()
         }
 
@@ -106,10 +106,16 @@ class SignedChatFeature internal constructor(
 
     override fun disable(api: SurfMinestomServer) {
         with(PacketListenerManager) {
-            setPlayListener(ClientChatMessagePacket::class.java, ChatMessageListener::chatMessageListener)
+            setPlayListener(
+                ClientChatMessagePacket::class.java,
+                ChatMessageListener::chatMessageListener,
+            )
             setPlayListener(ClientChatAckPacket::class.java) { _, _ -> }
             setPlayListener(ClientChatSessionUpdatePacket::class.java) { _, _ -> }
-            setPlayListener(ClientCommandChatPacket::class.java, ChatMessageListener::commandChatListener)
+            setPlayListener(
+                ClientCommandChatPacket::class.java,
+                ChatMessageListener::commandChatListener,
+            )
             setPlayListener(
                 ClientSignedCommandChatPacket::class.java,
                 ChatMessageListener::signedCommandChatListener,
@@ -121,34 +127,38 @@ class SignedChatFeature internal constructor(
         ChatSessionHolderImpl.clear()
     }
 
-    private fun holder(player: Player): ChatSessionHolderImpl? = ChatSessionHolderImpl.create(player, settings)
+    private fun holder(player: Player): ChatSessionHolderImpl? {
+        return ChatSessionHolderImpl.create(player, settings)
+    }
 
-    private fun registerPacketListeners() = with(PacketListenerManager) {
-        setPlayListener(ClientChatMessagePacket::class.java) { packet, player ->
-            holder(player)?.handler?.handleChat(packet) { message ->
-                ChatProcessor(player, message).process()
+    private fun registerPacketListeners() {
+        with(PacketListenerManager) {
+            setPlayListener(ClientChatMessagePacket::class.java) { packet, player ->
+                holder(player)?.handler?.handleChat(packet) { message ->
+                    ChatProcessor(player, message).process()
+                }
             }
-        }
 
-        setPlayListener(ClientChatAckPacket::class.java) { packet, player ->
-            holder(player)?.handler?.handleChatAck(packet)
-        }
-
-        setPlayListener(ClientChatSessionUpdatePacket::class.java) { packet, player ->
-            holder(player)?.handler?.handleChatSessionUpdate(packet) { session ->
-                broadcastChatSession(player, session)
+            setPlayListener(ClientChatAckPacket::class.java) { packet, player ->
+                holder(player)?.handler?.handleChatAck(packet)
             }
-        }
 
-        setPlayListener(ClientCommandChatPacket::class.java) { packet, player ->
-            holder(player)?.handler?.handleUnsignedCommandChat(packet.message()) { command ->
-                CommandManager.execute(player, command)
+            setPlayListener(ClientChatSessionUpdatePacket::class.java) { packet, player ->
+                holder(player)?.handler?.handleChatSessionUpdate(packet) { session ->
+                    broadcastChatSession(player, session)
+                }
             }
-        }
 
-        setPlayListener(ClientSignedCommandChatPacket::class.java) { packet, player ->
-            holder(player)?.handler?.handleSignedCommandChat(packet) { command ->
-                CommandManager.execute(player, command)
+            setPlayListener(ClientCommandChatPacket::class.java) { packet, player ->
+                holder(player)?.handler?.handleUnsignedCommandChat(packet.message()) { command ->
+                    CommandManager.execute(player, command)
+                }
+            }
+
+            setPlayListener(ClientSignedCommandChatPacket::class.java) { packet, player ->
+                holder(player)?.handler?.handleSignedCommandChat(packet) { command ->
+                    CommandManager.execute(player, command)
+                }
             }
         }
     }
@@ -166,12 +176,16 @@ class SignedChatFeature internal constructor(
             if (other === joined) continue
 
             val session = ChatSessionHolderImpl.fromPlayer(other)?.chatSession ?: continue
+
             joined.sendPacket(chatSessionInfoPacket(other, session))
         }
     }
 
-    private fun chatSessionInfoPacket(player: Player, session: ChatSession) =
-        PlayerInfoUpdatePacket(
+    private fun chatSessionInfoPacket(
+        player: Player,
+        session: ChatSession,
+    ): PlayerInfoUpdatePacket {
+        return PlayerInfoUpdatePacket(
             PlayerInfoUpdatePacket.Action.INITIALIZE_CHAT,
             PlayerInfoUpdatePacket.Entry(
                 player.uuid,
@@ -183,9 +197,10 @@ class SignedChatFeature internal constructor(
                 player.displayName,
                 session,
                 0,
-                false
-            )
+                false,
+            ),
         )
+    }
 
     companion object {
         const val ID = "signed-chat"

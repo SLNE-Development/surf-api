@@ -10,11 +10,13 @@ import java.net.InetAddress
 class InetAddressColumnType : ColumnType<InetAddress>() {
     override fun sqlType(): String = currentDialect.dataTypeProvider.varcharType(45)
 
-    override fun valueFromDB(value: Any): InetAddress = when (value) {
-        is InetAddress -> value
-        is String -> InetAddress.getByName(value)
-        is ByteArray -> InetAddress.getByAddress(value)
-        else -> error("Cannot convert $value to InetAddress")
+    override fun valueFromDB(value: Any): InetAddress {
+        return when (value) {
+            is InetAddress -> value
+            is String -> InetAddress.getByName(value)
+            is ByteArray -> InetAddress.getByAddress(value)
+            else -> error("Cannot convert $value to InetAddress")
+        }
     }
 
     override fun notNullValueToDB(value: InetAddress): Any = value.hostAddress

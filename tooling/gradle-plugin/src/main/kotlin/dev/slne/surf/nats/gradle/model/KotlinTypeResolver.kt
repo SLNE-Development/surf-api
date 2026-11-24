@@ -172,8 +172,9 @@ internal class KotlinTypeResolver(
         if (protoType == ProtoType.EMPTY) {
             problems.error(
                 location,
-                "${ProtoType.EMPTY} can only be an rpc request or response, not a field type"
+                "${ProtoType.EMPTY} can only be an rpc request or response, not a field type",
             )
+
             return null
         }
 
@@ -201,6 +202,7 @@ internal class KotlinTypeResolver(
 
         if (kotlinType == null) {
             reportUnknown(protoType, location)
+
             return null
         }
 
@@ -409,11 +411,13 @@ internal class KotlinTypeResolver(
                     location,
                     "sint32 is not supported (kotlinx-serialization-protobuf cannot decode values >= 2^30); use sint64 or int32",
                 )
+
                 return null
             }
 
             else -> {
                 problems.error(location, "unsupported scalar type $protoType")
+
                 return null
             }
         }

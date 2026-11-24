@@ -104,10 +104,12 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
      * then use their classes; add them as `compileOnly` dependencies to compile against them. The
      * server does not start when a plugin that is not `optional` is missing.
      */
-    val pluginDependencies: NamedDomainObjectContainer<MinestomPluginFile.Dependency> =
-        objects.domainObjectContainer(MinestomPluginFile.Dependency::class)
+    val pluginDependencies: NamedDomainObjectContainer<MinestomPluginFile.Dependency> = objects
+        .domainObjectContainer(MinestomPluginFile.Dependency::class)
 
-    fun pluginDependencies(action: Action<NamedDomainObjectContainer<MinestomPluginFile.Dependency>>) {
+    fun pluginDependencies(
+        action: Action<NamedDomainObjectContainer<MinestomPluginFile.Dependency>>,
+    ) {
         action.execute(pluginDependencies)
     }
 
@@ -133,18 +135,18 @@ open class MinestomServerSurfExtension @Inject constructor(objects: ObjectFactor
         features.add(feature)
     }
 
-    fun withSignedChat() = feature(MinestomServerFeature.SIGNED_CHAT)
+    fun withSignedChat(): Unit = feature(MinestomServerFeature.SIGNED_CHAT)
 
     /**
      * Also registers the LuckPerms agent as a delegate agent, which LuckPerms needs to load its
      * libraries.
      */
-    fun withLuckPerms() = feature(MinestomServerFeature.LUCKPERMS)
-    fun withSpark() = feature(MinestomServerFeature.SPARK)
-    fun withNpcLib() = feature(MinestomServerFeature.NPC)
-    fun withPlayerVisibility() = feature(MinestomServerFeature.PLAYER_VISIBILITY)
-    fun withConsole() = feature(MinestomServerFeature.CONSOLE)
-    fun withPlugins() = feature(MinestomServerFeature.PLUGINS)
+    fun withLuckPerms(): Unit = feature(MinestomServerFeature.LUCKPERMS)
+    fun withSpark(): Unit = feature(MinestomServerFeature.SPARK)
+    fun withNpcLib(): Unit = feature(MinestomServerFeature.NPC)
+    fun withPlayerVisibility(): Unit = feature(MinestomServerFeature.PLAYER_VISIBILITY)
+    fun withConsole(): Unit = feature(MinestomServerFeature.CONSOLE)
+    fun withPlugins(): Unit = feature(MinestomServerFeature.PLUGINS)
 
     /**
      * Puts the module of every feature on the class path.

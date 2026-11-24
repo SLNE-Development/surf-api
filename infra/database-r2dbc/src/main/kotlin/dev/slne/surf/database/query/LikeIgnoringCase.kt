@@ -14,16 +14,18 @@ private const val ESCAPE_CHAR = '\\'
  */
 infix fun <T : String?> Expression<T>.containsIgnoringCase(
     text: String,
-): Op<Boolean> = LikeIgnoringCaseOp(this) {
-    LikePattern("%", ESCAPE_CHAR) + LikePattern.ofLiteral(text, ESCAPE_CHAR) + "%"
+): Op<Boolean> {
+    return LikeIgnoringCaseOp(this) {
+        LikePattern("%", ESCAPE_CHAR) + LikePattern.ofLiteral(text, ESCAPE_CHAR) + "%"
+    }
 }
 
 /**
  * Matches values against [pattern], ignoring case.
  *
- * Renders `LOWER(value) LIKE LOWER(pattern)` on every vendor, so the database lowers both sides with the same rules.
- * The column collation still applies to the comparison: MariaDB's default `*_ai_ci` collations also ignore accents.
- * `NULL` values never match.
+ * Renders `LOWER(value) LIKE LOWER(pattern)` on every vendor, so the database lowers both sides
+ * with the same rules. The column collation still applies to the comparison: MariaDB's default
+ * `*_ai_ci` collations also ignore accents. `NULL` values never match.
  */
 infix fun <T : String?> Expression<T>.likeIgnoringCase(
     pattern: LikePattern,

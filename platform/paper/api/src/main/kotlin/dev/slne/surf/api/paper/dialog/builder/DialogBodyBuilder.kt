@@ -27,7 +27,7 @@ class DialogBodyBuilder {
                 DialogBody.plainMessage(message, width)
             } else {
                 DialogBody.plainMessage(message)
-            }
+            },
         )
     }
 
@@ -69,6 +69,7 @@ class DialogBodyBuilder {
             val message = message
             val width = width
             require(message != null) { "Dialog body message must not be null" }
+
             return if (width != null) {
                 DialogBody.plainMessage(message, width)
             } else {
@@ -138,19 +139,23 @@ class DialogBodyBuilder {
         internal fun build(): DialogBody {
             val item = item
             require(item != null) { "Dialog body item must not be null" }
+
             val builder = DialogBody.item(item)
             description?.let { builder.description(it) }
             showDecorations?.let { builder.showDecorations(it) }
             showTooltip?.let { builder.showTooltip(it) }
             width?.let { builder.width(it) }
             height?.let { builder.height(it) }
+
             return builder.build()
         }
     }
 }
 
-fun DialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> =
-    DialogBodyBuilder().apply(block).build()
+fun DialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> {
+    return DialogBodyBuilder().apply(block).build()
+}
 
-fun dialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> =
-    DialogBodyBuilder().apply(block).build()
+fun dialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> {
+    return DialogBodyBuilder().apply(block).build()
+}

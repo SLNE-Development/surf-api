@@ -48,6 +48,7 @@ internal class JsonHttp : AutoCloseable {
         val body = response.body?.let {
             runCatching { json.decodeFromString(deserializer, it) }.getOrNull()
         }
+
         return Response(response.status, body)
     }
 
@@ -58,10 +59,11 @@ internal class JsonHttp : AutoCloseable {
             .GET()
             .build()
         val response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).await()
+
         return Response(response.statusCode(), response.body().takeIf(String::isNotEmpty))
     }
 
-    override fun close() = client.close()
+    override fun close(): Unit = client.close()
 
     companion object {
         private val TIMEOUT = 10.seconds.toJavaDuration()
@@ -74,7 +76,8 @@ internal class JsonHttp : AutoCloseable {
         /**
          * Encodes [value] for use as one URL path segment.
          */
-        fun pathSegment(value: String): String =
-            URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
+        fun pathSegment(value: String): String {
+            return URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
+        }
     }
 }

@@ -1,5 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.command.requirement
 
 import dev.jorel.commandapi.ExecutableCommand
@@ -13,10 +11,12 @@ import org.bukkit.entity.Player
 @InternalSurfApi
 interface SuspendRequirementService {
 
-    fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, CommandSender>.withSuspendRequirement(
+    fun <
+        Impl : ExecutableCommand<Impl, CommandSender>,
+    > ExecutableCommand<Impl, CommandSender>.withSuspendRequirement(
         scope: CoroutineScopeProvider,
         requirement: suspend CoroutineScope.(Player) -> Boolean,
-        allowIfNonPlayer: Boolean
+        allowIfNonPlayer: Boolean,
     )
 
     @InternalSurfApi

@@ -8,14 +8,7 @@ import dev.slne.surf.nats.js.external.protobuf.fromBinary
 import dev.slne.surf.nats.js.external.protobuf.isMessage
 import dev.slne.surf.nats.js.external.protobuf.reflect.reflect
 import dev.slne.surf.nats.js.external.protobuf.toBinary
-import dev.slne.surf.nats.js.fixtures.Inner
-import dev.slne.surf.nats.js.fixtures.InnerSchema
-import dev.slne.surf.nats.js.fixtures.Location
-import dev.slne.surf.nats.js.fixtures.OneofCase
-import dev.slne.surf.nats.js.fixtures.Rules
-import dev.slne.surf.nats.js.fixtures.RulesSchema
-import dev.slne.surf.nats.js.fixtures.Uuid
-import dev.slne.surf.nats.js.fixtures.fields
+import dev.slne.surf.nats.js.fixtures.*
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import js.buffer.ArrayBuffer
 import js.objects.unsafeJso
@@ -38,13 +31,19 @@ class MessageRulesTest {
 
     private fun field(name: String) = RulesSchema.fields.first { it.localName == name }
 
-    private fun isSet(message: ProtoMessage, name: String): Boolean = reflect(RulesSchema, message).isSet(field(name))
+    private fun isSet(message: ProtoMessage, name: String): Boolean {
+        return reflect(RulesSchema, message).isSet(field(name))
+    }
 
     private fun unknownFields(message: ProtoMessage) = reflect(RulesSchema, message).getUnknown()
 
-    private fun violationOf(init: Rules): String? = MessageRules.violation(RulesSchema, create(RulesSchema, init))
+    private fun violationOf(init: Rules): String? {
+        return MessageRules.violation(RulesSchema, create(RulesSchema, init))
+    }
 
-    private fun roundTrip(init: Rules): ProtoMessage = fromBinary(RulesSchema, toBinary(RulesSchema, create(RulesSchema, init)))
+    private fun roundTrip(init: Rules): ProtoMessage {
+        return fromBinary(RulesSchema, toBinary(RulesSchema, create(RulesSchema, init)))
+    }
 
     @Test
     fun prepareCreatesAMessageFromAnInitObject() {
@@ -192,15 +191,28 @@ class MessageRulesTest {
 
     @Test
     fun decodeRejectsAMissingRequiredField() {
-        // color = 1 (field 13, varint) without required_text; protobuf-es refuses to encode such a message
+        // color = 1 (field 13, varint) without required_text; protobuf-es refuses to encode such a
+        // message
         val bytes = bytes(13 shl 3, 1)
-        val error = assertFailsWith<IllegalArgumentException> { NatsCodec.decode(RulesSchema, bytes, ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test") }
+        val error = assertFailsWith<IllegalArgumentException> {
+            NatsCodec.decode(
+                RulesSchema,
+                bytes,
+                ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+                "test",
+            )
+        }
         assertTrue(error.message!!.contains("'requiredText'"), error.message)
     }
 
     @Test
     fun defaultsAreAppliedWhenAbsent() {
-        val decoded = NatsCodec.decode(RulesSchema, toBinary(RulesSchema, create(RulesSchema, validInit())), ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test")
+        val decoded = NatsCodec.decode(
+            RulesSchema,
+            toBinary(RulesSchema, create(RulesSchema, validInit())),
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+            "test",
+        )
         assertEquals(7, decoded.fields<Rules>().defaulted)
         assertEquals("", decoded.fields<Rules>().nullableText)
         assertTrue(!isSet(decoded, "nullableText"))
@@ -210,7 +222,12 @@ class MessageRulesTest {
     fun uint32AboveIntMaxRoundTrips() {
         val init = validInit()
         init.big = 3_000_000_000.0
-        val decoded = NatsCodec.decode(RulesSchema, toBinary(RulesSchema, create(RulesSchema, init)), ProtocolHeaders.PROTOBUF_CONTENT_TYPE, "test")
+        val decoded = NatsCodec.decode(
+            RulesSchema,
+            toBinary(RulesSchema, create(RulesSchema, init)),
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+            "test",
+        )
         assertEquals(3_000_000_000.0, decoded.fields<Rules>().big)
     }
 
@@ -221,7 +238,8 @@ class MessageRulesTest {
             case = "textChoice"
             value = "t"
         }
-        // Appends color_choice (field 9) = 81, an unknown number of the closed enum, after text_choice.
+        // Appends color_choice (field 9) = 81, an unknown number of the closed enum, after
+        // text_choice.
         val bytes = toBinary(RulesSchema, create(RulesSchema, init))
         val withUnknown = Uint8Array<ArrayBuffer>(bytes.length + 2)
         withUnknown.set(bytes)

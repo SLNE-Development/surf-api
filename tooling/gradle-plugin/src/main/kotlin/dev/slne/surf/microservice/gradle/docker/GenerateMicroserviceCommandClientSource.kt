@@ -10,8 +10,8 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 /**
- * Writes the embedded Go source of `microservicectl` to [outputFile], from where the generated Dockerfile copies it
- * into the command client build stage.
+ * Writes the embedded Go source of `microservicectl` to [outputFile], from where the generated
+ * Dockerfile copies it into the command client build stage.
  */
 @CacheableTask
 internal abstract class GenerateMicroserviceCommandClientSource : DefaultTask() {
@@ -28,7 +28,7 @@ internal abstract class GenerateMicroserviceCommandClientSource : DefaultTask() 
         target.parentFile?.let { parent ->
             if (!parent.mkdirs() && !parent.isDirectory) {
                 throw GradleException(
-                    "Could not create command client source directory: ${parent.absolutePath}"
+                    "Could not create command client source directory: ${parent.absolutePath}",
                 )
             }
         }

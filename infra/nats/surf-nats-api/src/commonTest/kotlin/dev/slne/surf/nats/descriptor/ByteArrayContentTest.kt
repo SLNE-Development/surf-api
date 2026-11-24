@@ -79,13 +79,19 @@ class ByteArrayContentTest {
         val a = byteArrayOf(1, 2)
         val b = byteArrayOf(3)
 
-        assertEquals(listOf(a.contentHashCode(), b.contentHashCode()).hashCode(), natsContentHashCode(listOf(a, b)))
+        assertEquals(
+            listOf(a.contentHashCode(), b.contentHashCode()).hashCode(),
+            natsContentHashCode(listOf(a, b)),
+        )
         assertEquals(emptyList<Int>().hashCode(), natsContentHashCode(emptyList<ByteArray>()))
     }
 
     @Test
     fun `byte array list toString lists the element content`() {
-        assertEquals("[[1, 2], [], null]", natsContentToString(listOf(byteArrayOf(1, 2), byteArrayOf(), null)))
+        assertEquals(
+            "[[1, 2], [], null]",
+            natsContentToString(listOf(byteArrayOf(1, 2), byteArrayOf(), null)),
+        )
         assertEquals("[]", natsContentToString(emptyList<ByteArray>()))
         assertEquals("null", natsContentToString(noList))
     }
@@ -146,12 +152,18 @@ class ByteArrayContentTest {
             mapOf("a" to a.contentHashCode(), "b" to b.contentHashCode()).hashCode(),
             natsContentHashCode(mapOf("a" to a, "b" to b)),
         )
-        assertEquals(emptyMap<String, Int>().hashCode(), natsContentHashCode(emptyMap<String, ByteArray>()))
+        assertEquals(
+            emptyMap<String, Int>().hashCode(),
+            natsContentHashCode(emptyMap<String, ByteArray>()),
+        )
     }
 
     @Test
     fun `byte array map toString lists the value content`() {
-        assertEquals("{a=[1, 2], b=null}", natsContentToString(linkedMapOf("a" to byteArrayOf(1, 2), "b" to null)))
+        assertEquals(
+            "{a=[1, 2], b=null}",
+            natsContentToString(linkedMapOf("a" to byteArrayOf(1, 2), "b" to null)),
+        )
         assertEquals("{}", natsContentToString(emptyMap<String, ByteArray>()))
         assertEquals("null", natsContentToString(noMap))
     }

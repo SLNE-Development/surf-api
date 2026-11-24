@@ -1,12 +1,12 @@
 package dev.slne.surf.microservice.runtime.command
 
-
 /**
  * Splits a console line into a label and its arguments.
  *
- * Whitespace separates tokens. Single quotes keep their content literally. Double quotes group their content, and a
- * backslash outside single quotes takes the next character literally, also inside double quotes. Quotes may form
- * part of a token (`a"b c"` is `ab c`), and `""` is an empty token.
+ * Whitespace separates tokens. Single quotes keep their content literally. Double quotes group
+ * their content, and a backslash outside single quotes takes the next character literally, also
+ * inside double quotes. Quotes may form part of a token (`a"b c"` is `ab c`), and `""` is an empty
+ * token.
  */
 internal object CommandLineTokenizer {
     private const val SINGLE_QUOTE = '\''
@@ -27,6 +27,7 @@ internal object CommandLineTokenizer {
 
         while (index < line.length) {
             val char = line[index++]
+
             when {
                 quote == SINGLE_QUOTE && char != SINGLE_QUOTE -> token.append(char)
                 char == BACKSLASH -> {

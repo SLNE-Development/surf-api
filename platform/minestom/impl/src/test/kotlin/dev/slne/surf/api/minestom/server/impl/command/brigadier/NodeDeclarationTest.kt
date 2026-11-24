@@ -17,7 +17,10 @@ import org.junit.jupiter.api.Test
  */
 @EnvTest
 class NodeDeclarationTest {
-    private enum class Mode { LOW, HIGH }
+    private enum class Mode {
+        LOW,
+        HIGH
+    }
 
     private val declarations = NodeDeclarations()
     private val askServer = SuggestionType.ASK_SERVER.identifier
@@ -26,7 +29,7 @@ class NodeDeclarationTest {
     fun `kinds whose values only the server knows ask the server`(env: Env) {
         val registry = DynamicRegistry.fromMap<String>(Key.key("test:declaration-samples"))
 
-        listOf(
+        val arguments = listOf(
             SoundArgument("value"),
             BiomeArgument("value"),
             InstanceArgument("value"),
@@ -34,7 +37,8 @@ class NodeDeclarationTest {
             PlayerArgument("value"),
             MultiLiteralArgument("value", "one", "two"),
             EnumArgument("value", Mode.entries),
-        ).forEach { argument ->
+        )
+        for (argument in arguments) {
             val definition = argument.toDefinition()
             assertEquals(
                 askServer,
@@ -65,13 +69,14 @@ class NodeDeclarationTest {
 
     @Test
     fun `kinds the client completes from its own data are left to it`(env: Env) {
-        listOf(
+        val arguments = listOf(
             BooleanArgument("value"),
             IntegerArgument("value"),
             StringArgument("value"),
             GameModeArgument("value"),
             TeamColorArgument("value"),
-        ).forEach { argument ->
+        )
+        for (argument in arguments) {
             val definition = argument.toDefinition()
             assertNull(declarations.of(definition).suggestionsType, definition.kind.toString())
         }

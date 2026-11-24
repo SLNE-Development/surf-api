@@ -15,8 +15,8 @@ import java.time.ZoneOffset
 import kotlin.test.assertEquals
 
 /**
- * Pins the README's `JdbcMigration` guidance: how the JDBC drivers bind instants on the migration data source while
- * the JVM runs outside UTC.
+ * Pins the README's `JdbcMigration` guidance: how the JDBC drivers bind instants on the migration
+ * data source while the JVM runs outside UTC.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class JdbcTimeBindingIT {
@@ -24,17 +24,30 @@ class JdbcTimeBindingIT {
     private val instant = Instant.parse("2030-06-01T12:00:00.123456Z")
 
     /**
-     * Offset of [JVM_ZONE] at [instant]: a value converted through the JVM zone is stored this much early.
+     * Offset of [JVM_ZONE] at [instant]: a value converted through the JVM zone is stored this much
+     * early.
      */
     private val jvmShift = Duration.ofHours(-4)
 
-    private fun bindings(): Map<String, (PreparedStatement, Int) -> Unit> = mapOf(
-        "Timestamp" to { statement, index -> statement.setTimestamp(index, Timestamp.from(instant)) },
-        "OffsetDateTime" to { statement, index -> statement.setObject(index, instant.atOffset(ZoneOffset.ofHours(2))) },
-        "UTC LocalDateTime" to { statement, index ->
-            statement.setObject(index, LocalDateTime.ofInstant(instant, ZoneOffset.UTC))
-        },
-    )
+    private fun bindings(): Map<String, (PreparedStatement, Int) -> Unit> {
+        return mapOf(
+            "Timestamp" to { statement, index ->
+                statement.setTimestamp(
+                    index,
+                    Timestamp.from(instant),
+                )
+            },
+            "OffsetDateTime" to { statement, index ->
+                statement.setObject(
+                    index,
+                    instant.atOffset(ZoneOffset.ofHours(2)),
+                )
+            },
+            "UTC LocalDateTime" to { statement, index ->
+                statement.setObject(index, LocalDateTime.ofInstant(instant, ZoneOffset.UTC))
+            },
+        )
+    }
 
     /**
      * Stored shift per binding and column, as `binding/column`.
@@ -43,16 +56,20 @@ class JdbcTimeBindingIT {
         val shifts = linkedMapOf<String, Duration>()
         withJvmZone(JVM_ZONE) {
             val testDb = vendor.container().toTestDatabase(fresh = true)
+
             try {
                 testDb.migrationDataSource.connection.use { connection ->
                     connection.createStatement().use { it.execute(vendor.createTable()) }
                     bindings().entries.forEachIndexed { id, (name, bind) ->
-                        connection.prepareStatement("INSERT INTO bound (id, plain, with_zone) VALUES (?, ?, ?)").use {
-                            it.setInt(1, id)
-                            bind(it, 2)
-                            bind(it, 3)
-                            it.executeUpdate()
-                        }
+                        connection.prepareStatement(
+                            "INSERT INTO bound (id, plain, with_zone) VALUES (?, ?, ?)",
+                        )
+                            .use {
+                                it.setInt(1, id)
+                                bind(it, 2)
+                                bind(it, 3)
+                                it.executeUpdate()
+                            }
                         for (column in listOf("plain", "with_zone")) {
                             val stored = vendor.epochMicrosInstant(testDb, "bound", column, id)
                             shifts["$name/$column"] = Duration.between(instant, stored)
@@ -63,6 +80,7 @@ class JdbcTimeBindingIT {
                 testDb.close()
             }
         }
+
         return shifts
     }
 

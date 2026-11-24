@@ -10,10 +10,12 @@ internal object LoggingCommandOutput : MicroserviceCommandOutput {
     private val log = logger()
 
     override fun sendLine(message: String) {
-        log.atInfo().log("%s", message)
+        log.atInfo()
+            .log("%s", message)
     }
 
     override fun sendError(message: String) {
-        log.atWarning().log("%s", message)
+        log.atWarning()
+            .log("%s", message)
     }
 }

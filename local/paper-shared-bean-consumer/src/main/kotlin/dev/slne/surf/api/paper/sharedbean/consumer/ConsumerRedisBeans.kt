@@ -44,18 +44,25 @@ class ConsumerRedisProbe(
     private suspend fun writeAndReadBackSyncValue(): Boolean {
         val written = "probe-${UUID.randomUUID()}"
         value.setAndAwait(written)
+
         return value.get() == written && value.getRemote() == written
     }
 
-    private suspend fun incrementThroughProxy(): Boolean = withContext(Dispatchers.IO) {
-        redissonClient.getAtomicLong(COUNTER_ID).incrementAndGet() > 0
+    private suspend fun incrementThroughProxy(): Boolean {
+        return withContext(Dispatchers.IO) {
+            redissonClient.getAtomicLong(COUNTER_ID).incrementAndGet() > 0
+        }
     }
 
-    private suspend fun check(name: String, probe: suspend () -> Boolean): String = try {
-        if (probe()) "ok" else "mismatch"
-    } catch (failure: Exception) {
-        log.atWarning().withCause(failure).log("The redis probe '%s' failed", name)
-        "failed:${failure.javaClass.simpleName}"
+    private suspend fun check(name: String, probe: suspend () -> Boolean): String {
+        return try {
+            if (probe()) "ok" else "mismatch"
+        } catch (failure: Exception) {
+            log.atWarning()
+                .withCause(failure)
+                .log("The redis probe '%s' failed", name)
+            "failed:${failure.javaClass.simpleName}"
+        }
     }
 
     private companion object {

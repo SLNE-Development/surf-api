@@ -51,5 +51,6 @@ class DialogActionButtonBuilder {
     }
 }
 
-fun actionButton(block: DialogActionButtonBuilder.() -> Unit): DialogActionButton =
-    DialogActionButtonBuilder().apply(block).build()
+fun actionButton(block: DialogActionButtonBuilder.() -> Unit): DialogActionButton {
+    return DialogActionButtonBuilder().apply(block).build()
+}

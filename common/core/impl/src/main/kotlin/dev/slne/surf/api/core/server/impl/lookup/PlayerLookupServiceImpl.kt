@@ -39,6 +39,7 @@ internal class PlayerLookupServiceImpl(
     override fun getCacheStats(): PlayerLookupService.CacheStats {
         val names = nameToUuid.underlying().synchronous()
         val uuids = uuidToName.underlying().synchronous()
+
         return PlayerLookupService.CacheStats(
             nameToUuidHitRate = names.stats().hitRate(),
             nameToUuidSize = names.estimatedSize(),
@@ -51,8 +52,16 @@ internal class PlayerLookupServiceImpl(
         return lookup("UUID for username $name") {
             val segment = JsonHttp.pathSegment(name)
             firstFound(
-                { http.get<ProfileResponse>("https://api.mojang.com/users/profiles/minecraft/$segment") },
-                { http.get<ProfileResponse>("https://api.minecraftservices.com/minecraft/profile/lookup/name/$segment") },
+                {
+                    http.get<ProfileResponse>(
+                        "https://api.mojang.com/users/profiles/minecraft/$segment",
+                    )
+                },
+                {
+                    http.get<ProfileResponse>(
+                        "https://api.minecraftservices.com/minecraft/profile/lookup/name/$segment",
+                    )
+                },
                 { http.get<ProfileResponse>("https://api.minetools.eu/uuid/$segment") },
             ) { it.id }
         }
@@ -63,7 +72,11 @@ internal class PlayerLookupServiceImpl(
             val compact = UndashedUuidSerializer.format(uuid)
             firstFound(
                 { http.get<ProfileResponse>("https://api.mojang.com/user/profile/$compact") },
-                { http.get<ProfileResponse>("https://api.minecraftservices.com/minecraft/profile/lookup/$compact") },
+                {
+                    http.get<ProfileResponse>(
+                        "https://api.minecraftservices.com/minecraft/profile/lookup/$compact",
+                    )
+                },
                 { http.get<ProfileResponse>("https://api.minetools.eu/uuid/$compact") },
             ) { it.name }
         }
@@ -78,13 +91,16 @@ internal class PlayerLookupServiceImpl(
         extract: (ProfileResponse) -> T,
     ): LookupResult<T> {
         var last: JsonHttp.Response<ProfileResponse>? = null
+
         for ((index, source) in sources.withIndex()) {
             val response = source()
             response.body?.takeIf { response.isSuccess }
                 ?.let { return LookupResult.Found(extract(it)) }
             if (index == 0 && response.status == HTTP_NOT_FOUND) return LookupResult.NotFound
+
             last = response
         }
+
         return failureOf(checkNotNull(last).status)
     }
 
@@ -92,17 +108,21 @@ internal class PlayerLookupServiceImpl(
         return try {
             block()
         } catch (exception: Exception) {
-            log.atWarning().withCause(exception).log("Failed to look up the %s", subject)
+            log.atWarning()
+                .withCause(exception)
+                .log("Failed to look up the %s", subject)
             LookupResult.Failed(exception)
         }
     }
 
-    private fun <T> failureOf(status: Int): LookupResult<T> = when (status) {
-        HTTP_NOT_FOUND -> LookupResult.NotFound
-        HTTP_TOO_MANY_REQUESTS -> LookupResult.RateLimited("Rate limit exceeded")
-        HTTP_UNAVAILABLE -> LookupResult.RateLimited("Service unavailable")
-        HTTP_GATEWAY_TIMEOUT -> LookupResult.RateLimited("Timeout")
-        else -> LookupResult.RateLimited("API error: $status")
+    private fun <T> failureOf(status: Int): LookupResult<T> {
+        return when (status) {
+            HTTP_NOT_FOUND -> LookupResult.NotFound
+            HTTP_TOO_MANY_REQUESTS -> LookupResult.RateLimited("Rate limit exceeded")
+            HTTP_UNAVAILABLE -> LookupResult.RateLimited("Service unavailable")
+            HTTP_GATEWAY_TIMEOUT -> LookupResult.RateLimited("Timeout")
+            else -> LookupResult.RateLimited("API error: $status")
+        }
     }
 
     /**
@@ -122,28 +142,27 @@ internal class PlayerLookupServiceImpl(
      * Keeps found players for 15 minutes, unknown ones for 5 and failures for 1.
      */
     private class LookupExpiry<K : Any, V> : Expiry<K, LookupResult<V>> {
-        override fun expireAfterCreate(key: K, value: LookupResult<V>, currentTime: Long): Long =
-            when (value) {
+        override fun expireAfterCreate(key: K, value: LookupResult<V>, currentTime: Long): Long {
+            return when (value) {
                 is LookupResult.Found -> 15.minutes.inWholeNanoseconds
                 is LookupResult.NotFound -> 5.minutes.inWholeNanoseconds
                 is LookupResult.RateLimited, is LookupResult.Failed -> 1.minutes.inWholeNanoseconds
             }
+        }
 
         override fun expireAfterUpdate(
             key: K,
             value: LookupResult<V>,
             currentTime: Long,
-            currentDuration: Long
-        ) =
-            expireAfterCreate(key, value, currentTime)
+            currentDuration: Long,
+        ): Long = expireAfterCreate(key, value, currentTime)
 
         override fun expireAfterRead(
             key: K,
             value: LookupResult<V>,
             currentTime: Long,
-            currentDuration: Long
-        ) =
-            currentDuration
+            currentDuration: Long,
+        ): Long = currentDuration
     }
 
     /**
@@ -161,17 +180,30 @@ internal class PlayerLookupServiceImpl(
     private object UndashedUuidSerializer : KSerializer<UUID> {
         override val descriptor = PrimitiveSerialDescriptor("UndashedUuid", PrimitiveKind.STRING)
 
-        override fun serialize(encoder: Encoder, value: UUID) = encoder.encodeString(format(value))
+        override fun serialize(encoder: Encoder, value: UUID) {
+            encoder.encodeString(
+                format(
+                    value,
+                ),
+            )
+        }
 
         override fun deserialize(decoder: Decoder): UUID = parse(decoder.decodeString())
 
         fun format(uuid: UUID): String = uuid.toString().replace("-", "")
 
-        private fun parse(value: String): UUID = UUID.fromString(
-            if ('-' in value) value
-            else "${value.substring(0, 8)}-${value.substring(8, 12)}-${value.substring(12, 16)}-" +
-                    "${value.substring(16, 20)}-${value.substring(20)}"
-        )
+        private fun parse(value: String): UUID {
+            return UUID.fromString(
+                if ('-' in value) value
+                else "${value.substring(0, 8)}-${value.substring(8, 12)}-${
+                    value.substring(
+                        12,
+                        16,
+                    )
+                }-" +
+                    "${value.substring(16, 20)}-${value.substring(20)}",
+            )
+        }
     }
 
     private companion object {

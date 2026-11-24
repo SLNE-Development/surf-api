@@ -25,7 +25,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Wiring of the plugin class tasks and the Paper dependency DSL, on projects that are evaluated but never built.
+ * Wiring of the plugin class tasks and the Paper dependency DSL, on projects that are evaluated but
+ * never built.
  */
 class PluginClassWiringTest {
 
@@ -37,6 +38,7 @@ class PluginClassWiringTest {
         project.plugins.apply(plugin)
         project.extensions.getByType<E>().configure()
         (project as ProjectInternal).evaluate()
+
         return project
     }
 
@@ -44,8 +46,12 @@ class PluginClassWiringTest {
 
     private fun Task.runs() = (this as TaskInternal).onlyIf.isSatisfiedBy(this)
 
-    private fun Project.dependsOnNames(taskName: String): Set<String> =
-        tasks.getByName(taskName).taskDependencies.getDependencies(null).map { it.name }.toSet()
+    private fun Project.dependsOnNames(taskName: String): Set<String> {
+        return tasks.getByName(taskName)
+            .taskDependencies.getDependencies(null)
+            .map { it.name }
+            .toSet()
+    }
 
     @Test
     fun `paper plugin evaluates without a main class`() {
@@ -57,11 +63,16 @@ class PluginClassWiringTest {
 
     @Test
     fun `surfPluginDependency registers a required server and bootstrap dependency`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             surfPluginDependency("surf-core-paper")
         }
 
-        for (dependencies in listOf(project.paperDescription().serverDependencies, project.paperDescription().bootstrapDependencies)) {
+        for (dependencies in listOf(
+            project.paperDescription().serverDependencies,
+            project.paperDescription().bootstrapDependencies,
+        )) {
             val dependency = assertNotNull(dependencies.findByName("surf-core-paper"))
             assertTrue(dependency.required)
             assertTrue(dependency.joinClasspath)
@@ -71,11 +82,16 @@ class PluginClassWiringTest {
 
     @Test
     fun `softSurfPluginDependency registers an optional server and bootstrap dependency`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             softSurfPluginDependency("surf-lobby-paper")
         }
 
-        for (dependencies in listOf(project.paperDescription().serverDependencies, project.paperDescription().bootstrapDependencies)) {
+        for (dependencies in listOf(
+            project.paperDescription().serverDependencies,
+            project.paperDescription().bootstrapDependencies,
+        )) {
             val dependency = assertNotNull(dependencies.findByName("surf-lobby-paper"))
             assertFalse(dependency.required)
             assertTrue(dependency.joinClasspath)
@@ -85,7 +101,9 @@ class PluginClassWiringTest {
 
     @Test
     fun `dependencies of other plugins are never mirrored into the bootstrap dependencies`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             serverDependencies { register("LuckPerms") }
         }
 
@@ -97,16 +115,23 @@ class PluginClassWiringTest {
     fun `CommandAPI is always a required server dependency with join-classpath`() {
         val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java)
 
-        val commandApi = assertNotNull(project.paperDescription().serverDependencies.findByName("CommandAPI"))
+        val commandApi = assertNotNull(
+            project.paperDescription().serverDependencies.findByName("CommandAPI"),
+        )
         assertTrue(commandApi.required)
         assertTrue(commandApi.joinClasspath)
         assertEquals(RelativeLoadOrder.BEFORE, commandApi.load)
-        assertEquals(null, project.paperDescription().bootstrapDependencies.findByName("CommandAPI"))
+        assertEquals(
+            null,
+            project.paperDescription().bootstrapDependencies.findByName("CommandAPI"),
+        )
     }
 
     @Test
     fun `a CommandAPI dependency of the build script is kept`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             serverDependencies {
                 register("CommandAPI") {
                     required = false
@@ -115,22 +140,30 @@ class PluginClassWiringTest {
             }
         }
 
-        val commandApi = assertNotNull(project.paperDescription().serverDependencies.findByName("CommandAPI"))
+        val commandApi = assertNotNull(
+            project.paperDescription().serverDependencies.findByName("CommandAPI"),
+        )
         assertFalse(commandApi.required)
         assertEquals(RelativeLoadOrder.AFTER, commandApi.load)
     }
 
     @Test
     fun `a surf plugin dependency yields to a build script dependency of the same name`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             surfPluginDependency("surf-core-paper")
             serverDependencies { register("surf-core-paper") { required = false } }
             bootstrapDependencies { register("surf-core-paper") { load = RelativeLoadOrder.AFTER } }
         }
 
-        val server = assertNotNull(project.paperDescription().serverDependencies.findByName("surf-core-paper"))
+        val server = assertNotNull(
+            project.paperDescription().serverDependencies.findByName("surf-core-paper"),
+        )
         assertFalse(server.required)
-        val bootstrap = assertNotNull(project.paperDescription().bootstrapDependencies.findByName("surf-core-paper"))
+        val bootstrap = assertNotNull(
+            project.paperDescription().bootstrapDependencies.findByName("surf-core-paper"),
+        )
         assertEquals(RelativeLoadOrder.AFTER, bootstrap.load)
     }
 
@@ -141,27 +174,41 @@ class PluginClassWiringTest {
         project.plugins.apply("de.eldoria.plugin-yml.bukkit")
         (project as ProjectInternal).evaluate()
 
-        val bukkit = project.tasks.getByName("generateBukkitPluginDescription") as GeneratePluginDescription
+        val bukkit = project.tasks.getByName(
+            "generateBukkitPluginDescription",
+        ) as GeneratePluginDescription
 
         assertTrue(bukkit.pluginDescription.get() is BukkitPluginDescription)
-        assertFalse("computeSurfBasePackage" in project.dependsOnNames("generateBukkitPluginDescription"))
-        assertTrue("computeSurfBasePackage" in project.dependsOnNames("generatePaperPluginDescription"))
+        assertFalse(
+            "computeSurfBasePackage" in project.dependsOnNames("generateBukkitPluginDescription"),
+        )
+        assertTrue(
+            "computeSurfBasePackage" in project.dependsOnNames("generatePaperPluginDescription"),
+        )
     }
 
     @Test
     fun `the base package is only needed when something generated uses it`() {
-        fun needsBasePackage(project: Project) =
-            (project.tasks.getByName("computeSurfBasePackage") as ComputeBasePackageTask).generatesCode.get()
+        fun needsBasePackage(project: Project): Boolean {
+            return (project.tasks.getByName("computeSurfBasePackage") as ComputeBasePackageTask)
+                .generatesCode.get()
+        }
 
-        val generated = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java)
-        val bootstrapperOnly = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val generated = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        )
+        val bootstrapperOnly = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             bootstrapper("com.example.Boot")
         }
         val named = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
             mainClass("com.example.Main")
             bootstrapper("com.example.Boot")
         }
-        val namedWithLoader = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val namedWithLoader = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             mainClass("com.example.Main")
             bootstrapper("com.example.Boot")
             generateLibraryLoader(true)
@@ -185,8 +232,10 @@ class PluginClassWiringTest {
         val velocity = evaluatedProject<VelocitySurfExtension>(VelocitySurfPlugin::class.java)
         velocity.extensions.getByType<VelocityPluginFile>().main.set("com.example.Main")
 
-        fun scanned(project: Project) =
-            (project.tasks.getByName("computeSurfBasePackage") as ComputeBasePackageTask).scannedClass.orNull
+        fun scanned(project: Project): String? {
+            return (project.tasks.getByName("computeSurfBasePackage") as ComputeBasePackageTask)
+                .scannedClass.orNull
+        }
 
         assertEquals("com.example.boot.Boot", scanned(paper))
         assertEquals("com.example.Main", scanned(velocity))
@@ -202,7 +251,9 @@ class PluginClassWiringTest {
         }
 
         for (project in listOf(paper, velocity)) {
-            val generate = project.tasks.getByName("generateSurfPluginClasses") as GeneratePluginClassesTask
+            val generate = project.tasks.getByName(
+                "generateSurfPluginClasses",
+            ) as GeneratePluginClassesTask
             assertEquals(emptyList(), generate.classes.get())
         }
     }
@@ -218,7 +269,10 @@ class PluginClassWiringTest {
         named.extensions.getByType<VelocityPluginFile>().main.set("com.example.Main")
 
         assertFalse(unnamed.extensions.getByType<VelocityPluginFile>().effectiveMain().isPresent)
-        assertEquals("com.example.Main", named.extensions.getByType<VelocityPluginFile>().effectiveMain().get())
+        assertEquals(
+            "com.example.Main",
+            named.extensions.getByType<VelocityPluginFile>().effectiveMain().get(),
+        )
     }
 
     @Test
@@ -243,7 +297,9 @@ class PluginClassWiringTest {
 
     @Test
     fun `the Spring check is skipped when the build script allows Spring`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             allowBundledSpring.set(true)
         }
 
@@ -252,7 +308,9 @@ class PluginClassWiringTest {
 
     @Test
     fun `the Spring check is skipped when surf-api is not compileOnly`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             surfApiScope("implementation")
         }
 
@@ -278,7 +336,9 @@ class PluginClassWiringTest {
 
     @Test
     fun `the class check runs for a named main class`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             mainClass("com.example.Main")
         }
 
@@ -288,7 +348,9 @@ class PluginClassWiringTest {
 
     @Test
     fun `the class check is off when verifyPluginClasses is false`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             mainClass("com.example.Main")
             verifyPluginClasses.set(false)
         }
@@ -299,12 +361,16 @@ class PluginClassWiringTest {
 
     @Test
     fun `the generated main class is not generated when the build script names one`() {
-        val project = evaluatedProject<PaperPluginSurfExtension>(PaperPluginSurfPlugin::class.java) {
+        val project = evaluatedProject<PaperPluginSurfExtension>(
+            PaperPluginSurfPlugin::class.java,
+        ) {
             mainClass("com.example.Main")
             bootstrapper("com.example.Boot")
         }
 
-        val generate = project.tasks.getByName("generateSurfPluginClasses") as GeneratePluginClassesTask
+        val generate = project.tasks.getByName(
+            "generateSurfPluginClasses",
+        ) as GeneratePluginClassesTask
         assertEquals(emptyList(), generate.classes.get())
     }
 
@@ -315,11 +381,13 @@ class PluginClassWiringTest {
 
         assertEquals(
             listOf(GeneratedPluginClass.PAPER_BOOTSTRAPPER, GeneratedPluginClass.PAPER_PLUGIN),
-            (paper.tasks.getByName("generateSurfPluginClasses") as GeneratePluginClassesTask).classes.get(),
+            (paper.tasks.getByName("generateSurfPluginClasses") as GeneratePluginClassesTask)
+                .classes.get(),
         )
         assertEquals(
             listOf(GeneratedPluginClass.VELOCITY_PLUGIN),
-            (velocity.tasks.getByName("generateSurfPluginClasses") as GeneratePluginClassesTask).classes.get(),
+            (velocity.tasks.getByName("generateSurfPluginClasses") as GeneratePluginClassesTask)
+                .classes.get(),
         )
     }
 
@@ -333,7 +401,8 @@ class PluginClassWiringTest {
         for (project in projects) {
             assertTrue(project.plugins.hasPlugin("org.jetbrains.kotlin.plugin.spring"))
             assertTrue(
-                project.extensions.getByType<KotlinJvmProjectExtension>().compilerOptions.javaParameters.get()
+                project.extensions.getByType<KotlinJvmProjectExtension>()
+                    .compilerOptions.javaParameters.get(),
             )
         }
     }

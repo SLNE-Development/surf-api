@@ -40,14 +40,17 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Speaks the wire format of `microservicectl` (`surf-microservice-gradle-plugin/src/main/resources/microservicectl`).
+ * Speaks the wire format of `microservicectl`
+ * (`surf-microservice-gradle-plugin/src/main/resources/microservicectl`).
  */
 class MicroserviceCommandServerTest {
     private val socketDirectory: Path = Files.createTempDirectory("sms")
     private val socketPath: Path = socketDirectory.resolve("c.sock")
     private val uncaught = CopyOnWriteArrayList<Throwable>()
     private val scope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, exception -> uncaught += exception },
+        SupervisorJob() +
+            Dispatchers.Default +
+            CoroutineExceptionHandler { _, exception -> uncaught += exception },
     )
     private val shutdownRequest = CompletableDeferred<Unit>()
     private val floodLinesSent = AtomicInteger()
@@ -70,6 +73,7 @@ class MicroserviceCommandServerTest {
         command("crash") { throw InternalError("crashed") },
         command("linger") {
             lingerStarted.complete(Unit)
+
             try {
                 awaitCancellation()
             } finally {
@@ -95,7 +99,13 @@ class MicroserviceCommandServerTest {
         },
     )
     private val server = MicroserviceCommandServer(
-        dispatcher = MicroserviceCommandDispatcher { label -> commands.firstOrNull { it.matches(label) } },
+        dispatcher = MicroserviceCommandDispatcher { label ->
+            commands.firstOrNull {
+                it.matches(
+                    label,
+                )
+            }
+        },
         requestShutdown = { shutdownRequest.complete(Unit) },
         socketPath = socketPath,
         stopTimeout = STOP_TIMEOUT,
@@ -124,7 +134,10 @@ class MicroserviceCommandServerTest {
 
         val response = send(listOf("fails", "x"))
 
-        assertEquals(Response(listOf("ERR detail", "ERR failed with 1 arguments"), exitCode = 1), response)
+        assertEquals(
+            Response(listOf("ERR detail", "ERR failed with 1 arguments"), exitCode = 1),
+            response,
+        )
     }
 
     @Test
@@ -184,8 +197,12 @@ class MicroserviceCommandServerTest {
 
             withTimeout(5.seconds) { server.stop() }
 
-            // Without closing the connection, stop() only returns after STOP_TIMEOUT with the write still blocked.
-            assertTrue(floodFinished.get(), "stop returned while the response write was still blocked")
+            // Without closing the connection, stop() only returns after STOP_TIMEOUT with the write
+            // still blocked.
+            assertTrue(
+                floodFinished.get(),
+                "stop returned while the response write was still blocked",
+            )
         }
     }
 
@@ -223,17 +240,24 @@ class MicroserviceCommandServerTest {
         assertFalse(socketPath.exists())
     }
 
-    private suspend fun send(command: List<String>) = exchange { output -> writeRequest(output, command) }
+    private suspend fun send(command: List<String>) = exchange { output ->
+        writeRequest(
+            output,
+            command,
+        )
+    }
 
     private fun writeRequest(output: DataOutputStream, command: List<String>) {
         output.writeInt(MAGIC)
         output.writeInt(VERSION)
         output.writeInt(command.size)
-        command.forEach { argument ->
+
+        for (argument in command) {
             val bytes = argument.toByteArray(Charsets.UTF_8)
             output.writeInt(bytes.size)
             output.write(bytes)
         }
+
         output.flush()
     }
 
@@ -246,28 +270,39 @@ class MicroserviceCommandServerTest {
      */
     private suspend fun awaitStalledFlood() = withTimeout(EXCHANGE_TIMEOUT) {
         var previous = -1
+
         while (true) {
             val current = floodLinesSent.get()
             if (current == previous && current > 0) break
+
             previous = current
             delay(300)
         }
-        check(floodLinesSent.get() < FLOOD_LINE_COUNT) { "The flood command finished without blocking." }
+
+        check(floodLinesSent.get() < FLOOD_LINE_COUNT) {
+            "The flood command finished without blocking."
+        }
     }
 
-    private suspend fun exchange(writeRequest: (DataOutputStream) -> Unit): Response = withTimeout(EXCHANGE_TIMEOUT) {
-        runInterruptible(Dispatchers.IO) {
-            connect().use { channel ->
-                val output = DataOutputStream(Channels.newOutputStream(channel))
-                writeRequest(output)
-                output.flush()
-                readResponse(DataInputStream(BufferedInputStream(Channels.newInputStream(channel))))
+    private suspend fun exchange(writeRequest: (DataOutputStream) -> Unit): Response {
+        return withTimeout(
+            EXCHANGE_TIMEOUT,
+        ) {
+            runInterruptible(Dispatchers.IO) {
+                connect().use { channel ->
+                    val output = DataOutputStream(Channels.newOutputStream(channel))
+                    writeRequest(output)
+                    output.flush()
+                    val input = Channels.newInputStream(channel)
+                    readResponse(DataInputStream(BufferedInputStream(input)))
+                }
             }
         }
     }
 
     private fun readResponse(input: DataInputStream): Response {
         val lines = mutableListOf<String>()
+
         while (true) {
             when (val type = input.readByte().toInt()) {
                 STANDARD_OUTPUT -> lines += "OUT ${readString(input)}"
@@ -281,13 +316,16 @@ class MicroserviceCommandServerTest {
     private fun readString(input: DataInputStream): String {
         val bytes = ByteArray(input.readInt())
         input.readFully(bytes)
+
         return String(bytes, Charsets.UTF_8)
     }
 
-    private fun command(name: String, block: suspend MicroserviceCommandContext.(List<String>) -> Unit) =
-        object : MicroserviceCommand(name) {
-            override suspend fun MicroserviceCommandContext.execute(args: List<String>) = block(args)
-        }
+    private fun command(
+        name: String,
+        block: suspend MicroserviceCommandContext.(List<String>) -> Unit,
+    ) = object : MicroserviceCommand(name) {
+        override suspend fun MicroserviceCommandContext.execute(args: List<String>) = block(args)
+    }
 
     private data class Response(val lines: List<String>, val exitCode: Int)
 

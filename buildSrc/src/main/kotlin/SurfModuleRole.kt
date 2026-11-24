@@ -33,12 +33,14 @@ private val NMS_VERSION_MODULE = Regex("-nms-v[0-9]")
  * - `-nms-v<digit>`, used by the versioned NMS bridges
  *
  * Everything else counts as an API module. Aggregates are never derived from the name — they are
- * declared by applying the `surf.aggregate` plugin — which matters because `surf-api-minestom-server`
- * is an aggregate whose name would otherwise read as an implementation.
+ * declared by applying the `surf.aggregate` plugin — which matters because
+ * `surf-api-minestom-server` is an aggregate whose name would otherwise read as an implementation.
  */
-fun surfModuleRole(projectName: String): SurfModuleRole = when {
-    projectName.endsWith("-impl") -> SurfModuleRole.IMPL
-    projectName.endsWith("-internal") -> SurfModuleRole.IMPL
-    NMS_VERSION_MODULE.containsMatchIn(projectName) -> SurfModuleRole.IMPL
-    else -> SurfModuleRole.API
+fun surfModuleRole(projectName: String): SurfModuleRole {
+    return when {
+        projectName.endsWith("-impl") -> SurfModuleRole.IMPL
+        projectName.endsWith("-internal") -> SurfModuleRole.IMPL
+        NMS_VERSION_MODULE.containsMatchIn(projectName) -> SurfModuleRole.IMPL
+        else -> SurfModuleRole.API
+    }
 }

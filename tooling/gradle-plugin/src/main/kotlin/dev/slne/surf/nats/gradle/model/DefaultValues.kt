@@ -31,52 +31,54 @@ internal object DefaultValues {
      * @param literal the default value as declared in the schema
      * @return the Kotlin expression, or `null` if the literal is invalid or unsupported
      */
-    fun scalar(protoType: ProtoType, literal: String): CodeBlock? = when (protoType) {
-        ProtoType.INT32, ProtoType.SINT32, ProtoType.SFIXED32 -> {
-            val parsed = integer(literal, INT_MIN, INT_MAX)
-            parsed?.let { int(it.toInt()) }
-        }
+    fun scalar(protoType: ProtoType, literal: String): CodeBlock? {
+        return when (protoType) {
+            ProtoType.INT32, ProtoType.SINT32, ProtoType.SFIXED32 -> {
+                val parsed = integer(literal, INT_MIN, INT_MAX)
+                parsed?.let { int(it.toInt()) }
+            }
 
-        ProtoType.UINT32, ProtoType.FIXED32 -> {
-            val parsed = integer(literal, BigInteger.ZERO, UINT_MAX)
-            parsed?.let { int(it.toLong().toInt()) }
-        }
+            ProtoType.UINT32, ProtoType.FIXED32 -> {
+                val parsed = integer(literal, BigInteger.ZERO, UINT_MAX)
+                parsed?.let { int(it.toLong().toInt()) }
+            }
 
-        ProtoType.INT64, ProtoType.SINT64, ProtoType.SFIXED64 -> {
-            val parsed = integer(literal, LONG_MIN, LONG_MAX)
-            parsed?.let { long(it.toLong()) }
-        }
+            ProtoType.INT64, ProtoType.SINT64, ProtoType.SFIXED64 -> {
+                val parsed = integer(literal, LONG_MIN, LONG_MAX)
+                parsed?.let { long(it.toLong()) }
+            }
 
-        ProtoType.UINT64, ProtoType.FIXED64 -> {
-            val parsed = integer(literal, BigInteger.ZERO, ULONG_MAX)
-            parsed?.let { long(it.toLong()) }
-        }
+            ProtoType.UINT64, ProtoType.FIXED64 -> {
+                val parsed = integer(literal, BigInteger.ZERO, ULONG_MAX)
+                parsed?.let { long(it.toLong()) }
+            }
 
-        ProtoType.FLOAT -> {
-            floating(
-                literal = literal,
-                type = FLOAT,
-                format = "%Lf",
-                fromInteger = { it.toFloat() },
-                fromDecimal = String::toFloatOrNull,
-            )
-        }
+            ProtoType.FLOAT -> {
+                floating(
+                    literal = literal,
+                    type = FLOAT,
+                    format = "%Lf",
+                    fromInteger = { it.toFloat() },
+                    fromDecimal = String::toFloatOrNull,
+                )
+            }
 
-        ProtoType.DOUBLE -> {
-            floating(
-                literal = literal,
-                type = DOUBLE,
-                format = "%L",
-                fromInteger = { it.toDouble() },
-                fromDecimal = String::toDoubleOrNull,
-            )
-        }
+            ProtoType.DOUBLE -> {
+                floating(
+                    literal = literal,
+                    type = DOUBLE,
+                    format = "%L",
+                    fromInteger = { it.toDouble() },
+                    fromDecimal = String::toDoubleOrNull,
+                )
+            }
 
-        ProtoType.BOOL -> {
-            literal.toBooleanStrictOrNull()?.let { CodeBlock.of("%L", it) }
-        }
+            ProtoType.BOOL -> {
+                literal.toBooleanStrictOrNull()?.let { CodeBlock.of("%L", it) }
+            }
 
-        else -> null
+            else -> null
+        }
     }
 
     /**
@@ -135,6 +137,7 @@ internal object DefaultValues {
      */
     fun bytes(value: ByteArray): CodeBlock {
         if (value.isEmpty()) return CodeBlock.of("byteArrayOf()")
+
         return CodeBlock.of("byteArrayOf(%L)", value.joinToString(", "))
     }
 
@@ -155,6 +158,7 @@ internal object DefaultValues {
         val magnitude = parseMagnitude(unsigned) ?: return null
 
         val value = if (negative) magnitude.negate() else magnitude
+
         return value.takeIf { it in min..max }
     }
 
@@ -174,6 +178,7 @@ internal object DefaultValues {
         }
 
         if (digits.isEmpty() || digits.any { Character.digit(it, radix) < 0 }) return null
+
         return BigInteger(digits, radix)
     }
 
@@ -197,6 +202,7 @@ internal object DefaultValues {
         }
 
         val value = finiteFloatingValue(literal, fromInteger, fromDecimal) ?: return null
+
         return CodeBlock.of(format, value.toString())
     }
 
@@ -229,14 +235,16 @@ internal object DefaultValues {
      *
      * @return the quoted and escaped Kotlin string literal
      */
-    private fun kotlinString(value: String): String = buildString {
-        append('"')
+    private fun kotlinString(value: String): String {
+        return buildString {
+            append('"')
 
-        for (char in value) {
-            appendEscaped(char)
+            for (char in value) {
+                appendEscaped(char)
+            }
+
+            append('"')
         }
-
-        append('"')
     }
 
     /**
@@ -274,6 +282,7 @@ internal object DefaultValues {
      */
     private fun decimal(literal: String): String? {
         val valid = literal.isNotEmpty() && literal.all { it.isDigit() || it in ".-+eE" }
+
         return literal.takeIf { valid }
     }
 

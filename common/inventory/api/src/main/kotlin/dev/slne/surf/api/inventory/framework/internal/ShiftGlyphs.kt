@@ -39,6 +39,7 @@ object ShiftGlyphs {
 
         return buildString {
             var remaining = amount.abs
+
             while (remaining > 0) {
                 val largest = remaining.takeHighestOneBit()
                 val glyphAmount = largest.coerceAtMost(ShiftGlyph.MAX_GLYPH_AMOUNT)
@@ -86,7 +87,9 @@ object ShiftGlyphs {
 
         init {
             val abs = amount.abs
-            require(abs > 0 && abs and (abs - 1) == 0) { "Glyph amount must be a power of two, was $amount" }
+            require(abs > 0 && abs and (abs - 1) == 0) {
+                "Glyph amount must be a power of two, was $amount"
+            }
         }
 
         companion object {

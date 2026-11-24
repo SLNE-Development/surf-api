@@ -16,7 +16,9 @@ import net.minestom.server.utils.location.RelativeVec
 private val ERROR_MIXED_TYPE = SimpleCommandExceptionType(
     LiteralMessage("Cannot mix world and local coordinates in a single position"),
 )
-private val ERROR_EXPECTED_VALUE = SimpleCommandExceptionType(LiteralMessage("Expected a coordinate value"))
+private val ERROR_EXPECTED_VALUE = SimpleCommandExceptionType(
+    LiteralMessage("Expected a coordinate value"),
+)
 private val ERROR_INCOMPLETE = SimpleCommandExceptionType(LiteralMessage("Incomplete coordinate"))
 private val ERROR_INVALID_SWIZZLE = SimpleCommandExceptionType(LiteralMessage("Invalid swizzle"))
 private val ERROR_REQUIRES_SENDER = SimpleCommandExceptionType(
@@ -36,7 +38,10 @@ private fun readWorldComponent(reader: StringReader, blockAligned: Boolean): Com
     if (!reader.canRead()) throw ERROR_EXPECTED_VALUE.createWithContext(reader)
 
     val relative = reader.peek() == '~'
-    if (relative) reader.skip()
+
+    if (relative) {
+        reader.skip()
+    }
 
     val hasNumber = reader.canRead() && reader.peek() != ' '
     val value = when {
@@ -44,6 +49,7 @@ private fun readWorldComponent(reader: StringReader, blockAligned: Boolean): Com
         blockAligned && !relative -> reader.readInt().toDouble()
         else -> reader.readDouble()
     }
+
     return Component(relative, value)
 }
 
@@ -54,7 +60,9 @@ private fun readWorldComponent(reader: StringReader, blockAligned: Boolean): Com
 private fun readLocalComponent(reader: StringReader): Double {
     if (!reader.canRead()) throw ERROR_EXPECTED_VALUE.createWithContext(reader)
     if (reader.peek() != '^') throw ERROR_MIXED_TYPE.createWithContext(reader)
+
     reader.skip()
+
     return if (reader.canRead() && reader.peek() != ' ') reader.readDouble() else 0.0
 }
 
@@ -66,15 +74,24 @@ private fun expectSeparator(reader: StringReader) {
     }
 }
 
-private fun coordinateTypeOf(vararg relative: Boolean): RelativeVec.CoordinateType =
-    if (relative.any { it }) RelativeVec.CoordinateType.RELATIVE else RelativeVec.CoordinateType.ABSOLUTE
+private fun coordinateTypeOf(vararg relative: Boolean): RelativeVec.CoordinateType {
+    return if (relative.any { it }) {
+        RelativeVec.CoordinateType.RELATIVE
+    } else {
+        RelativeVec.CoordinateType.ABSOLUTE
+    }
+}
 
 /**
  * Rebuilds this exception with its cursor at [start] and moves [reader] there, because
  * [SimpleCommandExceptionType.createWithContext] fixes the cursor at construction.
  */
-private fun CommandSyntaxException.resetTo(reader: StringReader, start: Int): CommandSyntaxException {
+private fun CommandSyntaxException.resetTo(
+    reader: StringReader,
+    start: Int,
+): CommandSyntaxException {
     reader.cursor = start
+
     return CommandSyntaxException(type, rawMessage, reader.string, start)
 }
 
@@ -94,6 +111,7 @@ private fun requireResolvable(
         reader.cursor = start
         throw ERROR_REQUIRES_SENDER.createWithContext(reader)
     }
+
     return relative
 }
 
@@ -115,6 +133,7 @@ internal class PositionParser(
 ) : ArgumentType<RelativeVec> {
     override fun parse(reader: StringReader): RelativeVec {
         val start = reader.cursor
+
         try {
             return if (!twoDimensional && reader.canRead() && reader.peek() == '^') {
                 parseLocal(reader)
@@ -134,6 +153,7 @@ internal class PositionParser(
         val y = readWorldComponent(reader, blockAligned)
         expectSeparator(reader)
         val z = readWorldComponent(reader, blockAligned)
+
         return RelativeVec(
             Vec(x.value, y.value, z.value),
             coordinateTypeOf(x.relative, y.relative, z.relative),
@@ -147,6 +167,7 @@ internal class PositionParser(
         val x = readWorldComponent(reader, blockAligned)
         expectSeparator(reader)
         val z = readWorldComponent(reader, blockAligned)
+
         return RelativeVec(
             Vec(x.value, 0.0, z.value),
             coordinateTypeOf(x.relative, z.relative),
@@ -162,7 +183,14 @@ internal class PositionParser(
         val up = readLocalComponent(reader)
         expectSeparator(reader)
         val forward = readLocalComponent(reader)
-        return RelativeVec(Vec(left, up, forward), RelativeVec.CoordinateType.LOCAL, true, true, true)
+
+        return RelativeVec(
+            Vec(left, up, forward),
+            RelativeVec.CoordinateType.LOCAL,
+            true,
+            true,
+            true,
+        )
     }
 }
 
@@ -175,10 +203,12 @@ internal class PositionParser(
 internal object RotationParser : ArgumentType<RelativeVec> {
     override fun parse(reader: StringReader): RelativeVec {
         val start = reader.cursor
+
         try {
             val yaw = readWorldComponent(reader, blockAligned = false)
             expectSeparator(reader)
             val pitch = readWorldComponent(reader, blockAligned = false)
+
             return RelativeVec(
                 Vec(yaw.value, 0.0, pitch.value),
                 coordinateTypeOf(yaw.relative, pitch.relative),
@@ -202,6 +232,7 @@ internal object AxisParser : ArgumentType<Set<Axis>> {
     override fun parse(reader: StringReader): Set<Axis> {
         val start = reader.cursor
         val axes = LinkedHashSet<Axis>()
+
         while (reader.canRead() && reader.peek() != ' ') {
             val axis = when (reader.read().lowercaseChar()) {
                 'x' -> Axis.X
@@ -212,11 +243,13 @@ internal object AxisParser : ArgumentType<Set<Axis>> {
                     throw ERROR_INVALID_SWIZZLE.createWithContext(reader)
                 }
             }
+
             if (!axes.add(axis)) {
                 reader.cursor = start
                 throw ERROR_INVALID_SWIZZLE.createWithContext(reader)
             }
         }
+
         return axes
     }
 }
@@ -236,11 +269,14 @@ internal class PositionArgumentType(
 
     override fun parse(reader: StringReader): Vec = resolve(reader, null)
 
-    override fun <S> parse(reader: StringReader, source: S): Vec = resolve(reader, source as? CommandSender)
+    override fun <S> parse(reader: StringReader, source: S): Vec {
+        return resolve(reader, source as? CommandSender)
+    }
 
     private fun resolve(reader: StringReader, sender: CommandSender?): Vec {
         val start = reader.cursor
         val relative = delegate.parse(reader)
+
         return requireResolvable(relative, sender, reader, start).fromSender(sender)
     }
 }
@@ -256,13 +292,16 @@ internal class PositionArgumentType(
 internal object RotationArgumentType : ArgumentType<Rotation> {
     override fun parse(reader: StringReader): Rotation = resolve(reader, null)
 
-    override fun <S> parse(reader: StringReader, source: S): Rotation = resolve(reader, source as? CommandSender)
+    override fun <S> parse(reader: StringReader, source: S): Rotation {
+        return resolve(reader, source as? CommandSender)
+    }
 
     private fun resolve(reader: StringReader, sender: CommandSender?): Rotation {
         val start = reader.cursor
         val relative = RotationParser.parse(reader)
         val checked = requireResolvable(relative, sender, reader, start)
         val view = checked.fromView((sender as? Entity)?.position ?: Pos.ZERO)
+
         return Rotation(view.x().toFloat(), view.z().toFloat())
     }
 }

@@ -11,12 +11,13 @@ import dev.slne.surf.nats.test.proto.v1.InteropVectorRequest
 import io.nats.client.Dispatcher
 
 /**
- * Answers `RawVectorService` calls with the bytes of raw vectors, which a generated responder cannot produce: a Kotlin
- * message of another type than the JS-facing response.
+ * Answers `RawVectorService` calls with the bytes of raw vectors, which a generated responder
+ * cannot produce: a Kotlin message of another type than the JS-facing response.
  *
  * Replies carry the `Surf-Origin` of the client [clientName].
  */
-internal class RawVectorResponder(private val clientName: String, private val book: VectorBook) : AutoCloseable {
+internal class RawVectorResponder(private val clientName: String, private val book: VectorBook) :
+    AutoCloseable {
     private val connection = NatsConnectionManager.connection()
     private val dispatcher: Dispatcher = connection.createDispatcher()
 
@@ -31,10 +32,19 @@ internal class RawVectorResponder(private val clientName: String, private val bo
                 ).name
                 val vector = book.serve(name)
                 check(vector.raw) { "Vector $name is served by the generated responder" }
+
                 vector.encode()
             } catch (e: Exception) {
-                val headers = NatsHeaders.base(clientName).add(ProtocolHeaders.ERROR, e.javaClass.name)
-                connection.publish(request.replyTo, headers, e.message.orEmpty().encodeToByteArray())
+                val headers = NatsHeaders.base(clientName).add(
+                    ProtocolHeaders.ERROR,
+                    e.javaClass.name,
+                )
+                connection.publish(
+                    request.replyTo,
+                    headers,
+                    e.message.orEmpty().encodeToByteArray(),
+                )
+
                 return@subscribe
             }
             connection.publish(request.replyTo, NatsHeaders.base(clientName), body)

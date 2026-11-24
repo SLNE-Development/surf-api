@@ -38,9 +38,9 @@ open class MiniMessageArgument(nodeName: String) :
                     CommandExceptionBuilder(
                         e.detailMessage(),
                         e.originalText(),
-                        e.endIndex()
-                    ).build()
-                )
+                        e.endIndex(),
+                    ).build(),
+                ),
             ).create()
         }
     }
@@ -50,5 +50,6 @@ inline fun CommandAPICommand.miniMessageArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<*>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(MiniMessageArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(MiniMessageArgument(nodeName).setOptional(optional).apply(block))
+}

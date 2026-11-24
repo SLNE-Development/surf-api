@@ -1,15 +1,3 @@
-import kotlin.metadata.KmDeclarationContainer
-import kotlin.metadata.Visibility
-import kotlin.metadata.isInline
-import kotlin.metadata.jvm.JvmMethodSignature
-import kotlin.metadata.jvm.KotlinClassMetadata
-import kotlin.metadata.jvm.Metadata
-import kotlin.metadata.jvm.fieldSignature
-import kotlin.metadata.jvm.getterSignature
-import kotlin.metadata.jvm.setterSignature
-import kotlin.metadata.jvm.signature
-import kotlin.metadata.jvm.syntheticMethodForAnnotations
-import kotlin.metadata.visibility
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
@@ -26,6 +14,19 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import java.io.File
 import java.util.zip.ZipFile
+import kotlin.metadata.KmDeclarationContainer
+import kotlin.metadata.KmProperty
+import kotlin.metadata.Visibility
+import kotlin.metadata.isInline
+import kotlin.metadata.jvm.JvmMethodSignature
+import kotlin.metadata.jvm.KotlinClassMetadata
+import kotlin.metadata.jvm.Metadata
+import kotlin.metadata.jvm.fieldSignature
+import kotlin.metadata.jvm.getterSignature
+import kotlin.metadata.jvm.setterSignature
+import kotlin.metadata.jvm.signature
+import kotlin.metadata.jvm.syntheticMethodForAnnotations
+import kotlin.metadata.visibility
 
 /**
  * The binary names of surf-api's API markers.
@@ -63,6 +64,7 @@ abstract class CheckInlineInternalApi : DefaultTask() {
         val roots = classes.files.filter(File::isDirectory)
         ClassIndex(roots + classpath.files).use { index ->
             val violations = InlineInternalApi.findViolations(roots, index)
+
             if (violations.isNotEmpty()) {
                 throw GradleException(
                     "Public inline functions reference @InternalSurfApi declarations, which leave the ABI " +
@@ -78,7 +80,7 @@ abstract class CheckInlineInternalApi : DefaultTask() {
  * A reference from a public `inline` function to a declaration marked only `@InternalSurfApi`.
  */
 data class InlineViolation(val inlineFunction: String, val target: String) {
-    override fun toString() = "$inlineFunction references $target"
+    override fun toString(): String = "$inlineFunction references $target"
 }
 
 /**
@@ -98,15 +100,35 @@ object InlineInternalApi {
 
         return classFiles.keys.sorted().flatMap { className ->
             val owner = index.find(className) ?: return@flatMap emptyList()
+
             owner.publicInlineMethods().flatMap { method ->
                 val bodies = listOfNotNull(owner.methods[method]) +
-                    listOfNotNull(owner.methods.entries.find { it.key.startsWith("${method.substringBefore('(')}\$default(") }?.value) +
-                    lambdaClassesOf(className, method, classFiles.keys).flatMap { index.find(it)?.methods?.values.orEmpty() }
+                    listOfNotNull(
+                        owner.methods.entries.find {
+                            it.key.startsWith(
+                                "${
+                                    method.substringBefore(
+                                        '(',
+                                    )
+                                }\$default(",
+                            )
+                        }?.value,
+                    ) +
+                    lambdaClassesOf(
+                        className,
+                        method,
+                        classFiles.keys,
+                    ).flatMap { index.find(it)?.methods?.values.orEmpty() }
                 bodies.asSequence()
                     .flatMap { it.references }
                     .distinct()
                     .filter { index.isInternalOnly(it) }
-                    .map { InlineViolation("${className.toDisplay()}.${method.substringBefore('(')}", it.toDisplay()) }
+                    .map {
+                        InlineViolation(
+                            "${className.toDisplay()}.${method.substringBefore('(')}",
+                            it.toDisplay(),
+                        )
+                    }
                     .toList()
             }
         }.distinct()
@@ -116,8 +138,13 @@ object InlineInternalApi {
      * The classes the compiler generates for `crossinline` lambdas of [method]; they are copied
      * into the caller together with the function body.
      */
-    private fun lambdaClassesOf(className: String, method: String, classNames: Set<String>): List<String> {
+    private fun lambdaClassesOf(
+        className: String,
+        method: String,
+        classNames: Set<String>,
+    ): List<String> {
         val prefix = "$className\$${method.substringBefore('(')}\$"
+
         return classNames.filter { it.startsWith(prefix) }
     }
 
@@ -130,43 +157,65 @@ object InlineInternalApi {
 class ClassIndex(locations: Iterable<File>) : AutoCloseable {
 
     private val directories = locations.filter(File::isDirectory)
-    private val jars = locations.filter { it.isFile && it.extension == "jar" }.map(::ZipFile)
+    private val jars = locations
+        .filter { it.isFile && it.extension == "jar" }
+        .map(::ZipFile)
     private val cache = HashMap<String, ParsedClass?>()
 
     /**
      * The parsed class [internalName], or `null` if no location holds it.
      */
-    fun find(internalName: String): ParsedClass? = cache.getOrPut(internalName) {
-        val path = "$internalName.class"
-        val bytes = directories.firstNotNullOfOrNull { dir -> File(dir, path).takeIf(File::isFile)?.readBytes() }
-            ?: jars.firstNotNullOfOrNull { jar -> jar.getEntry(path)?.let { entry -> jar.getInputStream(entry).use { it.readBytes() } } }
-        bytes?.let(ParsedClass::parse)
+    fun find(internalName: String): ParsedClass? {
+        return cache.getOrPut(internalName) {
+            val path = "$internalName.class"
+            val bytes = directories.firstNotNullOfOrNull { dir ->
+                File(
+                    dir,
+                    path,
+                ).takeIf(File::isFile)?.readBytes()
+            }
+                ?: jars.firstNotNullOfOrNull { jar ->
+                    jar.getEntry(path)?.let { entry ->
+                        jar.getInputStream(
+                            entry,
+                        ).use { it.readBytes() }
+                    }
+                }
+            bytes?.let(ParsedClass::parse)
+        }
     }
 
     /**
-     * Whether [reference] points at a declaration marked `@InternalSurfApi` and not `@PublishedSurfApi`,
-     * directly or through a class that contains it.
+     * Whether [reference] points at a declaration marked `@InternalSurfApi` and not
+     * `@PublishedSurfApi`, directly or through a class that contains it.
      */
     fun isInternalOnly(reference: Reference): Boolean {
         val markers = when (reference) {
             is Reference.Type -> classMarkers(reference.owner)
             is Reference.Member -> memberMarkers(reference) + classMarkers(reference.owner)
         }
+
         return SurfApiMarkers.INTERNAL in markers && SurfApiMarkers.PUBLISHED !in markers
     }
 
-    private fun classMarkers(internalName: String): Set<String> =
-        generateSequence(internalName) { name -> name.substringBeforeLast('$', "").takeIf(String::isNotEmpty) }
+    private fun classMarkers(internalName: String): Set<String> {
+        return generateSequence(internalName) { name ->
+            name.substringBeforeLast('$', "").takeIf(
+                String::isNotEmpty,
+            )
+        }
             .flatMap { find(it)?.annotations.orEmpty() }
             .toSet()
+    }
 
-    private fun memberMarkers(member: Reference.Member): Set<String> =
-        generateSequence(find(member.owner)) { cls -> cls.superName?.let(::find) }
+    private fun memberMarkers(member: Reference.Member): Set<String> {
+        return generateSequence(find(member.owner)) { cls -> cls.superName?.let(::find) }
             .mapNotNull { cls -> cls.memberAnnotations(member, ::find) }
             .firstOrNull()
             .orEmpty()
+    }
 
-    override fun close() = jars.forEach(ZipFile::close)
+    override fun close(): Unit = jars.forEach(ZipFile::close)
 }
 
 /**
@@ -176,11 +225,16 @@ sealed interface Reference {
     val owner: String
 
     data class Type(override val owner: String) : Reference {
-        override fun toString() = owner
+        override fun toString(): String = owner
     }
 
-    data class Member(override val owner: String, val name: String, val descriptor: String, val isField: Boolean) : Reference {
-        override fun toString() = "$owner.$name"
+    data class Member(
+        override val owner: String,
+        val name: String,
+        val descriptor: String,
+        val isField: Boolean,
+    ) : Reference {
+        override fun toString(): String = "$owner.$name"
     }
 
     fun toDisplay(): String = toString().replace('/', '.')
@@ -208,7 +262,9 @@ class ParsedClass(
      */
     fun publicInlineMethods(): List<String> {
         val container: KmDeclarationContainer = when (metadata) {
-            is KotlinClassMetadata.Class -> metadata.kmClass.takeIf { it.visibility.isPublicApi() } ?: return emptyList()
+            is KotlinClassMetadata.Class -> metadata.kmClass.takeIf { it.visibility.isPublicApi() }
+                ?: return emptyList()
+
             is KotlinClassMetadata.FileFacade -> metadata.kmPackage
             is KotlinClassMetadata.MultiFileClassPart -> metadata.kmPackage
             else -> return emptyList()
@@ -226,11 +282,17 @@ class ParsedClass(
             }
         return (functions + accessors)
             .map { it.key() }
-            .filter { key -> methods[key]?.annotations?.none { it == SurfApiMarkers.INTERNAL || it == SurfApiMarkers.PUBLISHED } ?: false }
+            .filter { key ->
+                methods[key]?.annotations?.none {
+                    it == SurfApiMarkers.INTERNAL || it == SurfApiMarkers.PUBLISHED
+                }
+                    ?: false
+            }
     }
 
     /**
-     * The markers on the declaration [member] resolves to in this class, or `null` if it is not declared here.
+     * The markers on the declaration [member] resolves to in this class, or `null` if it is not
+     * declared here.
      *
      * A property's markers sit on a synthetic method, which the compiler puts into the outer class
      * for a companion object's property; [find] looks that class up.
@@ -242,21 +304,30 @@ class ParsedClass(
             val outer = name.substringBeforeLast('$', "").takeIf(String::isNotEmpty)?.let(find)
             (methods[signature.key()] ?: outer?.methods?.get(signature.key()))?.annotations
         }.orEmpty()
-        val direct = if (member.isField) fieldAnnotations[member.name] else methods[key]?.annotations
+        val direct = if (member.isField) fieldAnnotations[member.name] else methods[key]
+            ?.annotations
         if (direct == null && property == null) return null
+
         return direct.orEmpty() + propertyMarkers
     }
 
-    private fun propertyFor(member: Reference.Member, key: String) = declarationContainer()?.properties?.find { property ->
-        if (member.isField) property.fieldSignature?.name == member.name
-        else property.getterSignature?.key() == key || property.setterSignature?.key() == key
+    private fun propertyFor(
+        member: Reference.Member,
+        key: String,
+    ): KmProperty? {
+        return declarationContainer()?.properties?.find { property ->
+            if (member.isField) property.fieldSignature?.name == member.name
+            else property.getterSignature?.key() == key || property.setterSignature?.key() == key
+        }
     }
 
-    private fun declarationContainer(): KmDeclarationContainer? = when (metadata) {
-        is KotlinClassMetadata.Class -> metadata.kmClass
-        is KotlinClassMetadata.FileFacade -> metadata.kmPackage
-        is KotlinClassMetadata.MultiFileClassPart -> metadata.kmPackage
-        else -> null
+    private fun declarationContainer(): KmDeclarationContainer? {
+        return when (metadata) {
+            is KotlinClassMetadata.Class -> metadata.kmClass
+            is KotlinClassMetadata.FileFacade -> metadata.kmPackage
+            is KotlinClassMetadata.MultiFileClassPart -> metadata.kmPackage
+            else -> null
+        }
     }
 
     companion object {
@@ -267,6 +338,7 @@ class ParsedClass(
         fun parse(bytes: ByteArray): ParsedClass {
             val collector = ClassCollector()
             ClassReader(bytes).accept(collector, ClassReader.SKIP_FRAMES)
+
             return collector.result()
         }
     }
@@ -286,43 +358,89 @@ private class ClassCollector : ClassVisitor(Opcodes.ASM9) {
     private val fieldAnnotations = HashMap<String, MutableSet<String>>()
     private val metadata = MetadataCollector()
 
-    override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String?, interfaces: Array<out String>?) {
+    override fun visit(
+        version: Int,
+        access: Int,
+        name: String,
+        signature: String?,
+        superName: String?,
+        interfaces: Array<out String>?,
+    ) {
         this.name = name
         this.superName = superName
     }
 
     override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
         if (descriptor == "Lkotlin/Metadata;") return metadata
+
         annotations += descriptor.descriptorToMarker()
+
         return null
     }
 
-    override fun visitField(access: Int, name: String, descriptor: String, signature: String?, value: Any?): FieldVisitor {
+    override fun visitField(
+        access: Int,
+        name: String,
+        descriptor: String,
+        signature: String?,
+        value: Any?,
+    ): FieldVisitor {
         val markers = fieldAnnotations.getOrPut(name, ::HashSet)
+
         return object : FieldVisitor(Opcodes.ASM9) {
             override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
                 markers += descriptor.descriptorToMarker()
+
                 return null
             }
         }
     }
 
-    override fun visitMethod(access: Int, name: String, descriptor: String, signature: String?, exceptions: Array<out String>?): MethodVisitor {
+    override fun visitMethod(
+        access: Int,
+        name: String,
+        descriptor: String,
+        signature: String?,
+        exceptions: Array<out String>?,
+    ): MethodVisitor {
         val markers = HashSet<String>()
         val references = LinkedHashSet<Reference>()
         methods["$name$descriptor"] = ParsedMethod(markers, references)
+
         return object : MethodVisitor(Opcodes.ASM9) {
             override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
                 markers += descriptor.descriptorToMarker()
+
                 return null
             }
 
-            override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
-                references += Reference.Member(owner.arrayElement(), name, descriptor, isField = false)
+            override fun visitMethodInsn(
+                opcode: Int,
+                owner: String,
+                name: String,
+                descriptor: String,
+                isInterface: Boolean,
+            ) {
+                references += Reference.Member(
+                    owner.arrayElement(),
+                    name,
+                    descriptor,
+                    isField = false,
+                )
             }
 
-            override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
-                references += Reference.Member(owner.arrayElement(), name, descriptor, isField = true)
+            override fun visitFieldInsn(
+                opcode: Int,
+                owner: String,
+                name: String,
+                descriptor: String,
+            ) {
+                references += Reference.Member(
+                    owner.arrayElement(),
+                    name,
+                    descriptor,
+                    isField = true,
+                )
             }
 
             override fun visitTypeInsn(opcode: Int, type: String) {
@@ -330,20 +448,38 @@ private class ClassCollector : ClassVisitor(Opcodes.ASM9) {
             }
 
             override fun visitLdcInsn(value: Any?) {
-                if (value is Type && value.sort == Type.OBJECT) references += Reference.Type(value.internalName)
+                if (value is Type && value.sort == Type.OBJECT) {
+                    references += Reference.Type(
+                        value.internalName,
+                    )
+                }
             }
 
-            override fun visitInvokeDynamicInsn(name: String, descriptor: String, bootstrapMethodHandle: Handle, vararg bootstrapMethodArguments: Any?) {
-                bootstrapMethodArguments.filterIsInstance<Handle>().forEach { handle ->
-                    references += Reference.Member(handle.owner, handle.name, handle.desc, isField = handle.tag <= Opcodes.H_PUTSTATIC)
+            override fun visitInvokeDynamicInsn(
+                name: String,
+                descriptor: String,
+                bootstrapMethodHandle: Handle,
+                vararg bootstrapMethodArguments: Any?,
+            ) {
+                for (handle in bootstrapMethodArguments.filterIsInstance<Handle>()) {
+                    references += Reference.Member(
+                        handle.owner,
+                        handle.name,
+                        handle.desc,
+                        isField = handle.tag <= Opcodes.H_PUTSTATIC,
+                    )
                 }
             }
         }
     }
 
-    fun result() = ParsedClass(name, superName, annotations, methods, fieldAnnotations, metadata.read())
+    fun result(): ParsedClass {
+        return ParsedClass(name, superName, annotations, methods, fieldAnnotations, metadata.read())
+    }
 
-    private fun String.arrayElement() = if (startsWith("[")) Type.getType(this).elementType.internalName else this
+    private fun String.arrayElement(): String {
+        return if (startsWith("[")) Type.getType(this).elementType.internalName else this
+    }
 }
 
 /**
@@ -358,6 +494,7 @@ private class MetadataCollector : AnnotationVisitor(Opcodes.ASM9) {
 
     override fun visitArray(name: String): AnnotationVisitor {
         val items = ArrayList<String>()
+
         return object : AnnotationVisitor(Opcodes.ASM9) {
             override fun visit(name: String?, value: Any?) {
                 items += value as String
@@ -372,6 +509,7 @@ private class MetadataCollector : AnnotationVisitor(Opcodes.ASM9) {
     @Suppress("UNCHECKED_CAST")
     fun read(): KotlinClassMetadata? {
         if (values.isEmpty()) return null
+
         val metadata = Metadata(
             kind = values["k"] as Int?,
             metadataVersion = values["mv"] as IntArray?,
@@ -381,6 +519,7 @@ private class MetadataCollector : AnnotationVisitor(Opcodes.ASM9) {
             packageName = values["pn"] as String?,
             extraInt = values["xi"] as Int?,
         )
+
         return runCatching { KotlinClassMetadata.readLenient(metadata) }.getOrNull()
     }
 }

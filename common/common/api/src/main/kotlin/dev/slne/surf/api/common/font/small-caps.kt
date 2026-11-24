@@ -25,6 +25,7 @@ private val smallCapsTable = CharArray(128) { it.toChar() }.also { table ->
  */
 fun CharSequence.toSmallCaps(): String {
     val chars = CharArray(length)
+
     for (i in indices) {
         val c = this[i]
         chars[i] = if (c.code < 128) {
@@ -34,5 +35,6 @@ fun CharSequence.toSmallCaps(): String {
             if (lower in 'a'..'z') smallCapsTable[lower.code] else c
         }
     }
+
     return String(chars)
 }

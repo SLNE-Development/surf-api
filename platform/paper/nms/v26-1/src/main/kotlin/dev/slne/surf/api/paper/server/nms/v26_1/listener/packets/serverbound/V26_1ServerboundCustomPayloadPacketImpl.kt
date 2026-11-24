@@ -11,7 +11,7 @@ import dev.slne.surf.api.paper.nms.listener.packets.serverbound.ServerboundCusto
 @NmsUseWithCaution
 @Suppress("ClassName")
 class V26_1ServerboundCustomPayloadPacketImpl(
-    nmsPacket: ServerboundCustomPayloadPacket
+    nmsPacket: ServerboundCustomPayloadPacket,
 ) : V26_1NmsServerboundPacketImpl<ServerboundCustomPayloadPacket>(nmsPacket),
     dev.slne.surf.api.paper.nms.listener.packets.serverbound.ServerboundCustomPayloadPacket {
 
@@ -22,22 +22,26 @@ class V26_1ServerboundCustomPayloadPacketImpl(
         }
 
     companion object {
-        private fun toApiPayload(nmsPayload: CustomPacketPayload): ApiPayload = when (nmsPayload) {
-            is BrandPayload -> ApiPayload.Brand(nmsPayload.brand)
-            is DiscardedPayload -> ApiPayload.Discarded(
-                id = PaperAdventure.asAdventure(nmsPayload.id),
-                data = nmsPayload.data
-            )
+        private fun toApiPayload(nmsPayload: CustomPacketPayload): ApiPayload {
+            return when (nmsPayload) {
+                is BrandPayload -> ApiPayload.Brand(nmsPayload.brand)
+                is DiscardedPayload -> ApiPayload.Discarded(
+                    id = PaperAdventure.asAdventure(nmsPayload.id),
+                    data = nmsPayload.data,
+                )
 
-            else -> error("Unknown CustomPacketPayload type: ${nmsPayload.type()}")
+                else -> error("Unknown CustomPacketPayload type: ${nmsPayload.type()}")
+            }
         }
 
-        private fun toNmsPayload(apiPayload: ApiPayload): CustomPacketPayload = when (apiPayload) {
-            is ApiPayload.Brand -> BrandPayload(apiPayload.brand)
-            is ApiPayload.Discarded -> DiscardedPayload(
-                PaperAdventure.asVanilla(apiPayload.id),
-                apiPayload.data
-            )
+        private fun toNmsPayload(apiPayload: ApiPayload): CustomPacketPayload {
+            return when (apiPayload) {
+                is ApiPayload.Brand -> BrandPayload(apiPayload.brand)
+                is ApiPayload.Discarded -> DiscardedPayload(
+                    PaperAdventure.asVanilla(apiPayload.id),
+                    apiPayload.data,
+                )
+            }
         }
     }
 }

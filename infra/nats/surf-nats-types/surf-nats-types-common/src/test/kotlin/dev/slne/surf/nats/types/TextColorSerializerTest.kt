@@ -18,7 +18,11 @@ class TextColorSerializerTest {
 
     @Test
     fun `descriptor is the surf TextColor message`() {
-        assertMessageDescriptor(TextColorSerializer.descriptor, "surf.types.v1.TextColor", "rgb" to 1)
+        assertMessageDescriptor(
+            TextColorSerializer.descriptor,
+            "surf.types.v1.TextColor",
+            "rgb" to 1,
+        )
     }
 
     @Test

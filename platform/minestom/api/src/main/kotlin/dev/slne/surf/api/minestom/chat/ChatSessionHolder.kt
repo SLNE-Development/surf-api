@@ -113,7 +113,9 @@ interface ChatSessionHolder {
 
         internal fun deleteMessage(player: Player, signature: SignedMessage.Signature): Boolean {
             val provider = provider ?: return false
+
             provider.deleteMessage(player, signature)
+
             return true
         }
     }
@@ -148,8 +150,10 @@ fun Player.sendSignedMessage(
     unsignedContent: Component? = null,
 ) {
     val holder = chatSessionHolder
+
     if (holder == null) {
         sendMessage(unsignedContent ?: Component.text(message.message()))
+
         return
     }
 
@@ -181,8 +185,10 @@ fun Player.sendRemoteSignedMessage(
     boundName: Component,
 ) {
     val holder = chatSessionHolder
+
     if (holder == null) {
         sendMessage(message.unsignedContent ?: Component.text(message.content))
+
         return
     }
 

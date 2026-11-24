@@ -1,7 +1,7 @@
 package dev.slne.minestom.example
 
-import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.permission.PermissionProvider
+import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import net.kyori.adventure.util.TriState
 
 /**

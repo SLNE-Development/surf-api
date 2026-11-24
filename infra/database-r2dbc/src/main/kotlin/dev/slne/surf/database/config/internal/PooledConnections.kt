@@ -33,9 +33,18 @@ internal class PooledConnections private constructor(
             val details = config.credentials
             val timeouts = config.pool.timeouts
             val sizing = config.pool.sizing
-            val loopResources = LoopResources.create("${details.databaseType.vendor}-r2dbc-event-loop-$name", 1, 4, true)
+            val loopResources = LoopResources.create(
+                "${details.databaseType.vendor}-r2dbc-event-loop-$name",
+                1,
+                4,
+                true,
+            )
 
-            val connectionFactory = R2dbcConnectionFactories.create(details, ofMillis(timeouts.lockTimeoutMillis), loopResources)
+            val connectionFactory = R2dbcConnectionFactories.create(
+                details,
+                ofMillis(timeouts.lockTimeoutMillis),
+                loopResources,
+            )
             val poolConfiguration = ConnectionPoolConfiguration.builder()
                 .connectionFactory(connectionFactory)
                 // A retry would restart the acquire timeout at the end of the queue

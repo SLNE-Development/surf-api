@@ -39,23 +39,54 @@ class ConnectSettingsTest {
     fun servers() {
         assertEquals(
             listOf("nats://a:4222", "nats://b:4222"),
-            settings(ConnectOptions(name = "c", servers = arrayOf(" nats://a:4222", "nats://b:4222 ", ""))).servers,
+            settings(
+                ConnectOptions(
+                    name = "c",
+                    servers = arrayOf(" nats://a:4222", "nats://b:4222 ", ""),
+                ),
+            ).servers,
         )
         assertEquals(
             listOf("nats://a:4222"),
             settings(ConnectOptions(name = "c", servers = arrayOf("nats://a:4222", " "))).servers,
         )
-        assertTrue(failure(ConnectOptions(name = "c", servers = arrayOf(" ", ""))).contains("must not be empty"))
-        assertTrue(failure(ConnectOptions(name = "c", servers = arrayOf<String>())).contains("must not be empty"))
+        assertTrue(
+            failure(
+                ConnectOptions(
+                    name = "c",
+                    servers = arrayOf(" ", ""),
+                ),
+            ).contains("must not be empty"),
+        )
+        assertTrue(
+            failure(
+                ConnectOptions(
+                    name = "c",
+                    servers = arrayOf<String>(),
+                ),
+            ).contains("must not be empty"),
+        )
     }
 
     @Test
     fun serverString() {
         assertEquals(
             listOf("nats://a:4222", "nats://b:4222"),
-            settings(ConnectOptions(name = "c", servers = " nats://a:4222, ,nats://b:4222 ")).servers,
+            settings(
+                ConnectOptions(
+                    name = "c",
+                    servers = " nats://a:4222, ,nats://b:4222 ",
+                ),
+            ).servers,
         )
-        assertTrue(failure(ConnectOptions(name = "c", servers = " , ")).contains("must not be empty"))
+        assertTrue(
+            failure(
+                ConnectOptions(
+                    name = "c",
+                    servers = " , ",
+                ),
+            ).contains("must not be empty"),
+        )
         assertTrue(failure(ConnectOptions(name = "c", servers = "")).contains("must not be empty"))
     }
 
@@ -73,7 +104,14 @@ class ConnectSettingsTest {
 
     @Test
     fun authMethods() {
-        val tokenAuth = assertIs<ConnectSettings.Auth.Token>(settings(ConnectOptions(name = "c", token = "t")).auth)
+        val tokenAuth = assertIs<ConnectSettings.Auth.Token>(
+            settings(
+                ConnectOptions(
+                    name = "c",
+                    token = "t",
+                ),
+            ).auth,
+        )
         assertEquals("t", tokenAuth.token)
 
         val userPass = assertIs<ConnectSettings.Auth.UserPass>(
@@ -92,19 +130,64 @@ class ConnectSettingsTest {
     fun authRules() {
         assertTrue(failure(ConnectOptions(name = "c", user = "u")).contains("must be set together"))
         assertTrue(failure(ConnectOptions(name = "c", pass = "p")).contains("must be set together"))
-        assertTrue(failure(ConnectOptions(name = "c", token = "t", user = "u", pass = "p")).contains("only one of"))
-        assertTrue(failure(ConnectOptions(name = "c", token = "t", credsFile = "/x")).contains("only one of"))
+        assertTrue(
+            failure(
+                ConnectOptions(
+                    name = "c",
+                    token = "t",
+                    user = "u",
+                    pass = "p",
+                ),
+            ).contains("only one of"),
+        )
+        assertTrue(
+            failure(
+                ConnectOptions(
+                    name = "c",
+                    token = "t",
+                    credsFile = "/x",
+                ),
+            ).contains("only one of"),
+        )
     }
 
     @Test
     fun emptyStringsAreUnset() {
-        assertNull(settings(ConnectOptions(name = "c", token = "", user = "", pass = "", credsFile = "")).auth)
-        assertIs<ConnectSettings.Auth.Token>(settings(ConnectOptions(name = "c", token = "t", user = "")).auth)
+        assertNull(
+            settings(
+                ConnectOptions(
+                    name = "c",
+                    token = "",
+                    user = "",
+                    pass = "",
+                    credsFile = "",
+                ),
+            ).auth,
+        )
+        assertIs<ConnectSettings.Auth.Token>(
+            settings(
+                ConnectOptions(
+                    name = "c",
+                    token = "t",
+                    user = "",
+                ),
+            ).auth,
+        )
     }
 
     @Test
     fun connectTimeoutMustBePositive() {
-        assertEquals(250, settings(ConnectOptions(name = "c", connectTimeoutMs = 250)).connectTimeoutMs)
-        assertTrue(failure(ConnectOptions(name = "c", connectTimeoutMs = 0)).contains("must be positive"))
+        assertEquals(
+            250,
+            settings(ConnectOptions(name = "c", connectTimeoutMs = 250)).connectTimeoutMs,
+        )
+        assertTrue(
+            failure(
+                ConnectOptions(
+                    name = "c",
+                    connectTimeoutMs = 0,
+                ),
+            ).contains("must be positive"),
+        )
     }
 }

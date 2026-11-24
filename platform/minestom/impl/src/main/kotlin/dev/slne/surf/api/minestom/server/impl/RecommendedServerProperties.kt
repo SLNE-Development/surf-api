@@ -41,12 +41,15 @@ internal object RecommendedServerProperties {
     private fun applyCompressionThreshold() {
         if (MinecraftServer.process()?.isAlive == true) {
             LOGGER.warn("The server already started, packet compression stays as it is")
+
             return
         }
 
         val current = MinecraftServer.getCompressionThreshold()
+
         if (current != MINESTOM_COMPRESSION_THRESHOLD) {
             LOGGER.info("The compression threshold is set to {}, keeping it", current)
+
             return
         }
 
@@ -56,12 +59,18 @@ internal object RecommendedServerProperties {
 
     private fun <T : Any> apply(property: ServerProperty<T>, value: T) {
         val name = property.name()
+
         when {
             System.getProperty(name) != null ->
                 LOGGER.info("{} is set to {} with -D{}, keeping it", name, property.get(), name)
 
             !property.writable() ->
-                LOGGER.warn("{} cannot be changed at runtime, set it with -D{}={}", name, name, value)
+                LOGGER.warn(
+                    "{} cannot be changed at runtime, set it with -D{}={}",
+                    name,
+                    name,
+                    value,
+                )
 
             else -> {
                 property.set(value)

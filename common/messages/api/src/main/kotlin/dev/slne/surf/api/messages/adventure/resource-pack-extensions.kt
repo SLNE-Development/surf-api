@@ -39,7 +39,9 @@ annotation class ResourcePackDsl
  * }
  * ```
  */
-inline fun resourcePackInfo(block: @ResourcePackInfoDsl ResourcePackInfo.Builder.() -> Unit): ResourcePackInfo {
+inline fun resourcePackInfo(
+    block: @ResourcePackInfoDsl ResourcePackInfo.Builder.() -> Unit,
+): ResourcePackInfo {
     return ResourcePackInfo.resourcePackInfo().apply(block).build()
 }
 
@@ -58,11 +60,13 @@ inline fun resourcePackInfo(block: @ResourcePackInfoDsl ResourcePackInfo.Builder
  */
 suspend inline fun asyncResourcePackInfo(
     crossinline block: @ResourcePackInfoDsl suspend ResourcePackInfo.Builder.() -> Unit,
-): ResourcePackInfo = coroutineScope {
-    ResourcePackInfo.resourcePackInfo()
-        .apply { block() }
-        .computeHashAndBuild(Dispatchers.IO.asExecutor())
-        .await()
+): ResourcePackInfo {
+    return coroutineScope {
+        ResourcePackInfo.resourcePackInfo()
+            .apply { block() }
+            .computeHashAndBuild(Dispatchers.IO.asExecutor())
+            .await()
+    }
 }
 
 /**
@@ -96,7 +100,9 @@ fun ResourcePackInfo.Builder.url(url: String) {
  * }
  * ```
  */
-inline fun resourcePackRequest(block: @ResourcePackDsl ResourcePackRequest.Builder.() -> Unit): ResourcePackRequest {
+inline fun resourcePackRequest(
+    block: @ResourcePackDsl ResourcePackRequest.Builder.() -> Unit,
+): ResourcePackRequest {
     return ResourcePackRequest.resourcePackRequest().apply(block).build()
 }
 
@@ -116,6 +122,7 @@ inline fun resourcePackRequest(block: @ResourcePackDsl ResourcePackRequest.Build
  */
 fun addingResourcePackRequest(vararg infos: ResourcePackInfo): ResourcePackRequest {
     require(infos.isNotEmpty()) { "At least one ResourcePackInfo must be provided" }
+
     return ResourcePackRequest.addingRequest(infos[0], *infos.drop(1).toTypedArray())
 }
 
@@ -133,7 +140,9 @@ fun addingResourcePackRequest(vararg infos: ResourcePackInfo): ResourcePackReque
  * }
  * ```
  */
-inline fun ResourcePackRequest.Builder.pack(block: @ResourcePackDsl ResourcePackInfo.Builder.() -> Unit) {
+inline fun ResourcePackRequest.Builder.pack(
+    block: @ResourcePackDsl ResourcePackInfo.Builder.() -> Unit,
+) {
     packs(resourcePackInfo(block))
 }
 
@@ -152,7 +161,9 @@ inline fun ResourcePackRequest.Builder.pack(block: @ResourcePackDsl ResourcePack
  * }
  * ```
  */
-inline fun ResourcePackRequest.Builder.packs(block: @ResourcePackDsl ResourcePackRequestInfoBuilder.() -> Unit) {
+inline fun ResourcePackRequest.Builder.packs(
+    block: @ResourcePackDsl ResourcePackRequestInfoBuilder.() -> Unit,
+) {
     packs(ResourcePackRequestInfoBuilder().apply(block).infos)
 }
 
@@ -174,12 +185,18 @@ inline fun ResourcePackRequest.Builder.packs(block: @ResourcePackDsl ResourcePac
  * }
  * ```
  */
-inline fun ResourcePackRequest.Builder.simpleCallback(crossinline block: @ResourcePackDsl (packId: UUID, audience: Audience, success: Boolean) -> Unit) {
+inline fun ResourcePackRequest.Builder.simpleCallback(
+    crossinline block: @ResourcePackDsl (
+        packId: UUID,
+        audience: Audience,
+        success: Boolean,
+    ) -> Unit,
+) {
     callback(
         ResourcePackCallback.onTerminal(
             { packId, audience -> block(packId, audience, true) },
-            { packId, audience -> block(packId, audience, false) }
-        )
+            { packId, audience -> block(packId, audience, false) },
+        ),
     )
 }
 
@@ -195,7 +212,9 @@ inline fun ResourcePackRequest.Builder.simpleCallback(crossinline block: @Resour
  * }
  * ```
  */
-inline fun ResourcePackRequest.Builder.prompt(block: @ResourcePackDsl SurfComponentBuilder.() -> Unit) {
+inline fun ResourcePackRequest.Builder.prompt(
+    block: @ResourcePackDsl SurfComponentBuilder.() -> Unit,
+) {
     prompt(buildText(block))
 }
 
@@ -206,7 +225,6 @@ inline fun ResourcePackRequest.Builder.prompt(block: @ResourcePackDsl SurfCompon
 class ResourcePackRequestInfoBuilder {
     @PublishedApi
     internal val infos = mutableListOf<ResourcePackInfo>()
-
 
     /**
      * Adds a resource pack to the request.

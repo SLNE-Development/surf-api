@@ -16,8 +16,10 @@ internal class MessageMapStep(
         if (plan.isNoOp(direction)) return null
 
         val map = message.get(field)
+
         for (key in map.keys()) {
             val violation = plan.apply(map.get(key)!!, direction)
+
             if (violation != null) {
                 return violation.under("${field.localName}[$key]")
             }

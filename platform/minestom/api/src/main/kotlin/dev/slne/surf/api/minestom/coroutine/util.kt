@@ -14,7 +14,7 @@ val Int.ticks: Duration get() = (this * 50L - 25).milliseconds
 fun ServerProcess.launch(
     context: CoroutineContext = MinestomDispatchers.Main,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> Unit
+    block: suspend CoroutineScope.() -> Unit,
 ): Job {
     if (!minestomScope.isActive) {
         return Job()
@@ -24,8 +24,9 @@ fun ServerProcess.launch(
 }
 
 @Suppress("UnstableApiUsage")
-suspend fun <T, R> AcquirableSource<T>.asyncSuspend(block: (T) -> R): R =
-    acquirable().asyncSuspend(block)
+suspend fun <T, R> AcquirableSource<T>.asyncSuspend(block: (T) -> R): R {
+    return acquirable().asyncSuspend(block)
+}
 
 /**
  * Runs [block] with the element while the thread owning it is held, on the IO dispatcher.
@@ -35,6 +36,7 @@ suspend fun <T, R> AcquirableSource<T>.asyncSuspend(block: (T) -> R): R =
 @Suppress("UnstableApiUsage")
 suspend fun <T, R> Acquirable<T>.asyncSuspend(block: (T) -> R): R {
     val acquire = this
+
     return withContext(Dispatchers.IO) {
         var result: Any? = UNSET
         acquire.sync { element ->
@@ -56,6 +58,7 @@ suspend fun <T, R> Acquirable<T>.asyncSuspend(block: (T) -> R): R {
 @Suppress("UnstableApiUsage")
 suspend fun <T, R> Collection<Acquirable<T>>.asyncSuspend(block: (Collection<T>) -> R): R {
     val acquirableCollection = AcquirableCollection(this)
+
     return withContext(Dispatchers.IO) {
         val resolved = ArrayList<T>(size)
         acquirableCollection.acquireSync {

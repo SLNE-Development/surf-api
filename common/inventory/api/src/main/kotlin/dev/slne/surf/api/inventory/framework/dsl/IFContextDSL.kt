@@ -18,7 +18,7 @@ import me.devnatan.inventoryframework.context.IFContext
  * @receiver the [IFContext] whose viewers should transition to the new view
  * @param other the [RootView] to open for all current viewers
  */
-fun IFContext.openForEveryone(other: RootView) = openForEveryone(other.javaClass)
+fun IFContext.openForEveryone(other: RootView): Unit = openForEveryone(other.javaClass)
 
 /**
  * Opens the given [other] view for every player who currently has this context's view open,
@@ -34,5 +34,6 @@ fun IFContext.openForEveryone(other: RootView) = openForEveryone(other.javaClass
  * @param other the [RootView] to open for all current viewers
  * @param initialData arbitrary data to pass as the new view's initial state
  */
-fun IFContext.openForEveryone(other: RootView, initialData: Any) =
+fun IFContext.openForEveryone(other: RootView, initialData: Any) {
     openForEveryone(other.javaClass, initialData)
+}

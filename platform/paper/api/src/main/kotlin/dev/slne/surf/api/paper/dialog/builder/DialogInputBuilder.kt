@@ -15,6 +15,7 @@ class DialogInputBuilder {
     fun text(key: String, block: TextDialogInput.() -> Unit): DialogInput {
         val input = TextDialogInput(key).apply(block).build()
         inputs.add(input)
+
         return input
     }
 
@@ -30,12 +31,17 @@ class DialogInputBuilder {
     fun boolean(key: String, block: BooleanDialogInput.() -> Unit): DialogInput {
         val input = BooleanDialogInput(key).apply(block).build()
         inputs.add(input)
+
         return input
     }
 
     fun simpleBoolean(key: String, label: Component, defaultValue: Boolean? = null) {
         val input = DialogInput.bool(key, label)
-        defaultValue?.let { input.initial(it) }
+
+        if (defaultValue != null) {
+            input.initial(defaultValue)
+        }
+
         inputs.add(input.build())
     }
 
@@ -52,11 +58,15 @@ class DialogInputBuilder {
         range: ClosedRange<N>,
         block: NumberRangeDialogInput.() -> Unit,
     ): DialogInput where N : Number, N : Comparable<N> {
-        val input =
-            NumberRangeDialogInput(key, range.start.toFloat(), range.endInclusive.toFloat()).apply(
-                block
-            ).build()
+        val input = NumberRangeDialogInput(
+            key,
+            range.start.toFloat(),
+            range.endInclusive.toFloat(),
+        ).apply(
+            block,
+        ).build()
         inputs.add(input)
+
         return input
     }
 
@@ -65,8 +75,12 @@ class DialogInputBuilder {
         range: ClosedRange<N>,
         label: Component,
     ) where N : Number, N : Comparable<N> {
-        val input =
-            DialogInput.numberRange(key, label, range.start.toFloat(), range.endInclusive.toFloat())
+        val input = DialogInput.numberRange(
+            key,
+            label,
+            range.start.toFloat(),
+            range.endInclusive.toFloat(),
+        )
         inputs.add(input.build())
     }
 
@@ -84,6 +98,7 @@ class DialogInputBuilder {
     ): DialogInput {
         val input = SingleOptionDialogInput(key).apply(block).build()
         inputs.add(input)
+
         return input
     }
 
@@ -141,6 +156,7 @@ class DialogInputBuilder {
         internal fun build(): DialogInput {
             val label = label
             require(label != null) { "Dialog input label must not be null" }
+
             val builder = DialogInput.text(key, label)
             with(builder) {
                 width?.let { width(it) }
@@ -149,6 +165,7 @@ class DialogInputBuilder {
                 maxLength?.let { maxLength(it) }
                 multilineOptions?.let { multiline(it) }
             }
+
             return builder.build()
         }
     }
@@ -182,12 +199,14 @@ class DialogInputBuilder {
         internal fun build(): DialogInput {
             val label = label
             require(label != null) { "Dialog input label must not be null" }
+
             val builder = DialogInput.bool(key, label)
             with(builder) {
                 initial?.let { initial(it) }
                 onTrue?.let { onTrue(it) }
                 onFalse?.let { onFalse(it) }
             }
+
             return builder.build()
         }
     }
@@ -230,11 +249,12 @@ class DialogInputBuilder {
         internal fun build(): DialogInput {
             val label = label
             require(label != null) { "Dialog input label must not be null" }
+
             val builder = DialogInput.numberRange(
                 key,
                 label,
                 start,
-                end
+                end,
             )
             with(builder) {
                 initial?.let { initial(it) }
@@ -242,6 +262,7 @@ class DialogInputBuilder {
                 labelFormat?.let { labelFormat(it) }
                 step?.let { step(it) }
             }
+
             return builder.build()
         }
     }
@@ -283,19 +304,22 @@ class DialogInputBuilder {
         internal fun build(): DialogInput {
             val label = label
             require(label != null) { "Dialog input label must not be null" }
+
             val builder = DialogInput.singleOption(key, label, entries)
             with(builder) {
                 width?.let { width(it) }
                 labelVisible?.let { labelVisible(it) }
             }
+
             return builder.build()
         }
     }
-
 }
 
-fun DialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> =
-    DialogInputBuilder().apply(block).build()
+fun DialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> {
+    return DialogInputBuilder().apply(block).build()
+}
 
-fun dialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> =
-    DialogInputBuilder().apply(block).build()
+fun dialogInput(block: DialogInputBuilder.() -> Unit): MutableList<DialogInput> {
+    return DialogInputBuilder().apply(block).build()
+}

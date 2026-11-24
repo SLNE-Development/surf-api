@@ -8,12 +8,12 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.TransactionManager
 import javax.sql.DataSource
 
 /**
- * An [R2dbcDatabase] with the JDBC data source and the [SurfMigrationRunner] of its migrations, built from the
- * module's internal factories instead of the Spring auto-configuration so a test controls pool size, session setup and
- * type mapping.
+ * An [R2dbcDatabase] with the JDBC data source and the [SurfMigrationRunner] of its migrations,
+ * built from the module's internal factories instead of the Spring auto-configuration so a test
+ * controls pool size, session setup and type mapping.
  *
- * [close] unregisters the database from Exposed and runs [releaseResources], which disposes whatever pool the test
- * created.
+ * [close] unregisters the database from Exposed and runs [releaseResources], which disposes
+ * whatever pool the test created.
  */
 class TestDatabase(
     val database: R2dbcDatabase,
@@ -24,10 +24,12 @@ class TestDatabase(
     val migrationRunner = SurfMigrationRunner(database, migrationDataSource)
 
     /**
-     * Runs the migrations described by [block] as the set [name], like [SurfMigrationRunner.migrate].
+     * Runs the migrations described by [block] as the set [name], like
+     * [SurfMigrationRunner.migrate].
      */
-    suspend fun migrate(name: String, block: MigrationSpec.() -> Unit): MigrationResult =
-        migrationRunner.migrate(name, block)
+    suspend fun migrate(name: String, block: MigrationSpec.() -> Unit): MigrationResult {
+        return migrationRunner.migrate(name, block)
+    }
 
     override fun close() {
         try {

@@ -24,14 +24,20 @@ class ScalarParsersTest {
     @Test
     fun `a uuid with a group wider than canonical is rejected at its start`() {
         val parser = UUIDArgument("id").toDefinition().rawType
-        listOf(
+        val inputs = listOf(
             "1ffffffff-0-0-0-0",
             "79d40754-7772-4ab4-a7c6-f21df121db4a0",
             "79d40754-77720-4ab4-a7c6-f21df121db4a",
-        ).forEach { input ->
-            val failure = assertThrows(CommandSyntaxException::class.java) { parser.parse(StringReader(input)) }
+        )
+        for (input in inputs) {
+            val failure = assertThrows(CommandSyntaxException::class.java) {
+                parser.parse(
+                    StringReader(input),
+                )
+            }
             assertEquals(0, failure.cursor, input)
         }
+
         assertEquals(
             UUID.fromString("79d40754-7772-4ab4-a7c6-f21df121db4a"),
             parser.parse(StringReader("79D40754-7772-4AB4-A7C6-F21DF121DB4A")),
@@ -56,8 +62,14 @@ class ScalarParsersTest {
     fun `integer range covers both bounds, one bound and a single value`() {
         val parser = IntegerRangeArgument("levels").toDefinition().rawType
         assertEquals(1 to 4, parser.parse(StringReader("1..4")).let { it.min() to it.max() })
-        assertEquals(1 to Int.MAX_VALUE, parser.parse(StringReader("1..")).let { it.min() to it.max() })
-        assertEquals(Int.MIN_VALUE to 4, parser.parse(StringReader("..4")).let { it.min() to it.max() })
+        assertEquals(
+            1 to Int.MAX_VALUE,
+            parser.parse(StringReader("1..")).let { it.min() to it.max() },
+        )
+        assertEquals(
+            Int.MIN_VALUE to 4,
+            parser.parse(StringReader("..4")).let { it.min() to it.max() },
+        )
         assertEquals(3 to 3, parser.parse(StringReader("3")).let { it.min() to it.max() })
     }
 
@@ -104,8 +116,17 @@ class ScalarParsersTest {
     @Test
     fun `time rejects values whose duration overflows at the value's start`() {
         val parser = TimeArgument("delay").toDefinition().rawType
-        listOf("99999999999999999999999999999999999999d", "99999999999999999999", "100000000000000000d").forEach { input ->
-            val failure = assertThrows(CommandSyntaxException::class.java) { parser.parse(StringReader(input)) }
+        val inputs = listOf(
+            "99999999999999999999999999999999999999d",
+            "99999999999999999999",
+            "100000000000000000d",
+        )
+        for (input in inputs) {
+            val failure = assertThrows(CommandSyntaxException::class.java) {
+                parser.parse(
+                    StringReader(input),
+                )
+            }
             assertEquals(0, failure.cursor, input)
         }
     }

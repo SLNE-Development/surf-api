@@ -59,7 +59,8 @@ private object Children : Table("query_children") {
 }
 
 /**
- * Case-insensitive matching, null-skipping combinators and duplicate-key detection against a real database.
+ * Case-insensitive matching, null-skipping combinators and duplicate-key detection against a real
+ * database.
  */
 @Testcontainers(disabledWithoutDocker = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -74,7 +75,8 @@ abstract class QueryConditionsIT {
         testDb = container().toTestDatabase(fresh = true)
         suspendTransaction(testDb.database) {
             SchemaUtils.create(Texts, Parents, Children)
-            TEXTS.forEach { (id, text) ->
+
+            for ((id, text) in TEXTS) {
                 Texts.insert {
                     it[Texts.id] = id
                     it[value] = text
@@ -99,16 +101,28 @@ abstract class QueryConditionsIT {
 
     @Test
     fun containsIgnoringCaseWithEmptyTextMatchesEveryNonNullValue() = runBlocking {
-        val nonNullIds = TEXTS.filter { it.second != null }.map { it.first }.toSet()
+        val nonNullIds = TEXTS
+            .filter { it.second != null }
+            .map { it.first }
+            .toSet()
 
         assertEquals(nonNullIds, idsWhere(Texts.value containsIgnoringCase ""))
     }
 
     @Test
     fun likeIgnoringCaseKeepsWildcardsOfThePattern() = runBlocking {
-        assertEquals(setOf(UNDERSCORE, PLAIN), idsWhere(Texts.value likeIgnoringCase LikePattern("foo%")))
-        assertEquals(setOf(UNDERSCORE, PLAIN), idsWhere(Texts.value likeIgnoringCase LikePattern("FOO_BAR")))
-        assertEquals(setOf(PLAIN_OFF, PLAIN), idsWhere(Texts.value likeIgnoringCase LikePattern("%X%")))
+        assertEquals(
+            setOf(UNDERSCORE, PLAIN),
+            idsWhere(Texts.value likeIgnoringCase LikePattern("foo%")),
+        )
+        assertEquals(
+            setOf(UNDERSCORE, PLAIN),
+            idsWhere(Texts.value likeIgnoringCase LikePattern("FOO_BAR")),
+        )
+        assertEquals(
+            setOf(PLAIN_OFF, PLAIN),
+            idsWhere(Texts.value likeIgnoringCase LikePattern("%X%")),
+        )
     }
 
     @Test
@@ -118,7 +132,10 @@ abstract class QueryConditionsIT {
 
         assertEquals(setOf(SPECIAL, PERCENT, PLAIN_OFF), idsWhere(allOf(null, off, null)))
         assertEquals(setOf(PLAIN_OFF), idsWhere(allOf(off, Texts.id eq PLAIN_OFF)))
-        assertEquals(setOf(SPECIAL, PERCENT, PLAIN_OFF, UNDERSCORE, PLAIN), idsWhere(anyOf(off, null, foo)))
+        assertEquals(
+            setOf(SPECIAL, PERCENT, PLAIN_OFF, UNDERSCORE, PLAIN),
+            idsWhere(anyOf(off, null, foo)),
+        )
         assertEquals(TEXTS.map { it.first }.toSet(), idsWhere(allOf(null, null)))
         assertEquals(emptySet(), idsWhere(anyOf()))
         assertEquals(setOf(PLAIN_OFF), idsWhere(allOf(anyOf(off, foo), Texts.id eq PLAIN_OFF)))
@@ -130,7 +147,10 @@ abstract class QueryConditionsIT {
             val firstSource = intLiteral(FIRST_SOURCE).alias(SOURCE_KEY)
             val firstId = Texts.id.alias(ID_KEY)
             val low = Texts.select(firstSource, firstId).where { Texts.id lessEq PLAIN_OFF }
-            val high = Texts.select(intLiteral(SECOND_SOURCE).alias(SOURCE_KEY), Texts.id.alias(ID_KEY))
+            val high = Texts.select(
+                intLiteral(SECOND_SOURCE).alias(SOURCE_KEY),
+                Texts.id.alias(ID_KEY),
+            )
                 .where { Texts.id greater PLAIN_OFF }
 
             suspend fun page(queries: List<Query>) = unionAllOf(queries)
@@ -140,8 +160,14 @@ abstract class QueryConditionsIT {
                 .map { it[firstSource] to it[firstId] }
                 .toList()
 
-            assertEquals(listOf(SECOND_SOURCE to PLAIN, SECOND_SOURCE to UNDERSCORE), page(listOf(low, high)))
-            assertEquals(listOf(FIRST_SOURCE to PERCENT, FIRST_SOURCE to SPECIAL), page(listOf(low)))
+            assertEquals(
+                listOf(SECOND_SOURCE to PLAIN, SECOND_SOURCE to UNDERSCORE),
+                page(listOf(low, high)),
+            )
+            assertEquals(
+                listOf(FIRST_SOURCE to PERCENT, FIRST_SOURCE to SPECIAL),
+                page(listOf(low)),
+            )
             assertEquals(TEXTS.size.toLong(), unionAllOf(listOf(low, high)).count())
             assertEquals(TEXTS.size + 3L, unionAllOf(listOf(low, high, low)).count())
         }
@@ -153,10 +179,22 @@ abstract class QueryConditionsIT {
         suspendTransaction(testDb.database) { insertChild(id = 1, code = "first", parent = null) }
 
         val duplicate = assertFailsWith<ExposedR2dbcException> {
-            suspendTransaction(testDb.database) { insertChild(id = 2, code = "first", parent = null) }
+            suspendTransaction(testDb.database) {
+                insertChild(
+                    id = 2,
+                    code = "first",
+                    parent = null,
+                )
+            }
         }
         val missingParent = assertFailsWith<ExposedR2dbcException> {
-            suspendTransaction(testDb.database) { insertChild(id = 3, code = "third", parent = 404) }
+            suspendTransaction(testDb.database) {
+                insertChild(
+                    id = 3,
+                    code = "third",
+                    parent = 404,
+                )
+            }
         }
 
         assertTrue(duplicate.isDuplicateKeyViolation())
@@ -180,7 +218,10 @@ abstract class QueryConditionsIT {
         if (container() is MariaDBContainer) {
             assertEquals(0, insertIgnore())
         } else {
-            assertTrue(assertFailsWith<ExposedR2dbcException> { insertIgnore() }.isDataIntegrityViolation())
+            assertTrue(
+                assertFailsWith<ExposedR2dbcException> { insertIgnore() }
+                    .isDataIntegrityViolation(),
+            )
         }
     }
 
@@ -192,8 +233,13 @@ abstract class QueryConditionsIT {
         }
     }
 
-    private suspend fun idsWhere(condition: Op<Boolean>): Set<Int> = suspendTransaction(testDb.database) {
-        Texts.select(Texts.id).where(condition).map { it[Texts.id] }.toSet()
+    private suspend fun idsWhere(condition: Op<Boolean>): Set<Int> {
+        return suspendTransaction(testDb.database) {
+            Texts.select(Texts.id)
+                .where(condition)
+                .map { it[Texts.id] }
+                .toSet()
+        }
     }
 
     private companion object {

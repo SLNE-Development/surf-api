@@ -1,4 +1,3 @@
-
 package dev.slne.surf.nats.gradle.validate
 
 import com.squareup.wire.Syntax
@@ -45,7 +44,7 @@ internal class FileRules(private val problems: Problems) {
         val majorVersion = ProtocolNaming.majorVersionOrNull(protoPackage)
 
         val declaresContracts = file.services.isNotEmpty() ||
-                file.types.any(::declaresEvent)
+            file.types.any(::declaresEvent)
 
         if (declaresContracts) {
             ProtocolNaming.contractPackageProblem(protoPackage)?.let {
@@ -81,7 +80,7 @@ internal class FileRules(private val problems: Problems) {
             problems.error(
                 location,
                 "proto package '$protoPackage' resolves to the Kotlin package '$kotlinPackage', which proto package " +
-                        "'${owner.first}' (${owner.second}) already uses; give each proto package its own java_package",
+                    "'${owner.first}' (${owner.second}) already uses; give each proto package its own java_package",
             )
         }
     }
@@ -127,22 +126,25 @@ internal class FileRules(private val problems: Problems) {
 
     private fun declaresEvent(type: Type): Boolean {
         return (type is MessageType && SurfProtoOptions.isEvent(type.options)) ||
-                type.nestedTypes.any(::declaresEvent)
+            type.nestedTypes.any(::declaresEvent)
     }
 
     private fun usesSurfOptions(file: ProtoFile): Boolean {
         return file.types.any(::usesSurfOptions) ||
-                file.services.any { service ->
-                    SurfProtoOptions.isSet(service.options, SurfProtoOptions.SERVICE) ||
-                            service.rpcs.any { rpc ->
-                                SurfProtoOptions.isSet(rpc.options, SurfProtoOptions.METHOD)
-                            }
-                }
+            file.services.any { service ->
+                SurfProtoOptions.isSet(service.options, SurfProtoOptions.SERVICE) ||
+                    service.rpcs.any { rpc ->
+                        SurfProtoOptions.isSet(rpc.options, SurfProtoOptions.METHOD)
+                    }
+            }
     }
 
     private fun usesSurfOptions(type: Type): Boolean {
-        val usesOwnOptions =
-            type is MessageType && SurfProtoOptions.isSet(type.options, SurfProtoOptions.EVENT)
+        val usesOwnOptions = type is MessageType && SurfProtoOptions.isSet(
+            type.options,
+            SurfProtoOptions.EVENT,
+        )
+
         return usesOwnOptions || type.nestedTypes.any(::usesSurfOptions)
     }
 }

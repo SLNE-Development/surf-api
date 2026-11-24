@@ -28,11 +28,12 @@ import kotlin.time.Duration
 import kotlin.time.toJavaDuration
 
 /**
- * Moves message bodies that exceed the max payload of the connection to a JetStream object store and back.
+ * Moves message bodies that exceed the max payload of the connection to a JetStream object store
+ * and back.
  *
- * Each [PayloadBucket] is created on first use with its TTL and file storage. An existing bucket with a different
- * configuration is used as it is, with a warning. Object store handles are cached per connection instance, so a new
- * connection checks the bucket again. Thread-safe.
+ * Each [PayloadBucket] is created on first use with its TTL and file storage. An existing bucket
+ * with a different configuration is used as it is, with a warning. Object store handles are cached
+ * per connection instance, so a new connection checks the bucket again. Thread-safe.
  */
 @InternalNatsApi
 internal object PayloadStore {
@@ -44,16 +45,17 @@ internal object PayloadStore {
     private val buckets = ConcurrentHashMap<PayloadBucket, Bucket>()
 
     /**
-     * Offloads [body] to [bucket] when the message would exceed the max payload of the connection, and returns the
-     * body to send: [body] itself, or an empty body when it was offloaded.
+     * Offloads [body] to [bucket] when the message would exceed the max payload of the connection,
+     * and returns the body to send: [body] itself, or an empty body when it was offloaded.
      *
-     * Adds `Surf-Payload-Ref` to [headers] when offloading. [extraHeaderBytes] accounts for headers that are added
-     * after this call, such as the JetStream publish options. With [stampDeadline], `Surf-Deadline` (now +
-     * [lifetime]) is added after a possible upload and counted in the size check.
+     * Adds `Surf-Payload-Ref` to [headers] when offloading. [extraHeaderBytes] accounts for headers
+     * that are added after this call, such as the JetStream publish options. With [stampDeadline],
+     * `Surf-Deadline` (now + [lifetime]) is added after a possible upload and counted in the size
+     * check.
      *
-     * Throws [IllegalArgumentException] when the body must be offloaded and [lifetime] exceeds the TTL of [bucket],
-     * and [IllegalStateException] when it must be offloaded and JetStream is disabled on the server. A failing
-     * upload propagates.
+     * Throws [IllegalArgumentException] when the body must be offloaded and [lifetime] exceeds the
+     * TTL of [bucket], and [IllegalStateException] when it must be offloaded and JetStream is
+     * disabled on the server. A failing upload propagates.
      */
     suspend fun offload(
         headers: Headers,
@@ -80,14 +82,17 @@ internal object PayloadStore {
                 }
             },
         )
+
         return if (offloaded) NatsHeaders.EMPTY_BODY else body
     }
 
     /**
-     * Returns the body of [message], loaded from [bucket] when the message carries `Surf-Payload-Ref`.
+     * Returns the body of [message], loaded from [bucket] when the message carries
+     * `Surf-Payload-Ref`.
      *
-     * With [delete], the object is deleted after reading, and a failed delete is only logged. A failed read
-     * propagates, such as the [IllegalArgumentException] of jnats for an object that no longer exists.
+     * With [delete], the object is deleted after reading, and a failed delete is only logged. A
+     * failed read propagates, such as the [IllegalArgumentException] of jnats for an object that no
+     * longer exists.
      */
     suspend fun resolve(
         message: Message,
@@ -95,14 +100,17 @@ internal object PayloadStore {
         delete: Boolean,
     ): ByteArray {
         val name = payloadRef(message) ?: return message.data
+
         val store = store(NatsConnectionManager.connection(), bucket)
 
         return withContext(Dispatchers.IO) {
             ByteArrayOutputStream().use { out ->
                 store.get(name, out)
+
                 if (delete) {
                     deleteQuietly(store, name)
                 }
+
                 out.toByteArray()
             }
         }
@@ -111,11 +119,12 @@ internal object PayloadStore {
     /**
      * Deletes the offloaded payload of [message] from [bucket], if any.
      *
-     * Never throws except for the cancellation of the calling coroutine. Other failures are logged, and the object
-     * then expires with the TTL of the bucket.
+     * Never throws except for the cancellation of the calling coroutine. Other failures are logged,
+     * and the object then expires with the TTL of the bucket.
      */
     suspend fun delete(message: Message, bucket: PayloadBucket) {
         val name = payloadRef(message) ?: return
+
         try {
             val store = store(NatsConnectionManager.connection(), bucket)
             withContext(Dispatchers.IO) {
@@ -174,6 +183,7 @@ internal object PayloadStore {
             .build()
 
         val management = connection.objectStoreManagement()
+
         try {
             management.create(config)
         } catch (e: JetStreamApiException) {
@@ -188,7 +198,7 @@ internal object PayloadStore {
                 .log(
                     "Using existing bucket %s with a different configuration: %s",
                     bucket.bucketName,
-                    e.message
+                    e.message,
                 )
         }
     }

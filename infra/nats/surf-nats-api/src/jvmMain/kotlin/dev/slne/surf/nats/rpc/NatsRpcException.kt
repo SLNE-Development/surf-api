@@ -9,8 +9,8 @@ import kotlin.time.Duration
 /**
  * Represents a failure of a remote service call.
  *
- * Calls through a service proxy throw the subtypes for the outcomes described in [Recipients]. The base type itself
- * is thrown when the server rejects the publish of a persistent call.
+ * Calls through a service proxy throw the subtypes for the outcomes described in [Recipients]. The
+ * base type itself is thrown when the server rejects the publish of a persistent call.
  */
 public open class NatsRpcException @InternalNatsApi constructor(
     message: String,
@@ -25,11 +25,13 @@ public open class NatsRpcException @InternalNatsApi constructor(
 /**
  * Reports a failure while the remote instance handles a service call or prepares its response.
  *
- * Carries the remote exception's type name and message, without its stack trace or cause. The original exception
- * type is not recreated locally, so return expected domain outcomes in the response message instead of throwing them.
+ * Carries the remote exception's type name and message, without its stack trace or cause. The
+ * original exception type is not recreated locally, so return expected domain outcomes in the
+ * response message instead of throwing them.
  *
  * @property remoteType the remote exception's binary class name.
- * @property remoteMessage the remote message, truncated to at most 4096 characters, or empty if absent.
+ * @property remoteMessage the remote message, truncated to at most 4096 characters, or empty if
+ * absent.
  */
 public class NatsRemoteException @InternalNatsApi constructor(
     public val remoteType: String,
@@ -58,10 +60,10 @@ public class NatsNoRespondersException @InternalNatsApi constructor(
 /**
  * Indicates that no response or storage confirmation arrived within the call timeout.
  *
- * A fire call throws it when the server has not confirmed the storage in time. Calls that wait for a response,
- * including [Recipients.ANY_INSTANCE] methods returning [Unit], throw it when the response does not arrive in time,
- * also when the handler exceeded the time left until the caller's deadline.
- * Not thrown by [Recipients.ALL_INSTANCES] calls.
+ * A fire call throws it when the server has not confirmed the storage in time. Calls that wait for
+ * a response, including [Recipients.ANY_INSTANCE] methods returning [Unit], throw it when the
+ * response does not arrive in time, also when the handler exceeded the time left until the caller's
+ * deadline. Not thrown by [Recipients.ALL_INSTANCES] calls.
  *
  * @property subject the subject addressed by the call.
  * @property timeout the timeout used for the call.

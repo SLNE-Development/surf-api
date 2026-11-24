@@ -8,7 +8,9 @@ import net.minecraft.network.protocol.common.ClientboundDisconnectPacket
 
 @NmsUseWithCaution
 class V1_21_11ClientboundDisconnectPacketImpl(nmsPacket: ClientboundDisconnectPacket) :
-    V1_21_11NmsClientboundPacketImpl<ClientboundDisconnectPacket, ClientCommonPacketListener>(nmsPacket),
+    V1_21_11NmsClientboundPacketImpl<ClientboundDisconnectPacket, ClientCommonPacketListener>(
+        nmsPacket,
+    ),
     DisconnectPacket {
     override val reason get() = nmsPacket.reason.toBukkit()
 }

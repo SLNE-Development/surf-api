@@ -12,16 +12,21 @@ import org.gradle.kotlin.dsl.withType
  * multiple Surf Minestom plugins into one executable JAR.
  */
 internal class MinestomRelocationsPlugin : Plugin<Project> {
-    override fun apply(target: Project) = with(target) {
-        pluginManager.withPlugin("com.gradleup.shadow") {
-            tasks.withType<ShadowJar>().configureEach {
-                val prefix = Constants.RELOCATION_PREFIX
+    override fun apply(target: Project) {
+        with(target) {
+            pluginManager.withPlugin("com.gradleup.shadow") {
+                tasks.withType<ShadowJar>().configureEach {
+                    val prefix = Constants.RELOCATION_PREFIX
 
-                relocate("org.spongepowered.configurate", "$prefix.configurate")
-                relocate("net.kyori.adventure.nbt", "$prefix.kyori.nbt") {
-                    exclude("net.kyori.adventure.nbt.api.**")
+                    relocate("org.spongepowered.configurate", "$prefix.configurate")
+                    relocate("net.kyori.adventure.nbt", "$prefix.kyori.nbt") {
+                        exclude("net.kyori.adventure.nbt.api.**")
+                    }
+                    relocate(
+                        "me.devnatan.inventoryframework",
+                        "$prefix.devnatan.inventoryframework",
+                    )
                 }
-                relocate("me.devnatan.inventoryframework", "$prefix.devnatan.inventoryframework")
             }
         }
     }

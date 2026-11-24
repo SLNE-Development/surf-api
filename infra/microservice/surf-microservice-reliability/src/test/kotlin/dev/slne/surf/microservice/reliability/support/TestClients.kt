@@ -1,10 +1,11 @@
 package dev.slne.surf.microservice.reliability.support
 
 import dev.slne.surf.nats.NatsClient
-import java.util.UUID
+import java.util.*
 
 /**
- * Creates NATS clients with unique names, so tests never collide with clients a previous test left open.
+ * Creates NATS clients with unique names, so tests never collide with clients a previous test left
+ * open.
  */
 object TestClients {
 

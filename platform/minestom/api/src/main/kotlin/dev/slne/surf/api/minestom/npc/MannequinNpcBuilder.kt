@@ -79,7 +79,6 @@ class MannequinNpcBuilder(private val name: String) {
             hologramOffset = displayNameOffset ?: Vec(0.0, HOLOGRAM_HEIGHT * scale, 0.0),
             description = description,
 
-            // Equipments
             mainHandItem = equipments[EquipmentSlot.MAIN_HAND] ?: ItemStack.AIR,
             offHandItem = equipments[EquipmentSlot.OFF_HAND] ?: ItemStack.AIR,
             helmet = equipments[EquipmentSlot.HELMET] ?: ItemStack.AIR,
@@ -90,7 +89,7 @@ class MannequinNpcBuilder(private val name: String) {
             saddleEquipment = equipments[EquipmentSlot.SADDLE] ?: ItemStack.AIR,
         )
 
-        interactHandlers.forEach { handler ->
+        for (handler in interactHandlers) {
             npc.onInteract { interaction -> handler(interaction) }
         }
 

@@ -15,6 +15,7 @@ internal object TextColorSerializer : ScalarSerializer.Annotated<TextColor>(Text
         TextColor.fromHexString(input)?.let { return it }
 
         val rgb = input.split(',', ';').map { it.trim() }
+
         if (rgb.size == 3) {
             val red = rgb[0].toIntOrNull()
             val green = rgb[1].toIntOrNull()
@@ -28,7 +29,11 @@ internal object TextColorSerializer : ScalarSerializer.Annotated<TextColor>(Text
         throw SerializationException(TextColor::class.java, "$obj($type) is not a valid text color")
     }
 
-    override fun serialize(type: AnnotatedType, item: TextColor, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: TextColor,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return NamedTextColor.namedColor(item.value())?.toString() ?: item.asHexString()
     }
 }

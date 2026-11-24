@@ -6,15 +6,17 @@ import dev.slne.surf.nats.protocol.ProtocolFieldRules
 /**
  * The type mappings the plugin applies without `mapType`.
  *
- * The serializers live in `surf-api-nats-types-common` and `surf-api-nats-types-paper`. The `surf.types` protos are
- * bundled with the plugin. Explicit `mapType` calls override these mappings.
+ * The serializers live in `surf-api-nats-types-common` and `surf-api-nats-types-paper`. The
+ * `surf.types` protos are bundled with the plugin. Explicit `mapType` calls override these
+ * mappings.
  */
 internal object DefaultTypeMappings {
     private const val TYPES = "dev.slne.surf.nats.types"
     private const val PAPER_TYPES = "dev.slne.surf.nats.paper.types"
 
     /**
-     * Mappings for every project: well-known types, UUID, Adventure, `java.time`, `java.math` and `java.net`.
+     * Mappings for every project: well-known types, UUID, Adventure, `java.time`, `java.math` and
+     * `java.net`.
      */
     val common: List<TypeMapping> = listOf(
         TypeMapping(

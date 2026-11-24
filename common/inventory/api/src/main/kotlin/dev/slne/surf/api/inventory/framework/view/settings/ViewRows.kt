@@ -54,7 +54,9 @@ enum class ViewRows(val glyph: Char) {
          * @return the matching [ViewRows]
          * @throws IllegalStateException if [rows] is not in the range 1..6
          */
-        fun byRows(@Rows rows: Int): ViewRows =
-            byRowsOrNull(rows) ?: error("Invalid layout value: $rows")
+        fun byRows(@Rows rows: Int): ViewRows {
+            return byRowsOrNull(rows)
+                ?: error("Invalid layout value: $rows")
+        }
     }
 }

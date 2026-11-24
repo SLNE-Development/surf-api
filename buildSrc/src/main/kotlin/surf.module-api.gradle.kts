@@ -36,7 +36,7 @@ val checkApiBoundary = tasks.register<CheckApiBoundary>("checkApiBoundary") {
     strict.set(
         providers.gradleProperty("surf.apiBoundary.strict")
             .map { it.toBooleanStrict() }
-            .orElse(true)
+            .orElse(true),
     )
     violations.set(emptySet<String>())
 }

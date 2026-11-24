@@ -1,7 +1,6 @@
 package dev.slne.surf.microservice.runtime.boot
 
 import dev.slne.probe.microservice.ProbeApplication
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.PluginDescriptor
 import dev.slne.surf.api.standalone.SurfApiStandaloneBootstrap
@@ -16,10 +15,9 @@ import java.nio.file.Files
 import kotlin.test.*
 
 /**
- * Starts the microservice application in this JVM with an initializer that fails, which Spring Boot reports without
- * ever refreshing the context.
+ * Starts the microservice application in this JVM with an initializer that fails, which Spring Boot
+ * reports without ever refreshing the context.
  */
-@OptIn(InternalSurfApi::class)
 class MicroserviceContextInitializerTest {
 
     private val dataDirectory = Files.createTempDirectory("microservice-initializer")
@@ -33,11 +31,13 @@ class MicroserviceContextInitializerTest {
     @AfterTest
     fun cleanUp() {
         runBlocking { SurfApiStandaloneBootstrap.shutdown() }
+
         if (loggingSystem == null) {
             System.clearProperty(LoggingSystem.SYSTEM_PROPERTY)
         } else {
             System.setProperty(LoggingSystem.SYSTEM_PROPERTY, loggingSystem)
         }
+
         dataDirectory.toFile().deleteRecursively()
     }
 
@@ -59,11 +59,18 @@ class MicroserviceContextInitializerTest {
         val failure = assertFailsWith<IllegalStateException> { runWithFailingInitializer() }
 
         assertEquals("surf-api is already bootstrapped", failure.message)
-        assertSame(owner, SurfContexts.rootOrNull, "the failed run must not release what it did not adopt")
+        assertSame(
+            owner,
+            SurfContexts.rootOrNull,
+            "the failed run must not release what it did not adopt",
+        )
     }
 
     private fun runWithFailingInitializer() {
-        val application = microserviceApplication(ProbeApplication::class.java, MicroserviceShutdown())
+        val application = microserviceApplication(
+            ProbeApplication::class.java,
+            MicroserviceShutdown(),
+        )
         application.addInitializers(
             ApplicationContextInitializer<ConfigurableApplicationContext> {
                 throw IllegalStateException(FAILING_INITIALIZER_MESSAGE)

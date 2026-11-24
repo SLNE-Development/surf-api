@@ -19,16 +19,18 @@ import java.util.stream.Stream
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Embeds spark for its commands, such as `spark health`, and starts the sampling profiler with the service only if
- * [PROFILER_ENVIRONMENT_VARIABLE] is `true`. `spark profiler start` starts it on demand. A profiler that fails to
- * start is logged and does not fail the start. A value of the variable other than `true` or `false` fails the start
- * before spark is enabled.
+ * Embeds spark for its commands, such as `spark health`, and starts the sampling profiler with the
+ * service only if [PROFILER_ENVIRONMENT_VARIABLE] is `true`. `spark profiler start` starts it on
+ * demand. A profiler that fails to start is logged and does not fail the start. A value of the
+ * variable other than `true` or `false` fails the start before spark is enabled.
  *
- * The profiler is off by default because its call tree stays on the heap and keeps idle services large.
+ * The profiler is off by default because its call tree stays on the heap and keeps idle services
+ * large.
  *
- * spark keeps its files in `<dataPath>/spark` of the microservice. Commands
- * are accepted only while spark runs. spark's static log output goes through this plugin's logger. The
- * [CancellationException]s that spark's executors report while [stop] cancels the profiler are logged at debug level.
+ * spark keeps its files in `<dataPath>/spark` of the microservice. Commands are accepted only while
+ * spark runs. spark's static log output goes through this plugin's logger. The
+ * [CancellationException]s that spark's executors report while [stop] cancels the profiler are
+ * logged at debug level.
  */
 internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, RuntimeComponent {
     override val name = "spark"
@@ -37,11 +39,11 @@ internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, Runt
     private val senders = ConcurrentHashMap.newKeySet<CommandSender>()
     private val scope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO + CoroutineName("spark") +
-                CoroutineExceptionHandler { context, exception ->
-                    log.atSevere()
-                        .withCause(exception)
-                        .log("Unhandled exception in spark coroutine %s", context[CoroutineName])
-                },
+            CoroutineExceptionHandler { context, exception ->
+                log.atSevere()
+                    .withCause(exception)
+                    .log("Unhandled exception in spark coroutine %s", context[CoroutineName])
+            },
     )
 
     @Volatile
@@ -58,7 +60,9 @@ internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, Runt
 
         if (!SparkStaticLogging.redirectTo(this)) {
             log.atWarning()
-                .log("Could not route spark's static log output; it goes to the console unformatted")
+                .log(
+                    "Could not route spark's static log output; it goes to the console unformatted",
+                )
         }
 
         val platform = SparkPlatform(this)
@@ -75,6 +79,7 @@ internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, Runt
             executeCommand(MicroserviceSparkCommandSender(LoggingCommandOutput), PROFILER_START)
         } catch (exception: Exception) {
             if (exception is CancellationException) throw exception
+
             log.atWarning()
                 .withCause(exception)
                 .log("Could not start the spark profiler")
@@ -83,6 +88,7 @@ internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, Runt
 
     override suspend fun stop() {
         stopping = true
+
         try {
             platform?.disable()
             platform = null
@@ -100,6 +106,7 @@ internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, Runt
         val platform = checkNotNull(platform) { "spark is not running" }
 
         senders.add(sender)
+
         try {
             platform.executeCommand(sender, args.toTypedArray()).await()
         } finally {
@@ -137,8 +144,8 @@ internal class MicroserviceSpark(private val dataPath: Path) : SparkPlugin, Runt
     }
 
     /**
-     * spark's executors report a periodic task that was cancelled while running, which happens when [stop] cancels
-     * the profiler, as an uncaught exception.
+     * spark's executors report a periodic task that was cancelled while running, which happens when
+     * [stop] cancels the profiler, as an uncaught exception.
      */
     private fun isShutdownCancellation(throwable: Throwable): Boolean {
         return stopping && throwable is CancellationException

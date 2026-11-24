@@ -10,10 +10,18 @@ import kotlin.time.TimeSource
 /**
  * Polls [condition] every 50 ms and fails with [message] if it does not hold within [timeout].
  */
-suspend fun eventually(message: String, timeout: Duration = 20.seconds, condition: suspend () -> Boolean) {
+suspend fun eventually(
+    message: String,
+    timeout: Duration = 20.seconds,
+    condition: suspend () -> Boolean,
+) {
     val start = TimeSource.Monotonic.markNow()
+
     while (!condition()) {
-        if (start.elapsedNow() > timeout) fail("$message (waited $timeout)")
+        if (start.elapsedNow() > timeout) {
+            fail("$message (waited $timeout)")
+        }
+
         delay(50.milliseconds)
     }
 }

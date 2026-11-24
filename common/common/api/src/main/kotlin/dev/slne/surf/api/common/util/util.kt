@@ -22,10 +22,12 @@ import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 import kotlin.streams.asSequence
 
-private fun createRandom(): SecureRandom = try {
-    SecureRandom.getInstance("DRBG")
-} catch (_: NoSuchAlgorithmException) {
-    SecureRandom()
+private fun createRandom(): SecureRandom {
+    return try {
+        SecureRandom.getInstance("DRBG")
+    } catch (_: NoSuchAlgorithmException) {
+        SecureRandom()
+    }
 }
 
 private val platformRandom = ThreadLocal.withInitial(::createRandom)
@@ -86,15 +88,16 @@ inline fun <API : LoggingApi<API>> LoggingApi<API>.logIf(
 /**
  * Stack walker instance configured to retain class references for caller inspection.
  */
-private val STACK_WALK_INSTANCE: StackWalker =
-    StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
+private val STACK_WALK_INSTANCE: StackWalker = StackWalker.getInstance(
+    StackWalker.Option.RETAIN_CLASS_REFERENCE,
+)
 
 /**
  * Returns the class of the immediate caller.
  *
  * @return The caller's class, or null if unavailable.
  */
-fun getCallerClass() = getCallerClass(0)
+fun getCallerClass(): Class<*>? = getCallerClass(0)
 
 /**
  * Returns the class of the caller at the specified stack depth.
@@ -102,8 +105,14 @@ fun getCallerClass() = getCallerClass(0)
  * @param depth Number of additional stack frames to skip (0 for immediate caller).
  * @return The caller's class at the specified depth, or null if unavailable.
  */
-fun getCallerClass(depth: Int) =
-    STACK_WALK_INSTANCE.walk { it.asSequence().drop(3 + depth).firstOrNull()?.declaringClass }
+fun getCallerClass(depth: Int): Class<*>? {
+    return STACK_WALK_INSTANCE.walk { frames ->
+        frames.asSequence()
+            .drop(3 + depth)
+            .firstOrNull()
+            ?.declaringClass
+    }
+}
 
 /**
  * Verifies that the immediate caller is the expected class.
@@ -138,6 +147,7 @@ val unsafe = try {
  */
 fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
     val iterator = iterator()
+
     return object : Enumeration<T> {
         override fun hasMoreElements(): Boolean = iterator.hasNext()
         override fun nextElement(): T = iterator.next()
@@ -150,8 +160,9 @@ fun <T> Sequence<T>.toEnumeration(): Enumeration<T> {
  * @param default The value to return if this is not a collection.
  * @return The collection size, or the default value.
  */
-fun <E> Iterable<E>.collectionSizeOrDefault(default: Int) =
-    if (this is Collection<*>) this.size else default
+fun <E> Iterable<E>.collectionSizeOrDefault(default: Int): Int {
+    return if (this is Collection<*>) this.size else default
+}
 
 /**
  * Delegation operator for [WeakReference] allowing property-style access.
@@ -194,7 +205,9 @@ suspend inline fun <E, R> Iterable<E>.mapAsync(crossinline transform: suspend (E
  *
  * @return A composed [BiConsumer] that performs the [prepend] operation followed by this operation.
  */
-fun <T, U> BiConsumer<T, U>?.prepend(prepend: BiConsumer<in T, in U>): BiConsumer<T, U> = { t, u ->
-    prepend.accept(t, u)
-    this?.accept(t, u)
+fun <T, U> BiConsumer<T, U>?.prepend(prepend: BiConsumer<in T, in U>): BiConsumer<T, U> {
+    return { t, u ->
+        prepend.accept(t, u)
+        this?.accept(t, u)
+    }
 }

@@ -33,11 +33,11 @@ open class MiniMessageArgument(
                 CommandExceptionBuilder(
                     e.detailMessage(),
                     e.originalText(),
-                    e.endIndex()
-                ).build()
+                    e.endIndex(),
+                ).build(),
             )
         }
-    }
+    },
 )
 
 inline fun CommandAPICommand.miniMessageArgument(
@@ -45,8 +45,9 @@ inline fun CommandAPICommand.miniMessageArgument(
     optional: Boolean = false,
     greedy: Boolean = false,
     block: Argument<Component>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(MiniMessageArgument(nodeName, greedy).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(MiniMessageArgument(nodeName, greedy).setOptional(optional).apply(block))
+}
 
 inline fun CommandTree.miniMessageArgument(
     nodeName: String,

@@ -43,6 +43,7 @@ class SignedChatFeatureTest {
         block: (SurfMinestomServer) -> Unit,
     ) {
         val api = surfMinestomServer { withSignedChat(settings) }
+
         try {
             block(api)
         } finally {
@@ -78,21 +79,32 @@ class SignedChatFeatureTest {
                 current.locale(), current.viewDistance(), type, current.chatColors(),
                 current.displayedSkinParts(), current.mainHand(), current.enableTextFiltering(),
                 current.allowServerListings(), current.particleSetting(),
-            )
+            ),
         )
     }
 
-    private fun signedCommand(command: String, vararg names: String) = ClientSignedCommandChatPacket(
+    private fun signedCommand(
+        command: String,
+        vararg names: String,
+    ) = ClientSignedCommandChatPacket(
         command,
         System.currentTimeMillis(),
         0L,
-        ArgumentSignatures(names.map { ArgumentSignatures.Entry(it, MessageSignature(ByteArray(256))) }),
+        ArgumentSignatures(
+            names.map {
+                ArgumentSignatures.Entry(
+                    it,
+                    MessageSignature(ByteArray(256)),
+                )
+            },
+        ),
         LastSeenMessages.Update(0, BitSet()),
         0,
     )
 
-    private fun Collector<SystemChatPacket>.translationKeys() =
-        collect().map { (it.message() as? TranslatableComponent)?.key() }
+    private fun Collector<SystemChatPacket>.translationKeys(): List<String?> {
+        return collect().map { (it.message() as? TranslatableComponent)?.key() }
+    }
 
     @Test
     fun `a player gets a chat session holder when it spawns`(env: Env) = withFeature {
@@ -157,93 +169,103 @@ class SignedChatFeatureTest {
     }
 
     @Test
-    fun `a message of a sender that stays is sent to players without a chat packet before`(env: Env) =
-        withFeature {
-            val instance = env.createFlatInstance()
-            val sender = env.createPlayer(instance, Pos.ZERO)
-            val receiverConnection = env.createConnection()
-            receiverConnection.connect(instance, Pos.ZERO)
-            val packets = receiverConnection.trackIncoming(PlayerChatMessagePacket::class.java)
+    fun `a message of a sender that stays is sent to players without a chat packet before`(env: Env) = withFeature {
+        val instance = env.createFlatInstance()
+        val sender = env.createPlayer(instance, Pos.ZERO)
+        val receiverConnection = env.createConnection()
+        receiverConnection.connect(instance, Pos.ZERO)
+        val packets = receiverConnection.trackIncoming(PlayerChatMessagePacket::class.java)
 
-            runBlocking {
-                ChatProcessor(sender, PlayerChatMessage.unsigned(sender.uuid, "hi")).process()
-            }
-
-            packets.assertCount(1)
+        runBlocking {
+            ChatProcessor(sender, PlayerChatMessage.unsigned(sender.uuid, "hi")).process()
         }
+
+        packets.assertCount(1)
+    }
 
     @Test
-    fun `an unsigned command with signable arguments is rejected when profiles are enforced`(env: Env) =
-        withFeature({ enforceSecureProfile = true }) {
-            CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
-            CommandAPICommand("plain").anyExecutor { _, _ -> }.register()
+    fun `an unsigned command with signable arguments is rejected when profiles are enforced`(env: Env) = withFeature(
+        { enforceSecureProfile = true },
+    ) {
+        CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
+        CommandAPICommand("plain").anyExecutor { _, _ -> }.register()
 
-            val connection = env.createConnection()
-            val player = connection.connect(env.createFlatInstance(), Pos.ZERO)
-            val messages = connection.trackIncoming(SystemChatPacket::class.java)
-            val handler = player.holder()!!.handler
-            var ran = false
+        val connection = env.createConnection()
+        val player = connection.connect(env.createFlatInstance(), Pos.ZERO)
+        val messages = connection.trackIncoming(SystemChatPacket::class.java)
+        val handler = player.holder()!!.handler
+        var ran = false
 
-            handler.handleUnsignedCommandChat("echoes hello") { ran = true }
-            assertFalse(ran)
-            assertEquals(listOf("chat.disabled.invalid_command_signature"), messages.translationKeys())
+        handler.handleUnsignedCommandChat("echoes hello") { ran = true }
+        assertFalse(ran)
+        assertEquals(listOf("chat.disabled.invalid_command_signature"), messages.translationKeys())
 
-            handler.handleUnsignedCommandChat("plain") { ran = true }
-            assertTrue(ran)
-        }
-
-    @Test
-    fun `a signed command without signatures runs unsigned unless profiles are enforced`(env: Env) =
-        withFeature {
-            CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
-            val player = env.createPlayer(env.createFlatInstance(), Pos.ZERO)
-            var ran = false
-
-            asStartedServer(env) {
-                player.holder()!!.handler.handleSignedCommandChat(signedCommand("echoes hello")) { ran = true }
-            }
-
-            assertTrue(ran)
-        }
+        handler.handleUnsignedCommandChat("plain") { ran = true }
+        assertTrue(ran)
+    }
 
     @Test
-    fun `a signed command without signatures reports the missing profile key when enforced`(env: Env) =
-        withFeature({ enforceSecureProfile = true }) {
-            CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
-            val connection = env.createConnection()
-            val player = connection.connect(env.createFlatInstance(), Pos.ZERO)
-            val messages = connection.trackIncoming(SystemChatPacket::class.java)
-            var ran = false
+    fun `a signed command without signatures runs unsigned unless profiles are enforced`(env: Env) = withFeature {
+        CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
+        val player = env.createPlayer(env.createFlatInstance(), Pos.ZERO)
+        var ran = false
 
-            asStartedServer(env) {
-                player.holder()!!.handler.handleSignedCommandChat(signedCommand("echoes hello")) { ran = true }
+        asStartedServer(env) {
+            player.holder()!!.handler.handleSignedCommandChat(signedCommand("echoes hello")) {
+                ran = true
             }
-
-            assertFalse(ran)
-            assertEquals(listOf("chat.disabled.missingProfileKey"), messages.translationKeys())
         }
+
+        assertTrue(ran)
+    }
 
     @Test
-    fun `mismatching command signatures are reported and counted as command spam`(env: Env) =
-        withFeature({ commandSpamThresholdSeconds = 1 }) {
-            CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
-            val connection = env.createConnection()
-            val player = connection.connect(env.createFlatInstance(), Pos.ZERO)
-            val messages = connection.trackIncoming(SystemChatPacket::class.java)
-            var ran = false
+    fun `a signed command without signatures reports the missing profile key when enforced`(env: Env) = withFeature(
+        { enforceSecureProfile = true },
+    ) {
+        CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
+        val connection = env.createConnection()
+        val player = connection.connect(env.createFlatInstance(), Pos.ZERO)
+        val messages = connection.trackIncoming(SystemChatPacket::class.java)
+        var ran = false
 
-            asStartedServer(env) {
-                player.holder()!!.handler.handleSignedCommandChat(signedCommand("echoes hello", "other")) {
-                    ran = true
-                }
+        asStartedServer(env) {
+            player.holder()!!.handler.handleSignedCommandChat(signedCommand("echoes hello")) {
+                ran = true
             }
-
-            assertFalse(ran)
-            assertEquals(listOf("chat.disabled.invalid_command_signature"), messages.translationKeys())
-
-            env.tick()
-            assertFalse(player.isOnline, "the rejected command must count towards the spam threshold")
         }
+
+        assertFalse(ran)
+        assertEquals(listOf("chat.disabled.missingProfileKey"), messages.translationKeys())
+    }
+
+    @Test
+    fun `mismatching command signatures are reported and counted as command spam`(env: Env) = withFeature(
+        { commandSpamThresholdSeconds = 1 },
+    ) {
+        CommandAPICommand("echoes").signedMessageArgument("text").anyExecutor { _, _ -> }.register()
+        val connection = env.createConnection()
+        val player = connection.connect(env.createFlatInstance(), Pos.ZERO)
+        val messages = connection.trackIncoming(SystemChatPacket::class.java)
+        var ran = false
+
+        asStartedServer(env) {
+            player.holder()!!.handler.handleSignedCommandChat(
+                signedCommand(
+                    "echoes hello",
+                    "other",
+                ),
+            ) {
+                ran = true
+            }
+        }
+
+        assertFalse(ran)
+        assertEquals(listOf("chat.disabled.invalid_command_signature"), messages.translationKeys())
+
+        env.tick()
+        assertFalse(player.isOnline, "the rejected command must count towards the spam threshold")
+    }
 
     @Test
     fun `mismatching command signatures do not kick the player`(env: Env) = withFeature {
@@ -251,7 +273,12 @@ class SignedChatFeatureTest {
         val player = env.createPlayer(env.createFlatInstance(), Pos.ZERO)
 
         asStartedServer(env) {
-            player.holder()!!.handler.handleSignedCommandChat(signedCommand("echoes hello", "other")) {}
+            player.holder()!!.handler.handleSignedCommandChat(
+                signedCommand(
+                    "echoes hello",
+                    "other",
+                ),
+            ) {}
         }
         env.tick()
 

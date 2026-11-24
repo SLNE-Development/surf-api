@@ -11,7 +11,8 @@ import org.jetbrains.exposed.v1.core.lowerCase
 import org.jetbrains.exposed.v1.core.stringParam
 
 /**
- * `LOWER(expression) LIKE LOWER(pattern) ESCAPE escapeChar`, with the pattern built when the statement is rendered.
+ * `LOWER(expression) LIKE LOWER(pattern) ESCAPE escapeChar`, with the pattern built when the
+ * statement is rendered.
  */
 internal class LikeIgnoringCaseOp<T : String?>(
     private val expression: Expression<T>,

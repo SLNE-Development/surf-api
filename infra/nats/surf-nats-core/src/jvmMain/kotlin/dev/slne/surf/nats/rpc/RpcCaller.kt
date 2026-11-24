@@ -8,7 +8,8 @@ import dev.slne.surf.nats.InternalNatsApi
 @InternalNatsApi
 internal interface RpcCaller {
     /**
-     * Calls the method at [index] of the service descriptor with [request] and returns its decoded result.
+     * Calls the method at [index] of the service descriptor with [request] and returns its decoded
+     * result.
      *
      * [request] is [Unit] for a method with a `google.protobuf.Empty` request.
      */

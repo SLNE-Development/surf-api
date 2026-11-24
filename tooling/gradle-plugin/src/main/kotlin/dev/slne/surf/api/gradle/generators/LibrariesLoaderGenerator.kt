@@ -33,7 +33,6 @@ abstract class GenerateLibrariesLoaderTask : DefaultTask() {
     }
 }
 
-
 object LibrariesLoaderGenerator {
     val PluginLoader = "io.papermc.paper.plugin.loader.PluginLoader".className()
     val MavenLibraryResolver =
@@ -45,7 +44,9 @@ object LibrariesLoaderGenerator {
     val Gson = "com.google.gson.Gson".className()
     val Stream: ClassName = ClassName.get(java.util.stream.Stream::class.java)
 
-    fun Project.generateLibrariesLoaderTask(pkg: Provider<String>): TaskProvider<GenerateLibrariesLoaderTask> {
+    fun Project.generateLibrariesLoaderTask(
+        pkg: Provider<String>,
+    ): TaskProvider<GenerateLibrariesLoaderTask> {
         val generatedResourcesDirectory = layout.buildDirectory.dir("generated/surf-api/loader")
 
         return tasks.register<GenerateLibrariesLoaderTask>("generateLibrariesLoader") {
@@ -59,11 +60,11 @@ object LibrariesLoaderGenerator {
     fun generate(pkg: String): JavaFile {
         val dependencyStream = ParameterizedTypeName.get(
             Stream,
-            Dependency
+            Dependency,
         )
         val repositoryStream = ParameterizedTypeName.get(
             Stream,
-            RemoteRepository
+            RemoteRepository,
         )
 
         val asDependencies = MethodSpec.methodBuilder("asDependencies")
@@ -71,7 +72,7 @@ object LibrariesLoaderGenerator {
             .addStatement(
                 "return dependencies.stream().map(d -> new \$T(new \$T(d), null))",
                 Dependency,
-                DefaultArtifact
+                DefaultArtifact,
             )
             .build()
 
@@ -79,7 +80,7 @@ object LibrariesLoaderGenerator {
             .returns(repositoryStream)
             .addStatement(
                 "return repositories.entrySet().stream().map(e -> new \$T.Builder(e.getKey(), \"default\", e.getValue()).build())",
-                RemoteRepository
+                RemoteRepository,
             )
             .build()
 
@@ -88,7 +89,7 @@ object LibrariesLoaderGenerator {
                 MethodSpec.constructorBuilder()
                     .addParameter(typeNameOf<Map<String, String>>(), "repositories")
                     .addParameter(typeNameOf<List<String>>(), "dependencies")
-                    .build()
+                    .build(),
             )
             .addMethod(asDependencies)
             .addMethod(asRepositories)
@@ -99,14 +100,16 @@ object LibrariesLoaderGenerator {
                 "return new \$N(\$T.of(), \$T.of())",
                 pluginLibrariesClass,
                 Map::class.java,
-                List::class.java
+                List::class.java,
             )
             .build()
 
         val loadMethod = MethodSpec.methodBuilder("loadLibraries")
             .addModifiers(PRIVATE)
             .returns(ClassName.bestGuess(pluginLibrariesClass.name()))
-            .beginControlFlow("try (final var in = getClass().getResourceAsStream(\"/paper-libraries.json\"))")
+            .beginControlFlow(
+                "try (final var in = getClass().getResourceAsStream(\"/paper-libraries.json\"))",
+            )
             .beginControlFlow("if (in == null)")
             .addStatement(returnEmptyLibraries)
             .nextControlFlow("else if (in.available() < 1)")
@@ -117,7 +120,7 @@ object LibrariesLoaderGenerator {
                 Gson,
                 InputStreamReader::class.java,
                 StandardCharsets::class.java,
-                pluginLibrariesClass
+                pluginLibrariesClass,
             )
             .nextControlFlow("catch (\$T e)", IOException::class.java)
             .addStatement("throw new \$T(e)", RuntimeException::class.java)
@@ -130,7 +133,7 @@ object LibrariesLoaderGenerator {
             .addParameter(PluginClasspathBuilder, "classpathBuilder")
             .addStatement(
                 "final var resolver = new \$T()",
-                MavenLibraryResolver
+                MavenLibraryResolver,
             )
             .addStatement("final var libraries = loadLibraries()")
             .addStatement("libraries.asDependencies().forEach(resolver::addDependency)")
@@ -152,11 +155,13 @@ object LibrariesLoaderGenerator {
             .build()
     }
 
-    private fun String.className(): ClassName =
-        ClassName.get(substringBeforeLast('.'), substringAfterLast('.'))
+    private fun String.className(): ClassName {
+        return ClassName.get(substringBeforeLast('.'), substringAfterLast('.'))
+    }
 
     private inline fun <reified T> typeNameOf(): TypeName {
         val type = typeOf<T>().javaType
+
         return ParameterizedTypeName.get(type)
     }
 }

@@ -12,8 +12,10 @@ typealias SerializableVectorNl = @Serializable(with = SpongeVectorNlSerializer::
 
 object SpongeVectorNlSerializer : KSerializer<VectorNl> {
     private val arraySerializer = LongArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surf.api.sponge.VectorNl", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surf.api.sponge.VectorNl",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -27,6 +29,7 @@ object SpongeVectorNlSerializer : KSerializer<VectorNl> {
 
     override fun deserialize(decoder: Decoder): VectorNl {
         val array = decoder.decodeSerializableValue(arraySerializer)
+
         return VectorNl(*array)
     }
 }

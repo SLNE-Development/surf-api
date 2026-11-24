@@ -21,7 +21,9 @@ object TagSerializer : KSerializer<Tag> {
         encoder.encodeSerializableValue(TagProto.serializer(), TagProto(value.value))
     }
 
-    override fun deserialize(decoder: Decoder): Tag = Tag(decoder.decodeSerializableValue(TagProto.serializer()).value)
+    override fun deserialize(decoder: Decoder): Tag {
+        return Tag(decoder.decodeSerializableValue(TagProto.serializer()).value)
+    }
 }
 
 @Serializable

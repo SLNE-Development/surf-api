@@ -9,10 +9,12 @@ import dev.slne.surf.nats.js.external.nats.core.TimeoutError
 /**
  * Maps a failed nats.js request to the surf-nats error, or returns [error] unchanged.
  */
-internal fun mapRequestError(error: Throwable, subject: String, timeoutMs: Int): Throwable = when {
-    isNoResponders(error) -> NatsNoRespondersError(subject)
-    isTimeout(error) -> NatsCallTimeoutError(subject, timeoutMs)
-    else -> error
+internal fun mapRequestError(error: Throwable, subject: String, timeoutMs: Int): Throwable {
+    return when {
+        isNoResponders(error) -> NatsNoRespondersError(subject)
+        isTimeout(error) -> NatsCallTimeoutError(subject, timeoutMs)
+        else -> error
+    }
 }
 
 internal fun isTimeout(error: Throwable): Boolean {

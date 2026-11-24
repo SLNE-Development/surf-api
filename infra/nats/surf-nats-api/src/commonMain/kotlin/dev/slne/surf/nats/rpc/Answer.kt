@@ -3,9 +3,10 @@ package dev.slne.surf.nats.rpc
 /**
  * Represents the result of a service method for which "no instance knows" is a valid outcome.
  *
- * Every [Recipients.ALL_INSTANCES] method with a response message returns [Answer] of that message. Each handler
- * returns [Known] when it has the answer and [Unknown] otherwise. The caller receives the first [Known] of any
- * instance, or [Unknown] when none arrives in time, as described in [Recipients].
+ * Every [Recipients.ALL_INSTANCES] method with a response message returns [Answer] of that message.
+ * Each handler returns [Known] when it has the answer and [Unknown] otherwise. The caller receives
+ * the first [Known] of any instance, or [Unknown] when none arrives in time, as described in
+ * [Recipients].
  *
  * ```kotlin
  * override suspend fun find(request: FindRequest): Answer<FindReply> =
@@ -34,11 +35,14 @@ public sealed interface Answer<out T> {
 public fun <T : Any> Answer<T>.getOrNull(): T? = (this as? Answer.Known)?.value
 
 /**
- * Returns the known value, which may be `null` when [T] is nullable, or the result of [default] for [Answer.Unknown].
+ * Returns the known value, which may be `null` when [T] is nullable, or the result of [default] for
+ * [Answer.Unknown].
  */
-public inline fun <T> Answer<T>.getOrElse(default: () -> T): T = when (this) {
-    is Answer.Known -> value
-    is Answer.Unknown -> default()
+public inline fun <T> Answer<T>.getOrElse(default: () -> T): T {
+    return when (this) {
+        is Answer.Known -> value
+        is Answer.Unknown -> default()
+    }
 }
 
 /**

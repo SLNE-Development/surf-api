@@ -31,6 +31,7 @@ class DeclareCommandsMergerTest {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             CommandAPICommand("declare-suggestions")
                 .withArguments(
@@ -103,6 +104,7 @@ class DeclareCommandsMergerTest {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             block(manager)
         } finally {
@@ -129,6 +131,7 @@ class DeclareCommandsMergerTest {
         }
         val merger = MinestomCommandAPIPlatform.activeMerger()
             ?: error("No Minestom CommandAPI platform is installed")
+
         return merger.merge(DeclareCommandsPacket(listOf(root), 0), sender)
     }
 }

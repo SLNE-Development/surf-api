@@ -21,7 +21,10 @@ internal suspend inline fun <T> Iterable<T>.forEachLoggingFailures(
         } catch (exception: VirtualMachineError) {
             throw exception
         } catch (exception: Throwable) {
-            if (exception is CancellationException) currentCoroutineContext().ensureActive()
+            if (exception is CancellationException) {
+                currentCoroutineContext().ensureActive()
+            }
+
             logFailure(element, exception)
         }
     }

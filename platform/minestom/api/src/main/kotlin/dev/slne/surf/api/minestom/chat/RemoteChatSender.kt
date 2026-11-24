@@ -1,7 +1,7 @@
 package dev.slne.surf.api.minestom.chat
 
 import net.minestom.server.crypto.ChatSession
-import java.util.UUID
+import java.util.*
 
 /**
  * The player a [RemoteSignedMessage] came from, as far as the receiving server knows them.

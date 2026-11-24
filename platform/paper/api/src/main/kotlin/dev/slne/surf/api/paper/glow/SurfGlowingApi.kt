@@ -1,11 +1,11 @@
 package dev.slne.surf.api.paper.glow
 
+import dev.slne.surf.api.spring.SurfApiBean
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
-import dev.slne.surf.api.spring.SurfApiBean
 
 @SurfApiBean
 interface SurfGlowingApi {

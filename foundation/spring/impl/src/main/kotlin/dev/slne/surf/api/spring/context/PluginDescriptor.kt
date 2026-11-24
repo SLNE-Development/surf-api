@@ -10,8 +10,8 @@ import java.nio.file.Path
  * @property classLoader the loader that defined the plugin's classes; the context loads its beans
  * and resolves its resources through it
  * @property source the plugin's jar, or a classes directory in tests; component scanning reads only
- * classes from here, even though [classLoader] also sees the classes of its dependencies. `null` for
- * a plugin that has no jar of its own, such as one shaded into the server: the scan is then not
+ * classes from here, even though [classLoader] also sees the classes of its dependencies. `null`
+ * for a plugin that has no jar of its own, such as one shaded into the server: the scan is then not
  * restricted, and reads every class [classLoader] sees under [basePackages].
  * @property basePackages the packages scanned for components
  * @property dependencies the names of the plugins whose exports this plugin may inject: its direct
@@ -35,5 +35,5 @@ class PluginDescriptor(
         require(basePackages.isNotEmpty()) { "Plugin '$name' declares no package to scan" }
     }
 
-    override fun toString() = "PluginDescriptor(name=$name, source=$source)"
+    override fun toString(): String = "PluginDescriptor(name=$name, source=$source)"
 }

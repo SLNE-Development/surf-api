@@ -75,7 +75,9 @@ class AsyncPlayerChatEvent @InternalSurfApi constructor(
          */
         fun addListener(
             priority: Int = 0,
-            listener: AsyncPlayerChatEventListener
-        ) = node.addListener(priority, listener)
+            listener: AsyncPlayerChatEventListener,
+        ): SuspendingEventNode.Registration<AsyncPlayerChatEvent> {
+            return node.addListener(priority, listener)
+        }
     }
 }

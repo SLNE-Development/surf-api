@@ -18,7 +18,7 @@ internal object LinkedListSerializer : AbstractListChildSerializer<LinkedList<An
         if (containerType !is AnnotatedParameterizedType) {
             throw SerializationException(
                 containerType,
-                "Raw types are not supported for collections"
+                "Raw types are not supported for collections",
             )
         }
 
@@ -43,7 +43,7 @@ internal object LinkedListSerializer : AbstractListChildSerializer<LinkedList<An
         deserialized: Any?,
     ) {
         if (deserialized == null) return
+
         collection.add(deserialized)
     }
-
 }

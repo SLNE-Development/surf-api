@@ -14,8 +14,10 @@ import java.net.InetAddress
 typealias SerializableInetAddress = @Serializable(with = InetAddressSerializer::class) InetAddress
 
 object InetAddressSerializer : KSerializer<InetAddress> {
-    override val descriptor =
-        PrimitiveSerialDescriptor("surf.api.java.ip.InetAddress", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor(
+        "surf.api.java.ip.InetAddress",
+        PrimitiveKind.STRING,
+    )
 
     override fun serialize(
         encoder: Encoder,

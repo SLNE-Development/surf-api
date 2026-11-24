@@ -10,10 +10,10 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator
 /**
  * Runs the [SurfLifecycle] and [SurfBootstrapLifecycle] hooks of one context.
  *
- * The driver is installed as a bean post-processor before the context refreshes. It records the name
- * of every singleton hook bean when that bean finishes initializing, which is after all of its
- * dependencies did, so the recorded order is a valid dependency order. Hooks are invoked on the bean
- * the context hands out, so proxies created by later post-processors are honored.
+ * The driver is installed as a bean post-processor before the context refreshes. It records the
+ * name of every singleton hook bean when that bean finishes initializing, which is after all of its
+ * dependencies did, so the recorded order is a valid dependency order. Hooks are invoked on the
+ * bean the context hands out, so proxies created by later post-processors are honored.
  */
 internal class LifecycleHookRunner(private val owner: String) : BeanPostProcessor {
 
@@ -31,6 +31,7 @@ internal class LifecycleHookRunner(private val owner: String) : BeanPostProcesso
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         val isHookBean = bean is SurfLifecycle || bean is SurfBootstrapLifecycle
+
         if (isHookBean && beanFactory.containsBean(beanName) && beanFactory.isSingleton(beanName)) {
             synchronized(initializationOrder) {
                 initializationOrder += beanName
@@ -44,21 +45,27 @@ internal class LifecycleHookRunner(private val owner: String) : BeanPostProcesso
      * Runs [SurfBootstrapLifecycle.onBootstrap] on every participant.
      */
     suspend fun bootstrap() {
-        participants<SurfBootstrapLifecycle>().forEach { it.onBootstrap() }
+        for (lifecycle in participants<SurfBootstrapLifecycle>()) {
+            lifecycle.onBootstrap()
+        }
     }
 
     /**
      * Runs [SurfLifecycle.onLoad] on every participant.
      */
     suspend fun load() {
-        participants<SurfLifecycle>().forEach { it.onLoad() }
+        for (lifecycle in participants<SurfLifecycle>()) {
+            lifecycle.onLoad()
+        }
     }
 
     /**
      * Runs [SurfLifecycle.onEnable] on every participant.
      */
     suspend fun enable() {
-        participants<SurfLifecycle>().forEach { it.onEnable() }
+        for (lifecycle in participants<SurfLifecycle>()) {
+            lifecycle.onEnable()
+        }
     }
 
     /**

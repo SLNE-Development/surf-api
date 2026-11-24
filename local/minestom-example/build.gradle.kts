@@ -19,15 +19,16 @@ dependencies {
     implementation(projects.surfApiMinestomConsoleImpl)
     implementation(projects.surfApiMinestomPluginsImpl)
 
-    // Shaded into the server, where the plugin feature finds it on the class path
     implementation(projects.surfApiMinestomExamplePlugin)
-    if (luckPerms != null) implementation(luckPerms)
+
+    if (luckPerms != null) {
+        implementation(luckPerms)
+    }
 
     implementation(libs.minestom.server)
     runtimeOnly(libs.log4j.slf4j2.impl)
 }
 
-// The example decides at runtime whether LuckPerms is on the class path
 sourceSets.main {
     kotlin.srcDir(if (luckPerms != null) "src/luckperms/kotlin" else "src/noLuckperms/kotlin")
 }
@@ -69,8 +70,11 @@ tasks {
         archiveClassifier = "all"
         dependencies {
             exclude { dependency ->
-                dependency.moduleGroup != "xyz.jpenilla" && dependency.moduleGroup != "org.jspecify" &&
-                        dependency.moduleArtifacts.none { it.id.componentIdentifier is ProjectComponentIdentifier }
+                dependency.moduleGroup != "xyz.jpenilla" &&
+                    dependency.moduleGroup != "org.jspecify" &&
+                    dependency.moduleArtifacts.none {
+                        it.id.componentIdentifier is ProjectComponentIdentifier
+                    }
             }
         }
         // log4j-core and the terminal console appender each ship a plugin cache, which have to be
@@ -79,9 +83,11 @@ tasks {
         transform<Log4j2PluginsCacheFileTransformer>()
         manifest {
             attributes["Main-Class"] = mainClassName
-            attributes["Launcher-Agent-Class"] = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
-            // Mixin goes first, so its transformer is installed before another agent loads a Minestom
-            // class; LuckPerms adds the libraries it downloads to the class path through its agent
+            attributes["Launcher-Agent-Class"] =
+                "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
+            // Mixin goes first, so its transformer is installed before another agent loads a
+            // Minestom class; LuckPerms adds the libraries it downloads to the class path through
+            // its agent
             attributes["Surf-Delegate-Agent-Classes"] = listOfNotNull(
                 "dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent",
                 "me.lucko.luckperms.minestom.dependencies.LuckPermsAgent".takeIf { luckPerms != null },

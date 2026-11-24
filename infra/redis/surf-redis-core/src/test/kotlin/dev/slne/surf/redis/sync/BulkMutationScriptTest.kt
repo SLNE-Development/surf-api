@@ -10,7 +10,7 @@ class BulkMutationScriptTest {
         val scripts = listOf(
             "/lua/sync/list/remove-many.lua",
             "/lua/sync/set/remove-many.lua",
-            "/lua/sync/map/remove-many.lua"
+            "/lua/sync/map/remove-many.lua",
         )
 
         for (path in scripts) {

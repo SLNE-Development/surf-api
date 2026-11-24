@@ -1,8 +1,8 @@
 package dev.slne.surf.database.reliability.internal
 
 /**
- * Server requirements of the reliability tables on MariaDB: `FOR UPDATE SKIP LOCKED` (MariaDB 10.6) and InnoDB
- * row locks.
+ * Server requirements of the reliability tables on MariaDB: `FOR UPDATE SKIP LOCKED` (MariaDB 10.6)
+ * and InnoDB row locks.
  */
 internal object MariaDbRequirements {
     private const val MIN_MAJOR = 10
@@ -23,9 +23,11 @@ internal object MariaDbRequirements {
             "Cannot parse MariaDB version '$version'"
         }.destructured
 
-        check(major.toInt() > MIN_MAJOR || major.toInt() == MIN_MAJOR && minor.toInt() >= MIN_MINOR) {
+        check(
+            major.toInt() > MIN_MAJOR || major.toInt() == MIN_MAJOR && minor.toInt() >= MIN_MINOR,
+        ) {
             "surf reliability tables need MariaDB $MIN_MAJOR.$MIN_MINOR or newer for FOR UPDATE SKIP LOCKED, " +
-                    "but the server is $version"
+                "but the server is $version"
         }
     }
 
@@ -37,7 +39,7 @@ internal object MariaDbRequirements {
         val wrong = engines.filterValues { !it.equals(REQUIRED_ENGINE, ignoreCase = true) }
         check(wrong.isEmpty()) {
             "surf reliability tables must use $REQUIRED_ENGINE, found " +
-                    wrong.entries.joinToString { (table, engine) -> "$table: ${engine ?: "missing"}" }
+                wrong.entries.joinToString { (table, engine) -> "$table: ${engine ?: "missing"}" }
         }
     }
 }

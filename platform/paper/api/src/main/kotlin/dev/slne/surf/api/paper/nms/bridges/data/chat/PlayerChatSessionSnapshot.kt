@@ -10,7 +10,7 @@ data class PlayerChatSessionSnapshot(
     val chatSession: RemoteChatSessionData?,
     val lastSeenMessages: LastSeenMessagesValidatorMirror,
     val messageSignatureCache: Array<ByteArray?>,
-    val incomingChatChain: IncomingChatChainMirror
+    val incomingChatChain: IncomingChatChainMirror,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -29,6 +29,7 @@ data class PlayerChatSessionSnapshot(
         result = 31 * result + chatSession.hashCode()
         result = 31 * result + lastSeenMessages.hashCode()
         result = 31 * result + messageSignatureCache.contentDeepHashCode()
+
         return result
     }
 }

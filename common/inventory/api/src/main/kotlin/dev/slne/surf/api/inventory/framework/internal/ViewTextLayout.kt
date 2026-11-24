@@ -79,7 +79,7 @@ fun layoutViewText(
             charSpacing = charSpacing,
             spaceShift = spaceShift,
             bold = effectiveBold,
-            advance = advance
+            advance = advance,
         )
     } else {
         // Not plain text: emit it untouched, but still measure what the client will draw for it.
@@ -124,6 +124,7 @@ private fun layoutRun(
     var width = 0
     val emitted = StringBuilder(text.length)
     var index = 0
+
     while (index < text.length) {
         val codePoint = text.codePointAt(index)
         index += Character.charCount(codePoint)
@@ -148,11 +149,13 @@ private fun layoutRun(
 /**
  * Returns the text [component] itself contributes, ignoring its children.
  */
-private fun ownText(component: Component): String = when (component) {
-    is TextComponent -> component.content()
-    is TranslatableComponent -> component.fallback() ?: component.key()
-    is KeybindComponent -> component.keybind()
-    else -> ""
+private fun ownText(component: Component): String {
+    return when (component) {
+        is TextComponent -> component.content()
+        is TranslatableComponent -> component.fallback() ?: component.key()
+        is KeybindComponent -> component.keybind()
+        else -> ""
+    }
 }
 
 /**
@@ -165,6 +168,7 @@ private inline fun measure(
 ): Int {
     var width = 0
     var index = 0
+
     while (index < text.length) {
         val codePoint = text.codePointAt(index)
         width += advance(codePoint, bold)

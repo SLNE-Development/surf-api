@@ -13,14 +13,16 @@ import kotlin.time.Duration
 /**
  * Offloads a body that does not fit into [maxPayload] and returns whether it was offloaded.
  *
- * [headerBytes] is the encoded size of the headers before this call. [extraHeaderBytes] accounts for headers the
- * client library adds after it. With [stampDeadline], `Surf-Deadline` (now + [lifetime]) counts in the size check
- * and is written exactly once: before returning `false`, or after [upload], which used up part of the lifetime.
+ * [headerBytes] is the encoded size of the headers before this call. [extraHeaderBytes] accounts
+ * for headers the client library adds after it. With [stampDeadline], `Surf-Deadline` (now +
+ * [lifetime]) counts in the size check and is written exactly once: before returning `false`, or
+ * after [upload], which used up part of the lifetime.
  *
- * When offloading, [upload] stores the body under the random object name it receives. [writeHeader] then receives
- * that name as `Surf-Payload-Ref`, and the caller sends an empty body. Only a body that must be offloaded is checked
- * against the TTL of [bucket]: a [lifetime] above it throws [IllegalArgumentException] before [upload]. A failing
- * [upload] propagates and no header is written. [upload] may suspend when the caller is a suspend function.
+ * When offloading, [upload] stores the body under the random object name it receives. [writeHeader]
+ * then receives that name as `Surf-Payload-Ref`, and the caller sends an empty body. Only a body
+ * that must be offloaded is checked against the TTL of [bucket]: a [lifetime] above it throws
+ * [IllegalArgumentException] before [upload]. A failing [upload] propagates and no header is
+ * written. [upload] may suspend when the caller is a suspend function.
  */
 @InternalNatsApi
 internal inline fun offloadPayload(
@@ -36,8 +38,17 @@ internal inline fun offloadPayload(
 ): Boolean {
     val deadline = if (stampDeadline) deadlineHeader(lifetime) else null
     val sizedHeaderBytes = headerBytes + headerLineBytes(ProtocolHeaders.DEADLINE, deadline)
-    if (!ProtocolDefaults.requiresOffload(bodyBytes, sizedHeaderBytes, extraHeaderBytes, maxPayload)) {
-        if (deadline != null) writeHeader(ProtocolHeaders.DEADLINE, deadline)
+    if (!ProtocolDefaults.requiresOffload(
+            bodyBytes,
+            sizedHeaderBytes,
+            extraHeaderBytes,
+            maxPayload,
+        )
+    ) {
+        if (deadline != null) {
+            writeHeader(ProtocolHeaders.DEADLINE, deadline)
+        }
+
         return false
     }
 
@@ -46,7 +57,11 @@ internal inline fun offloadPayload(
     val name = randomId()
     upload(name)
     // The upload used up part of the lifetime
-    if (stampDeadline) writeHeader(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))
+    if (stampDeadline) {
+        writeHeader(ProtocolHeaders.DEADLINE, deadlineHeader(lifetime))
+    }
+
     writeHeader(ProtocolHeaders.PAYLOAD_REF, name)
+
     return true
 }

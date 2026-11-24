@@ -22,8 +22,10 @@ import javax.lang.model.SourceVersion
 internal object BasePackage {
     private const val SURF_API_PACKAGE = "dev.slne.surf.api"
 
-    private val packageDeclaration =
-        Regex("""^[ \t]*package[ \t]+([^\s;/]+)""", RegexOption.MULTILINE)
+    private val packageDeclaration = Regex(
+        """^[ \t]*package[ \t]+([^\s;/]+)""",
+        RegexOption.MULTILINE,
+    )
     private val blockComment = Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
     private val lineComment = Regex("""//[^\n]*""")
 
@@ -55,9 +57,11 @@ internal object BasePackage {
     fun commonPackage(packages: Collection<String>): String {
         val segments = packages.map { if (it.isEmpty()) emptyList() else it.split('.') }
         val first = segments.firstOrNull() ?: return ""
+
         val shared = first.indices.takeWhile { index ->
             segments.all { it.size > index && it[index] == first[index] }
         }
+
         return first.take(shared.size).joinToString(".")
     }
 
@@ -73,15 +77,16 @@ internal object BasePackage {
      *
      * The warnings name source packages the scan of an explicit package would miss.
      *
-     * @throws InvalidUserDataException if there are no sources to derive a package from, the package
-     * is no valid package name, or the runtime would reject it on [platform]
+     * @throws InvalidUserDataException if there are no sources to derive a package from, the
+     * package is no valid package name, or the runtime would reject it on [platform]
      */
     fun resolve(
         sourcePackages: Collection<String>,
         explicitPackage: String?,
-        platform: SurfApiPlatform
+        platform: SurfApiPlatform,
     ): Resolution {
         val explicit = explicitPackage?.trim()?.takeIf { it.isNotEmpty() }
+
         if (explicit == null && sourcePackages.isEmpty()) {
             throw invalid("The plugin has no Kotlin or Java sources to derive a package from.")
         }
@@ -92,12 +97,16 @@ internal object BasePackage {
             !SourceVersion.isName(basePackage) -> "'$basePackage' is not a valid package name."
             else -> surfApiOverlap(basePackage, platform)
         }
-        problem?.let { throw invalid(it) }
+
+        if (problem != null) {
+            throw invalid(problem)
+        }
 
         val warnings = listOfNotNull(
             outsideWarning(sourcePackages, basePackage, "The base package '$basePackage'")
-                .takeIf { explicit != null }
+                .takeIf { explicit != null },
         )
+
         return Resolution(basePackage, warnings)
     }
 
@@ -111,42 +120,51 @@ internal object BasePackage {
     fun checkScanned(
         className: String,
         sourcePackages: Collection<String>,
-        platform: SurfApiPlatform
+        platform: SurfApiPlatform,
     ): List<String> {
         val scanPackage = packageOf(className)
         val problem = when {
             scanPackage.isEmpty() -> "The class '$className' is in the default package."
             else -> surfApiOverlap(scanPackage, platform)
         }
-        problem?.let { throw InvalidUserDataException("$it Move '$className' to a package of its own.") }
+
+        if (problem != null) {
+            throw InvalidUserDataException("$problem Move '$className' to a package of its own.")
+        }
 
         return listOfNotNull(
             outsideWarning(
                 sourcePackages,
                 scanPackage,
-                "The package '$scanPackage' of the class '$className'"
-            )
+                "The package '$scanPackage' of the class '$className'",
+            ),
         )
     }
 
     private fun outsideWarning(
         sourcePackages: Collection<String>,
         scanPackage: String,
-        subject: String
+        subject: String,
     ): String? {
-        val outside = sourcePackages.filterNot { isWithin(it, scanPackage) }.distinct().sorted()
+        val outside = sourcePackages
+            .filterNot { isWithin(it, scanPackage) }
+            .distinct()
+            .sorted()
         if (outside.isEmpty()) return null
 
         return "$subject does not contain the source packages ${outside.joinToString { "'$it'" }}, " +
-                "so the component scan misses their components."
+            "so the component scan misses their components."
     }
 
-    private fun isWithin(candidate: String, parent: String) =
-        candidate == parent || candidate.startsWith("$parent.")
+    private fun isWithin(candidate: String, parent: String): Boolean {
+        return candidate == parent || candidate.startsWith("$parent.")
+    }
 
-    private fun invalid(problem: String) = InvalidUserDataException(
-        "$problem Set basePackage in the surf extension, e.g. basePackage = \"com.example.plugin\"."
-    )
+    private fun invalid(problem: String): InvalidUserDataException {
+        return InvalidUserDataException(
+            "$problem Set basePackage in the surf extension, e.g. basePackage = \"com.example.plugin\".",
+        )
+    }
 
     /**
      * Returns why the runtime refuses to scan [scanPackage] on [platform], or `null` when it
@@ -155,19 +173,21 @@ internal object BasePackage {
      * Paper and Velocity plugins have a class loader of their own, so only a package that equals or
      * contains surf-api's is refused. A package inside surf-api is accepted there.
      */
-    private fun surfApiOverlap(scanPackage: String, platform: SurfApiPlatform): String? = when {
-        scanPackage == SURF_API_PACKAGE ->
-            "The package '$scanPackage' is surf-api's own package."
+    private fun surfApiOverlap(scanPackage: String, platform: SurfApiPlatform): String? {
+        return when {
+            scanPackage == SURF_API_PACKAGE ->
+                "The package '$scanPackage' is surf-api's own package."
 
-        SURF_API_PACKAGE.startsWith("$scanPackage.") ->
-            "The package '$scanPackage' contains surf-api's package '$SURF_API_PACKAGE', " +
+            SURF_API_PACKAGE.startsWith("$scanPackage.") ->
+                "The package '$scanPackage' contains surf-api's package '$SURF_API_PACKAGE', " +
                     "so its scan would include the components of surf-api itself."
 
-        platform == SurfApiPlatform.MINESTOM && scanPackage.startsWith("$SURF_API_PACKAGE.") ->
-            "The package '$scanPackage' lies inside surf-api's package '$SURF_API_PACKAGE'. " +
+            platform == SurfApiPlatform.MINESTOM && scanPackage.startsWith("$SURF_API_PACKAGE.") ->
+                "The package '$scanPackage' lies inside surf-api's package '$SURF_API_PACKAGE'. " +
                     "A Minestom plugin shares the class loader of surf-api, whose own scan covers that package."
 
-        else -> null
+            else -> null
+        }
     }
 }
 
@@ -221,17 +241,22 @@ abstract class ComputeBasePackageTask : DefaultTask() {
         val warnings = mutableListOf<String>()
 
         var basePackage = ""
+
         if (generatesCode.get()) {
-            val resolution =
-                BasePackage.resolve(sourcePackages, explicitBasePackage.orNull, platform.get())
+            val resolution = BasePackage.resolve(
+                sourcePackages,
+                explicitBasePackage.orNull,
+                platform.get(),
+            )
             basePackage = resolution.basePackage
             warnings += resolution.warnings
         }
+
         scannedClass.orNull?.let {
             warnings += BasePackage.checkScanned(
                 it,
                 sourcePackages,
-                platform.get()
+                platform.get(),
             )
         }
 

@@ -19,7 +19,7 @@ import dev.slne.surf.api.inventory.framework.internal.ShiftGlyphs
  * @see GlyphShift
  */
 @Suppress("NOTHING_TO_INLINE")
-inline fun shift(amount: Int) = GlyphShift(amount).renderGlyphs()
+inline fun shift(amount: Int): String = GlyphShift(amount).renderGlyphs()
 
 /**
  * Represents a horizontal pixel shift

@@ -20,7 +20,13 @@ class InetSocketAddressSerializerTest {
 
     @Test
     fun `resolved address keeps address, host name and port`() {
-        val value = InetSocketAddress(InetAddress.getByAddress("localhost", byteArrayOf(127, 0, 0, 1)), 25565)
+        val value = InetSocketAddress(
+            InetAddress.getByAddress(
+                "localhost",
+                byteArrayOf(127, 0, 0, 1),
+            ),
+            25565,
+        )
         val hex = "0a060a047f000001" + "12096c6f63616c686f7374" + "18ddc701"
 
         assertEquals(hex, encodeHex(InetSocketAddressSerializer, value))
@@ -59,7 +65,17 @@ class InetSocketAddressSerializerTest {
 
     @Test
     fun `port out of range is rejected`() {
-        assertInvalid { decodeHex(InetSocketAddressSerializer, "120b6578616d706c652e6f7267" + "18808004") } // 65536
-        assertInvalid { decodeHex(InetSocketAddressSerializer, "120b6578616d706c652e6f7267" + "18ffffffffffffffffff01") }
+        assertInvalid {
+            decodeHex(
+                InetSocketAddressSerializer,
+                "120b6578616d706c652e6f7267" + "18808004",
+            )
+        } // 65536
+        assertInvalid {
+            decodeHex(
+                InetSocketAddressSerializer,
+                "120b6578616d706c652e6f7267" + "18ffffffffffffffffff01",
+            )
+        }
     }
 }

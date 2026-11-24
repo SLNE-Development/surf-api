@@ -11,13 +11,13 @@ suspend fun <S : DialogState> composableDialog(
     player: Player,
     initialState: S,
     scope: CoroutineScope,
-    content: suspend DialogScope<S>.() -> Dialog
+    content: suspend DialogScope<S>.() -> Dialog,
 ) {
     val store = DialogStore(
         initialState = initialState,
         playerUuid = player.uniqueId,
         renderer = content,
-        scope = scope
+        scope = scope,
     )
 
     store.open()

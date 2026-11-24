@@ -61,6 +61,7 @@ class NpcDisplaySyncTest {
     private fun spawn(instance: Instance, position: Pos): Entity {
         val entity = Entity(EntityType.ARMOR_STAND)
         entity.setInstance(instance, position).join()
+
         return entity
     }
 }

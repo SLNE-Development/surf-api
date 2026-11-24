@@ -48,39 +48,75 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
             builder.registerSafeRegistry({ PotionEffectType::class }, { RegistryKey.MOB_EFFECT })
             builder.registerSafeRegistry({ BlockType::class }, { RegistryKey.BLOCK })
             builder.registerSafeRegistry({ ItemType::class }, { RegistryKey.ITEM })
-            builder.registerSafeRegistry({ Villager.Profession::class }, { RegistryKey.VILLAGER_PROFESSION })
+            builder.registerSafeRegistry(
+                { Villager.Profession::class },
+                { RegistryKey.VILLAGER_PROFESSION },
+            )
             builder.registerSafeRegistry({ PoiType::class }, { RegistryKey.POINT_OF_INTEREST_TYPE })
             builder.registerSafeRegistry({ Villager.Type::class }, { RegistryKey.VILLAGER_TYPE })
-            builder.registerSafeRegistry({ MapCursor.Type::class }, { RegistryKey.MAP_DECORATION_TYPE })
+            builder.registerSafeRegistry(
+                { MapCursor.Type::class },
+                { RegistryKey.MAP_DECORATION_TYPE },
+            )
             builder.registerSafeRegistry({ MenuType::class }, { RegistryKey.MENU })
             builder.registerSafeRegistry({ Attribute::class }, { RegistryKey.ATTRIBUTE })
             builder.registerSafeRegistry({ Fluid::class }, { RegistryKey.FLUID })
             builder.registerSafeRegistry({ Sound::class }, { RegistryKey.SOUND_EVENT })
-            builder.registerSafeRegistry({ DataComponentType::class }, { RegistryKey.DATA_COMPONENT_TYPE })
+            builder.registerSafeRegistry(
+                { DataComponentType::class },
+                { RegistryKey.DATA_COMPONENT_TYPE },
+            )
             builder.registerSafeRegistry({ Biome::class }, { RegistryKey.BIOME })
             builder.registerSafeRegistry({ Structure::class }, { RegistryKey.STRUCTURE })
             builder.registerSafeRegistry({ TrimMaterial::class }, { RegistryKey.TRIM_MATERIAL })
             builder.registerSafeRegistry({ TrimPattern::class }, { RegistryKey.TRIM_PATTERN })
             builder.registerSafeRegistry({ DamageType::class }, { RegistryKey.DAMAGE_TYPE })
             builder.registerSafeRegistry({ Wolf.Variant::class }, { RegistryKey.WOLF_VARIANT })
-            builder.registerSafeRegistry({ Wolf.SoundVariant::class }, { RegistryKey.WOLF_SOUND_VARIANT })
+            builder.registerSafeRegistry(
+                { Wolf.SoundVariant::class },
+                { RegistryKey.WOLF_SOUND_VARIANT },
+            )
             builder.registerSafeRegistry({ Enchantment::class }, { RegistryKey.ENCHANTMENT })
             builder.registerSafeRegistry({ JukeboxSong::class }, { RegistryKey.JUKEBOX_SONG })
             builder.registerSafeRegistry({ PatternType::class }, { RegistryKey.BANNER_PATTERN })
             builder.registerSafeRegistry({ Art::class }, { RegistryKey.PAINTING_VARIANT })
             builder.registerSafeRegistry({ MusicInstrument::class }, { RegistryKey.INSTRUMENT })
             builder.registerSafeRegistry({ Cat.Type::class }, { RegistryKey.CAT_VARIANT })
-            builder.registerSafeRegistry({ Cat.SoundVariant::class }, { RegistryKey.CAT_SOUND_VARIANT })
+            builder.registerSafeRegistry(
+                { Cat.SoundVariant::class },
+                { RegistryKey.CAT_SOUND_VARIANT },
+            )
             builder.registerSafeRegistry({ Frog.Variant::class }, { RegistryKey.FROG_VARIANT })
-            builder.registerSafeRegistry({ Chicken.Variant::class }, { RegistryKey.CHICKEN_VARIANT })
-            builder.registerSafeRegistry({ Chicken.SoundVariant::class }, { RegistryKey.CHICKEN_SOUND_VARIANT })
+            builder.registerSafeRegistry(
+                { Chicken.Variant::class },
+                { RegistryKey.CHICKEN_VARIANT },
+            )
+            builder.registerSafeRegistry(
+                { Chicken.SoundVariant::class },
+                { RegistryKey.CHICKEN_SOUND_VARIANT },
+            )
             builder.registerSafeRegistry({ Cow.Variant::class }, { RegistryKey.COW_VARIANT })
-            builder.registerSafeRegistry({ Cow.SoundVariant::class }, { RegistryKey.COW_SOUND_VARIANT })
+            builder.registerSafeRegistry(
+                { Cow.SoundVariant::class },
+                { RegistryKey.COW_SOUND_VARIANT },
+            )
             builder.registerSafeRegistry({ Pig.Variant::class }, { RegistryKey.PIG_VARIANT })
-            builder.registerSafeRegistry({ Pig.SoundVariant::class }, { RegistryKey.PIG_SOUND_VARIANT })
-            builder.registerSafeRegistry({ ZombieNautilus.Variant::class }, { RegistryKey.ZOMBIE_NAUTILUS_VARIANT })
+            builder.registerSafeRegistry(
+                { Pig.SoundVariant::class },
+                { RegistryKey.PIG_SOUND_VARIANT },
+            )
+            builder.registerSafeRegistry(
+                { ZombieNautilus.Variant::class },
+                { RegistryKey.ZOMBIE_NAUTILUS_VARIANT },
+            )
             builder.registerSafeRegistry({ Dialog::class }, { RegistryKey.DIALOG })
-            builder.register(RegistryValueSerializer(object : TypeToken<GameRule<*>>() {}, RegistryKey.GAME_RULE, true))
+            builder.register(
+                RegistryValueSerializer(
+                    object : TypeToken<GameRule<*>>() {},
+                    RegistryKey.GAME_RULE,
+                    true,
+                ),
+            )
             //@formatter:on
             //endregion
         }
@@ -89,17 +125,17 @@ class PaperSpongeConfigSerializers : SpongeConfigSerializers() {
         builder.register(
             { type ->
                 type is Class<*> && ConfigurationSerializable::class.java.isAssignableFrom(
-                    type
+                    type,
                 )
             },
-            BukkitConfigurationSerializableSerializer
+            BukkitConfigurationSerializableSerializer,
         )
     }
 
     private fun <T : Keyed> TypeSerializerCollection.Builder.registerSafeRegistry(
         type: () -> KClass<T>,
         registryKey: () -> RegistryKey<T>,
-        omitMinecraftNamespace: Boolean = true
+        omitMinecraftNamespace: Boolean = true,
     ) {
         try {
             register(RegistryValueSerializer(type().java, registryKey(), omitMinecraftNamespace))

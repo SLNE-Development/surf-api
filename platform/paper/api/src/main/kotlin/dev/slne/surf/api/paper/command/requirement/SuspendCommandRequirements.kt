@@ -26,14 +26,17 @@ import org.bukkit.entity.Player
  * execution should also be checked explicitly inside the command executor.
  *
  * @param scope the coroutine scope provider used to refresh the requirement
- * @param allowIfNonPlayer whether non-player command senders should bypass this player-only requirement
+ * @param allowIfNonPlayer whether non-player command senders should bypass this player-only
+ * requirement
  * @param requirement the suspendable predicate used to refresh the cached requirement
  * result for a player
  */
-fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, CommandSender>.withSuspendPlayerRequirement(
+fun <
+    Impl : ExecutableCommand<Impl, CommandSender>,
+> ExecutableCommand<Impl, CommandSender>.withSuspendPlayerRequirement(
     scope: CoroutineScopeProvider = callingPluginCommandScope(),
     allowIfNonPlayer: Boolean = false,
-    requirement: suspend CoroutineScope.(Player) -> Boolean
+    requirement: suspend CoroutineScope.(Player) -> Boolean,
 ) {
     SuspendRequirementService.instance.apply {
         withSuspendRequirement(scope, requirement, allowIfNonPlayer)

@@ -19,19 +19,20 @@ import java.util.concurrent.atomic.AtomicInteger
 @EnvTest
 class CommandApiExecuteTest {
     @Test
-    fun `execute dispatches a registered command and rejects trailing input`(env: Env) =
-        withPlatform(env) { manager ->
-            val runs = AtomicInteger()
-            CommandAPICommand("ping").anyExecutor { _, _ -> runs.incrementAndGet() }.register()
+    fun `execute dispatches a registered command and rejects trailing input`(env: Env) = withPlatform(
+        env,
+    ) { manager ->
+        val runs = AtomicInteger()
+        CommandAPICommand("ping").anyExecutor { _, _ -> runs.incrementAndGet() }.register()
 
-            assertEquals(1, CommandAPI.execute(manager.consoleSender, "ping"))
-            assertEquals(1, runs.get())
+        assertEquals(1, CommandAPI.execute(manager.consoleSender, "ping"))
+        assertEquals(1, runs.get())
 
-            assertThrows(CommandSyntaxException::class.java) {
-                CommandAPI.execute(manager.consoleSender, "ping extra")
-            }
-            assertEquals(1, runs.get())
+        assertThrows(CommandSyntaxException::class.java) {
+            CommandAPI.execute(manager.consoleSender, "ping extra")
         }
+        assertEquals(1, runs.get())
+    }
 
     @Test
     fun `execute returns a resulting executor's own value`(env: Env) = withPlatform(env) { manager ->
@@ -41,22 +42,23 @@ class CommandApiExecuteTest {
     }
 
     @Test
-    fun `dispatch goes through brigadier, not through minestom's parser`(env: Env) =
-        withPlatform(env) { manager ->
-            val runs = AtomicInteger()
-            CommandAPICommand("owned").withArguments(StringArgument("value"))
-                .anyExecutor { _, _ -> runs.incrementAndGet() }
-                .register()
+    fun `dispatch goes through brigadier, not through minestom's parser`(env: Env) = withPlatform(
+        env,
+    ) { manager ->
+        val runs = AtomicInteger()
+        CommandAPICommand("owned").withArguments(StringArgument("value"))
+            .anyExecutor { _, _ -> runs.incrementAndGet() }
+            .register()
 
-            assertEquals(1, CommandAPI.execute(manager.consoleSender, "owned thing"))
-            assertEquals(1, runs.get())
+        assertEquals(1, CommandAPI.execute(manager.consoleSender, "owned thing"))
+        assertEquals(1, runs.get())
 
-            // Minestom accepts the trailing token and runs the same syntax; Brigadier rejects it.
-            assertThrows(CommandSyntaxException::class.java) {
-                CommandAPI.execute(manager.consoleSender, "owned thing extra")
-            }
-            assertEquals(1, runs.get())
+        // Minestom accepts the trailing token and runs the same syntax; Brigadier rejects it.
+        assertThrows(CommandSyntaxException::class.java) {
+            CommandAPI.execute(manager.consoleSender, "owned thing extra")
         }
+        assertEquals(1, runs.get())
+    }
 
     @Test
     fun `an unknown command is rejected`(env: Env) = withPlatform(env) { manager ->
@@ -66,22 +68,22 @@ class CommandApiExecuteTest {
     }
 
     @Test
-    fun `unregistering removes the command from the dispatcher`(env: Env) =
-        withPlatform(env) { manager ->
-            CommandAPICommand("temporary").anyExecutor { _, _ -> }.register()
-            assertEquals(1, CommandAPI.execute(manager.consoleSender, "temporary"))
+    fun `unregistering removes the command from the dispatcher`(env: Env) = withPlatform(env) { manager ->
+        CommandAPICommand("temporary").anyExecutor { _, _ -> }.register()
+        assertEquals(1, CommandAPI.execute(manager.consoleSender, "temporary"))
 
-            CommandAPI.unregister("temporary")
+        CommandAPI.unregister("temporary")
 
-            assertThrows(CommandSyntaxException::class.java) {
-                CommandAPI.execute(manager.consoleSender, "temporary")
-            }
+        assertThrows(CommandSyntaxException::class.java) {
+            CommandAPI.execute(manager.consoleSender, "temporary")
         }
+    }
 
     private fun withPlatform(env: Env, block: (CommandManager) -> Unit) {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             block(manager)
         } finally {

@@ -5,7 +5,8 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Carries the idempotency key of `withNatsIdempotencyKey` to the persistent calls made in its block.
+ * Carries the idempotency key of `withNatsIdempotencyKey` to the persistent calls made in its
+ * block.
  */
 @InternalNatsApi
 public class NatsIdempotencyKeyElement(

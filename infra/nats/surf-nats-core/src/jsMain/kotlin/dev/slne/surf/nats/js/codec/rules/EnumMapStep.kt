@@ -16,8 +16,10 @@ internal class EnumMapStep(
         if (direction == Direction.OUTGOING) return null
 
         val map = message.get(field)
+
         for (key in map.keys()) {
             val value = map.get(key)!!
+
             if (!enum.isKnown(value)) {
                 map.set(key, enum.zero)
             }

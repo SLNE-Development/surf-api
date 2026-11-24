@@ -36,6 +36,7 @@ class ConfigurationPhaseMixinTest {
         }
 
         val instance = env.createFlatInstance()
+
         try {
             val player = connect(env.createConnection(), instance)
             assertEquals(listOf(false), runs)
@@ -51,6 +52,7 @@ class ConfigurationPhaseMixinTest {
     fun `without the configuration phase Minestom configures the player`(env: Env) {
         val server = surfMinestomServer()
         val instance = env.createFlatInstance()
+
         try {
             val player = connect(env.createConnection(), instance)
             assertTrue(player.isOnline)
@@ -68,6 +70,7 @@ class ConfigurationPhaseMixinTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 

@@ -9,7 +9,8 @@ internal external interface SourceCodeInfoLocation {
     val path: Array<Int>
 
     /**
-     * Zero-based `[startLine, startColumn, endLine, endColumn]`. `endLine` is omitted when it equals `startLine`.
+     * Zero-based `[startLine, startColumn, endLine, endColumn]`. `endLine` is omitted when it
+     * equals `startLine`.
      */
     val span: Array<Int>
 }

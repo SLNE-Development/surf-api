@@ -19,6 +19,7 @@ inline fun buildItem(
 ): ItemStack {
     val item = ItemStack.of(material, amount)
     item.init()
+
     return item
 }
 
@@ -29,6 +30,7 @@ inline fun buildItem(
 ): ItemStack {
     val item = type.createItemStack(amount)
     item.init()
+
     return item
 }
 
@@ -42,8 +44,10 @@ inline fun ItemStack(
 
 inline fun <reified M : ItemMeta> ItemStack.meta(block: (@ItemDsl M).() -> Unit): Boolean {
     val meta = itemMeta as? M ?: return false
+
     meta.block()
     itemMeta = meta
+
     return true
 }
 
@@ -93,6 +97,7 @@ class LoreBuilder {
         lore.add(Component.empty())
     }
 
-    fun build() =
-        lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) }
+    fun build(): List<Component> {
+        return lore.map { it.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE) }
+    }
 }

@@ -32,7 +32,9 @@ import me.devnatan.inventoryframework.context.*
  * @param block the init callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@InventoryFrameworkDSL ViewConfigBuilder).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onInit(
+    block: context(ViewRef) (@InventoryFrameworkDSL ViewConfigBuilder).() -> Unit,
+) {
     ctx.onInit = block
 }
 
@@ -54,7 +56,9 @@ fun <ViewRef : AbstractSurfViewRef> onInit(block: context (ViewRef) (@InventoryF
  * @param block the open callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@InventoryFrameworkDSL OpenContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onOpen(
+    block: context(ViewRef) (@InventoryFrameworkDSL OpenContext).() -> Unit,
+) {
     ctx.onOpen = block
 }
 
@@ -76,7 +80,9 @@ fun <ViewRef : AbstractSurfViewRef> onOpen(block: context(ViewRef) (@InventoryFr
  * @param block the render callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@InventoryFrameworkDSL RenderContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onFirstRender(
+    block: context(ViewRef) (@InventoryFrameworkDSL RenderContext).() -> Unit,
+) {
     ctx.onFirstRender = block
 }
 
@@ -98,7 +104,9 @@ fun <ViewRef : AbstractSurfViewRef> onFirstRender(block: context(ViewRef) (@Inve
  * @param block the click callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@InventoryFrameworkDSL SlotClickContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onClick(
+    block: context(ViewRef) (@InventoryFrameworkDSL SlotClickContext).() -> Unit,
+) {
     ctx.onClick = block
 }
 
@@ -120,7 +128,9 @@ fun <ViewRef : AbstractSurfViewRef> onClick(block: context(ViewRef) (@InventoryF
  * @param block the close callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@InventoryFrameworkDSL CloseContext).() -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> onClose(
+    block: context(ViewRef) (@InventoryFrameworkDSL CloseContext).() -> Unit,
+) {
     ctx.onClose = block
 }
 
@@ -136,7 +146,7 @@ fun <ViewRef : AbstractSurfViewRef> onClose(block: context(ViewRef) (@InventoryF
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
 fun <ViewRef : AbstractSurfViewRef> onUpdate(
-    block: context(ViewRef) (@InventoryFrameworkDSL Context).() -> Unit
+    block: context(ViewRef) (@InventoryFrameworkDSL Context).() -> Unit,
 ) {
     ctx.onUpdate = block
 }
@@ -159,20 +169,22 @@ fun <ViewRef : AbstractSurfViewRef> onUpdate(
  * @param block the container defaults callback to register
  */
 context(ctx: AbstractSurfViewContext<ViewRef>)
-fun <ViewRef : AbstractSurfViewRef> containerDefaults(block: context (@InventoryFrameworkDSL ViewContainerModificationContext, ViewRef) () -> Unit) {
+fun <ViewRef : AbstractSurfViewRef> containerDefaults(
+    block: context(@InventoryFrameworkDSL ViewContainerModificationContext, ViewRef) () -> Unit,
+) {
     ctx.containerDefaults = block
 }
 
-
 /**
- * Modifies the [ViewContainer] of this view from within a lifecycle callback.
- * This function is only callable inside a [AbstractSurfViewRef] context (i.e. within lifecycle
- * callbacks). It is a type-safe forwarding wrapper that delegates to the internal `modifyContainer` method of [AbstractSurfView].
+ * Modifies the [ViewContainer] of this view from within a lifecycle callback. This function is only
+ * callable inside a [AbstractSurfViewRef] context (i.e. within lifecycle callbacks). It is a
+ * type-safe forwarding wrapper that delegates to the internal `modifyContainer` method of
+ * [AbstractSurfView].
  *
  */
 context(ref: AbstractSurfViewRef)
 fun Context.modifyContainer(
-    block: context(ViewContainerModificationContext) () -> Unit
+    block: context(ViewContainerModificationContext) () -> Unit,
 ) {
     when (val view = ref.getRegisteredView()) {
         is SurfViewDSLImpl -> view.modifyContainer0(this, block)
@@ -230,8 +242,9 @@ fun settings(block: @InventoryFrameworkDSL PaginatedViewSettingsBuilder.() -> Un
 /**
  * Sets the layout character that marks pagination item slots.
  *
- * The character must match one used in the inventory layout pattern (set via `onInit { layout { } }`).
- * Slots marked with this character will be populated by the pagination engine.
+ * The character must match one used in the inventory layout pattern (set via
+ * `onInit { layout { } }`). Slots marked with this character will be populated by the pagination
+ * engine.
  *
  * ```kotlin
  * paginatedSurfView("List") {

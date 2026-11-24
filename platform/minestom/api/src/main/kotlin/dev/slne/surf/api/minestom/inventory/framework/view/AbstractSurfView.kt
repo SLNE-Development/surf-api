@@ -28,16 +28,17 @@ import net.kyori.adventure.text.Component
  * and settings (cancel behaviours, row count, type) are always applied before delegating
  * to the subclass hooks.
  *
- * The view's title is composed from a [ViewContainer] that holds the header components: the
- * aligned title text plus whatever the view adds on top of it. The container can be modified at any time via
- * [modifyContainer].
+ * The view's title is composed from a [ViewContainer] that holds the header components: the aligned
+ * title text plus whatever the view adds on top of it. The container can be modified at any time
+ * via [modifyContainer].
  *
- * A title set on the view's config instead - `onInit { title(...) }`, or `modifyConfig { title(...) }`
- * inside [onViewOpen] - is adopted as the container's header rather than replacing the rendered
- * container, so the header texture, the alignment and every other header element survive it. From
- * any other context use [updateHeader], which does the same.
+ * A title set on the view's config instead - `onInit { title(...) }`, or
+ * `modifyConfig { title(...) }` inside [onViewOpen] - is adopted as the container's header rather
+ * than replacing the rendered container, so the header texture, the alignment and every other
+ * header element survive it. From any other context use [updateHeader], which does the same.
  *
- * You can directly create a subclass or use the dsl functions ([surfView] or [paginatedSurfView]) instead.
+ * You can directly create a subclass or use the dsl functions ([surfView] or [paginatedSurfView])
+ * instead.
  *
  * ```kotlin
  * val view = surfView("My View") {
@@ -73,7 +74,7 @@ abstract class AbstractSurfView(
      *
      * @param config the [ViewConfigBuilder] passed by the inventory framework
      */
-    protected open fun onViewInit(config: ViewConfigBuilder) = Unit
+    protected open fun onViewInit(config: ViewConfigBuilder): Unit = Unit
 
     /**
      * Called during [onOpen].
@@ -81,7 +82,7 @@ abstract class AbstractSurfView(
      *
      * @param open the [OpenContext] provided by the inventory framework
      */
-    protected open fun onViewOpen(open: OpenContext) = Unit
+    protected open fun onViewOpen(open: OpenContext): Unit = Unit
 
     /**
      * Called during [onFirstRender].
@@ -89,7 +90,7 @@ abstract class AbstractSurfView(
      *
      * @param render the [RenderContext] provided by the inventory framework
      */
-    protected open fun onViewRender(render: RenderContext) = Unit
+    protected open fun onViewRender(render: RenderContext): Unit = Unit
 
     /**
      * Called during [onClick] when the click is not an outside-click or
@@ -97,7 +98,7 @@ abstract class AbstractSurfView(
      *
      * @param click the [SlotClickContext] provided by the inventory framework
      */
-    protected open fun onViewClick(click: SlotClickContext) = Unit
+    protected open fun onViewClick(click: SlotClickContext): Unit = Unit
 
     /**
      * Called during [onClose].
@@ -105,7 +106,7 @@ abstract class AbstractSurfView(
      *
      * @param close the [CloseContext] provided by the inventory framework
      */
-    protected open fun onViewClose(close: CloseContext) = Unit
+    protected open fun onViewClose(close: CloseContext): Unit = Unit
 
     /**
      * Called during [onUpdate].
@@ -113,7 +114,7 @@ abstract class AbstractSurfView(
      *
      * @param update the [Context] provided by the inventory framework
      */
-    protected open fun onViewUpdate(update: Context) = Unit
+    protected open fun onViewUpdate(update: Context): Unit = Unit
 
     /**
      * Applies modifications to the [ViewContainer] and updates the inventory title.
@@ -128,7 +129,7 @@ abstract class AbstractSurfView(
      */
     protected fun modifyContainer(
         context: Context,
-        block: context(ViewContainerModificationContext) () -> Unit
+        block: context(ViewContainerModificationContext) () -> Unit,
     ) {
         val container = containerState.get(context)
 
@@ -169,7 +170,7 @@ abstract class AbstractSurfView(
         context: Context,
         header: Component,
         alignment: TextAlignment? = null,
-    ) = modifyContainer(context) { applyHeader(header, alignment) }
+    ): Unit = modifyContainer(context) { applyHeader(header, alignment) }
 
     /**
      * Replaces the header text of the view with the plain, white string [header].
@@ -184,7 +185,7 @@ abstract class AbstractSurfView(
         context: Context,
         header: String,
         alignment: TextAlignment? = null,
-    ) = updateHeader(context, Component.text(header), alignment)
+    ): Unit = updateHeader(context, Component.text(header), alignment)
 
     /**
      * Swaps the container's [ViewContainerTitleComponent] for one rendering [header].
@@ -210,8 +211,8 @@ abstract class AbstractSurfView(
                 textAlignment = alignment ?: currentAlignment ?: settings.headerTextAlignment,
                 geometry = settings.headerGeometry,
                 defaultColor = settings.headerTextColor,
-                metrics = settings.headerFontMetrics
-            )
+                metrics = settings.headerFontMetrics,
+            ),
         )
     }
 
@@ -254,10 +255,12 @@ abstract class AbstractSurfView(
      * Returns the title currently set on this context's config as a [Component], or `null` if no
      * title is set. Non-component titles (e.g. plain strings) are wrapped as-is.
      */
-    private fun OpenContext.configuredTitle(): Component? = when (val title = config.title) {
-        null -> null
-        is Component -> title
-        else -> Component.text(title.toString())
+    private fun OpenContext.configuredTitle(): Component? {
+        return when (val title = config.title) {
+            null -> null
+            is Component -> title
+            else -> Component.text(title.toString())
+        }
     }
 
     /**
@@ -272,10 +275,21 @@ abstract class AbstractSurfView(
 
     final override fun onInit(config: ViewConfigBuilder) {
         with(settings) {
-            if (cancelOnPickup) config.cancelOnPickup()
-            if (cancelOnDrag) config.cancelOnDrag()
-            if (cancelOnClick) config.cancelOnClick()
-            if (cancelOnDrop) config.cancelOnDrop()
+            if (cancelOnPickup) {
+                config.cancelOnPickup()
+            }
+
+            if (cancelOnDrag) {
+                config.cancelOnDrag()
+            }
+
+            if (cancelOnClick) {
+                config.cancelOnClick()
+            }
+
+            if (cancelOnDrop) {
+                config.cancelOnDrop()
+            }
         }
 
         onViewInit(config)
@@ -309,6 +323,7 @@ abstract class AbstractSurfView(
     final override fun onClick(click: SlotClickContext) {
         if (click.isOutsideClick && settings.navigateBackOnOutsideClick) {
             handleOutsideClick(click)
+
             return
         }
 
@@ -317,9 +332,11 @@ abstract class AbstractSurfView(
 
     final override fun onClose(close: CloseContext) {
         val player = close.player
+
         if (!close.viewer.isSwitching && !ViewNavigationHistory.isPending(player.uuid)) {
             ViewNavigationHistory.clear(player)
         }
+
         onViewClose(close)
     }
 
@@ -334,6 +351,7 @@ abstract class AbstractSurfView(
         if (target == null) {
             ViewNavigationHistory.clear(player)
             click.closeForPlayer()
+
             return
         }
 
@@ -343,6 +361,7 @@ abstract class AbstractSurfView(
         // non-null parameter), unlike the Bukkit platform's Java signature. Fall back to the
         // single-argument overload when the recorded entry carries no data.
         val data = target.data
+
         if (data == null) {
             click.openForPlayer(target.viewClass)
         } else {

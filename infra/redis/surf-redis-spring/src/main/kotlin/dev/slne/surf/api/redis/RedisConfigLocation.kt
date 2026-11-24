@@ -5,7 +5,8 @@ import java.nio.file.Path
 
 /**
  * Locates the Redis configuration folder inside surf-api's data folder and carries a configuration
- * over from the folder of the retired `surf-redis-<platform>` plugins (Paper, Velocity and Minestom).
+ * over from the folder of the retired `surf-redis-<platform>` plugins (Paper, Velocity and
+ * Minestom).
  */
 internal object RedisConfigLocation {
 

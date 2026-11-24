@@ -66,7 +66,7 @@ data class ViewFontMetrics(
          */
         val VANILLA = ViewFontMetrics(
             charSize = DefaultFontWidths.DEFAULT_ADVANCE,
-            charWidths = DefaultFontWidths.advances
+            charWidths = DefaultFontWidths.advances,
         )
 
         /**
@@ -89,7 +89,7 @@ data class ViewFontMetrics(
             charSpacing = MENU_CHAR_SPACING,
             uppercase = true,
             spaceAsShift = true,
-            charWidths = mapOf(' '.code to MENU_SPACE_SIZE)
+            charWidths = mapOf(' '.code to MENU_SPACE_SIZE),
         )
 
         /**
@@ -103,8 +103,8 @@ data class ViewFontMetrics(
         const val MENU_CHAR_SPACING = -1
 
         /**
-         * Advance of a space in the menu font, taken from the space provider of the pack rather than
-         * from the glyph texture.
+         * Advance of a space in the menu font, taken from the space provider of the pack rather
+         * than from the glyph texture.
          */
         const val MENU_SPACE_SIZE = 4
     }

@@ -17,7 +17,7 @@ class DialogScope<S : DialogState>(
 
     suspend fun <T> remember(
         vararg keys: Any?,
-        block: suspend CoroutineScope.() -> T
+        block: suspend CoroutineScope.() -> T,
     ): T {
         val key = keys.toList()
         val cached = store.recall<T>(key)

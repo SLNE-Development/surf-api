@@ -45,18 +45,22 @@ class DialogActionButtonBuilder {
     internal fun build(): ActionButton {
         val label = label
         require(label != null) { "ActionButton label must not be null" }
+
         val builder = ActionButton.builder(label)
         with(builder) {
             tooltip?.let { tooltip(it) }
             width?.let { width(it) }
             action?.let { action(it) }
         }
+
         return builder.build()
     }
 }
 
-fun ActionButton(block: DialogActionButtonBuilder.() -> Unit): ActionButton =
-    DialogActionButtonBuilder().apply(block).build()
+fun ActionButton(block: DialogActionButtonBuilder.() -> Unit): ActionButton {
+    return DialogActionButtonBuilder().apply(block).build()
+}
 
-fun actionButton(block: DialogActionButtonBuilder.() -> Unit): ActionButton =
-    DialogActionButtonBuilder().apply(block).build()
+fun actionButton(block: DialogActionButtonBuilder.() -> Unit): ActionButton {
+    return DialogActionButtonBuilder().apply(block).build()
+}

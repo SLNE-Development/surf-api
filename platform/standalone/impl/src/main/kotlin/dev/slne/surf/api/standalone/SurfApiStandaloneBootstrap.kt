@@ -21,9 +21,9 @@ import kotlin.concurrent.thread
  * Runs surf-api in a plain JVM process without a Minecraft server.
  *
  * [bootstrap] creates surf-api's root Spring context, after which the caller runs [enable]; [adopt]
- * instead makes a caller-owned context the root, whose lifecycle runs the hooks. [shutdown] releases
- * the process-wide state. At most one root context exists at a time, and a process that has shut
- * down can bootstrap again.
+ * instead makes a caller-owned context the root, whose lifecycle runs the hooks. [shutdown]
+ * releases the process-wide state. At most one root context exists at a time, and a process that
+ * has shut down can bootstrap again.
  */
 object SurfApiStandaloneBootstrap {
     private val shutdown = AtomicBoolean(false)
@@ -46,10 +46,10 @@ object SurfApiStandaloneBootstrap {
     /**
      * Builds surf-api's root context and runs its load hooks.
      *
-     * With an [application], the root context also hosts the application's components, contributions
-     * and phase listeners, as a plugin context would; its packages must not overlap surf-api's.
-     * surf-api's static entry points can be used while the context refreshes, so that beans such as
-     * config handles work during the refresh.
+     * With an [application], the root context also hosts the application's components,
+     * contributions and phase listeners, as a plugin context would; its packages must not overlap
+     * surf-api's. surf-api's static entry points can be used while the context refreshes, so that
+     * beans such as config handles work during the refresh.
      */
     suspend fun bootstrap(application: PluginDescriptor? = null) {
         check(root == null) { "surf-api is already bootstrapped" }
@@ -76,28 +76,29 @@ object SurfApiStandaloneBootstrap {
     }
 
     /**
-     * Makes [context], which the caller refreshes and closes, surf-api's root context that also hosts
-     * [application].
+     * Makes [context], which the caller refreshes and closes, surf-api's root context that also
+     * hosts [application].
      *
      * For a Spring Boot application: call it from an `ApplicationContextInitializer`, before the
      * refresh. The application's components come from the caller's own scan; surf-api's package is
-     * scanned and the contributors contribute as [bootstrap] describes. surf-api's static entry points
-     * work from the refresh on. The context gets a `SmartLifecycle` bean in [LIFECYCLE_PHASE] that
-     * runs the load and enable hooks when the context starts and [shutdown] when it stops; a failing
-     * start shuts surf-api down before the failure propagates. A refresh that fails before that bean
-     * starts undoes the adoption when the context destroys its beans, so surf-api can be adopted again.
+     * scanned and the contributors contribute as [bootstrap] describes. surf-api's static entry
+     * points work from the refresh on. The context gets a `SmartLifecycle` bean in
+     * [LIFECYCLE_PHASE] that runs the load and enable hooks when the context starts and [shutdown]
+     * when it stops; a failing start shuts surf-api down before the failure propagates. A refresh
+     * that fails before that bean starts undoes the adoption when the context destroys its beans,
+     * so surf-api can be adopted again.
      *
      * The initializer needs no particular order among the other initializers: the NATS integration
-     * reads the adopted root when the context refreshes, not when the initializers run. It must adopt
-     * the context before the refresh starts.
+     * reads the adopted root when the context refreshes, not when the initializers run. It must
+     * adopt the context before the refresh starts.
      *
      * The microservice runtime does the rest for its applications; another Spring Boot program
      * supplies it itself:
      * - the property `surf.config-directory`
      *   ([SurfProperties.CONFIG_DIRECTORY][dev.slne.surf.api.spring.SurfProperties.CONFIG_DIRECTORY]),
      *   from which NATS and the database read their configuration;
-     * - [shutdown] when Spring Boot reports a failed start (`ApplicationFailedEvent`), because a later
-     *   initializer can fail before the context refreshes and destroys its beans;
+     * - [shutdown] when Spring Boot reports a failed start (`ApplicationFailedEvent`), because a
+     *   later initializer can fail before the context refreshes and destroys its beans;
      * - its logging policy: `spring-boot` turns off log4j's own shutdown hook, so the program shuts
      *   log4j down itself once the context has closed.
      *
@@ -106,6 +107,7 @@ object SurfApiStandaloneBootstrap {
      */
     fun adopt(context: AnnotationConfigApplicationContext, application: PluginDescriptor) {
         check(root == null) { "surf-api is already bootstrapped" }
+
         shutdown.set(false)
         preparePacketEvents()
 
@@ -187,7 +189,9 @@ object SurfApiStandaloneBootstrap {
 
             root?.let { root ->
                 try {
-                    if (root.context.isActive) root.disable()
+                    if (root.context.isActive) {
+                        root.disable()
+                    }
                 } finally {
                     try {
                         unregisterSurfEventListeners()
@@ -203,13 +207,14 @@ object SurfApiStandaloneBootstrap {
 
     /**
      * Undoes [adopt] for [adopted], unless [shutdown] ran already. Runs while the context destroys
-     * its beans, so it runs no hooks: a context that gets here without the stop of its lifecycle bean
-     * never started surf-api.
+     * its beans, so it runs no hooks: a context that gets here without the stop of its lifecycle
+     * bean never started surf-api.
      */
     private fun abandon(adopted: SurfRootContext) {
         if (root !== adopted) return
 
         shutdown.set(true)
+
         try {
             adopted.close()
         } finally {
@@ -225,6 +230,7 @@ object SurfApiStandaloneBootstrap {
 
     private fun release() {
         root = null
+
         try {
             SurfContexts.uninstall()
         } finally {

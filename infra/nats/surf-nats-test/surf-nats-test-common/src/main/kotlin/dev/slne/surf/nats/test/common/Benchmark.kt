@@ -27,8 +27,8 @@ object Benchmark {
     /**
      * The measurements of one [run].
      *
-     * Latencies cover successful calls only. [min], [max], [avg] and [percentile] throw when no call succeeded, so
-     * check [succeeded] first or use [lines].
+     * Latencies cover successful calls only. [min], [max], [avg] and [percentile] throw when no
+     * call succeeded, so check [succeeded] first or use [lines].
      *
      * @property name the label passed to [run].
      * @property iterations the number of measured calls, successful or failed.
@@ -71,31 +71,53 @@ object Benchmark {
         val opsPerSecond get() = succeeded / total.toDouble(DurationUnit.SECONDS)
 
         /**
-         * Returns the latency at the fraction [p] of the sorted successful calls, for example `0.99` for p99.
+         * Returns the latency at the fraction [p] of the sorted successful calls, for example
+         * `0.99` for p99.
          *
-         * @param p the fraction from `0.0` to `1.0`. Values outside are clamped to the minimum or maximum.
+         * @param p the fraction from `0.0` to `1.0`. Values outside are clamped to the minimum or
+         * maximum.
          */
         fun percentile(p: Double): Duration {
             return sorted[((sorted.size - 1) * p).toInt().coerceIn(0, sorted.lastIndex)].nanoseconds
         }
 
         /**
-         * Formats the result as log lines: a summary line, then a latency line when a call succeeded and a failure
-         * line when a call failed.
+         * Formats the result as log lines: a summary line, then a latency line when a call
+         * succeeded and a failure line when a call failed.
          */
-        fun lines() = buildList {
-            add(buildString {
-                append("$name: $iterations calls, concurrency $concurrency, total ${total.pretty()}, ")
-                append("%.0f ops/s".format(opsPerSecond))
-            })
-            if (sorted.isNotEmpty()) {
-                add(buildString {
-                    append("  min ${min.pretty()} | avg ${avg.pretty()} | p50 ${percentile(0.50).pretty()} | ")
-                    append("p90 ${percentile(0.90).pretty()} | p99 ${percentile(0.99).pretty()} | max ${max.pretty()}")
-                })
-            }
-            if (failures.isNotEmpty()) {
-                add("  failed ${iterations - succeeded}: " + failures.entries.joinToString { "${it.key} x${it.value}" })
+        fun lines(): List<String> {
+            return buildList {
+                add(
+                    buildString {
+                        append(
+                            "$name: $iterations calls, concurrency $concurrency, total ${total.pretty()}, ",
+                        )
+                        append("%.0f ops/s".format(opsPerSecond))
+                    },
+                )
+
+                if (sorted.isNotEmpty()) {
+                    add(
+                        buildString {
+                            append(
+                                "  min ${min.pretty()} | avg ${avg.pretty()} | p50 ${
+                                    percentile(
+                                        0.50,
+                                    ).pretty()
+                                } | ",
+                            )
+                            append(
+                                "p90 ${percentile(0.90).pretty()} | p99 ${percentile(0.99).pretty()} | max ${max.pretty()}",
+                            )
+                        },
+                    )
+                }
+
+                if (failures.isNotEmpty()) {
+                    add(
+                        "  failed ${iterations - succeeded}: " + failures.entries.joinToString { "${it.key} x${it.value}" },
+                    )
+                }
             }
         }
     }
@@ -103,9 +125,10 @@ object Benchmark {
     /**
      * Runs [call] [warmup] times, then [iterations] times while measuring each call.
      *
-     * Calls run on [Dispatchers.Default] in [concurrency] coroutines that take the next iteration until all are done.
-     * Warmup results are discarded and a garbage collection is requested before the measured phase. An exception
-     * from [call] counts as a failure and does not stop the run. Cancellation propagates.
+     * Calls run on [Dispatchers.Default] in [concurrency] coroutines that take the next iteration
+     * until all are done. Warmup results are discarded and a garbage collection is requested before
+     * the measured phase. An exception from [call] counts as a failure and does not stop the run.
+     * Cancellation propagates.
      *
      * @param name the label of the result.
      * @param warmup the number of unmeasured calls, at least 0.
@@ -121,20 +144,29 @@ object Benchmark {
         iterations: Int,
         concurrency: Int = 1,
         call: suspend () -> Unit,
-    ): Result = withContext(Dispatchers.Default) {
-        require(iterations > 0 && warmup >= 0 && concurrency > 0)
+    ): Result {
+        return withContext(Dispatchers.Default) {
+            require(iterations > 0 && warmup >= 0 && concurrency > 0)
 
-        execute(warmup, concurrency, null, ConcurrentHashMap(), call)
-        System.gc()
+            execute(warmup, concurrency, null, ConcurrentHashMap(), call)
+            System.gc()
 
-        val samples = Samples(iterations)
-        val failures = ConcurrentHashMap<String, AtomicInteger>()
-        val start = System.nanoTime()
-        execute(iterations, concurrency, samples, failures, call)
-        val total = (System.nanoTime() - start).nanoseconds
+            val samples = Samples(iterations)
+            val failures = ConcurrentHashMap<String, AtomicInteger>()
+            val start = System.nanoTime()
+            execute(iterations, concurrency, samples, failures, call)
+            val total = (System.nanoTime() - start).nanoseconds
 
-        val sorted = samples.toSortedArray()
-        Result(name, iterations, concurrency, total, sorted, failures.mapValues { it.value.get() })
+            val sorted = samples.toSortedArray()
+            Result(
+                name,
+                iterations,
+                concurrency,
+                total,
+                sorted,
+                failures.mapValues { it.value.get() },
+            )
+        }
     }
 
     private class Samples(capacity: Int) {
@@ -145,7 +177,7 @@ object Benchmark {
             values[size.getAndIncrement()] = value
         }
 
-        fun toSortedArray() = values.copyOf(size.get()).also { it.sort() }
+        fun toSortedArray(): LongArray = values.copyOf(size.get()).also { it.sort() }
     }
 
     private suspend fun execute(
@@ -154,21 +186,26 @@ object Benchmark {
         samples: Samples?,
         failures: ConcurrentHashMap<String, AtomicInteger>,
         call: suspend () -> Unit,
-    ) = coroutineScope {
-        val next = AtomicInteger()
-        repeat(concurrency) {
-            launch {
-                while (true) {
-                    val index = next.getAndIncrement()
-                    if (index >= count) break
-                    val begin = System.nanoTime()
-                    try {
-                        call()
-                        samples?.add(System.nanoTime() - begin)
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        failures.computeIfAbsent(e.javaClass.simpleName) { AtomicInteger() }.incrementAndGet()
+    ) {
+        coroutineScope {
+            val next = AtomicInteger()
+            repeat(concurrency) {
+                launch {
+                    while (true) {
+                        val index = next.getAndIncrement()
+                        if (index >= count) break
+
+                        val begin = System.nanoTime()
+
+                        try {
+                            call()
+                            samples?.add(System.nanoTime() - begin)
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            failures.computeIfAbsent(e.javaClass.simpleName) { AtomicInteger() }
+                                .incrementAndGet()
+                        }
                     }
                 }
             }

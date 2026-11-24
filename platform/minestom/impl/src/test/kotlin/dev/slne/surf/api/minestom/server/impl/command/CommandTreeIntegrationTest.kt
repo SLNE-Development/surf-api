@@ -48,6 +48,7 @@ class CommandTreeIntegrationTest {
         val platform = MinestomCommandAPIPlatform(manager, ownership, suggestionScope = { this })
         val node = EventNode.all("admin-tree-test")
         CommandAPI.installPlatform(platform)
+
         try {
             listener.register(node)
             env.process().eventHandler().addChild(node)
@@ -90,6 +91,7 @@ class CommandTreeIntegrationTest {
 
             val instance = env.createEmptyInstance()
             var target: Player? = null
+
             try {
                 val connection = env.createConnection(profile("Offender"))
                 target = connect(connection, instance)
@@ -97,7 +99,12 @@ class CommandTreeIntegrationTest {
                 assertTrue(runCommand(manager.consoleSender, "admin kick Offender"))
                 assertEquals(listOf("Offender" to "no reason given"), kicked)
 
-                assertTrue(runCommand(manager.consoleSender, "admin kick Offender \"breaking stuff\""))
+                assertTrue(
+                    runCommand(
+                        manager.consoleSender,
+                        "admin kick Offender \"breaking stuff\"",
+                    ),
+                )
                 assertEquals(2, kicked.size)
                 assertEquals("breaking stuff", kicked[1].second)
 
@@ -123,6 +130,7 @@ class CommandTreeIntegrationTest {
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.process().eventHandler().removeChild(node)
             env.process().connection().setPlayerProvider(null)
         }
@@ -140,7 +148,11 @@ class CommandTreeIntegrationTest {
             listOf("staff", "public")
         }
         val staffTargets = ArgumentSuggestions.strings("Deniz")
-        val branch = SuggestionsBranch.suggest(channels).branch(SuggestionsBranch.suggest(staffTargets))
+        val branch = SuggestionsBranch.suggest(channels).branch(
+            SuggestionsBranch.suggest(
+                staffTargets,
+            ),
+        )
 
         val channel = StringArgument("channel").replaceSuggestions(branch)
         val mode = channel.toDefinition().suggestions
@@ -153,13 +165,27 @@ class CommandTreeIntegrationTest {
         entered.await()
         assertFalse(headSuggestions.isCompleted)
         release.complete(Unit)
-        assertEquals(listOf("staff", "public"), headSuggestions.await().map(StringTooltip::suggestion))
+        assertEquals(
+            listOf("staff", "public"),
+            headSuggestions.await().map(StringTooltip::suggestion),
+        )
 
-        val previousChannel = CommandArguments.of(listOf(ParsedArgument("channel", "staff", "staff", true)))
+        val previousChannel = CommandArguments.of(
+            listOf(
+                ParsedArgument(
+                    "channel",
+                    "staff",
+                    "staff",
+                    true,
+                ),
+            ),
+        )
         val nested = branch.getNextSuggestion(sender, "staff")
         assertEquals(
             listOf("Deniz"),
-            nested?.suggest(SuggestionInfo(sender, previousChannel, "staff ", ""))?.map(StringTooltip::suggestion),
+            nested?.suggest(SuggestionInfo(sender, previousChannel, "staff ", ""))?.map(
+                StringTooltip::suggestion,
+            ),
         )
     }
 
@@ -169,6 +195,7 @@ class CommandTreeIntegrationTest {
         val ownership = MinestomCommandOwnership()
         val platform = MinestomCommandAPIPlatform(manager, ownership)
         CommandAPI.installPlatform(platform)
+
         try {
             val queried = AtomicInteger()
             val applied = mutableListOf<Difficulty>()
@@ -206,6 +233,7 @@ class CommandTreeIntegrationTest {
         val ownership = MinestomCommandOwnership()
         val platform = MinestomCommandAPIPlatform(manager, ownership)
         CommandAPI.installPlatform(platform)
+
         try {
             val queried = AtomicInteger()
             val applied = mutableListOf<Difficulty>()
@@ -239,6 +267,7 @@ class CommandTreeIntegrationTest {
         val ownership = MinestomCommandOwnership()
         val platform = MinestomCommandAPIPlatform(manager, ownership)
         CommandAPI.installPlatform(platform)
+
         try {
             val runs = AtomicInteger()
             commandTree("ping") {
@@ -264,6 +293,7 @@ class CommandTreeIntegrationTest {
         val platform = MinestomCommandAPIPlatform(manager, ownership)
         val node = EventNode.all("namespaced-tab-test")
         CommandAPI.installPlatform(platform)
+
         try {
             listener.register(node)
             env.process().eventHandler().addChild(node)
@@ -274,6 +304,7 @@ class CommandTreeIntegrationTest {
 
             val instance = env.createEmptyInstance()
             var player: Player? = null
+
             try {
                 val connection = env.createConnection(profile("Completer"))
                 player = connect(connection, instance)
@@ -296,6 +327,7 @@ class CommandTreeIntegrationTest {
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.process().eventHandler().removeChild(node)
         }
     }
@@ -307,6 +339,7 @@ class CommandTreeIntegrationTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 

@@ -10,27 +10,34 @@ import reactor.core.Disposable
  * - a local near-cache (Caffeine)
  *
  * Note:
- * - `condition: (T) -> Boolean` can NOT be evaluated server-side, so `findCached(condition)` always scans.
- * - Index queries are fast (use Redis sets), but still validate results to self-heal stale index entries.
+ * - `condition: (T) -> Boolean` can NOT be evaluated server-side, so `findCached(condition)` always
+ *   scans.
+ * - Index queries are fast (use Redis sets), but still validate results to self-heal stale index
+ *   entries.
  */
 interface SimpleSetRedisCache<T : Any> : Disposable, Initializable {
 
     suspend fun findCached(condition: (T) -> Boolean): Set<T>
     suspend fun getCachedById(id: String): T?
     suspend fun <V : Any> findByIndexCached(index: RedisSetIndex<T, V>, value: V): Set<T>
-    suspend fun <V : Any> findFirstByIndexCached(index: RedisSetIndex<T, V>, value: V): T? =
-        findByIndexCached(index, value).firstOrNull()
+    suspend fun <V : Any> findFirstByIndexCached(index: RedisSetIndex<T, V>, value: V): T? {
+        return findByIndexCached(index, value).firstOrNull()
+    }
 
     suspend fun add(element: T): Boolean
 
     suspend fun findCachedOrLoad(condition: (T) -> Boolean, loader: suspend () -> T): T
-    suspend fun <V : Any> findCachedByIndexOrLoad(index: RedisSetIndex<T, V>, value: V, loader: suspend () -> T): T
+    suspend fun <V : Any> findCachedByIndexOrLoad(
+        index: RedisSetIndex<T, V>,
+        value: V,
+        loader: suspend () -> T,
+    ): T
 
     suspend fun findCachedOrLoadNullable(condition: (T) -> Boolean, loader: suspend () -> T?): T?
     suspend fun <V : Any> findCachedByIndexOrLoadNullable(
         index: RedisSetIndex<T, V>,
         value: V,
-        loader: suspend () -> T?
+        loader: suspend () -> T?,
     ): T?
 
     suspend fun removeIf(predicate: (T) -> Boolean): Boolean

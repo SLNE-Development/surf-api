@@ -31,7 +31,7 @@ data class BooleanOrDefault private constructor(val value: Boolean?) {
     /**
      * Returns the configured boolean value, or [other] if this value is configured as `default`.
      */
-    infix fun or(other: Boolean) = value ?: other
+    infix fun or(other: Boolean): Boolean = value ?: other
 
     companion object {
 
@@ -57,7 +57,8 @@ data class BooleanOrDefault private constructor(val value: Boolean?) {
     /**
      * Configurate serializer for [BooleanOrDefault].
      */
-    internal object Serializer : ScalarSerializer.Annotated<BooleanOrDefault>(BooleanOrDefault::class.java) {
+    internal object Serializer :
+        ScalarSerializer.Annotated<BooleanOrDefault>(BooleanOrDefault::class.java) {
         private const val DEFAULT_VALUE = "default"
 
         override fun deserialize(type: AnnotatedType, obj: Any): BooleanOrDefault {
@@ -67,22 +68,35 @@ data class BooleanOrDefault private constructor(val value: Boolean?) {
                 }
 
                 try {
-                    return BooleanOrDefault(BooleanUtils.toBoolean(obj.lowercase(), "true", "false"))
+                    return BooleanOrDefault(
+                        BooleanUtils.toBoolean(
+                            obj.lowercase(),
+                            "true",
+                            "false",
+                        ),
+                    )
                 } catch (e: IllegalArgumentException) {
                     throw SerializationException(
                         BooleanOrDefault::class.java,
                         "$obj($type) is not a boolean or '$DEFAULT_VALUE'",
-                        e
+                        e,
                     )
                 }
             } else if (obj is Boolean) {
                 return BooleanOrDefault(obj)
             }
 
-            throw SerializationException(BooleanOrDefault::class.java, "$obj($type) is not a boolean or '$DEFAULT_VALUE'")
+            throw SerializationException(
+                BooleanOrDefault::class.java,
+                "$obj($type) is not a boolean or '$DEFAULT_VALUE'",
+            )
         }
 
-        override fun serialize(type: AnnotatedType, item: BooleanOrDefault, typeSupported: Predicate<Class<*>>): Any {
+        override fun serialize(
+            type: AnnotatedType,
+            item: BooleanOrDefault,
+            typeSupported: Predicate<Class<*>>,
+        ): Any {
             return item.value ?: DEFAULT_VALUE
         }
     }

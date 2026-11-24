@@ -7,17 +7,18 @@ import org.bukkit.inventory.ItemStack
 /**
  * A simplified handler for modifying the lore of an item stack in a Bukkit-based environment.
  *
- * This interface extends [SurfPaperPacketLoreHandlerSimple] and provides a streamlined version
- * of the `handleLore` method that does not require interacting with the persistent data container
- * or the item stack itself. Implementations can focus solely on modifying the list of lore components.
+ * This interface extends [SurfPaperPacketLoreHandlerSimple] and provides a streamlined version of
+ * the `handleLore` method that does not require interacting with the persistent data container or
+ * the item stack itself. Implementations can focus solely on modifying the list of lore components.
  *
- * This is particularly useful when additional item metadata or item-specific context is unnecessary.
+ * This is particularly useful when additional item metadata or item-specific context is
+ * unnecessary.
  */
 fun interface SurfPaperPacketLoreHandlerSimple : SurfPaperPacketLoreHandler {
     override fun handleLore(
         loreToDisplay: MutableList<Component>,
         pdc: PersistentDataContainerView,
-        itemStack: ItemStack
+        itemStack: ItemStack,
     ) {
         handleLore(loreToDisplay)
     }

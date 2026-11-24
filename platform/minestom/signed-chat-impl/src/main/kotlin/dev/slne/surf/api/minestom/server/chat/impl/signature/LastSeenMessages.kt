@@ -5,7 +5,7 @@ import dev.slne.surf.api.minestom.server.chat.impl.signature.LastSeenMessages.Up
 import net.minestom.server.crypto.MessageSignature
 import net.minestom.server.network.packet.client.play.ClientChatMessagePacket
 import net.minestom.server.network.packet.client.play.ClientSignedCommandChatPacket
-import java.util.BitSet
+import java.util.*
 import net.minestom.server.crypto.LastSeenMessages as NetworkLastSeenMessages
 
 @JvmInline
@@ -37,31 +37,37 @@ internal value class LastSeenMessages(val entries: List<MessageSignature>) {
         }
     }
 
-    fun pack(cache: MessageSignatureCache): NetworkLastSeenMessages.Packed =
-        NetworkLastSeenMessages.Packed(entries.map { it.pack(cache) })
+    fun pack(cache: MessageSignatureCache): NetworkLastSeenMessages.Packed {
+        return NetworkLastSeenMessages.Packed(entries.map { it.pack(cache) })
+    }
 
     data class Update(
         val offset: Int,
         val acknowledged: BitSet,
-        val checksum: Byte
+        val checksum: Byte,
     ) {
         companion object {
             const val IGNORE_CHECKSUM = 0.toByte()
 
-            fun fromPacket(packet: ClientChatMessagePacket) = Update(
-                offset = packet.ackOffset(),
-                acknowledged = packet.ackList(),
-                checksum = packet.checksum()
-            )
+            fun fromPacket(packet: ClientChatMessagePacket): LastSeenMessages.Update {
+                return Update(
+                    offset = packet.ackOffset(),
+                    acknowledged = packet.ackList(),
+                    checksum = packet.checksum(),
+                )
+            }
 
-            fun fromPacket(packet: ClientSignedCommandChatPacket) = Update(
-                offset = packet.lastSeenMessages().offset(),
-                acknowledged = packet.lastSeenMessages().acknowledged(),
-                checksum = packet.checksum()
-            )
+            fun fromPacket(packet: ClientSignedCommandChatPacket): LastSeenMessages.Update {
+                return Update(
+                    offset = packet.lastSeenMessages().offset(),
+                    acknowledged = packet.lastSeenMessages().acknowledged(),
+                    checksum = packet.checksum(),
+                )
+            }
         }
 
-        fun verifyChecksum(lastSeen: LastSeenMessages): Boolean =
-            checksum == IGNORE_CHECKSUM || checksum == lastSeen.computeChecksum()
+        fun verifyChecksum(lastSeen: LastSeenMessages): Boolean {
+            return checksum == IGNORE_CHECKSUM || checksum == lastSeen.computeChecksum()
+        }
     }
 }

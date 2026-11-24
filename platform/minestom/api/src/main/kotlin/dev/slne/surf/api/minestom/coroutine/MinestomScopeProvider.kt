@@ -1,10 +1,6 @@
 package dev.slne.surf.api.minestom.coroutine
 
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.*
 import net.minestom.server.MinecraftServer
 
 internal object MinestomScopeProvider {

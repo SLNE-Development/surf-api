@@ -22,9 +22,11 @@ internal object UuidParser : ArgumentType<UUID> {
 
     override fun parse(reader: StringReader): UUID {
         val start = reader.cursor
+
         while (reader.canRead() && isAllowed(reader.peek())) {
             reader.skip()
         }
+
         val text = reader.string.substring(start, reader.cursor)
 
         return parseDashedUuid(text) ?: run {
@@ -33,8 +35,10 @@ internal object UuidParser : ArgumentType<UUID> {
         }
     }
 
-    private fun isAllowed(character: Char): Boolean = character in '0'..'9' ||
+    private fun isAllowed(character: Char): Boolean {
+        return character in '0'..'9' ||
             character in 'a'..'f' || character in 'A'..'F' || character == '-'
+    }
 }
 
 /**
@@ -46,16 +50,21 @@ internal object UuidParser : ArgumentType<UUID> {
 internal fun parseDashedUuid(text: String): UUID? {
     var group = 0
     var groupLength = 0
+
     for (character in text) {
         if (character == '-') {
             if (groupLength == 0 || ++group >= UUID_GROUP_WIDTHS.size) return null
+
             groupLength = 0
             continue
         }
+
         val hex = character in '0'..'9' || character in 'a'..'f' || character in 'A'..'F'
         if (!hex || ++groupLength > UUID_GROUP_WIDTHS[group]) return null
     }
+
     if (group != UUID_GROUP_WIDTHS.lastIndex || groupLength == 0) return null
+
     return UUID.fromString(text)
 }
 
@@ -66,8 +75,15 @@ private val UUID_GROUP_WIDTHS = intArrayOf(8, 4, 4, 4, 12)
  */
 internal fun wrapDegrees(degrees: Float): Float {
     var wrapped = degrees % 360f
-    if (wrapped >= 180f) wrapped -= 360f
-    if (wrapped < -180f) wrapped += 360f
+
+    if (wrapped >= 180f) {
+        wrapped -= 360f
+    }
+
+    if (wrapped < -180f) {
+        wrapped += 360f
+    }
+
     return wrapped
 }
 
@@ -83,17 +99,22 @@ internal object AngleParser : ArgumentType<Float> {
 
     override fun parse(reader: StringReader): Float = read(reader, yaw = 0f)
 
-    override fun <S> parse(reader: StringReader, source: S): Float =
-        read(reader, (source as? Entity)?.position?.yaw ?: 0f)
+    override fun <S> parse(reader: StringReader, source: S): Float {
+        return read(reader, (source as? Entity)?.position?.yaw ?: 0f)
+    }
 
     private fun read(reader: StringReader, yaw: Float): Float {
         if (!reader.canRead()) throw INCOMPLETE.createWithContext(reader)
 
         val relative = reader.peek() == '~'
-        if (relative) reader.skip()
+
+        if (relative) {
+            reader.skip()
+        }
 
         val start = reader.cursor
         val value = if (reader.canRead() && reader.peek() != ' ') reader.readFloat() else 0f
+
         if (!value.isFinite()) {
             reader.cursor = start
             throw INVALID.createWithContext(reader)
@@ -115,8 +136,12 @@ internal object TimeParser : ArgumentType<Duration> {
     private val INVALID_UNIT = DynamicCommandExceptionType { unit ->
         LiteralMessage("Invalid unit '$unit'; expected 'd', 's', 't' or none")
     }
-    private val NEGATIVE = SimpleCommandExceptionType(LiteralMessage("Duration must not be negative"))
-    private val OUT_OF_RANGE = SimpleCommandExceptionType(LiteralMessage("Duration is out of range"))
+    private val NEGATIVE = SimpleCommandExceptionType(
+        LiteralMessage("Duration must not be negative"),
+    )
+    private val OUT_OF_RANGE = SimpleCommandExceptionType(
+        LiteralMessage("Duration is out of range"),
+    )
     private val MAX_TICKS = Long.MAX_VALUE / MinecraftServer.TICK_MS
 
     override fun parse(reader: StringReader): Duration {
@@ -130,16 +155,19 @@ internal object TimeParser : ArgumentType<Duration> {
         }
 
         val scaled = amount * factor
+
         if (!scaled.isFinite()) {
             reader.cursor = start
             throw OUT_OF_RANGE.createWithContext(reader)
         }
 
         val ticks = Math.round(scaled.toDouble())
+
         if (ticks < 0) {
             reader.cursor = start
             throw NEGATIVE.createWithContext(reader)
         }
+
         if (ticks > MAX_TICKS) {
             reader.cursor = start
             throw OUT_OF_RANGE.createWithContext(reader)
@@ -148,11 +176,13 @@ internal object TimeParser : ArgumentType<Duration> {
         return Duration.ofMillis(ticks * MinecraftServer.TICK_MS)
     }
 
-    private fun unitFactor(unit: Char?): Int? = when (unit) {
-        null, 't' -> 1
-        's' -> 20
-        'd' -> 24000
-        else -> null
+    private fun unitFactor(unit: Char?): Int? {
+        return when (unit) {
+            null, 't' -> 1
+            's' -> 20
+            'd' -> 24000
+            else -> null
+        }
     }
 }
 
@@ -167,6 +197,7 @@ internal object IntegerRangeParser : ArgumentType<Range.Int> {
     override fun parse(reader: StringReader): Range.Int {
         val start = reader.cursor
         val (min, max) = readRange(reader, String::toIntOrNull)
+
         return try {
             Range.Int(min ?: Int.MIN_VALUE, max ?: Int.MAX_VALUE)
         } catch (cause: IllegalArgumentException) {
@@ -187,6 +218,7 @@ internal object FloatRangeParser : ArgumentType<Range.Float> {
     override fun parse(reader: StringReader): Range.Float {
         val start = reader.cursor
         val (min, max) = readRange(reader, String::toFloatOrNull)
+
         return try {
             Range.Float(min ?: -Float.MAX_VALUE, max ?: Float.MAX_VALUE)
         } catch (cause: IllegalArgumentException) {
@@ -196,9 +228,15 @@ internal object FloatRangeParser : ArgumentType<Range.Float> {
     }
 }
 
-private val RANGE_EMPTY = SimpleCommandExceptionType(LiteralMessage("Expected value or range of values"))
-private val RANGE_INVALID = DynamicCommandExceptionType { value -> LiteralMessage("Invalid range value '$value'") }
-private val RANGE_INVERTED = SimpleCommandExceptionType(LiteralMessage("Range minimum must not exceed its maximum"))
+private val RANGE_EMPTY = SimpleCommandExceptionType(
+    LiteralMessage("Expected value or range of values"),
+)
+private val RANGE_INVALID = DynamicCommandExceptionType { value ->
+    LiteralMessage("Invalid range value '$value'")
+}
+private val RANGE_INVERTED = SimpleCommandExceptionType(
+    LiteralMessage("Range minimum must not exceed its maximum"),
+)
 
 /**
  * Reads a `lower..upper` range, converting each bound with [parse]. A bare value supplies both
@@ -224,6 +262,7 @@ private fun <T> readRange(reader: StringReader, parse: (String) -> T?): Pair<T?,
 
     fun parseBound(text: String): T? {
         if (text.isEmpty()) return null
+
         return parse(text) ?: run {
             reader.cursor = start
             throw RANGE_INVALID.createWithContext(reader, text)
@@ -240,17 +279,22 @@ private fun <T> readRange(reader: StringReader, parse: (String) -> T?): Pair<T?,
  */
 private fun readRangeBoundText(reader: StringReader): String {
     val start = reader.cursor
+
     if (reader.canRead() && reader.peek() == '-') {
         reader.skip()
     }
+
     while (reader.canRead() && reader.peek() in '0'..'9') {
         reader.skip()
     }
+
     if (reader.canRead() && reader.peek() == '.' && !(reader.canRead(2) && reader.peek(1) == '.')) {
         reader.skip()
+
         while (reader.canRead() && reader.peek() in '0'..'9') {
             reader.skip()
         }
     }
+
     return reader.string.substring(start, reader.cursor)
 }

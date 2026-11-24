@@ -27,9 +27,11 @@ inline fun CommandAPICommand.booleanArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Boolean>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    BooleanArgument(nodeName).setOptional(optional = optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        BooleanArgument(nodeName).setOptional(optional = optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.integerArgument(
     nodeName: String,
@@ -37,41 +39,51 @@ inline fun CommandAPICommand.integerArgument(
     max: Int = Int.MAX_VALUE,
     optional: Boolean = false,
     block: Argument<Int>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    IntegerArgument(nodeName, min, max).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        IntegerArgument(nodeName, min, max).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.stringArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<String>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    StringArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        StringArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.textArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<String>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    TextArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        TextArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.greedyStringArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<String>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    GreedyStringArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        GreedyStringArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.signedMessageArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<SignedMessage>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    SignedMessageArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        SignedMessageArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.literalArgument(
     nodeName: String,
@@ -83,43 +95,53 @@ inline fun CommandAPICommand.playerArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Player>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    PlayerArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        PlayerArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.playersArgument(
     nodeName: String,
     allowEmpty: Boolean = false,
     optional: Boolean = false,
     block: Argument<List<Player>>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    PlayersArgument(nodeName, allowEmpty).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        PlayersArgument(nodeName, allowEmpty).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.entityArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Entity>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    EntityArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        EntityArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.entitiesArgument(
     nodeName: String,
     allowEmpty: Boolean = false,
     optional: Boolean = false,
     block: Argument<List<Entity>>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    EntitiesArgument(nodeName, allowEmpty).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        EntitiesArgument(nodeName, allowEmpty).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.entityTypeArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<EntityType>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    EntityTypeArgument(nodeName).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        EntityTypeArgument(nodeName).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.locationArgument(
     nodeName: String,
@@ -131,15 +153,17 @@ inline fun CommandAPICommand.location2DArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Vec>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(Position2DArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(Position2DArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.blockPositionArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Vec>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(BlockPositionArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(BlockPositionArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.rotationArgument(
     nodeName: String,
@@ -163,8 +187,9 @@ inline fun CommandAPICommand.resourceLocationArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Key>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(ResourceLocationArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(ResourceLocationArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.timeArgument(
     nodeName: String,
@@ -206,8 +231,9 @@ inline fun CommandAPICommand.potionEffectArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<PotionEffect>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(PotionEffectArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(PotionEffectArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.biomeArgument(
     nodeName: String,
@@ -219,8 +245,9 @@ inline fun CommandAPICommand.enchantmentArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<RegistryKey<Enchantment>>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(EnchantmentArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(EnchantmentArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun <T> CommandAPICommand.resourceArgument(
     nodeName: String,
@@ -228,9 +255,11 @@ inline fun <T> CommandAPICommand.resourceArgument(
     registry: Registry<T>,
     optional: Boolean = false,
     block: Argument<RegistryKey<T>>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    ResourceArgument(nodeName, identifier, registry).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        ResourceArgument(nodeName, identifier, registry).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.instanceArgument(
     nodeName: String,
@@ -244,9 +273,11 @@ inline fun CommandAPICommand.longArgument(
     max: Long = Long.MAX_VALUE,
     optional: Boolean = false,
     block: Argument<Long>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    LongArgument(nodeName, min, max).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        LongArgument(nodeName, min, max).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.floatArgument(
     nodeName: String,
@@ -254,9 +285,11 @@ inline fun CommandAPICommand.floatArgument(
     max: Float = Float.MAX_VALUE,
     optional: Boolean = false,
     block: Argument<Float>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    FloatArgument(nodeName, min, max).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        FloatArgument(nodeName, min, max).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.doubleArgument(
     nodeName: String,
@@ -264,9 +297,11 @@ inline fun CommandAPICommand.doubleArgument(
     max: Double = Double.MAX_VALUE,
     optional: Boolean = false,
     block: Argument<Double>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    DoubleArgument(nodeName, min, max).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        DoubleArgument(nodeName, min, max).setOptional(optional).apply(block),
+    )
+}
 
 inline fun <E : Enum<E>> CommandAPICommand.enumArgument(
     nodeName: String,
@@ -274,9 +309,11 @@ inline fun <E : Enum<E>> CommandAPICommand.enumArgument(
     noinline formatter: (E) -> String = { value -> value.name.lowercase() },
     optional: Boolean = false,
     block: Argument<E>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    EnumArgument(nodeName, values, formatter).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        EnumArgument(nodeName, values, formatter).setOptional(optional).apply(block),
+    )
+}
 
 inline fun CommandAPICommand.uuidArgument(
     nodeName: String,
@@ -288,15 +325,17 @@ inline fun CommandAPICommand.integerRangeArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Range.Int>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(IntegerRangeArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(IntegerRangeArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.floatRangeArgument(
     nodeName: String,
     optional: Boolean = false,
     block: Argument<Range.Float>.() -> Unit = {},
-): CommandAPICommand =
-    withArguments(FloatRangeArgument(nodeName).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(FloatRangeArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.multiLiteralArgument(
     nodeName: String,
@@ -458,8 +497,9 @@ inline fun <T> CommandTree.resourceArgument(
     registry: Registry<T>,
     optional: Boolean = false,
     block: Argument<RegistryKey<T>>.() -> Unit = {},
-): CommandTree =
-    then(ResourceArgument(nodeName, identifier, registry).setOptional(optional).apply(block))
+): CommandTree {
+    return then(ResourceArgument(nodeName, identifier, registry).setOptional(optional).apply(block))
+}
 
 inline fun CommandTree.instanceArgument(
     nodeName: String,
@@ -701,8 +741,9 @@ inline fun <P, T> Argument<P>.resourceArgument(
     registry: Registry<T>,
     optional: Boolean = false,
     block: Argument<RegistryKey<T>>.() -> Unit = {},
-): Argument<P> =
-    then(ResourceArgument(nodeName, identifier, registry).setOptional(optional).apply(block))
+): Argument<P> {
+    return then(ResourceArgument(nodeName, identifier, registry).setOptional(optional).apply(block))
+}
 
 inline fun <T> Argument<T>.instanceArgument(
     nodeName: String,
@@ -795,15 +836,21 @@ inline fun <T, B> CommandAPICommand.customArgument(
     noinline parser: (CustomArgumentInfo<B>) -> T,
     optional: Boolean? = null,
     block: Argument<T>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    CustomArgument(base, parser = parser).apply {
-        optional?.let { override ->
-            setOptional(false)
-            if (override) setOptional(true)
-        }
-        block()
-    },
-)
+): CommandAPICommand {
+    return withArguments(
+        CustomArgument(base, parser = parser).apply {
+            if (optional != null) {
+                setOptional(false)
+
+                if (optional) {
+                    setOptional(true)
+                }
+            }
+
+            block()
+        },
+    )
+}
 
 inline fun <T> CommandAPICommand.listArgument(
     nodeName: String,
@@ -812,24 +859,32 @@ inline fun <T> CommandAPICommand.listArgument(
     allowEmpty: Boolean = false,
     optional: Boolean = false,
     block: Argument<List<T>>.() -> Unit = {},
-): CommandAPICommand = withArguments(
-    ListArgument(nodeName, element, delimiter, allowEmpty).setOptional(optional).apply(block),
-)
+): CommandAPICommand {
+    return withArguments(
+        ListArgument(nodeName, element, delimiter, allowEmpty).setOptional(optional).apply(block),
+    )
+}
 
 inline fun <T, B> CommandTree.customArgument(
     base: Argument<B>,
     noinline parser: (CustomArgumentInfo<B>) -> T,
     optional: Boolean? = null,
     block: Argument<T>.() -> Unit = {},
-): CommandTree = then(
-    CustomArgument(base, parser = parser).apply {
-        optional?.let { override ->
-            setOptional(false)
-            if (override) setOptional(true)
-        }
-        block()
-    },
-)
+): CommandTree {
+    return then(
+        CustomArgument(base, parser = parser).apply {
+            if (optional != null) {
+                setOptional(false)
+
+                if (optional) {
+                    setOptional(true)
+                }
+            }
+
+            block()
+        },
+    )
+}
 
 inline fun <T> CommandTree.listArgument(
     nodeName: String,
@@ -838,24 +893,32 @@ inline fun <T> CommandTree.listArgument(
     allowEmpty: Boolean = false,
     optional: Boolean = false,
     block: Argument<List<T>>.() -> Unit = {},
-): CommandTree = then(
-    ListArgument(nodeName, element, delimiter, allowEmpty).setOptional(optional).apply(block),
-)
+): CommandTree {
+    return then(
+        ListArgument(nodeName, element, delimiter, allowEmpty).setOptional(optional).apply(block),
+    )
+}
 
 inline fun <P, T, B> Argument<P>.customArgument(
     base: Argument<B>,
     noinline parser: (CustomArgumentInfo<B>) -> T,
     optional: Boolean? = null,
     block: Argument<T>.() -> Unit = {},
-): Argument<P> = then(
-    CustomArgument(base, parser = parser).apply {
-        optional?.let { override ->
-            setOptional(false)
-            if (override) setOptional(true)
-        }
-        block()
-    },
-)
+): Argument<P> {
+    return then(
+        CustomArgument(base, parser = parser).apply {
+            if (optional != null) {
+                setOptional(false)
+
+                if (optional) {
+                    setOptional(true)
+                }
+            }
+
+            block()
+        },
+    )
+}
 
 inline fun <P, T> Argument<P>.listArgument(
     nodeName: String,
@@ -864,6 +927,8 @@ inline fun <P, T> Argument<P>.listArgument(
     allowEmpty: Boolean = false,
     optional: Boolean = false,
     block: Argument<List<T>>.() -> Unit = {},
-): Argument<P> = then(
-    ListArgument(nodeName, element, delimiter, allowEmpty).setOptional(optional).apply(block),
-)
+): Argument<P> {
+    return then(
+        ListArgument(nodeName, element, delimiter, allowEmpty).setOptional(optional).apply(block),
+    )
+}

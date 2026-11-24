@@ -93,9 +93,11 @@ internal fun signableArgumentsOf(
     val values = LinkedHashMap<String, String>()
 
     var context: CommandContextBuilder<CommandSender>? = parse.context
+
     while (context != null) {
-        context.nodes.forEach { parsed ->
+        for (parsed in context.nodes) {
             val node = parsed.node
+
             if (node is ArgumentCommandNode<*, *> && node.type.isSignable()) {
                 values[node.name] = input.substring(parsed.range.start, parsed.range.end)
             }
@@ -118,10 +120,13 @@ fun signaturesCoverArguments(
     values: Map<String, String>,
 ): Boolean {
     val entries = signatures.entries()
+
     return entries.size == values.size && entries.all { entry -> entry.name() in values }
 }
 
-private fun ArgumentType<*>.isSignable(): Boolean = when (this) {
-    is SuggestingArgumentType -> delegate is SignedMessageArgumentType
-    else -> this is SignedMessageArgumentType
+private fun ArgumentType<*>.isSignable(): Boolean {
+    return when (this) {
+        is SuggestingArgumentType -> delegate is SignedMessageArgumentType
+        else -> this is SignedMessageArgumentType
+    }
 }

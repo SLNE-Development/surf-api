@@ -2,6 +2,7 @@ package dev.slne.surf.api.messages.actionbar
 
 import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import dev.slne.surf.api.spring.surfBean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -9,7 +10,6 @@ import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import dev.slne.surf.api.spring.SurfApiBean
 
 @SurfApiBean
 interface ActionBarService {
@@ -35,10 +35,12 @@ interface ActionBarService {
      * @param audience The audience that should receive the action bar.
      * @param duration The total duration for which the action bar should be updated.
      * @param interval The delay between two action bar updates.
-     * @param fadeOut Whether the last action bar should fade out naturally instead of being cleared.
+     * @param fadeOut Whether the last action bar should fade out naturally instead of being
+     * cleared.
      * @param autoCancelPlayer Whether to stop automatically when a player audience goes offline.
      * @param computation Computes the component to send for the current tick.
-     * @param afterTick Optional callback invoked after each tick, regardless of whether a component was sent.
+     * @param afterTick Optional callback invoked after each tick, regardless of whether a component
+     * was sent.
      * @param onFinish Optional callback invoked when the action bar task finishes.
      *
      * @return The launched action bar job.
@@ -54,7 +56,7 @@ interface ActionBarService {
         autoCancelPlayer: Boolean = true,
         computation: () -> Component,
         afterTick: (() -> Unit)? = null,
-        onFinish: ((ActionBarFinishReason) -> Unit)? = null
+        onFinish: ((ActionBarFinishReason) -> Unit)? = null,
     ): Job
 
     @InternalSurfApi
@@ -102,18 +104,20 @@ fun Audience.sendActionBar(
     autoCancelPlayer: Boolean = true,
     textComputation: SurfComponentBuilder.() -> Unit,
     afterTick: (() -> Unit)? = null,
-    onFinish: ((ActionBarFinishReason) -> Unit)? = null
-) = ActionBarService.instance.sendActionBar(
-    scope,
-    this,
-    duration,
-    interval,
-    fadeOut,
-    autoCancelPlayer,
-    { SurfComponentBuilder(textComputation) },
-    afterTick,
-    onFinish
-)
+    onFinish: ((ActionBarFinishReason) -> Unit)? = null,
+): Job {
+    return ActionBarService.instance.sendActionBar(
+        scope,
+        this,
+        duration,
+        interval,
+        fadeOut,
+        autoCancelPlayer,
+        { SurfComponentBuilder(textComputation) },
+        afterTick,
+        onFinish,
+    )
+}
 
 /**
  * Sends a repeatedly updated action bar to this [Audience].
@@ -143,15 +147,17 @@ fun Audience.sendActionBar(
     interval: Duration = 1.seconds,
     fadeOut: Boolean = false,
     autoCancelPlayer: Boolean = true,
-    textComputation: SurfComponentBuilder.() -> Unit
-) = ActionBarService.instance.sendActionBar(
-    scope,
-    this,
-    duration,
-    interval,
-    fadeOut,
-    autoCancelPlayer,
-    { SurfComponentBuilder(textComputation) },
-    null,
-    null
-)
+    textComputation: SurfComponentBuilder.() -> Unit,
+): Job {
+    return ActionBarService.instance.sendActionBar(
+        scope,
+        this,
+        duration,
+        interval,
+        fadeOut,
+        autoCancelPlayer,
+        { SurfComponentBuilder(textComputation) },
+        null,
+        null,
+    )
+}

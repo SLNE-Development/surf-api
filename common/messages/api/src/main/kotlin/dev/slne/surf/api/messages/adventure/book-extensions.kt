@@ -36,7 +36,7 @@ inline fun book(block: @BookDsl Book.Builder.() -> Unit): Book {
  * @param block The configuration block for building the book.
  * @return A configured [Book] instance.
  */
-inline fun Book(block: @BookDsl Book.Builder.() -> Unit) = book(block)
+inline fun Book(block: @BookDsl Book.Builder.() -> Unit): Book = book(block)
 
 /**
  * Sets the title of the book using a component builder.

@@ -29,7 +29,9 @@ import kotlin.time.Duration.Companion.seconds
 class MicroserviceConsoleListenerTest {
     private val uncaught = CopyOnWriteArrayList<Throwable>()
     private val scope = CoroutineScope(
-        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, exception -> uncaught += exception },
+        SupervisorJob() +
+            Dispatchers.Default +
+            CoroutineExceptionHandler { _, exception -> uncaught += exception },
     )
     private val console = PipedOutputStream()
     private val input = PipedInputStream(console)
@@ -55,6 +57,7 @@ class MicroserviceConsoleListenerTest {
         command("exit") { requestShutdown() },
         command("linger") {
             lingerStarted.complete(Unit)
+
             try {
                 awaitCancellation()
             } finally {
@@ -70,7 +73,13 @@ class MicroserviceConsoleListenerTest {
         },
     )
     private val listener = MicroserviceConsoleListener(
-        dispatcher = MicroserviceCommandDispatcher { label -> commands.firstOrNull { it.matches(label) } },
+        dispatcher = MicroserviceCommandDispatcher { label ->
+            commands.firstOrNull {
+                it.matches(
+                    label,
+                )
+            }
+        },
         requestShutdown = { shutdownRequest.complete(Unit) },
         stopTimeout = STOP_TIMEOUT,
         input = input,
@@ -128,8 +137,9 @@ class MicroserviceConsoleListenerTest {
         type("stuck\n")
         withTimeout(TIMEOUT) { stuckStarted.await() }
 
-        // The lifecycle stops the endpoints in a non-cancellable context. Awaiting it from outside keeps withTimeout
-        // effective, so a stop() that never returns fails the test instead of hanging it.
+        // The lifecycle stops the endpoints in a non-cancellable context. Awaiting it from outside
+        // keeps withTimeout effective, so a stop() that never returns fails the test instead of
+        // hanging it.
         val stop = scope.async { withContext(NonCancellable) { listener.stop() } }
         withTimeout(TIMEOUT) { stop.await() }
     }
@@ -139,10 +149,12 @@ class MicroserviceConsoleListenerTest {
         console.flush()
     }
 
-    private fun command(name: String, block: suspend MicroserviceCommandContext.(List<String>) -> Unit) =
-        object : MicroserviceCommand(name) {
-            override suspend fun MicroserviceCommandContext.execute(args: List<String>) = block(args)
-        }
+    private fun command(
+        name: String,
+        block: suspend MicroserviceCommandContext.(List<String>) -> Unit,
+    ) = object : MicroserviceCommand(name) {
+        override suspend fun MicroserviceCommandContext.execute(args: List<String>) = block(args)
+    }
 
     private companion object {
         val TIMEOUT = 5.seconds

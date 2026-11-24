@@ -12,8 +12,10 @@ typealias SerializableMatrix2d = @Serializable(with = SpongeMatrix2dSerializer::
 
 object SpongeMatrix2dSerializer : KSerializer<Matrix2d> {
     private val arraySerializer = DoubleArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surf.api.sponge.Matrix2d", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surf.api.sponge.Matrix2d",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -25,6 +27,7 @@ object SpongeMatrix2dSerializer : KSerializer<Matrix2d> {
     override fun deserialize(decoder: Decoder): Matrix2d {
         val array = decoder.decodeSerializableValue(arraySerializer)
         require(array.size == 4) { "Expected array of size 4, got ${array.size}" }
+
         return Matrix2d(
             array[0], array[1],
             array[2], array[3],

@@ -25,7 +25,7 @@ internal object NatsEnvironment {
         converter = { Path(it) },
         validation = {
             require("Credentials file path does not exist") { it.exists() }
-        }
+        },
     )
 
     val SURF_NATS_CONNECTION_NAME by env.optional()

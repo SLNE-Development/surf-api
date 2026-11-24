@@ -17,7 +17,8 @@ import java.util.function.Predicate
  *
  * Serialization:
  * - The `Serializer` handles the string representation of the value for use in configurations.
- * - Serialized values include explicit strings or an internal `__default__` marker for default representation.
+ * - Serialized values include explicit strings or an internal `__default__` marker for default
+ *   representation.
  *
  * Companion Object:
  * - Contains helper methods and a constant (`USE_DEFAULT`) for working with default behavior.
@@ -37,13 +38,14 @@ data class StringOrDefault private constructor(val value: String?) {
         @JvmField
         val USE_DEFAULT = StringOrDefault(null)
 
-        fun of(value: String) = StringOrDefault(value)
+        fun of(value: String): StringOrDefault = StringOrDefault(value)
     }
 
-    internal object Serializer : ScalarSerializer.Annotated<StringOrDefault>(StringOrDefault::class.java) {
+    internal object Serializer :
+        ScalarSerializer.Annotated<StringOrDefault>(StringOrDefault::class.java) {
         override fun deserialize(
             type: AnnotatedType?,
-            obj: Any?
+            obj: Any?,
         ): StringOrDefault? {
             val value = obj?.toString()
 
@@ -57,7 +59,7 @@ data class StringOrDefault private constructor(val value: String?) {
         override fun serialize(
             type: AnnotatedType?,
             item: StringOrDefault?,
-            typeSupported: Predicate<Class<*>?>?
+            typeSupported: Predicate<Class<*>?>?,
         ): Any {
             return item?.value ?: DEFAULT_MARKER
         }

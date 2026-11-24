@@ -11,17 +11,26 @@ import dev.slne.surf.microservice.runtime.spark.MicroserviceSpark
 internal fun builtinCommands(
     health: MicroserviceHealth,
     spark: MicroserviceSpark,
-): List<MicroserviceCommand> = listOf(ExitCommand(), HealthCommand(health), HelpCommand(), SparkCommand(spark))
+): List<MicroserviceCommand> {
+    return listOf(ExitCommand(), HealthCommand(health), HelpCommand(), SparkCommand(spark))
+}
 
 /**
- * Registers each of [commands] in [MicroserviceCommands] unless its name or one of its aliases is taken already.
+ * Registers each of [commands] in [MicroserviceCommands] unless its name or one of its aliases is
+ * taken already.
  *
  * @return the skipped commands, each with the first of its labels that was taken
  */
-internal fun registerBuiltinCommands(commands: List<MicroserviceCommand>): Map<MicroserviceCommand, String> {
+internal fun registerBuiltinCommands(
+    commands: List<MicroserviceCommand>,
+): Map<MicroserviceCommand, String> {
     val skipped = LinkedHashMap<MicroserviceCommand, String>()
+
     for (command in commands) {
-        MicroserviceCommands.registerIfAbsent(command)?.let { takenLabel -> skipped[command] = takenLabel }
+        MicroserviceCommands.registerIfAbsent(command)?.let { takenLabel ->
+            skipped[command] = takenLabel
+        }
     }
+
     return skipped
 }

@@ -10,7 +10,7 @@ class SuspendCommandExecutionTest(name: String) : CommandAPICommand(name) {
             SuspendCommandExecutionSyntaxExceptionTest("syntaxException"),
             SuspendCommandExecutionUncheckedExceptionTest("uncheckedException"),
             SuspendCommandExecutionCancellationExceptionTest("cancellationException"),
-            SuspendCommandExecutionDelayWithSuspendArgTest("delayWithSuspendArg")
+            SuspendCommandExecutionDelayWithSuspendArgTest("delayWithSuspendArg"),
         )
     }
 }

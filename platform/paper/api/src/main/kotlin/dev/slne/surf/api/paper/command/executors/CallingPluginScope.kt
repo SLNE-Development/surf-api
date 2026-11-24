@@ -27,7 +27,9 @@ internal fun callingPluginCommandScope(): CoroutineScopeProvider {
     val plugin = callingPlugin()
     val scope by lazy {
         val runtime = SurfPaperPluginRuntime.get()
-        CoroutineScope(runtime.coroutineScope(plugin).coroutineContext + runtime.dispatchers(plugin).main)
+        CoroutineScope(
+            runtime.coroutineScope(plugin).coroutineContext + runtime.dispatchers(plugin).main,
+        )
     }
 
     return { scope }
@@ -43,7 +45,11 @@ private fun callingPlugin(): Plugin {
             .map { runCatching { JavaPlugin.getProvidingPlugin(it) }.getOrNull() }
             .filter { it != null && it != commandApiPlugin }
             .findFirst()
-            .orElseThrow { IllegalStateException("No plugin declares this command: no plugin class is on the stack") }
+            .orElseThrow {
+                IllegalStateException(
+                    "No plugin declares this command: no plugin class is on the stack",
+                )
+            }
     }!!
 }
 

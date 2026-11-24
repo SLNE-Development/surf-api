@@ -9,7 +9,6 @@ import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.util.chunkX
 import dev.slne.surf.api.paper.util.chunkZ
 import dev.slne.surf.api.paper.util.doInChunkAsync
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.bukkit.test.plugin
 import kotlinx.coroutines.withContext
 import org.bukkit.Location
@@ -29,164 +28,225 @@ class BlockPdcContainerTest(name: String) : CommandAPICommand(name) {
         copyFarCommand()
     }
 
-    private fun setCommand() = subcommand("set") {
-        locationArgument("location", LocationType.BLOCK_POSITION)
-        textArgument("key")
-        greedyStringArgument("value")
+    private fun setCommand(): CommandAPICommand {
+        return subcommand("set") {
+            locationArgument("location", LocationType.BLOCK_POSITION)
+            textArgument("key")
+            greedyStringArgument("value")
 
-        playerExecutorSuspend { sender, args ->
-            val location: Location by args
-            val key: String by args
-            val value: String by args
+            playerExecutorSuspend { sender, args ->
+                val location: Location by args
+                val key: String by args
+                val value: String by args
 
-            val world = location.world ?: run {
-                sender.sendMessage("Location has no world.")
-                return@playerExecutorSuspend
-            }
+                val world = location.world ?: run {
+                    sender.sendMessage("Location has no world.")
 
-            val nsKey = NamespacedKey(plugin, key)
+                    return@playerExecutorSuspend
+                }
 
-            world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
-                val block = chunk.getBlock(location.blockX and 15, location.blockY, location.blockZ and 15)
-                block.pdc().set(nsKey, PersistentDataType.STRING, value)
-            }
+                val nsKey = NamespacedKey(plugin, key)
 
-            sender.sendMessage("Set '$key' = '$value' on block at (${location.blockX}, ${location.blockY}, ${location.blockZ}).")
-        }
-    }
+                world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
+                    val block = chunk.getBlock(
+                        location.blockX and 15,
+                        location.blockY,
+                        location.blockZ and 15,
+                    )
+                    block.pdc().set(nsKey, PersistentDataType.STRING, value)
+                }
 
-    private fun getCommand() = subcommand("get") {
-        locationArgument("location", LocationType.BLOCK_POSITION)
-        textArgument("key")
-
-        playerExecutorSuspend { sender, args ->
-            val location: Location by args
-            val key: String by args
-
-            val world = location.world ?: run {
-                sender.sendMessage("Location has no world.")
-                return@playerExecutorSuspend
-            }
-
-            val nsKey = NamespacedKey(plugin, key)
-
-            val result = world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
-                val block = chunk.getBlock(location.blockX and 15, location.blockY, location.blockZ and 15)
-                block.pdc().get(nsKey, PersistentDataType.STRING)
-            }
-
-            if (result != null) {
-                sender.sendMessage("Block PDC [$key] = '$result' at (${location.blockX}, ${location.blockY}, ${location.blockZ}).")
-            } else {
-                sender.sendMessage("No value for key '$key' on block at (${location.blockX}, ${location.blockY}, ${location.blockZ}).")
+                sender.sendMessage(
+                    "Set '$key' = '$value' on block at (${location.blockX}, ${location.blockY}, ${location.blockZ}).",
+                )
             }
         }
     }
 
-    private fun listCommand() = subcommand("list") {
-        locationArgument("location", LocationType.BLOCK_POSITION)
+    private fun getCommand(): CommandAPICommand {
+        return subcommand("get") {
+            locationArgument("location", LocationType.BLOCK_POSITION)
+            textArgument("key")
 
-        playerExecutorSuspend { sender, args ->
-            val location: Location by args
+            playerExecutorSuspend { sender, args ->
+                val location: Location by args
+                val key: String by args
 
-            val world = location.world ?: run {
-                sender.sendMessage("Location has no world.")
-                return@playerExecutorSuspend
-            }
+                val world = location.world ?: run {
+                    sender.sendMessage("Location has no world.")
 
-            val keys = world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
-                val block = chunk.getBlock(location.blockX and 15, location.blockY, location.blockZ and 15)
-                block.pdc().keys.map { it.toString() }
-            }
+                    return@playerExecutorSuspend
+                }
 
-            if (keys.isEmpty()) {
-                sender.sendMessage("Block PDC at (${location.blockX}, ${location.blockY}, ${location.blockZ}) is empty.")
-            } else {
-                sender.sendMessage("Block PDC keys at (${location.blockX}, ${location.blockY}, ${location.blockZ}) [${keys.size}]:")
-                keys.forEach { sender.sendMessage("  - $it") }
+                val nsKey = NamespacedKey(plugin, key)
+
+                val result = world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
+                    val block = chunk.getBlock(
+                        location.blockX and 15,
+                        location.blockY,
+                        location.blockZ and 15,
+                    )
+                    block.pdc().get(nsKey, PersistentDataType.STRING)
+                }
+
+                if (result != null) {
+                    sender.sendMessage(
+                        "Block PDC [$key] = '$result' at (${location.blockX}, ${location.blockY}, ${location.blockZ}).",
+                    )
+                } else {
+                    sender.sendMessage(
+                        "No value for key '$key' on block at (${location.blockX}, ${location.blockY}, ${location.blockZ}).",
+                    )
+                }
             }
         }
     }
 
-    private fun clearCommand() = subcommand("clear") {
-        locationArgument("location", LocationType.BLOCK_POSITION)
+    private fun listCommand(): CommandAPICommand {
+        return subcommand("list") {
+            locationArgument("location", LocationType.BLOCK_POSITION)
 
-        playerExecutorSuspend { sender, args ->
-            val location: Location by args
+            playerExecutorSuspend { sender, args ->
+                val location: Location by args
 
-            val world = location.world ?: run {
-                sender.sendMessage("Location has no world.")
-                return@playerExecutorSuspend
+                val world = location.world ?: run {
+                    sender.sendMessage("Location has no world.")
+
+                    return@playerExecutorSuspend
+                }
+
+                val keys = world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
+                    val block = chunk.getBlock(
+                        location.blockX and 15,
+                        location.blockY,
+                        location.blockZ and 15,
+                    )
+                    block.pdc().keys.map { it.toString() }
+                }
+
+                if (keys.isEmpty()) {
+                    sender.sendMessage(
+                        "Block PDC at (${location.blockX}, ${location.blockY}, ${location.blockZ}) is empty.",
+                    )
+                } else {
+                    sender.sendMessage(
+                        "Block PDC keys at (${location.blockX}, ${location.blockY}, ${location.blockZ}) [${keys.size}]:",
+                    )
+                    for (key in keys) {
+                        sender.sendMessage("  - $key")
+                    }
+                }
             }
-
-            world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
-                val block = chunk.getBlock(location.blockX and 15, location.blockY, location.blockZ and 15)
-                block.pdc().clear()
-            }
-
-            sender.sendMessage("Cleared block PDC at (${location.blockX}, ${location.blockY}, ${location.blockZ}).")
         }
     }
 
-    private fun copyNearCommand() = subcommand("copy-near") {
-        locationArgument("source", LocationType.BLOCK_POSITION)
-        locationArgument("target", LocationType.BLOCK_POSITION)
+    private fun clearCommand(): CommandAPICommand {
+        return subcommand("clear") {
+            locationArgument("location", LocationType.BLOCK_POSITION)
 
-        playerExecutorSuspend { sender, args ->
-            val source: Location by args
-            val target: Location by args
+            playerExecutorSuspend { sender, args ->
+                val location: Location by args
 
-            if (!isSameWorld(sender, source, target)) {
-                return@playerExecutorSuspend
+                val world = location.world ?: run {
+                    sender.sendMessage("Location has no world.")
+
+                    return@playerExecutorSuspend
+                }
+
+                world.doInChunkAsync(location.chunkX, location.chunkZ) { chunk ->
+                    val block = chunk.getBlock(
+                        location.blockX and 15,
+                        location.blockY,
+                        location.blockZ and 15,
+                    )
+                    block.pdc().clear()
+                }
+
+                sender.sendMessage(
+                    "Cleared block PDC at (${location.blockX}, ${location.blockY}, ${location.blockZ}).",
+                )
             }
-
-            val chunkDistance = chunkDistance(source, target)
-            if (chunkDistance > 1) {
-                sender.sendMessage("copy-near expects source and target in the same region (chunk distance <= 1), got $chunkDistance.")
-                return@playerExecutorSuspend
-            }
-
-            runCopyTest(sender, source, target, "near")
         }
     }
 
-    private fun copyFarCommand() = subcommand("copy-far") {
-        locationArgument("source", LocationType.BLOCK_POSITION)
-        locationArgument("target", LocationType.BLOCK_POSITION)
+    private fun copyNearCommand(): CommandAPICommand {
+        return subcommand("copy-near") {
+            locationArgument("source", LocationType.BLOCK_POSITION)
+            locationArgument("target", LocationType.BLOCK_POSITION)
 
-        playerExecutorSuspend { sender, args ->
-            val source: Location by args
-            val target: Location by args
+            playerExecutorSuspend { sender, args ->
+                val source: Location by args
+                val target: Location by args
 
-            if (!isSameWorld(sender, source, target)) {
-                return@playerExecutorSuspend
+                if (!isSameWorld(sender, source, target)) {
+                    return@playerExecutorSuspend
+                }
+
+                val chunkDistance = chunkDistance(source, target)
+
+                if (chunkDistance > 1) {
+                    sender.sendMessage(
+                        "copy-near expects source and target in the same region (chunk distance <= 1), got $chunkDistance.",
+                    )
+
+                    return@playerExecutorSuspend
+                }
+
+                runCopyTest(sender, source, target, "near")
             }
+        }
+    }
 
-            val chunkDistance = chunkDistance(source, target)
-            if (chunkDistance < FAR_MIN_CHUNK_DISTANCE) {
-                sender.sendMessage("copy-far expects blocks to be far apart (chunk distance >= $FAR_MIN_CHUNK_DISTANCE), got $chunkDistance.")
-                return@playerExecutorSuspend
+    private fun copyFarCommand(): CommandAPICommand {
+        return subcommand("copy-far") {
+            locationArgument("source", LocationType.BLOCK_POSITION)
+            locationArgument("target", LocationType.BLOCK_POSITION)
+
+            playerExecutorSuspend { sender, args ->
+                val source: Location by args
+                val target: Location by args
+
+                if (!isSameWorld(sender, source, target)) {
+                    return@playerExecutorSuspend
+                }
+
+                val chunkDistance = chunkDistance(source, target)
+
+                if (chunkDistance < FAR_MIN_CHUNK_DISTANCE) {
+                    sender.sendMessage(
+                        "copy-far expects blocks to be far apart (chunk distance >= $FAR_MIN_CHUNK_DISTANCE), got $chunkDistance.",
+                    )
+
+                    return@playerExecutorSuspend
+                }
+
+                runCopyTest(sender, source, target, "far")
             }
-
-            runCopyTest(sender, source, target, "far")
         }
     }
 
     private fun isSameWorld(sender: Player, source: Location, target: Location): Boolean {
         if (source.world == null || target.world == null) {
             sender.sendMessage("Both source and target must include a world.")
+
             return false
         }
 
         if (source.world != target.world) {
             sender.sendMessage("Source and target must be in the same world.")
+
             return false
         }
 
         return true
     }
 
-    private suspend fun runCopyTest(sender: Player, source: Location, target: Location, label: String) {
+    private suspend fun runCopyTest(
+        sender: Player,
+        source: Location,
+        target: Location,
+        label: String,
+    ) {
         val value = "$label-copy-${System.currentTimeMillis()}"
 
         val result = runCatching {
@@ -206,21 +266,27 @@ class BlockPdcContainerTest(name: String) : CommandAPICommand(name) {
 
         result.onSuccess { copiedValue ->
             if (copiedValue == value) {
-                sender.sendMessage("Block PDC copy test [$label] passed. Value '$copiedValue' was copied successfully.")
+                sender.sendMessage(
+                    "Block PDC copy test [$label] passed. Value '$copiedValue' was copied successfully.",
+                )
             } else {
-                sender.sendMessage("Block PDC copy test [$label] failed. Expected '$value', got '${copiedValue ?: "null"}'.")
+                sender.sendMessage(
+                    "Block PDC copy test [$label] failed. Expected '$value', got '${copiedValue ?: "null"}'.",
+                )
             }
         }.onFailure { error ->
-            sender.sendMessage("Block PDC copy test [$label] failed with exception: ${error::class.simpleName}: ${error.message}")
+            sender.sendMessage(
+                "Block PDC copy test [$label] failed with exception: ${error::class.simpleName}: ${error.message}",
+            )
         }
     }
 
-    @OptIn(InternalSurfApi::class)
     private val dispatchers get() = SurfPaperPluginRuntime.get().dispatchers(plugin)
 
     private fun chunkDistance(source: Location, target: Location): Int {
         val dx = abs(source.chunkX - target.chunkX)
         val dz = abs(source.chunkZ - target.chunkZ)
+
         return max(dx, dz)
     }
 

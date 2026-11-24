@@ -27,7 +27,7 @@ class DefaultValueTest {
             $PROTO2
             package surf.test.v1;
             message Defaults { optional $type value = 1 [default = $literal]; }
-            """
+            """,
         ).generateFile("Defaults.kt")
     }
 
@@ -67,7 +67,11 @@ class DefaultValueTest {
             "bool     | false                | Boolean = false",
         ],
     )
-    fun `scalar defaults become typed Kotlin literals`(type: String, literal: String, expected: String) {
+    fun `scalar defaults become typed Kotlin literals`(
+        type: String,
+        literal: String,
+        expected: String,
+    ) {
         assertContainsAll(generate(type, literal), "public val `value`: $expected,")
     }
 
@@ -96,16 +100,31 @@ class DefaultValueTest {
             "int64   | 0777  | 511L",
         ],
     )
-    fun `the literal parser understands octal integers`(type: String, literal: String, expected: String) {
+    fun `the literal parser understands octal integers`(
+        type: String,
+        literal: String,
+        expected: String,
+    ) {
         assertEquals(expected, DefaultValues.scalar(ProtoType.get(type), literal).toString())
     }
 
     @ParameterizedTest(name = "{0} {1} is invalid")
     @CsvSource(
         delimiter = '|',
-        value = ["int32 | 2147483648", "uint32 | -1", "uint64 | 18446744073709551616", "int32 | 0x", "int32 | 09", "float | 1e40", "bool | yes"],
+        value = [
+            "int32 | 2147483648",
+            "uint32 | -1",
+            "uint64 | 18446744073709551616",
+            "int32 | 0x",
+            "int32 | 09",
+            "float | 1e40",
+            "bool | yes",
+        ],
     )
-    fun `the literal parser rejects out-of-range and malformed literals`(type: String, literal: String) {
+    fun `the literal parser rejects out-of-range and malformed literals`(
+        type: String,
+        literal: String,
+    ) {
         assertNull(DefaultValues.scalar(ProtoType.get(type), literal))
     }
 
@@ -117,10 +136,22 @@ class DefaultValueTest {
 
     @Test
     fun `bytes and string defaults keep the byte values of the source literal`() {
-        assertContainsAll(generate("bytes", "\"\u00e9\""), "public val `value`: ByteArray = byteArrayOf(-61, -87),")
-        assertContainsAll(generate("string", "\"\\xC3\\xA9\""), "public val `value`: String = \"\\u00e9\",")
-        assertContainsAll(generate("string", "\"\\u00e9\\U0001F600\""), "public val `value`: String = \"\\u00e9\\ud83d\\ude00\",")
-        assertContainsAll(generate("string", "\"ab\" 'cd'"), "public val `value`: String = \"abcd\",")
+        assertContainsAll(
+            generate("bytes", "\"\u00e9\""),
+            "public val `value`: ByteArray = byteArrayOf(-61, -87),",
+        )
+        assertContainsAll(
+            generate("string", "\"\\xC3\\xA9\""),
+            "public val `value`: String = \"\\u00e9\",",
+        )
+        assertContainsAll(
+            generate("string", "\"\\u00e9\\U0001F600\""),
+            "public val `value`: String = \"\\u00e9\\ud83d\\ude00\",",
+        )
+        assertContainsAll(
+            generate("string", "\"ab\" 'cd'"),
+            "public val `value`: String = \"abcd\",",
+        )
     }
 
     @Test
@@ -134,7 +165,10 @@ class DefaultValueTest {
 
     @Test
     fun `empty bytes default becomes an empty array`() {
-        assertContainsAll(generate("bytes", "\"\""), "public val `value`: ByteArray = byteArrayOf(),")
+        assertContainsAll(
+            generate("bytes", "\"\""),
+            "public val `value`: ByteArray = byteArrayOf(),",
+        )
     }
 
     @Test
@@ -153,7 +187,7 @@ class DefaultValueTest {
               optional string escapes = 5 [default = "a\012b\x0Ac"];
               optional string last = 6 [default = "Last"];
             }
-            """
+            """,
         ).generateFile("Defaults.kt")
         assertContainsAll(
             text,
@@ -170,7 +204,9 @@ class DefaultValueTest {
     fun `a raw literal that does not match the default wire-schema parsed is not used`() {
         val file = temp.resolve("surf/test/v1/raw.proto")
         file.parentFile.mkdirs()
-        file.writeText("message A {\n  optional string a = 1 [default = \"a\"];\n  optional string b = 2 [default = \"b\"];\n}\n")
+        file.writeText(
+            "message A {\n  optional string a = 1 [default = \"a\"];\n  optional string b = 2 [default = \"b\"];\n}\n",
+        )
         val second = Location.get(temp.path, "surf/test/v1/raw.proto").at(3, 3)
 
         val rawDefaults = RawDefaults()

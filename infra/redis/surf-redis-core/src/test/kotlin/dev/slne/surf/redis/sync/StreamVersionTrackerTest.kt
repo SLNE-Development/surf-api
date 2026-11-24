@@ -88,14 +88,21 @@ class StreamVersionTrackerTest {
             val threads = List(THREADS) {
                 Thread {
                     start.await()
-                    if (tracker.apply(1) == Outcome.APPLIED) applied.incrementAndGet()
+
+                    if (tracker.apply(1) == Outcome.APPLIED) {
+                        applied.incrementAndGet()
+                    }
+
                     done.countDown()
                 }.apply { start() }
             }
 
             start.countDown()
             assertTrue(done.await(30, TimeUnit.SECONDS), "workers did not finish")
-            threads.forEach { it.join() }
+
+            for (thread in threads) {
+                thread.join()
+            }
 
             assertEquals(1, applied.get(), "version 1 was applied by more than one caller")
             assertEquals(1, tracker.current)
@@ -128,21 +135,31 @@ class StreamVersionTrackerTest {
                             Thread.onSpinWait()
                             outcome = tracker.apply(version.toLong())
                         }
+
                         if (outcome == Outcome.APPLIED) {
                             synchronized(locks[version]) { appliedCounts[version]++ }
                         }
                     }
+
                     done.countDown()
                 }.apply { start() }
             }
 
             start.countDown()
             assertTrue(done.await(30, TimeUnit.SECONDS), "workers did not finish")
-            threads.forEach { it.join() }
+
+            for (thread in threads) {
+                thread.join()
+            }
 
             for (version in 1..VERSIONS) {
-                assertEquals(1, appliedCounts[version], "version $version was not applied exactly once")
+                assertEquals(
+                    1,
+                    appliedCounts[version],
+                    "version $version was not applied exactly once",
+                )
             }
+
             assertEquals(VERSIONS.toLong(), tracker.current)
         }
     }

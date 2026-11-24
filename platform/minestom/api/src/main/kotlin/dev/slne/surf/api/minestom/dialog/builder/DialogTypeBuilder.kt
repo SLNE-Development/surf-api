@@ -90,7 +90,10 @@ class DialogTypeBuilder {
         block: DialogMultiActionTypeBuilder.() -> Unit = {},
     ) {
         multiAction {
-            actions.forEach { action(it) }
+            for (actionBuilder in actions) {
+                action(actionBuilder)
+            }
+
             block()
         }
     }
@@ -105,6 +108,7 @@ class DialogTypeBuilder {
     internal fun build(metadata: DialogMetadata): Dialog {
         val factory = factory
         require(factory != null) { "Dialog type must be built" }
+
         return factory(metadata)
     }
 
@@ -148,13 +152,15 @@ class DialogTypeBuilder {
             this.buttonWidth = buttonWidth
         }
 
-        internal fun build(metadata: DialogMetadata): Dialog = Dialog.DialogList(
-            metadata,
-            HolderSet.Direct(dialogs.toList()),
-            exitAction,
-            columns,
-            buttonWidth
-        )
+        internal fun build(metadata: DialogMetadata): Dialog {
+            return Dialog.DialogList(
+                metadata,
+                HolderSet.Direct(dialogs.toList()),
+                exitAction,
+                columns,
+                buttonWidth,
+            )
+        }
     }
 
     /**
@@ -181,8 +187,9 @@ class DialogTypeBuilder {
             this.buttonWidth = buttonWidth
         }
 
-        internal fun build(metadata: DialogMetadata): Dialog =
-            Dialog.ServerLinks(metadata, exitAction, columns, buttonWidth)
+        internal fun build(metadata: DialogMetadata): Dialog {
+            return Dialog.ServerLinks(metadata, exitAction, columns, buttonWidth)
+        }
     }
 
     class DialogConfirmationTypeBuilder {

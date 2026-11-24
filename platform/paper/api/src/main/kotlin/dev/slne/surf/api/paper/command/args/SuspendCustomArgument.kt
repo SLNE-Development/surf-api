@@ -27,9 +27,14 @@ import kotlinx.coroutines.async
 abstract class SuspendCustomArgument<T, B>(
     private val base: Argument<B>,
     scope: CoroutineScope? = null,
-) : CustomArgument<Deferred<T>, B>(base, { _ ->
-    throw UnsupportedOperationException("Parsing is performed asynchronously via the overridden parse method")
-}) {
+) : CustomArgument<Deferred<T>, B>(
+    base,
+    { _ ->
+        throw UnsupportedOperationException(
+            "Parsing is performed asynchronously via the overridden parse method",
+        )
+    },
+) {
 
     private val scope: () -> CoroutineScope = if (scope != null) {
         { scope }
@@ -69,7 +74,7 @@ abstract class SuspendCustomArgument<T, B>(
     final override fun <CommandSourceStack : Any> parseArgument(
         cmdCtx: CommandContext<CommandSourceStack>,
         key: String,
-        previousArgs: CommandArguments
+        previousArgs: CommandArguments,
     ): Deferred<T> {
         val customResult = CommandAPIHandler.getRawArgumentInput(cmdCtx, key)
         val parsedInput = base.parseArgument(cmdCtx, key, previousArgs)

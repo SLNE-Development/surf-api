@@ -69,11 +69,17 @@ class RegistryArgumentIntegrationTest {
         val failure = assertThrows(CommandSyntaxException::class.java) {
             compiled.read(sender, "minecraft:not_a_real_effect")
         }
-        assertEquals("Unknown potion effect 'minecraft:not_a_real_effect'", failure.rawMessage.string)
+        assertEquals(
+            "Unknown potion effect 'minecraft:not_a_real_effect'",
+            failure.rawMessage.string,
+        )
 
         assertEquals(ArgumentParserType.RESOURCE_LOCATION, compiled.declaration().parser)
         assertNull(compiled.declaration().properties)
-        assertEquals("minecraft:speed", PotionEffectArgument("effect").toDefinition().stringify(speed!!))
+        assertEquals(
+            "minecraft:speed",
+            PotionEffectArgument("effect").toDefinition().stringify(speed!!),
+        )
     }
 
     @Test
@@ -107,12 +113,18 @@ class RegistryArgumentIntegrationTest {
         val compiled = EnchantmentArgument("enchant").toDefinition()
         val identifier = BuiltinRegistries.ENCHANTMENT.name()
 
-        val sharpness = env.process().registries().enchantment().getKey(Key.key("minecraft:sharpness"))
+        val sharpness = env.process()
+            .registries()
+            .enchantment()
+            .getKey(Key.key("minecraft:sharpness"))
         assertEquals(sharpness, compiled.read(sender, "minecraft:sharpness"))
         val failure = assertThrows(CommandSyntaxException::class.java) {
             compiled.read(sender, "minecraft:not_a_real_enchantment")
         }
-        assertEquals("Unknown enchantment 'minecraft:not_a_real_enchantment'", failure.rawMessage.string)
+        assertEquals(
+            "Unknown enchantment 'minecraft:not_a_real_enchantment'",
+            failure.rawMessage.string,
+        )
 
         assertEquals(ArgumentParserType.RESOURCE, compiled.declaration().parser)
         assertEquals(
@@ -156,6 +168,7 @@ class RegistryArgumentIntegrationTest {
         val compiled = InstanceArgument("instance").toDefinition()
         val overworld = env.process().instance().createInstanceContainer(DimensionType.OVERWORLD)
         val nether = env.process().instance().createInstanceContainer(DimensionType.THE_NETHER)
+
         try {
             assertEquals(overworld, compiled.read(sender, overworld.uuid.toString()))
             assertEquals(nether, compiled.read(sender, nether.uuid.toString()))
@@ -169,7 +182,9 @@ class RegistryArgumentIntegrationTest {
                 notFound.rawMessage.string,
             )
 
-            val secondOverworld = env.process().instance().createInstanceContainer(DimensionType.OVERWORLD)
+            val secondOverworld = env.process()
+                .instance()
+                .createInstanceContainer(DimensionType.OVERWORLD)
             try {
                 val ambiguous = assertThrows(CommandSyntaxException::class.java) {
                     compiled.read(sender, "minecraft:overworld")
@@ -179,7 +194,10 @@ class RegistryArgumentIntegrationTest {
                     ambiguous.rawMessage.string,
                 )
                 assertEquals(overworld, compiled.read(sender, overworld.uuid.toString()))
-                assertEquals(secondOverworld, compiled.read(sender, secondOverworld.uuid.toString()))
+                assertEquals(
+                    secondOverworld,
+                    compiled.read(sender, secondOverworld.uuid.toString()),
+                )
                 assertEquals(nether, compiled.read(sender, "minecraft:the_nether"))
             } finally {
                 env.destroyInstance(secondOverworld)
@@ -223,7 +241,9 @@ class RegistryArgumentIntegrationTest {
             send(1, "/sound-cmd minecraft:entity.experience_orb.pi")
             runCurrent()
             soundPackets.assertSingle { packet ->
-                assertTrue("minecraft:entity.experience_orb.pickup" in packet.matches.map { it.match })
+                assertTrue(
+                    "minecraft:entity.experience_orb.pickup" in packet.matches.map { it.match },
+                )
             }
 
             val biomePackets = connection.trackIncoming(TabCompletePacket::class.java)
@@ -253,8 +273,11 @@ class RegistryArgumentIntegrationTest {
                 .anyExecutor { _, _ -> }
                 .register()
 
-            val caves = env.process().instance().createInstanceContainer(DimensionType.OVERWORLD_CAVES)
+            val caves = env.process()
+                .instance()
+                .createInstanceContainer(DimensionType.OVERWORLD_CAVES)
             val end = env.process().instance().createInstanceContainer(DimensionType.THE_END)
+
             try {
                 val packets = connection.trackIncoming(TabCompletePacket::class.java)
                 send(4, "/instance-cmd ")
@@ -267,7 +290,9 @@ class RegistryArgumentIntegrationTest {
                     assertTrue("minecraft:the_end" in matches)
                 }
 
-                val secondCaves = env.process().instance().createInstanceContainer(DimensionType.OVERWORLD_CAVES)
+                val secondCaves = env.process()
+                    .instance()
+                    .createInstanceContainer(DimensionType.OVERWORLD_CAVES)
                 try {
                     val ambiguousPackets = connection.trackIncoming(TabCompletePacket::class.java)
                     send(5, "/instance-cmd ")
@@ -294,32 +319,62 @@ class RegistryArgumentIntegrationTest {
     fun `custom suggestion modes are permitted for every new registry backed argument`(env: Env) {
         withPlatform(env) {
             CommandAPICommand("allow-sound")
-                .withArguments(SoundArgument("value").replaceSuggestions(ArgumentSuggestions.strings("extra")))
+                .withArguments(
+                    SoundArgument("value").replaceSuggestions(
+                        ArgumentSuggestions.strings(
+                            "extra",
+                        ),
+                    ),
+                )
                 .anyExecutor { _, _ -> }
                 .register()
             CommandAPICommand("allow-potion")
                 .withArguments(
-                    PotionEffectArgument("value").includeSuggestions(ArgumentSuggestions.strings("extra")),
+                    PotionEffectArgument("value")
+                        .includeSuggestions(ArgumentSuggestions.strings("extra")),
                 )
                 .anyExecutor { _, _ -> }
                 .register()
             CommandAPICommand("allow-biome")
-                .withArguments(BiomeArgument("value").replaceSuggestions(ArgumentSuggestions.strings("extra")))
+                .withArguments(
+                    BiomeArgument("value").replaceSuggestions(
+                        ArgumentSuggestions.strings(
+                            "extra",
+                        ),
+                    ),
+                )
                 .anyExecutor { _, _ -> }
                 .register()
             CommandAPICommand("allow-enchantment")
                 .withArguments(
-                    EnchantmentArgument("value").includeSuggestions(ArgumentSuggestions.strings("extra")),
+                    EnchantmentArgument("value")
+                        .includeSuggestions(ArgumentSuggestions.strings("extra")),
                 )
                 .anyExecutor { _, _ -> }
                 .register()
             CommandAPICommand("allow-instance")
-                .withArguments(InstanceArgument("value").replaceSuggestions(ArgumentSuggestions.strings("extra")))
+                .withArguments(
+                    InstanceArgument("value").replaceSuggestions(
+                        ArgumentSuggestions.strings(
+                            "extra",
+                        ),
+                    ),
+                )
                 .anyExecutor { _, _ -> }
                 .register()
 
-            assertTrue(runCommand(env.process().command().consoleSender, "allow-sound minecraft:entity.pig.ambient"))
-            assertTrue(runCommand(env.process().command().consoleSender, "allow-potion minecraft:speed"))
+            assertTrue(
+                runCommand(
+                    env.process().command().consoleSender,
+                    "allow-sound minecraft:entity.pig.ambient",
+                ),
+            )
+            assertTrue(
+                runCommand(
+                    env.process().command().consoleSender,
+                    "allow-potion minecraft:speed",
+                ),
+            )
         }
     }
 
@@ -328,13 +383,19 @@ class RegistryArgumentIntegrationTest {
         val captured = mutableMapOf<String, Any?>()
         withPlayerPlatform(env) { manager, player ->
             CommandAPICommand("sound-value-cmd").withArguments(SoundArgument("soundValue"))
-                .anyExecutor { _, arguments -> captured["sound"] = arguments.get<SoundEvent>("soundValue") }
+                .anyExecutor { _, arguments ->
+                    captured["sound"] = arguments.get<SoundEvent>("soundValue")
+                }
                 .register()
             CommandAPICommand("potion-value-cmd").withArguments(PotionEffectArgument("potionValue"))
-                .anyExecutor { _, arguments -> captured["potion"] = arguments.get<PotionEffect>("potionValue") }
+                .anyExecutor { _, arguments ->
+                    captured["potion"] = arguments.get<PotionEffect>("potionValue")
+                }
                 .register()
             CommandAPICommand("biome-value-cmd").withArguments(BiomeArgument("biomeValue"))
-                .anyExecutor { _, arguments -> captured["biome"] = arguments.get<Any?>("biomeValue") }
+                .anyExecutor { _, arguments ->
+                    captured["biome"] = arguments.get<Any?>("biomeValue")
+                }
                 .register()
 
             assertTrue(runCommand(player, "sound-value-cmd minecraft:entity.experience_orb.pickup"))
@@ -353,7 +414,9 @@ class RegistryArgumentIntegrationTest {
             )
 
             val packet = declaredCommands(env, player)
-            fun parserOf(nodeName: String) = packet.nodes.single { node -> node.name == nodeName }.parser
+            fun parserOf(nodeName: String): ArgumentParserType {
+                return packet.nodes.single { node -> node.name == nodeName }.parser
+            }
             assertEquals(ArgumentParserType.RESOURCE_LOCATION, parserOf("soundValue"))
             assertEquals(ArgumentParserType.RESOURCE_LOCATION, parserOf("potionValue"))
             assertEquals(ArgumentParserType.RESOURCE, parserOf("biomeValue"))
@@ -378,7 +441,11 @@ class RegistryArgumentIntegrationTest {
             .potionEffectArgument("potion") { anyExecutor { _, _ -> } }
             .biomeArgument("biome") { anyExecutor { _, _ -> } }
             .enchantmentArgument("enchantment") { anyExecutor { _, _ -> } }
-            .resourceArgument("resource", "test:dsl-sample", customRegistry) { anyExecutor { _, _ -> } }
+            .resourceArgument(
+                "resource",
+                "test:dsl-sample",
+                customRegistry,
+            ) { anyExecutor { _, _ -> } }
             .instanceArgument("instance") { anyExecutor { _, _ -> } }
             .toDefinition()
 
@@ -389,12 +456,23 @@ class RegistryArgumentIntegrationTest {
                     .potionEffectArgument("potion") { anyExecutor { _, _ -> } }
                     .biomeArgument("biome") { anyExecutor { _, _ -> } }
                     .enchantmentArgument("enchantment") { anyExecutor { _, _ -> } }
-                    .resourceArgument("resource", "test:dsl-sample", customRegistry) { anyExecutor { _, _ -> } }
+                    .resourceArgument(
+                        "resource",
+                        "test:dsl-sample",
+                        customRegistry,
+                    ) { anyExecutor { _, _ -> } }
                     .instanceArgument("instance") { anyExecutor { _, _ -> } },
             )
             .toDefinition()
 
-        val expectedNames = listOf("sound", "potion", "biome", "enchantment", "resource", "instance")
+        val expectedNames = listOf(
+            "sound",
+            "potion",
+            "biome",
+            "enchantment",
+            "resource",
+            "instance",
+        )
         assertEquals(expectedNames, command.paths.single().arguments.map { it.nodeName })
         assertEquals(
             expectedNames.map { name -> listOf(name) },
@@ -407,8 +485,12 @@ class RegistryArgumentIntegrationTest {
     }
 
     private inline fun withPlatform(env: Env, block: () -> Unit) {
-        val platform = MinestomCommandAPIPlatform(env.process().command(), MinestomCommandOwnership())
+        val platform = MinestomCommandAPIPlatform(
+            env.process().command(),
+            MinestomCommandOwnership(),
+        )
         CommandAPI.installPlatform(platform)
+
         try {
             block()
         } finally {
@@ -429,17 +511,25 @@ class RegistryArgumentIntegrationTest {
         val instance = env.createEmptyInstance()
         var player: Player? = null
         CommandAPI.installPlatform(platform)
+
         try {
-            val connected = connect(env.createConnection(profile("Registry-${UUID.randomUUID()}")), instance)
+            val connected = connect(
+                env.createConnection(profile("Registry-${UUID.randomUUID()}")),
+                instance,
+            )
             player = connected
             block(manager, connected)
         } finally {
             try {
-                if (player?.isRemoved == false) player.remove()
+                if (player?.isRemoved == false) {
+                    player.remove()
+                }
+
                 platform.close()
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.destroyInstance(instance)
         }
     }
@@ -456,6 +546,7 @@ class RegistryArgumentIntegrationTest {
         val instance = env.createEmptyInstance()
         var player: Player? = null
         CommandAPI.installPlatform(platform)
+
         try {
             listener.register(node)
             env.process().eventHandler().addChild(node)
@@ -465,11 +556,15 @@ class RegistryArgumentIntegrationTest {
             BackendFixture(connection, connected).block()
         } finally {
             try {
-                if (player?.isRemoved == false) player.remove()
+                if (player?.isRemoved == false) {
+                    player.remove()
+                }
+
                 platform.close()
             } finally {
                 CommandAPI.uninstallPlatform(platform)
             }
+
             env.process().eventHandler().removeChild(node)
             env.destroyInstance(instance)
         }
@@ -482,6 +577,7 @@ class RegistryArgumentIntegrationTest {
                 .onSuccess(connected::complete)
                 .onFailure(connected::completeExceptionally)
         }
+
         return connected.join()
     }
 

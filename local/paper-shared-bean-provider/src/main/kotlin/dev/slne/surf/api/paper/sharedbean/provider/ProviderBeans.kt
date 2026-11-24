@@ -12,16 +12,17 @@ import org.springframework.stereotype.Service
  * The exported [SharedGreeting], which logs every phase of the full context it goes through.
  */
 @Service
-class SharedGreetingImpl(private val internals: ProviderInternals) : SharedGreeting, SurfLifecycle, DisposableBean {
+class SharedGreetingImpl(private val internals: ProviderInternals) : SharedGreeting, SurfLifecycle,
+    DisposableBean {
 
     private val log = logger()
 
-    override fun greet() = SharedGreeting.GREETING
+    override fun greet(): String = SharedGreeting.GREETING
 
-    override suspend fun onLoad() = logPhase(log, "load")
-    override suspend fun onEnable() = logPhase(log, "enable")
-    override suspend fun onDisable() = logPhase(log, "disable")
-    override fun destroy() = logPhase(log, "destroy")
+    override suspend fun onLoad(): Unit = logPhase(log, "load")
+    override suspend fun onEnable(): Unit = logPhase(log, "enable")
+    override suspend fun onDisable(): Unit = logPhase(log, "disable")
+    override fun destroy(): Unit = logPhase(log, "destroy")
 
     companion object {
 
@@ -41,7 +42,7 @@ class ProviderBootstrapProbe(private val helper: ProviderBootstrapHelper) : Surf
 
     private val log = logger()
 
-    override suspend fun onBootstrap() = logPhase(log, "bootstrap:${helper.answer}")
+    override suspend fun onBootstrap(): Unit = logPhase(log, "bootstrap:${helper.answer}")
 }
 
 /**
@@ -59,5 +60,6 @@ class ProviderBootstrapHelper {
 class ProviderInternals
 
 private fun logPhase(log: FluentLogger, name: String) {
-    log.atInfo().log("%s provider phase=%s", SharedGreetingImpl.PROVIDER_MARKER, name)
+    log.atInfo()
+        .log("%s provider phase=%s", SharedGreetingImpl.PROVIDER_MARKER, name)
 }

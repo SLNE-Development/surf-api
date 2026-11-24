@@ -8,7 +8,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Applies the plugin to a plain Kotlin/JVM project, like a consumer that uses none of the surf-api platform plugins.
+ * Applies the plugin to a plain Kotlin/JVM project, like a consumer that uses none of the surf-api
+ * platform plugins.
  */
 class PlainKotlinJvmProjectTest {
 

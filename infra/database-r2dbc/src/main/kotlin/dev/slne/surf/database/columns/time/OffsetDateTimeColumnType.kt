@@ -9,19 +9,20 @@ import java.time.ZoneId
 class OffsetDateTimeColumnType :
     UtcInstantDateTimeColumnType<OffsetDateTime>() {
 
-    override fun toInstant(value: OffsetDateTime): Instant =
-        value.toInstant()
+    override fun toInstant(value: OffsetDateTime): Instant = value.toInstant()
 
-    override fun fromInstant(instant: Instant): OffsetDateTime =
-        instant.atZone(ZoneId.systemDefault()).toOffsetDateTime()
+    override fun fromInstant(instant: Instant): OffsetDateTime {
+        return instant.atZone(ZoneId.systemDefault()).toOffsetDateTime()
+    }
 
     companion object {
         internal val INSTANCE = OffsetDateTimeColumnType()
     }
 }
 
-fun Table.offsetDateTime(name: String): Column<OffsetDateTime> =
-    registerColumn(name, OffsetDateTimeColumnType())
+fun Table.offsetDateTime(name: String): Column<OffsetDateTime> {
+    return registerColumn(name, OffsetDateTimeColumnType())
+}
 
 class CurrentOffsetDateTime(includeUpdate: Boolean = false) :
     CurrentTimestampBase<OffsetDateTime>(OffsetDateTimeColumnType.INSTANCE, includeUpdate) {

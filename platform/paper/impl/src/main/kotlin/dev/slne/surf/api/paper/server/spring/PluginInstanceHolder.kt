@@ -35,9 +35,11 @@ internal class PluginInstanceHolder(private val pluginName: String) {
     /**
      * A bean definition for the [Plugin] proxy, for the bootstrap context.
      */
-    fun proxyDefinition(): RootBeanDefinition = RootBeanDefinition(Plugin::class.java).apply {
-        setInstanceSupplier { proxy }
-        destroyMethodName = ""
+    fun proxyDefinition(): RootBeanDefinition {
+        return RootBeanDefinition(Plugin::class.java).apply {
+            setInstanceSupplier { proxy }
+            destroyMethodName = ""
+        }
     }
 
     /**
@@ -46,8 +48,8 @@ internal class PluginInstanceHolder(private val pluginName: String) {
      *
      * Paper creates the instance, but the context manages it like any other singleton: it injects
      * `@Autowired` members and runs the `Aware` callbacks, `@PostConstruct` and every
-     * `BeanPostProcessor` on it, and calls `@PreDestroy` and `DisposableBean.destroy` when it closes.
-     * Only the inferred `close()` or `shutdown()` call is suppressed.
+     * `BeanPostProcessor` on it, and calls `@PreDestroy` and `DisposableBean.destroy` when it
+     * closes. Only the inferred `close()` or `shutdown()` call is suppressed.
      */
     fun instanceDefinition(plugin: Plugin): RootBeanDefinition {
         return RootBeanDefinition(plugin.javaClass).apply {
@@ -69,16 +71,18 @@ internal class PluginInstanceHolder(private val pluginName: String) {
     /**
      * Mirrors `PluginBase.equals`, which compares plugin names.
      */
-    private fun isSamePlugin(proxy: Any, other: Any?): Boolean = when {
-        other === proxy || other === instance -> true
-        other !is Plugin || Proxy.isProxyClass(other.javaClass) -> false
-        else -> runCatching { other.name == pluginName }.getOrDefault(false)
+    private fun isSamePlugin(proxy: Any, other: Any?): Boolean {
+        return when {
+            other === proxy || other === instance -> true
+            other !is Plugin || Proxy.isProxyClass(other.javaClass) -> false
+            else -> runCatching { other.name == pluginName }.getOrDefault(false)
+        }
     }
 
     private fun invokeOnInstance(method: Method, arguments: Array<Any?>?): Any? {
         val target = checkNotNull(instance) {
             "The plugin instance of '$pluginName' is used before Paper created it. It exists from " +
-                    "the load phase on; do not call it from a constructor or onBootstrap."
+                "the load phase on; do not call it from a constructor or onBootstrap."
         }
 
         return try {

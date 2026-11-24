@@ -27,6 +27,7 @@ internal enum class PaginationButton(val column: Int) {
      */
     fun clickSlot(paginationRow: Int): Int {
         val effectiveRow = paginationRow - 1
+
         return column + effectiveRow * 9
     }
 }

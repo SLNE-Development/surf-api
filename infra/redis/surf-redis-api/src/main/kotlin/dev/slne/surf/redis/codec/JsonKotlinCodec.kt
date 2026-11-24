@@ -54,19 +54,18 @@ class JsonKotlinCodec<T : Any> private constructor(
         ByteBufUtil.reserveAndWriteUtf8(
             buf,
             encoded,
-            encodedLength
+            encodedLength,
         )
     }
 
     override fun read(buf: ByteBuf): T {
         val encoded = buf.readCharSequence(
             buf.readableBytes(),
-            StandardCharsets.UTF_8
+            StandardCharsets.UTF_8,
         ).toString()
 
         return json.decodeFromString(serializer, encoded)
     }
-
 
     companion object {
 
@@ -77,12 +76,11 @@ class JsonKotlinCodec<T : Any> private constructor(
          * UUID representation with [JavaUUIDStringSerializer].
          */
         @PublishedApi
-        internal val DEFAULT_SERIALIZERS: SerializersModule =
-            SurfSerializerModule.all.overwriteWith(
-                SerializersModule {
-                    contextual(JavaUUIDStringSerializer)
-                }
-            )
+        internal val DEFAULT_SERIALIZERS = SurfSerializerModule.all.overwriteWith(
+            SerializersModule {
+                contextual(JavaUUIDStringSerializer)
+            },
+        )
 
         /**
          * Creates a JSON codec for [T] using the serializer resolved from the combined serializers
@@ -93,7 +91,8 @@ class JsonKotlinCodec<T : Any> private constructor(
          * @param T the non-null value type handled by the codec
          * @param additionalSerializers serializers to add to or override in the default module
          * @return a JSON codec for values of type [T]
-         * @throws kotlinx.serialization.SerializationException if no serializer for [T] can be resolved
+         * @throws kotlinx.serialization.SerializationException if no serializer for [T] can be
+         * resolved
          */
         inline fun <reified T : Any> of(
             additionalSerializers: SerializersModule = EmptySerializersModule(),
@@ -101,6 +100,7 @@ class JsonKotlinCodec<T : Any> private constructor(
             val serializersModule = DEFAULT_SERIALIZERS.overwriteWith(additionalSerializers)
 
             val serializer = serializersModule.serializer<T>()
+
             return of(serializer, serializersModule)
         }
 
@@ -119,6 +119,7 @@ class JsonKotlinCodec<T : Any> private constructor(
             additionalSerializers: SerializersModule = EmptySerializersModule(),
         ): JsonKotlinCodec<T> {
             val serializersModule = DEFAULT_SERIALIZERS.overwriteWith(additionalSerializers)
+
             return JsonKotlinCodec(serializersModule, serializer)
         }
     }

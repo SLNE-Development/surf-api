@@ -7,5 +7,9 @@ private const val NATS_HANDLER_LIMITS_CLASS = "dev.slne.surf.nats.NatsHandlerLim
 /**
  * Returns whether surf-nats is on the class path of the microservice.
  */
-internal fun isSurfNatsPresent(): Boolean =
-    ClassUtils.isPresent(NATS_HANDLER_LIMITS_CLASS, PoolHandlerLimits::class.java.classLoader)
+internal fun isSurfNatsPresent(): Boolean {
+    return ClassUtils.isPresent(
+        NATS_HANDLER_LIMITS_CLASS,
+        PoolHandlerLimits::class.java.classLoader,
+    )
+}

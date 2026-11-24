@@ -39,21 +39,28 @@ class PluginClassCheckTest {
 
     private fun jarOf(name: String, vararg classes: Pair<String, String>): File {
         val classRoot = directory.resolve("jar-classes-$name").apply { mkdirs() }
-        classes.forEach { (className, superclass) -> writeClass(classRoot, className, superclass) }
+
+        for ((className, superclass) in classes) {
+            writeClass(classRoot, className, superclass)
+        }
 
         val jar = directory.resolve("$name.jar")
         JarOutputStream(jar.outputStream()).use { output ->
-            classRoot.walkTopDown().filter { it.isFile }.forEach { file ->
+            for (file in classRoot.walkTopDown().filter { it.isFile }) {
                 output.putNextEntry(JarEntry(file.relativeTo(classRoot).invariantSeparatorsPath))
                 output.write(file.readBytes())
                 output.closeEntry()
             }
         }
+
         return jar
     }
 
-    private fun chain(className: String, lookup: ClassPathLookup) =
-        SuperclassChecker.check(className, paperPlugin, lookup)
+    private fun chain(className: String, lookup: ClassPathLookup) = SuperclassChecker.check(
+        className,
+        paperPlugin,
+        lookup,
+    )
 
     @Test
     fun `a direct subclass reaches the base class`() {
@@ -76,7 +83,10 @@ class PluginClassCheckTest {
 
         ClassPathLookup(listOf(classes), emptyList()).use { lookup ->
             val result = assertIs<SuperclassChain.Reaches>(chain("com.example.Main", lookup))
-            assertEquals(listOf("com.example.Main", "com.example.AbstractMain", paperPlugin), result.chain)
+            assertEquals(
+                listOf("com.example.Main", "com.example.AbstractMain", paperPlugin),
+                result.chain,
+            )
         }
     }
 
@@ -100,7 +110,10 @@ class PluginClassCheckTest {
 
         ClassPathLookup(listOf(classes), listOf(sibling)).use { lookup ->
             val result = assertIs<SuperclassChain.Reaches>(chain("com.example.Main", lookup))
-            assertEquals(listOf("com.example.Main", "com.shared.AbstractPlugin", paperPlugin), result.chain)
+            assertEquals(
+                listOf("com.example.Main", "com.shared.AbstractPlugin", paperPlugin),
+                result.chain,
+            )
             assertTrue(lookup.contains("com.shared.AbstractPlugin"))
         }
     }
@@ -148,6 +161,7 @@ class PluginClassCheckTest {
         classpath: List<File> = emptyList(),
     ): CheckSurfPluginClassesTask {
         val project = ProjectBuilder.builder().withProjectDir(directory.resolve("project")).build()
+
         return project.tasks.register<CheckSurfPluginClassesTask>("check").get().apply {
             expectedBases.set(expected)
             classDirectories.from(classes)
@@ -185,7 +199,12 @@ class PluginClassCheckTest {
         assertTrue(passing.passMarker.get().asFile.isFile)
 
         passing.passMarker.get().asFile.delete()
-        assertFailsWith<GradleException> { checkTask(mapOf("com.example.Other" to paperPlugin), classes).check() }
+        assertFailsWith<GradleException> {
+            checkTask(
+                mapOf("com.example.Other" to paperPlugin),
+                classes,
+            ).check()
+        }
         assertFalse(passing.passMarker.get().asFile.exists())
     }
 
@@ -212,15 +231,30 @@ class PluginClassCheckTest {
         writeClass(classes, "com.example.Main", "java.lang.Object")
 
         val velocity = assertFailsWith<GradleException> {
-            checkTask(mapOf("com.example.Main" to GeneratedPluginClass.VELOCITY_PLUGIN.superclass), classes).check()
+            checkTask(
+                mapOf("com.example.Main" to GeneratedPluginClass.VELOCITY_PLUGIN.superclass),
+                classes,
+            ).check()
         }
         val minestom = assertFailsWith<GradleException> {
-            checkTask(mapOf("com.example.Missing" to GeneratedPluginClass.MINESTOM_PLUGIN.superclass), classes).check()
+            checkTask(
+                mapOf("com.example.Missing" to GeneratedPluginClass.MINESTOM_PLUGIN.superclass),
+                classes,
+            ).check()
         }
 
-        assertTrue("named in velocityPluginFile { main = ... }" in velocity.message.orEmpty(), velocity.message)
-        assertTrue("remove the class from velocityPluginFile { main = ... }" in velocity.message.orEmpty(), velocity.message)
-        assertTrue("named in minestomPluginFile { main = ... }" in minestom.message.orEmpty(), minestom.message)
+        assertTrue(
+            "named in velocityPluginFile { main = ... }" in velocity.message.orEmpty(),
+            velocity.message,
+        )
+        assertTrue(
+            "remove the class from velocityPluginFile { main = ... }" in velocity.message.orEmpty(),
+            velocity.message,
+        )
+        assertTrue(
+            "named in minestomPluginFile { main = ... }" in minestom.message.orEmpty(),
+            minestom.message,
+        )
         assertFalse("surf extension" in velocity.message.orEmpty() + minestom.message.orEmpty())
     }
 
@@ -232,7 +266,10 @@ class PluginClassCheckTest {
             checkTask(mapOf("com.example.Missing" to paperPlugin), classes).check()
         }
 
-        assertTrue("was not found among the compiled classes" in failure.message.orEmpty(), failure.message)
+        assertTrue(
+            "was not found among the compiled classes" in failure.message.orEmpty(),
+            failure.message,
+        )
     }
 
     @Test

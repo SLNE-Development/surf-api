@@ -56,6 +56,7 @@ object TextAlignmentMath {
 
         var width = (glyphs - 1) * charSpacing
         var index = 0
+
         while (index < text.length) {
             val codePoint = text.codePointAt(index)
             width += charWidth(codePoint, charSize, charWidths)

@@ -11,6 +11,7 @@ abstract class PermissionRegistry {
         pluginManager.addPermission(bukkitPermission)
 
         permissions[permission] = bukkitPermission
+
         return permission
     }
 }

@@ -5,14 +5,12 @@ import dev.slne.standalone.fixture.ApplicationService
 import dev.slne.standalone.fixture.FixtureEvent
 import dev.slne.standalone.fixture.FixtureEventPublisher
 import dev.slne.surf.api.event.SurfEventBus
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.PluginDescriptor
 import kotlinx.coroutines.test.runTest
 import org.springframework.beans.factory.getBean
 import org.springframework.context.ApplicationContextException
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
-import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
 import kotlin.test.AfterTest
@@ -29,7 +27,6 @@ import kotlin.test.assertTrue
  * Checks that an application passed to [SurfApiStandaloneBootstrap.bootstrap] lives in surf-api's
  * root context and gets what a plugin context gets.
  */
-@OptIn(InternalSurfApi::class)
 class StandaloneApplicationTest {
 
     private val dataDirectory = createTempDirectory("surf-standalone-application")
@@ -52,12 +49,21 @@ class StandaloneApplicationTest {
 
         val service = SurfContexts.root.getBean<ApplicationService>()
         assertEquals("hello", service.config.value.greeting)
-        assertTrue(dataDirectory.resolve("application.yml").exists(), "the handle writes its defaults")
+        assertTrue(
+            dataDirectory.resolve("application.yml").exists(),
+            "the handle writes its defaults",
+        )
 
         SurfApiStandaloneBootstrap.shutdown()
 
         assertEquals(
-            listOf("contribute:application", "onEnable", "afterEnable", "beforeDisable", "onDisable"),
+            listOf(
+                "contribute:application",
+                "onEnable",
+                "afterEnable",
+                "beforeDisable",
+                "onDisable",
+            ),
             ApplicationEvents.recorded,
         )
     }
@@ -71,7 +77,10 @@ class StandaloneApplicationTest {
         SurfApiStandaloneBootstrap.shutdown()
         FixtureEvent("shut down").call()
 
-        assertEquals(listOf(FixtureEventPublisher.ON_ENABLE_SOURCE, "enabled"), ApplicationEvents.handled)
+        assertEquals(
+            listOf(FixtureEventPublisher.ON_ENABLE_SOURCE, "enabled"),
+            ApplicationEvents.handled,
+        )
     }
 
     @Test
@@ -104,13 +113,18 @@ class StandaloneApplicationTest {
         context.close()
         FixtureEvent("closed").call()
 
-        assertEquals(listOf(FixtureEventPublisher.ON_ENABLE_SOURCE, "refreshed"), ApplicationEvents.handled)
+        assertEquals(
+            listOf(FixtureEventPublisher.ON_ENABLE_SOURCE, "refreshed"),
+            ApplicationEvents.handled,
+        )
     }
 
     @Test
     fun `an application inside surf-api's package is rejected`() = runTest {
         assertFailsWith<IllegalArgumentException> {
-            SurfApiStandaloneBootstrap.bootstrap(application(listOf("dev.slne.surf.api.standalone")))
+            SurfApiStandaloneBootstrap.bootstrap(
+                application(listOf("dev.slne.surf.api.standalone")),
+            )
         }
 
         assertNull(SurfContexts.rootOrNull, "a failed start leaves no root context installed")
@@ -129,7 +143,13 @@ class StandaloneApplicationTest {
         context.close()
 
         assertEquals(
-            listOf("contribute:application", "onEnable", "afterEnable", "beforeDisable", "onDisable"),
+            listOf(
+                "contribute:application",
+                "onEnable",
+                "afterEnable",
+                "beforeDisable",
+                "onDisable",
+            ),
             ApplicationEvents.recorded,
         )
         assertNull(SurfContexts.rootOrNull, "stopping the context shuts surf-api down")
@@ -176,7 +196,10 @@ class StandaloneApplicationTest {
         SurfApiStandaloneBootstrap.shutdown()
 
         assertNull(SurfContexts.rootOrNull)
-        SurfApiStandaloneBootstrap.adopt(AnnotationConfigApplicationContext(), application(listOf(FIXTURE_PACKAGE)))
+        SurfApiStandaloneBootstrap.adopt(
+            AnnotationConfigApplicationContext(),
+            application(listOf(FIXTURE_PACKAGE)),
+        )
     }
 
     @Test
@@ -189,7 +212,10 @@ class StandaloneApplicationTest {
         context.stop()
         val failure = assertFailsWith<ApplicationContextException> { context.start() }
 
-        assertTrue(generateSequence<Throwable>(failure) { it.cause }.any { "cannot be restarted" in it.message.orEmpty() })
+        assertTrue(
+            generateSequence<Throwable>(failure) { it.cause }
+                .any { "cannot be restarted" in it.message.orEmpty() },
+        )
         context.close()
     }
 

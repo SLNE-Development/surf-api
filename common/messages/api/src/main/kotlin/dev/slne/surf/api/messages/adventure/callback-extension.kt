@@ -12,28 +12,40 @@ import kotlin.time.toJavaDuration
 
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallback(
     callback: ClickCallback<Audience>,
-) = clickEvent(ClickEvent.callback(callback))
+): B = clickEvent(ClickEvent.callback(callback))
 
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackWithOptions(
     builder: ClickCallbackWithOptionsBuilder<Audience>.() -> Unit,
-) = clickEvent(ClickCallbackWithOptionsBuilder(Audience::class.java).apply(builder).build())
+): B = clickEvent(ClickCallbackWithOptionsBuilder(Audience::class.java).apply(builder).build())
 
-inline fun <reified T : Audience, C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackTyped(
+inline fun <
+    reified T : Audience,
+    C : Component,
+    B : ComponentBuilder<C, B>,
+> ComponentBuilder<C, B>.clickCallbackTyped(
     callback: ClickCallback<T>,
-) = clickEvent(ClickEvent.callback(ClickCallback.widen(callback, T::class.java)))
+): B = clickEvent(ClickEvent.callback(ClickCallback.widen(callback, T::class.java)))
 
 @OptIn(ExperimentalTypeInference::class)
-inline fun <reified T : Audience, C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCallbackTypedWithOptions(
-    builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit
-) = clickEvent(ClickCallbackWithOptionsBuilder(T::class.java).apply(builder).build())
+inline fun <
+    reified T : Audience,
+    C : Component,
+    B : ComponentBuilder<C, B>,
+> ComponentBuilder<C, B>.clickCallbackTypedWithOptions(
+    builder: ClickCallbackWithOptionsBuilder<T>.() -> Unit,
+): B = clickEvent(ClickCallbackWithOptionsBuilder(T::class.java).apply(builder).build())
 
-fun ClickCallback.Options.Builder.lifetime(duration: Duration) = lifetime(duration.toJavaDuration())
+fun ClickCallback.Options.Builder.lifetime(duration: Duration): ClickCallback.Options.Builder {
+    return lifetime(duration.toJavaDuration())
+}
 
 @DslMarker
 annotation class ClickCallbackWithOptionsBuilderDsl
 
 @ClickCallbackWithOptionsBuilderDsl
-class ClickCallbackWithOptionsBuilder<T : Audience> @PublishedApi internal constructor(private val type: Class<T>) {
+class ClickCallbackWithOptionsBuilder<T : Audience> @PublishedApi internal constructor(
+    private val type: Class<T>,
+) {
     private var callback: ClickCallback<T>? = null
     private var permission: String? = null
     private var permissionOtherwise: Consumer<in Audience>? = null
@@ -45,7 +57,7 @@ class ClickCallbackWithOptionsBuilder<T : Audience> @PublishedApi internal const
 
     fun requiresPermissionOrElse(
         permission: String,
-        callback: Consumer<in Audience>
+        callback: Consumer<in Audience>,
     ) {
         this.permission = permission
         this.permissionOtherwise = callback
@@ -62,6 +74,7 @@ class ClickCallbackWithOptionsBuilder<T : Audience> @PublishedApi internal const
     @PublishedApi
     internal fun build(): ClickEvent<*> {
         val callback = callback ?: return ClickEvent.callback { }
+
         val callbackWithPermission = permission
             ?.let { permission -> callback.requiringPermission(permission, permissionOtherwise) }
             ?: callback

@@ -16,7 +16,8 @@ class PaperBoostrapper : PluginBootstrap {
     override fun bootstrap(bootstrapContext: BootstrapContext) {
         NatsPlatform.install(bootstrapContext.dataDirectory)
         RedisPlatform.install(bootstrapContext.dataDirectory) { type ->
-            (type.classLoader as? ConfiguredPluginClassLoader)?.configuration?.name ?: type.simpleName
+            (type.classLoader as? ConfiguredPluginClassLoader)?.configuration?.name
+                ?: type.simpleName
         }
 
         springRuntime = PaperSpringRuntime(PaperBoostrapper::class.java.classLoader)
@@ -28,7 +29,7 @@ class PaperBoostrapper : PluginBootstrap {
         }
     }
 
-    override fun createPlugin(context: PluginProviderContext) = PaperMain()
+    override fun createPlugin(context: PluginProviderContext): PaperMain = PaperMain()
 
     companion object {
 

@@ -12,12 +12,13 @@ import io.nats.client.Dispatcher
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Tracks the live responder instances of a service, so an `ALL_INSTANCES` call with an answer can end once every
- * instance has answered.
+ * Tracks the live responder instances of a service, so an `ALL_INSTANCES` call with an answer can
+ * end once every instance has answered.
  *
- * Instances are identified by `Surf-Origin`. A `join` or `beat` keeps an instance for [RpcDefaults.PRESENCE_TTL], and
- * a `leave` removes it. [start] and [refreshAfterReconnect] query all instances and open a warm-up of
- * [RpcDefaults.PRESENCE_WARMUP] during which [allAnswered] returns `false`.
+ * Instances are identified by `Surf-Origin`. A `join` or `beat` keeps an instance for
+ * [RpcDefaults.PRESENCE_TTL], and a `leave` removes it. [start] and [refreshAfterReconnect] query
+ * all instances and open a warm-up of [RpcDefaults.PRESENCE_WARMUP] during which [allAnswered]
+ * returns `false`.
  */
 @InternalNatsApi
 internal class PresenceTracker(
@@ -37,6 +38,7 @@ internal class PresenceTracker(
     fun start(dispatcher: Dispatcher) {
         dispatcher.subscribe(subject) { message ->
             val origin = message.header(ProtocolHeaders.ORIGIN) ?: return@subscribe
+
             when (message.presenceKind()) {
                 ProtocolHeaders.PRESENCE_JOIN, ProtocolHeaders.PRESENCE_BEAT -> seen(origin)
                 ProtocolHeaders.PRESENCE_LEAVE -> left(origin)
@@ -47,12 +49,13 @@ internal class PresenceTracker(
     }
 
     /**
-     * Queries all instances again when the connection reconnected since the last query. Concurrent callers
-     * send one query per reconnect.
+     * Queries all instances again when the connection reconnected since the last query. Concurrent
+     * callers send one query per reconnect.
      */
     fun refreshAfterReconnect() {
         val reconnects = reconnects()
         val queried = queriedAtReconnects.get()
+
         if (reconnects != queried && queriedAtReconnects.compareAndSet(queried, reconnects)) {
             query()
         }
@@ -67,15 +70,17 @@ internal class PresenceTracker(
     }
 
     /**
-     * Returns whether every live instance is in [answered]. Returns `false` during the warm-up and while no instance
-     * is known.
+     * Returns whether every live instance is in [answered]. Returns `false` during the warm-up and
+     * while no instance is known.
      *
-     * Callers check this after each reply, so an instance that leaves while a call waits does not end the call.
+     * Callers check this after each reply, so an instance that leaves while a call waits does not
+     * end the call.
      */
     fun allAnswered(answered: Set<String>): Boolean {
         if (System.nanoTime() - warmAt < 0) return false
 
         val live = members.asMap().keys.toList()
+
         return live.isNotEmpty() && answered.containsAll(live)
     }
 

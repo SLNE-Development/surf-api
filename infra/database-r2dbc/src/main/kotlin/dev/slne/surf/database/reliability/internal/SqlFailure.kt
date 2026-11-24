@@ -3,18 +3,21 @@ package dev.slne.surf.database.reliability.internal
 import io.r2dbc.spi.R2dbcException
 
 /**
- * Database errors the reliability stores react to, recognized by SQLSTATE (PostgreSQL) or vendor code (MariaDB).
+ * Database errors the reliability stores react to, recognized by SQLSTATE (PostgreSQL) or vendor
+ * code (MariaDB).
  *
- * Exposed wraps driver errors without SQLSTATE, and the drivers map the same event to different exception classes,
- * so [of] inspects the first [R2dbcException] in the cause chain that carries a state or code.
+ * Exposed wraps driver errors without SQLSTATE, and the drivers map the same event to different
+ * exception classes, so [of] inspects the first [R2dbcException] in the cause chain that carries a
+ * state or code.
  */
 internal enum class SqlFailure {
     DUPLICATE_KEY,
     LOCK_TIMEOUT,
 
     /**
-     * Deadlock, serialization failure or, on MariaDB under REPEATABLE READ with `innodb_snapshot_isolation`, a row
-     * changed since the snapshot: the transaction was rolled back and can be retried as a whole.
+     * Deadlock, serialization failure or, on MariaDB under REPEATABLE READ with
+     * `innodb_snapshot_isolation`, a row changed since the snapshot: the transaction was rolled
+     * back and can be retried as a whole.
      */
     TRANSIENT_CONFLICT;
 
@@ -35,12 +38,16 @@ internal enum class SqlFailure {
                 ?: return null
 
             return when {
-                cause.sqlState == PG_UNIQUE_VIOLATION || cause.errorCode == MARIADB_DUPLICATE_ENTRY -> DUPLICATE_KEY
-                cause.sqlState == PG_LOCK_NOT_AVAILABLE || cause.errorCode == MARIADB_LOCK_WAIT_TIMEOUT -> LOCK_TIMEOUT
+                cause.sqlState == PG_UNIQUE_VIOLATION ||
+                    cause.errorCode == MARIADB_DUPLICATE_ENTRY -> DUPLICATE_KEY
+
+                cause.sqlState == PG_LOCK_NOT_AVAILABLE ||
+                    cause.errorCode == MARIADB_LOCK_WAIT_TIMEOUT -> LOCK_TIMEOUT
+
                 cause.sqlState == PG_DEADLOCK_DETECTED ||
-                        cause.sqlState == SERIALIZATION_FAILURE ||
-                        cause.errorCode == MARIADB_DEADLOCK ||
-                        cause.errorCode == MARIADB_RECORD_CHANGED -> TRANSIENT_CONFLICT
+                    cause.sqlState == SERIALIZATION_FAILURE ||
+                    cause.errorCode == MARIADB_DEADLOCK ||
+                    cause.errorCode == MARIADB_RECORD_CHANGED -> TRANSIENT_CONFLICT
 
                 else -> null
             }

@@ -23,13 +23,26 @@ class ItemStackSerializerTest {
         assertEquals("surf.types.paper.v1.ItemStack", descriptor.serialName)
         assertEquals(StructureKind.CLASS, descriptor.kind)
         assertEquals(listOf("data"), descriptor.elementNames.toList())
-        assertEquals(1, descriptor.getElementAnnotations(0).filterIsInstance<ProtoNumber>().single().number)
+        assertEquals(
+            1,
+            descriptor.getElementAnnotations(0).filterIsInstance<ProtoNumber>().single().number,
+        )
     }
 
     @Test
     fun `absent data is a missing field`() {
-        assertMissingField("surf.types.paper.v1.ItemStack", "data") { decodeHex(ItemStackSerializer, "") }
-        assertMissingField("surf.types.paper.v1.ItemStack", "data") { decodeHex(Holder.serializer(), "0a00") }
+        assertMissingField("surf.types.paper.v1.ItemStack", "data") {
+            decodeHex(
+                ItemStackSerializer,
+                "",
+            )
+        }
+        assertMissingField("surf.types.paper.v1.ItemStack", "data") {
+            decodeHex(
+                Holder.serializer(),
+                "0a00",
+            )
+        }
     }
 
     @Test

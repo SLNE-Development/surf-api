@@ -83,14 +83,16 @@ data class ViewHeaderGeometry(
         charWidths: Map<Int, Int> = DefaultFontWidths.advances,
         charSize: Int = DefaultFontWidths.DEFAULT_ADVANCE,
         charSpacing: Int = 0,
-    ): TextAlignmentOptions = TextAlignmentOptions(
-        leftShift = titleLeftShift,
-        padding = titlePadding,
-        containerWidth = titleWidth,
-        charSize = charSize,
-        charSpacing = charSpacing,
-        charWidths = charWidths
-    )
+    ): TextAlignmentOptions {
+        return TextAlignmentOptions(
+            leftShift = titleLeftShift,
+            padding = titlePadding,
+            containerWidth = titleWidth,
+            charSize = charSize,
+            charSpacing = charSpacing,
+            charWidths = charWidths,
+        )
+    }
 
     /**
      * Returns the [TextAlignmentOptions] that align text inside the span of slot [columns], so a
@@ -115,7 +117,7 @@ data class ViewHeaderGeometry(
             containerWidth = ViewSlotGeometry.spanWidth(columns.count(), slotSize),
             charSize = charSize,
             charSpacing = charSpacing,
-            charWidths = charWidths
+            charWidths = charWidths,
         )
     }
 
@@ -141,10 +143,10 @@ data class ViewHeaderGeometry(
         const val DEFAULT_SLOT_ORIGIN_X = -1
 
         /**
-         * Default [slotGlyphInset]: none. The slot overlay glyphs of the pack are 18x18 textures that
-         * start at their first pixel, so they land on the cell border the grid is measured from.
-         * Set it to the number of transparent columns your texture carries on its left instead of
-         * re-cutting the texture.
+         * Default [slotGlyphInset]: none. The slot overlay glyphs of the pack are 18x18 textures
+         * that start at their first pixel, so they land on the cell border the grid is measured
+         * from. Set it to the number of transparent columns your texture carries on its left
+         * instead of re-cutting the texture.
          */
         const val DEFAULT_SLOT_GLYPH_INSET = 0
 

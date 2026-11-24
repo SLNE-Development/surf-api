@@ -20,13 +20,14 @@ import javax.inject.Inject
 /**
  * Downloads the `.proto` files of this module's previous weaver release into [outputDir].
  *
- * The plugin registers it as `fetchSurfNatsBaseline` for [CheckSurfNatsCompatibilityTask]. The baseline version is
- * [requestedVersion] when set, otherwise the highest release in [repository] below [projectVersion] without its
- * `-SNAPSHOT` suffix. The lookup ignores snapshots.
+ * The plugin registers it as `fetchSurfNatsBaseline` for [CheckSurfNatsCompatibilityTask]. The
+ * baseline version is [requestedVersion] when set, otherwise the highest release in [repository]
+ * below [projectVersion] without its `-SNAPSHOT` suffix. The lookup ignores snapshots.
  *
- * [versionFile] records the version, or [NO_BASELINE] when there is no earlier release, the registry answers 404
- * for the artifact, or Gradle runs with `--offline`. The task is never up to date, so every build sees a new
- * release. [outputDir] holds only the files of this artifact, not those of its dependencies.
+ * [versionFile] records the version, or [NO_BASELINE] when there is no earlier release, the
+ * registry answers 404 for the artifact, or Gradle runs with `--offline`. The task is never up to
+ * date, so every build sees a new release. [outputDir] holds only the files of this artifact, not
+ * those of its dependencies.
  */
 @DisableCachingByDefault(because = "Always re-checks the registry for a newer release")
 abstract class FetchSurfNatsBaselineTask : DefaultTask() {
@@ -66,7 +67,8 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
     abstract val artifactName: Property<String>
 
     /**
-     * The current version, from `weaver.publishing.version`. The baseline is the highest release below it.
+     * The current version, from `weaver.publishing.version`. The baseline is the highest release
+     * below it.
      */
     @get:Input
     @get:Optional
@@ -92,13 +94,15 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
     abstract val offline: Property<Boolean>
 
     /**
-     * The directory that receives the baseline `.proto` files, `build/surf-nats/baseline/protos` by default.
+     * The directory that receives the baseline `.proto` files, `build/surf-nats/baseline/protos` by
+     * default.
      */
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
     /**
-     * The file that records the baseline version or [NO_BASELINE], `build/surf-nats/baseline/version.txt` by default.
+     * The file that records the baseline version or [NO_BASELINE],
+     * `build/surf-nats/baseline/version.txt` by default.
      */
     @get:OutputFile
     abstract val versionFile: RegularFileProperty
@@ -117,9 +121,9 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
     /**
      * Resolves the baseline version, downloads and extracts its archive, and writes [versionFile].
      *
-     * @throws GradleException when a required weaver setting is missing, the registry cannot be reached or answers
-     *   with an error, an explicit [requestedVersion] does not exist, the archive checksum does not match, or an
-     *   archive entry escapes [outputDir].
+     * @throws GradleException when a required weaver setting is missing, the registry cannot be
+     *   reached or answers with an error, an explicit [requestedVersion] does not exist, the
+     *   archive checksum does not match, or an archive entry escapes [outputDir].
      */
     @TaskAction
     fun fetch() {
@@ -127,8 +131,11 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
         outputDir.get().asFile.mkdirs()
 
         if (offline.get()) {
-            logger.warn("surf-nats: Gradle runs with --offline, skipping the compatibility check against weaver.")
+            logger.warn(
+                "surf-nats: Gradle runs with --offline, skipping the compatibility check against weaver.",
+            )
             writeVersion(NO_BASELINE)
+
             return
         }
 
@@ -137,20 +144,29 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
         val name = required(artifactName, "weaver.publishing.name")
         val client = WeaverBaselineClient(required(url, "weaver.url"), token.orNull)
 
-        val version = requestedVersion.orNull ?: findPreviousRelease(client, repository, group, name)
+        val version = requestedVersion.orNull ?: findPreviousRelease(
+            client,
+            repository,
+            group,
+            name,
+        )
+
         if (version == null) {
             logNoBaseline(repository, group, name)
             writeVersion(NO_BASELINE)
+
             return
         }
 
         val archive = temporaryDir.resolve("baseline.tar.gz")
+
         try {
             client.download(repository, group, name, version, archive)
             extract(archive, "$group:$name:$version")
         } finally {
             archive.delete()
         }
+
         writeVersion(version)
         logger.info("surf-nats: compatibility baseline is {}:{}:{}", group, name, version)
     }
@@ -162,7 +178,9 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
         name: String,
     ): String? {
         val releases = client.releases(repository, group, name) ?: return null
+
         val current = required(projectVersion, "weaver.publishing.version")
+
         return WeaverVersions.previousRelease(releases, current)
     }
 
@@ -172,9 +190,12 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
      * weaver answers a missing or unreadable repository with the same 404 as a missing artifact.
      */
     private fun logNoBaseline(repository: String, group: String, name: String) {
-        val message = "surf-nats: no earlier release of $group:$name in $repository, skipping the compatibility check."
+        val message =
+            "surf-nats: no earlier release of $group:$name in $repository, skipping the compatibility check."
+
         if (repository == WeaverIntegration.DEFAULT_REPOSITORY) {
             logger.lifecycle(message)
+
             return
         }
 
@@ -193,7 +214,9 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
             this.includeEmptyDirs = false
             this.eachFile {
                 if (this.relativePath.segments.any { it == ".." }) {
-                    throw GradleException("$coordinate: archive entry ${this.path} escapes the baseline directory")
+                    throw GradleException(
+                        "$coordinate: archive entry ${this.path} escapes the baseline directory",
+                    )
                 }
             }
             this.into(outputDir)
@@ -206,12 +229,15 @@ abstract class FetchSurfNatsBaselineTask : DefaultTask() {
         file.writeText(version, Charsets.UTF_8)
     }
 
-    private fun required(property: Property<String>, name: String): String =
-        property.orNull?.takeIf { it.isNotBlank() } ?: throw GradleException("surf-nats: $name is not set.")
+    private fun required(property: Property<String>, name: String): String {
+        return property.orNull?.takeIf { it.isNotBlank() }
+            ?: throw GradleException("surf-nats: $name is not set.")
+    }
 
     private class Active : Spec<Task> {
-        override fun isSatisfiedBy(element: Task): Boolean =
-            (element as FetchSurfNatsBaselineTask).active.get()
+        override fun isSatisfiedBy(element: Task): Boolean {
+            return (element as FetchSurfNatsBaselineTask).active.get()
+        }
     }
 
     companion object {

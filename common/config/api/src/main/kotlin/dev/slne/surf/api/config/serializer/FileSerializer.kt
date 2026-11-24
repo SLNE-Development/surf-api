@@ -10,7 +10,11 @@ internal object FileSerializer : ScalarSerializer.Annotated<File>(File::class.ja
         return File(obj.toString())
     }
 
-    override fun serialize(type: AnnotatedType, item: File, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: File,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.path
     }
 }

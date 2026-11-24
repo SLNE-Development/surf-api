@@ -1,7 +1,9 @@
 package dev.slne.surf.api.messages
 
 /**
- * @see <a href="https://www.spigotmc.org/threads/free-code-sending-perfectly-centered-chat-message.95872/">SpigotMC Forum</a>
+ * @see <a
+ * href="https://www.spigotmc.org/threads/free-code-sending-perfectly-centered-chat-message.95872/">SpigotMC
+ * Forum</a>
  */
 @Suppress("EnumEntryName")
 enum class DefaultFontInfo(val character: Char, val length: Int) {
@@ -104,6 +106,7 @@ enum class DefaultFontInfo(val character: Char, val length: Int) {
 
     fun getBoldLength(): Int {
         if (this == SPACE) return length
+
         return this.length + 1
     }
 
@@ -112,9 +115,10 @@ enum class DefaultFontInfo(val character: Char, val length: Int) {
             for (dFI in entries) {
                 if (dFI.character == c) return dFI
             }
+
             return DEFAULT
         }
 
-        fun pixelWidth(text: String) = text.sumOf { getDefaultFontInfo(it).length + 1 }
+        fun pixelWidth(text: String): Int = text.sumOf { getDefaultFontInfo(it).length + 1 }
     }
 }

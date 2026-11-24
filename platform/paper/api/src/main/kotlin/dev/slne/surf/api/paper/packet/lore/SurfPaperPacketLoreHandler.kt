@@ -58,6 +58,6 @@ fun interface SurfPaperPacketLoreHandler {
     fun handleLore(
         loreToDisplay: MutableList<Component>,
         pdc: PersistentDataContainerView,
-        itemStack: ItemStack
+        itemStack: ItemStack,
     )
 }

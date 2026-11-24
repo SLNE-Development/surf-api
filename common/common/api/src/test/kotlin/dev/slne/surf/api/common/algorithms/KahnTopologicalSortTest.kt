@@ -43,8 +43,9 @@ class KahnTopologicalSortTest {
 
     private fun <T> assertPartialOrder(graph: Map<T, List<T>>, order: List<T>) {
         val index = order.withIndex().associate { (i, v) -> v to i }
-        graph.forEach { (from, successors) ->
-            successors.forEach { to ->
+
+        for ((from, successors) in graph) {
+            for (to in successors) {
                 assertTrue(
                     index.getValue(from) < index.getValue(to),
                     "$from must be ordered before $to",

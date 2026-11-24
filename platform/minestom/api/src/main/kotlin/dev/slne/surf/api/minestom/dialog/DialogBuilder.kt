@@ -23,8 +23,7 @@ import net.minestom.server.dialog.Dialog
  * }
  * ```
  */
-fun dialog(block: DialogEntryBuilder.() -> Unit): Dialog =
-    DialogEntryBuilder().apply(block).build()
+fun dialog(block: DialogEntryBuilder.() -> Unit): Dialog = DialogEntryBuilder().apply(block).build()
 
 fun DialogEntryBuilder.base(block: DialogBaseBuilder.() -> Unit) {
     base(DialogBaseBuilder().apply(block))

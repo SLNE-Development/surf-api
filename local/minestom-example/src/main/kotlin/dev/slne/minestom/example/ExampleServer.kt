@@ -58,7 +58,7 @@ fun main() {
                 LOGGER.info(
                     "{} joins with locale {}",
                     context.player.username,
-                    context.player.locale
+                    context.player.locale,
                 )
             }
         }
@@ -90,11 +90,13 @@ fun main() {
     LOGGER.info("Example server started on port {}", port)
 }
 
-private fun createWorld(): InstanceContainer = buildInstance {
-    setChunkSupplier(::LightingChunk)
-    generator {
-        modify {
-            fillHeight(0, 40, Block.GRASS_BLOCK)
+private fun createWorld(): InstanceContainer {
+    return buildInstance {
+        setChunkSupplier(::LightingChunk)
+        generator {
+            modify {
+                fillHeight(0, 40, Block.GRASS_BLOCK)
+            }
         }
     }
 }
@@ -121,10 +123,14 @@ private class ExampleListeners(private val world: InstanceContainer) : EventRegi
             }
         }
 
-        // Runs on the player's virtual configuration thread, so a stored location could be loaded here
+        // Runs on the player's virtual configuration thread, so a stored location could be loaded
+        // here
         node.addListener<AsyncPlayerSpawnLocationEvent> { event ->
-            event.position =
-                SPAWN.add(Random.nextDouble(-3.0, 3.0), 0.0, Random.nextDouble(-3.0, 3.0))
+            event.position = SPAWN.add(
+                Random.nextDouble(-3.0, 3.0),
+                0.0,
+                Random.nextDouble(-3.0, 3.0),
+            )
         }
 
         node.addListener<PlayerJoinEvent> { event ->
@@ -141,8 +147,8 @@ private class ExampleListeners(private val world: InstanceContainer) : EventRegi
                 event.player.sendMessage(
                     Component.text(
                         "No flying while sneaking!",
-                        NamedTextColor.RED
-                    )
+                        NamedTextColor.RED,
+                    ),
                 )
             }
         }

@@ -17,7 +17,8 @@ fun interface SuspendPaginationRowRenderer<T> {
 
     fun interface Simple<T> : SuspendPaginationRowRenderer<T> {
         suspend fun CoroutineScope.render(value: T): Component
-        override suspend fun CoroutineScope.renderRow(value: T, index: Int): Collection<Component> =
-            listOf(render(value))
+        override suspend fun CoroutineScope.renderRow(value: T, index: Int): Collection<Component> {
+            return listOf(render(value))
+        }
     }
 }

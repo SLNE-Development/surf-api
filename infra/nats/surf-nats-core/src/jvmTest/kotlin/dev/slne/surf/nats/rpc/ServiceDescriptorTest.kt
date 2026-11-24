@@ -1,17 +1,9 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.DuplicateRpcService
-import dev.slne.surf.nats.EmptyService
-import dev.slne.surf.nats.InvalidRpcNameService
-import dev.slne.surf.nats.MismatchedRequestService
-import dev.slne.surf.nats.MissingMethodService
-import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.OverloadedService
-import dev.slne.surf.nats.UndescribedMethodService
+import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.protocol.ProtocolDefaults
-import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.proto.v1.CalcService
 import dev.slne.surf.nats.test.proto.v1.FinderService
 import dev.slne.surf.nats.test.proto.v1.InlineRequest
@@ -38,10 +30,17 @@ class ServiceDescriptorTest {
     private val clients = mutableListOf<NatsClientImpl>()
 
     @AfterEach
-    fun closeClients() = clients.forEach { it.close() }
+    fun closeClients() {
+        for (client in clients) {
+            client.close()
+        }
+    }
 
-    private fun client(name: String = "svc-${UUID.randomUUID().toString().take(8)}") =
-        (NatsClient.create(name) as NatsClientImpl).also { clients += it }
+    private fun client(
+        name: String = "svc-${UUID.randomUUID().toString().take(8)}",
+    ): NatsClientImpl {
+        return (NatsClient.create(name) as NatsClientImpl).also { clients += it }
+    }
 
     private fun describe(type: Class<*>) = ServiceDescriptor.of(type)
 
@@ -52,9 +51,18 @@ class ServiceDescriptorTest {
         val descriptor = describe(CalcService::class.java)
 
         assertEquals("surf.nats.test.v1.CalcService", descriptor.name)
-        assertEquals("surf.rpc.surf.nats.test.v1.CalcService.Mixed", descriptor.method("mixed").subject)
-        assertEquals("surf.rpc.surf.nats.test.v1.CalcService.InnerTimeout", descriptor.method("innerTimeout").subject)
-        assertEquals("surf.rpc.surf.nats.test.v1.CalcService.SlowFire", descriptor.method("slowFire").subject)
+        assertEquals(
+            "surf.rpc.surf.nats.test.v1.CalcService.Mixed",
+            descriptor.method("mixed").subject,
+        )
+        assertEquals(
+            "surf.rpc.surf.nats.test.v1.CalcService.InnerTimeout",
+            descriptor.method("innerTimeout").subject,
+        )
+        assertEquals(
+            "surf.rpc.surf.nats.test.v1.CalcService.SlowFire",
+            descriptor.method("slowFire").subject,
+        )
         assertEquals("surf.nats.test.v1.CalcService", descriptor.names.queueGroup)
     }
 
@@ -65,7 +73,10 @@ class ServiceDescriptorTest {
 
         assertEquals(generated.map { it.kotlinName }, methods.map { it.kotlinName })
         assertEquals(methods.indices.toList(), methods.map { it.index })
-        methods.forEach { assertSame(generated[it.index], it.generated) }
+
+        for (method in methods) {
+            assertSame(generated[method.index], method.generated)
+        }
     }
 
     @Test
@@ -74,7 +85,10 @@ class ServiceDescriptorTest {
 
         val inline = descriptor.method("inline")
         assertEquals("inline", inline.method.name)
-        assertEquals(listOf(InlineRequest::class.java, Continuation::class.java), inline.method.parameterTypes.toList())
+        assertEquals(
+            listOf(InlineRequest::class.java, Continuation::class.java),
+            inline.method.parameterTypes.toList(),
+        )
 
         val health = descriptor.method("health")
         assertEquals(listOf(Continuation::class.java), health.method.parameterTypes.toList())
@@ -86,7 +100,9 @@ class ServiceDescriptorTest {
 
     @Test
     fun `request parameters have no default bridges`() {
-        val statics = CalcService::class.java.declaredMethods.filter { Modifier.isStatic(it.modifiers) }
+        val statics = CalcService::class.java.declaredMethods.filter {
+            Modifier.isStatic(it.modifiers)
+        }
         assertTrue(statics.none { it.name.endsWith("\$default") }, statics.toString())
     }
 
@@ -114,7 +130,10 @@ class ServiceDescriptorTest {
         assertEquals(ProtocolDefaults.CORE_TIMEOUT_SECONDS.seconds, calc.method("mixed").timeout)
 
         val orders = describe(OrderService::class.java)
-        assertEquals(ProtocolDefaults.PERSISTENT_TIMEOUT_SECONDS.seconds, orders.method("total").timeout)
+        assertEquals(
+            ProtocolDefaults.PERSISTENT_TIMEOUT_SECONDS.seconds,
+            orders.method("total").timeout,
+        )
         assertEquals(180.seconds, orders.method("audit").timeout)
         assertEquals(ProtocolDefaults.CORE_TIMEOUT_SECONDS.seconds, orders.method("ping").timeout)
     }
@@ -124,9 +143,15 @@ class ServiceDescriptorTest {
         val descriptor = describe(OrderService::class.java)
 
         assertTrue(descriptor.method("place").persistent)
-        assertEquals("surf.persist.surf.nats.test.v1.OrderService.Place", descriptor.method("place").subject)
+        assertEquals(
+            "surf.persist.surf.nats.test.v1.OrderService.Place",
+            descriptor.method("place").subject,
+        )
         assertFalse(descriptor.method("ping").persistent)
-        assertEquals("surf.rpc.surf.nats.test.v1.OrderService.Ping", descriptor.method("ping").subject)
+        assertEquals(
+            "surf.rpc.surf.nats.test.v1.OrderService.Ping",
+            descriptor.method("ping").subject,
+        )
 
         val streams = assertNotNull(descriptor.streams)
         assertEquals("SURF_PERSIST_surf_nats_test_v1_OrderService", streams.stream)
@@ -171,23 +196,36 @@ class ServiceDescriptorTest {
 
         assertEquals("surf.nats.test.v1.VersionedService", v1.name)
         assertEquals("surf.nats.test.v2.VersionedService", v2.name)
-        assertEquals("surf.rpc.surf.nats.test.v1.VersionedService.Ping", v1.methods.single().subject)
-        assertEquals("surf.rpc.surf.nats.test.v2.VersionedService.Ping", v2.methods.single().subject)
+        assertEquals(
+            "surf.rpc.surf.nats.test.v1.VersionedService.Ping",
+            v1.methods.single().subject,
+        )
+        assertEquals(
+            "surf.rpc.surf.nats.test.v2.VersionedService.Ping",
+            v2.methods.single().subject,
+        )
     }
 
     @Test
     fun `implementation class is rejected with the generated interface it implements`() {
         val client = client()
-        val message = assertFailsWith<IllegalArgumentException> { client.service(CalcImpl::class) }.message.orEmpty()
+        val message = assertFailsWith<IllegalArgumentException> { client.service(CalcImpl::class) }
+            .message.orEmpty()
 
-        assertContains(message, "${CalcImpl::class.java.name} is not a generated surf-nats service interface")
+        assertContains(
+            message,
+            "${CalcImpl::class.java.name} is not a generated surf-nats service interface",
+        )
         assertContains(message, "registerService<CalcService>(implementation)")
         assertContains(message, CalcService::class.java.name)
     }
 
     @Test
     fun `interface without a generated descriptor is rejected`() {
-        val message = assertFailsWith<IllegalArgumentException> { describe(NotGenerated::class.java) }.message.orEmpty()
+        val message = assertFailsWith<IllegalArgumentException> {
+            describe(NotGenerated::class.java)
+        }
+            .message.orEmpty()
 
         assertContains(message, "is not a generated surf-nats service interface")
     }
@@ -198,8 +236,14 @@ class ServiceDescriptorTest {
             describe(MissingMethodService::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "Invalid NATS_DESCRIPTOR of ${MissingMethodService::class.java.name}")
-        assertContains(message, "pong (rpc Pong): no suspend method pong() for the google.protobuf.Empty request")
+        assertContains(
+            message,
+            "Invalid NATS_DESCRIPTOR of ${MissingMethodService::class.java.name}",
+        )
+        assertContains(
+            message,
+            "pong (rpc Pong): no suspend method pong() for the google.protobuf.Empty request",
+        )
     }
 
     @Test
@@ -217,7 +261,10 @@ class ServiceDescriptorTest {
             describe(DuplicateRpcService::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "Invalid NATS_DESCRIPTOR of ${DuplicateRpcService::class.java.name}")
+        assertContains(
+            message,
+            "Invalid NATS_DESCRIPTOR of ${DuplicateRpcService::class.java.name}",
+        )
         assertContains(message, "ping (rpc Ping): ping is described by more than one rpc")
     }
 
@@ -239,8 +286,14 @@ class ServiceDescriptorTest {
             describe(InvalidRpcNameService::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "Invalid NATS_DESCRIPTOR of ${InvalidRpcNameService::class.java.name}")
-        assertContains(message, "ping (rpc Pi ng): rpc surf.nats.test.v1.InvalidRpcNameService.Pi ng:")
+        assertContains(
+            message,
+            "Invalid NATS_DESCRIPTOR of ${InvalidRpcNameService::class.java.name}",
+        )
+        assertContains(
+            message,
+            "ping (rpc Pi ng): rpc surf.nats.test.v1.InvalidRpcNameService.Pi ng:",
+        )
     }
 
     @Test
@@ -261,9 +314,15 @@ class ServiceDescriptorTest {
         assertContains(
             message,
             "pause (rpc Pause): no suspend method pause() for the google.protobuf.Empty request, " +
-                    "found pause(${Text::class.java.name})",
+                "found pause(${Text::class.java.name})",
         )
-        assertContains(message, "resume (rpc Resume): no suspend method resume(request: surf.nats.test.v1.Text), found resume()")
-        assertContains(message, "count (rpc Count): expected count(request: surf.nats.test.v1.Text), found the primitive parameter int")
+        assertContains(
+            message,
+            "resume (rpc Resume): no suspend method resume(request: surf.nats.test.v1.Text), found resume()",
+        )
+        assertContains(
+            message,
+            "count (rpc Count): expected count(request: surf.nats.test.v1.Text), found the primitive parameter int",
+        )
     }
 }

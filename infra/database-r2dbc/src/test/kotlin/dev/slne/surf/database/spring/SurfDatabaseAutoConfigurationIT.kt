@@ -37,8 +37,16 @@ class SurfDatabaseAutoConfigurationIT {
         val lockTimeoutSql: String,
         val expectedLockTimeout: String,
     ) {
-        MARIADB(DatabaseContainers::mariadb, "SELECT CAST(@@SESSION.innodb_lock_wait_timeout AS CHAR)", "3"),
-        POSTGRESQL(DatabaseContainers::postgres, "SELECT current_setting('lock_timeout')", "2500ms"),
+        MARIADB(
+            DatabaseContainers::mariadb,
+            "SELECT CAST(@@SESSION.innodb_lock_wait_timeout AS CHAR)",
+            "3",
+        ),
+        POSTGRESQL(
+            DatabaseContainers::postgres,
+            "SELECT current_setting('lock_timeout')",
+            "2500ms",
+        ),
     }
 
     @ParameterizedTest
@@ -57,7 +65,9 @@ class SurfDatabaseAutoConfigurationIT {
     fun `every connection waits at most the configured lock timeout`(vendor: Vendor) {
         start(vendor.container().connectionDetails(fresh = true)).use { context ->
             val lockTimeout = runBlocking {
-                suspendTransaction(context.getBean<R2dbcDatabase>()) { single(vendor.lockTimeoutSql) }
+                suspendTransaction(context.getBean<R2dbcDatabase>()) {
+                    single(vendor.lockTimeoutSql)
+                }
             }
             assertEquals(vendor.expectedLockTimeout, lockTimeout)
         }
@@ -67,7 +77,9 @@ class SurfDatabaseAutoConfigurationIT {
     @EnumSource(Vendor::class)
     fun `configurers customize the database`(vendor: Vendor) {
         start(vendor.container().connectionDetails(fresh = true)) {
-            registerBean<SurfDatabaseConfigurer> { SurfDatabaseConfigurer { it.defaultFetchSize = 500 } }
+            registerBean<SurfDatabaseConfigurer> {
+                SurfDatabaseConfigurer { it.defaultFetchSize = 500 }
+            }
         }.use { context ->
             assertEquals(500, context.getBean<R2dbcDatabase>().config.defaultFetchSize)
         }
@@ -89,7 +101,10 @@ class SurfDatabaseAutoConfigurationIT {
                 SurfDatabaseConfigurer { it.defaultMaxAttempts = EXPOSED_DEFAULT_ATTEMPTS }
             }
         }.use { context ->
-            assertEquals(EXPOSED_DEFAULT_ATTEMPTS, context.getBean<R2dbcDatabase>().config.defaultMaxAttempts)
+            assertEquals(
+                EXPOSED_DEFAULT_ATTEMPTS,
+                context.getBean<R2dbcDatabase>().config.defaultMaxAttempts,
+            )
         }
     }
 
@@ -118,7 +133,10 @@ class SurfDatabaseAutoConfigurationIT {
         configure: AnnotationConfigApplicationContext.() -> Unit = {},
     ) = AnnotationConfigApplicationContext().apply {
         val timeouts = PoolConfig.Timeouts(lockTimeoutMillis = 2_500)
-        val pool = PoolConfig(sizing = PoolConfig.Sizing(initialSize = 2, maxSize = 2), timeouts = timeouts)
+        val pool = PoolConfig(
+            sizing = PoolConfig.Sizing(initialSize = 2, maxSize = 2),
+            timeouts = timeouts,
+        )
         registerBean<DatabaseConfig> { DatabaseConfig(credentials = details, pool = pool) }
         configure()
         register(SurfDatabaseAutoConfiguration::class.java)
@@ -131,13 +149,21 @@ class SurfDatabaseAutoConfigurationIT {
     private fun awaitNoConnections(details: ConnectionDetails) {
         val container = DatabaseContainers.mariadb()
         repeat(POLL_ATTEMPTS) {
-            val open = DriverManager.getConnection(container.jdbcUrl, "root", container.password).use { connection ->
-                connection.prepareStatement("SELECT COUNT(*) FROM information_schema.PROCESSLIST WHERE DB = ?").use {
-                    it.setString(1, details.database)
-                    it.executeQuery().use { rows -> rows.next(); rows.getInt(1) }
-                }
+            val open = DriverManager.getConnection(
+                container.jdbcUrl,
+                "root",
+                container.password,
+            ).use { connection ->
+                connection.prepareStatement(
+                    "SELECT COUNT(*) FROM information_schema.PROCESSLIST WHERE DB = ?",
+                )
+                    .use {
+                        it.setString(1, details.database)
+                        it.executeQuery().use { rows -> rows.next(); rows.getInt(1) }
+                    }
             }
             if (open == 0) return
+
             Thread.sleep(POLL_INTERVAL_MILLIS)
         }
         fail("The pool still holds connections to ${details.database}")
@@ -163,7 +189,14 @@ class SurfDatabaseAutoConfigurationIT {
     class MigratedItems(database: R2dbcDatabase) {
         val names: List<String> = runBlocking {
             suspendTransaction(database) {
-                assertNotNull(exec("SELECT name FROM a_items ORDER BY id") { it.get(0, String::class.java)!! }).toList().requireNoNulls()
+                assertNotNull(
+                    exec("SELECT name FROM a_items ORDER BY id") {
+                        it.get(
+                            0,
+                            String::class.java,
+                        )!!
+                    },
+                ).toList().requireNoNulls()
             }
         }
     }
@@ -173,7 +206,15 @@ class SurfDatabaseAutoConfigurationIT {
         const val POLL_ATTEMPTS = 100
         const val POLL_INTERVAL_MILLIS = 50L
 
-        suspend fun R2dbcTransaction.single(sql: String): String =
-            assertNotNull(exec(sql) { it.get(0, String::class.java)!! }).toList().requireNoNulls().single()
+        suspend fun R2dbcTransaction.single(sql: String): String {
+            return assertNotNull(
+                exec(sql) {
+                    it.get(
+                        0,
+                        String::class.java,
+                    )!!
+                },
+            ).toList().requireNoNulls().single()
+        }
     }
 }

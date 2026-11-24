@@ -10,12 +10,20 @@ class BigDecimalSerializerTest {
 
     @Serializable
     private data class Holder(
-        @ProtoNumber(1) val list: List<@Serializable(BigDecimalSerializer::class) BigDecimal> = emptyList(),
+        @ProtoNumber(1) val list: List<
+            @Serializable(
+                BigDecimalSerializer::class,
+            ) BigDecimal,
+            > = emptyList(),
     )
 
     @Test
     fun `descriptor is the surf BigDecimal message`() {
-        assertMessageDescriptor(BigDecimalSerializer.descriptor, "surf.types.v1.BigDecimal", "value" to 1)
+        assertMessageDescriptor(
+            BigDecimalSerializer.descriptor,
+            "surf.types.v1.BigDecimal",
+            "value" to 1,
+        )
     }
 
     @Test
@@ -46,7 +54,12 @@ class BigDecimalSerializerTest {
 
     @Test
     fun `absent value is a missing field`() {
-        assertMissingField("surf.types.v1.BigDecimal", "value") { decodeHex(BigDecimalSerializer, "") }
+        assertMissingField("surf.types.v1.BigDecimal", "value") {
+            decodeHex(
+                BigDecimalSerializer,
+                "",
+            )
+        }
     }
 
     @Test

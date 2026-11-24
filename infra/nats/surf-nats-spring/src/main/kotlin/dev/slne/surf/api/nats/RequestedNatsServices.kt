@@ -19,10 +19,11 @@ import java.util.*
 /**
  * Finds the generated service interfaces that a bean class asks Spring to inject.
  *
- * Only injection points are inspected: the constructor Spring uses to create the bean, non-static `@Autowired` and
- * `@Inject` fields and methods, and the parameters of `@Bean` methods, over the whole class hierarchy. A parameter of
- * type `ObjectProvider<T>`, `ObjectFactory<T>`, `Optional<T>` or `Provider<T>` asks for `T`. Collections are not
- * inspected, and neither is a lookup through `getBean`.
+ * Only injection points are inspected: the constructor Spring uses to create the bean, non-static
+ * `@Autowired` and `@Inject` fields and methods, and the parameters of `@Bean` methods, over the
+ * whole class hierarchy. A parameter of type `ObjectProvider<T>`, `ObjectFactory<T>`, `Optional<T>`
+ * or `Provider<T>` asks for `T`. Collections are not inspected, and neither is a lookup through
+ * `getBean`.
  */
 internal object RequestedNatsServices {
 
@@ -43,14 +44,15 @@ internal object RequestedNatsServices {
     /**
      * Returns the generated service interfaces that [beanClass] asks Spring to inject.
      *
-     * The constructors are the ones Spring's `AutowiredAnnotationBeanPostProcessor` selects: an `@Autowired`
-     * constructor, the single constructor or the Kotlin primary constructor. The type arguments of generic members are
-     * resolved against [beanClass], so a member that a generic superclass declares as `S` asks for the type
-     * [beanClass] binds `S` to. A class that cannot be reflected because a type it mentions, also as a type argument,
-     * is missing asks for nothing.
+     * The constructors are the ones Spring's `AutowiredAnnotationBeanPostProcessor` selects: an
+     * `@Autowired` constructor, the single constructor or the Kotlin primary constructor. The type
+     * arguments of generic members are resolved against [beanClass], so a member that a generic
+     * superclass declares as `S` asks for the type [beanClass] binds `S` to. A class that cannot be
+     * reflected because a type it mentions, also as a type argument, is missing asks for nothing.
      *
      * @param beanName the bean's name, for Spring's constructor selection
-     * @param includeConstructors `false` for the result of a factory method, whose constructors Spring does not call
+     * @param includeConstructors `false` for the result of a factory method, whose constructors
+     * Spring does not call
      */
     fun requestedBy(
         beanClass: Class<*>,
@@ -60,7 +62,10 @@ internal object RequestedNatsServices {
         val requested = LinkedHashSet<Class<*>>()
 
         try {
-            if (includeConstructors) collectConstructorParameter(beanClass, beanName, requested)
+            if (includeConstructors) {
+                collectConstructorParameter(beanClass, beanName, requested)
+            }
+
             collectFields(beanClass, requested)
             collectMethodParameters(beanClass, requested)
         } catch (_: LinkageError) {
@@ -69,6 +74,7 @@ internal object RequestedNatsServices {
             return emptySet()
         } catch (failure: IllegalStateException) {
             if (failure.cause !is LinkageError) throw failure
+
             return emptySet()
         }
 
@@ -76,10 +82,12 @@ internal object RequestedNatsServices {
     }
 
     /**
-     * Returns the class [type] asks Spring for: itself, or the type argument of a lazy lookup wrapper.
+     * Returns the class [type] asks Spring for: itself, or the type argument of a lazy lookup
+     * wrapper.
      */
     fun requestedType(type: ResolvableType): Class<*>? {
         val raw = type.resolve() ?: return null
+
         return if (isLookupWrapper(raw)) {
             type.getGeneric(0).resolve()
         } else {
@@ -89,8 +97,8 @@ internal object RequestedNatsServices {
 
     private fun isLookupWrapper(raw: Class<*>): Boolean {
         return raw == Optional::class.java ||
-                ObjectFactory::class.java.isAssignableFrom(raw) ||
-                raw.name in PROVIDER_TYPES
+            ObjectFactory::class.java.isAssignableFrom(raw) ||
+            raw.name in PROVIDER_TYPES
     }
 
     private fun collectConstructorParameter(
@@ -105,7 +113,9 @@ internal object RequestedNatsServices {
         } catch (_: BeanCreationException) {
             return
         } catch (failure: Error) {
-            if (failure !is LinkageError && failure.javaClass.name != KOTLIN_REFLECTION_ERROR) throw failure
+            val isReflectionError = failure.javaClass.name == KOTLIN_REFLECTION_ERROR
+            if (failure !is LinkageError && !isReflectionError) throw failure
+
             return
         }
 
@@ -141,17 +151,19 @@ internal object RequestedNatsServices {
     private fun collectParameters(
         executable: Executable,
         beanClass: Class<*>,
-        requested: MutableSet<Class<*>>
+        requested: MutableSet<Class<*>>,
     ) {
         for (index in 0 until executable.parameterCount) {
-            val parameter =
-                MethodParameter.forExecutable(executable, index).withContainingClass(beanClass)
+            val parameter = MethodParameter.forExecutable(executable, index).withContainingClass(
+                beanClass,
+            )
             add(ResolvableType.forMethodParameter(parameter), requested)
         }
     }
 
     private fun add(type: ResolvableType, requested: MutableSet<Class<*>>) {
         val requestedType = requestedType(type) ?: return
+
         if (requestedType.isInterface && EmbeddedNats.isServiceInterface(requestedType)) {
             requested += requestedType
         }
@@ -161,6 +173,7 @@ internal object RequestedNatsServices {
 
     private fun isInjectionPoint(element: AnnotatedElement): Boolean {
         val annotations = MergedAnnotations.from(element)
+
         return INJECT_ANNOTATIONS.any(annotations::isPresent)
     }
 

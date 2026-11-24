@@ -36,7 +36,10 @@ class RedisClientProxyTest {
         assertTrue(client.isShutdown)
         client.getBucket<String>("key")
 
-        assertEquals(listOf("isShutdown" to emptyList<Any?>(), "getBucket" to listOf<Any?>("key")), target.calls)
+        assertEquals(
+            listOf("isShutdown" to emptyList<Any?>(), "getBucket" to listOf<Any?>("key")),
+            target.calls,
+        )
     }
 
     @Test
@@ -69,7 +72,12 @@ class RedisClientProxyTest {
 
     @Test
     fun `equals, hashCode and toString work while disconnected and never reach the target`() {
-        val other = RedisClientProxy.create(RedissonClient::class.java, "demo", { false }, { target.client })
+        val other = RedisClientProxy.create(
+            RedissonClient::class.java,
+            "demo",
+            { false },
+            { target.client },
+        )
 
         assertEquals(client, client)
         assertNotEquals(client, other)

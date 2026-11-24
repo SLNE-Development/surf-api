@@ -7,7 +7,8 @@ import dev.slne.surf.nats.js.api.MethodSchema
 /**
  * Binds `DescMethod`, which describes an rpc.
  *
- * The descriptor `<Service>.method.<name>` of the generated code is passed to the exported API as [MethodSchema].
+ * The descriptor `<Service>.method.<name>` of the generated code is passed to the exported API as
+ * [MethodSchema].
  */
 internal external interface DescMethod : AnyDesc, MethodSchema {
     override val name: String

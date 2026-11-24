@@ -9,8 +9,10 @@ import org.bukkit.Bukkit
 import org.bukkit.block.BlockState
 
 object BlockStateSerializer : KSerializer<BlockState> {
-    override val descriptor =
-        PrimitiveSerialDescriptor("surfapi.bukkit.BlockState", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor(
+        "surfapi.bukkit.BlockState",
+        PrimitiveKind.STRING,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -19,6 +21,7 @@ object BlockStateSerializer : KSerializer<BlockState> {
         encoder.encodeString(value.blockData.asString)
     }
 
-    override fun deserialize(decoder: Decoder) =
-        Bukkit.createBlockData(decoder.decodeString()).createBlockState()
+    override fun deserialize(decoder: Decoder): BlockState {
+        return Bukkit.createBlockData(decoder.decodeString()).createBlockState()
+    }
 }

@@ -31,5 +31,5 @@ class AsyncPlayerSpawnLocationEvent @InternalSurfApi constructor(
     var position: Pos,
 ) : PlayerEvent, AsyncEvent {
 
-    override fun getPlayer() = player
+    override fun getPlayer(): Player = player
 }

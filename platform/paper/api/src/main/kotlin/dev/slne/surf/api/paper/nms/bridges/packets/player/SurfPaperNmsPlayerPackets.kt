@@ -1,4 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
 @file:Suppress("UnstableApiUsage")
 
 package dev.slne.surf.api.paper.nms.bridges.packets.player
@@ -7,14 +6,13 @@ import com.destroystokyo.paper.profile.PlayerProfile
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import io.papermc.paper.math.BlockPosition
 import net.kyori.adventure.text.Component
 import org.bukkit.GameMode
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import java.util.*
-import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
 @SurfApiBean
@@ -36,7 +34,7 @@ interface SurfPaperNmsPlayerPackets {
         displayName: Component?,
         showHat: Boolean,
         listOrder: Int,
-        chatSession: RemoteChatSessionData?
+        chatSession: RemoteChatSessionData?,
     ): PacketOperation
 
     fun removePlayerInfoUpdate(profileIds: List<UUID>): PacketOperation

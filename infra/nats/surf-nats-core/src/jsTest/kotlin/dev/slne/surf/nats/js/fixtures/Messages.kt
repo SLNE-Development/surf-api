@@ -5,7 +5,8 @@ import dev.slne.surf.nats.js.api.ProtoMessageInit
 import js.typedarrays.Uint8Array
 import kotlin.js.Json
 
-// protobuf-es shapes of the fixture messages, used as init objects and to read decoded messages (see fields()).
+// protobuf-es shapes of the fixture messages, used as init objects and to read decoded messages
+// (see fields()).
 
 internal external interface Uuid : ProtoMessageInit {
     var value: Uint8Array<*>?
@@ -86,4 +87,6 @@ internal external interface AuditResult : ProtoMessageInit {
 }
 
 // The fields of a decoded message as the fixture shape [T].
-internal fun <T : ProtoMessageInit> ProtoMessage?.fields(): T = checkNotNull(this) { "Expected a message" }.unsafeCast<T>()
+internal fun <T : ProtoMessageInit> ProtoMessage?.fields(): T {
+    return checkNotNull(this) { "Expected a message" }.unsafeCast<T>()
+}

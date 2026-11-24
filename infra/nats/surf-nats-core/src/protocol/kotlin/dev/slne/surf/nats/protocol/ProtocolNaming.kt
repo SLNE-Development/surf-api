@@ -1,8 +1,8 @@
 package dev.slne.surf.nats.protocol
 
 /**
- * Naming rules for proto names, client names and versioned contract packages, shared by the code generator and both
- * clients.
+ * Naming rules for proto names, client names and versioned contract packages, shared by the code
+ * generator and both clients.
  */
 internal object ProtocolNaming {
 
@@ -15,77 +15,92 @@ internal object ProtocolNaming {
     /**
      * Converts a declared name to kebab-case.
      *
-     * Words split between an ASCII lowercase letter or digit and an ASCII uppercase letter, and before the last
-     * uppercase letter of an uppercase run that is followed by a lowercase letter. All other characters, including
-     * `_` and `-`, stay as they are. The result is lowercased.
+     * Words split between an ASCII lowercase letter or digit and an ASCII uppercase letter, and
+     * before the last uppercase letter of an uppercase run that is followed by a lowercase letter.
+     * All other characters, including `_` and `-`, stay as they are. The result is lowercased.
      */
-    fun kebabCase(name: String): String = buildString(name.length + 4) {
-        for (i in name.indices) {
-            if (i > 0 && isWordBoundary(name, i)) {
-                append('-')
+    fun kebabCase(name: String): String {
+        return buildString(name.length + 4) {
+            for (i in name.indices) {
+                if (i > 0 && isWordBoundary(name, i)) {
+                    append('-')
+                }
+
+                append(name[i])
             }
-            append(name[i])
-        }
-    }.lowercase()
+        }.lowercase()
+    }
 
     /**
-     * Returns whether [name] is a proto full name: identifiers joined by single `.`, each starting with an ASCII
-     * letter and containing only ASCII letters, digits and `_`.
+     * Returns whether [name] is a proto full name: identifiers joined by single `.`, each starting
+     * with an ASCII letter and containing only ASCII letters, digits and `_`.
      *
-     * Subjects and stream names embed such names unchanged. The leading letter keeps the stream name encoding of
-     * [ProtocolStreams] injective.
+     * Subjects and stream names embed such names unchanged. The leading letter keeps the stream
+     * name encoding of [ProtocolStreams] injective.
      */
     fun isProtoName(name: String): Boolean {
         if (name.isEmpty()) return false
 
         var atStart = true
+
         for (char in name) {
             if (char == '.') {
                 if (atStart) return false
+
                 atStart = true
             } else {
                 val valid = isAsciiLetter(char) || !atStart && (isAsciiDigit(char) || char == '_')
                 if (!valid) return false
+
                 atStart = false
             }
         }
+
         return !atStart
     }
 
     /**
-     * Returns whether [name] is a single component of a proto full name ([isProtoName]), without `.`.
+     * Returns whether [name] is a single component of a proto full name ([isProtoName]), without
+     * `.`.
      */
     fun isProtoIdentifier(name: String): Boolean = '.' !in name && isProtoName(name)
 
     /**
      * Returns why [fullName] cannot name a [kind] declaration, or `null`.
      *
-     * [fullName] must be a proto full name ([isProtoName]). [declaredName], when given, is the name the declaration
-     * itself declares and must not contain `.`: some parsers accept dotted declared names, which would add subject
-     * tokens and collide with other full names.
+     * [fullName] must be a proto full name ([isProtoName]). [declaredName], when given, is the name
+     * the declaration itself declares and must not contain `.`: some parsers accept dotted declared
+     * names, which would add subject tokens and collide with other full names.
      */
-    fun nameProblem(kind: String, fullName: String, declaredName: String? = null): String? = when {
-        declaredName != null && '.' in declaredName -> "$kind $fullName: the declared name '$declaredName' must not contain '.'"
-        !isProtoName(fullName) -> "$kind $fullName: $PROTO_NAME_RULE"
-        else -> null
+    fun nameProblem(kind: String, fullName: String, declaredName: String? = null): String? {
+        return when {
+            declaredName != null && '.' in declaredName ->
+                "$kind $fullName: the declared name '$declaredName' must not contain '.'"
+
+            !isProtoName(fullName) -> "$kind $fullName: $PROTO_NAME_RULE"
+            else -> null
+        }
     }
 
     /**
-     * Returns [name] when [nameProblem] reports nothing for it, else throws [IllegalArgumentException] with that
-     * problem.
+     * Returns [name] when [nameProblem] reports nothing for it, else throws
+     * [IllegalArgumentException] with that problem.
      */
     fun requireProtoName(name: String, kind: String): String {
         nameProblem(kind, name)?.let { throw IllegalArgumentException(it) }
+
         return name
     }
 
     /**
-     * Returns whether [name] consists of `[a-z0-9]` words joined by single `-`, the format of client names.
+     * Returns whether [name] consists of `[a-z0-9]` words joined by single `-`, the format of
+     * client names.
      */
     fun isKebabName(name: String): Boolean {
         if (name.isEmpty() || name.last() == '-') return false
 
         var previous = '-'
+
         for (char in name) {
             val valid = if (char == '-') {
                 previous != '-'
@@ -94,16 +109,19 @@ internal object ProtocolNaming {
             }
 
             if (!valid) return false
+
             previous = char
         }
+
         return true
     }
 
     /**
-     * Returns the major version of a proto package that ends with `.v<N>`, or `null` without such a suffix.
+     * Returns the major version of a proto package that ends with `.v<N>`, or `null` without such a
+     * suffix.
      *
-     * `N` must be at least 1 and is written without leading zeros, so each major version has exactly one package
-     * spelling in subjects and stream names.
+     * `N` must be at least 1 and is written without leading zeros, so each major version has
+     * exactly one package spelling in subjects and stream names.
      */
     fun majorVersionOrNull(protoPackage: String): Int? {
         val dot = protoPackage.lastIndexOf('.')
@@ -116,33 +134,37 @@ internal object ProtocolNaming {
     }
 
     /**
-     * Returns why a file with the proto package [protoPackage] cannot declare events or services, or `null` when the
-     * package has a major version suffix ([majorVersionOrNull]).
+     * Returns why a file with the proto package [protoPackage] cannot declare events or services,
+     * or `null` when the package has a major version suffix ([majorVersionOrNull]).
      */
     fun contractPackageProblem(protoPackage: String): String? {
         if (majorVersionOrNull(protoPackage) != null) return null
+
         return "package '$protoPackage' declares events or services and must end with a major version '.v<N>' " +
-                "(N >= 1, no leading zeros)"
+            "(N >= 1, no leading zeros)"
     }
 
     /**
-     * Returns the major version like [majorVersionOrNull], or throws [IllegalArgumentException] without a version
-     * suffix. [source] names the declaration in the error message.
+     * Returns the major version like [majorVersionOrNull], or throws [IllegalArgumentException]
+     * without a version suffix. [source] names the declaration in the error message.
      */
     fun majorVersion(protoPackage: String, source: String? = null): Int {
         return majorVersionOrNull(protoPackage)
             ?: throw IllegalArgumentException(
                 "Proto package '$protoPackage'${if (source == null) "" else " of $source"} must end with a major version " +
-                        "suffix '.v<N>' (N >= 1, no leading zeros)"
+                    "suffix '.v<N>' (N >= 1, no leading zeros)",
             )
     }
 
     /**
-     * Returns [name] when it is [isKebabName], else throws [IllegalArgumentException]. [what] names the value in the
-     * error message.
+     * Returns [name] when it is [isKebabName], else throws [IllegalArgumentException]. [what] names
+     * the value in the error message.
      */
     fun requireClientName(name: String, what: String = "NATS client name"): String {
-        require(isKebabName(name)) { "Invalid $what '$name': must be kebab-case ([a-z0-9] separated by '-')" }
+        require(isKebabName(name)) {
+            "Invalid $what '$name': must be kebab-case ([a-z0-9] separated by '-')"
+        }
+
         return name
     }
 
@@ -156,9 +178,9 @@ internal object ProtocolNaming {
         ) return true
 
         return isAsciiUpper(previous) &&
-                isAsciiUpper(current) &&
-                index + 1 < name.length &&
-                isAsciiLower(name[index + 1])
+            isAsciiUpper(current) &&
+            index + 1 < name.length &&
+            isAsciiLower(name[index + 1])
     }
 
     private fun isAsciiLower(char: Char): Boolean = char in 'a'..'z'

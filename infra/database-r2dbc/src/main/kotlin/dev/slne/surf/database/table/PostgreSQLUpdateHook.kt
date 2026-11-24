@@ -27,7 +27,7 @@ internal object PostgreSQLUpdateHook {
         statements: List<String>,
         table: Table,
         updatedAt: Column<*>,
-        tableName: String
+        tableName: String,
     ): List<String> {
         if (currentDialect !is PostgreSQLDialect) return statements
 
@@ -35,7 +35,7 @@ internal object PostgreSQLUpdateHook {
         val tableIdentity = tr.identity(table)
         val updatedAtColumn = tr.identity(updatedAt)
         val triggerName = tr.db.identifierManager.cutIfNecessaryAndQuote(
-            "${tableName.substringAfterLast('.')}_set_updated_at"
+            "${tableName.substringAfterLast('.')}_set_updated_at",
         )
 
         // Shared, idempotent trigger function. Mirrors CurrentTimestampBase by storing the UTC
@@ -55,7 +55,7 @@ internal object PostgreSQLUpdateHook {
         // "CREATE " after all others, which would drop the trigger right after creating it. The
         // statements only run together with CREATE TABLE, so the trigger cannot exist yet.
         val createTrigger = "CREATE TRIGGER $triggerName BEFORE UPDATE ON $tableIdentity " +
-                "FOR EACH ROW EXECUTE FUNCTION $UPDATED_AT_FUNCTION()"
+            "FOR EACH ROW EXECUTE FUNCTION $UPDATED_AT_FUNCTION()"
 
         return buildList {
             addAll(statements)

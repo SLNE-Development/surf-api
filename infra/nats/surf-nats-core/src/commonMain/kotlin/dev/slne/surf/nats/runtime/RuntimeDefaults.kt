@@ -16,8 +16,8 @@ internal object RuntimeDefaults {
     /**
      * JetStream duplicate window of the persist streams.
      *
-     * The JVM client provisions the streams with this window. Both clients bound the timeout of a persistent call
-     * without a result and the publish phase of a persistent RPC by it, see
+     * The JVM client provisions the streams with this window. Both clients bound the timeout of a
+     * persistent call without a result and the publish phase of a persistent RPC by it, see
      * [dev.slne.surf.nats.runtime.rpc.PersistentRules].
      */
     @Volatile

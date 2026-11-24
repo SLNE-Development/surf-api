@@ -23,6 +23,7 @@ class SuspendRequirementTestCommand(name: String) : CommandAPICommand(name) {
 
             playerExecutor { player, arguments ->
                 val show: Boolean by arguments
+
                 if (show) {
                     shown.add(player.uniqueId)
                 } else {

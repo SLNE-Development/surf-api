@@ -8,8 +8,9 @@ import java.time.Instant
 
 class MessageSignatureCacheTest {
 
-    private fun signature(seed: Int): MessageSignature =
-        MessageSignature(ByteArray(SIGNATURE_LENGTH) { index -> (seed + index).toByte() })
+    private fun signature(seed: Int): MessageSignature {
+        return MessageSignature(ByteArray(SIGNATURE_LENGTH) { index -> (seed + index).toByte() })
+    }
 
     private fun bodyWith(lastSeen: List<MessageSignature>) = SignedMessageBody(
         content = "content",

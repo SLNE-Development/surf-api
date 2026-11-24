@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testfixtures.ProjectBuilder
 import java.io.File
-import java.util.Properties
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -11,7 +11,9 @@ import kotlin.test.assertEquals
 
 class SpringRegistriesTest {
 
-    private val directory = createTempDirectory("spring-registries").toFile().apply { deleteOnExit() }
+    private val directory = createTempDirectory("spring-registries")
+        .toFile()
+        .apply { deleteOnExit() }
 
     @Test
     fun `spring factories append the values of a key`() {
@@ -35,7 +37,10 @@ class SpringRegistriesTest {
         val handlers = jar.properties("META-INF/spring.handlers")
         assertEquals("first.Handler", handlers.getProperty("http://demo/schema"))
         assertEquals("other.Handler", handlers.getProperty("http://demo/other"))
-        assertEquals("first.xsd", jar.properties("META-INF/spring.schemas").getProperty("http://demo/schema.xsd"))
+        assertEquals(
+            "first.xsd",
+            jar.properties("META-INF/spring.schemas").getProperty("http://demo/schema.xsd"),
+        )
     }
 
     private fun shadow(vararg entries: Pair<String, String>): File {
@@ -49,7 +54,11 @@ class SpringRegistriesTest {
         task.mergeSpringRegistries()
         task.archiveFileName.set("merged.jar")
         task.destinationDirectory.set(File(directory, "out").apply { mkdirs() })
-        task.actions.forEach { it.execute(task) }
+
+        for (action in task.actions) {
+            action.execute(task)
+        }
+
         return task.archiveFile.get().asFile
     }
 
@@ -60,6 +69,7 @@ class SpringRegistriesTest {
             zip.write(content.toByteArray())
             zip.closeEntry()
         }
+
         return file
     }
 

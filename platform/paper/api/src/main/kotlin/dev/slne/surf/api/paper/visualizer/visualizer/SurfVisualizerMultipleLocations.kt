@@ -32,18 +32,20 @@ interface SurfVisualizerMultipleLocations : SurfVisualizer {
      * customized display settings using the provided consumer function.
      *
      * @param visualLocation The location to be added for visualization.
-     * @param consumer A lambda for configuring display settings using `BlockDisplaySettings`. Defaults to an empty lambda.
+     * @param consumer A lambda for configuring display settings using `BlockDisplaySettings`.
+     * Defaults to an empty lambda.
      */
     fun addVisualLocation(
         visualLocation: Vector3d,
         consumer: BlockDisplaySettings.() -> Unit = {},
-    ) = addVisualLocation(visualLocation, BlockDisplaySettings.create(consumer))
+    ): Unit = addVisualLocation(visualLocation, BlockDisplaySettings.create(consumer))
 
     /**
      * Adds a visual location with the specified settings to the visualizer.
      *
      * @param visualLocation The location to be added as a visual point.
-     * @param settings The display settings to be used for the visual representation at the specified location.
+     * @param settings The display settings to be used for the visual representation at the
+     * specified location.
      */
     fun addVisualLocation(
         visualLocation: Vector3d,

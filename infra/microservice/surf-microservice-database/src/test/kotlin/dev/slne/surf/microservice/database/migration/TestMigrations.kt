@@ -40,7 +40,8 @@ object TestMigrations {
 }
 
 /**
- * Migrations that discovery must skip: an anonymous object and a local class cannot be instantiated by name.
+ * Migrations that discovery must skip: an anonymous object and a local class cannot be instantiated
+ * by name.
  */
 val anonymousMigration: SurfMigration = object : JdbcMigration("98", "anonymous migration") {
     override fun migrate(connection: Connection) = Unit
@@ -50,5 +51,6 @@ fun localMigration(): SurfMigration {
     class LocalMigration : JdbcMigration("99", "local migration") {
         override fun migrate(connection: Connection) = Unit
     }
+
     return LocalMigration()
 }

@@ -29,14 +29,26 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
             group = '$group'
             version = '1.1.0-SNAPSHOT'
             $extra
-            """
+            """,
         )
         build.proto(CONTRACT_PATH, TestBuild.contract(current))
     }
 
-    private fun serveBaseline(contract: String = baseline, version: String = "1.0.0", withVersionList: Boolean = true) {
-        if (withVersionList) stub.versions(group, name, version to false)
-        stub.archive(group, name, version, TarGz.create(mapOf(CONTRACT_PATH to TestBuild.contract(contract))))
+    private fun serveBaseline(
+        contract: String = baseline,
+        version: String = "1.0.0",
+        withVersionList: Boolean = true,
+    ) {
+        if (withVersionList) {
+            stub.versions(group, name, version to false)
+        }
+
+        stub.archive(
+            group,
+            name,
+            version,
+            TarGz.create(mapOf(CONTRACT_PATH to TestBuild.contract(contract))),
+        )
     }
 
     @Test
@@ -56,7 +68,9 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a compatible change passes the check and is reported as compatible`() {
-        module("message Player { required int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }")
+        module(
+            "message Player { required int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }",
+        )
         serveBaseline()
 
         val result = build.run("checkSurfNatsCompatibility")
@@ -71,7 +85,12 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
         stub.versions(group, name, "1.0.0" to false)
         stub.archive(
             group, name, "1.0.0",
-            TarGz.create(mapOf(CONTRACT_PATH to TestBuild.contract(baseline), "surf/demo/v1/gone.proto" to TestBuild.contract("message Gone { required int64 id = 1; }"))),
+            TarGz.create(
+                mapOf(
+                    CONTRACT_PATH to TestBuild.contract(baseline),
+                    "surf/demo/v1/gone.proto" to TestBuild.contract("message Gone { required int64 id = 1; }"),
+                ),
+            ),
         )
 
         val result = build.runAndFail("checkSurfNatsCompatibility")
@@ -91,7 +110,18 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
         val result = build.runAndFail("checkSurfNatsCompatibility")
 
         assertContains(result.output, "field number changed from 1 to 2")
-        assertEquals(listOf("GET ${WeaverStub.artifactPath(WeaverStub.REPOSITORY, group, name)}/1.0.0/archive"), stub.requests.map { "${it.method} ${it.path}" })
+        assertEquals(
+            listOf(
+                "GET ${
+                    WeaverStub.artifactPath(
+                        WeaverStub.REPOSITORY,
+                        group,
+                        name,
+                    )
+                }/1.0.0/archive",
+            ),
+            stub.requests.map { "${it.method} ${it.path}" },
+        )
     }
 
     @Test
@@ -108,7 +138,10 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `the check can be disabled for a published module`() {
-        module("message Player { required int64 id = 2; }", extra = "surfNats { compatibilityCheck = false }")
+        module(
+            "message Player { required int64 id = 2; }",
+            extra = "surfNats { compatibilityCheck = false }",
+        )
         serveBaseline()
 
         val result = build.run("checkSurfNatsCompatibility")
@@ -120,12 +153,18 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a baseline archive without protos fails the check`() {
-        module("message Player { required int64 id = 1; }", extra = "surfNats { compatibilityBaseline('1.0.0') }")
+        module(
+            "message Player { required int64 id = 1; }",
+            extra = "surfNats { compatibilityBaseline('1.0.0') }",
+        )
         stub.archive(group, name, "1.0.0", TarGz.create(mapOf("README.txt" to "no protos")))
 
         val result = build.runAndFail("checkSurfNatsCompatibility")
 
-        assertContains(result.output, "The surf-nats compatibility baseline 1.0.0 contains no .proto files")
+        assertContains(
+            result.output,
+            "The surf-nats compatibility baseline 1.0.0 contains no .proto files",
+        )
     }
 
     @Test
@@ -144,14 +183,19 @@ internal class CompatibilityEndToEndTest : TestKitSupport() {
 
     @Test
     fun `a compatible change is published after the check`() {
-        module("message Player { required int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }")
+        module(
+            "message Player { required int64 id = 1; optional string name = 2 [default = \"anonymous\"]; }",
+        )
         serveBaseline()
         stub.acceptPublish(group, name, "1.1.0-SNAPSHOT")
 
         val result = build.run("publish")
 
         val tasks = result.tasks.map { it.path }
-        assertTrue(tasks.indexOf(":checkSurfNatsCompatibility") < tasks.indexOf(":publishProtos"), tasks.toString())
+        assertTrue(
+            tasks.indexOf(":checkSurfNatsCompatibility") < tasks.indexOf(":publishProtos"),
+            tasks.toString(),
+        )
         assertEquals(1, stub.requests("PUT").size)
     }
 }

@@ -20,12 +20,14 @@ class PaperTestServiceImpl : PaperTestService {
 
     override suspend fun findPlayer(request: FindPlayerRequest): Answer<FindPlayerResponse> {
         val player = Bukkit.getPlayerExact(request.name) ?: return Answer.Unknown
+
         return Answer.Known(FindPlayerResponse(info = "${player.name} on $serverOrigin"))
     }
 
     override suspend fun broadcast(request: BroadcastRequest) {
         val message = request.message
-        log.atInfo().log("broadcast: %s", message)
+        log.atInfo()
+            .log("broadcast: %s", message)
         Bukkit.broadcast(Component.text("[nats broadcast] $message"))
     }
 }

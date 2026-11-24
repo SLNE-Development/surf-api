@@ -27,7 +27,7 @@ import me.devnatan.inventoryframework.context.RenderContext
  */
 inline fun RenderContext.slot(
     slot: Int,
-    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
 ) {
     slot(slot).apply(block)
 }
@@ -51,7 +51,7 @@ inline fun RenderContext.slot(
 inline fun RenderContext.slot(
     row: Int,
     column: Int,
-    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
 ) {
     slot(row, column).apply(block)
 }
@@ -68,7 +68,9 @@ inline fun RenderContext.slot(
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [MinestomItemComponentBuilder]
  */
-inline fun RenderContext.firstSlot(block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.firstSlot(
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
+) {
     firstSlot().apply(block)
 }
 
@@ -84,7 +86,9 @@ inline fun RenderContext.firstSlot(block: @InventoryFrameworkDSL MinestomItemCom
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [MinestomItemComponentBuilder]
  */
-inline fun RenderContext.lastSlot(block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.lastSlot(
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
+) {
     lastSlot().apply(block)
 }
 
@@ -102,7 +106,9 @@ inline fun RenderContext.lastSlot(block: @InventoryFrameworkDSL MinestomItemComp
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [MinestomItemComponentBuilder]
  */
-inline fun RenderContext.availableSlot(block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.availableSlot(
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
+) {
     availableSlot().apply(block)
 }
 
@@ -129,7 +135,7 @@ inline fun RenderContext.availableSlot(block: @InventoryFrameworkDSL MinestomIte
  */
 inline fun RenderContext.layoutSlot(
     character: Char,
-    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
 ) {
     layoutSlot(character).apply(block)
 }
@@ -148,7 +154,9 @@ inline fun RenderContext.layoutSlot(
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [MinestomItemComponentBuilder]
  */
-inline fun RenderContext.resultSlot(block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.resultSlot(
+    block: @InventoryFrameworkDSL MinestomItemComponentBuilder.() -> Unit,
+) {
     resultSlot().apply(block)
 }
 

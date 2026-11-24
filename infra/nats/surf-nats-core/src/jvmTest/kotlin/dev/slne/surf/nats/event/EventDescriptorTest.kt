@@ -19,13 +19,22 @@ class EventDescriptorTest {
     @Test
     fun `subject is the proto full name under surf evt`() {
         assertEquals("surf.evt.surf.nats.test.v1.Created", describe(Created::class.java).subject)
-        assertEquals("surf.evt.surf.nats.test.v1.ProfileUpdated", describe(ProfileUpdated::class.java).subject)
+        assertEquals(
+            "surf.evt.surf.nats.test.v1.ProfileUpdated",
+            describe(ProfileUpdated::class.java).subject,
+        )
     }
 
     @Test
     fun `major versions of an event have separate subjects`() {
-        assertEquals("surf.evt.surf.nats.test.v1.VersionedChanged", describe(VersionedChangedV1::class.java).subject)
-        assertEquals("surf.evt.surf.nats.test.v2.VersionedChanged", describe(VersionedChangedV2::class.java).subject)
+        assertEquals(
+            "surf.evt.surf.nats.test.v1.VersionedChanged",
+            describe(VersionedChangedV1::class.java).subject,
+        )
+        assertEquals(
+            "surf.evt.surf.nats.test.v2.VersionedChanged",
+            describe(VersionedChangedV2::class.java).subject,
+        )
     }
 
     @Test
@@ -38,7 +47,8 @@ class EventDescriptorTest {
 
     @Test
     fun `class without a generated descriptor is rejected`() {
-        val message = assertFailsWith<IllegalArgumentException> { describe(NotAnEvent::class.java) }.message.orEmpty()
+        val message = assertFailsWith<IllegalArgumentException> { describe(NotAnEvent::class.java) }
+            .message.orEmpty()
 
         assertContains(message, "${NotAnEvent::class.java.name} is not a generated surf-nats event")
     }
@@ -49,7 +59,10 @@ class EventDescriptorTest {
             describe(InvalidProtoNameEvent::class.java)
         }.message.orEmpty()
 
-        assertContains(message, "Invalid NATS_DESCRIPTOR of ${InvalidProtoNameEvent::class.java.name}")
+        assertContains(
+            message,
+            "Invalid NATS_DESCRIPTOR of ${InvalidProtoNameEvent::class.java.name}",
+        )
         assertContains(message, "event surf.nats.test.v1.Invalid Name")
     }
 }

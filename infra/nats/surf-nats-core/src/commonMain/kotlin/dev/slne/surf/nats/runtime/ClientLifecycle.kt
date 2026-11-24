@@ -8,9 +8,10 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 /**
  * Open, closing and closed state of a client.
  *
- * While closing, new registrations are rejected but running handlers may still publish and call through the
- * client. Once closed, every use is rejected. A client can stop accepting registrations ([stopAccepting]) before its
- * close starts ([beginClose]). Until then, outgoing work such as new service proxies stays allowed. Thread-safe.
+ * While closing, new registrations are rejected but running handlers may still publish and call
+ * through the client. Once closed, every use is rejected. A client can stop accepting registrations
+ * ([stopAccepting]) before its close starts ([beginClose]). Until then, outgoing work such as new
+ * service proxies stays allowed. Thread-safe.
  */
 @InternalNatsApi
 @OptIn(ExperimentalAtomicApi::class)
@@ -26,17 +27,17 @@ internal class ClientLifecycle(name: String) {
     /**
      * Throws [IllegalStateException] when the client is closed.
      */
-    fun requireOpen() = check(!isClosed) { "$label is closed" }
+    fun requireOpen(): Unit = check(!isClosed) { "$label is closed" }
 
     /**
      * Throws [IllegalStateException] when the client is closing or closed.
      */
-    fun requireAccepting() = check(state.load() == State.OPEN) { rejection() }
+    fun requireAccepting(): Unit = check(state.load() == State.OPEN) { rejection() }
 
     /**
      * Throws [IllegalStateException] when [beginClose] already ran.
      */
-    fun requireCloseNotStarted() = check(!closeStarted.load()) { rejection() }
+    fun requireCloseNotStarted(): Unit = check(!closeStarted.load()) { rejection() }
 
     /**
      * Moves from open to closing without starting the close.
@@ -52,15 +53,17 @@ internal class ClientLifecycle(name: String) {
      */
     fun beginClose(): Boolean {
         if (!closeStarted.compareAndSet(expectedValue = false, newValue = true)) return false
+
         stopAccepting()
+
         return true
     }
 
-    fun markClosed() = state.store(State.CLOSED)
+    fun markClosed(): Unit = state.store(State.CLOSED)
 
     /**
-     * Runs [add] and keeps its effect only while new work is accepted: when [add] fails or closing started meanwhile,
-     * [undo] reverts it and the failure is rethrown.
+     * Runs [add] and keeps its effect only while new work is accepted: when [add] fails or closing
+     * started meanwhile, [undo] reverts it and the failure is rethrown.
      */
     inline fun admit(add: () -> Unit, undo: () -> Unit) {
         try {
@@ -73,8 +76,8 @@ internal class ClientLifecycle(name: String) {
     }
 
     /**
-     * Runs [add] and keeps its effect only while the close has not started: when [add] fails or [beginClose] ran
-     * meanwhile, [undo] reverts it and the failure is rethrown.
+     * Runs [add] and keeps its effect only while the close has not started: when [add] fails or
+     * [beginClose] ran meanwhile, [undo] reverts it and the failure is rethrown.
      */
     inline fun admitBeforeClose(add: () -> Unit, undo: () -> Unit) {
         try {
@@ -88,5 +91,9 @@ internal class ClientLifecycle(name: String) {
 
     private fun rejection() = if (isClosed) "$label is closed" else "$label is closing"
 
-    private enum class State { OPEN, CLOSING, CLOSED }
+    private enum class State {
+        OPEN,
+        CLOSING,
+        CLOSED
+    }
 }

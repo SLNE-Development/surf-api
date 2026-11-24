@@ -52,12 +52,16 @@ class MinestomExecutorIntegrationTest {
 
             val instance = env.createEmptyInstance()
             var player: Player? = null
+
             try {
                 player = connect(env.createConnection(), instance)
 
                 assertTrue(runCommand(player, "dispatch-specific"))
                 assertTrue(runCommand(manager.consoleSender, "dispatch-specific"))
-                assertEquals(listOf("player", "console"), calls.map(Pair<String, CommandSender>::first))
+                assertEquals(
+                    listOf("player", "console"),
+                    calls.map(Pair<String, CommandSender>::first),
+                )
                 assertSame(player, calls[0].second)
                 assertSame(manager.consoleSender, calls[1].second)
             } finally {
@@ -77,6 +81,7 @@ class MinestomExecutorIntegrationTest {
             val other = RecordingSender()
             val instance = env.createEmptyInstance()
             var player: Player? = null
+
             try {
                 player = connect(env.createConnection(), instance)
 
@@ -92,7 +97,9 @@ class MinestomExecutorIntegrationTest {
     }
 
     @Test
-    fun `execution info snapshots the full path with converted values raw input delegates and defaults`(env: Env) {
+    fun `execution info snapshots the full path with converted values raw input delegates and defaults`(
+        env: Env,
+    ) {
         withPlatform(env) { manager ->
             val received = AtomicReference<Snapshot>()
             CommandAPICommand("inspect")
@@ -180,7 +187,9 @@ class MinestomExecutorIntegrationTest {
                 }
                 .register()
             CommandAPICommand("fail-unexpected")
-                .anyResultingExecutor { _, _ -> throw IllegalStateException("broken sync executor") }
+                .anyResultingExecutor { _, _ ->
+                    throw IllegalStateException("broken sync executor")
+                }
                 .register()
 
             val instance = env.createEmptyInstance()
@@ -188,6 +197,7 @@ class MinestomExecutorIntegrationTest {
             val logEvents = mutableListOf<LogEvent>()
             val appender = RecordingAppender(logEvents)
             val loggerContext = LogManager.getContext(false) as LoggerContext
+
             try {
                 val connection = env.createConnection()
                 player = connect(connection, instance)
@@ -201,11 +211,16 @@ class MinestomExecutorIntegrationTest {
 
                 assertTrue(unexpectedResult)
                 val expectedMessages = listOf(direct, wrapped, GENERIC_COMMAND_FAILURE).map(::plain)
-                assertEquals(expectedMessages, messages.collect().map { packet -> plain(packet.message) })
+                assertEquals(
+                    expectedMessages,
+                    messages.collect().map { packet -> plain(packet.message) },
+                )
                 assertEquals(
                     1,
                     logEvents.count { event ->
-                        event.message.formattedMessage.contains("Failed to execute command 'fail-unexpected'")
+                        event.message.formattedMessage.contains(
+                            "Failed to execute command 'fail-unexpected'",
+                        )
                     },
                 )
             } finally {
@@ -269,10 +284,14 @@ class MinestomExecutorIntegrationTest {
         }
     }
 
-    private inline fun withPlatform(env: Env, block: (net.minestom.server.command.CommandManager) -> Unit) {
+    private inline fun withPlatform(
+        env: Env,
+        block: (net.minestom.server.command.CommandManager) -> Unit,
+    ) {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             block(manager)
         } finally {
@@ -291,13 +310,17 @@ class MinestomExecutorIntegrationTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 
-    private fun plain(component: Component): String =
-        PlainTextComponentSerializer.plainText().serialize(component)
+    private fun plain(component: Component): String {
+        return PlainTextComponentSerializer.plainText().serialize(component)
+    }
 
-    private class DelegatedArguments(arguments: dev.slne.surf.api.minestom.command.executor.CommandArguments) {
+    private class DelegatedArguments(
+        arguments: dev.slne.surf.api.minestom.command.executor.CommandArguments,
+    ) {
         val mode: SnapshotMode by arguments
         val message: String by arguments
         val count: Int by arguments

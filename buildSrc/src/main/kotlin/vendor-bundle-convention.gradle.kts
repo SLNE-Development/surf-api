@@ -32,7 +32,9 @@ private val providedGroups = setOf(
 /**
  * Adventure ships with Minestom, apart from the few extensions spark brings along.
  */
-private val providedAdventureModules = Regex("adventure-(api|key|nbt|text-(minimessage|logger-slf4j|serializer-.*))|option|examination-.*")
+private val providedAdventureModules = Regex(
+    "adventure-(api|key|nbt|text-(minimessage|logger-slf4j|serializer-.*))|option|examination-.*",
+)
 
 /**
  * Libraries the module declares as regular dependencies instead of bundling them. A bundled ASM
@@ -44,12 +46,14 @@ private val declaredGroups = setOf(
     "org.ow2.asm",
 )
 
-private fun isProvided(id: ModuleComponentIdentifier): Boolean =
-    id.group in providedGroups || id.group in declaredGroups ||
-            (id.group == "net.kyori" && providedAdventureModules.matches(id.module))
+private fun isProvided(id: ModuleComponentIdentifier): Boolean {
+    return id.group in providedGroups || id.group in declaredGroups ||
+        (id.group == "net.kyori" && providedAdventureModules.matches(id.module))
+}
 
 val bundled: Configuration = configurations.create("bundled") {
-    description = "Vendor builds copied into this module's jar instead of being published as dependencies"
+    description =
+        "Vendor builds copied into this module's jar instead of being published as dependencies"
     isCanBeConsumed = false
     isCanBeResolved = true
 }

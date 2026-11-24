@@ -43,14 +43,14 @@ internal class RedisContextContributor : ContextContributor {
             clientDefinition<RedissonClient>(
                 context,
                 plugin.name,
-            ) { redisApi -> redisApi.redisson }
+            ) { redisApi -> redisApi.redisson },
         )
         context.registerBeanDefinition(
             REDISSON_REACTIVE_CLIENT_BEAN,
             clientDefinition<RedissonReactiveClient>(
                 context,
                 plugin.name,
-            ) { redisApi -> redisApi.redissonReactive }
+            ) { redisApi -> redisApi.redissonReactive },
         )
         context.registerBeanDefinition(REDIS_CONNECTOR_BEAN, connectorDefinition(redis))
     }
@@ -68,17 +68,19 @@ internal class RedisContextContributor : ContextContributor {
         context: AnnotationConfigApplicationContext,
         pluginName: String,
         crossinline client: (RedisApi) -> T,
-    ) = RootBeanDefinition(T::class.java).apply {
-        isLazyInit = true
-        isFallback = true
-        setInstanceSupplier {
-            val api = context.getBean<RedisApi>()
-            RedisClientProxy.create(
-                type = T::class.java,
-                pluginName = pluginName,
-                isConnected = api::isConnected,
-                target = { client(api) },
-            )
+    ): RootBeanDefinition {
+        return RootBeanDefinition(T::class.java).apply {
+            isLazyInit = true
+            isFallback = true
+            setInstanceSupplier {
+                val api = context.getBean<RedisApi>()
+                RedisClientProxy.create(
+                    type = T::class.java,
+                    pluginName = pluginName,
+                    isConnected = api::isConnected,
+                    target = { client(api) },
+                )
+            }
         }
     }
 

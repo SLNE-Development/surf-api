@@ -9,12 +9,16 @@ import kotlinx.serialization.encoding.Encoder
 import org.spongepowered.math.imaginary.Quaternionf
 import org.spongepowered.math.vector.Vector4f
 
-typealias SerializableQuaternionf = @Serializable(with = SpongeQuaternionfSerializer::class) Quaternionf
+typealias SerializableQuaternionf = @Serializable(
+    with = SpongeQuaternionfSerializer::class,
+) Quaternionf
 
 object SpongeQuaternionfSerializer : KSerializer<Quaternionf> {
     private val arraySerializer = FloatArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surfapi.sponge.Quaternionf", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surfapi.sponge.Quaternionf",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -27,6 +31,7 @@ object SpongeQuaternionfSerializer : KSerializer<Quaternionf> {
     override fun deserialize(decoder: Decoder): Quaternionf {
         val array = decoder.decodeSerializableValue(arraySerializer)
         require(array.size == 4) { "Expected array of size 4, got ${array.size}" }
+
         return Quaternionf(array[0], array[1], array[2], array[3])
     }
 }

@@ -16,11 +16,13 @@ internal object NatsHeaders {
     val EMPTY_BODY: Uint8Array<*> = Uint8Array<ArrayBuffer>(0)
 
     /**
-     * Returns new headers with the base headers every surf-nats message carries, including [origin].
+     * Returns new headers with the base headers every surf-nats message carries, including
+     * [origin].
      */
     fun forOrigin(origin: String): MsgHdrs {
         val headers = createNatsHeaders()
         writeBaseNatsHeaders(origin, headers::set)
+
         return headers
     }
 

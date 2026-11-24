@@ -28,7 +28,7 @@ inline fun buildText(block: SurfComponentBuilder.() -> Unit): TextComponent {
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendText(
     text: String,
     color: TextColor? = null,
-) = append(Component.text(text, color))
+): B = append(Component.text(text, color))
 
 /**
  * Appends a text component with the given [text] and optional [color] to the builder,
@@ -43,7 +43,7 @@ fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendTex
     text: String,
     color: TextColor? = null,
     block: TextComponent.Builder.() -> Unit,
-) = append(Component.text().appendText(text, color).apply(block))
+): B = append(Component.text().appendText(text, color).apply(block))
 
 /**
  * Sets a click event on the component that opens the given [url] when clicked.
@@ -53,7 +53,7 @@ fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendTex
  */
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickOpensUrl(
     url: String,
-) = clickEvent(ClickEvent.openUrl(url))
+): B = clickEvent(ClickEvent.openUrl(url))
 
 /**
  * Sets a click event on the component that runs the specified [command] when clicked.
@@ -63,7 +63,7 @@ fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickOpen
  */
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickRunsCommand(
     command: String,
-) = clickEvent(ClickEvent.runCommand(command))
+): B = clickEvent(ClickEvent.runCommand(command))
 
 /**
  * Sets a click event on the component that suggests the specified [command] when clicked.
@@ -73,17 +73,18 @@ fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickRuns
  */
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickSuggestsCommand(
     command: String,
-) = clickEvent(ClickEvent.suggestCommand(command))
+): B = clickEvent(ClickEvent.suggestCommand(command))
 
 /**
- * Sets a click event on the component that copies the specified [value] to the clipboard when clicked.
+ * Sets a click event on the component that copies the specified [value] to the clipboard when
+ * clicked.
  *
  * @param value The value to copy to the clipboard on click.
  * @return The modified builder instance.
  */
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCopiesToClipboard(
     value: String,
-) = clickEvent(ClickEvent.copyToClipboard(value))
+): B = clickEvent(ClickEvent.copyToClipboard(value))
 
 /**
  * Appends a newline character to the builder the specified number of times.
@@ -93,7 +94,7 @@ fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.clickCopi
  */
 fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNewline(
     amount: Int,
-) = repeat(amount) { appendNewline() }
+): Unit = repeat(amount) { appendNewline() }
 
 /**
  * Creates a [TextComponent] with the given string [content] and optional [color].
@@ -105,14 +106,16 @@ fun <C : Component, B : ComponentBuilder<C, B>> ComponentBuilder<C, B>.appendNew
 fun text(content: String, color: TextColor? = null): TextComponent = Component.text(content, color)
 
 /**
- * Creates a [TextComponent] with the given number [value] converted to a string and optional [color].
+ * Creates a [TextComponent] with the given number [value] converted to a string and optional
+ * [color].
  *
  * @param number The numeric value to convert to text.
  * @param color The optional text color.
  * @return A [TextComponent] containing the given number as text.
  */
-fun text(number: Number, color: TextColor? = null): TextComponent =
-    Component.text(number.toString(), color)
+fun text(number: Number, color: TextColor? = null): TextComponent {
+    return Component.text(number.toString(), color)
+}
 
 /**
  * Creates a [TextComponent] with the given boolean [value] and optional [color].
@@ -121,8 +124,7 @@ fun text(number: Number, color: TextColor? = null): TextComponent =
  * @param color The optional text color.
  * @return A [TextComponent] containing the boolean value as text.
  */
-fun text(boolean: Boolean, color: TextColor? = null): TextComponent =
-    Component.text(boolean, color)
+fun text(boolean: Boolean, color: TextColor? = null): TextComponent = Component.text(boolean, color)
 
 /**
  * Creates a [TextComponent] with the given character [char] and optional [color].
@@ -142,4 +144,4 @@ fun text(char: Char, color: TextColor? = null): TextComponent = Component.text(c
  */
 fun text(any: Any, color: TextColor? = null): TextComponent = Component.text(any.toString(), color)
 
-fun Component.plain() = PlainTextComponentSerializer.plainText().serialize(this)
+fun Component.plain(): String = PlainTextComponentSerializer.plainText().serialize(this)

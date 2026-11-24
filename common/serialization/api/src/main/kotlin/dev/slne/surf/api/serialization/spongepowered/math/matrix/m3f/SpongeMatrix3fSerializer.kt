@@ -12,8 +12,10 @@ typealias SerializableMatrix3f = @Serializable(with = SpongeMatrix3fSerializer::
 
 object SpongeMatrix3fSerializer : KSerializer<Matrix3f> {
     private val arraySerializer = FloatArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surf.api.sponge.Matrix3f", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surf.api.sponge.Matrix3f",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -25,6 +27,7 @@ object SpongeMatrix3fSerializer : KSerializer<Matrix3f> {
     override fun deserialize(decoder: Decoder): Matrix3f {
         val array = decoder.decodeSerializableValue(arraySerializer)
         require(array.size == 9) { "Expected array of size 9, got ${array.size}" }
+
         return Matrix3f(
             array[0], array[1], array[2],
             array[3], array[4], array[5],

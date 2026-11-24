@@ -15,6 +15,7 @@ import org.redisson.client.protocol.Encoder
 abstract class AbstractCodec<T : Any> : BaseCodec(), RedisCodec<T> {
     private val encoder = Encoder { obj ->
         val buf = Unpooled.buffer()
+
         try {
             @Suppress("UNCHECKED_CAST")
             write(buf, obj as T)
@@ -22,6 +23,7 @@ abstract class AbstractCodec<T : Any> : BaseCodec(), RedisCodec<T> {
             buf.release()
             throw t
         }
+
         buf
     }
 

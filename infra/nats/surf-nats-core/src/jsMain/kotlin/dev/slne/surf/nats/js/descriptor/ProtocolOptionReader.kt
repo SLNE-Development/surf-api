@@ -13,8 +13,8 @@ import js.collections.WeakMap
 /**
  * Reads the `surf.nats.v1` options of protobuf-es descriptors.
  *
- * The option extensions are looked up in the direct imports of the declaring file, so a file that uses surf
- * options must import `surf/nats/v1/options.proto` directly.
+ * The option extensions are looked up in the direct imports of the declaring file, so a file that
+ * uses surf options must import `surf/nats/v1/options.proto` directly.
  */
 internal object ProtocolOptionReader {
 
@@ -30,6 +30,7 @@ internal object ProtocolOptionReader {
      */
     fun service(service: DescService): ServiceOptions {
         val options = read(service, service.file, ProtocolOptions.SERVICE)
+
         return ServiceOptions(
             callTimeoutSeconds = options.int(ProtocolOptions.CALL_TIMEOUT_SECONDS),
             recipients = options.recipients(),
@@ -42,6 +43,7 @@ internal object ProtocolOptionReader {
      */
     fun method(method: DescMethod): MethodOptions {
         val options = read(method, method.parent.file, ProtocolOptions.METHOD)
+
         return MethodOptions(
             persistent = options.boolean(ProtocolOptions.PERSISTENT),
             callTimeoutSeconds = options.int(ProtocolOptions.CALL_TIMEOUT_SECONDS),
@@ -50,18 +52,28 @@ internal object ProtocolOptionReader {
     }
 
     /**
-     * Returns `call_timeout_seconds` of the `(surf.nats.v1.service)` option of [service] without a range check, or
-     * `null` when unset.
+     * Returns `call_timeout_seconds` of the `(surf.nats.v1.service)` option of [service] without a
+     * range check, or `null` when unset.
      */
-    fun serviceTimeoutSeconds(service: DescService): Double? =
-        read(service, service.file, ProtocolOptions.SERVICE).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
+    fun serviceTimeoutSeconds(service: DescService): Double? {
+        return read(
+            service,
+            service.file,
+            ProtocolOptions.SERVICE,
+        ).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
+    }
 
     /**
-     * Returns `call_timeout_seconds` of the `(surf.nats.v1.method)` option of [method] without a range check, or
-     * `null` when unset.
+     * Returns `call_timeout_seconds` of the `(surf.nats.v1.method)` option of [method] without a
+     * range check, or `null` when unset.
      */
-    fun methodTimeoutSeconds(method: DescMethod): Double? =
-        read(method, method.parent.file, ProtocolOptions.METHOD).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
+    fun methodTimeoutSeconds(method: DescMethod): Double? {
+        return read(
+            method,
+            method.parent.file,
+            ProtocolOptions.METHOD,
+        ).number(ProtocolOptions.CALL_TIMEOUT_SECONDS)
+    }
 
     private fun flag(element: AnyDesc, file: DescFile, option: String): Boolean {
         val extension = findExtension(file, option) ?: return false

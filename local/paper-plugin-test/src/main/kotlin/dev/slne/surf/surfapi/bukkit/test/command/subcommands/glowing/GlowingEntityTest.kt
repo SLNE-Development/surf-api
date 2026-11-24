@@ -6,7 +6,6 @@ import dev.jorel.commandapi.kotlindsl.entitySelectorArgumentOneEntity
 import dev.jorel.commandapi.kotlindsl.getValue
 import dev.jorel.commandapi.kotlindsl.playerExecutor
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.surfBean
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Entity
@@ -26,12 +25,14 @@ class GlowingEntityTest(name: String) : CommandAPICommand(name) {
                 glowingApi.removeGlowing(entity, sender)
             }
 
-            sender.sendMessage(
-                if (glow) "You made ${entity.name} glowing!" else "You removed glowing from ${entity.name}!"
-            )
+            val message = if (glow) {
+                "You made ${entity.name} glowing!"
+            } else {
+                "You removed glowing from ${entity.name}!"
+            }
+            sender.sendMessage(message)
         }
     }
 }
 
-@OptIn(InternalSurfApi::class)
 private val glowingApi by surfBean<SurfGlowingApi>()

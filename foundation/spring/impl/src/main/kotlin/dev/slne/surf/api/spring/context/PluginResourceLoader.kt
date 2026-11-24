@@ -10,10 +10,10 @@ import org.springframework.core.io.Resource
  *
  * Paper's plugin class loader resolves classes through the plugins it joins, yet `getResource` only
  * searches the plugin's own jar. Spring reads the bytecode of every interface and superclass of a
- * configuration class as a `.class` resource, so a bean implementing a surf-api interface would fail
- * the refresh. For a missing `.class` resource this loader asks the class loader that defined the
- * class. Every other resource resolves exactly as the plugin's class loader resolves it, so another
- * jar's configuration files never appear as the plugin's own.
+ * configuration class as a `.class` resource, so a bean implementing a surf-api interface would
+ * fail the refresh. For a missing `.class` resource this loader asks the class loader that defined
+ * the class. Every other resource resolves exactly as the plugin's class loader resolves it, so
+ * another jar's configuration files never appear as the plugin's own.
  */
 internal class PluginResourceLoader(
     private val pluginClassLoader: ClassLoader,
@@ -24,6 +24,7 @@ internal class PluginResourceLoader(
         if (!location.startsWith(CLASSPATH_URL_PREFIX) || resource.exists()) return resource
 
         val path = location.removePrefix(CLASSPATH_URL_PREFIX).removePrefix("/")
+
         return definingLoaderResource(path) ?: resource
     }
 

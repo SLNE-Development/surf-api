@@ -24,7 +24,9 @@ class StructuralParserTest {
 
     @Test
     fun `custom argument applies its parser to the base value`() {
-        val argument = CustomArgument(StringArgument("name")) { info -> "resolved:${info.baseValue}" }
+        val argument = CustomArgument(StringArgument("name")) { info ->
+            "resolved:${info.baseValue}"
+        }
         assertEquals(
             "resolved:lobby",
             argument.toDefinition().rawType.parse(StringReader("lobby"), sender),
@@ -37,7 +39,10 @@ class StructuralParserTest {
             Triple(info.sender, info.currentInput, info.baseValue)
         }
         val reader = StringReader("lobby rest")
-        val (capturedSender, currentInput, baseValue) = argument.toDefinition().rawType.parse(reader, sender)
+        val (capturedSender, currentInput, baseValue) = argument.toDefinition().rawType.parse(
+            reader,
+            sender,
+        )
 
         assertEquals(sender, capturedSender)
         assertEquals("lobby", currentInput)
@@ -120,7 +125,10 @@ class StructuralParserTest {
     @Test
     fun `list argument skips whitespace around its delimiter`() {
         val argument = ListArgument("values", IntegerArgument("value"), ',', allowEmpty = false)
-        assertEquals(listOf(1, 2, 3), argument.toDefinition().rawType.parse(StringReader(" 1 , 2 ,3 ")))
+        assertEquals(
+            listOf(1, 2, 3),
+            argument.toDefinition().rawType.parse(StringReader(" 1 , 2 ,3 ")),
+        )
     }
 
     @Test

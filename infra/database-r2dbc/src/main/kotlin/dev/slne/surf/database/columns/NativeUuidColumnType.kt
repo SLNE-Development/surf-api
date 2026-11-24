@@ -9,15 +9,17 @@ import java.util.*
 
 class NativeUuidColumnType : ColumnType<UUID>() {
     @Language("SQL")
-    override fun sqlType() = "UUID"
+    override fun sqlType(): String = "UUID"
 
-    override fun valueFromDB(value: Any): UUID? = when (value) {
-        is UUID -> value
-        is String if value.matches(CharUuidColumnType.uuidRegexp) -> UUID.fromString(value)
-        is String -> ByteBuffer.wrap(value.toByteArray()).let { UUID(it.long, it.long) }
-        is ByteArray -> ByteBuffer.wrap(value).let { UUID(it.long, it.long) }
-        is ByteBuffer -> UUID(value.long, value.long)
-        else -> error("Unexpected value of type UUID: $value of ${value::class.qualifiedName}")
+    override fun valueFromDB(value: Any): UUID? {
+        return when (value) {
+            is UUID -> value
+            is String if value.matches(CharUuidColumnType.uuidRegexp) -> UUID.fromString(value)
+            is String -> ByteBuffer.wrap(value.toByteArray()).let { UUID(it.long, it.long) }
+            is ByteArray -> ByteBuffer.wrap(value).let { UUID(it.long, it.long) }
+            is ByteBuffer -> UUID(value.long, value.long)
+            else -> error("Unexpected value of type UUID: $value of ${value::class.qualifiedName}")
+        }
     }
 }
 

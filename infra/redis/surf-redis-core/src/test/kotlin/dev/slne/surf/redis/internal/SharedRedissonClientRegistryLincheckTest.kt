@@ -21,13 +21,13 @@ import kotlin.test.Test
 /**
  * Verifies that acquiring and releasing shared Redisson clients is linearizable.
  *
- * The operations mirror real usage: every owner behaves like a `RedisApi`, holding at most one lease
- * behind its own lifecycle lock, while different owners connect and disconnect concurrently. Owners
- * 1 and 2 share key A, owner 3 uses key B. Every interleaving must behave like some sequential order
- * in which owners of one key join a single client, exactly the last disconnect shuts it down, and a
- * later connect creates a fresh client. Global counters are only inspected in [validate], after each
- * invocation, because the registry shuts a client down after leaving its lock, which is observable
- * but intentionally not atomic.
+ * The operations mirror real usage: every owner behaves like a `RedisApi`, holding at most one
+ * lease behind its own lifecycle lock, while different owners connect and disconnect concurrently.
+ * Owners 1 and 2 share key A, owner 3 uses key B. Every interleaving must behave like some
+ * sequential order in which owners of one key join a single client, exactly the last disconnect
+ * shuts it down, and a later connect creates a fresh client. Global counters are only inspected in
+ * [validate], after each invocation, because the registry shuts a client down after leaving its
+ * lock, which is observable but intentionally not atomic.
  */
 @Tag("lincheck")
 class SharedRedissonClientRegistryLincheckTest {
@@ -67,21 +67,29 @@ class SharedRedissonClientRegistryLincheckTest {
         check(connector.shutdowns.get() == expectedShutdowns) {
             "expected $expectedShutdowns shut down clients for ${connector.createdCount} created and ${live.size} live, got ${connector.shutdowns.get()}"
         }
+
         for (key in listOf(KEY_A, KEY_B)) {
             val held = owners.count { it.key == key && it.lease != null }
-            check((held > 0) == (key in live)) { "key $key is held by $held owner(s) but live=${key in live}" }
+            check((held > 0) == (key in live)) {
+                "key $key is held by $held owner(s) but live=${key in live}"
+            }
+
             if (held > 0) {
-                val clients = owners.filter { it.key == key }.mapNotNull { it.lease?.client }.toSet()
+                val clients = owners.filter { it.key == key }
+                    .mapNotNull { it.lease?.client }
+                    .toSet()
                 check(clients.size == 1) { "owners of $key hold different clients: $clients" }
-                check(!connector.isShutDown(clients.single().redisson)) { "live client of $key is shut down" }
+                check(!connector.isShutDown(clients.single().redisson)) {
+                    "live client of $key is shut down"
+                }
             }
         }
     }
 
     /**
      * Stress mode drives real threads through the per-key locks and is the primary check here;
-     * exhaustive model checking of the lock internals is too expensive for anything beyond the small
-     * scenario in [modelChecking].
+     * exhaustive model checking of the lock internals is too expensive for anything beyond the
+     * small scenario in [modelChecking].
      */
     @Test
     fun stressTesting() {
@@ -108,7 +116,7 @@ class SharedRedissonClientRegistryLincheckTest {
             .addGuarantee(
                 forClasses { className ->
                     className.startsWith("com.google.common.flogger.") ||
-                            className.startsWith("dev.slne.surf.api.")
+                        className.startsWith("dev.slne.surf.api.")
                 }
                     .allMethods()
                     .ignore(),
@@ -118,8 +126,10 @@ class SharedRedissonClientRegistryLincheckTest {
 
     private fun connect(index: Int): String {
         val owner = owners[index]
+
         return owner.lock.withLock {
             if (owner.lease != null) return "already"
+
             val lease = registry.acquire(owner.key, "owner-$index", config)
             owner.lease = lease
             "client#${connector.serialOf(lease.client.redisson)}"
@@ -128,8 +138,10 @@ class SharedRedissonClientRegistryLincheckTest {
 
     private fun disconnect(index: Int): String {
         val owner = owners[index]
+
         return owner.lock.withLock {
             val lease = owner.lease ?: return "none"
+
             owner.lease = null
             val last = lease.release()
             val serial = connector.serialOf(lease.client.redisson)
@@ -148,8 +160,8 @@ class SharedRedissonClientRegistryLincheckTest {
     }
 
     /**
-     * Hands out pre-built fake clients in creation order so [serialOf] is a deterministic function of
-     * the sequential history. Proxies are created here, outside the analyzed operations, because
+     * Hands out pre-built fake clients in creation order so [serialOf] is a deterministic function
+     * of the sequential history. Proxies are created here, outside the analyzed operations, because
      * proxy class generation is non-deterministic under model checking.
      */
     private class CountingConnector : RedissonConnector {
@@ -161,13 +173,13 @@ class SharedRedissonClientRegistryLincheckTest {
 
         private val reactive = Proxy.newProxyInstance(
             RedissonReactiveClient::class.java.classLoader,
-            arrayOf(RedissonReactiveClient::class.java)
+            arrayOf(RedissonReactiveClient::class.java),
         ) { _, method, _ -> if (method.name == "hashCode") 0 else null } as RedissonReactiveClient
 
         private val pool: List<RedissonClient> = List(POOL_SIZE) { serial ->
             Proxy.newProxyInstance(
                 RedissonClient::class.java.classLoader,
-                arrayOf(RedissonClient::class.java)
+                arrayOf(RedissonClient::class.java),
             ) { self, method, args ->
                 when (method.name) {
                     "shutdown" -> {
@@ -192,6 +204,7 @@ class SharedRedissonClientRegistryLincheckTest {
         override fun connect(config: Config): RedissonClient {
             val serial = next.getAndIncrement()
             check(serial < pool.size) { "fake client pool exhausted" }
+
             return pool[serial]
         }
 
@@ -200,7 +213,8 @@ class SharedRedissonClientRegistryLincheckTest {
 
     private companion object {
         /**
-         * Upper bound on clients one scenario can create: every actor may connect to a fresh client.
+         * Upper bound on clients one scenario can create: every actor may connect to a fresh
+         * client.
          */
         const val POOL_SIZE = 16
 

@@ -82,13 +82,15 @@ internal fun DatabaseConfig.withEnvironmentOverrides(): DatabaseConfig {
     )
 
     overridden.validate()
+
     return overridden
 }
 
 /**
  * Checks that every value is in the range the drivers and servers accept.
  *
- * [DatabaseConfig.load] runs it on the loaded values. A [DatabaseConfig] built in code is checked by whoever consumes it.
+ * [DatabaseConfig.load] runs it on the loaded values. A [DatabaseConfig] built in code is checked
+ * by whoever consumes it.
  *
  * @throws IllegalArgumentException naming the offending value and its environment variable
  */
@@ -109,15 +111,15 @@ internal fun DatabaseConfig.validate() {
     }
     require(sizing.initialSize <= sizing.maxSize) {
         "Database pool initialSize must not exceed maxSize. Configure " +
-                "${DatabaseEnvironmentVariables.POOL_INITIAL_SIZE} and ${DatabaseEnvironmentVariables.POOL_MAX_SIZE}."
+            "${DatabaseEnvironmentVariables.POOL_INITIAL_SIZE} and ${DatabaseEnvironmentVariables.POOL_MAX_SIZE}."
     }
     require(sizing.minIdle <= sizing.maxSize) {
         "Database pool minIdle must not exceed maxSize. Configure " +
-                "${DatabaseEnvironmentVariables.POOL_MIN_IDLE} and ${DatabaseEnvironmentVariables.POOL_MAX_SIZE}."
+            "${DatabaseEnvironmentVariables.POOL_MIN_IDLE} and ${DatabaseEnvironmentVariables.POOL_MAX_SIZE}."
     }
     require(pool.timeouts.lockTimeoutMillis in 1..Int.MAX_VALUE) {
         "Database pool lockTimeoutMillis must be in 1..${Int.MAX_VALUE}, the range PostgreSQL accepts for lock_timeout. " +
-                "Configure ${DatabaseEnvironmentVariables.POOL_LOCK_TIMEOUT_MILLIS}."
+            "Configure ${DatabaseEnvironmentVariables.POOL_LOCK_TIMEOUT_MILLIS}."
     }
 }
 
@@ -125,9 +127,11 @@ private val nonBlank: EnvironmentVariableValidation<String>.() -> Unit = {
     require("expected a non-blank string") { it.isNotBlank() }
 }
 
-private inline fun <reified T : Enum<T>> enumIgnoringCase(): (String) -> T = { rawValue ->
-    enumValues<T>().firstOrNull { it.name.equals(rawValue, ignoreCase = true) }
-        ?: throw IllegalArgumentException(
-            "Expected one of: " + enumValues<T>().joinToString { it.name.lowercase() }
-        )
+private inline fun <reified T : Enum<T>> enumIgnoringCase(): (String) -> T {
+    return { rawValue ->
+        enumValues<T>().firstOrNull { it.name.equals(rawValue, ignoreCase = true) }
+            ?: throw IllegalArgumentException(
+                "Expected one of: " + enumValues<T>().joinToString { it.name.lowercase() },
+            )
+    }
 }

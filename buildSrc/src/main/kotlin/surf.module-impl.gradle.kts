@@ -14,6 +14,6 @@ plugins {
 
 require(surfModuleRole(project.name) == SurfModuleRole.IMPL) {
     "${project.path} applies surf.module-impl, but its name does not mark it as an implementation " +
-            "module. Expected a name ending in -impl or -internal, or matching -nms-v<digit>."
+        "module. Expected a name ending in -impl or -internal, or matching -nms-v<digit>."
 }
 

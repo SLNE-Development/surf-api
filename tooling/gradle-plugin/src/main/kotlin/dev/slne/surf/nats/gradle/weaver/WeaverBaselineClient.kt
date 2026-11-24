@@ -21,8 +21,9 @@ import java.util.concurrent.TimeoutException
 /**
  * Reads the versions and archives of one weaver artifact for the compatibility baseline.
  *
- * Uses HTTP/1.1 like weaver's own client, because the registry closes plain-http connections that ask for an
- * h2c upgrade. Every non-2xx response except a 404 on the version list becomes a [GradleException].
+ * Uses HTTP/1.1 like weaver's own client, because the registry closes plain-http connections that
+ * ask for an h2c upgrade. Every non-2xx response except a 404 on the version list becomes a
+ * [GradleException].
  */
 internal class WeaverBaselineClient(baseUrl: String, private val token: String?) {
 
@@ -34,8 +35,8 @@ internal class WeaverBaselineClient(baseUrl: String, private val token: String?)
         .build()
 
     /**
-     * Returns the release versions of `group:name` in [repository], or `null` when the artifact does not exist
-     * there or the token cannot read it.
+     * Returns the release versions of `group:name` in [repository], or `null` when the artifact
+     * does not exist there or the token cannot read it.
      */
     @Blocking
     fun releases(repository: String, group: String, name: String): List<String>? {
@@ -45,7 +46,7 @@ internal class WeaverBaselineClient(baseUrl: String, private val token: String?)
         if (response.statusCode() !in SUCCESS) throw failure(
             response.statusCode(),
             response.body(),
-            request.uri()
+            request.uri(),
         )
 
         return try {
@@ -90,16 +91,23 @@ internal class WeaverBaselineClient(baseUrl: String, private val token: String?)
         }
 
         val expected = response.headers().firstValue(SHA256_HEADER).orElse(null) ?: return
+
         val actual = sha256(target)
+
         if (!actual.equals(expected, ignoreCase = true)) {
             target.delete()
-            throw GradleException("Checksum mismatch for $group:$name:$version: expected $expected, got $actual")
+            throw GradleException(
+                "Checksum mismatch for $group:$name:$version: expected $expected, got $actual",
+            )
         }
     }
 
     private fun artifactUri(repository: String, group: String, name: String): URI {
-        val path =
-            listOf(repository, "artifacts", group, name).joinToString("/", transform = ::encode)
+        val path = listOf(repository, "artifacts", group, name).joinToString(
+            "/",
+            transform = ::encode,
+        )
+
         return URI.create("$baseUrl/api/v1/repos/$path")
     }
 
@@ -112,33 +120,37 @@ internal class WeaverBaselineClient(baseUrl: String, private val token: String?)
     /**
      * Sends [request] and waits at most [TIMEOUT] for the complete response, body included.
      *
-     * The request timeout alone ends once the response headers arrive, so a stalled body would block forever.
+     * The request timeout alone ends once the response headers arrive, so a stalled body would
+     * block forever.
      */
     @Blocking
     private fun <T> send(
         request: HttpRequest,
-        handler: HttpResponse.BodyHandler<T>
+        handler: HttpResponse.BodyHandler<T>,
     ): HttpResponse<T> {
         val future = http.sendAsync(request, handler)
+
         return try {
             future.get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)
         } catch (e: TimeoutException) {
             future.cancel(true)
             throw GradleException(
                 "surf-nats request to ${request.uri()} did not complete within $TIMEOUT",
-                e
+                e,
             )
         } catch (e: ExecutionException) {
             val cause = e.cause ?: e
+
             if (cause is IOException) {
                 throw GradleException(
                     "surf-nats could not reach ${request.uri()}: ${cause.message}",
-                    cause
+                    cause,
                 )
             }
+
             throw GradleException(
                 "surf-nats request to ${request.uri()} failed: ${cause.message}",
-                cause
+                cause,
             )
         } catch (e: InterruptedException) {
             future.cancel(true)
@@ -147,8 +159,11 @@ internal class WeaverBaselineClient(baseUrl: String, private val token: String?)
         }
     }
 
-    private fun failure(status: Int, body: String, uri: URI): GradleException =
-        GradleException("Weaver request $uri failed with HTTP $status: ${body.take(MAX_BODY)}")
+    private fun failure(status: Int, body: String, uri: URI): GradleException {
+        return GradleException(
+            "Weaver request $uri failed with HTTP $status: ${body.take(MAX_BODY)}",
+        )
+    }
 
     private companion object {
         const val NOT_FOUND = 404
@@ -163,12 +178,15 @@ internal class WeaverBaselineClient(baseUrl: String, private val token: String?)
             val digest = MessageDigest.getInstance("SHA-256")
             file.inputStream().use { input ->
                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
                 while (true) {
                     val read = input.read(buffer)
                     if (read < 0) break
+
                     digest.update(buffer, 0, read)
                 }
             }
+
             return digest.digest().joinToString("") { "%02x".format(it) }
         }
     }

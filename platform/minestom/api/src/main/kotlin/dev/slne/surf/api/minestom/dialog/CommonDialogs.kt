@@ -3,14 +3,17 @@ package dev.slne.surf.api.minestom.dialog
 import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.minestom.dialog.builder.DialogEntryBuilder
 import net.kyori.adventure.text.Component
+import net.minestom.server.dialog.Dialog
 import org.jetbrains.annotations.Range
 
 /**
  * Builds a dialog that only acknowledges what it says.
  */
-fun noticeDialog(block: DialogEntryBuilder.() -> Unit) = dialog {
-    block()
-    type { notice() }
+fun noticeDialog(block: DialogEntryBuilder.() -> Unit): Dialog {
+    return dialog {
+        block()
+        type { notice() }
+    }
 }
 
 /**
@@ -19,12 +22,14 @@ fun noticeDialog(block: DialogEntryBuilder.() -> Unit) = dialog {
 fun noticeDialog(
     title: Component,
     notice: Component,
-    width: @Range(from = 1, to = 1024) Int? = null
-) = noticeDialog {
-    base {
-        title(title)
-        body {
-            plainMessage(notice, width)
+    width: @Range(from = 1, to = 1024) Int? = null,
+): Dialog {
+    return noticeDialog {
+        base {
+            title(title)
+            body {
+                plainMessage(notice, width)
+            }
         }
     }
 }
@@ -36,4 +41,4 @@ fun noticeDialogWithBuilder(
     title: Component,
     width: @Range(from = 1, to = 1024) Int? = null,
     notice: SurfComponentBuilder.() -> Unit,
-) = noticeDialog(title, SurfComponentBuilder(notice), width)
+): Dialog = noticeDialog(title, SurfComponentBuilder(notice), width)

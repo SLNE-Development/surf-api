@@ -19,7 +19,13 @@ class MiniPlaceholdersCommandMixinTest {
         val calls = command.methods.single { it.name == "lambda\$new\$0" }
             .instructions.filterIsInstance<MethodInsnNode>()
 
-        assertTrue(calls.none { it.owner == CONNECTION_MANAGER && it.name == "getOnlinePlayers" && it.desc == COLLECTION_DESCRIPTOR }) {
+        assertTrue(
+            calls.none { call ->
+                call.owner == CONNECTION_MANAGER &&
+                    call.name == "getOnlinePlayers" &&
+                    call.desc == COLLECTION_DESCRIPTOR
+            },
+        ) {
             "lambda\$new\$0 still calls getOnlinePlayers$COLLECTION_DESCRIPTOR"
         }
         assertTrue(calls.any { it.name.endsWith("surf\$onlinePlayers") }) {

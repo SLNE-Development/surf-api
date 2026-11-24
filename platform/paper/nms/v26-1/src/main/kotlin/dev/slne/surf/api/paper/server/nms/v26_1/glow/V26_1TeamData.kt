@@ -19,9 +19,9 @@ class V26_1TeamData(color: ChatFormatting) {
 
     private val seenBy = ConcurrentHashMap.newKeySet<UUID>()
 
-    fun markSeen(uniqueId: UUID) = seenBy.add(uniqueId)
+    fun markSeen(uniqueId: UUID): Boolean = seenBy.add(uniqueId)
     fun isSeen(uniqueId: UUID): Boolean = seenBy.contains(uniqueId)
-    fun removeSeen(uniqueId: UUID) = seenBy.remove(uniqueId)
+    fun removeSeen(uniqueId: UUID): Boolean = seenBy.remove(uniqueId)
 
     companion object {
         private val lastUid = AtomicInteger()
@@ -29,13 +29,16 @@ class V26_1TeamData(color: ChatFormatting) {
 
         private val teams = EnumMap<ChatFormatting, V26_1TeamData>(ChatFormatting::class.java)
 
-        fun getByColor(color: ChatFormatting): V26_1TeamData =
-            teams.computeIfAbsent(color) { V26_1TeamData(color) }
+        fun getByColor(color: ChatFormatting): V26_1TeamData {
+            return teams.computeIfAbsent(color) { V26_1TeamData(color) }
+        }
 
         fun getByColorOrNull(color: ChatFormatting): V26_1TeamData? = teams[color]
 
         fun removeFromAll(uuid: UUID) {
-            teams.values.forEach { it.removeSeen(uuid) }
+            for (team in teams.values) {
+                team.removeSeen(uuid)
+            }
         }
     }
 }

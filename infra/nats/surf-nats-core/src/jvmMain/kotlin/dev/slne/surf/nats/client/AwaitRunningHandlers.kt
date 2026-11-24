@@ -13,10 +13,11 @@ import kotlin.time.TimeMark
 /**
  * Blocks until the handlers running in [handlerScope] have completed or [deadline] passes.
  *
- * Returns `null` when all of them completed, otherwise the positive number that has not completed yet, including
- * handlers that are being cancelled. The handlers are the direct children of the scope's job at the time of the call.
- * Handlers started later are not awaited, and none is cancelled. A [deadline] that has already passed counts as
- * missed without waiting, unless no handler is running.
+ * Returns `null` when all of them completed, otherwise the positive number that has not completed
+ * yet, including handlers that are being cancelled. The handlers are the direct children of the
+ * scope's job at the time of the call. Handlers started later are not awaited, and none is
+ * cancelled. A [deadline] that has already passed counts as missed without waiting, unless no
+ * handler is running.
  *
  * @throws InterruptedException when the calling thread is interrupted while it waits
  */
@@ -32,5 +33,6 @@ internal fun awaitRunningHandlers(handlerScope: CoroutineScope, deadline: TimeMa
     }
 
     if (finished) return null
+
     return handlers.count { !it.isCompleted }.takeIf { it > 0 }
 }

@@ -15,8 +15,9 @@ typealias SerializablePublicKey = @Serializable(with = PublicKeySerializer::clas
 
 object PublicKeySerializer : KSerializer<PublicKey> {
     // KeyFactory is not thread-safe, so we cache them per thread
-    private val keyFactoryCache: ThreadLocal<MutableMap<String, KeyFactory>> =
-        ThreadLocal.withInitial { HashMap(4) }
+    private val keyFactoryCache = ThreadLocal.withInitial<MutableMap<String, KeyFactory>> {
+        HashMap(4)
+    }
 
     override val descriptor = buildClassSerialDescriptor("surf.api.java.crypt.PublicKey") {
         element<String>("algorithm")
@@ -30,7 +31,9 @@ object PublicKeySerializer : KSerializer<PublicKey> {
         }
 
         val encoded = value.encoded
-            ?: throw IllegalArgumentException("PublicKey of algorithm '${value.algorithm}' does not support encoding")
+            ?: throw IllegalArgumentException(
+                "PublicKey of algorithm '${value.algorithm}' does not support encoding",
+            )
 
         encoder.encodeStructure(descriptor) {
             encodeStringElement(descriptor, 0, value.algorithm)
@@ -39,32 +42,35 @@ object PublicKeySerializer : KSerializer<PublicKey> {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    override fun deserialize(decoder: Decoder): PublicKey = decoder.decodeStructure(descriptor) {
-        var algorithm: String? = null
-        var encoded: ByteArray? = null
+    override fun deserialize(decoder: Decoder): PublicKey {
+        return decoder.decodeStructure(descriptor) {
+            var algorithm: String? = null
+            var encoded: ByteArray? = null
 
-        if (decodeSequentially()) {
-            algorithm = decodeStringElement(descriptor, 0)
-            encoded = decodeSerializableElement(descriptor, 1, ByteArraySerializer())
-        } else while (true) {
-            when (val index = decodeElementIndex(descriptor)) {
-                0 -> algorithm = decodeStringElement(descriptor, 0)
-                1 -> encoded = decodeSerializableElement(descriptor, 1, ByteArraySerializer())
-                CompositeDecoder.DECODE_DONE -> break
-                else -> error("Unexpected index: $index")
+            if (decodeSequentially()) {
+                algorithm = decodeStringElement(descriptor, 0)
+                encoded = decodeSerializableElement(descriptor, 1, ByteArraySerializer())
+            } else while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> algorithm = decodeStringElement(descriptor, 0)
+                    1 -> encoded = decodeSerializableElement(descriptor, 1, ByteArraySerializer())
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
             }
+
+            requireNotNull(algorithm) { "Missing 'algorithm'" }
+            requireNotNull(encoded) { "Missing 'encoded'" }
+
+            val keyFactory = keyFactoryFor(algorithm)
+            val keySpec = X509EncodedKeySpec(encoded)
+            keyFactory.generatePublic(keySpec)
         }
-
-        requireNotNull(algorithm) { "Missing 'algorithm'" }
-        requireNotNull(encoded) { "Missing 'encoded'" }
-
-        val keyFactory = keyFactoryFor(algorithm)
-        val keySpec = X509EncodedKeySpec(encoded)
-        keyFactory.generatePublic(keySpec)
     }
 
     private fun keyFactoryFor(algorithm: String): KeyFactory {
         val cache = keyFactoryCache.get()
+
         return cache.computeIfAbsent(algorithm) { KeyFactory.getInstance(algorithm) }
     }
 }

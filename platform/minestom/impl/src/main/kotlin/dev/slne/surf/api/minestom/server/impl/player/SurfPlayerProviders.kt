@@ -27,8 +27,8 @@ object SurfPlayerProviders {
     /**
      * Installs the provider of [factory] and takes ownership of Minestom's player provider.
      *
-     * @param replaceForeignProvider whether a provider installed through Minestom is replaced instead
-     * of failing the call
+     * @param replaceForeignProvider whether a provider installed through Minestom is replaced
+     * instead of failing the call
      * @throws IllegalStateException when a provider other than the surf one is installed and
      * [replaceForeignProvider] is `false`
      */
@@ -39,7 +39,7 @@ object SurfPlayerProviders {
     ) {
         check(!foreignProviderInstalled || replaceForeignProvider) {
             "ConnectionManager#setPlayerProvider installed a provider before the surf api started; " +
-                    "set the player class with surfMinestomServer { playerFactory { connection, profile -> ... } } instead"
+                "set the player class with surfMinestomServer { playerFactory { connection, profile -> ... } } instead"
         }
 
         ConnectionManager.setPlayerProvider(SurfPlayerProvider(factory))
@@ -69,15 +69,17 @@ object SurfPlayerProviders {
         val surf = provider is SurfPlayerProvider
         check(!owned || surf) {
             "The surf api creates the players of this server; set the player class with " +
-                    "surfMinestomServer { playerFactory { connection, profile -> ... } } instead of " +
-                    "ConnectionManager#setPlayerProvider"
+                "surfMinestomServer { playerFactory { connection, profile -> ... } } instead of " +
+                "ConnectionManager#setPlayerProvider"
         }
 
         foreignProviderInstalled = provider != null && !surf
     }
 
-    private class SurfPlayerProvider(private val factory: SurfMinestomPlayerFactory) : PlayerProvider {
-        override fun createPlayer(connection: PlayerConnection, gameProfile: GameProfile): Player =
-            factory.create(connection, gameProfile)
+    private class SurfPlayerProvider(private val factory: SurfMinestomPlayerFactory) :
+        PlayerProvider {
+        override fun createPlayer(connection: PlayerConnection, gameProfile: GameProfile): Player {
+            return factory.create(connection, gameProfile)
+        }
     }
 }

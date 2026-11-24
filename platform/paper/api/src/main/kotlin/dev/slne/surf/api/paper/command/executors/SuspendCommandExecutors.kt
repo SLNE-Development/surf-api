@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.command.executors
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.jorel.commandapi.BukkitExecutable
-import dev.jorel.commandapi.CommandAPI
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
 import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.*
@@ -27,120 +26,153 @@ typealias CoroutineScopeProvider = () -> CoroutineScope
  * The executor is launched in the provided [CoroutineScope]. Any thrown exceptions are handled
  * consistently and reported back to the sender if applicable.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.anyExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(CommandSender, CommandArguments) -> Unit
-) = anyExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(CommandSender, CommandArguments) -> Unit,
+): BukkitExecutable<*> {
+    return anyExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
  * Registers an executor that can only be run by a [Player] and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.playerExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(Player, CommandArguments) -> Unit
-) = playerExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(Player, CommandArguments) -> Unit,
+): BukkitExecutable<*> {
+    return playerExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
  * Registers an executor that can only be run by an [Entity] and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.entityExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(Entity, CommandArguments) -> Unit
-) = entityExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(Entity, CommandArguments) -> Unit,
+): BukkitExecutable<*> {
+    return entityExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
  * Registers an executor that can only be run by the console and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.consoleExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(ConsoleCommandSender, CommandArguments) -> Unit
-) = consoleExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(ConsoleCommandSender, CommandArguments) -> Unit,
+): BukkitExecutable<*> {
+    return consoleExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
  * Registers an executor that can only be run by a command block and executes it inside a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.commandBlockExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(BlockCommandSender, CommandArguments) -> Unit
-) = commandBlockExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(BlockCommandSender, CommandArguments) -> Unit,
+): BukkitExecutable<*> {
+    return commandBlockExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
- * Registers an executor that can only be run by a [ProxiedCommandSender] and executes it inside a coroutine.
+ * Registers an executor that can only be run by a [ProxiedCommandSender] and executes it inside a
+ * coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.proxyExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(ProxiedCommandSender, CommandArguments) -> Unit
-) = proxyExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(ProxiedCommandSender, CommandArguments) -> Unit,
+): BukkitExecutable<*> {
+    return proxyExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
- * Registers an executor that can only be run by a [NativeProxyCommandSender] and executes it inside a coroutine.
+ * Registers an executor that can only be run by a [NativeProxyCommandSender] and executes it inside
+ * a coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.nativeExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(NativeProxyCommandSender, CommandArguments) -> Unit
-) = nativeExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(
+        NativeProxyCommandSender,
+        CommandArguments,
+    ) -> Unit,
+): BukkitExecutable<*> {
+    return nativeExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
 /**
- * Registers an executor that can only be run by a remote console and executes it inside a coroutine.
+ * Registers an executor that can only be run by a remote console and executes it inside a
+ * coroutine.
  *
- * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's scope, on the server thread.
+ * @param scope The [CoroutineScope] used to launch the executor. Defaults to the calling plugin's
+ * scope, on the server thread.
  * @param executor The suspending executor logic.
  */
 inline fun BukkitExecutable<*>.remoteConsoleExecutorSuspend(
     noinline scope: CoroutineScopeProvider = callingPluginCommandScope(),
-    crossinline executor: suspend CoroutineScope.(RemoteConsoleCommandSender, CommandArguments) -> Unit
-) = remoteConsoleExecutor { sender, arguments ->
-    scope().launchCommandExecutor(sender) {
-        executor(sender, arguments)
+    crossinline executor: suspend CoroutineScope.(
+        RemoteConsoleCommandSender,
+        CommandArguments,
+    ) -> Unit,
+): BukkitExecutable<*> {
+    return remoteConsoleExecutor { sender, arguments ->
+        scope().launchCommandExecutor(sender) {
+            executor(sender, arguments)
+        }
     }
 }
 
@@ -157,13 +189,14 @@ inline fun BukkitExecutable<*>.remoteConsoleExecutorSuspend(
 @InternalSurfApi
 internal inline fun <S : CommandSender> CoroutineScope.launchCommandExecutor(
     sender: S,
-    crossinline block: suspend CoroutineScope.() -> Unit
+    crossinline block: suspend CoroutineScope.() -> Unit,
 ) {
     launch {
         try {
             block()
         } catch (t: Throwable) {
             if (t is CancellationException) throw t
+
             handleCommandFailure(sender, t)
         }
     }
@@ -206,5 +239,6 @@ internal inline fun handleCommandFailure(sender: CommandSender, t: Throwable) {
 @PublishedSurfApi
 internal fun CommandSender.sendSyntaxMessageOrRethrow(message: String?, t: Throwable) {
     val msg = message ?: throw t
+
     sendMessage(text(msg, Colors.ERROR))
 }

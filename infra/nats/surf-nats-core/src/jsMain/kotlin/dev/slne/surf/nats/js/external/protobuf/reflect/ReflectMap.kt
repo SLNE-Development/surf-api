@@ -8,7 +8,8 @@ import js.iterable.JsIterator
 /**
  * Binds `ReflectMap`, the reflection access to a map field.
  *
- * Keys are converted to the closest ECMAScript type of the key scalar: string, number, boolean or bigint.
+ * Keys are converted to the closest ECMAScript type of the key scalar: string, number, boolean or
+ * bigint.
  */
 internal external interface ReflectMap<K : Any, V> {
     val size: Int

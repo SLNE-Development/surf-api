@@ -9,7 +9,9 @@ import net.kyori.adventure.inventory.Book
 import net.kyori.adventure.permission.PermissionChecker
 import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.sound.Sound.Emitter
+import net.kyori.adventure.text.Component
 import net.kyori.adventure.util.TriState
+import java.util.*
 
 inline fun Audience.sendText(block: SurfComponentBuilder.() -> Unit) {
     sendMessage(SurfComponentBuilder(block))
@@ -34,6 +36,7 @@ inline fun Audience.playSound(block: @SoundDsl Sound.Builder.() -> Unit) {
 inline fun Audience.playSound(useSelfEmitter: Boolean, block: @SoundDsl Sound.Builder.() -> Unit) {
     if (useSelfEmitter) {
         playSound(Sound(block), Emitter.self())
+
         return
     }
 
@@ -44,16 +47,19 @@ inline fun Audience.showTitle(block: @TitleDsl TitleBuilder.() -> Unit) {
     showTitle(Title(block))
 }
 
-inline fun Audience.uuidOrNull() = getPointer(Identity.UUID)
-inline fun Audience.uuid() = uuidOrNull() ?: error("Audience does not have a UUID pointer")
-inline fun Audience.nameOrNull() = getPointer(Identity.NAME)
-inline fun Audience.name() = nameOrNull() ?: error("Audience does not have a name pointer")
-inline fun Audience.displayNameOrNull() = getPointer(Identity.DISPLAY_NAME)
-inline fun Audience.displayName() =
-    displayNameOrNull() ?: error("Audience does not have a display name pointer")
+inline fun Audience.uuidOrNull(): UUID? = getPointer(Identity.UUID)
+inline fun Audience.uuid(): UUID = uuidOrNull() ?: error("Audience does not have a UUID pointer")
+inline fun Audience.nameOrNull(): String? = getPointer(Identity.NAME)
+inline fun Audience.name(): String = nameOrNull() ?: error("Audience does not have a name pointer")
+inline fun Audience.displayNameOrNull(): Component? = getPointer(Identity.DISPLAY_NAME)
+inline fun Audience.displayName(): Component {
+    return displayNameOrNull() ?: error("Audience does not have a display name pointer")
+}
 
-inline fun Audience.testPermission(permission: String) =
-    getPointer(PermissionChecker.POINTER)?.value(permission) ?: TriState.NOT_SET
+inline fun Audience.testPermission(permission: String): TriState {
+    return getPointer(PermissionChecker.POINTER)?.value(permission) ?: TriState.NOT_SET
+}
 
-inline fun Audience.hasPermission(permission: String) =
-    getPointer(PermissionChecker.POINTER)?.test(permission) ?: false
+inline fun Audience.hasPermission(permission: String): Boolean {
+    return getPointer(PermissionChecker.POINTER)?.test(permission) ?: false
+}

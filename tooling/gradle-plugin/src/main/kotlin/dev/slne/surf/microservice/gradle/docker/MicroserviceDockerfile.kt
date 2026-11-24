@@ -19,13 +19,14 @@ private const val ENTRYPOINT_PATH = "/usr/local/bin/microservice-entrypoint"
 private const val MEMORY_BUDGET_ENVIRONMENT_VARIABLE = "SURF_MICROSERVICE_MEMORY_BUDGET"
 
 /**
- * Upper bound of glibc malloc arenas. glibc creates up to eight per core and keeps freed memory in each.
+ * Upper bound of glibc malloc arenas. glibc creates up to eight per core and keeps freed memory in
+ * each.
  */
 private const val MALLOC_ARENA_MAX = 2
 
 /**
- * One JVM option without whitespace, quotes or characters the shell would interpret. `*` is safe because the
- * entrypoint turns globbing off.
+ * One JVM option without whitespace, quotes or characters the shell would interpret. `*` is safe
+ * because the entrypoint turns globbing off.
  */
 private val JVM_OPTION = Regex("""-[A-Za-z0-9_.:+=/,%@*-]+""")
 private val MEMORY_SIZE = Regex("""(\d+[kKmMgGtT]?)?""")
@@ -51,8 +52,8 @@ private val HEALTHCHECK_INTERVAL = Duration.ofSeconds(30)
 private val HEALTHCHECK_TIMEOUT = Duration.ofSeconds(10)
 
 /**
- * Grace period for startup (surf-api bootstrap, database migrations, NATS connect). Failed probes in this window
- * do not count towards [HEALTHCHECK_RETRIES].
+ * Grace period for startup (surf-api bootstrap, database migrations, NATS connect). Failed probes
+ * in this window do not count towards [HEALTHCHECK_RETRIES].
  */
 private val HEALTHCHECK_START_PERIOD = Duration.ofSeconds(60)
 
@@ -62,15 +63,15 @@ private val HEALTHCHECK_START_PERIOD = Duration.ofSeconds(60)
 private const val HEALTHCHECK_RETRIES = 3
 
 /**
- * Fills this Dockerfile task with the three stages of the microservice image: Gradle build, `microservicectl` build and
- * runtime.
+ * Fills this Dockerfile task with the three stages of the microservice image: Gradle build,
+ * `microservicectl` build and runtime.
  *
- * [runnableTaskPath] is the path of the task that prepares the jar, passed as a plain string so that generating the
- * Dockerfile does not make the task depend on building the jar. [runnableArtifactPath] and [commandClientSourcePath]
- * are relative to the Docker build context.
+ * [runnableTaskPath] is the path of the task that prepares the jar, passed as a plain string so
+ * that generating the Dockerfile does not make the task depend on building the jar.
+ * [runnableArtifactPath] and [commandClientSourcePath] are relative to the Docker build context.
  *
- * Before writing, the task refuses to replace a file without the generated marker unless [overwrite] is set. The
- * options and the memory budget are validated when the file is generated.
+ * Before writing, the task refuses to replace a file without the generated marker unless
+ * [overwrite] is set. The options and the memory budget are validated when the file is generated.
  */
 internal fun Dockerfile.configureMicroserviceDockerfile(
     overwrite: Provider<Boolean>,
@@ -81,14 +82,14 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
     memoryBudget: Provider<String>,
     runnableTaskPath: Provider<String>,
     runnableArtifactPath: Provider<String>,
-    commandClientSourcePath: Provider<String>
+    commandClientSourcePath: Provider<String>,
 ) {
     val dockerfileTask = this
 
     inputs.property("surfMicroservice.docker.overwrite", overwrite)
 
     outputs.doNotCacheIf(
-        "Generation must preserve manual Dockerfile overwrite protection."
+        "Generation must preserve manual Dockerfile overwrite protection.",
     ) {
         true
     }
@@ -111,7 +112,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
             Dockerfile.From(image).apply {
                 withStage(BUILD_STAGE_NAME)
             }
-        }
+        },
     )
 
     workingDir("/workspace")
@@ -120,7 +121,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
     runCommand(
         runnableTaskPath.map { task ->
             "chmod +x gradlew && ./gradlew $task --no-daemon"
-        }
+        },
     )
 
     section("Stage 2: compile the native $COMMAND_CLIENT_EXECUTABLE command client.")
@@ -130,7 +131,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
             Dockerfile.From(image).apply {
                 withStage(COMMAND_CLIENT_BUILD_STAGE_NAME)
             }
-        }
+        },
     )
 
     workingDir("/src")
@@ -139,11 +140,11 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
         commandClientSourcePath.map { sourcePath ->
             Dockerfile.CopyFile(
                 "/workspace/${sourcePath.asDockerContextPath()}",
-                COMMAND_CLIENT_SOURCE_FILE
+                COMMAND_CLIENT_SOURCE_FILE,
             ).apply {
                 withStage(BUILD_STAGE_NAME)
             }
-        }
+        },
     )
 
     // language="Shell Script"
@@ -156,7 +157,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
                 -ldflags='-s -w' \
                 -o $COMMAND_CLIENT_OUTPUT_FILE \
                 $COMMAND_CLIENT_SOURCE_FILE
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     section("Stage 3: assemble the runtime image.")
@@ -164,7 +165,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
     from(
         baseImage.map { image ->
             Dockerfile.From(image)
-        }
+        },
     )
 
     section("Run the application as an unprivileged user that owns /app.")
@@ -179,7 +180,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
                 --home-dir /app \
                 --create-home \
                 $APPLICATION_USER
-        """.trimIndent()
+        """.trimIndent(),
     )
 
     section("Install the application JAR and the command client.")
@@ -190,29 +191,33 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
         runnableArtifactPath.map { artifactPath ->
             Dockerfile.CopyFile(
                 "/workspace/${artifactPath.asDockerContextPath()}",
-                "/app/$DOCKER_APPLICATION_JAR_NAME"
+                "/app/$DOCKER_APPLICATION_JAR_NAME",
             ).apply {
                 withStage(BUILD_STAGE_NAME)
                 withChown("$APPLICATION_USER:$APPLICATION_GROUP")
             }
-        }
+        },
     )
 
     instruction(
         "COPY --from=$COMMAND_CLIENT_BUILD_STAGE_NAME " +
-                "$COMMAND_CLIENT_OUTPUT_FILE " +
-                COMMAND_CLIENT_INSTALL_PATH
+            "$COMMAND_CLIENT_OUTPUT_FILE " +
+            COMMAND_CLIENT_INSTALL_PATH,
     )
 
     section(
         "JVM settings. The entrypoint starts java with the default options, then -XX:MaxRAM=<budget> if cgroup v2",
         "shows no memory limit for the container, then JAVA_OPTS. For options with a value the last one wins;",
         "a different collector needs -XX:-UseG1GC as well. An empty $MEMORY_BUDGET_ENVIRONMENT_VARIABLE turns the",
-        "budget off. MALLOC_ARENA_MAX bounds the native memory that glibc keeps per malloc arena."
+        "budget off. MALLOC_ARENA_MAX bounds the native memory that glibc keeps per malloc arena.",
     )
 
     instruction("ENV JAVA_OPTS=\"\"")
-    instruction(memoryBudget.map { budget -> "ENV $MEMORY_BUDGET_ENVIRONMENT_VARIABLE=\"${budget.checkedMemorySize()}\"" })
+    instruction(
+        memoryBudget.map { budget ->
+            "ENV $MEMORY_BUDGET_ENVIRONMENT_VARIABLE=\"${budget.checkedMemorySize()}\""
+        },
+    )
     instruction("ENV MALLOC_ARENA_MAX=\"$MALLOC_ARENA_MAX\"")
     instruction(jvmOptions.map { options -> installEntrypoint(options.checkedJvmOptions()) })
 
@@ -231,7 +236,7 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
             .withInterval(HEALTHCHECK_INTERVAL)
             .withTimeout(HEALTHCHECK_TIMEOUT)
             .withStartPeriod(HEALTHCHECK_START_PERIOD)
-            .withRetries(HEALTHCHECK_RETRIES)
+            .withRetries(HEALTHCHECK_RETRIES),
     )
 
     section("Start the application; arguments passed to the container are forwarded to it.")
@@ -244,64 +249,75 @@ internal fun Dockerfile.configureMicroserviceDockerfile(
 /**
  * Returns the `RUN` instruction that writes the entrypoint script line by line with `printf`.
  *
- * The script lives in a `RUN` instruction instead of a heredoc because Dockerfile instructions tolerate CRLF line
- * endings from a Windows checkout, while a heredoc body would keep them and break the shebang.
+ * The script lives in a `RUN` instruction instead of a heredoc because Dockerfile instructions
+ * tolerate CRLF line endings from a Windows checkout, while a heredoc body would keep them and
+ * break the shebang.
  */
 private fun installEntrypoint(jvmOptions: List<String>): String {
     val lines = entrypointScript(jvmOptions)
     check(lines.none { '\'' in it }) { "Entrypoint script lines must not contain single quotes" }
 
     val printedLines = lines.joinToString(separator = " \\\n") { line -> "        '$line'" }
+
     return "RUN printf '%s\\n' \\\n$printedLines \\\n        > $ENTRYPOINT_PATH \\\n    && chmod 755 $ENTRYPOINT_PATH"
 }
 
 /**
- * Lines of the entrypoint script that starts java with [jvmOptions], the memory budget and `JAVA_OPTS`.
+ * Lines of the entrypoint script that starts java with [jvmOptions], the memory budget and
+ * `JAVA_OPTS`.
  *
- * The budget applies only if every `memory.max` from the container's own cgroup (read from `/proc/self/cgroup`) up to
- * the cgroup root reads `max`, so a limit is respected in a private as well as in the host cgroup namespace. On
- * cgroup v1 no `memory.max` exists and the budget is not applied. An unlimited container then sizes the JVM from the
- * host memory. Word splitting of the option lists is intended, globbing is off.
+ * The budget applies only if every `memory.max` from the container's own cgroup (read from
+ * `/proc/self/cgroup`) up to the cgroup root reads `max`, so a limit is respected in a private as
+ * well as in the host cgroup namespace. On cgroup v1 no `memory.max` exists and the budget is not
+ * applied. An unlimited container then sizes the JVM from the host memory. Word splitting of the
+ * option lists is intended, globbing is off.
  */
-private fun entrypointScript(jvmOptions: List<String>): List<String> = listOf(
-    "#!/bin/sh",
-    "set -f",
-    "budget=\"\"",
-    $$"if [ -n \"${$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE:-}\" ]; then",
-    "    cgroup=\"\"",
-    "    while IFS=: read -r id controllers path; do",
-    $$"        if [ \"$id\" = 0 ]; then cgroup=$path; fi",
-    "    done < /proc/self/cgroup",
-    $$"    dir=\"/sys/fs/cgroup${cgroup%/}\"",
-    "    found=\"\"",
-    "    limited=\"\"",
-    "    while :; do",
-    $$"        if [ -r \"$dir/memory.max\" ]; then",
-    "            found=1",
-    $$"            if [ \"$(cat \"$dir/memory.max\")\" != max ]; then limited=1; fi",
-    "        fi",
-    $$"        case $dir in /sys/fs/cgroup/*) dir=${dir%/*} ;; *) break ;; esac",
-    "    done",
-    $$"    if [ -n \"$found\" ] && [ -z \"$limited\" ]; then budget=\"-XX:MaxRAM=$$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE\"; fi",
-    "fi",
-    $$"exec java $${jvmOptions.joinToString(" ")} $budget $JAVA_OPTS -jar /app/$$DOCKER_APPLICATION_JAR_NAME \"$@\"",
-)
+private fun entrypointScript(jvmOptions: List<String>): List<String> {
+    return listOf(
+        "#!/bin/sh",
+        "set -f",
+        "budget=\"\"",
+        $$"if [ -n \"${$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE:-}\" ]; then",
+        "    cgroup=\"\"",
+        "    while IFS=: read -r id controllers path; do",
+        $$"        if [ \"$id\" = 0 ]; then cgroup=$path; fi",
+        "    done < /proc/self/cgroup",
+        $$"    dir=\"/sys/fs/cgroup${cgroup%/}\"",
+        "    found=\"\"",
+        "    limited=\"\"",
+        "    while :; do",
+        $$"        if [ -r \"$dir/memory.max\" ]; then",
+        "            found=1",
+        $$"            if [ \"$(cat \"$dir/memory.max\")\" != max ]; then limited=1; fi",
+        "        fi",
+        $$"        case $dir in /sys/fs/cgroup/*) dir=${dir%/*} ;; *) break ;; esac",
+        "    done",
+        $$"    if [ -n \"$found\" ] && [ -z \"$limited\" ]; then budget=\"-XX:MaxRAM=$$$MEMORY_BUDGET_ENVIRONMENT_VARIABLE\"; fi",
+        "fi",
+        $$"exec java $${jvmOptions.joinToString(" ")} $budget $JAVA_OPTS -jar /app/$$DOCKER_APPLICATION_JAR_NAME \"$@\"",
+    )
+}
 
-private fun List<String>.checkedJvmOptions(): List<String> = onEach { option ->
-    if (!JVM_OPTION.matches(option)) {
-        throw GradleException(
-            "surfMicroservice.docker.jvmOptions: '$option' must start with '-' and contain no whitespace or " +
-                    "shell metacharacters"
-        )
+private fun List<String>.checkedJvmOptions(): List<String> {
+    return onEach { option ->
+        if (!JVM_OPTION.matches(option)) {
+            throw GradleException(
+                "surfMicroservice.docker.jvmOptions: '$option' must start with '-' and contain no " +
+                    "whitespace or shell metacharacters",
+            )
+        }
     }
 }
 
-private fun String.checkedMemorySize(): String = also {
+private fun String.checkedMemorySize(): String {
     if (!MEMORY_SIZE.matches(this)) {
         throw GradleException(
-            "surfMicroservice.docker.memoryBudget: '$this' is no memory size such as 1g, 768m or 1073741824"
+            "surfMicroservice.docker.memoryBudget: '$this' is no memory size such as 1g, 768m or " +
+                "1073741824",
         )
     }
+
+    return this
 }
 
 private fun Dockerfile.section(vararg lines: String) {
@@ -344,10 +360,9 @@ internal fun File.relativeToDockerContext(
 private fun String.asDockerContextPath(): String {
     val normalized = replace('\\', '/').removePrefix("./")
 
-    val invalid =
-        normalized.isBlank() ||
-                normalized.startsWith('/') ||
-                normalized.split('/').any { segment -> segment == ".." }
+    val invalid = normalized.isBlank() ||
+        normalized.startsWith('/') ||
+        normalized.split('/').any { segment -> segment == ".." }
 
     if (invalid) {
         throw GradleException(
@@ -377,7 +392,7 @@ private fun protectExistingDockerfile(
 
     throw GradleException(
         "Refusing to overwrite ${destination.absolutePath} because it was not generated by " +
-                "$taskPath. Move the file, add the generated marker, or set " +
-                "surfMicroservice.docker.overwrite to true."
+            "$taskPath. Move the file, add the generated marker, or set " +
+            "surfMicroservice.docker.overwrite to true."
     )
 }

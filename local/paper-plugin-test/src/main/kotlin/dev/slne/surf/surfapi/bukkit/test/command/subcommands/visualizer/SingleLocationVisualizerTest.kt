@@ -13,7 +13,6 @@ import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.paper.visualizer.SurfPaperVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.surfBean
 import net.kyori.adventure.text.Component
 import org.bukkit.Location
@@ -52,7 +51,9 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
 
         subcommand("changeLocation") {
             uuidArgument("uid") {
-                includeSuggestions(ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } })
+                includeSuggestions(
+                    ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } },
+                )
             }
             locationArgument("location", LocationType.BLOCK_POSITION)
 
@@ -62,11 +63,13 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val visualizer = visualizers[uid]
 
                 if (visualizer == null) {
-                    throw CommandAPIPaper.failWithAdventureComponent(buildText {
-                        append(Component.text("Visualizer with UID "))
-                        append(Component.text(uid.toString(), Colors.VARIABLE_VALUE))
-                        append(Component.text(" not found!"))
-                    })
+                    throw CommandAPIPaper.failWithAdventureComponent(
+                        buildText {
+                            append(Component.text("Visualizer with UID "))
+                            append(Component.text(uid.toString(), Colors.VARIABLE_VALUE))
+                            append(Component.text(" not found!"))
+                        },
+                    )
                 }
 
                 visualizer.location = location
@@ -82,7 +85,9 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
 
         subcommand("delete") {
             uuidArgument("uid") {
-                includeSuggestions(ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } })
+                includeSuggestions(
+                    ArgumentSuggestions.stringCollection { visualizers.keys.map { it.toString() } },
+                )
             }
 
             anyExecutor { sender, args ->
@@ -90,11 +95,13 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
                 val visualizer = visualizers.remove(uid)
 
                 if (visualizer == null) {
-                    throw CommandAPIPaper.failWithAdventureComponent(buildText {
-                        append(Component.text("Visualizer with UID "))
-                        append(Component.text(uid.toString(), Colors.VARIABLE_VALUE))
-                        append(Component.text(" not found!"))
-                    })
+                    throw CommandAPIPaper.failWithAdventureComponent(
+                        buildText {
+                            append(Component.text("Visualizer with UID "))
+                            append(Component.text(uid.toString(), Colors.VARIABLE_VALUE))
+                            append(Component.text(" not found!"))
+                        },
+                    )
                 }
 
                 visualizer.stopVisualizing()
@@ -103,5 +110,4 @@ class SingleLocationVisualizerTest(name: String) : CommandAPICommand(name) {
     }
 }
 
-@OptIn(InternalSurfApi::class)
 private val visualizerApi by surfBean<SurfPaperVisualizerApi>()

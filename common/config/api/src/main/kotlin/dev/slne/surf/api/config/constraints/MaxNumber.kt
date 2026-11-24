@@ -31,29 +31,44 @@ annotation class MaxNumber(val max: Double) {
          * Configurate constraint factory for [MaxNumber].
          */
         internal object Factory : Constraint.Factory<MaxNumber, Number?> {
-            override fun make(data: MaxNumber, type: Type): Constraint<Number?> = { number ->
-                if (number != null && number.toDouble() > data.max) {
-                    throw SerializationException(type, "Number is too big: $number, expected <= ${data.max}")
+            override fun make(data: MaxNumber, type: Type): Constraint<Number?> {
+                return { number ->
+                    if (number != null && number.toDouble() > data.max) {
+                        throw SerializationException(
+                            type,
+                            "Number is too big: $number, expected <= ${data.max}",
+                        )
+                    }
                 }
             }
         }
 
         internal object FactoryIntOr : Constraint.Factory<MaxNumber, IntOr?> {
-            override fun make(data: MaxNumber, type: Type): Constraint<IntOr?> = { intOr ->
-                val number = intOr?.value
+            override fun make(data: MaxNumber, type: Type): Constraint<IntOr?> {
+                return { intOr ->
+                    val number = intOr?.value
 
-                if (number != null && number > data.max) {
-                    throw SerializationException(type, "Number is too big: $number, expected <= ${data.max}")
+                    if (number != null && number > data.max) {
+                        throw SerializationException(
+                            type,
+                            "Number is too big: $number, expected <= ${data.max}",
+                        )
+                    }
                 }
             }
         }
 
         internal object FactoryDoubleOr : Constraint.Factory<MaxNumber, DoubleOr?> {
-            override fun make(data: MaxNumber, type: Type): Constraint<DoubleOr?> = { doubleOr ->
-                val number = doubleOr?.value
+            override fun make(data: MaxNumber, type: Type): Constraint<DoubleOr?> {
+                return { doubleOr ->
+                    val number = doubleOr?.value
 
-                if (number != null && number > data.max) {
-                    throw SerializationException(type, "Number is too big: $number, expected <= ${data.max}")
+                    if (number != null && number > data.max) {
+                        throw SerializationException(
+                            type,
+                            "Number is too big: $number, expected <= ${data.max}",
+                        )
+                    }
                 }
             }
         }

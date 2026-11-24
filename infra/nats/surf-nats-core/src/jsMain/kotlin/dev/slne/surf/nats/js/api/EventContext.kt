@@ -16,12 +16,14 @@ external interface EventContext {
     val origin: String?
 
     /**
-     * `true` if this connection published the event. Another client counts as foreign, even with the same name.
+     * `true` if this connection published the event. Another client counts as foreign, even with
+     * the same name.
      */
     val isFromThisClient: Boolean
 
     /**
-     * The publisher's `Surf-Event-Id`, which identifies the logical event, or `null` if the publisher sent none.
+     * The publisher's `Surf-Event-Id`, which identifies the logical event, or `null` if the
+     * publisher sent none.
      */
     val eventId: String?
 }

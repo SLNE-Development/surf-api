@@ -27,12 +27,15 @@ fun launchCommandExecutor(
     sender: CommandSender,
     arguments: CommandArguments,
     input: String,
-): Job = definition.scopeProvider().launch {
-    try {
-        definition.executor(this, ExecutionInfo(sender, arguments, input))
-    } catch (failure: Throwable) {
-        if (failure is TimeoutCancellationException && !isActive) throw failure
-        handleCommandFailure(sender, input, failure)
+): Job {
+    return definition.scopeProvider().launch {
+        try {
+            definition.executor(this, ExecutionInfo(sender, arguments, input))
+        } catch (failure: Throwable) {
+            if (failure is TimeoutCancellationException && !isActive) throw failure
+
+            handleCommandFailure(sender, input, failure)
+        }
     }
 }
 
@@ -61,7 +64,7 @@ fun handleCommandExecutorFailure(
     sender: CommandSender,
     input: String,
     failure: Throwable,
-) = handleCommandFailure(sender, input, failure)
+): Unit = handleCommandFailure(sender, input, failure)
 
 private fun sendUnexpectedFailure(
     sender: CommandSender,
@@ -75,5 +78,6 @@ private fun sendUnexpectedFailure(
 
 private fun sendSyntaxFailure(sender: CommandSender, failure: CommandSyntaxException) {
     val component = failure.component ?: throw failure
+
     sender.sendMessage(component)
 }

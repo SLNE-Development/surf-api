@@ -30,13 +30,13 @@ import kotlin.time.TimeSource
 /**
  * Manages the event subscriptions of one client on a dispatcher of its own.
  *
- * Listener methods with the same subject and queue group share one subscription. `ANY_INSTANCE` listeners subscribe
- * in a queue group named after the client, so the instances of the same client share the load. One subject accepts
- * listeners of a single event type per client.
+ * Listener methods with the same subject and queue group share one subscription. `ANY_INSTANCE`
+ * listeners subscribe in a queue group named after the client, so the instances of the same client
+ * share the load. One subject accepts listeners of a single event type per client.
  *
- * Every message is decoded once and each listener runs in its own coroutine. A message that cannot be decoded,
- * including one without a `Content-Type: application/protobuf` header, is dropped with a warning. A failing listener
- * is logged and does not affect the others. Thread-safe.
+ * Every message is decoded once and each listener runs in its own coroutine. A message that cannot
+ * be decoded, including one without a `Content-Type: application/protobuf` header, is dropped with
+ * a warning. A failing listener is logged and does not affect the others. Thread-safe.
  */
 @InternalNatsApi
 internal class EventSubscriptions(private val client: NatsClientImpl) {
@@ -55,87 +55,106 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     private var dispatcher: Dispatcher? = null
     private var closed = false
 
-    private val handlerScope = client.clientScope + SupervisorJob(client.clientScope.coroutineContext.job)
+    private val handlerScope = client.clientScope + SupervisorJob(
+        client.clientScope.coroutineContext.job,
+    )
 
     /**
-     * Adds [invoker] as a target of [method]'s subject and subscribes when no subscription exists yet.
+     * Adds [invoker] as a target of [method]'s subject and subscribes when no subscription exists
+     * yet.
      *
-     * Throws [IllegalStateException] after [drain] or [close], or when the subject is used by another event type.
+     * Throws [IllegalStateException] after [drain] or [close], or when the subject is used by
+     * another event type.
      */
-    fun add(method: ListenerMethod, invoker: ListenerInvoker): Unit = synchronized(lock) {
-        check(!closed) { "NatsClient[${client.name}] is closed" }
+    fun add(method: ListenerMethod, invoker: ListenerInvoker) {
+        synchronized(lock) {
+            check(!closed) { "NatsClient[${client.name}] is closed" }
 
-        val key = keyOf(method)
+            val key = keyOf(method)
 
-        for ((otherKey, other) in entries) {
-            if (otherKey.subject != key.subject) continue
-            check(other.descriptor.type == method.descriptor.type) {
-                "Subject '${key.subject}' is already used by ${other.descriptor.type.name}, " +
+            for ((otherKey, other) in entries) {
+                if (otherKey.subject != key.subject) continue
+                check(other.descriptor.type == method.descriptor.type) {
+                    "Subject '${key.subject}' is already used by ${other.descriptor.type.name}, " +
                         "cannot register a listener for ${method.descriptor.type.name}"
+                }
             }
+
+            val target = Target(invoker, method.ignoreFromThisClient)
+
+            val existing = entries[key]
+
+            if (existing != null) {
+                existing.targets.add(target)
+
+                return
+            }
+
+            val targets = CopyOnWriteArrayList(listOf(target))
+            val descriptor = method.descriptor
+            val name = CoroutineName(
+                "surf-nats/${client.name}/listener/${descriptor.type.simpleName}",
+            )
+            val handler = MessageHandler { message -> dispatch(descriptor, name, targets, message) }
+
+            val dispatcher = dispatcher
+                ?: NatsConnectionManager.connection().createDispatcher().also { dispatcher = it }
+
+            val subscription = if (key.queueGroup == null) {
+                dispatcher.subscribe(key.subject, handler)
+            } else {
+                dispatcher.subscribe(key.subject, key.queueGroup, handler)
+            }
+
+            entries[key] = Entry(descriptor, subscription, targets)
         }
-
-        val target = Target(invoker, method.ignoreFromThisClient)
-
-        val existing = entries[key]
-        if (existing != null) {
-            existing.targets.add(target)
-            return
-        }
-
-        val targets = CopyOnWriteArrayList(listOf(target))
-        val descriptor = method.descriptor
-        val name = CoroutineName("surf-nats/${client.name}/listener/${descriptor.type.simpleName}")
-        val handler = MessageHandler { message -> dispatch(descriptor, name, targets, message) }
-
-        val dispatcher = dispatcher
-            ?: NatsConnectionManager.connection().createDispatcher().also { dispatcher = it }
-
-        val subscription = if (key.queueGroup == null) {
-            dispatcher.subscribe(key.subject, handler)
-        } else {
-            dispatcher.subscribe(key.subject, key.queueGroup, handler)
-        }
-
-        entries[key] = Entry(descriptor, subscription, targets)
     }
 
     /**
      * Removes [invoker] from [method]'s subject and unsubscribes once no target is left.
      */
-    fun remove(method: ListenerMethod, invoker: ListenerInvoker): Unit = synchronized(lock) {
-        val key = keyOf(method)
-        val entry = entries[key] ?: return
+    fun remove(method: ListenerMethod, invoker: ListenerInvoker) {
+        synchronized(lock) {
+            val key = keyOf(method)
+            val entry = entries[key] ?: return
 
-        entry.targets.removeIf { it.invoker === invoker }
+            entry.targets.removeIf { it.invoker === invoker }
 
-        if (entry.targets.isEmpty()) {
-            entries.remove(key)
-            dispatcher?.unsubscribe(entry.subscription)
+            if (entry.targets.isEmpty()) {
+                entries.remove(key)
+                dispatcher?.unsubscribe(entry.subscription)
+            }
         }
     }
 
     /**
-     * Stops every subscription after the messages it already received are dispatched, then waits for the running
-     * handlers until [timeout] passes and cancels those still running. Later listeners are rejected, handlers launched
-     * after the drain never run and [close] has nothing left to do.
+     * Stops every subscription after the messages it already received are dispatched, then waits
+     * for the running handlers until [timeout] passes and cancels those still running. Later
+     * listeners are rejected, handlers launched after the drain never run and [close] has nothing
+     * left to do.
      */
     @Blocking
     fun drain(timeout: Duration) {
         val deadline = TimeSource.Monotonic.markNow() + timeout
         val draining = synchronized(lock) {
             if (closed) return
+
             closed = true
             entries.clear()
             dispatcher.also { dispatcher = null }
         }
+
         try {
-            draining?.let { client.drainDispatcher(it, timeout, "event dispatcher") }
+            if (draining != null) {
+                client.drainDispatcher(draining, timeout, "event dispatcher")
+            }
+
             val stillActive = awaitRunningHandlers(handlerScope, deadline)
+
             if (stillActive != null) {
                 client.logger.warn(
                     "$stillActive listener handlers did not finish within the drain timeout of $timeout " +
-                            "and are cancelled"
+                        "and are cancelled",
                 )
             }
         } finally {
@@ -144,24 +163,28 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     }
 
     /**
-     * Closes the dispatcher without draining it. Running handlers keep running until [NatsClientImpl.close] cancels
-     * the client scope.
+     * Closes the dispatcher without draining it. Running handlers keep running until
+     * [NatsClientImpl.close] cancels the client scope.
      */
-    fun close(): Unit = synchronized(lock) {
-        if (closed) return
-        closed = true
-        entries.clear()
+    fun close() {
+        synchronized(lock) {
+            if (closed) return
 
-        val dispatcher = dispatcher ?: return
-        this.dispatcher = null
-        client.closeDispatcher(dispatcher, "event dispatcher")
+            closed = true
+            entries.clear()
+
+            val dispatcher = dispatcher ?: return
+
+            this.dispatcher = null
+            client.closeDispatcher(dispatcher, "event dispatcher")
+        }
     }
 
     private fun dispatch(
         descriptor: EventDescriptor,
         name: CoroutineName,
         targets: List<Target>,
-        message: Message
+        message: Message,
     ) {
         val origin = message.header(ProtocolHeaders.ORIGIN)
         val contentType = message.header(ProtocolHeaders.CONTENT_TYPE)
@@ -175,15 +198,21 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
         } catch (e: Exception) {
             client.logger.warn(
                 "Dropping undecodable ${descriptor.type.simpleName} on ${message.subject}",
-                e
+                e,
             )
+
             return
         }
 
-        val context = NatsEventContext(origin, fromThisClient, message.header(ProtocolHeaders.EVENT_ID)) + name
+        val context = NatsEventContext(
+            origin,
+            fromThisClient,
+            message.header(ProtocolHeaders.EVENT_ID),
+        ) + name
 
         for (target in targets) {
             if (fromThisClient && target.ignoreFromThisClient) continue
+
             handlerScope.launch(context) {
                 try {
                     target.invoker.call(event)
@@ -202,6 +231,9 @@ internal class EventSubscriptions(private val client: NatsClientImpl) {
     }
 
     private fun keyOf(method: ListenerMethod): Key {
-        return Key(method.descriptor.subject, ListenerRules.queueGroup(method.recipients, client.name))
+        return Key(
+            method.descriptor.subject,
+            ListenerRules.queueGroup(method.recipients, client.name),
+        )
     }
 }

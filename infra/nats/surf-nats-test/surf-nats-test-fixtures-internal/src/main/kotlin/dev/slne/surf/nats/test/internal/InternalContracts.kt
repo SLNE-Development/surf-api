@@ -16,11 +16,15 @@ internal object InternalContracts {
 
     val event: NatsEventDescriptor<*> = AlarmRaised.NATS_DESCRIPTOR
 
-    fun alarm(): AlarmRaised = AlarmRaised(level = AlarmLevel.HIGH, source = AlarmRaised.Source.Server("lobby"))
+    fun alarm(): AlarmRaised {
+        return AlarmRaised(level = AlarmLevel.HIGH, source = AlarmRaised.Source.Server("lobby"))
+    }
 
     val implementation: AlarmService = object : AlarmService {
-        override suspend fun raise(request: RaiseRequest): RaiseReply = RaiseReply(id = request.level.number.toLong())
+        override suspend fun raise(request: RaiseRequest): RaiseReply {
+            return RaiseReply(id = request.level.number.toLong())
+        }
 
-        override suspend fun clear() = Unit
+        override suspend fun clear(): Unit = Unit
     }
 }

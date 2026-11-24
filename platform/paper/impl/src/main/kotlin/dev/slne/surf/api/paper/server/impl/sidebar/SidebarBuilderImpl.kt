@@ -61,6 +61,7 @@ open class SidebarBuilderImpl : SidebarBuilder {
     override var maxLines: Int = MAX_LINES
         set(value) {
             require(value in 1..MAX_LINES) { "maxLines must be between 1 and $MAX_LINES: $value" }
+
             field = value
         }
 
@@ -102,6 +103,7 @@ open class SidebarBuilderImpl : SidebarBuilder {
 
     override fun animatedLine(frames: List<Component>) {
         require(frames.isNotEmpty()) { "frames must not be empty" }
+
         addAnimation(FrameAnimation(frames))
     }
 
@@ -114,7 +116,14 @@ open class SidebarBuilderImpl : SidebarBuilder {
         entries.add(SidebarEntry.Animated(animation))
     }
 
-    fun definition() = SidebarDefinition(title, entries.toMutableList(), animations.toMutableList(), maxLines)
+    fun definition(): SidebarDefinition {
+        return SidebarDefinition(
+            title,
+            entries.toMutableList(),
+            animations.toMutableList(),
+            maxLines,
+        )
+    }
 
     companion object {
         const val MAX_LINES = PlayerNmsScoreboard.MAX_LINES
@@ -128,20 +137,20 @@ open class SidebarBuilderImpl : SidebarBuilder {
             val textPlaceholder = Placeholder.component("text", text)
             val frames = mutableListOf<Component>()
 
-            // Animation from left to right
             var phase = -1f
+
             while (phase < 1) {
                 frames.add(
                     miniMessage.deserialize(
                         "<gradient:$firstHex:$secondHex:$phase><text></gradient>",
-                        textPlaceholder
-                    )
+                        textPlaceholder,
+                    ),
                 )
                 phase += step
             }
 
-            // Animation from right to left
             frames.addAll(frames.reversed())
+
             return frames
         }
     }
@@ -151,6 +160,7 @@ class AutoUpdatingSidebarBuilderImpl : SidebarBuilderImpl(), AutoUpdatingSidebar
     override var updateInterval: Duration = DEFAULT_UPDATE_INTERVAL
         set(value) {
             require(value >= ONE_TICK) { "updateInterval must be at least one tick: $value" }
+
             field = value
         }
 

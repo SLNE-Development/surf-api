@@ -24,7 +24,11 @@ class RuntimeComponentLifecycleTest {
 
         assertFailsWith<IllegalStateException> { lifecycle.start() }
 
-        assertEquals(listOf("start", "stop"), component.calls, "the component never sees the second start")
+        assertEquals(
+            listOf("start", "stop"),
+            component.calls,
+            "the component never sees the second start",
+        )
     }
 
     @Test

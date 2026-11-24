@@ -2,7 +2,6 @@ package dev.slne.surf.api.minestom.server.chat.impl.signature
 
 import net.minestom.server.crypto.MessageSignature
 
-
 internal class MessageSignatureCache(capacity: Int = DEFAULT_CAPACITY) {
 
     private class Entry(val signature: MessageSignature) {
@@ -41,7 +40,10 @@ internal class MessageSignatureCache(capacity: Int = DEFAULT_CAPACITY) {
     fun push(body: SignedMessageBody, signature: MessageSignature?) {
         val lastSeen = body.lastSeen.entries
         val queue = ArrayDeque<Entry>(lastSeen.size + 1)
-        lastSeen.forEach { entry -> queue.addLast(Entry(entry)) }
+
+        for (entry in lastSeen) {
+            queue.addLast(Entry(entry))
+        }
 
         if (signature != null) {
             queue.addLast(Entry(signature))
@@ -54,6 +56,7 @@ internal class MessageSignatureCache(capacity: Int = DEFAULT_CAPACITY) {
         val newEntries = queue.toSet()
 
         var index = 0
+
         while (queue.isNotEmpty() && index < entries.size) {
             val previous = entries[index]
             entries[index] = queue.removeLast()
@@ -70,6 +73,6 @@ internal class MessageSignatureCache(capacity: Int = DEFAULT_CAPACITY) {
         const val NOT_FOUND = -1
         private const val DEFAULT_CAPACITY = 128
 
-        fun createDefault() = MessageSignatureCache(DEFAULT_CAPACITY)
+        fun createDefault(): MessageSignatureCache = MessageSignatureCache(DEFAULT_CAPACITY)
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata
  */
 class TestPropertyCondition : Condition {
 
-    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata) =
-        context.environment.getProperty("test.property") == "true"
+    override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean {
+        return context.environment.getProperty("test.property") == "true"
+    }
 }

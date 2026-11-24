@@ -27,7 +27,7 @@ internal object ComponentSerializer : ScalarSerializer.Annotated<Component>(Comp
     override fun serialize(
         type: AnnotatedType,
         item: Component,
-        typeSupported: Predicate<Class<*>>
+        typeSupported: Predicate<Class<*>>,
     ): Any {
         return miniMessage.serialize(item)
     }

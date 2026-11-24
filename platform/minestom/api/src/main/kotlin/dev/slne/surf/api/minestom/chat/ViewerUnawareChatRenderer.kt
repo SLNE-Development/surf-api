@@ -12,7 +12,7 @@ import net.minestom.server.entity.Player
  * identical arguments may each render.
  */
 internal sealed class ViewerUnawareChatRenderer(
-    private val unaware: ChatRenderer.ViewerUnaware
+    private val unaware: ChatRenderer.ViewerUnaware,
 ) : ChatRenderer, ChatRenderer.ViewerUnaware {
 
     private class Rendered(
@@ -21,10 +21,11 @@ internal sealed class ViewerUnawareChatRenderer(
         val message: Component,
         val result: Component,
     ) {
-        fun matches(source: Player, sourceDisplayName: Component, message: Component) =
-            this.source === source &&
-                    this.sourceDisplayName === sourceDisplayName &&
-                    this.message === message
+        fun matches(source: Player, sourceDisplayName: Component, message: Component): Boolean {
+            return this.source === source &&
+                this.sourceDisplayName === sourceDisplayName &&
+                this.message === message
+        }
     }
 
     @Volatile
@@ -34,18 +35,19 @@ internal sealed class ViewerUnawareChatRenderer(
         source: Player,
         sourceDisplayName: Component,
         message: Component,
-        viewer: Audience
+        viewer: Audience,
     ): Component = render(source, sourceDisplayName, message)
 
     override suspend fun render(
         source: Player,
         sourceDisplayName: Component,
-        message: Component
+        message: Component,
     ): Component {
         last?.takeIf { it.matches(source, sourceDisplayName, message) }?.let { return it.result }
 
         val result = unaware.render(source, sourceDisplayName, message)
         last = Rendered(source, sourceDisplayName, message, result)
+
         return result
     }
 

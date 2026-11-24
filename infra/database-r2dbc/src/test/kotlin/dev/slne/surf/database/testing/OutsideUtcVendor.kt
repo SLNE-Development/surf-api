@@ -24,24 +24,27 @@ enum class OutsideUtcVendor(
     );
 
     /**
-     * Microseconds since the epoch of [column] in row [id], read over the migration data source of [testDb] in a UTC
-     * session, so wall-clock types count as UTC.
+     * Microseconds since the epoch of [column] in row [id], read over the migration data source of
+     * [testDb] in a UTC session, so wall-clock types count as UTC.
      */
-    fun epochMicros(testDb: TestDatabase, table: String, column: String, id: Int): Long =
-        testDb.migrationDataSource.connection.use { connection ->
+    fun epochMicros(testDb: TestDatabase, table: String, column: String, id: Int): Long {
+        return testDb.migrationDataSource.connection.use { connection ->
             connection.createStatement().use { statement ->
                 statement.execute(utcSessionSql)
                 val expression = epochMicrosExpression.format(column)
-                statement.executeQuery("SELECT $expression FROM $table WHERE id = $id").use { rows ->
-                    rows.next()
-                    rows.getLong(1)
-                }
+                statement.executeQuery("SELECT $expression FROM $table WHERE id = $id")
+                    .use { rows ->
+                        rows.next()
+                        rows.getLong(1)
+                    }
             }
         }
+    }
 
     /**
      * [epochMicros] as an [Instant].
      */
-    fun epochMicrosInstant(testDb: TestDatabase, table: String, column: String, id: Int): Instant =
-        Instant.EPOCH.plus(epochMicros(testDb, table, column, id), ChronoUnit.MICROS)
+    fun epochMicrosInstant(testDb: TestDatabase, table: String, column: String, id: Int): Instant {
+        return Instant.EPOCH.plus(epochMicros(testDb, table, column, id), ChronoUnit.MICROS)
+    }
 }

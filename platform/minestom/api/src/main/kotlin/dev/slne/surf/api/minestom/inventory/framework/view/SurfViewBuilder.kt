@@ -31,7 +31,7 @@ import dev.slne.surf.api.minestom.inventory.framework.view.pagination.AbstractPa
  * @see paginatedSurfView
  * @see AbstractSurfView
  */
-inline fun surfView(header: String, block: context (SurfViewContext) () -> Unit): AbstractSurfView {
+inline fun surfView(header: String, block: context(SurfViewContext) () -> Unit): AbstractSurfView {
     val ctx = SurfViewContext()
     val ref = SurfViewRef()
 
@@ -76,7 +76,7 @@ inline fun surfView(header: String, block: context (SurfViewContext) () -> Unit)
  */
 inline fun paginatedSurfView(
     header: String,
-    block: context (PaginatedSurfViewContext) () -> Unit
+    block: context(PaginatedSurfViewContext) () -> Unit,
 ): AbstractPaginatedSurfView {
     val ctx = PaginatedSurfViewContext()
     val ref = PaginatedSurfViewRef()

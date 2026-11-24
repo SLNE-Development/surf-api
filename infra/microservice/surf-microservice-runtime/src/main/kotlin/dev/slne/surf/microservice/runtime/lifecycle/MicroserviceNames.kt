@@ -11,8 +11,8 @@ internal object MicroserviceNames {
     /**
      * Returns [name] if it is a valid [MicroserviceInfo.name].
      *
-     * @throws IllegalStateException if [name] is not lowercase letters and digits in hyphen-separated groups or is
-     * longer than [MicroserviceInfo.MAX_NAME_LENGTH]
+     * @throws IllegalStateException if [name] is not lowercase letters and digits in
+     * hyphen-separated groups or is longer than [MicroserviceInfo.MAX_NAME_LENGTH]
      */
     fun requireValid(name: String): String {
         check(name.length <= MicroserviceInfo.MAX_NAME_LENGTH) {

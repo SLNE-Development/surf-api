@@ -18,22 +18,28 @@ import org.slf4j.event.Level
 /**
  * Builds a [TestDatabase] that exchanges time values like version 2.3 of the library.
  *
- * The session time zone is the driver default: the server zone on MariaDB and the JVM default zone at the time of
- * this call on PostgreSQL. The type mapping is Exposed's default, without the library's UTC mapper. Version 2.3's
- * shaded jar fell back to Exposed's hard-coded mapper list, whereas the test class path loads Exposed's service
- * registrations, which add `DateTimeMySqlTypeMapper`; both bind a `java.sql.Timestamp` as its wall-clock time in the
- * JVM default zone.
+ * The session time zone is the driver default: the server zone on MariaDB and the JVM default zone
+ * at the time of this call on PostgreSQL. The type mapping is Exposed's default, without the
+ * library's UTC mapper. Version 2.3's shaded jar fell back to Exposed's hard-coded mapper list,
+ * whereas the test class path loads Exposed's service registrations, which add
+ * `DateTimeMySqlTypeMapper`; both bind a `java.sql.Timestamp` as its wall-clock time in the JVM
+ * default zone.
  */
-internal fun ConnectionDetails.toLegacyTestDatabase(): TestDatabase = TestDatabase(
-    database = DatabaseConnector.connect(
-        connectionFactory = legacyConnectionFactory(),
-        dialect = databaseType.newDialect(),
-        sqlLogger = ComponentSqlLogger(ComponentLogger.logger("LegacyTestDatabase"), Level.DEBUG),
-        customize = { typeMapping = R2dbcRegistryTypeMapping.default() },
-    ),
-    migrationDataSource = JdbcDataSources.create(this),
-    releaseResources = {},
-)
+internal fun ConnectionDetails.toLegacyTestDatabase(): TestDatabase {
+    return TestDatabase(
+        database = DatabaseConnector.connect(
+            connectionFactory = legacyConnectionFactory(),
+            dialect = databaseType.newDialect(),
+            sqlLogger = ComponentSqlLogger(
+                ComponentLogger.logger("LegacyTestDatabase"),
+                Level.DEBUG,
+            ),
+            customize = { typeMapping = R2dbcRegistryTypeMapping.default() },
+        ),
+        migrationDataSource = JdbcDataSources.create(this),
+        releaseResources = {},
+    )
+}
 
 private fun ConnectionDetails.legacyConnectionFactory(): ConnectionFactory = when (databaseType) {
     DatabaseType.MARIADB -> MariadbConnectionFactory.from(
@@ -43,7 +49,7 @@ private fun ConnectionDetails.legacyConnectionFactory(): ConnectionFactory = whe
             .username(username)
             .password(password)
             .database(database)
-            .build()
+            .build(),
     )
 
     DatabaseType.POSTGRESQL -> PostgresqlConnectionFactory(
@@ -54,6 +60,6 @@ private fun ConnectionDetails.legacyConnectionFactory(): ConnectionFactory = whe
             .password(password)
             .database(database)
             .schema(schema)
-            .build()
+            .build(),
     )
 }

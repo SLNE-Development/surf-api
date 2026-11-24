@@ -50,16 +50,15 @@ class SuspendCommandExecutionDelayWithSuspendArgTest(name: String) : CommandAPIC
                 info("Done delaying in command parsing")
             }
 
-            val player =
-                Bukkit.getPlayer(playerName) ?: throw CustomArgumentException.fromMessageBuilder(
+            val player = Bukkit.getPlayer(playerName)
+                ?: throw CustomArgumentException.fromMessageBuilder(
                     MessageBuilder()
                         .append("Player ")
                         .appendArgInput()
-                        .append(" not found!")
+                        .append(" not found!"),
                 )
 
             return player
         }
     }
-
 }

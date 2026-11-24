@@ -10,8 +10,7 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
  * [getString] returns the plain text of the component.
  */
 class ComponentMessage(val component: Component) : Message {
-    override fun getString(): String =
-        PlainTextComponentSerializer.plainText().serialize(component)
+    override fun getString(): String = PlainTextComponentSerializer.plainText().serialize(component)
 
     override fun toString(): String = string
 }

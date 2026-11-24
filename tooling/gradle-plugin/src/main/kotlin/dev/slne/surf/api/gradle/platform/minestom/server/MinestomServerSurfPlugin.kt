@@ -16,14 +16,10 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaApplication
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.jvm.toolchain.JavaLanguageVersion
-import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.jvm.tasks.ProcessResources
-import org.gradle.process.CommandLineArgumentProvider
 import xyz.jpenilla.gremlin.gradle.GremlinExtension
 import xyz.jpenilla.gremlin.gradle.WriteDependencySet
 
@@ -57,7 +53,10 @@ import xyz.jpenilla.gremlin.gradle.WriteDependencySet
  * contains, whether they are dropped into `plugins/` or shaded in through a project dependency.
  */
 internal class MinestomServerSurfPlugin :
-    AbstractCoreSurfPlugin<MinestomServerSurfExtension>("minestomServer", SurfApiPlatform.MINESTOM_SERVER) {
+    AbstractCoreSurfPlugin<MinestomServerSurfExtension>(
+        "minestomServer",
+        SurfApiPlatform.MINESTOM_SERVER,
+    ) {
 
     init {
         // The core relocations (adventure nbt, configurate) come from the base class
@@ -78,7 +77,7 @@ internal class MinestomServerSurfPlugin :
     override fun Project.configure0() {
         val shaded = configurations.create(SHADED) {
             description = "Dependencies embedded in the server jar instead of being downloaded, " +
-                    "for repositories that need credentials"
+                "for repositories that need credentials"
             isCanBeConsumed = false
             isCanBeResolved = true
         }
@@ -99,7 +98,8 @@ internal class MinestomServerSurfPlugin :
         }
 
         extensions.configure<GremlinExtension> {
-            // The bootstrap module brings the gremlin runtime, which is shaded instead of downloaded
+            // The bootstrap module brings the gremlin runtime, which is shaded instead of
+            // downloaded
             defaultGremlinRuntimeDependency.set(false)
             // gremlin's default ASM cannot read the class files of current Java versions
             defaultJarRelocatorDependencies.set(false)
@@ -115,37 +115,52 @@ internal class MinestomServerSurfPlugin :
         val features = extension.features.get()
 
         dependencies {
-            features.forEach { feature ->
-                add("implementation", "dev.slne.surf.api:${feature.module}:${Constants.SURF_API_VERSION}")
+            for (feature in features) {
+                add(
+                    "implementation",
+                    "dev.slne.surf.api:${feature.module}:${Constants.SURF_API_VERSION}",
+                )
             }
         }
 
         val mainClass = extension.mainClass.orNull
+
         if (mainClass == null) {
-            logger.warn("No main class set for the Minestom server ${project.path}; call mainClass(...) in surfMinestomServerApi { }")
+            logger.warn(
+                "No main class set for the Minestom server ${project.path}; call mainClass(...) in surfMinestomServerApi { }",
+            )
         } else {
             configure<JavaApplication> { this.mainClass.set(mainClass) }
         }
 
         dependencies {
-            add("implementation", "dev.slne.surf.api:$BOOTSTRAP_MODULE:${Constants.SURF_API_VERSION}")
+            add(
+                "implementation",
+                "dev.slne.surf.api:$BOOTSTRAP_MODULE:${Constants.SURF_API_VERSION}",
+            )
         }
 
-        // Mixin goes first: its transformer must be installed before another agent loads a Minestom class
+        // Mixin goes first: its transformer must be installed before another agent loads a Minestom
+        // class
         val agents = listOf(MIXIN_AGENT) + features.mapNotNull(MinestomServerFeature::agentClass)
         val mixinConfigs = listOf(MIXIN_CONFIG) +
-                features.mapNotNull(MinestomServerFeature::mixinConfig) +
-                extension.mixinConfigs.get()
+            features.mapNotNull(MinestomServerFeature::mixinConfig) +
+            extension.mixinConfigs.get()
         val pluginDependencies = extension.pluginDependencies
             .filter { it.enabled.get() }
             .map { if (it.optional.get()) "${it.name}?" else it.name }
         tasks.named<ShadowJar>("shadowJar") {
-            if (mainClass != null) manifest.attributes["Main-Class"] = mainClass
+            if (mainClass != null) {
+                manifest.attributes["Main-Class"] = mainClass
+            }
+
             manifest.attributes["Launcher-Agent-Class"] = BOOTSTRAP_AGENT
             manifest.attributes[DELEGATE_AGENTS_ATTRIBUTE] = agents.joinToString(",")
             manifest.attributes[MIXIN_CONFIGS_ATTRIBUTE] = mixinConfigs.distinct().joinToString(",")
+
             if (pluginDependencies.isNotEmpty()) {
-                manifest.attributes[PLUGIN_DEPENDENCIES_ATTRIBUTE] = pluginDependencies.joinToString(",")
+                val dependencyIds = pluginDependencies.joinToString(",")
+                manifest.attributes[PLUGIN_DEPENDENCIES_ATTRIBUTE] = dependencyIds
             }
         }
 
@@ -153,8 +168,11 @@ internal class MinestomServerSurfPlugin :
             configureLibraryDownload(extension)
         } else {
             if (extension.downloadSurfModules.get()) {
-                logger.warn("downloadSurfModules has no effect on ${project.path} while downloadLibraries is disabled")
+                logger.warn(
+                    "downloadSurfModules has no effect on ${project.path} while downloadLibraries is disabled",
+                )
             }
+
             tasks.named<ProcessResources>("processResources") { exclude(DEPENDENCIES_FILE) }
             configureShadedAsmVersion()
         }
@@ -168,7 +186,8 @@ internal class MinestomServerSurfPlugin :
      * console appender is the terminal console.
      */
     private fun Project.registerDefaultLoggingConfiguration(console: Boolean) {
-        val ownConfiguration = layout.projectDirectory.file("src/main/resources/$LOG4J_CONFIG").asFile
+        val ownConfiguration = layout.projectDirectory.file("src/main/resources/$LOG4J_CONFIG")
+            .asFile
         if (ownConfiguration.exists()) return
 
         val appender = if (console) {
@@ -205,7 +224,9 @@ internal class MinestomServerSurfPlugin :
             |</Configuration>
             |""".trimMargin()
 
-        val outputDirectory = layout.buildDirectory.dir("generated/surf-api/minestom-server-logging")
+        val outputDirectory = layout.buildDirectory.dir(
+            "generated/surf-api/minestom-server-logging",
+        )
         val generate = tasks.register<GeneratePluginFile>("generateDefaultLoggingConfiguration") {
             group = "surf-api"
             fileName.set(LOG4J_CONFIG)
@@ -229,9 +250,12 @@ internal class MinestomServerSurfPlugin :
             // Selects the same versions as the runtime graph and resolves the same variants
             shouldResolveConsistentlyWith(runtimeClasspath)
             attributes {
-                runtimeClasspath.attributes.keySet().forEach { key ->
+                for (key in runtimeClasspath.attributes.keySet()) {
                     @Suppress("UNCHECKED_CAST")
-                    attribute(key as Attribute<Any>, runtimeClasspath.attributes.getAttribute(key)!!)
+                    attribute(
+                        key as Attribute<Any>,
+                        runtimeClasspath.attributes.getAttribute(key)!!,
+                    )
                 }
             }
         }
@@ -247,19 +271,29 @@ internal class MinestomServerSurfPlugin :
         )
 
         configurations.named(RUNTIME_DOWNLOAD) {
-            extendsFrom(configurations.getByName("implementation"), configurations.getByName("runtimeOnly"))
+            extendsFrom(
+                configurations.getByName("implementation"),
+                configurations.getByName("runtimeOnly"),
+            )
             shouldResolveConsistentlyWith(configurations.getByName("runtimeClasspath"))
         }
 
         tasks.named<WriteDependencySet>("writeDependencies") {
             // Filtered per component, so that the libraries of shaded modules are still downloaded
-            dependencies.setFrom(configurations.named(RUNTIME_DOWNLOAD).map { configuration ->
-                // Resolves `shaded` before the artifact view, not during its resolution
-                rules.embeddedModules
-                configuration.incoming.artifactView {
-                    componentFilter { id -> id !is ModuleComponentIdentifier || !rules.isShaded(id.group, id.module) }
-                }.artifacts
-            })
+            dependencies.setFrom(
+                configurations.named(RUNTIME_DOWNLOAD).map { configuration ->
+                    // Resolves `shaded` before the artifact view, not during its resolution
+                    rules.embeddedModules
+                    configuration.incoming.artifactView {
+                        componentFilter { id ->
+                            id !is ModuleComponentIdentifier || !rules.isShaded(
+                                id.group,
+                                id.module,
+                            )
+                        }
+                    }.artifacts
+                },
+            )
             forEachRelocation { from, to, excludes ->
                 relocate(from, to) { this.excludes.set(excludes) }
             }
@@ -291,8 +325,12 @@ internal class MinestomServerSurfPlugin :
         tasks.named<ShadowJar>("shadowJar") {
             doFirst {
                 val version = asmVersion.get()
+
                 if (version.isNotEmpty()) {
-                    manifest.attributes(mapOf("Implementation-Version" to version), "org/objectweb/asm/")
+                    manifest.attributes(
+                        mapOf("Implementation-Version" to version),
+                        "org/objectweb/asm/",
+                    )
                 }
             }
         }
@@ -318,14 +356,19 @@ internal class MinestomServerSurfPlugin :
 
         fun isShaded(group: String, module: String): Boolean {
             val id = group to module
+            val isSurfModule = group == "dev.slne.surf" || group.startsWith("dev.slne.surf.")
+
             return id in BOOTSTRAP_MODULES ||
-                    id in embeddedModules ||
-                    (!downloadSurfModules && (group == "dev.slne.surf" || group.startsWith("dev.slne.surf.")))
+                id in embeddedModules ||
+                (!downloadSurfModules && isSurfModule)
         }
 
-        fun isShaded(dependency: ResolvedDependency) =
-            isShaded(dependency.moduleGroup, dependency.moduleName) ||
-                    dependency.moduleArtifacts.any { it.id.componentIdentifier is ProjectComponentIdentifier }
+        fun isShaded(dependency: ResolvedDependency): Boolean {
+            return isShaded(dependency.moduleGroup, dependency.moduleName) ||
+                dependency.moduleArtifacts.any {
+                    it.id.componentIdentifier is ProjectComponentIdentifier
+                }
+        }
     }
 
     private companion object {
@@ -336,7 +379,8 @@ internal class MinestomServerSurfPlugin :
         const val JAR_RELOCATOR_RUNTIME = "jarRelocatorRuntime"
         const val DEPENDENCIES_FILE = "dependencies.txt"
         const val BOOTSTRAP_MODULE = "surf-api-minestom-bootstrap-impl"
-        const val BOOTSTRAP_AGENT = "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
+        const val BOOTSTRAP_AGENT =
+            "dev.slne.surf.api.minestom.server.bootstrap.SurfMinestomBootstrap"
         const val DELEGATE_AGENTS_ATTRIBUTE = "Surf-Delegate-Agent-Classes"
         const val PLUGIN_DEPENDENCIES_ATTRIBUTE = "Surf-Plugin-Dependencies"
         const val MIXIN_AGENT = "dev.slne.surf.api.minestom.server.impl.mixin.SurfMixinAgent"
@@ -357,10 +401,11 @@ internal class MinestomServerSurfPlugin :
     override fun Project.platformTestDependencies(extension: MinestomServerSurfExtension) {
         val testing = extension.testing
         if (!testing.minestomTesting.get()) return
+
         dependencies {
             add(
                 SurfTestingConfigurer.TEST_IMPLEMENTATION,
-                "net.minestom:testing:${testing.minestomTestingVersion.get()}"
+                "net.minestom:testing:${testing.minestomTestingVersion.get()}",
             )
         }
     }

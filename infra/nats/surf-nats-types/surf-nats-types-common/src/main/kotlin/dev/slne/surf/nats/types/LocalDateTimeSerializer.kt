@@ -15,8 +15,9 @@ import java.time.LocalTime
  * Serializes a [LocalDateTime] as the protobuf message `surf.types.v1.LocalDateTime`.
  *
  * The fields `date` (1, `surf.types.v1.LocalDate`, see [LocalDateSerializer]) and `time` (2,
- * `surf.types.v1.LocalTime`, see [LocalTimeSerializer]) are required. No offset or zone is written. The
- * `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [LocalDateTime] with this serializer.
+ * `surf.types.v1.LocalTime`, see [LocalTimeSerializer]) are required. No offset or zone is written.
+ * The `dev.slne.surf.nats` Gradle plugin maps fields of this message type to [LocalDateTime] with
+ * this serializer.
  *
  * Decoding throws [kotlinx.serialization.MissingFieldException] when `date` or `time` is absent and
  * [kotlinx.serialization.SerializationException] when either is invalid.
@@ -27,7 +28,7 @@ object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
     override fun serialize(encoder: Encoder, value: LocalDateTime) {
         encoder.encodeSerializableValue(
             LocalDateTimeProto.serializer(),
-            LocalDateTimeProto(value.toLocalDate(), value.toLocalTime())
+            LocalDateTimeProto(value.toLocalDate(), value.toLocalTime()),
         )
     }
 

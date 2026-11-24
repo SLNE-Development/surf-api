@@ -12,8 +12,10 @@ typealias SerializableMatrixNf = @Serializable(with = SpongeMatrixNfSerializer::
 
 object SpongeMatrixNfSerializer : KSerializer<MatrixNf> {
     private val arraySerializer = FloatArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surfapi.sponge.MatrixNf", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surfapi.sponge.MatrixNf",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -24,6 +26,7 @@ object SpongeMatrixNfSerializer : KSerializer<MatrixNf> {
 
     override fun deserialize(decoder: Decoder): MatrixNf {
         val decodeSerializableValue = decoder.decodeSerializableValue(arraySerializer)
+
         return MatrixNf(*decodeSerializableValue)
     }
 }

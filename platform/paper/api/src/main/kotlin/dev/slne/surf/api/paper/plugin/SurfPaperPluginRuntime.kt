@@ -63,9 +63,11 @@ interface SurfPaperPluginRuntime {
          * @throws IllegalStateException if surf-api has not bootstrapped, which means the calling
          * plugin does not declare `SurfPaperAPI` as a bootstrap dependency that loads before it
          */
-        fun get(): SurfPaperPluginRuntime = checkNotNull(installed) {
-            "surf-api has not bootstrapped yet. Declare SurfPaperAPI as a bootstrap dependency " +
+        fun get(): SurfPaperPluginRuntime {
+            return checkNotNull(installed) {
+                "surf-api has not bootstrapped yet. Declare SurfPaperAPI as a bootstrap dependency " +
                     "with load order BEFORE and join-classpath enabled."
+            }
         }
 
         /**
@@ -73,6 +75,7 @@ interface SurfPaperPluginRuntime {
          */
         fun install(runtime: SurfPaperPluginRuntime) {
             check(installed == null) { "A SurfPaperPluginRuntime is already installed" }
+
             installed = runtime
         }
 

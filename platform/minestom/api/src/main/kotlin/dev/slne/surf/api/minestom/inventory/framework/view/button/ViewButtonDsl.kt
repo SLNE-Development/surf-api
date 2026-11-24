@@ -9,8 +9,9 @@ import me.devnatan.inventoryframework.context.Context
  * Declares a button that cycles through an arbitrary number of states, starting at [initial].
  *
  * Must be called inside a `surfView { }` or `paginatedSurfView { }` block; place the returned
- * handle into a slot with [button][me.devnatan.inventoryframework.component.MinestomItemComponentBuilder.button].
- * Every viewer gets their own copy of the button's value.
+ * handle into a slot with
+ * [button][me.devnatan.inventoryframework.component.MinestomItemComponentBuilder.button]. Every
+ * viewer gets their own copy of the button's value.
  *
  * ```kotlin
  * surfView("Einstellungen") {
@@ -39,7 +40,7 @@ import me.devnatan.inventoryframework.context.Context
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> statefulButton(
     initial: T,
-    block: ViewButtonBuilder<T>.() -> Unit
+    block: ViewButtonBuilder<T>.() -> Unit,
 ): ViewButtonHandle<T> = computedStatefulButton({ initial }, block)
 
 /**
@@ -69,7 +70,7 @@ fun <T> statefulButton(
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> computedStatefulButton(
     initial: (Context) -> T,
-    block: ViewButtonBuilder<T>.() -> Unit
+    block: ViewButtonBuilder<T>.() -> Unit,
 ): ViewButtonHandle<T> = registerButton(ViewButtonBuilder<T>().apply(block).build(), initial)
 
 /**
@@ -102,7 +103,7 @@ fun <T> computedStatefulButton(
 context(ctx: AbstractSurfViewContext<*>)
 fun toggleButton(
     initial: Boolean = false,
-    block: ViewToggleButtonBuilder.() -> Unit
+    block: ViewToggleButtonBuilder.() -> Unit,
 ): ViewButtonHandle<Boolean> = computedToggleButton({ initial }, block)
 
 /**
@@ -126,7 +127,7 @@ fun toggleButton(
 context(ctx: AbstractSurfViewContext<*>)
 fun computedToggleButton(
     initial: (Context) -> Boolean,
-    block: ViewToggleButtonBuilder.() -> Unit
+    block: ViewToggleButtonBuilder.() -> Unit,
 ): ViewButtonHandle<Boolean> {
     val delegate = ViewButtonBuilder<Boolean>()
     ViewToggleButtonBuilder(delegate).apply(block)
@@ -163,7 +164,7 @@ fun computedToggleButton(
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> tripleButton(
     initial: T,
-    block: ViewButtonBuilder<T>.() -> Unit
+    block: ViewButtonBuilder<T>.() -> Unit,
 ): ViewButtonHandle<T> = computedTripleButton({ initial }, block)
 
 /**
@@ -180,13 +181,13 @@ fun <T> tripleButton(
 context(ctx: AbstractSurfViewContext<*>)
 fun <T> computedTripleButton(
     initial: (Context) -> T,
-    block: ViewButtonBuilder<T>.() -> Unit
+    block: ViewButtonBuilder<T>.() -> Unit,
 ): ViewButtonHandle<T> {
     val spec = ViewButtonBuilder<T>().apply(block).build()
 
     require(spec.values.size == 3) {
         "A triple button must declare exactly three states, but ${spec.values.size} " +
-                "were declared: ${spec.values}"
+            "were declared: ${spec.values}"
     }
 
     return registerButton(spec, initial)
@@ -201,7 +202,7 @@ fun <T> computedTripleButton(
 context(ctx: AbstractSurfViewContext<*>)
 private fun <T> registerButton(
     spec: ViewButtonSpec<T>,
-    initial: (Context) -> T
+    initial: (Context) -> T,
 ): ViewButtonHandle<T> {
     val sessionState = lazyState { context -> ViewButtonSession(spec.values, initial(context)) }
     val handle = ViewButtonHandle(sessionState, spec)

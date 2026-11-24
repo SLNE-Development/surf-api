@@ -1,21 +1,21 @@
 package dev.slne.surf.api.minestom.inventory.framework.view.container
 
 import dev.slne.surf.api.inventory.framework.internal.appendShiftedComponent
-import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.util.shift
+import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.minestom.inventory.framework.view.settings.SurfViewSettingsDefaults
-import java.util.concurrent.CopyOnWriteArrayList
 import net.kyori.adventure.text.Component
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * An ordered, thread-safe collection of [ViewContainerComponent]s that compose the
  * rendered inventory title.
  *
- * Components are stored in a [CopyOnWriteArrayList] to allow concurrent iteration and
- * modification. Duplicate components (by [equals]/[hashCode]) are silently ignored on
- * [addChild]. The [render] method builds the final Adventure [Component][net.kyori.adventure.text.Component]
- * by iterating each child and applying its positional shift glyphs around its visual. Children with
+ * Components are stored in a [CopyOnWriteArrayList] to allow concurrent iteration and modification.
+ * Duplicate components (by [equals]/[hashCode]) are silently ignored on [addChild]. The [render]
+ * method builds the final Adventure [Component][net.kyori.adventure.text.Component] by iterating
+ * each child and applying its positional shift glyphs around its visual. Children with
  * [ViewContainerComponent.hasExactWidth] `false` are rendered last so their inexact cursor reset
  * cannot displace any other component.
  *
@@ -69,20 +69,23 @@ internal class ViewContainer {
         removeChildrenOfType(T::class.java)
     }
 
-    fun render(): Component = buildText {
-        // Components that only estimate their textureWidth leave the cursor slightly off the
-        // container origin, so render them after every exact one instead of letting the following
-        // components inherit that drift. partition() keeps the relative insertion order of both.
-        val (exact, estimated) = children.partition { it.hasExactWidth }
+    fun render(): Component {
+        return buildText {
+            // Components that only estimate their textureWidth leave the cursor slightly off the
+            // container origin, so render them after every exact one instead of letting the
+            // following components inherit that drift. partition() keeps the relative insertion
+            // order of both.
+            val (exact, estimated) = children.partition { it.hasExactWidth }
 
-        for (component in exact + estimated) {
-            append {
-                appendShiftedComponent(component.positionalShift, component.textureWidth) {
-                    with(component) { renderComponent() }
+            for (component in exact + estimated) {
+                append {
+                    appendShiftedComponent(component.positionalShift, component.textureWidth) {
+                        with(component) { renderComponent() }
+                    }
                 }
             }
-        }
 
-        font(SurfViewSettingsDefaults.DEFAULT_MENU_FONT)
-    }.also { lastRenderedTitle = it }
+            font(SurfViewSettingsDefaults.DEFAULT_MENU_FONT)
+        }.also { lastRenderedTitle = it }
+    }
 }

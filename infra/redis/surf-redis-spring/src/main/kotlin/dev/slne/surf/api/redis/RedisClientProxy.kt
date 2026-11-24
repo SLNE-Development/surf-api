@@ -34,14 +34,17 @@ internal object RedisClientProxy {
                     method.name,
                     arguments,
                     type,
-                    pluginName
+                    pluginName,
                 )
 
                 method.name == "shutdown" -> throw UnsupportedOperationException(
-                    "The Redisson client is shared and owned by surf-api; plugin '$pluginName' must not shut it down"
+                    "The Redisson client is shared and owned by surf-api; plugin '$pluginName' must not shut it down",
                 )
 
-                !isConnected() -> throw IllegalStateException("Redis is not connected yet for plugin $pluginName")
+                !isConnected() -> throw IllegalStateException(
+                    "Redis is not connected yet for plugin $pluginName",
+                )
+
                 else -> forward(target(), method, arguments)
             }
         }
@@ -55,11 +58,13 @@ internal object RedisClientProxy {
         arguments: Array<Any?>?,
         type: Class<*>,
         pluginName: String,
-    ): Any = when (name) {
-        "equals" -> proxy === arguments?.get(0)
-        "hashCode" -> System.identityHashCode(proxy)
-        "toString" -> "${type.simpleName} proxy of plugin $pluginName"
-        else -> throw MatchException("Unknown Object method '$name'", null)
+    ): Any {
+        return when (name) {
+            "equals" -> proxy === arguments?.get(0)
+            "hashCode" -> System.identityHashCode(proxy)
+            "toString" -> "${type.simpleName} proxy of plugin $pluginName"
+            else -> throw MatchException("Unknown Object method '$name'", null)
+        }
     }
 
     private fun forward(target: Any, method: Method, arguments: Array<Any?>?): Any? {

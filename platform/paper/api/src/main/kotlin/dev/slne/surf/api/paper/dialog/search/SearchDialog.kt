@@ -17,7 +17,7 @@ import org.bukkit.entity.Player
 
 data class SearchDialogAction(
     var label: SurfComponentBuilder.() -> Unit,
-    var tooltip: SurfComponentBuilder.() -> Unit
+    var tooltip: SurfComponentBuilder.() -> Unit,
 )
 
 data class SearchInput(
@@ -26,7 +26,7 @@ data class SearchInput(
         text("Suche")
     },
     var initialValue: String = "",
-    var inputModifier: DialogInputBuilder.TextDialogInput.() -> Unit = {}
+    var inputModifier: DialogInputBuilder.TextDialogInput.() -> Unit = {},
 )
 
 fun searchDialog(
@@ -53,65 +53,67 @@ fun searchDialog(
     },
     searchInput: SearchInput.() -> Unit,
     canCloseWithEscape: Boolean = false,
-    afterAction: DialogBase.DialogAfterAction = DialogBase.DialogAfterAction.NONE
-): Dialog = dialog {
-    val searchInput = SearchInput().apply(searchInput)
+    afterAction: DialogBase.DialogAfterAction = DialogBase.DialogAfterAction.NONE,
+): Dialog {
+    return dialog {
+        val searchInput = SearchInput().apply(searchInput)
 
-    val searchButton = SearchDialogAction(
-        label = { },
-        tooltip = { }
-    ).apply(searchButton)
+        val searchButton = SearchDialogAction(
+            label = { },
+            tooltip = { },
+        ).apply(searchButton)
 
-    val cancelButton = SearchDialogAction(
-        label = { },
-        tooltip = { }
-    ).apply(cancelButton)
+        val cancelButton = SearchDialogAction(
+            label = { },
+            tooltip = { },
+        ).apply(cancelButton)
 
-    base {
-        title(title)
-        externalTitle(externalTitle)
-        this.canCloseWithEscape = canCloseWithEscape
-        this.afterAction = afterAction
+        base {
+            title(title)
+            externalTitle(externalTitle)
+            this.canCloseWithEscape = canCloseWithEscape
+            this.afterAction = afterAction
 
-        body {
-            body()
+            body {
+                body()
 
-            input {
-                text(searchInput.key) {
-                    label(searchInput.label)
-                    initial(searchInput.initialValue)
+                input {
+                    text(searchInput.key) {
+                        label(searchInput.label)
+                        initial(searchInput.initialValue)
 
-                    searchInput.inputModifier(this)
-                }
-            }
-        }
-
-        type {
-            confirmation {
-                no {
-                    label(searchButton.label)
-                    tooltip(searchButton.tooltip)
-
-                    action {
-                        customPlayerClick { response, player ->
-                            player.clearDialogs(false)
-
-                            val query = response.getText(searchInput.key) ?: ""
-                            onSearch(player, query)
-                        }
+                        searchInput.inputModifier(this)
                     }
                 }
+            }
 
-                yes {
-                    label(cancelButton.label)
-                    tooltip(cancelButton.tooltip)
+            type {
+                confirmation {
+                    no {
+                        label(searchButton.label)
+                        tooltip(searchButton.tooltip)
 
-                    action {
-                        customPlayerClick { response, player ->
-                            player.clearDialogs(false)
+                        action {
+                            customPlayerClick { response, player ->
+                                player.clearDialogs(false)
 
-                            val query = response.getText(searchInput.key) ?: ""
-                            onClose(player, query)
+                                val query = response.getText(searchInput.key) ?: ""
+                                onSearch(player, query)
+                            }
+                        }
+                    }
+
+                    yes {
+                        label(cancelButton.label)
+                        tooltip(cancelButton.tooltip)
+
+                        action {
+                            customPlayerClick { response, player ->
+                                player.clearDialogs(false)
+
+                                val query = response.getText(searchInput.key) ?: ""
+                                onClose(player, query)
+                            }
                         }
                     }
                 }

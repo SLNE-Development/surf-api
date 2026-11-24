@@ -8,7 +8,6 @@ import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
 import dev.slne.surf.api.minestom.server.impl.PluginsDirectory
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginDiscovery
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginManagerImpl
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import org.springframework.context.ConfigurableApplicationContext
 import java.io.File
@@ -23,13 +22,13 @@ import kotlin.io.path.createDirectories
 class PluginsFeatureBuilder internal constructor() {
 
     /**
-     * The directory plugin jars are loaded from, and their data directories are created in. Defaults to the
-     * `surf.minestom.plugins` system property, or `plugins` when it is not set.
+     * The directory plugin jars are loaded from, and their data directories are created in.
+     * Defaults to the `surf.minestom.plugins` system property, or `plugins` when it is not set.
      *
-     * surf-api keeps its own data folder, `surf-api`, in the directory named by the system property, which is
-     * what the bootstrap reads too. When the server declares plugin dependencies or runs surf-api's Redis and
-     * NATS integrations and this value is changed, also start it with `-Dsurf.minestom.plugins=<dir>`, so that
-     * all of them use the same directory.
+     * surf-api keeps its own data folder, `surf-api`, in the directory named by the system
+     * property, which is what the bootstrap reads too. When the server declares plugin dependencies
+     * or runs surf-api's Redis and NATS integrations and this value is changed, also start it with
+     * `-Dsurf.minestom.plugins=<dir>`, so that all of them use the same directory.
      */
     var directory: Path = PluginsDirectory.fromSystemProperty()
 
@@ -60,12 +59,12 @@ class PluginsFeatureBuilder internal constructor() {
  * `minestom-plugin.json`, which the `dev.slne.surf.api.gradle.minestom` Gradle plugin generates.
  * Each plugin jar loaded from the `plugins` directory gets its own class loader, which sees the
  * server, the plugin itself and the plugins it depends on, but no other plugin. Each plugin also
- * gets its own Spring context, whose beans carry the plugin's logic; it sees surf-api's beans and the
- * `@PluginApi` beans of the plugins it depends on.
+ * gets its own Spring context, whose beans carry the plugin's logic; it sees surf-api's beans and
+ * the `@PluginApi` beans of the plugins it depends on.
  *
- * Plugins load in dependency order while the server starts, are enabled right after they are loaded,
- * before [dev.slne.surf.api.minestom.server.surfMinestomServer] returns and so before the server
- * accepts players, and are disabled in reverse order on shutdown.
+ * Plugins load in dependency order while the server starts, are enabled right after they are
+ * loaded, before [dev.slne.surf.api.minestom.server.surfMinestomServer] returns and so before the
+ * server accepts players, and are disabled in reverse order on shutdown.
  *
  * Each plugin's data directory, `<directory>/<id>`, is created before the plugin is constructed.
  * A plugin that fails to load or enable is skipped, unless [PluginsFeatureBuilder.requireAll] is
@@ -104,8 +103,10 @@ class PluginsFeature internal constructor(
 
         val candidates = buildList {
             addAll(classPath)
+
             for (candidate in PluginDiscovery.fromDirectory(directory, discoveryFailures)) {
                 val jar = candidate.jar?.toAbsolutePath()?.normalize()
+
                 when {
                     jar !in serverPluginJars -> add(candidate)
                     // The class path index already lists the plugin of this bootstrap-placed jar
@@ -123,8 +124,10 @@ class PluginsFeature internal constructor(
         PluginManager.install(manager)
 
         val failures = discoveryFailures + manager.load(candidates)
+
         if (failures.isNotEmpty() && settings.requireAll) {
-            // Rolls back here, so that no plugin stays loaded however the runtime handles a failing load
+            // Rolls back here, so that no plugin stays loaded however the runtime handles a failing
+            // load
             disable(api)
             throw requireAllFailure("loaded", failures.keys)
         }
@@ -132,6 +135,7 @@ class PluginsFeature internal constructor(
 
     override fun enable(api: SurfMinestomServer) {
         val failures = manager?.enable().orEmpty()
+
         if (failures.isNotEmpty() && settings.requireAll) {
             throw requireAllFailure("enabled", failures.keys)
         }
@@ -143,16 +147,19 @@ class PluginsFeature internal constructor(
         PluginManager.install(null)
     }
 
-    private fun requireAllFailure(action: String, ids: Collection<String>) = IllegalStateException(
-        "Plugins could not be $action: ${ids.joinToString()}. They are required by requireAll, " +
-                "the reasons are logged above"
-    )
+    private fun requireAllFailure(action: String, ids: Collection<String>): IllegalStateException {
+        return IllegalStateException(
+            "Plugins could not be $action: ${ids.joinToString()}. They are required by requireAll, " +
+                "the reasons are logged above",
+        )
+    }
 
-    private fun serverPluginJars(): Set<Path> =
-        System.getProperty(SERVER_PLUGINS_PROPERTY).orEmpty()
+    private fun serverPluginJars(): Set<Path> {
+        return System.getProperty(SERVER_PLUGINS_PROPERTY).orEmpty()
             .split(File.pathSeparator)
             .filter(String::isNotEmpty)
             .mapTo(mutableSetOf()) { Path(it).toAbsolutePath().normalize() }
+    }
 
     companion object {
         const val ID = "plugins"

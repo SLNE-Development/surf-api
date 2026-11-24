@@ -41,9 +41,17 @@ class PluginsFeatureTest {
             assertSame(TestPlugin.instance, plugin)
             assertEquals("TestPlugin", plugin!!.meta.name)
             assertEquals(directory.resolve("test-plugin"), plugin.dataDirectory)
-            assertEquals(listOf("load", "enable"), TestPlugin.calls, "the plugin was not enabled before the start returned")
             assertEquals(
-                TestPlugin.SeenAtEnable(eventNodeAttached = true, registrarCommand = true, beanCommand = true),
+                listOf("load", "enable"),
+                TestPlugin.calls,
+                "the plugin was not enabled before the start returned",
+            )
+            assertEquals(
+                TestPlugin.SeenAtEnable(
+                    eventNodeAttached = true,
+                    registrarCommand = true,
+                    beanCommand = true,
+                ),
                 TestPlugin.seenAtEnable,
                 "listeners and commands are registered before the enable hooks run",
             )
@@ -52,15 +60,25 @@ class PluginsFeatureTest {
             assertTrue(plugin.eventNode.parent != null)
 
             FixtureEvent().call()
-            assertEquals(1, TestPlugin.surfEventsHandled, "the @SurfEventHandler bean is registered")
+            assertEquals(
+                1,
+                TestPlugin.surfEventsHandled,
+                "the @SurfEventHandler bean is registered",
+            )
             plugin
         } finally {
             server.shutdown()
         }
 
         assertEquals(listOf("load", "enable", "disable"), TestPlugin.calls)
-        assertFalse(commands.commandExists(REGISTRAR_COMMAND), "the plugin's registrar command is unregistered")
-        assertFalse(commands.commandExists(BEAN_COMMAND), "the plugin's bean command is unregistered")
+        assertFalse(
+            commands.commandExists(REGISTRAR_COMMAND),
+            "the plugin's registrar command is unregistered",
+        )
+        assertFalse(
+            commands.commandExists(BEAN_COMMAND),
+            "the plugin's bean command is unregistered",
+        )
         assertNull(plugin.eventNode.parent, "the plugin's event node is removed")
     }
 
@@ -69,7 +87,9 @@ class PluginsFeatureTest {
         val plugin = directory.resolve("example.jar")
         JarOutputStream(plugin.outputStream()).use { jar ->
             jar.putNextEntry(JarEntry(PluginMeta.FILE_NAME))
-            jar.write("""{ "id": "example", "main": "example.Main", "version": "2.0" }""".toByteArray())
+            jar.write(
+                """{ "id": "example", "main": "example.Main", "version": "2.0" }""".toByteArray(),
+            )
             jar.closeEntry()
         }
 

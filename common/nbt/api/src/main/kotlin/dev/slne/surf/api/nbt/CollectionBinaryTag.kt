@@ -23,7 +23,9 @@ value class CollectionBinaryTag private constructor(val tag: BinaryTag) : Iterab
          * @param tag The binary tag to wrap
          * @return A CollectionBinaryTag if the tag is a collection type, null otherwise
          */
-        fun from(tag: BinaryTag) = if (tag.isCollectionTag()) CollectionBinaryTag(tag) else null
+        fun from(tag: BinaryTag): CollectionBinaryTag? {
+            return if (tag.isCollectionTag()) CollectionBinaryTag(tag) else null
+        }
 
         /**
          * Creates a CollectionBinaryTag from the given tag, throwing if it's not a collection type.
@@ -34,6 +36,7 @@ value class CollectionBinaryTag private constructor(val tag: BinaryTag) : Iterab
          */
         fun require(tag: BinaryTag): CollectionBinaryTag {
             require(tag.isCollectionTag()) { "Tag is not a collection tag" }
+
             return CollectionBinaryTag(tag)
         }
     }
@@ -41,45 +44,53 @@ value class CollectionBinaryTag private constructor(val tag: BinaryTag) : Iterab
     /**
      * Returns an iterator over the elements in this collection tag.
      */
-    override fun iterator() = when (tag) {
-        is ListBinaryTag -> tag.tagIterator()
-        is ByteArrayBinaryTag -> tag.tagIterator()
-        is LongArrayBinaryTag -> tag.tagIterator()
-        is IntArrayBinaryTag -> tag.tagIterator()
-        else -> throw MatchException(null, null)
+    override fun iterator(): Iterator<BinaryTag> {
+        return when (tag) {
+            is ListBinaryTag -> tag.tagIterator()
+            is ByteArrayBinaryTag -> tag.tagIterator()
+            is LongArrayBinaryTag -> tag.tagIterator()
+            is IntArrayBinaryTag -> tag.tagIterator()
+            else -> throw MatchException(null, null)
+        }
     }
 
     /**
      * Returns a spliterator over the elements in this collection tag.
      */
-    fun tagSpliterator(): Spliterator<BinaryTag> = when (tag) {
-        is ListBinaryTag -> tag.tagSpliterator()
-        is ByteArrayBinaryTag -> tag.tagSpliterator()
-        is LongArrayBinaryTag -> tag.tagSpliterator()
-        is IntArrayBinaryTag -> tag.tagSpliterator()
-        else -> throw MatchException(null, null)
+    fun tagSpliterator(): Spliterator<BinaryTag> {
+        return when (tag) {
+            is ListBinaryTag -> tag.tagSpliterator()
+            is ByteArrayBinaryTag -> tag.tagSpliterator()
+            is LongArrayBinaryTag -> tag.tagSpliterator()
+            is IntArrayBinaryTag -> tag.tagSpliterator()
+            else -> throw MatchException(null, null)
+        }
     }
 
     /**
      * Returns the number of elements in this collection tag.
      */
-    fun size(): Int = when (tag) {
-        is ListBinaryTag -> tag.size()
-        is ByteArrayBinaryTag -> tag.size()
-        is LongArrayBinaryTag -> tag.size()
-        is IntArrayBinaryTag -> tag.size()
-        else -> throw MatchException(null, null)
+    fun size(): Int {
+        return when (tag) {
+            is ListBinaryTag -> tag.size()
+            is ByteArrayBinaryTag -> tag.size()
+            is LongArrayBinaryTag -> tag.size()
+            is IntArrayBinaryTag -> tag.size()
+            else -> throw MatchException(null, null)
+        }
     }
 
     /**
      * Returns a sequential stream over the elements in this collection tag.
      */
-    fun stream(): Stream<BinaryTag> = when (tag) {
-        is ListBinaryTag -> tag.tagStream()
-        is ByteArrayBinaryTag -> tag.tagStream()
-        is LongArrayBinaryTag -> tag.tagStream()
-        is IntArrayBinaryTag -> tag.tagStream()
-        else -> throw MatchException(null, null)
+    fun stream(): Stream<BinaryTag> {
+        return when (tag) {
+            is ListBinaryTag -> tag.tagStream()
+            is ByteArrayBinaryTag -> tag.tagStream()
+            is LongArrayBinaryTag -> tag.tagStream()
+            is IntArrayBinaryTag -> tag.tagStream()
+            else -> throw MatchException(null, null)
+        }
     }
 }
 
@@ -88,7 +99,7 @@ value class CollectionBinaryTag private constructor(val tag: BinaryTag) : Iterab
  *
  * @return A CollectionBinaryTag if this tag is a collection type, null otherwise
  */
-fun BinaryTag.asCollectionOrNull() = CollectionBinaryTag.from(this)
+fun BinaryTag.asCollectionOrNull(): CollectionBinaryTag? = CollectionBinaryTag.from(this)
 
 /**
  * Wraps this BinaryTag as a CollectionBinaryTag.
@@ -96,4 +107,4 @@ fun BinaryTag.asCollectionOrNull() = CollectionBinaryTag.from(this)
  * @return A CollectionBinaryTag wrapping this tag
  * @throws IllegalArgumentException if this tag is not a collection type
  */
-fun BinaryTag.asCollection() = CollectionBinaryTag.require(this)
+fun BinaryTag.asCollection(): CollectionBinaryTag = CollectionBinaryTag.require(this)

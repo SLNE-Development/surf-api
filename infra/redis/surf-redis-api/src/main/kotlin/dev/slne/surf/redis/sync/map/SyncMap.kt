@@ -77,7 +77,8 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     fun put(key: K, value: V): V?
 
     /**
-     * Associates [value] with [key] locally and waits until the mutation has been committed to Redis.
+     * Associates [value] with [key] locally and waits until the mutation has been committed to
+     * Redis.
      *
      * This does not wait for other Redis-connected nodes to apply the corresponding stream event.
      */
@@ -113,7 +114,8 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     fun removeIf(predicate: (K, V) -> Boolean): Boolean
 
     /**
-     * Removes all locally matching entries and waits until the batched Redis mutation has completed.
+     * Removes all locally matching entries and waits until the batched Redis mutation has
+     * completed.
      */
     suspend fun removeIfAndAwait(predicate: (K, V) -> Boolean): Boolean
 
@@ -154,7 +156,8 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     /**
      * Reads [key] directly from Redis, bypassing the eventually consistent local view.
      *
-     * Use this for correctness-critical reads where observing the latest committed Redis state matters.
+     * Use this for correctness-critical reads where observing the latest committed Redis state
+     * matters.
      */
     suspend fun getRemote(key: K): V?
 
@@ -185,7 +188,8 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     /**
      * Associates [value] with [key] in Redis only if Redis holds no mapping for [key].
      *
-     * @return the existing Redis value if the mapping was not changed, or `null` if [value] was stored
+     * @return the existing Redis value if the mapping was not changed, or `null` if [value] was
+     * stored
      */
     suspend fun putIfAbsentRemote(key: K, value: V): V?
 
@@ -197,7 +201,8 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     suspend fun removeRemote(key: K): V?
 
     /**
-     * Clears the Redis map regardless of the local view and waits until the clear has been committed.
+     * Clears the Redis map regardless of the local view and waits until the clear has been
+     * committed.
      *
      * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
      */
@@ -206,11 +211,11 @@ interface SyncMap<K : Any, V : Any> : SyncStructure<SyncMapChange<K, V>> {
     /**
      * Atomically recomputes the mapping for [key] from the committed Redis value.
      *
-     * [remapping] receives the current Redis value (or `null`) and returns the new value; `null`
-     * removes the mapping. Implemented as a compare-and-set loop that retries without bound while
-     * other nodes modify the key concurrently. [remapping] must be side-effect free and may be
-     * invoked more than once.
+     * Implemented as a compare-and-set loop that retries without bound while other nodes modify the
+     * key concurrently.
      *
+     * @param remapping receives the current Redis value or `null` and returns the new value, where
+     *   `null` removes the mapping; it must be side-effect free and may be invoked more than once.
      * @return the new value associated with [key], or `null` if the mapping was removed or absent
      */
     suspend fun computeRemote(key: K, remapping: (K, V?) -> V?): V?

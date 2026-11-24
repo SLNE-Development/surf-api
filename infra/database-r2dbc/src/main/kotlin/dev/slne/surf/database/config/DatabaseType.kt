@@ -15,8 +15,8 @@ enum class DatabaseType(val defaultPort: Int) {
 
     /**
      * Lowercase vendor name, for example `mariadb`, that replaces
-     * [MigrationSpec.VENDOR_PLACEHOLDER][dev.slne.surf.database.migration.MigrationSpec.VENDOR_PLACEHOLDER] in SQL
-     * locations.
+     * [MigrationSpec.VENDOR_PLACEHOLDER][dev.slne.surf.database.migration.MigrationSpec.VENDOR_PLACEHOLDER]
+     * in SQL locations.
      */
     val vendor: String = name.lowercase()
 }
@@ -32,6 +32,6 @@ val R2dbcDatabase.databaseType: DatabaseType
         is PostgreSQLDialect -> DatabaseType.POSTGRESQL
         else -> error(
             "Dialect ${dialect.javaClass.simpleName} has no DatabaseType, " +
-                    "expected one of ${DatabaseType.entries.joinToString()}"
+                "expected one of ${DatabaseType.entries.joinToString()}",
         )
     }

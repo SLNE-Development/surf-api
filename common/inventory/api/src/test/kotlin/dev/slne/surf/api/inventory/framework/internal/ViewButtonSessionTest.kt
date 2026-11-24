@@ -8,13 +8,18 @@ import kotlin.test.assertTrue
 
 class ViewButtonSessionTest {
 
-    private enum class Difficulty { EASY, NORMAL, HARD }
+    private enum class Difficulty {
+        EASY,
+        NORMAL,
+        HARD
+    }
 
-    private fun difficulty(initial: Difficulty = Difficulty.EASY) =
-        ViewButtonSession(Difficulty.entries.toList(), initial)
+    private fun difficulty(initial: Difficulty = Difficulty.EASY) = ViewButtonSession(
+        Difficulty.entries.toList(),
+        initial,
+    )
 
-    private fun toggle(initial: Boolean = false) =
-        ViewButtonSession(listOf(false, true), initial)
+    private fun toggle(initial: Boolean = false) = ViewButtonSession(listOf(false, true), initial)
 
     @Test
     fun `starts on the initial state`() {

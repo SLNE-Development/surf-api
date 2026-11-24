@@ -48,17 +48,20 @@ object MinestomPermissions {
      * The console and the server sender always resolve to [TriState.TRUE]; players resolve through
      * the installed [provider]; any other sender resolves to [TriState.NOT_SET].
      */
-    fun permissionValue(sender: CommandSender, permission: String): TriState = when (sender) {
-        is ConsoleSender, is ServerSender -> TriState.TRUE
-        is Player -> provider.permissionValue(sender, permission)
-        else -> TriState.NOT_SET
+    fun permissionValue(sender: CommandSender, permission: String): TriState {
+        return when (sender) {
+            is ConsoleSender, is ServerSender -> TriState.TRUE
+            is Player -> provider.permissionValue(sender, permission)
+            else -> TriState.NOT_SET
+        }
     }
 
     /**
      * Whether [permission] resolves to [TriState.TRUE] for [sender].
      */
-    fun hasPermission(sender: CommandSender, permission: String): Boolean =
-        permissionValue(sender, permission) == TriState.TRUE
+    fun hasPermission(sender: CommandSender, permission: String): Boolean {
+        return permissionValue(sender, permission) == TriState.TRUE
+    }
 }
 
 /**
@@ -66,11 +69,13 @@ object MinestomPermissions {
  *
  * The console and the server sender hold every permission.
  */
-fun CommandSender.hasPermission(permission: String): Boolean =
-    MinestomPermissions.hasPermission(this, permission)
+fun CommandSender.hasPermission(permission: String): Boolean {
+    return MinestomPermissions.hasPermission(this, permission)
+}
 
 /**
  * The value of [permission] for this sender.
  */
-fun CommandSender.permissionValue(permission: String): TriState =
-    MinestomPermissions.permissionValue(this, permission)
+fun CommandSender.permissionValue(permission: String): TriState {
+    return MinestomPermissions.permissionValue(this, permission)
+}

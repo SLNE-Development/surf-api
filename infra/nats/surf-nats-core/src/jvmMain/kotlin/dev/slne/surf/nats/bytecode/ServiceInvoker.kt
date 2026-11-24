@@ -5,7 +5,8 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
 /**
- * Calls one method of a service implementation with the calling convention of a compiled `suspend` function.
+ * Calls one method of a service implementation with the calling convention of a compiled `suspend`
+ * function.
  *
  * [invoke] returns the result or `COROUTINE_SUSPENDED`. Instances are hidden classes created by
  * [ServiceInvokerFactory].

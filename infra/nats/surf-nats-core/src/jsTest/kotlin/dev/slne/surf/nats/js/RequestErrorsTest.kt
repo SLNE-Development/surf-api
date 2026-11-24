@@ -23,7 +23,13 @@ class RequestErrorsTest {
         val mapped = assertIs<NatsNoRespondersError>(mapRequestError(noResponders, "a.b", 100))
         assertEquals("a.b", mapped.subject)
 
-        val direct = assertIs<NatsNoRespondersError>(mapRequestError(NoRespondersError("c.d"), "c.d", 100))
+        val direct = assertIs<NatsNoRespondersError>(
+            mapRequestError(
+                NoRespondersError("c.d"),
+                "c.d",
+                100,
+            ),
+        )
         assertEquals("c.d", direct.subject)
 
         val timeout = assertIs<NatsCallTimeoutError>(mapRequestError(TimeoutError(), "a.b", 250))

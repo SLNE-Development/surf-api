@@ -18,7 +18,6 @@ class SuspendingEventNode<E : Any>(private val name: String) {
     @Volatile
     private var listeners: List<Registration<E>> = emptyList()
 
-
     fun addListener(priority: Int = 0, listener: suspend (E) -> Unit): Registration<E> {
         val registration = Registration(this, priority, listener)
 
@@ -29,7 +28,6 @@ class SuspendingEventNode<E : Any>(private val name: String) {
         return registration
     }
 
-
     @InternalSurfApi
     suspend fun call(event: E) {
         for (registration in listeners) {
@@ -37,7 +35,12 @@ class SuspendingEventNode<E : Any>(private val name: String) {
                 registration.listener(event)
             } catch (failure: Throwable) {
                 if (failure is CancellationException && !isOwnTimeout(failure)) throw failure
-                LOGGER.error("Listener for '{}' failed, continuing with the next one", name, failure)
+
+                LOGGER.error(
+                    "Listener for '{}' failed, continuing with the next one",
+                    name,
+                    failure,
+                )
             }
         }
     }
@@ -46,13 +49,14 @@ class SuspendingEventNode<E : Any>(private val name: String) {
      * Whether [failure] is a timeout of the listener itself rather than a cancellation of the
      * calling coroutine.
      */
-    private suspend fun isOwnTimeout(failure: CancellationException): Boolean =
-        failure is TimeoutCancellationException && currentCoroutineContext().isActive
+    private suspend fun isOwnTimeout(failure: CancellationException): Boolean {
+        return failure is TimeoutCancellationException && currentCoroutineContext().isActive
+    }
 
     class Registration<E : Any> internal constructor(
         private val node: SuspendingEventNode<E>,
         internal val priority: Int,
-        internal val listener: suspend (E) -> Unit
+        internal val listener: suspend (E) -> Unit,
     ) : AutoCloseable {
         override fun close() {
             synchronized(node.lock) {

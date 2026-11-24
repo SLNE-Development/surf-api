@@ -16,8 +16,8 @@ import java.io.File
 /**
  * Writes `.proto` sources into [root] and resolves their contract with [ContractResolver].
  *
- * The sources are resolved on the first lookup and must be free of problems. Declarations are looked up by their
- * proto full name.
+ * The sources are resolved on the first lookup and must be free of problems. Declarations are
+ * looked up by their proto full name.
  */
 internal class ContractHarness(root: File, private val mappings: List<TypeMapping> = emptyList()) {
     private val sources = GeneratorHarness(root)
@@ -28,27 +28,35 @@ internal class ContractHarness(root: File, private val mappings: List<TypeMappin
 
     fun proto(path: String, content: String): ContractHarness {
         sources.proto(path, content)
+
         return this
     }
 
-    fun members(message: String): List<MessageMember> =
-        contract.members(loaded.schema.getType(message) as MessageType)
+    fun members(message: String): List<MessageMember> {
+        return contract.members(loaded.schema.getType(message) as MessageType)
+    }
 
-    fun entries(enumType: String): Map<String, EnumConstant> =
-        contract.entries(loaded.schema.getType(enumType) as EnumType)
+    fun entries(enumType: String): Map<String, EnumConstant> {
+        return contract.entries(loaded.schema.getType(enumType) as EnumType)
+    }
 
-    fun methods(service: String): List<ContractMethod> =
-        contract.methods(checkNotNull(loaded.schema.getService(service)))
+    fun methods(service: String): List<ContractMethod> {
+        return contract.methods(checkNotNull(loaded.schema.getService(service)))
+    }
 
     private fun resolve(): ResolvedContract {
         val problems = Problems()
         val mapped = (DefaultTypeMappings.common + mappings).associate {
-            it.protoType to MappedClass(ClassName.bestGuess(it.kotlinClass), ClassName.bestGuess(it.serializerClass))
+            it.protoType to MappedClass(
+                ClassName.bestGuess(it.kotlinClass),
+                ClassName.bestGuess(it.serializerClass),
+            )
         }
         val types = KotlinTypeResolver(loaded.schema, loaded.sourceFiles, mapped, problems)
         val contract = ContractResolver(types).resolve(loaded.sourceFiles)
 
         problems.throwIfAny()
+
         return contract
     }
 }

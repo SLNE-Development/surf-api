@@ -17,9 +17,9 @@ annotation class SurfMinestomServerDsl
 /**
  * An optional part of the surf api, installed through [SurfMinestomServerBuilder.install].
  *
- * Feature modules ship their feature together with an extension on [SurfMinestomServerBuilder], e.g.
- * `withSignedChat()` or `withLuckPerms()`, so that adding the module as a dependency is enough to
- * offer the feature.
+ * Feature modules ship their feature together with an extension on [SurfMinestomServerBuilder],
+ * e.g. `withSignedChat()` or `withLuckPerms()`, so that adding the module as a dependency is enough
+ * to offer the feature.
  *
  * Features are loaded ordered by [loadPriority], ties in installation order, then enabled in the
  * same order, and disabled in reverse. A feature that throws in [load] or [enable] fails
@@ -42,7 +42,7 @@ interface SurfMinestomFeature {
      * Called while [surfMinestomServer] runs, before the server starts. Register listeners, packet
      * listeners and commands here.
      */
-    fun load(api: SurfMinestomServer) = Unit
+    fun load(api: SurfMinestomServer): Unit = Unit
 
     /**
      * Called once every feature is loaded, while [surfMinestomServer] still runs, so before the
@@ -51,7 +51,7 @@ interface SurfMinestomFeature {
      * The server does not tick yet: work scheduled for a tick runs once it is started, and must not
      * be waited for here.
      */
-    fun enable(api: SurfMinestomServer) = Unit
+    fun enable(api: SurfMinestomServer): Unit = Unit
 
     /**
      * Called when the server shuts down or [SurfMinestomServer.shutdown] is called, for every
@@ -60,7 +60,7 @@ interface SurfMinestomFeature {
      * When the server stops, Minestom no longer ticks: work scheduled for a tick does not run and
      * must not be waited for here.
      */
-    fun disable(api: SurfMinestomServer) = Unit
+    fun disable(api: SurfMinestomServer): Unit = Unit
 }
 
 /**
@@ -154,8 +154,9 @@ class SurfMinestomServerBuilder internal constructor() {
      * @see disableEntityTicking
      */
     fun disableEntityTicking(types: Iterable<EntityType>) {
-        types.forEach { type ->
+        for (type in types) {
             require(type != EntityType.PLAYER) { "Players have to tick" }
+
             disabledEntityTicks += type
         }
     }
@@ -169,7 +170,8 @@ class SurfMinestomServerBuilder internal constructor() {
      * @see ConfigurationPhaseBuilder
      */
     fun withConfigurationPhase(block: ConfigurationPhaseBuilder.() -> Unit = {}) {
-        val builder = configurationPhase ?: ConfigurationPhaseBuilder().also { configurationPhase = it }
+        val builder = configurationPhase
+            ?: ConfigurationPhaseBuilder().also { configurationPhase = it }
         builder.block()
     }
 
@@ -225,7 +227,8 @@ interface SurfMinestomServer {
     val eventNode: EventNode<Event>
 
     /**
-     * The installed features, ordered by [SurfMinestomFeature.loadPriority], ties in installation order.
+     * The installed features, ordered by [SurfMinestomFeature.loadPriority], ties in installation
+     * order.
      */
     val features: Collection<SurfMinestomFeature>
 
@@ -311,5 +314,6 @@ interface SurfMinestomServer {
  * @throws Exception whatever a feature threw while loading or enabling; the features loaded so far
  * are disabled again
  */
-fun surfMinestomServer(block: SurfMinestomServerBuilder.() -> Unit = {}): SurfMinestomServer =
-    SurfMinestomRuntime.start(SurfMinestomServerBuilder().apply(block))
+fun surfMinestomServer(block: SurfMinestomServerBuilder.() -> Unit = {}): SurfMinestomServer {
+    return SurfMinestomRuntime.start(SurfMinestomServerBuilder().apply(block))
+}

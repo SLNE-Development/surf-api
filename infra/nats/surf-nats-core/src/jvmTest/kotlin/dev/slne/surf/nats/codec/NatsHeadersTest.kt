@@ -13,7 +13,10 @@ class NatsHeadersTest {
         val headers = NatsHeaders.base("transaction")
 
         assertEquals("application/protobuf", headers.getFirst(ProtocolHeaders.CONTENT_TYPE))
-        assertEquals("transaction@${NatsConnectionManager.instanceId}", headers.getFirst(ProtocolHeaders.ORIGIN))
+        assertEquals(
+            "transaction@${NatsConnectionManager.instanceId}",
+            headers.getFirst(ProtocolHeaders.ORIGIN),
+        )
         assertEquals(NatsConstants.VERSION, headers.getFirst(ProtocolHeaders.SENDER_VERSION))
     }
 }

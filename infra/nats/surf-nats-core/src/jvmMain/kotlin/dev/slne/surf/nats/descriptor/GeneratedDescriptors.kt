@@ -5,11 +5,12 @@ import dev.slne.surf.nats.protocol.ProtocolDescriptors
 import java.lang.reflect.Modifier
 
 /**
- * Reads the static `NATS_DESCRIPTOR` field a generated event class or service interface declares itself.
+ * Reads the static `NATS_DESCRIPTOR` field a generated event class or service interface declares
+ * itself.
  *
  * Inherited fields do not count. The result is cached per class. [event] and [service] throw
- * [IllegalArgumentException] for a class without a matching descriptor. For an implementation class, the message of
- * [service] names the generated interfaces it implements.
+ * [IllegalArgumentException] for a class without a matching descriptor. For an implementation
+ * class, the message of [service] names the generated interfaces it implements.
  */
 @InternalNatsApi
 internal object GeneratedDescriptors {
@@ -26,30 +27,38 @@ internal object GeneratedDescriptors {
         require(descriptor is NatsEventDescriptor<*>) {
             "${type.name} is not a generated surf-nats event: it declares no NatsEventDescriptor $FIELD"
         }
+
         return descriptor
     }
 
     fun service(type: Class<*>): NatsServiceDescriptor<*> {
         val descriptor = descriptors.get(type)
-        require(type.isInterface && descriptor is NatsServiceDescriptor<*>) { notAServiceMessage(type) }
+        require(type.isInterface && descriptor is NatsServiceDescriptor<*>) {
+            notAServiceMessage(
+                type,
+            )
+        }
+
         return descriptor
     }
 
     /**
      * Whether [type] declares a static `NATS_DESCRIPTOR` field of a service descriptor itself.
      *
-     * Reads the field declaration only, so [type] is not initialized and the descriptor is not created.
+     * Reads the field declaration only, so [type] is not initialized and the descriptor is not
+     * created.
      */
     fun isService(type: Class<*>): Boolean {
         if (!type.isInterface) return false
+
         val field = try {
             type.getField(FIELD)
         } catch (_: NoSuchFieldException) {
             return false
         }
         return field.declaringClass === type &&
-                Modifier.isStatic(field.modifiers) &&
-                NatsServiceDescriptor::class.java.isAssignableFrom(field.type)
+            Modifier.isStatic(field.modifiers) &&
+            NatsServiceDescriptor::class.java.isAssignableFrom(field.type)
     }
 
     private fun read(type: Class<*>): Any? {
@@ -59,7 +68,9 @@ internal object GeneratedDescriptors {
             return null
         }
         if (field.declaringClass !== type || !Modifier.isStatic(field.modifiers)) return null
+
         field.trySetAccessible()
+
         return field.get(null)
     }
 
@@ -67,7 +78,10 @@ internal object GeneratedDescriptors {
         val services = LinkedHashSet<Class<*>>()
         fun collect(current: Class<*>) {
             for (candidate in current.interfaces) {
-                if (descriptors.get(candidate) is NatsServiceDescriptor<*>) services.add(candidate)
+                if (descriptors.get(candidate) is NatsServiceDescriptor<*>) {
+                    services.add(candidate)
+                }
+
                 collect(candidate)
             }
         }
@@ -75,8 +89,9 @@ internal object GeneratedDescriptors {
 
         val problem = "${type.name} is not a generated surf-nats service interface"
         if (services.isEmpty()) return "$problem: it declares no NatsServiceDescriptor $FIELD"
+
         return "$problem. Use the generated service interface it implements as the type argument, " +
-                "e.g. registerService<${services.first().simpleName}>(implementation): " +
-                services.joinToString { it.name }
+            "e.g. registerService<${services.first().simpleName}>(implementation): " +
+            services.joinToString { it.name }
     }
 }

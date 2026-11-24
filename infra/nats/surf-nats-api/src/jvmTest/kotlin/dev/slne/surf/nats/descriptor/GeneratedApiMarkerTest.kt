@@ -9,13 +9,17 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The entry points of generated code carry `@NatsGeneratedApi`, which ABI validation covers, and not `@InternalNatsApi`,
- * which it excludes. Both markers have binary retention, so the class files are read directly.
+ * The entry points of generated code carry `@NatsGeneratedApi`, which ABI validation covers, and
+ * not `@InternalNatsApi`, which it excludes. Both markers have binary retention, so the class files
+ * are read directly.
  */
 class GeneratedApiMarkerTest {
 
     private fun methods(type: Class<*>): List<MethodModel> {
-        val bytes = checkNotNull(type.getResourceAsStream("${type.simpleName}.class")).use { it.readBytes() }
+        val bytes = checkNotNull(type.getResourceAsStream("${type.simpleName}.class")).use {
+            it.readBytes()
+        }
+
         return ClassFile.of().parse(bytes).methods()
     }
 
@@ -27,8 +31,13 @@ class GeneratedApiMarkerTest {
 
     private fun assertGeneratedApi(methods: List<MethodModel>) {
         assertTrue(methods.isNotEmpty())
+
         for (method in methods) {
-            assertEquals(listOf(GENERATED_API), markers(method).filter { it in setOf(GENERATED_API, INTERNAL_API) }, method.toString())
+            assertEquals(
+                listOf(GENERATED_API),
+                markers(method).filter { it in setOf(GENERATED_API, INTERNAL_API) },
+                method.toString(),
+            )
         }
     }
 
@@ -39,9 +48,14 @@ class GeneratedApiMarkerTest {
             NatsServiceDescriptor::class.java,
             NatsMethodDescriptor::class.java,
         )
+
         for (type in types) {
             assertGeneratedApi(
-                methods(type).filter { it.methodName().equalsString("<init>") && AccessFlag.SYNTHETIC !in it.flags().flags() }
+                methods(type)
+                    .filter { method ->
+                        method.methodName().equalsString("<init>") &&
+                            AccessFlag.SYNTHETIC !in method.flags().flags()
+                    },
             )
         }
     }
@@ -50,7 +64,10 @@ class GeneratedApiMarkerTest {
     fun `byte array content helpers are generated API`() {
         val facade = Class.forName("dev.slne.surf.nats.descriptor.ByteArrayContentKt")
         val helpers = methods(facade).filter { method ->
-            method.methodName().stringValue().startsWith("natsContent") && AccessFlag.PUBLIC in method.flags().flags()
+            method.methodName()
+                .stringValue()
+                .startsWith("natsContent") && AccessFlag.PUBLIC in method.flags()
+                .flags()
         }
         assertEquals(9, helpers.size)
         assertGeneratedApi(helpers)

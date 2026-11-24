@@ -45,6 +45,7 @@ class ConfigurationPhaseBuilder internal constructor() {
      */
     fun replace(id: ConfigurationTaskId, task: ConfigurationTask) {
         require(id in tasks) { "There is no configuration step '$id' to replace" }
+
         tasks[id] = task
     }
 
@@ -58,14 +59,16 @@ class ConfigurationPhaseBuilder internal constructor() {
     /**
      * Runs [task] as [id] right before the step [anchor].
      */
-    fun before(anchor: ConfigurationTaskId, id: ConfigurationTaskId, task: ConfigurationTask) =
+    fun before(anchor: ConfigurationTaskId, id: ConfigurationTaskId, task: ConfigurationTask) {
         insert(anchor, id, task, offset = 0)
+    }
 
     /**
      * Runs [task] as [id] right after the step [anchor].
      */
-    fun after(anchor: ConfigurationTaskId, id: ConfigurationTaskId, task: ConfigurationTask) =
+    fun after(anchor: ConfigurationTaskId, id: ConfigurationTaskId, task: ConfigurationTask) {
         insert(anchor, id, task, offset = 1)
+    }
 
     /**
      * Runs [task] as [id] before every other step.
@@ -105,14 +108,18 @@ class ConfigurationPhaseBuilder internal constructor() {
      */
     fun codeOfConduct(text: (Player) -> String?) {
         val task = ConfigurationTasks.CodeOfConduct(text)
+
         if (ConfigurationTasks.CODE_OF_CONDUCT in tasks) {
             replace(ConfigurationTasks.CODE_OF_CONDUCT, task)
+
             return
         }
 
         val anchor = when {
             ConfigurationTasks.AWAIT_SETTINGS in tasks -> ConfigurationTasks.AWAIT_SETTINGS
-            ConfigurationTasks.SYNCHRONIZE_REGISTRIES in tasks -> ConfigurationTasks.SYNCHRONIZE_REGISTRIES
+            ConfigurationTasks.SYNCHRONIZE_REGISTRIES in tasks ->
+                ConfigurationTasks.SYNCHRONIZE_REGISTRIES
+
             else -> null
         }
 
@@ -130,7 +137,9 @@ class ConfigurationPhaseBuilder internal constructor() {
         offset: Int,
     ) {
         requireUnknown(id)
-        val entries = tasks.entries.map { it.toPair() }.toMutableList()
+        val entries = tasks.entries
+            .map { it.toPair() }
+            .toMutableList()
         val index = entries.indexOfFirst { it.first == anchor }
         require(index != -1) { "There is no configuration step '$anchor'" }
 
@@ -143,6 +152,7 @@ class ConfigurationPhaseBuilder internal constructor() {
         require(id !in tasks) { "The configuration step '$id' already exists, use replace instead" }
     }
 
-    internal fun build(): List<Pair<ConfigurationTaskId, ConfigurationTask>> =
-        tasks.entries.map { it.toPair() }
+    internal fun build(): List<Pair<ConfigurationTaskId, ConfigurationTask>> {
+        return tasks.entries.map { it.toPair() }
+    }
 }

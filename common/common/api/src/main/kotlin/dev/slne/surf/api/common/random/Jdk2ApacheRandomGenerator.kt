@@ -146,11 +146,13 @@ class Jdk2ApacheRandomGenerator(private val jdk: java.util.random.RandomGenerato
  * [RandomGenerator].
  *
  * @receiver The JDK RandomGenerator to convert, or null.
- * @return An Apache Commons Math RandomGenerator wrapping the JDK generator, or null if the receiver is null.
+ * @return An Apache Commons Math RandomGenerator wrapping the JDK generator, or null if the
+ * receiver is null.
  */
 @JvmName("toApacheNullable")
-fun java.util.random.RandomGenerator?.toApache(): RandomGenerator? =
-    this?.let(::Jdk2ApacheRandomGenerator)
+fun java.util.random.RandomGenerator?.toApache(): RandomGenerator? {
+    return this?.let(::Jdk2ApacheRandomGenerator)
+}
 
 /**
  * Converts a JDK [java.util.random.RandomGenerator] to an Apache Commons Math

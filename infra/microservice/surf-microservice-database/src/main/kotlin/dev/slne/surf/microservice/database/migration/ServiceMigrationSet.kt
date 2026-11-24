@@ -7,9 +7,10 @@ import org.springframework.core.Ordered
 /**
  * The migrations of the microservice itself, described by [migrations].
  *
- * SQL files and migration classes are resolved through [applicationClassLoader] instead of the class loader of this
- * library, because they belong to the application. Only the classes in [ConventionalMigrations.classNames] are loaded,
- * never the rest of the application's packages. The history lives in `flyway_schema_history_<name>`.
+ * SQL files and migration classes are resolved through [applicationClassLoader] instead of the
+ * class loader of this library, because they belong to the application. Only the classes in
+ * [ConventionalMigrations.classNames] are loaded, never the rest of the application's packages. The
+ * history lives in `flyway_schema_history_<name>`.
  *
  * Runs at [order], before the sets of libraries.
  */
@@ -25,6 +26,9 @@ internal class ServiceMigrationSet(
     override fun MigrationSpec.describe() {
         classLoader(applicationClassLoader)
         migrations.sqlLocation?.let { location -> sql(location) }
-        if (migrations.classNames.isNotEmpty()) classNames(*migrations.classNames.toTypedArray())
+
+        if (migrations.classNames.isNotEmpty()) {
+            classNames(*migrations.classNames.toTypedArray())
+        }
     }
 }

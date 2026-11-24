@@ -1,13 +1,6 @@
 package dev.slne.surf.api.minestom.coroutine
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.EntityType
@@ -94,16 +87,20 @@ class WithEntityTest {
         }
     }
 
-    private fun zombieIn(instance: Instance): Entity =
-        Entity(EntityType.ZOMBIE).also { it.setInstance(instance, Pos.ZERO).join() }
+    private fun zombieIn(instance: Instance): Entity {
+        return Entity(EntityType.ZOMBIE).also { it.setInstance(instance, Pos.ZERO).join() }
+    }
 
     /**
-     * Ticks the server until [deferred] is done, failing the test instead of hanging when it is not.
+     * Ticks the server until [deferred] is done, failing the test instead of hanging when it is
+     * not.
      */
     private fun tickUntilCompleted(env: Env, deferred: Deferred<*>) {
         val deadline = System.nanoTime() + TIMEOUT_NANOS
+
         while (!deferred.isCompleted) {
             check(System.nanoTime() < deadline) { "withEntity did not complete within the timeout" }
+
             env.tick()
             Thread.sleep(1)
         }

@@ -27,7 +27,7 @@ import me.devnatan.inventoryframework.context.RenderContext
  */
 inline fun RenderContext.slot(
     slot: Int,
-    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
 ) {
     slot(slot).apply(block)
 }
@@ -51,7 +51,7 @@ inline fun RenderContext.slot(
 inline fun RenderContext.slot(
     row: Int,
     column: Int,
-    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
 ) {
     slot(row, column).apply(block)
 }
@@ -68,7 +68,9 @@ inline fun RenderContext.slot(
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [BukkitItemComponentBuilder]
  */
-inline fun RenderContext.firstSlot(block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.firstSlot(
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
+) {
     firstSlot().apply(block)
 }
 
@@ -84,7 +86,9 @@ inline fun RenderContext.firstSlot(block: @InventoryFrameworkDSL BukkitItemCompo
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [BukkitItemComponentBuilder]
  */
-inline fun RenderContext.lastSlot(block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.lastSlot(
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
+) {
     lastSlot().apply(block)
 }
 
@@ -102,7 +106,9 @@ inline fun RenderContext.lastSlot(block: @InventoryFrameworkDSL BukkitItemCompon
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [BukkitItemComponentBuilder]
  */
-inline fun RenderContext.availableSlot(block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.availableSlot(
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
+) {
     availableSlot().apply(block)
 }
 
@@ -129,7 +135,7 @@ inline fun RenderContext.availableSlot(block: @InventoryFrameworkDSL BukkitItemC
  */
 inline fun RenderContext.layoutSlot(
     character: Char,
-    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
 ) {
     layoutSlot(character).apply(block)
 }
@@ -148,7 +154,9 @@ inline fun RenderContext.layoutSlot(
  * @receiver the [RenderContext] to configure
  * @param block configuration block applied to the [BukkitItemComponentBuilder]
  */
-inline fun RenderContext.resultSlot(block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit) {
+inline fun RenderContext.resultSlot(
+    block: @InventoryFrameworkDSL BukkitItemComponentBuilder.() -> Unit,
+) {
     resultSlot().apply(block)
 }
 

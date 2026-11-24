@@ -22,6 +22,7 @@ class RegisteredCommand(
         var result = name.hashCode()
         result = 31 * result + namespace.hashCode()
         result = 31 * result + aliases.hashCode()
+
         return result
     }
 

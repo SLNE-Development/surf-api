@@ -10,11 +10,15 @@ internal object MaterialSerializer : ScalarSerializer.Annotated<Material>(Materi
     override fun deserialize(type: AnnotatedType, obj: Any): Material {
         return Material.matchMaterial(obj.toString()) ?: throw SerializationException(
             Material::class.java,
-            "$obj($type) is not a valid material"
+            "$obj($type) is not a valid material",
         )
     }
 
-    override fun serialize(type: AnnotatedType, item: Material, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: Material,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.key.toString()
     }
 }

@@ -6,8 +6,8 @@ import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
- * Listener that records the origin of every received [TestChatEvent], once through a listener method that sees all
- * events and once through one that skips the events of its own client.
+ * Listener that records the origin of every received [TestChatEvent], once through a listener
+ * method that sees all events and once through one that skips the events of its own client.
  */
 class OriginListener {
 
@@ -33,6 +33,7 @@ class OriginListener {
 
     private suspend fun received(event: TestChatEvent): ReceivedOrigin {
         val context = natsEventContext()
+
         return ReceivedOrigin(event.message, context.origin, context.isFromThisClient)
     }
 }

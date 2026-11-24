@@ -60,10 +60,17 @@ class NotAdmittedLogTest {
         assertEquals(listOf(summary(1)), lines.drop(1))
     }
 
-    private fun notAdmittedLog(scope: CoroutineScope) =
-        NotAdmittedLog("test.Service", permits = 2, scope = scope, interval = INTERVAL, warn = { lines += it })
+    private fun notAdmittedLog(scope: CoroutineScope) = NotAdmittedLog(
+        "test.Service",
+        permits = 2,
+        scope = scope,
+        interval = INTERVAL,
+        warn = { lines += it },
+    )
 
-    private fun summary(count: Int) = "$count more requests to test.Service got no handler slot in the last $INTERVAL"
+    private fun summary(count: Int): String {
+        return "$count more requests to test.Service got no handler slot in the last $INTERVAL"
+    }
 
     private companion object {
         val INTERVAL = 10.seconds

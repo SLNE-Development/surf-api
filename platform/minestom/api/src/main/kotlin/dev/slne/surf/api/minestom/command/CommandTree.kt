@@ -33,8 +33,10 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
     private val usage = mutableListOf<String>()
     private var help: String? = null
 
-    fun withAliases(vararg aliases: String): CommandTree = apply {
-        this.aliases += aliases
+    fun withAliases(vararg aliases: String): CommandTree {
+        return apply {
+            this.aliases += aliases
+        }
     }
 
     /**
@@ -45,52 +47,70 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
      *
      * @throws CommandValidationException when [permission] is blank
      */
-    fun withPermission(permission: String): CommandTree = apply {
-        val normalized = permission.trim()
-        if (normalized.isBlank()) {
-            throw CommandValidationException("Command permission must not be blank")
+    fun withPermission(permission: String): CommandTree {
+        return apply {
+            val normalized = permission.trim()
+
+            if (normalized.isBlank()) {
+                throw CommandValidationException("Command permission must not be blank")
+            }
+
+            permissions += normalized
         }
-        permissions += normalized
     }
 
     /**
      * Requires [requirement] to return `true` for the sender to use any branch of the command.
      * Multiple requirements accumulate and all must pass.
      */
-    fun withRequirement(requirement: (CommandSender) -> Boolean): CommandTree = apply {
-        requirements += requirement
+    fun withRequirement(requirement: (CommandSender) -> Boolean): CommandTree {
+        return apply {
+            requirements += requirement
+        }
     }
 
-    fun withShortDescription(description: String): CommandTree = apply {
-        shortDescription = description
+    fun withShortDescription(description: String): CommandTree {
+        return apply {
+            shortDescription = description
+        }
     }
 
-    fun withFullDescription(vararg description: String): CommandTree = apply {
-        fullDescription.clear()
-        fullDescription += description
+    fun withFullDescription(vararg description: String): CommandTree {
+        return apply {
+            fullDescription.clear()
+            fullDescription += description
+        }
     }
 
-    fun withUsage(vararg usage: String): CommandTree = apply {
-        this.usage.clear()
-        this.usage += usage
+    fun withUsage(vararg usage: String): CommandTree {
+        return apply {
+            this.usage.clear()
+            this.usage += usage
+        }
     }
 
-    fun withHelp(help: String): CommandTree = apply {
-        this.help = help
+    fun withHelp(help: String): CommandTree {
+        return apply {
+            this.help = help
+        }
     }
 
     /**
      * Adds [argument], together with the branches nested below it, as a branch of the command.
      */
-    fun then(argument: Argument<*>): CommandTree = apply {
-        arguments += argument
+    fun then(argument: Argument<*>): CommandTree {
+        return apply {
+            arguments += argument
+        }
     }
 
     /**
      * Adds an executor that runs when the command is invoked without arguments.
      */
-    override fun addExecutor(definition: ExecutorDefinition): CommandTree = apply {
-        executors += definition
+    override fun addExecutor(definition: ExecutorDefinition): CommandTree {
+        return apply {
+            executors += definition
+        }
     }
 
     @InternalSurfApi
@@ -110,7 +130,7 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
             )
         }
 
-        arguments.forEach { argument ->
+        for (argument in arguments) {
             flatten(
                 prefix = emptyList(),
                 inheritedPermissions = rootPermissions,
@@ -131,10 +151,13 @@ class CommandTree(val name: String) : CommandExecutable<CommandTree> {
     /**
      * Validates the command and registers it with the server.
      *
-     * With a [namespace], the name and every alias are additionally registered as `namespace:label`.
+     * With a [namespace], the name and every alias are additionally registered as
+     * `namespace:label`.
      *
      * @throws CommandValidationException when the command or [namespace] is invalid
      * @throws IllegalStateException when a label is already taken or the platform is not installed
      */
-    fun register(namespace: String? = null): RegisteredCommand = CommandAPI.register(toDefinition(), namespace)
+    fun register(namespace: String? = null): RegisteredCommand {
+        return CommandAPI.register(toDefinition(), namespace)
+    }
 }

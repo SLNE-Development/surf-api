@@ -28,6 +28,6 @@ interface GlowingLifecycleHandler {
         player: Player,
         chunkX: Int,
         chunkZ: Int,
-        world: org.bukkit.World
+        world: org.bukkit.World,
     ): PacketOperation?
 }

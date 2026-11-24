@@ -24,8 +24,8 @@ internal external interface MsgHdrs {
     fun keys(): Array<String>
 
     /**
-     * Member of `MsgHdrsImpl`, the class of every `MsgHdrs` that nats.js creates. It is not part of the `MsgHdrs`
-     * interface.
+     * Member of `MsgHdrsImpl`, the class of every `MsgHdrs` that nats.js creates. It is not part of
+     * the `MsgHdrs` interface.
      */
     fun encode(): Uint8Array<*>
 }

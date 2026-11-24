@@ -13,12 +13,17 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Token and user/password authentication against the servers `startNatsJsTestServer` starts with `--auth` and
- * `--user`/`--pass`.
+ * Token and user/password authentication against the servers `startNatsJsTestServer` starts with
+ * `--auth` and `--user`/`--pass`.
  */
 class AuthE2eTest {
 
-    private fun options(url: String, token: String? = null, user: String? = null, pass: String? = null) = ConnectOptions(
+    private fun options(
+        url: String,
+        token: String? = null,
+        user: String? = null,
+        pass: String? = null,
+    ) = ConnectOptions(
         name = uniqueName("auth-client"),
         servers = arrayOf(url),
         connectTimeoutMs = 2000,
@@ -32,7 +37,10 @@ class AuthE2eTest {
         try {
             assertFalse(client.isClosed)
             val received = mutableListOf<String?>()
-            client.listen(ChatMessageSchema, { event, _ -> received.add(event.fields<ChatMessage>().text) }).await()
+            client.listen(
+                ChatMessageSchema,
+                { event, _ -> received.add(event.fields<ChatMessage>().text) },
+            ).await()
             client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = "authorized" })
             eventually { received.size == 1 }
             assertEquals(listOf<String?>("authorized"), received)
@@ -58,7 +66,15 @@ class AuthE2eTest {
     @Test
     fun userAndPasswordAuthentication() = e2eTest {
         val url = TestNats.auth("userUrl")
-        assertUsable(connect(options(url, user = TestNats.auth("user"), pass = TestNats.auth("pass"))).await())
+        assertUsable(
+            connect(
+                options(
+                    url,
+                    user = TestNats.auth("user"),
+                    pass = TestNats.auth("pass"),
+                ),
+            ).await(),
+        )
         assertRejected(options(url, user = TestNats.auth("user"), pass = "wrong-pass"))
         assertRejected(options(url))
     }

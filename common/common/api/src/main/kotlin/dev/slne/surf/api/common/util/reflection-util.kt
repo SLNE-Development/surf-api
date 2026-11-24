@@ -13,5 +13,6 @@ import java.lang.reflect.AccessibleObject
  * @param A the type of annotation to query for
  * @return this element's annotation for the specified type if directly present, null otherwise
  */
-inline fun <reified A : Annotation> AccessibleObject.findAnnotation(): A? =
-    getDeclaredAnnotation(A::class.java)
+inline fun <reified A : Annotation> AccessibleObject.findAnnotation(): A? {
+    return getDeclaredAnnotation(A::class.java)
+}

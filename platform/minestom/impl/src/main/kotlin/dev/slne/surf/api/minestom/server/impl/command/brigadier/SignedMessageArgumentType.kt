@@ -10,8 +10,8 @@ import net.minestom.server.entity.Player
 /**
  * Consumes the rest of the command line as a [SignedMessage].
  *
- * The result is the message supplied for [nodeName] through [SignedCommandArguments], or an unsigned
- * one created by [SignedCommandArguments.unsignedFactory] when none is in scope.
+ * The result is the message supplied for [nodeName] through [SignedCommandArguments], or an
+ * unsigned one created by [SignedCommandArguments.unsignedFactory] when none is in scope.
  */
 internal class SignedMessageArgumentType(
     private val nodeName: String,
@@ -19,8 +19,9 @@ internal class SignedMessageArgumentType(
 
     override fun parse(reader: StringReader): SignedMessage = read(reader, sender = null)
 
-    override fun <S> parse(reader: StringReader, source: S): SignedMessage =
-        read(reader, source as? CommandSender)
+    override fun <S> parse(reader: StringReader, source: S): SignedMessage {
+        return read(reader, source as? CommandSender)
+    }
 
     private fun read(reader: StringReader, sender: CommandSender?): SignedMessage {
         val content = reader.remaining

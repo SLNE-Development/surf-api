@@ -7,16 +7,7 @@ import dev.slne.surf.nats.js.api.ProtoMessage
 import dev.slne.surf.nats.js.client.JsRuntimeDefaults
 import dev.slne.surf.nats.js.external.nats.core.NatsConnectionInternals
 import dev.slne.surf.nats.js.external.protobuf.DescMethod
-import dev.slne.surf.nats.js.fixtures.ChatMessage
-import dev.slne.surf.nats.js.fixtures.ChatMessageSchema
-import dev.slne.surf.nats.js.fixtures.FindPlayerRequest
-import dev.slne.surf.nats.js.fixtures.FindPlayerResponse
-import dev.slne.surf.nats.js.fixtures.FindPlayerResponseSchema
-import dev.slne.surf.nats.js.fixtures.PlayerJoined
-import dev.slne.surf.nats.js.fixtures.PlayerJoinedSchema
-import dev.slne.surf.nats.js.fixtures.PlayerService
-import dev.slne.surf.nats.js.fixtures.Uuid
-import dev.slne.surf.nats.js.fixtures.fields
+import dev.slne.surf.nats.js.fixtures.*
 import dev.slne.surf.nats.runtime.epochMillis
 import js.objects.unsafeJso
 import kotlinx.coroutines.CompletableDeferred
@@ -37,7 +28,9 @@ import kotlin.time.Duration.Companion.seconds
 
 class CloseE2eTest {
 
-    private fun findPlayer(): DescMethod = PlayerService.methods.first { it.localName == "findPlayer" }
+    private fun findPlayer(): DescMethod {
+        return PlayerService.methods.first { it.localName == "findPlayer" }
+    }
 
     // A listener handler that suspends until release() and then runs body.
     private class GatedHandler(private val body: suspend () -> Unit = {}) {
@@ -49,6 +42,7 @@ class CloseE2eTest {
             GlobalScope.promise {
                 entered.complete(Unit)
                 gate.await()
+
                 try {
                     body()
                     finished.complete(Unit)
@@ -64,7 +58,8 @@ class CloseE2eTest {
         }
     }
 
-    // Runs the gated handler on client and starts closing client while it runs; returns the pending close().
+    // Runs the gated handler on client and starts closing client while it runs; returns the pending
+    // close().
     private suspend fun closeWhileRunning(
         client: SurfNatsClient,
         publisher: SurfNatsClient,
@@ -77,6 +72,7 @@ class CloseE2eTest {
         val closing = client.close()
         // Lets close() run up to the point where it waits for the handler.
         delay(200.milliseconds)
+
         return closing
     }
 
@@ -85,16 +81,29 @@ class CloseE2eTest {
         val raw = rawNats()
         val client = TestNats.client(uniqueName("close-handler"))
         val publisher = TestNats.client(uniqueName("close-publisher"))
+
         try {
             val published = mutableListOf<String?>()
             raw.subscribe("surf.evt.surf.natsjs.test.v1.PlayerJoined") { message ->
-                published += raw.decode(PlayerJoinedSchema, message.data).fields<PlayerJoined>().name
+                published += raw.decode(
+                    PlayerJoinedSchema,
+                    message.data,
+                ).fields<PlayerJoined>().name
             }
-            raw.subscribe("surf.rpc.surf.natsjs.test.v1.PlayerService.FindPlayer", queue = "surf.natsjs.test.v1.PlayerService") { request ->
-                raw.respond(request, raw.encode(FindPlayerResponseSchema, unsafeJso<FindPlayerResponse> {
-                    name = "Steve"
-                    server = "lobby"
-                }))
+            raw.subscribe(
+                "surf.rpc.surf.natsjs.test.v1.PlayerService.FindPlayer",
+                queue = "surf.natsjs.test.v1.PlayerService",
+            ) { request ->
+                raw.respond(
+                    request,
+                    raw.encode(
+                        FindPlayerResponseSchema,
+                        unsafeJso<FindPlayerResponse> {
+                            name = "Steve"
+                            server = "lobby"
+                        },
+                    ),
+                )
             }
             raw.flush()
 
@@ -106,7 +115,10 @@ class CloseE2eTest {
                 }
                 client.publish(PlayerJoinedSchema, joined)
                 val request = unsafeJso<FindPlayerRequest> { name = "Steve" }
-                server = client.call(findPlayer(), request).await().fields<FindPlayerResponse>().server
+                server = client.call(
+                    findPlayer(),
+                    request,
+                ).await().fields<FindPlayerResponse>().server
             }
             val closing = closeWhileRunning(client, publisher, gated)
 
@@ -132,6 +144,7 @@ class CloseE2eTest {
         val impl = TestNats.clientImpl(uniqueName("close-buffered"))
         val client = SurfNatsClient(impl)
         val protocol = impl.connection.unsafeCast<NatsConnectionInternals>().protocol
+
         try {
             val received = mutableListOf<String?>()
             raw.subscribe("surf.evt.surf.natsjs.test.v1.ChatMessage") { message ->
@@ -139,11 +152,19 @@ class CloseE2eTest {
             }
             raw.flush()
 
-            // While nats.js considers the connection down it keeps the publishes in its outbound buffer, and the
-            // flush it schedules for them is a no-op. Only the drain in close() can send them afterwards.
+            // While nats.js considers the connection down it keeps the publishes in its outbound
+            // buffer, and the flush it schedules for them is a no-op. Only the drain in close() can
+            // send them afterwards.
             val expected = (0 until 200).map<Int, String?> { "buffered-$it" }
             protocol.connected = false
-            expected.forEach { value -> client.publish(ChatMessageSchema, unsafeJso<ChatMessage> { text = value }) }
+
+            for (value in expected) {
+                client.publish(
+                    ChatMessageSchema,
+                    unsafeJso<ChatMessage> { text = value },
+                )
+            }
+
             delay(100.milliseconds)
             assertTrue(received.isEmpty(), "the publishes left the buffer before close()")
 
@@ -164,6 +185,7 @@ class CloseE2eTest {
     fun closeWaitsForRunningHandlers() = e2eTest {
         val client = TestNats.client(uniqueName("close-handler"))
         val publisher = TestNats.client(uniqueName("close-publisher"))
+
         try {
             val gated = GatedHandler()
             var resolved = false
@@ -187,6 +209,7 @@ class CloseE2eTest {
         val client = TestNats.client(uniqueName("close-handler"))
         val publisher = TestNats.client(uniqueName("close-publisher"))
         val previousTimeout = JsRuntimeDefaults.drainTimeout
+
         try {
             JsRuntimeDefaults.drainTimeout = 500.milliseconds
             val gated = GatedHandler()
@@ -210,6 +233,7 @@ class CloseE2eTest {
     fun listenIsRejectedWhileClosingAndAfterClose() = e2eTest {
         val client = TestNats.client(uniqueName("close-handler"))
         val publisher = TestNats.client(uniqueName("close-publisher"))
+
         try {
             val gated = GatedHandler()
             val closing = closeWhileRunning(client, publisher, gated)

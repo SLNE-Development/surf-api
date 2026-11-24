@@ -14,8 +14,9 @@ class BasePackageTest {
     @TempDir
     lateinit var directory: File
 
-    private fun source(name: String, content: String): File =
-        directory.resolve(name).apply { writeText(content) }
+    private fun source(name: String, content: String): File {
+        return directory.resolve(name).apply { writeText(content) }
+    }
 
     private fun resolution(
         files: List<File>,
@@ -23,13 +24,20 @@ class BasePackageTest {
         platform: SurfApiPlatform = SurfApiPlatform.PAPER,
     ) = BasePackage.resolve(BasePackage.declaredPackages(files), explicitPackage, platform)
 
-    private fun resolve(files: List<File>, explicitPackage: String?, platform: SurfApiPlatform = SurfApiPlatform.PAPER) =
-        resolution(files, explicitPackage, platform).basePackage
+    private fun resolve(
+        files: List<File>,
+        explicitPackage: String?,
+        platform: SurfApiPlatform = SurfApiPlatform.PAPER,
+    ) = resolution(files, explicitPackage, platform).basePackage
 
     @Test
     fun `common package is the longest shared prefix of whole segments`() {
         val common = BasePackage.commonPackage(
-            listOf("com.example.plugin.listener", "com.example.plugin", "com.example.plugin.command.admin")
+            listOf(
+                "com.example.plugin.listener",
+                "com.example.plugin",
+                "com.example.plugin.command.admin",
+            ),
         )
 
         assertEquals("com.example.plugin", common)
@@ -37,7 +45,10 @@ class BasePackageTest {
 
     @Test
     fun `common package does not split a segment`() {
-        assertEquals("com.example", BasePackage.commonPackage(listOf("com.example.pluginA", "com.example.pluginB")))
+        assertEquals(
+            "com.example",
+            BasePackage.commonPackage(listOf("com.example.pluginA", "com.example.pluginB")),
+        )
     }
 
     @Test
@@ -57,8 +68,14 @@ class BasePackageTest {
 
     @Test
     fun `reads the package of Kotlin and Java files`() {
-        assertEquals("com.example.kt", BasePackage.declaredPackage("package com.example.kt\n\nclass A"))
-        assertEquals("com.example.java", BasePackage.declaredPackage("package com.example.java;\n\npublic class A {}"))
+        assertEquals(
+            "com.example.kt",
+            BasePackage.declaredPackage("package com.example.kt\n\nclass A"),
+        )
+        assertEquals(
+            "com.example.java",
+            BasePackage.declaredPackage("package com.example.java;\n\npublic class A {}"),
+        )
     }
 
     @Test
@@ -149,12 +166,28 @@ class BasePackageTest {
 
     @Test
     fun `says that surf-api's own package is rejected and that a parent would scan surf-api`() {
-        val own = assertFailsWith<InvalidUserDataException> { resolve(emptyList(), "dev.slne.surf.api") }
-        val parent = assertFailsWith<InvalidUserDataException> { resolve(emptyList(), "dev.slne.surf") }
+        val own = assertFailsWith<InvalidUserDataException> {
+            resolve(
+                emptyList(),
+                "dev.slne.surf.api",
+            )
+        }
+        val parent = assertFailsWith<InvalidUserDataException> {
+            resolve(
+                emptyList(),
+                "dev.slne.surf",
+            )
+        }
 
         assertTrue("is surf-api's own package" in own.message.orEmpty(), own.message)
-        assertTrue("contains surf-api's package 'dev.slne.surf.api'" in parent.message.orEmpty(), parent.message)
-        assertTrue("would include the components of surf-api itself" in parent.message.orEmpty(), parent.message)
+        assertTrue(
+            "contains surf-api's package 'dev.slne.surf.api'" in parent.message.orEmpty(),
+            parent.message,
+        )
+        assertTrue(
+            "would include the components of surf-api itself" in parent.message.orEmpty(),
+            parent.message,
+        )
     }
 
     @Test
@@ -170,14 +203,27 @@ class BasePackageTest {
     @Test
     fun `Paper and Velocity accept a package inside surf-api because they have a class loader of their own`() {
         for (platform in listOf(SurfApiPlatform.PAPER, SurfApiPlatform.VELOCITY)) {
-            assertEquals("dev.slne.surf.api.example", resolve(emptyList(), "dev.slne.surf.api.example", platform))
+            assertEquals(
+                "dev.slne.surf.api.example",
+                resolve(emptyList(), "dev.slne.surf.api.example", platform),
+            )
         }
     }
 
     @Test
     fun `rejects a package that is no Java package name`() {
-        for (malformed in listOf("com.example.", "com..example", "com.example.class", "1com.example")) {
-            val failure = assertFailsWith<InvalidUserDataException>(malformed) { resolve(emptyList(), malformed) }
+        for (malformed in listOf(
+            "com.example.",
+            "com..example",
+            "com.example.class",
+            "1com.example",
+        )) {
+            val failure = assertFailsWith<InvalidUserDataException>(malformed) {
+                resolve(
+                    emptyList(),
+                    malformed,
+                )
+            }
 
             assertTrue("is not a valid package name" in failure.message.orEmpty(), failure.message)
         }
@@ -195,7 +241,10 @@ class BasePackageTest {
         assertEquals("com.example.plugin.core", resolution.basePackage)
         val warning = resolution.warnings.single()
         assertTrue("'com.example.plugin.listener'" in warning, warning)
-        assertTrue("'com.example.plugin.core'" !in warning.substringAfter("source packages"), warning)
+        assertTrue(
+            "'com.example.plugin.core'" !in warning.substringAfter("source packages"),
+            warning,
+        )
     }
 
     @Test
@@ -228,7 +277,10 @@ class BasePackageTest {
 
     @Test
     fun `a scanned class without sources raises no warning`() {
-        assertEquals(emptyList(), BasePackage.checkScanned("com.example.Main", emptyList(), SurfApiPlatform.VELOCITY))
+        assertEquals(
+            emptyList(),
+            BasePackage.checkScanned("com.example.Main", emptyList(), SurfApiPlatform.VELOCITY),
+        )
     }
 
     @Test
@@ -240,7 +292,10 @@ class BasePackageTest {
         )
 
         val warning = warnings.single()
-        assertTrue("'com.example.plugin.core'" in warning.substringBefore("does not contain"), warning)
+        assertTrue(
+            "'com.example.plugin.core'" in warning.substringBefore("does not contain"),
+            warning,
+        )
         assertTrue("'com.example.plugin.listener', 'org.other'" in warning, warning)
     }
 
@@ -256,12 +311,20 @@ class BasePackageTest {
     @Test
     fun `a Minestom class inside surf-api is rejected while a Paper class there is scanned`() {
         assertFailsWith<InvalidUserDataException> {
-            BasePackage.checkScanned("dev.slne.surf.api.example.Main", emptyList(), SurfApiPlatform.MINESTOM)
+            BasePackage.checkScanned(
+                "dev.slne.surf.api.example.Main",
+                emptyList(),
+                SurfApiPlatform.MINESTOM,
+            )
         }
 
         assertEquals(
             emptyList(),
-            BasePackage.checkScanned("dev.slne.surf.api.example.Boot", emptyList(), SurfApiPlatform.PAPER),
+            BasePackage.checkScanned(
+                "dev.slne.surf.api.example.Boot",
+                emptyList(),
+                SurfApiPlatform.PAPER,
+            ),
         )
     }
 

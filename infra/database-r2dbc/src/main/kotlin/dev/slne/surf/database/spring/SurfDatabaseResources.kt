@@ -16,9 +16,10 @@ import javax.sql.DataSource
 /**
  * The pooled database and the JDBC data source of its migrations, owned by one context.
  *
- * [database] is not migrated yet; the context hands it out as a bean only after [SurfMigrationRunner][dev.slne.surf.database.migration.SurfMigrationRunner]
- * ran. [close] unregisters the database from Exposed's [TransactionManager], then disposes the pool and its event
- * loop. The JDBC data source opens a connection per use and holds none.
+ * [database] is not migrated yet; the context hands it out as a bean only after
+ * [SurfMigrationRunner][dev.slne.surf.database.migration.SurfMigrationRunner] ran. [close]
+ * unregisters the database from Exposed's [TransactionManager], then disposes the pool and its
+ * event loop. The JDBC data source opens a connection per use and holds none.
  */
 internal class SurfDatabaseResources private constructor(
     val database: R2dbcDatabase,
@@ -38,10 +39,12 @@ internal class SurfDatabaseResources private constructor(
     companion object {
 
         /**
-         * Opens the pool for [config] under [name] and connects Exposed to it, applying [customize] last.
+         * Opens the pool for [config] under [name] and connects Exposed to it, applying [customize]
+         * last.
          *
-         * [createMigrationDataSource] runs before anything is allocated or registered, so a failure there leaves no pool
-         * and no database in Exposed. If connecting fails, the pool is disposed again.
+         * [createMigrationDataSource] runs before anything is allocated or registered, so a failure
+         * there leaves no pool and no database in Exposed. If connecting fails, the pool is
+         * disposed again.
          */
         fun open(
             config: DatabaseConfig,

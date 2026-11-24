@@ -37,7 +37,12 @@ class OffloadPayloadTest {
     @Test
     fun inlineBodyGetsOneDeadline() {
         val before = epochMillis()
-        assertFalse(offload(maxPayload = FITTING_MAX_PAYLOAD + DEADLINE_LINE_BYTES, stampDeadline = true))
+        assertFalse(
+            offload(
+                maxPayload = FITTING_MAX_PAYLOAD + DEADLINE_LINE_BYTES,
+                stampDeadline = true,
+            ),
+        )
         val after = epochMillis()
 
         assertEquals(listOf(ProtocolHeaders.DEADLINE), events.map { it.first })
@@ -72,7 +77,12 @@ class OffloadPayloadTest {
     fun deadlineIsTakenAfterTheUpload() {
         var uploadedAt = 0L
 
-        assertTrue(offload(maxPayload = FITTING_MAX_PAYLOAD - 1, stampDeadline = true) { uploadedAt = nextClockTick() })
+        assertTrue(
+            offload(
+                maxPayload = FITTING_MAX_PAYLOAD - 1,
+                stampDeadline = true,
+            ) { uploadedAt = nextClockTick() },
+        )
         val after = epochMillis()
 
         assertTrue(deadline() in (uploadedAt + LIFETIME_MILLIS)..(after + LIFETIME_MILLIS))
@@ -99,13 +109,20 @@ class OffloadPayloadTest {
 
             assertEquals(bucket.lifetimeExceededMessage(BODY_BYTES, lifetime), error.message)
         }
+
         assertEquals(emptyList(), events)
     }
 
     @Test
     fun lifetimeEqualToTheBucketTtlIsOffloaded() {
         for (bucket in PayloadBucket.entries) {
-            assertTrue(offload(maxPayload = FITTING_MAX_PAYLOAD - 1, lifetime = bucket.ttl, bucket = bucket))
+            assertTrue(
+                offload(
+                    maxPayload = FITTING_MAX_PAYLOAD - 1,
+                    lifetime = bucket.ttl,
+                    bucket = bucket,
+                ),
+            )
         }
     }
 
@@ -135,30 +152,39 @@ class OffloadPayloadTest {
         lifetime: Duration = LIFETIME,
         bucket: PayloadBucket = PayloadBucket.TRANSIENT,
         duringUpload: () -> Unit = {},
-    ): Boolean = offloadPayload(
-        bodyBytes = BODY_BYTES,
-        headerBytes = HEADER_BYTES,
-        extraHeaderBytes = extraHeaderBytes,
-        maxPayload = maxPayload,
-        lifetime = lifetime,
-        bucket = bucket,
-        stampDeadline = stampDeadline,
-        writeHeader = { name, value -> events += name to value },
-        upload = { name ->
-            events += UPLOAD to name
-            duringUpload()
-        },
-    )
+    ): Boolean {
+        return offloadPayload(
+            bodyBytes = BODY_BYTES,
+            headerBytes = HEADER_BYTES,
+            extraHeaderBytes = extraHeaderBytes,
+            maxPayload = maxPayload,
+            lifetime = lifetime,
+            bucket = bucket,
+            stampDeadline = stampDeadline,
+            writeHeader = { name, value -> events += name to value },
+            upload = { name ->
+                events += UPLOAD to name
+                duringUpload()
+            },
+        )
+    }
 
-    private fun uploadedNames(): List<String> = events.filter { it.first == UPLOAD }.map { it.second }
+    private fun uploadedNames(): List<String> {
+        return events
+            .filter { it.first == UPLOAD }
+            .map { it.second }
+    }
 
-    private fun deadline(): Long = events.single { it.first == ProtocolHeaders.DEADLINE }.second.toLong()
+    private fun deadline(): Long {
+        return events.single { it.first == ProtocolHeaders.DEADLINE }.second.toLong()
+    }
 
     // A deadline taken before this returns is smaller than one taken after it
     private fun nextClockTick(): Long {
         val start = epochMillis()
         var now = epochMillis()
         while (now <= start) now = epochMillis()
+
         return now
     }
 
@@ -170,7 +196,8 @@ class OffloadPayloadTest {
         val LIFETIME_MILLIS = LIFETIME.inWholeMilliseconds
 
         // Smallest max payload the body fits into without a deadline and without extra headers
-        val FITTING_MAX_PAYLOAD = (BODY_BYTES + HEADER_BYTES + ProtocolDefaults.PAYLOAD_REF_RESERVE).toLong()
+        val FITTING_MAX_PAYLOAD = (BODY_BYTES + HEADER_BYTES + ProtocolDefaults.PAYLOAD_REF_RESERVE)
+            .toLong()
 
         // Surf-Deadline is epoch milliseconds: 13 digits
         val DEADLINE_LINE_BYTES = headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))

@@ -23,7 +23,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 
 /**
- * The wire vectors of spec 12.7; `src/jsTest/interop/vectors.mjs` holds the JS expectations under the same names.
+ * The wire vectors of spec 12.7; `src/jsTest/interop/vectors.mjs` holds the JS expectations under
+ * the same names.
  */
 internal object InteropVectors {
     val INSTANT: Instant = Instant.ofEpochSecond(1_700_000_000, 123_456_789)
@@ -31,7 +32,8 @@ internal object InteropVectors {
 
     private val zeroScalars = InteropScalars(0, 0L, 0L, 0, 0L, 0, 0.0, false)
 
-    // Kotlin decodes WIDE_COLOR_PURPLE (4) as ColorHolder to UNSPECIFIED in every position (spec 12.9 E).
+    // Kotlin decodes WIDE_COLOR_PURPLE (4) as ColorHolder to UNSPECIFIED in every position (spec
+    // 12.9 E).
     private val unknownColorsDecoded = ColorHolder(
         color = Color.UNSPECIFIED,
         maybeColor = Color.UNSPECIFIED,
@@ -77,8 +79,18 @@ internal object InteropVectors {
         InteropVector(
             "maps", InteropMaps.serializer(),
             InteropMaps(
-                signedByName = mapOf("min" to Long.MIN_VALUE, "minus-one" to -1L, "zero" to 0L, "max" to Long.MAX_VALUE),
-                namesByFixed = mapOf(0 to "zero", 1 to "one", Int.MIN_VALUE to "2^31", -1 to "2^32-1"),
+                signedByName = mapOf(
+                    "min" to Long.MIN_VALUE,
+                    "minus-one" to -1L,
+                    "zero" to 0L,
+                    "max" to Long.MAX_VALUE,
+                ),
+                namesByFixed = mapOf(
+                    0 to "zero",
+                    1 to "one",
+                    Int.MIN_VALUE to "2^31",
+                    -1 to "2^32-1",
+                ),
             ),
         ),
         InteropVector("maps-empty", InteropMaps.serializer(), InteropMaps()),
@@ -132,10 +144,24 @@ internal object InteropVectors {
         ),
         InteropVector("defaults-sent-by-js", InteropDefaults.serializer(), InteropDefaults()),
         InteropVector("required", InteropRequired.serializer(), InteropRequired(name = "steve")),
-        InteropVector("required-empty", InteropRequired.serializer(), InteropRequired(name = "", count = 0)),
+        InteropVector(
+            "required-empty",
+            InteropRequired.serializer(),
+            InteropRequired(name = "", count = 0),
+        ),
         // A sender without InteropRequired.name: the empty message encodes to 0 bytes.
-        InteropVector("required-missing", InteropEmpty.serializer(), InteropEmpty(), echo = null, raw = true),
-        InteropVector("types", InteropTypes.serializer(), InteropTypes(TEST_UUID, INSTANT, NEGATIVE_DURATION)),
+        InteropVector(
+            "required-missing",
+            InteropEmpty.serializer(),
+            InteropEmpty(),
+            echo = null,
+            raw = true,
+        ),
+        InteropVector(
+            "types",
+            InteropTypes.serializer(),
+            InteropTypes(TEST_UUID, INSTANT, NEGATIVE_DURATION),
+        ),
         InteropVector(
             "types-epoch", InteropTypes.serializer(),
             InteropTypes(UUID(Long.MIN_VALUE, 1L), Instant.EPOCH, Duration.ZERO),
@@ -146,7 +172,11 @@ internal object InteropVectors {
         ),
         InteropVector("empty", InteropEmpty.serializer(), InteropEmpty()),
         InteropVector("oneof-unset", InteropOneof.serializer(), InteropOneof()),
-        InteropVector("oneof-text", InteropOneof.serializer(), InteropOneof(InteropOneof.Value.Text(""))),
+        InteropVector(
+            "oneof-text",
+            InteropOneof.serializer(),
+            InteropOneof(InteropOneof.Value.Text("")),
+        ),
         InteropVector(
             "oneof-number", InteropOneof.serializer(),
             InteropOneof(InteropOneof.Value.Number(Long.MIN_VALUE)),
@@ -155,15 +185,16 @@ internal object InteropVectors {
             "oneof-empty", InteropOneof.serializer(),
             InteropOneof(InteropOneof.Value.Empty(InteropEmpty())),
         ),
-        // Schema evolution: a newer Kotlin sender for an older JS reader, which keeps the new fields as unknown
-        // fields; its echo shows that the older Kotlin reader skips them.
+        // Schema evolution: a newer Kotlin sender for an older JS reader, which keeps the new
+        // fields as unknown fields; its echo shows that the older Kotlin reader skips them.
         InteropVector(
             "evolved-new-to-old", InteropEvolvedV2.serializer(),
             InteropEvolvedV2(name = "steve", level = 3, nickname = "st", rank = 9),
             echo = InteropEvolved(name = "steve", level = 3),
             raw = true,
         ),
-        // An older Kotlin sender for a newer JS reader; both newer readers restore null and the [default].
+        // An older Kotlin sender for a newer JS reader; both newer readers restore null and the
+        // [default].
         InteropVector(
             "evolved-old-to-new", InteropEvolved.serializer(),
             InteropEvolved(name = "alex", level = 0),

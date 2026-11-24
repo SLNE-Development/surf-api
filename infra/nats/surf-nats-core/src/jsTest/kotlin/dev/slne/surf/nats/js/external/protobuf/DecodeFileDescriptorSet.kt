@@ -7,4 +7,7 @@ import js.typedarrays.Uint8Array
 
 // fromBinary() of @bufbuild/protobuf, typed for FileDescriptorSetSchema
 @JsName("fromBinary")
-internal external fun decodeFileDescriptorSet(schema: DescMessage, bytes: Uint8Array<*>): FileDescriptorSet
+internal external fun decodeFileDescriptorSet(
+    schema: DescMessage,
+    bytes: Uint8Array<*>,
+): FileDescriptorSet

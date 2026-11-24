@@ -16,4 +16,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.container.ViewContainer
  * @see blockCell
  */
 @ConsistentCopyVisibility
-data class ViewContainerModificationContext internal constructor(@PublishedApi internal val container: ViewContainer)
+data class ViewContainerModificationContext internal constructor(
+    @PublishedApi internal val container: ViewContainer,
+)

@@ -32,7 +32,8 @@ internal external interface ReflectMessage {
     fun oneofCase(oneof: DescOneof): DescField?
 
     /**
-     * Returns the `ScalarValue`: number, bigint, string, boolean or `Uint8Array`, by the scalar type.
+     * Returns the `ScalarValue`: number, bigint, string, boolean or `Uint8Array`, by the scalar
+     * type.
      */
     fun get(field: DescFieldScalar): Any
     fun get(field: DescFieldEnum): Int
@@ -49,8 +50,8 @@ internal external interface ReflectMessage {
     fun getUnknown(): Array<UnknownField>?
 
     /**
-     * Sets the unknown fields. TypeScript declares the parameter as `UnknownField[]`, but the value is assigned to
-     * `$unknown` as is, so `undefined` removes the unknown fields.
+     * Sets the unknown fields. TypeScript declares the parameter as `UnknownField[]`, but the value
+     * is assigned to `$unknown` as is, so `undefined` removes the unknown fields.
      */
     fun setUnknown(value: Array<UnknownField>?)
 }

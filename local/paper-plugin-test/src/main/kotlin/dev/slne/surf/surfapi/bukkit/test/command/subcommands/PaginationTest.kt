@@ -18,7 +18,7 @@ class PaginationTest(name: String) : CommandAPICommand(name) {
                     variableValue(data.name)
                     appendSpace()
                     info("(${data.age})")
-                }
+                },
             )
         }
     }
@@ -26,7 +26,7 @@ class PaginationTest(name: String) : CommandAPICommand(name) {
     val exampleDataList = listOf(
         ExampleData("Alice", 30),
         ExampleData("Bob", 25),
-        ExampleData("Charlie", 35)
+        ExampleData("Charlie", 35),
     )
 
     val longExampleDataList = List(100) { index ->

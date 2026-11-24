@@ -23,6 +23,7 @@ class ContextClassLoaderElement(
         val thread = Thread.currentThread()
         val previous = thread.contextClassLoader
         thread.contextClassLoader = classLoader
+
         return previous
     }
 
@@ -40,6 +41,7 @@ inline fun <T> withContextClassLoader(classLoader: ClassLoader, block: () -> T):
     val thread = Thread.currentThread()
     val previous = thread.contextClassLoader
     thread.contextClassLoader = classLoader
+
     try {
         return block()
     } finally {

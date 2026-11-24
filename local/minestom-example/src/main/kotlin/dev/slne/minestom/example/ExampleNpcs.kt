@@ -20,7 +20,7 @@ internal object ExampleNpcs {
             setEquipment(EquipmentSlot.MAIN_HAND, ItemStack.of(Material.COMPASS))
             onInteract { interaction ->
                 interaction.player.sendMessage(
-                    Component.text("Try /example highlight, /shout or /gamemode creative!")
+                    Component.text("Try /example highlight, /shout or /gamemode creative!"),
                 )
             }
         }

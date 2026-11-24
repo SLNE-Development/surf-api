@@ -21,4 +21,6 @@ public fun microserviceCommand(
     vararg aliases: String,
     description: String? = null,
     block: suspend MicroserviceCommandContext.(args: List<String>) -> Unit,
-): MicroserviceCommand = MicroserviceCommands.register(name, *aliases, description = description, block = block)
+): MicroserviceCommand {
+    return MicroserviceCommands.register(name, *aliases, description = description, block = block)
+}

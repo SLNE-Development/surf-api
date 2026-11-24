@@ -19,9 +19,15 @@ class DeliveryDispositionTest {
     private val last = RpcDefaults.MAX_DELIVER.toLong()
 
     private val permanentFailures = DeliveryCause.entries.filter { it.permanent }
-    private val transientFailures =
-        DeliveryCause.entries - permanentFailures - setOf(DeliveryCause.COMPLETED, DeliveryCause.DRAINING)
-    private val callerGaveUp = setOf(DeliveryCause.TIMED_OUT, DeliveryCause.NOT_ADMITTED, DeliveryCause.EXPIRED)
+    private val transientFailures = DeliveryCause.entries - permanentFailures - setOf(
+        DeliveryCause.COMPLETED,
+        DeliveryCause.DRAINING,
+    )
+    private val callerGaveUp = setOf(
+        DeliveryCause.TIMED_OUT,
+        DeliveryCause.NOT_ADMITTED,
+        DeliveryCause.EXPIRED,
+    )
     private val drainDelay = RpcDefaults.DRAIN_REDELIVERY_DELAY
 
     @Test
@@ -35,7 +41,11 @@ class DeliveryDispositionTest {
         for (cause in transientFailures) {
             assertEquals(Nak(1.seconds), fire(cause, 1), "$cause")
             assertEquals(Nak(5.seconds), fire(cause, 2), "$cause")
-            assertEquals(Nak(5.seconds), fire(cause, last - 1), "$cause: the last backoff entry repeats")
+            assertEquals(
+                Nak(5.seconds),
+                fire(cause, last - 1),
+                "$cause: the last backoff entry repeats",
+            )
         }
     }
 
@@ -82,18 +92,26 @@ class DeliveryDispositionTest {
     @Test
     fun `persistent rpc that met a draining registration is redelivered soon while its caller waits`() {
         assertEquals(Nak(drainDelay), rpc(DeliveryCause.DRAINING, 1))
-        assertEquals(Nak(drainDelay), rpc(DeliveryCause.DRAINING, last - 1, timeLeft = drainDelay + 1.milliseconds))
+        assertEquals(
+            Nak(drainDelay),
+            rpc(DeliveryCause.DRAINING, last - 1, timeLeft = drainDelay + 1.milliseconds),
+        )
     }
 
     @Test
     fun `persistent rpc that met a draining registration is terminated when no redelivery can happen`() {
-        assertEquals(Term, rpc(DeliveryCause.DRAINING, 1, timeLeft = drainDelay), "ends at the deadline")
+        assertEquals(
+            Term,
+            rpc(DeliveryCause.DRAINING, 1, timeLeft = drainDelay),
+            "ends at the deadline",
+        )
         assertEquals(Term, rpc(DeliveryCause.DRAINING, last))
     }
 
     @Test
     fun `persistent rpc is acknowledged after every reply and failure`() {
         val redelivered = setOf(DeliveryCause.REDELIVERY_REQUESTED, DeliveryCause.DRAINING)
+
         for (cause in DeliveryCause.entries - callerGaveUp - redelivered) {
             assertEquals(Ack, rpc(cause, 1), "$cause")
             assertEquals(Ack, rpc(cause, last, timeLeft = Duration.ZERO), "$cause")
@@ -111,19 +129,29 @@ class DeliveryDispositionTest {
     @Test
     fun `requested redelivery happens when its backoff ends before the deadline`() {
         val justEnough = 1.seconds + 1.milliseconds
-        assertEquals(Nak(1.seconds), rpc(DeliveryCause.REDELIVERY_REQUESTED, 1, timeLeft = justEnough))
-        assertEquals(Nak(5.seconds), rpc(DeliveryCause.REDELIVERY_REQUESTED, 2, timeLeft = 5.seconds + 1.milliseconds))
+        assertEquals(
+            Nak(1.seconds),
+            rpc(DeliveryCause.REDELIVERY_REQUESTED, 1, timeLeft = justEnough),
+        )
+        assertEquals(
+            Nak(5.seconds),
+            rpc(DeliveryCause.REDELIVERY_REQUESTED, 2, timeLeft = 5.seconds + 1.milliseconds),
+        )
         assertEquals(Nak(5.seconds), rpc(DeliveryCause.REDELIVERY_REQUESTED, last - 1))
     }
 
     @Test
     fun `requested redelivery that cannot happen before the deadline is answered`() {
-        assertEquals(Ack, rpc(DeliveryCause.REDELIVERY_REQUESTED, 1, timeLeft = 1.seconds), "ends at the deadline")
+        assertEquals(
+            Ack,
+            rpc(DeliveryCause.REDELIVERY_REQUESTED, 1, timeLeft = 1.seconds),
+            "ends at the deadline",
+        )
         assertEquals(Ack, rpc(DeliveryCause.REDELIVERY_REQUESTED, 1, timeLeft = 500.milliseconds))
         assertEquals(
             Ack,
             rpc(DeliveryCause.REDELIVERY_REQUESTED, 2, timeLeft = 3.seconds),
-            "compares the backoff of this delivery"
+            "compares the backoff of this delivery",
         )
     }
 
@@ -135,16 +163,25 @@ class DeliveryDispositionTest {
     @Test
     fun `core call has no delivery`() {
         assertFailsWith<IllegalStateException> {
-            DeliveryDisposition.of(DeliveryCause.COMPLETED, CallFlow.CORE, 1, Duration.INFINITE, backoff)
+            DeliveryDisposition.of(
+                DeliveryCause.COMPLETED,
+                CallFlow.CORE,
+                1,
+                Duration.INFINITE,
+                backoff,
+            )
         }
     }
 
-    private fun fire(cause: DeliveryCause, delivered: Long): DeliveryDisposition =
-        DeliveryDisposition.of(cause, CallFlow.FIRE, delivered, Duration.INFINITE, backoff)
+    private fun fire(cause: DeliveryCause, delivered: Long): DeliveryDisposition {
+        return DeliveryDisposition.of(cause, CallFlow.FIRE, delivered, Duration.INFINITE, backoff)
+    }
 
     private fun rpc(
         cause: DeliveryCause,
         delivered: Long,
         timeLeft: Duration = Duration.INFINITE,
-    ): DeliveryDisposition = DeliveryDisposition.of(cause, CallFlow.PERSISTENT_RPC, delivered, timeLeft, backoff)
+    ): DeliveryDisposition {
+        return DeliveryDisposition.of(cause, CallFlow.PERSISTENT_RPC, delivered, timeLeft, backoff)
+    }
 }

@@ -1,10 +1,12 @@
 package dev.slne.surf.nats.protocol
 
 /**
- * Subjects, stream names and consumer names of a service, derived from its proto full name [service].
+ * Subjects, stream names and consumer names of a service, derived from its proto full name
+ * [service].
  *
- * The full name includes the versioned package, so the major versions of a service never share subjects or streams.
- * The constructor throws [IllegalArgumentException] when [problem] reports a violation.
+ * The full name includes the versioned package, so the major versions of a service never share
+ * subjects or streams. The constructor throws [IllegalArgumentException] when [problem] reports a
+ * violation.
  */
 internal class ServiceNames(val service: String) {
 
@@ -37,7 +39,8 @@ internal class ServiceNames(val service: String) {
     val dlqStream = ProtocolStreams.dlq(service)
 
     /**
-     * Core queue group of the `ANY_INSTANCE` responders, shared by every client that serves the service.
+     * Core queue group of the `ANY_INSTANCE` responders, shared by every client that serves the
+     * service.
      */
     val queueGroup: String get() = service
 
@@ -50,6 +53,7 @@ internal class ServiceNames(val service: String) {
      */
     fun methodSubject(method: String, persistent: Boolean): String {
         methodProblem(service, method)?.let { throw IllegalArgumentException(it) }
+
         return "${if (persistent) persistBase else rpcBase}.$method"
     }
 
@@ -57,27 +61,31 @@ internal class ServiceNames(val service: String) {
         /**
          * Returns why [service] cannot name a service, or `null`.
          *
-         * The name must be a proto full name ([ProtocolNaming.isProtoName]) whose stream names stay within
-         * [ProtocolStreams.MAX_NAME_LENGTH] characters.
+         * The name must be a proto full name ([ProtocolNaming.isProtoName]) whose stream names stay
+         * within [ProtocolStreams.MAX_NAME_LENGTH] characters.
          */
         fun problem(service: String): String? {
             ProtocolNaming.nameProblem("service", service)?.let { return it }
             val stream = ProtocolStreams.persist(service)
+
             if (stream.length > ProtocolStreams.MAX_NAME_LENGTH) {
                 return "service $service: its stream name $stream has ${stream.length} characters, more than " +
-                        "${ProtocolStreams.MAX_NAME_LENGTH}; shorten the package or the service name"
+                    "${ProtocolStreams.MAX_NAME_LENGTH}; shorten the package or the service name"
             }
+
             return null
         }
 
         /**
          * Returns why [method] cannot name an rpc of [service], or `null`.
          *
-         * The name must be a single proto identifier ([ProtocolNaming.isProtoIdentifier]), so it stays one subject
-         * token and the stream filter `surf.persist.<service>.*` matches its persistent subject.
+         * The name must be a single proto identifier ([ProtocolNaming.isProtoIdentifier]), so it
+         * stays one subject token and the stream filter `surf.persist.<service>.*` matches its
+         * persistent subject.
          */
         fun methodProblem(service: String, method: String): String? {
             if (ProtocolNaming.isProtoIdentifier(method)) return null
+
             return ProtocolNaming.nameProblem("rpc", "$service.$method", method)
         }
     }

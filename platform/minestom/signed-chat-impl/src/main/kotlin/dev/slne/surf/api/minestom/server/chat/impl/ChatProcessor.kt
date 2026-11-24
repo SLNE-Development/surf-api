@@ -51,7 +51,7 @@ internal class ChatProcessor(
             renderer = renderer,
             message = originalMessage,
             originalMessage = originalMessage,
-            signedMessage = message.adventureView()
+            signedMessage = message.adventureView(),
         )
 
         AsyncPlayerChatEvent.node.call(event)
@@ -78,7 +78,7 @@ internal class ChatProcessor(
         val useVanillaChatType = renderer is ChatRenderer.Default
         val chatType = BoundChatType(
             chatType = if (useVanillaChatType) ChatType.CHAT else SurfChatTypes.raw,
-            name = displayName
+            name = displayName,
         )
 
         when {
@@ -109,9 +109,10 @@ internal class ChatProcessor(
         viewers: Set<Audience>,
         chatType: BoundChatType,
         sendConcurrent: Boolean,
-        unsignedFor: (suspend (Audience) -> Component)?
+        unsignedFor: (suspend (Audience) -> Component)?,
     ) {
         if (viewers.isEmpty()) return
+
         if (sendConcurrent) {
             supervisorScope {
                 for (viewer in viewers) {
@@ -131,21 +132,23 @@ internal class ChatProcessor(
         when (viewer) {
             is Player -> {
                 val holder = ChatSessionHolderImpl.fromPlayer(viewer) ?: return
+
                 outgoing.sendToPlayer(holder.handler, chatType, unsigned)
             }
 
             is ConsoleSender -> viewer.sendMessage(
                 GlobalTranslator.render(
                     chatType.decorate(unsigned ?: outgoing.content),
-                    MinestomAdventure.getDefaultLocale()
-                )
+                    MinestomAdventure.getDefaultLocale(),
+                ),
             )
 
             is ForwardingAudience.Single -> sendTo(viewer.audience(), chatType, unsigned)
 
             else -> {
-                val message =
-                    if (unsigned == null) message else message.withUnsignedContent(unsigned)
+                val message = if (unsigned == null) message else message.withUnsignedContent(
+                    unsigned,
+                )
                 viewer.sendMessage(message.adventureView(), chatType.adventure())
             }
         }
@@ -156,6 +159,8 @@ internal class ChatProcessor(
  * The name a chat message is attributed to: the display name, or the username when there is none.
  * Shift-clicking it inserts the username, and hovering it shows the player.
  */
-internal fun Player.chatDisplayName(): Component = (displayName ?: Component.text(username))
-    .insertion(username)
-    .hoverEvent(this)
+internal fun Player.chatDisplayName(): Component {
+    return (displayName ?: Component.text(username))
+        .insertion(username)
+        .hoverEvent(this)
+}

@@ -60,8 +60,10 @@ enum class PaginationEmptyRows(val rows: Int) {
          * @return the matching [PaginationEmptyRows]
          * @throws IllegalArgumentException if [rows] is not in the range 0..3
          */
-        fun byRows(rows: Int): PaginationEmptyRows = requireNotNull(byRowsOrNull(rows)) {
-            "A paginated view supports 0 to 3 empty rows, but $rows were requested"
+        fun byRows(rows: Int): PaginationEmptyRows {
+            return requireNotNull(byRowsOrNull(rows)) {
+                "A paginated view supports 0 to 3 empty rows, but $rows were requested"
+            }
         }
     }
 }

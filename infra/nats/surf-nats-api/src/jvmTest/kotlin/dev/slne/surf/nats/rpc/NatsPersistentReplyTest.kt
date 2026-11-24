@@ -1,10 +1,6 @@
 package dev.slne.surf.nats.rpc
 
-import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
+import kotlin.test.*
 
 class NatsPersistentReplyTest {
 
@@ -35,13 +31,22 @@ class NatsPersistentReplyTest {
 
     @Test
     fun `error message is truncated and a missing message is empty`() {
-        assertEquals(4096, NatsPersistentReply.error(IllegalStateException("x".repeat(5000))).errorMessage!!.length)
+        assertEquals(
+            4096,
+            NatsPersistentReply.error(IllegalStateException("x".repeat(5000)))
+                .errorMessage!!.length,
+        )
         assertEquals("", NatsPersistentReply.error(IllegalStateException()).errorMessage)
     }
 
     @Test
     fun `invalid stored replies are rejected`() {
-        assertFailsWith<IllegalArgumentException> { NatsPersistentReply.restore("surf-nats.value.v0", ByteArray(0)) }
+        assertFailsWith<IllegalArgumentException> {
+            NatsPersistentReply.restore(
+                "surf-nats.value.v0",
+                ByteArray(0),
+            )
+        }
         assertFailsWith<IllegalArgumentException> {
             NatsPersistentReply.restore(NatsPersistentReply.empty().format, byteArrayOf(1))
         }
@@ -49,7 +54,10 @@ class NatsPersistentReplyTest {
             NatsPersistentReply.restore(NatsPersistentReply.unknownAnswer().format, byteArrayOf(1))
         }
         assertFailsWith<IllegalArgumentException> {
-            NatsPersistentReply.restore(NatsPersistentReply.error(IllegalStateException()).format, "no separator".encodeToByteArray())
+            NatsPersistentReply.restore(
+                NatsPersistentReply.error(IllegalStateException()).format,
+                "no separator".encodeToByteArray(),
+            )
         }
     }
 }

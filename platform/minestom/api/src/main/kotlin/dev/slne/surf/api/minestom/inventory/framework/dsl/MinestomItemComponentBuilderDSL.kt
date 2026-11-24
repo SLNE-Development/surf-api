@@ -1,8 +1,8 @@
 package dev.slne.surf.api.minestom.inventory.framework.dsl
 
+import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import dev.slne.surf.api.minestom.builder.ItemDsl
 import dev.slne.surf.api.minestom.builder.buildItem
-import dev.slne.surf.api.inventory.framework.view.InventoryFrameworkDSL
 import me.devnatan.inventoryframework.component.MinestomItemComponentBuilder
 import me.devnatan.inventoryframework.context.SlotClickContext
 import me.devnatan.inventoryframework.context.SlotContext
@@ -30,7 +30,7 @@ import net.minestom.server.item.Material
 inline fun MinestomItemComponentBuilder.withItem(
     material: Material,
     amount: Int = 1,
-    init: (@InventoryFrameworkDSL ItemDsl).() -> Unit = {}
+    init: (@InventoryFrameworkDSL ItemDsl).() -> Unit = {},
 ): MinestomItemComponentBuilder = this.withItem(buildItem(material, amount, init))
 
 /**
@@ -55,7 +55,7 @@ inline fun MinestomItemComponentBuilder.withItem(
 inline fun MinestomItemComponentBuilder.renderWith(
     material: Material,
     amount: Int = 1,
-    crossinline init: (@InventoryFrameworkDSL ItemDsl).() -> Unit = {}
+    crossinline init: (@InventoryFrameworkDSL ItemDsl).() -> Unit = {},
 ): MinestomItemComponentBuilder = this.renderWith { buildItem(material, amount, init) }
 
 /**
@@ -72,7 +72,9 @@ inline fun MinestomItemComponentBuilder.renderWith(
  * @receiver the [MinestomItemComponentBuilder] to configure
  * @param action the callback invoked with a [SlotRenderContext]
  */
-inline fun MinestomItemComponentBuilder.onItemRender(crossinline action: @InventoryFrameworkDSL SlotRenderContext.() -> Unit) {
+inline fun MinestomItemComponentBuilder.onItemRender(
+    crossinline action: @InventoryFrameworkDSL SlotRenderContext.() -> Unit,
+) {
     this.onRender { context -> action(context) }
 }
 
@@ -89,7 +91,9 @@ inline fun MinestomItemComponentBuilder.onItemRender(crossinline action: @Invent
  * @receiver the [MinestomItemComponentBuilder] to configure
  * @param action the callback invoked with a [SlotClickContext]
  */
-inline fun MinestomItemComponentBuilder.onItemClick(crossinline action: @InventoryFrameworkDSL SlotClickContext.() -> Unit) {
+inline fun MinestomItemComponentBuilder.onItemClick(
+    crossinline action: @InventoryFrameworkDSL SlotClickContext.() -> Unit,
+) {
     this.onClick { context -> action(context) }
 }
 
@@ -106,6 +110,8 @@ inline fun MinestomItemComponentBuilder.onItemClick(crossinline action: @Invento
  * @receiver the [MinestomItemComponentBuilder] to configure
  * @param action the callback invoked with a [SlotContext]
  */
-inline fun MinestomItemComponentBuilder.onItemUpdate(crossinline action: @InventoryFrameworkDSL SlotContext.() -> Unit) {
+inline fun MinestomItemComponentBuilder.onItemUpdate(
+    crossinline action: @InventoryFrameworkDSL SlotContext.() -> Unit,
+) {
     this.onUpdate { context -> action(context) }
 }

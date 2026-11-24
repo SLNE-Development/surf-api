@@ -64,6 +64,7 @@ class ViewButtonSession<T>(
         if (next == currentIndex) return false
 
         currentIndex = next
+
         return true
     }
 
@@ -83,6 +84,7 @@ class ViewButtonSession<T>(
         if (index == currentIndex) return false
 
         currentIndex = index
+
         return true
     }
 }

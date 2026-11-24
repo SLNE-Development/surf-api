@@ -38,10 +38,12 @@ fun loadSchema(sourceDirs: List<File>, protoPathDirs: List<File>): LoadedSchema 
     return LoadedSchema(schema, sourceFiles)
 }
 
-private fun existingDirectories(directories: List<File>): List<File> = directories
-    .filter(File::isDirectory)
-    .map(::normalized)
-    .distinct()
+private fun existingDirectories(directories: List<File>): List<File> {
+    return directories
+        .filter(File::isDirectory)
+        .map(::normalized)
+        .distinct()
+}
 
 private fun validateSourceRoots(
     requestedDirs: List<File>,
@@ -49,7 +51,7 @@ private fun validateSourceRoots(
 ) {
     if (sourceRoots.none { it.containsProtos() }) {
         throw SurfNatsGeneratorException(
-            listOf("${requestedDirs.joinToString()}: no .proto files found")
+            listOf("${requestedDirs.joinToString()}: no .proto files found"),
         )
     }
 
@@ -79,7 +81,7 @@ private fun createSchemaLoader(
     loader.initRoots(
         sourcePath = sourceRoots.map { Location.get(it.path) },
         protoPath = listOf(Location.get(BundledProtos.ROOT)) +
-                protoPathRoots.map { Location.get(it.path) },
+            protoPathRoots.map { Location.get(it.path) },
     )
 
     return loader
@@ -93,11 +95,11 @@ private fun loadWireSchema(
         loader.loadSchema()
     } catch (e: SchemaException) {
         throw SurfNatsGeneratorException(
-            WireErrors.translate(e.message.orEmpty(), sourceRoots)
+            WireErrors.translate(e.message.orEmpty(), sourceRoots),
         )
     } catch (e: IllegalStateException) {
         throw SurfNatsGeneratorException(
-            listOf(WireErrors.translateSyntaxError(e.message.orEmpty()))
+            listOf(WireErrors.translateSyntaxError(e.message.orEmpty())),
         )
     }
 }
@@ -130,6 +132,7 @@ private class ProtoFileSystem(
 
     override fun metadataOrNull(path: Path): FileMetadata? {
         val bundledPath = bundledPath(path)
+
         if (bundledPath != null) {
             return when {
                 bundledPath.isEmpty() -> DIRECTORY
@@ -147,6 +150,7 @@ private class ProtoFileSystem(
 
     override fun source(file: Path): Source {
         val bundledPath = bundledPath(file) ?: return super.source(file)
+
         return BundledProtos.open(bundledPath).source()
     }
 

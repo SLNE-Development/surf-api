@@ -10,20 +10,28 @@ const val DEFAULT_PASSWORD_ENV_PRIVATE = "SLNE_PRIVATE_REPO_PASSWORD"
 const val DEFAULT_USERNAME_RELEASES = "SLNE_RELEASES_REPO_USERNAME"
 const val DEFAULT_PASSWORD_RELEASES = "SLNE_RELEASES_REPO_PASSWORD"
 
-inline fun RepositoryHandler.slnePublic(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://reposilite.slne.dev/public/") {
+inline fun RepositoryHandler.slnePublic(
+    crossinline block: MavenArtifactRepository.() -> Unit = {},
+): MavenArtifactRepository {
+    return maven("https://reposilite.slne.dev/public/") {
         name = "slne-repository-public"
         block()
     }
+}
 
-inline fun RepositoryHandler.canvasMaven(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://maven.canvasmc.io/snapshots") {
+inline fun RepositoryHandler.canvasMaven(
+    crossinline block: MavenArtifactRepository.() -> Unit = {},
+): MavenArtifactRepository {
+    return maven("https://maven.canvasmc.io/snapshots") {
         name = "Canvas"
         block()
     }
+}
 
-inline fun RepositoryHandler.minestomSnapshots(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://central.sonatype.com/repository/maven-snapshots/") {
+inline fun RepositoryHandler.minestomSnapshots(
+    crossinline block: MavenArtifactRepository.() -> Unit = {},
+): MavenArtifactRepository {
+    return maven("https://central.sonatype.com/repository/maven-snapshots/") {
         name = "minestom-snapshots"
         mavenContent {
             snapshotsOnly()
@@ -31,9 +39,12 @@ inline fun RepositoryHandler.minestomSnapshots(crossinline block: MavenArtifactR
         }
         block()
     }
+}
 
-inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://reposilite.slne.dev/releases/") {
+inline fun RepositoryHandler.slneReleases(
+    crossinline block: MavenArtifactRepository.() -> Unit = {},
+): MavenArtifactRepository {
+    return maven("https://reposilite.slne.dev/releases/") {
         name = "slne-repository-releases"
         credentials {
             username = System.getenv(DEFAULT_USERNAME_RELEASES)
@@ -42,9 +53,12 @@ inline fun RepositoryHandler.slneReleases(crossinline block: MavenArtifactReposi
 
         block()
     }
+}
 
-inline fun RepositoryHandler.slnePrivate(crossinline block: MavenArtifactRepository.() -> Unit = {}) =
-    maven("https://reposilite.slne.dev/private/") {
+inline fun RepositoryHandler.slnePrivate(
+    crossinline block: MavenArtifactRepository.() -> Unit = {},
+): MavenArtifactRepository {
+    return maven("https://reposilite.slne.dev/private/") {
         name = "slne-repository-private"
         credentials {
             username = System.getenv(DEFAULT_USERNAME_ENV_PRIVATE)
@@ -52,3 +66,4 @@ inline fun RepositoryHandler.slnePrivate(crossinline block: MavenArtifactReposit
         }
         block()
     }
+}

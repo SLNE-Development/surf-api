@@ -30,12 +30,15 @@ internal object PlayerFlightListener {
 
     private fun handle(packet: ClientPlayerAbilitiesPacket, player: Player) {
         val isFlying = packet.flags and PlayerAbilitiesPacket.FLAG_FLYING != 0.toByte()
+
         if (player.isAllowFlying && player.isFlying != isFlying) {
             val event = PlayerToggleFlightEvent(player, isFlying)
             EventDispatcher.call(event)
+
             if (event.isCancelled) {
                 // Resends the abilities, which puts the client back into its previous state
                 player.isFlying = player.isFlying
+
                 return
             }
         }

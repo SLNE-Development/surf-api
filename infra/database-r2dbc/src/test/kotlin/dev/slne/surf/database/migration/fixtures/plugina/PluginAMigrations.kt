@@ -7,7 +7,9 @@ import java.sql.Connection
 
 object V2_JdbcInsert : JdbcMigration("2", "jdbc insert") {
     override fun migrate(connection: Connection) {
-        connection.createStatement().use { it.execute("INSERT INTO a_items (id, name) VALUES (1, 'jdbc')") }
+        connection.createStatement().use {
+            it.execute("INSERT INTO a_items (id, name) VALUES (1, 'jdbc')")
+        }
     }
 }
 

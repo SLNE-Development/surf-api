@@ -31,7 +31,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 /**
  * Generates Kotlin contracts from `.proto` files and wires them into a Kotlin/JVM build.
  *
- * Apply the plugin with the id [ID] to every module that uses surf-nats or contains `.proto` contracts:
+ * Apply the plugin with the id [ID] to every module that uses surf-nats or contains `.proto`
+ * contracts:
  *
  * ```kotlin
  * plugins {
@@ -44,20 +45,22 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
  * }
  * ```
  *
- * Replace `KOTLIN_VERSION` with your Kotlin version and `SURF_API_VERSION` with the surf-api release. Configure
- * the plugin through [SurfNatsExtension] (`surfNats { }`).
+ * Replace `KOTLIN_VERSION` with your Kotlin version and `SURF_API_VERSION` with the surf-api
+ * release. Configure the plugin through [SurfNatsExtension] (`surfNats { }`).
  *
  * The plugin registers these tasks:
  *
- * - [GENERATE_TASK] ([GenerateSurfNatsKotlinTask]): writes the contracts to `build/generated/surf-nats/kotlin`.
+ * - [GENERATE_TASK] ([GenerateSurfNatsKotlinTask]): writes the contracts to
+ *   `build/generated/surf-nats/kotlin`.
  * - [STAGE_TASK]: copies the `.proto` files of [SurfNatsExtension.protoSourceDirs] to
  *   `build/surf-nats/weaver-source`, the directory weaver publishes.
- * - [BASELINE_TASK] ([FetchSurfNatsBaselineTask]): downloads the previous weaver release of the module.
+ * - [BASELINE_TASK] ([FetchSurfNatsBaselineTask]): downloads the previous weaver release of the
+ *   module.
  * - [CHECK_TASK] ([CheckSurfNatsCompatibilityTask]): compares the sources with that release.
  *
- * With `org.jetbrains.kotlin.jvm`, the generated directory is added to the `main` source set, the Kotlin
- * serialization plugin is applied, and `check` depends on [CHECK_TASK]. Applying `org.jetbrains.kotlin.multiplatform`
- * fails the build with a [GradleException].
+ * With `org.jetbrains.kotlin.jvm`, the generated directory is added to the `main` source set, the
+ * Kotlin serialization plugin is applied, and `check` depends on [CHECK_TASK]. Applying
+ * `org.jetbrains.kotlin.multiplatform` fails the build with a [GradleException].
  *
  * The plugin also applies `dev.slne.weaver` with these conventions, which `weaver { }` overrides:
  *
@@ -66,46 +69,56 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
  * - `publishing.group`: `project.group` when set explicitly.
  * - `publishing.name`: `rootProject.name`, for published modules only.
  *
- * A *published module* applies `maven-publish` and configures at least one publishing repository. For published
- * modules `publish` first runs weaver's `publishProtos`, after code generation and the compatibility check, and the
- * Maven publications run after it. The plugin validates their weaver coordinates after all projects are evaluated
- * and fails when two projects of the build publish the same `group:name`. For other modules `publish` does not run
- * `publishProtos`, and the compatibility check runs only with [SurfNatsExtension.compatibilityBaseline] set.
- * Dependencies in the `weaver` configuration are import paths for generation and are not generated themselves.
+ * A *published module* applies `maven-publish` and configures at least one publishing repository.
+ * For published modules `publish` first runs weaver's `publishProtos`, after code generation and
+ * the compatibility check, and the Maven publications run after it. The plugin validates their
+ * weaver coordinates after all projects are evaluated and fails when two projects of the build
+ * publish the same `group:name`. For other modules `publish` does not run `publishProtos`, and the
+ * compatibility check runs only with [SurfNatsExtension.compatibilityBaseline] set. Dependencies in
+ * the `weaver` configuration are import paths for generation and are not generated themselves.
  *
- * When a surf-api Gradle plugin (`core`, `paper-plugin`, `paper-raw`, `velocity`, `minestom`, `minestom-server`
- * or `standalone`) is applied, the plugin adds `surf-api-nats-api`, `surf-api-nats-types-common` and
- * `kotlinx-serialization-protobuf` to `compileOnly` and `testImplementation`. The surf-nats modules are pinned
- * strictly to the plugin version. On top of that:
+ * When a surf-api Gradle plugin (`core`, `paper-plugin`, `paper-raw`, `velocity`, `minestom`,
+ * `minestom-server` or `standalone`) is applied, the plugin adds `surf-api-nats-api`,
+ * `surf-api-nats-types-common` and `kotlinx-serialization-protobuf` to `compileOnly` and
+ * `testImplementation`. The surf-nats modules are pinned strictly to the plugin version. On top of
+ * that:
  *
- * - `paper-plugin` and `paper-raw` also get `surf-api-nats-types-paper` and its default type mappings.
- * - `standalone` applies `dev.slne.surf.api.gradle.microservice` and adds `surf-api-nats-spring` to `implementation`.
- *   A microservice uses NATS through its Spring context.
+ * - `paper-plugin` and `paper-raw` also get `surf-api-nats-types-paper` and its default type
+ *   mappings.
+ * - `standalone` applies `dev.slne.surf.api.gradle.microservice` and adds `surf-api-nats-spring` to
+ *   `implementation`. A microservice uses NATS through its Spring context.
  */
 class SurfNatsPlugin : Plugin<Project> {
 
-    override fun apply(project: Project): Unit = with(project) {
-        val extension = createExtension()
-        val defaultTypeMappings = objects.listProperty(TypeMapping::class.java)
-            .value(DefaultTypeMappings.common)
-        val typeModules = objects.listProperty(String::class.java)
-            .value(listOf(TYPES_COMMON_MODULE))
+    override fun apply(project: Project) {
+        with(project) {
+            val extension = createExtension()
+            val defaultTypeMappings = objects.listProperty(TypeMapping::class.java)
+                .value(DefaultTypeMappings.common)
+            val typeModules = objects.listProperty(String::class.java)
+                .value(listOf(TYPES_COMMON_MODULE))
 
-        val weaver = applyWeaver()
-        stageWeaverSource(extension, weaver, STAGE_TASK, GROUP)
-        guardOfflineFetch()
-        addTypeDependenciesToPublish(typeModules)
-        validateWeaverCoordinates(extension, weaver)
+            val weaver = applyWeaver()
+            stageWeaverSource(extension, weaver, STAGE_TASK, GROUP)
+            guardOfflineFetch()
+            addTypeDependenciesToPublish(typeModules)
+            validateWeaverCoordinates(extension, weaver)
 
-        val active = extension.compatibilityBaseline.map { true }.orElse(publishedModule())
+            val active = extension.compatibilityBaseline.map { true }.orElse(publishedModule())
 
-        val generateTask = registerGenerateTask(extension, weaver, defaultTypeMappings)
-        val baselineTask = registerBaselineTask(extension, weaver, active)
-        val compatibilityTask = registerCompatibilityTask(extension, weaver, baselineTask, active)
-        wirePublishProtos(generateTask, compatibilityTask)
+            val generateTask = registerGenerateTask(extension, weaver, defaultTypeMappings)
+            val baselineTask = registerBaselineTask(extension, weaver, active)
+            val compatibilityTask = registerCompatibilityTask(
+                extension,
+                weaver,
+                baselineTask,
+                active,
+            )
+            wirePublishProtos(generateTask, compatibilityTask)
 
-        configureKotlinPlugins(generateTask, compatibilityTask)
-        configureSurfApiPlugins(defaultTypeMappings, typeModules)
+            configureKotlinPlugins(generateTask, compatibilityTask)
+            configureSurfApiPlugins(defaultTypeMappings, typeModules)
+        }
     }
 
     private fun Project.createExtension(): SurfNatsExtension {
@@ -125,8 +138,8 @@ class SurfNatsPlugin : Plugin<Project> {
         extension: SurfNatsExtension,
         weaver: WeaverExtension,
         defaultTypeMappings: ListProperty<TypeMapping>,
-    ): TaskProvider<GenerateSurfNatsKotlinTask> =
-        tasks.register(GENERATE_TASK, GenerateSurfNatsKotlinTask::class.java) {
+    ): TaskProvider<GenerateSurfNatsKotlinTask> {
+        return tasks.register(GENERATE_TASK, GenerateSurfNatsKotlinTask::class.java) {
             this.group = GROUP
             this.description = "Generates Kotlin contracts from the surf-nats .proto sources."
 
@@ -139,15 +152,17 @@ class SurfNatsPlugin : Plugin<Project> {
             this.visibility.set(extension.generatedVisibility)
             this.outputDir.set(layout.buildDirectory.dir("generated/surf-nats/kotlin"))
         }
+    }
 
     private fun Project.registerBaselineTask(
         extension: SurfNatsExtension,
         weaver: WeaverExtension,
         active: Provider<Boolean>,
-    ): TaskProvider<FetchSurfNatsBaselineTask> =
-        tasks.register(BASELINE_TASK, FetchSurfNatsBaselineTask::class.java) {
+    ): TaskProvider<FetchSurfNatsBaselineTask> {
+        return tasks.register(BASELINE_TASK, FetchSurfNatsBaselineTask::class.java) {
             this.group = GROUP
-            this.description = "Downloads the previous weaver release of this module as the compatibility baseline."
+            this.description =
+                "Downloads the previous weaver release of this module as the compatibility baseline."
 
             this.url.set(weaver.url)
             this.token.set(weaver.token)
@@ -156,21 +171,25 @@ class SurfNatsPlugin : Plugin<Project> {
             this.artifactName.set(baselineName(weaver))
             this.projectVersion.set(weaver.publishing.version)
             this.requestedVersion.set(extension.compatibilityBaseline)
-            this.active.set(extension.compatibilityCheck.zip(active) { enabled, needed -> enabled && needed })
+            this.active.set(
+                extension.compatibilityCheck.zip(active) { enabled, needed -> enabled && needed },
+            )
             this.offline.set(gradle.startParameter.isOffline)
             this.outputDir.set(layout.buildDirectory.dir("surf-nats/baseline/protos"))
             this.versionFile.set(layout.buildDirectory.file("surf-nats/baseline/version.txt"))
         }
+    }
 
     private fun Project.registerCompatibilityTask(
         extension: SurfNatsExtension,
         weaver: WeaverExtension,
         baselineTask: TaskProvider<FetchSurfNatsBaselineTask>,
         active: Provider<Boolean>,
-    ): TaskProvider<CheckSurfNatsCompatibilityTask> =
-        tasks.register(CHECK_TASK, CheckSurfNatsCompatibilityTask::class.java) {
+    ): TaskProvider<CheckSurfNatsCompatibilityTask> {
+        return tasks.register(CHECK_TASK, CheckSurfNatsCompatibilityTask::class.java) {
             this.group = LifecycleBasePlugin.VERIFICATION_GROUP
-            this.description = "Checks the surf-nats .proto sources against the previous weaver release."
+            this.description =
+                "Checks the surf-nats .proto sources against the previous weaver release."
 
             this.sourceDirectories.from(extension.protoSourceDirs)
             this.protoPathDirectories.from(extension.protoPath)
@@ -182,6 +201,7 @@ class SurfNatsPlugin : Plugin<Project> {
             this.checkEnabled.set(extension.compatibilityCheck)
             this.reportFile.set(layout.buildDirectory.file("reports/surf-nats/compatibility.txt"))
         }
+    }
 
     private fun Project.configureKotlinPlugins(
         generateTask: TaskProvider<GenerateSurfNatsKotlinTask>,
@@ -202,7 +222,7 @@ class SurfNatsPlugin : Plugin<Project> {
 
         pluginManager.withPlugin(KOTLIN_MULTIPLATFORM) {
             throw GradleException(
-                "$ID supports Kotlin/JVM projects only; $path applies $KOTLIN_MULTIPLATFORM"
+                "$ID supports Kotlin/JVM projects only; $path applies $KOTLIN_MULTIPLATFORM",
             )
         }
     }
@@ -235,13 +255,16 @@ class SurfNatsPlugin : Plugin<Project> {
     }
 
     /**
-     * Turns a surf-api standalone project into a microservice: applies the surf-microservice plugin and adds the
-     * Spring NATS module at the version of this plugin. The microservice context contributes the NATS beans.
+     * Turns a surf-api standalone project into a microservice: applies the surf-microservice plugin
+     * and adds the Spring NATS module at the version of this plugin. The microservice context
+     * contributes the NATS beans.
      */
     private fun Project.configureMicroservice() {
         pluginManager.apply(MICROSERVICE_PLUGIN)
 
-        val runtime = dependencies.create("${SurfNatsPluginVersion.GROUP}:$SPRING_MODULE") as ExternalModuleDependency
+        val runtime = dependencies.create(
+            "${SurfNatsPluginVersion.GROUP}:$SPRING_MODULE",
+        ) as ExternalModuleDependency
         runtime.version { strictly(SurfNatsPluginVersion.VERSION) }
         dependencies.add(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, runtime)
     }

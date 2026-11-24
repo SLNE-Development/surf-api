@@ -14,8 +14,17 @@ class DurationSerializerTest {
     @Serializable
     private data class Holder(
         @ProtoNumber(1) val single: @Serializable(DurationSerializer::class) Duration,
-        @ProtoNumber(2) val list: List<@Serializable(DurationSerializer::class) Duration> = emptyList(),
-        @ProtoNumber(3) val map: Map<String, @Serializable(DurationSerializer::class) Duration> = emptyMap(),
+        @ProtoNumber(2) val list: List<
+            @Serializable(
+                DurationSerializer::class,
+            ) Duration,
+            > = emptyList(),
+        @ProtoNumber(3) val map: Map<
+            String,
+            @Serializable(
+                DurationSerializer::class,
+            ) Duration,
+            > = emptyMap(),
         @ProtoNumber(4) val nullable: @Serializable(DurationSerializer::class) Duration? = null,
     )
 
@@ -25,7 +34,7 @@ class DurationSerializerTest {
             DurationSerializer.descriptor,
             "google.protobuf.Duration",
             "seconds" to 1,
-            "nanos" to 2
+            "nanos" to 2,
         )
     }
 
@@ -95,7 +104,8 @@ class DurationSerializerTest {
             list = listOf(Duration.ZERO, (-1500).milliseconds),
             map = mapOf("a" to 1500.milliseconds),
         )
-        val hex = "0a0208021200121608ffffffffffffffffff011080b6ca91feffffffff011a0d0a0161120808011080cab5ee01"
+        val hex =
+            "0a0208021200121608ffffffffffffffffff011080b6ca91feffffffff011a0d0a0161120808011080cab5ee01"
 
         assertEquals(hex, encodeHex(Holder.serializer(), value))
         assertEquals(value, decodeHex(Holder.serializer(), hex))

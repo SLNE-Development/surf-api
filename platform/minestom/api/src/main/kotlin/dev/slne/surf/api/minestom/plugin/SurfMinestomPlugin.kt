@@ -33,24 +33,26 @@ import java.nio.file.Path
  * only the plugin's own jar, or, for a plugin shaded into the server, every class under that
  * package.
  *
- * In the plugin's enable phase, before the `onEnable` hooks run, beans of type [EventNode] are added
- * as children of [eventNode], and the plugin's commands are registered: beans of type
- * `CommandAPICommand` or `CommandTree`, and `CommandRegistrar` beans. Listeners registered on [eventNode],
- * coroutines launched in [scope] and commands registered while a hook runs, or from within
- * [scope], belong to the plugin. They are removed or, for coroutines, cancelled once the plugin is
- * disabled.
+ * In the plugin's enable phase, before the `onEnable` hooks run, beans of type [EventNode] are
+ * added as children of [eventNode], and the plugin's commands are registered: beans of type
+ * `CommandAPICommand` or `CommandTree`, and `CommandRegistrar` beans. Listeners registered on
+ * [eventNode], coroutines launched in [scope] and commands registered while a hook runs, or from
+ * within [scope], belong to the plugin. They are removed or, for coroutines, cancelled once the
+ * plugin is disabled.
  *
  * The hooks run blocking: `onLoad` and then `onEnable` while the server starts, before it accepts
  * players, and `onDisable` during shutdown. They must not wait for work dispatched to
  * `MinestomDispatchers.Main` or to an entity scheduler, because that work only runs on a tick: the
- * server does not tick yet while it starts and no longer ticks while it stops. Such work is launched
- * in [scope] instead.
+ * server does not tick yet while it starts and no longer ticks while it stops. Such work is
+ * launched in [scope] instead.
  */
 abstract class SurfMinestomPlugin {
     private val context: Context? = pendingContext.get()?.invoke(this)
 
     private val requireContext: Context
-        get() = checkNotNull(context) { "${javaClass.name} has not been initialized by the server yet" }
+        get() = checkNotNull(context) {
+            "${javaClass.name} has not been initialized by the server yet"
+        }
 
     /**
      * What the plugin's `minestom-plugin.json` says about it.
@@ -74,7 +76,9 @@ abstract class SurfMinestomPlugin {
      */
     val scope: CoroutineScope get() = requireContext.scope
 
-    override fun toString(): String = context?.let { "${it.meta.name} ${it.meta.version}" } ?: javaClass.name
+    override fun toString(): String {
+        return context?.let { "${it.meta.name} ${it.meta.version}" } ?: javaClass.name
+    }
 
     /**
      * What the server hands a plugin when creating it.
@@ -100,6 +104,7 @@ abstract class SurfMinestomPlugin {
         fun <T> constructing(context: (SurfMinestomPlugin) -> Context, block: () -> T): T {
             val previous = pendingContext.get()
             pendingContext.set(context)
+
             try {
                 return block()
             } finally {
@@ -119,7 +124,8 @@ abstract class SurfMinestomPlugin {
          * A coroutine context element that makes [plugin] the [current] one.
          */
         @InternalSurfApi
-        fun contextElement(plugin: SurfMinestomPlugin): ThreadContextElement<SurfMinestomPlugin?> =
-            current.asContextElement(plugin)
+        fun contextElement(plugin: SurfMinestomPlugin): ThreadContextElement<SurfMinestomPlugin?> {
+            return current.asContextElement(plugin)
+        }
     }
 }

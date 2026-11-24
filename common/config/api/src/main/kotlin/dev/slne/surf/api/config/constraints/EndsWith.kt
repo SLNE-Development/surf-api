@@ -18,18 +18,23 @@ import java.lang.reflect.Type
 annotation class EndsWith(val suffix: String) {
     companion object {
         internal object Factory : Constraint.Factory<EndsWith, String?> {
-            override fun make(data: EndsWith, type: Type): Constraint<String?> = { value ->
-                if (value != null && !value.endsWith(data.suffix)) {
-                    throw SerializationException("String must end with '${data.suffix}'")
+            override fun make(data: EndsWith, type: Type): Constraint<String?> {
+                return { value ->
+                    if (value != null && !value.endsWith(data.suffix)) {
+                        throw SerializationException("String must end with '${data.suffix}'")
+                    }
                 }
             }
         }
 
         internal object FactoryStringOrDefault : Constraint.Factory<EndsWith, StringOrDefault?> {
-            override fun make(data: EndsWith, type: Type): Constraint<StringOrDefault?> = { stringOrDefault ->
-                val value = stringOrDefault?.value
-                if (value != null && !value.endsWith(data.suffix)) {
-                    throw SerializationException("String must end with '${data.suffix}'")
+            override fun make(data: EndsWith, type: Type): Constraint<StringOrDefault?> {
+                return { stringOrDefault ->
+                    val value = stringOrDefault?.value
+
+                    if (value != null && !value.endsWith(data.suffix)) {
+                        throw SerializationException("String must end with '${data.suffix}'")
+                    }
                 }
             }
         }

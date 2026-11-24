@@ -26,10 +26,11 @@ import kotlin.uuid.Uuid
 fun uuidToString(uuid: Any?): String {
     val raw: Any? = uuid as? Uint8Array<*> ?: uuid?.unsafeCast<UuidMessage>()?.value
     val bytes = raw as? Uint8Array<*>
+
     if (bytes == null || bytes.length != ProtocolFieldRules.UUID_BYTES) {
         throw RangeError(
             "${ProtocolFieldRules.UUID_TYPE} value must be exactly ${ProtocolFieldRules.UUID_BYTES} bytes, " +
-                "was ${bytes?.length ?: raw}"
+                "was ${bytes?.length ?: raw}",
         )
     }
 

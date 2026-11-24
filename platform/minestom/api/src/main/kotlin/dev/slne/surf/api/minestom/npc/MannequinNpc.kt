@@ -43,7 +43,6 @@ class MannequinNpc(
     description: Component,
     uuid: UUID = UUID.randomUUID(),
 
-    // Equipments
     private var mainHandItem: ItemStack = ItemStack.AIR,
     private var offHandItem: ItemStack = ItemStack.AIR,
 
@@ -76,6 +75,7 @@ class MannequinNpc(
         StomNPCs.manager().register(this)
 
         val instance = instance ?: return
+
         scheduler().scheduleNextTick {
             textDisplayController?.attachTo(this, instance)
             textDisplayController?.getEntity()?.editEntityMeta<TextDisplayMeta> { meta ->
@@ -103,26 +103,28 @@ class MannequinNpc(
             player.sendPacket(
                 EntityAttributesPacket(
                     entityId,
-                    listOf(EntityAttributesPacket.Property(Attribute.SCALE, scale, emptyList()))
-                )
+                    listOf(EntityAttributesPacket.Property(Attribute.SCALE, scale, emptyList())),
+                ),
             )
         }
     }
 
-    override fun getEquipment(slot: EquipmentSlot) = when (slot) {
-        EquipmentSlot.MAIN_HAND -> mainHandItem
-        EquipmentSlot.OFF_HAND -> offHandItem
-        EquipmentSlot.BOOTS -> boots
-        EquipmentSlot.LEGGINGS -> leggings
-        EquipmentSlot.CHESTPLATE -> chestplate
-        EquipmentSlot.HELMET -> helmet
-        EquipmentSlot.BODY -> bodyEquipment
-        EquipmentSlot.SADDLE -> saddleEquipment
+    override fun getEquipment(slot: EquipmentSlot): ItemStack {
+        return when (slot) {
+            EquipmentSlot.MAIN_HAND -> mainHandItem
+            EquipmentSlot.OFF_HAND -> offHandItem
+            EquipmentSlot.BOOTS -> boots
+            EquipmentSlot.LEGGINGS -> leggings
+            EquipmentSlot.CHESTPLATE -> chestplate
+            EquipmentSlot.HELMET -> helmet
+            EquipmentSlot.BODY -> bodyEquipment
+            EquipmentSlot.SADDLE -> saddleEquipment
+        }
     }
 
     override fun setEquipment(
         slot: EquipmentSlot,
-        newItem: ItemStack
+        newItem: ItemStack,
     ) {
         when (slot) {
             EquipmentSlot.MAIN_HAND -> mainHandItem = newItem

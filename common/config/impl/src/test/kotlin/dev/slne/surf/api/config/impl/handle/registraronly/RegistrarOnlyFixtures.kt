@@ -5,7 +5,8 @@ import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
 import org.springframework.stereotype.Component
 
 /**
- * The only bean of a plugin that declares no `@SurfConfig` class; records whether surf-api called it.
+ * The only bean of a plugin that declares no `@SurfConfig` class; records whether surf-api called
+ * it.
  */
 @Component
 class RegistrarWithoutConfigs : ConfigSerializerRegistrar {

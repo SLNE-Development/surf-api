@@ -3,8 +3,8 @@ package dev.slne.surf.nats.protocol
 /**
  * Names declared by `surf/nats/v1/options.proto`.
  *
- * [EVENT], [SERVICE] and [METHOD] are the extension fields. The remaining field constants are the proto field names of
- * the option messages.
+ * [EVENT], [SERVICE] and [METHOD] are the extension fields. The remaining field constants are the
+ * proto field names of the option messages.
  */
 internal object ProtocolOptions {
     const val PACKAGE = "surf.nats.v1"

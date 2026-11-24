@@ -24,16 +24,24 @@ class SurfNatsPluginTest {
     lateinit var projectDir: File
 
     private fun project(vararg plugins: String, dir: File = projectDir): Project {
-        // Resolving keeps files of the Gradle user home open on Windows, so it lives outside the deleted temp dir.
-        val project = ProjectBuilder.builder().withProjectDir(dir).withGradleUserHomeDir(File("build/tmp/projectBuilderUserHome")).build()
+        // Resolving keeps files of the Gradle user home open on Windows, so it lives outside the
+        // deleted temp dir.
+        val project = ProjectBuilder.builder()
+            .withProjectDir(dir)
+            .withGradleUserHomeDir(File("build/tmp/projectBuilderUserHome"))
+            .build()
         for (plugin in plugins) {
             if (plugin == SurfNatsPlugin.ID) project.pluginManager.apply(SurfNatsPlugin::class.java)
             else project.pluginManager.apply(plugin)
         }
+
         return project
     }
 
-    private val Project.surfNats: SurfNatsExtension get() = extensions.getByType(SurfNatsExtension::class.java)
+    private val Project.surfNats: SurfNatsExtension
+        get() = extensions.getByType(
+            SurfNatsExtension::class.java,
+        )
     private val Project.generate: GenerateSurfNatsKotlinTask
         get() = tasks.getByName(SurfNatsPlugin.GENERATE_TASK) as GenerateSurfNatsKotlinTask
     private val Project.check: CheckSurfNatsCompatibilityTask
@@ -53,11 +61,17 @@ class SurfNatsPluginTest {
     @Test
     fun `has the documented defaults`() {
         val project = project(KOTLIN_JVM, SurfNatsPlugin.ID)
-        assertEquals(setOf(projectDir.resolve("src/main/proto")), project.surfNats.protoSourceDirs.files)
+        assertEquals(
+            setOf(projectDir.resolve("src/main/proto")),
+            project.surfNats.protoSourceDirs.files,
+        )
         assertEquals(GeneratedVisibility.PUBLIC, project.surfNats.generatedVisibility.get())
         assertTrue(project.surfNats.compatibilityCheck.get())
         assertFalse(project.surfNats.compatibilityBaseline.isPresent)
-        assertEquals(projectDir.resolve("build/generated/surf-nats/kotlin"), project.generate.outputDir.get().asFile)
+        assertEquals(
+            projectDir.resolve("build/generated/surf-nats/kotlin"),
+            project.generate.outputDir.get().asFile,
+        )
         assertEquals(DefaultTypeMappings.common, project.generate.defaultTypeMappings.get())
         assertFalse(project.check.active.get())
     }
@@ -71,7 +85,10 @@ class SurfNatsPluginTest {
             project.generate.sourceDirectories.files,
         )
         project.surfNats.protoSourceDirs.setFrom("contracts")
-        assertEquals(setOf(projectDir.resolve("contracts")), project.generate.sourceDirectories.files)
+        assertEquals(
+            setOf(projectDir.resolve("contracts")),
+            project.generate.sourceDirectories.files,
+        )
     }
 
     @Test
@@ -84,11 +101,20 @@ class SurfNatsPluginTest {
             compatibilityCheck.set(false)
         }
         assertEquals(
-            listOf(TypeMapping(ProtoType.get("surf.demo.v1.Tag"), "dev.slne.demo.Tag", "dev.slne.demo.TagSerializer")),
+            listOf(
+                TypeMapping(
+                    ProtoType.get("surf.demo.v1.Tag"),
+                    "dev.slne.demo.Tag",
+                    "dev.slne.demo.TagSerializer",
+                ),
+            ),
             project.generate.typeMappings.get(),
         )
         assertEquals(GeneratedVisibility.INTERNAL, project.generate.visibility.get())
-        assertEquals(setOf(projectDir.resolve("imports")), project.generate.protoPathDirectories.files)
+        assertEquals(
+            setOf(projectDir.resolve("imports")),
+            project.generate.protoPathDirectories.files,
+        )
         assertEquals(setOf(projectDir.resolve("imports")), project.check.protoPathDirectories.files)
         assertFalse(project.check.checkEnabled.get())
     }
@@ -114,22 +140,33 @@ class SurfNatsPluginTest {
 
     @Test
     fun `wires generated sources, serialization and the check task into Kotlin JVM projects`() {
-        val orders = listOf(arrayOf(KOTLIN_JVM, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, KOTLIN_JVM))
+        val orders = listOf(
+            arrayOf(KOTLIN_JVM, SurfNatsPlugin.ID),
+            arrayOf(SurfNatsPlugin.ID, KOTLIN_JVM),
+        )
         orders.forEachIndexed { index, order ->
             val dir = projectDir.resolve(index.toString())
             val project = project(*order, dir = dir)
-            val main = project.extensions.getByType(KotlinJvmProjectExtension::class.java).sourceSets.getByName("main")
-            assertTrue(dir.resolve("build/generated/surf-nats/kotlin") in main.kotlin.srcDirs, order.joinToString())
+            val main = project.extensions.getByType(KotlinJvmProjectExtension::class.java)
+                .sourceSets.getByName(
+                    "main",
+                )
+            assertTrue(
+                dir.resolve("build/generated/surf-nats/kotlin") in main.kotlin.srcDirs,
+                order.joinToString(),
+            )
             assertTrue(project.pluginManager.hasPlugin("org.jetbrains.kotlin.plugin.serialization"))
 
             val check = project.tasks.getByName("check")
             assertTrue(
-                check.taskDependencies.getDependencies(check).any { it.name == SurfNatsPlugin.CHECK_TASK },
+                check.taskDependencies.getDependencies(check)
+                    .any { it.name == SurfNatsPlugin.CHECK_TASK },
                 "check must depend on ${SurfNatsPlugin.CHECK_TASK}",
             )
             val compile = project.tasks.getByName("compileKotlin")
             assertTrue(
-                compile.taskDependencies.getDependencies(compile).any { it.name == SurfNatsPlugin.GENERATE_TASK },
+                compile.taskDependencies.getDependencies(compile)
+                    .any { it.name == SurfNatsPlugin.GENERATE_TASK },
                 "compileKotlin must depend on ${SurfNatsPlugin.GENERATE_TASK}",
             )
         }
@@ -137,14 +174,27 @@ class SurfNatsPluginTest {
 
     @Test
     fun `rejects Kotlin Multiplatform projects`() {
-        val error = assertFailsWith<Exception> { project("org.jetbrains.kotlin.multiplatform", SurfNatsPlugin.ID) }
-        val messages = generateSequence<Throwable>(error) { it.cause }.mapNotNull { it.message }.toList()
-        assertTrue(messages.any { "supports Kotlin/JVM projects only" in it }, messages.joinToString("\n"))
+        val error = assertFailsWith<Exception> {
+            project(
+                "org.jetbrains.kotlin.multiplatform",
+                SurfNatsPlugin.ID,
+            )
+        }
+        val messages = generateSequence<Throwable>(error) { it.cause }
+            .mapNotNull { it.message }
+            .toList()
+        assertTrue(
+            messages.any { "supports Kotlin/JVM projects only" in it },
+            messages.joinToString("\n"),
+        )
     }
 
     @Test
     fun `surf-api plugins get the contract dependencies`() {
-        val orders = listOf(arrayOf(SURF_API_CORE, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_CORE))
+        val orders = listOf(
+            arrayOf(SURF_API_CORE, SurfNatsPlugin.ID),
+            arrayOf(SurfNatsPlugin.ID, SURF_API_CORE),
+        )
         orders.forEachIndexed { index, order ->
             val project = project(*order, dir = projectDir.resolve(index.toString()))
             assertEquals(DefaultTypeMappings.common, project.generate.defaultTypeMappings.get())
@@ -154,9 +204,16 @@ class SurfNatsPluginTest {
                     .filterIsInstance<ExternalModuleDependency>()
                     .associateBy { "${it.group}:${it.name}" }
                 for (module in listOf("surf-api-nats-api", "surf-api-nats-types-common")) {
-                    val dependency = assertNotNull(dependencies["dev.slne.surf.api:$module"], "$configuration $module")
-                    assertEquals(SurfNatsPluginVersion.VERSION, dependency.versionConstraint.strictVersion)
+                    val dependency = assertNotNull(
+                        dependencies["dev.slne.surf.api:$module"],
+                        "$configuration $module",
+                    )
+                    assertEquals(
+                        SurfNatsPluginVersion.VERSION,
+                        dependency.versionConstraint.strictVersion,
+                    )
                 }
+
                 assertNull(dependencies["dev.slne.surf.api:surf-api-nats-types-paper"])
                 assertEquals(
                     SurfNatsPluginVersion.KOTLINX_SERIALIZATION_VERSION,
@@ -169,7 +226,10 @@ class SurfNatsPluginTest {
     @Test
     fun `paper surf-api plugins enable the paper types`() {
         val project = project(SURF_API_PAPER_RAW, SurfNatsPlugin.ID)
-        assertEquals(DefaultTypeMappings.common + DefaultTypeMappings.paper, project.generate.defaultTypeMappings.get())
+        assertEquals(
+            DefaultTypeMappings.common + DefaultTypeMappings.paper,
+            project.generate.defaultTypeMappings.get(),
+        )
         val dependency = project.configurations.getByName("compileOnly").dependencies
             .filterIsInstance<ExternalModuleDependency>()
             .single { it.name == "surf-api-nats-types-paper" }
@@ -178,11 +238,17 @@ class SurfNatsPluginTest {
 
     @Test
     fun `paper plugins do not depend on a separate NATS plugin`() {
-        val orders = listOf(arrayOf(SURF_API_PAPER_PLUGIN, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_PAPER_PLUGIN))
+        val orders = listOf(
+            arrayOf(SURF_API_PAPER_PLUGIN, SurfNatsPlugin.ID),
+            arrayOf(SurfNatsPlugin.ID, SURF_API_PAPER_PLUGIN),
+        )
         orders.forEachIndexed { index, order ->
             val project = project(*order, dir = projectDir.resolve(index.toString()))
             val description = project.extensions.getByType(PaperPluginDescription::class.java)
-            for (dependencies in listOf(description.bootstrapDependencies, description.serverDependencies)) {
+            for (dependencies in listOf(
+                description.bootstrapDependencies,
+                description.serverDependencies,
+            )) {
                 assertNull(dependencies.findByName("surf-api-nats-paper"), order.joinToString())
             }
         }
@@ -190,7 +256,10 @@ class SurfNatsPluginTest {
 
     @Test
     fun `velocity plugins do not depend on a separate NATS plugin`() {
-        val orders = listOf(arrayOf(SURF_API_VELOCITY, SurfNatsPlugin.ID), arrayOf(SurfNatsPlugin.ID, SURF_API_VELOCITY))
+        val orders = listOf(
+            arrayOf(SURF_API_VELOCITY, SurfNatsPlugin.ID),
+            arrayOf(SurfNatsPlugin.ID, SURF_API_VELOCITY),
+        )
         orders.forEachIndexed { index, order ->
             val project = project(*order, dir = projectDir.resolve(index.toString()))
             val dependency = project.extensions.getByType(VelocityPluginFile::class.java)

@@ -5,7 +5,8 @@ import dev.slne.surf.nats.NatsConstants
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 
 /**
- * Writes the headers every surf-nats message carries: `Content-Type`, `Surf-Sender-Version` and `Surf-Origin`.
+ * Writes the headers every surf-nats message carries: `Content-Type`, `Surf-Sender-Version` and
+ * `Surf-Origin`.
  */
 @InternalNatsApi
 internal inline fun writeBaseNatsHeaders(origin: String, writer: HeaderWriter) {

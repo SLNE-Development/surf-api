@@ -19,6 +19,7 @@ object JavaUUIDStringSerializer : KSerializer<UUID> {
 
     override fun deserialize(decoder: Decoder): UUID {
         val input = decoder.decodeString()
+
         if (input.length == 36) {
             return UUID.fromString(input)
         }
@@ -33,8 +34,8 @@ object JavaUUIDStringSerializer : KSerializer<UUID> {
     fun fromString(input: String): UUID {
         return UUID.fromString(
             input.replaceFirst(
-                "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})".toRegex(), "$1-$2-$3-$4-$5"
-            )
+                "(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})".toRegex(), "$1-$2-$3-$4-$5",
+            ),
         )
     }
 }

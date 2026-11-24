@@ -13,7 +13,7 @@ import kotlin.reflect.KProperty
  */
 class EnvironmentVariableDelegate<T> internal constructor(
     private val explicitName: String?,
-    private val resolver: (String) -> T
+    private val resolver: (String) -> T,
 ) : PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, T>> {
     /**
      * Returns an equivalent delegate that resolves the explicit environment-variable [name].
@@ -36,7 +36,7 @@ class EnvironmentVariableDelegate<T> internal constructor(
      */
     override fun provideDelegate(
         thisRef: Any?,
-        property: KProperty<*>
+        property: KProperty<*>,
     ): ReadOnlyProperty<Any?, T> {
         val variableName = explicitName ?: property.name
         val resolved = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {

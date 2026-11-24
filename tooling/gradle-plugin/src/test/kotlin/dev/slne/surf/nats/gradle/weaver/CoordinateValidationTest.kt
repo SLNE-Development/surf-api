@@ -9,16 +9,26 @@ import kotlin.test.assertFalse
 
 internal class CoordinateValidationTest : TestKitSupport() {
 
-    private fun publishedModule(coordinates: String, withProtos: Boolean = true, publishing: String = TestBuild.PUBLISHING) {
+    private fun publishedModule(
+        coordinates: String,
+        withProtos: Boolean = true,
+        publishing: String = TestBuild.PUBLISHING,
+    ) {
         build.settings()
         build.script(
             """
             ${TestBuild.PLUGIN}
             $publishing
             $coordinates
-            """
+            """,
         )
-        if (withProtos) build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"))
+
+        if (withProtos) {
+            build.proto(
+                CONTRACT_PATH,
+                TestBuild.contract("message Player { required int64 id = 1; }"),
+            )
+        }
     }
 
     private fun failure(): String = build.runAndFail("help").output
@@ -30,14 +40,20 @@ internal class CoordinateValidationTest : TestKitSupport() {
         val output = failure()
 
         assertContains(output, "surf-nats: invalid weaver configuration in :")
-        assertContains(output, "weaver.publishing.group 'Dev.Slne' must be a lowercase reverse-DNS name")
+        assertContains(
+            output,
+            "weaver.publishing.group 'Dev.Slne' must be a lowercase reverse-DNS name",
+        )
     }
 
     @Test
     fun `a bad version fails configuration`() {
         publishedModule("group = 'dev.slne.demo'; version = '1.2.3.4.5'")
 
-        assertContains(failure(), "weaver.publishing.version '1.2.3.4.5' must have 1 to 4 numeric parts")
+        assertContains(
+            failure(),
+            "weaver.publishing.version '1.2.3.4.5' must have 1 to 4 numeric parts",
+        )
     }
 
     @Test
@@ -46,7 +62,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
             """
             group = 'dev.slne.demo'; version = '1.0.0'
             weaver { publishing { name = 'My_Project'; repository = 'Bad Repo' }; repositories('also bad') }
-            """
+            """,
         )
 
         val output = failure()
@@ -76,14 +92,24 @@ internal class CoordinateValidationTest : TestKitSupport() {
             """,
         )
 
-        assertContains(failure(), "weaver.publishing.group 'Dev.Slne' must be a lowercase reverse-DNS name")
+        assertContains(
+            failure(),
+            "weaver.publishing.group 'Dev.Slne' must be a lowercase reverse-DNS name",
+        )
     }
 
     @Test
     fun `an ungrouped published subproject reports the group as not set`() {
         build.settings("sub", rootName = "demo")
-        build.script("${TestBuild.PLUGIN}\n${TestBuild.PUBLISHING}\nversion = '1.0.0'", project = "sub")
-        build.proto(CONTRACT_PATH, TestBuild.contract("message Player { required int64 id = 1; }"), project = "sub")
+        build.script(
+            "${TestBuild.PLUGIN}\n${TestBuild.PUBLISHING}\nversion = '1.0.0'",
+            project = "sub",
+        )
+        build.proto(
+            CONTRACT_PATH,
+            TestBuild.contract("message Player { required int64 id = 1; }"),
+            project = "sub",
+        )
 
         assertContains(failure(), "weaver.publishing.group is not set")
     }
@@ -119,11 +145,19 @@ internal class CoordinateValidationTest : TestKitSupport() {
         build.run("help")
     }
 
-    private fun twoPublishedModules(secondName: String? = null, secondPublished: Boolean = true, secondProtos: Boolean = true) {
+    private fun twoPublishedModules(
+        secondName: String? = null,
+        secondPublished: Boolean = true,
+        secondProtos: Boolean = true,
+    ) {
         build.settings("a", "b", rootName = "demo")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
         build.script("${TestBuild.PLUGIN}\n${TestBuild.PUBLISHING}", project = "a")
-        build.proto(CONTRACT_PATH, TestBuild.contract("message A { required int64 id = 1; }"), project = "a")
+        build.proto(
+            CONTRACT_PATH,
+            TestBuild.contract("message A { required int64 id = 1; }"),
+            project = "a",
+        )
         build.script(
             """
             ${TestBuild.PLUGIN}
@@ -132,8 +166,13 @@ internal class CoordinateValidationTest : TestKitSupport() {
             """,
             project = "b",
         )
+
         if (secondProtos) {
-            build.proto("surf/b/v1/b.proto", TestBuild.contract("message B { required int64 id = 1; }"), project = "b")
+            build.proto(
+                "surf/b/v1/b.proto",
+                TestBuild.contract("message B { required int64 id = 1; }"),
+                project = "b",
+            )
         }
     }
 
@@ -143,7 +182,10 @@ internal class CoordinateValidationTest : TestKitSupport() {
 
         val output = failure()
 
-        assertContains(output, "projects :a and :b both publish the weaver artifact dev.slne.demo:demo")
+        assertContains(
+            output,
+            "projects :a and :b both publish the weaver artifact dev.slne.demo:demo",
+        )
         assertContains(output, "weaver { publishing { name = \"...\" } }")
     }
 
@@ -151,6 +193,7 @@ internal class CoordinateValidationTest : TestKitSupport() {
     fun `projects whose repositories are added in afterEvaluate still clash`() {
         build.settings("a", "b", rootName = "demo")
         build.script("allprojects { group = 'dev.slne.demo'; version = '1.0.0' }")
+
         for (project in listOf("a", "b")) {
             build.script(
                 """
@@ -167,7 +210,10 @@ internal class CoordinateValidationTest : TestKitSupport() {
             )
         }
 
-        assertContains(failure(), "projects :a and :b both publish the weaver artifact dev.slne.demo:demo")
+        assertContains(
+            failure(),
+            "projects :a and :b both publish the weaver artifact dev.slne.demo:demo",
+        )
     }
 
     @Test

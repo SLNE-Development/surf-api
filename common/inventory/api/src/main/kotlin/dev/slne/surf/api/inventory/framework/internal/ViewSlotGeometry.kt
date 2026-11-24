@@ -40,8 +40,9 @@ object ViewSlotGeometry {
      * @param originX the pixel offset of column `0`
      * @param slotSize the horizontal pitch of the slot grid
      */
-    fun columnShift(column: Int, originX: Int, slotSize: Int = SLOT_SIZE): Int =
-        originX + (column * slotSize)
+    fun columnShift(column: Int, originX: Int, slotSize: Int = SLOT_SIZE): Int {
+        return originX + (column * slotSize)
+    }
 
     /**
      * Returns the pixel width spanned by [columns] adjacent slot columns.
@@ -75,6 +76,5 @@ object ViewSlotGeometry {
      * @param row the one-based row index
      * @param columns the number of columns per row
      */
-    fun slotOf(column: Int, row: Int, columns: Int = COLUMNS): Int =
-        ((row - 1) * columns) + column
+    fun slotOf(column: Int, row: Int, columns: Int = COLUMNS): Int = ((row - 1) * columns) + column
 }

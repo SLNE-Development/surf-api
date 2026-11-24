@@ -18,7 +18,7 @@ import me.devnatan.inventoryframework.context.IFConfinedContext
  * @receiver the [IFConfinedContext] (a context tied to a specific player)
  * @param view the [RootView] to open for the confined player
  */
-fun IFConfinedContext.openForPlayer(view: RootView) = openForPlayer(view.javaClass)
+fun IFConfinedContext.openForPlayer(view: RootView): Unit = openForPlayer(view.javaClass)
 
 /**
  * Opens the given [view] for the confined player with arbitrary [initialData].
@@ -36,5 +36,6 @@ fun IFConfinedContext.openForPlayer(view: RootView) = openForPlayer(view.javaCla
  * @param view the [RootView] to open for the confined player
  * @param initialData arbitrary data to pass as the view's initial state
  */
-fun IFConfinedContext.openForPlayer(view: RootView, initialData: Any) =
+fun IFConfinedContext.openForPlayer(view: RootView, initialData: Any) {
     openForPlayer(view.javaClass, initialData)
+}

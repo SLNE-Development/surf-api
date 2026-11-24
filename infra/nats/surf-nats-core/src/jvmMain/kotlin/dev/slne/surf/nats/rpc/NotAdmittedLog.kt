@@ -8,12 +8,13 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 /**
- * Reports the requests of one service registration that got no handler slot, without one log line per request.
+ * Reports the requests of one service registration that got no handler slot, without one log line
+ * per request.
  *
- * The first rejection after a quiet [interval] is reported at once. Later ones are counted and summarized once per
- * [interval] for as long as they continue. A summary pending when [scope] is cancelled is reported then. The summary
- * runs in [scope], which must not be the handler scope of the registration, so a drain does not wait for it.
- * Thread-safe.
+ * The first rejection after a quiet [interval] is reported at once. Later ones are counted and
+ * summarized once per [interval] for as long as they continue. A summary pending when [scope] is
+ * cancelled is reported then. The summary runs in [scope], which must not be the handler scope of
+ * the registration, so a drain does not wait for it. Thread-safe.
  */
 @InternalNatsApi
 internal class NotAdmittedLog(
@@ -39,7 +40,7 @@ internal class NotAdmittedLog(
 
         warn(
             "Request on $subject got no handler slot: all $permits handler slots of $serviceName stayed busy " +
-                    "until its deadline (further rejections are summarized every $interval)"
+                "until its deadline (further rejections are summarized every $interval)",
         )
         scope.launch { summarizeWhileRejecting() }
     }
@@ -61,7 +62,13 @@ internal class NotAdmittedLog(
                 summarizing = it > 0
             }
         }
-        if (count > 0) warn("$count more requests to $serviceName got no handler slot in the last $interval")
+
+        if (count > 0) {
+            warn(
+                "$count more requests to $serviceName got no handler slot in the last $interval",
+            )
+        }
+
         return count > 0
     }
 }

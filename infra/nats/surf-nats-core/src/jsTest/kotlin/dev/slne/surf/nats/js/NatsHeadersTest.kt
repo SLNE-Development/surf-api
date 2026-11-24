@@ -20,6 +20,7 @@ class NatsHeadersTest {
             ProtocolHeaders.NATS_TTL to "60s",
             ProtocolHeaders.DEADLINE to "1761234567890",
         )
+
         for ((name, value) in lines) {
             headers.set(name, value)
             expected += headerLineBytes(name, value)

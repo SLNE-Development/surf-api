@@ -106,7 +106,8 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
     fun removeIf(predicate: (T) -> Boolean): Boolean
 
     /**
-     * Removes all locally matching elements and waits until the batched Redis mutation has completed.
+     * Removes all locally matching elements and waits until the batched Redis mutation has
+     * completed.
      */
     suspend fun removeIfAndAwait(predicate: (T) -> Boolean): Boolean
 
@@ -154,7 +155,8 @@ interface SyncSet<T : Any> : SyncStructure<SyncSetChange> {
     suspend fun removeRemote(element: T): Boolean
 
     /**
-     * Clears the Redis set regardless of the local view and waits until the clear has been committed.
+     * Clears the Redis set regardless of the local view and waits until the clear has been
+     * committed.
      *
      * Unlike [clearAndAwait], this is not skipped when the local view is already empty.
      */

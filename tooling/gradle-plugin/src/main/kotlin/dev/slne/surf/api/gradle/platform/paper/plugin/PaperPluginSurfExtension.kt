@@ -1,7 +1,7 @@
 package dev.slne.surf.api.gradle.platform.paper.plugin
 
 import dev.slne.surf.api.gradle.platform.paper.AbstractPaperSurfExtension
-import net.minecrell.pluginyml.paper.PaperPluginDescription
+import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.NamedDomainObjectContainerScope
@@ -26,9 +26,9 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
      */
     internal val surfPluginDependencies = objects.listProperty<SurfPluginDependency>()
     internal val bootstrapDependencies =
-        objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
+        objects.property<Action<NamedDomainObjectContainerScope<DependencyDefinition>>>()
     internal val serverDependencies =
-        objects.property<Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>>()
+        objects.property<Action<NamedDomainObjectContainerScope<DependencyDefinition>>>()
     internal val foliaSupported = objects.property<Boolean>().convention(true)
     internal val generateLibraryLoader = objects.property<Boolean>().convention(false)
 
@@ -43,7 +43,8 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     }
 
     /**
-     * Uses [bootstrapper] instead of the generated bootstrapper. It must extend `SurfPaperBootstrapper`.
+     * Uses [bootstrapper] instead of the generated bootstrapper. It must extend
+     * `SurfPaperBootstrapper`.
      */
     fun bootstrapper(bootstrapper: String) {
         this.bootstrapper.set(bootstrapper)
@@ -51,7 +52,8 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
     }
 
     /**
-     * Requires the surf plugin [name] as server and bootstrap dependency, loaded before this plugin.
+     * Requires the surf plugin [name] as server and bootstrap dependency, loaded before this
+     * plugin.
      *
      * A plugin that depends on a surf plugin's beans needs both: the bootstrap dependency makes
      * the surf plugin's bootstrap context exist when this plugin bootstraps. Use
@@ -68,12 +70,16 @@ open class PaperPluginSurfExtension @Inject constructor(objects: ObjectFactory) 
         surfPluginDependencies.add(SurfPluginDependency(name, required = false))
     }
 
-    fun bootstrapDependencies(action: Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>) {
+    fun bootstrapDependencies(
+        action: Action<NamedDomainObjectContainerScope<DependencyDefinition>>,
+    ) {
         bootstrapDependencies.set(action)
         bootstrapDependencies.finalizeValue()
     }
 
-    fun serverDependencies(action: Action<NamedDomainObjectContainerScope<PaperPluginDescription.DependencyDefinition>>) {
+    fun serverDependencies(
+        action: Action<NamedDomainObjectContainerScope<DependencyDefinition>>,
+    ) {
         serverDependencies.set(action)
         serverDependencies.finalizeValue()
     }

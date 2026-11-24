@@ -17,13 +17,16 @@ import org.slf4j.event.Level
 /**
  * An R2DBC factory pointing at a closed port, for databases that never connect.
  */
-fun offlineConnectionFactory(): ConnectionFactory = MariadbConnectionFactory.from(
-    MariadbConnectionConfiguration.builder().host("localhost").port(1).username("x").build()
-)
+fun offlineConnectionFactory(): ConnectionFactory {
+    return MariadbConnectionFactory.from(
+        MariadbConnectionConfiguration.builder().host("localhost").port(1).username("x").build(),
+    )
+}
 
 /**
- * Runs [block] with an [R2dbcDatabase] connected like the library does, whose R2DBC factory points at a closed port,
- * for tests that never connect. The database is unregistered from Exposed afterwards.
+ * Runs [block] with an [R2dbcDatabase] connected like the library does, whose R2DBC factory points
+ * at a closed port, for tests that never connect. The database is unregistered from Exposed
+ * afterwards.
  *
  * @param customize runs last on the database configuration, as a `SurfDatabaseConfigurer` does
  */
@@ -38,6 +41,7 @@ fun <T> withOfflineDatabase(
         ComponentSqlLogger(ComponentLogger.logger("OfflineDatabase"), Level.DEBUG),
         customize,
     )
+
     try {
         block(database)
     } finally {

@@ -19,7 +19,10 @@ import org.junit.jupiter.api.Test
  * [dev.slne.surf.api.minestom.command.argument.Argument.toDefinition].
  */
 class FixedSetParserTest {
-    private enum class AccessLevel { STAFF, GUEST }
+    private enum class AccessLevel {
+        STAFF,
+        GUEST
+    }
 
     @Test
     fun `a known value resolves`() {
@@ -30,7 +33,9 @@ class FixedSetParserTest {
     @Test
     fun `an unknown value is rejected at its own start`() {
         val parser = MultiLiteralArgument("side", "left", "right").toDefinition().rawType
-        val failure = assertThrows(CommandSyntaxException::class.java) { parser.parse(StringReader("up")) }
+        val failure = assertThrows(CommandSyntaxException::class.java) {
+            parser.parse(StringReader("up"))
+        }
         assertEquals(0, failure.cursor)
     }
 

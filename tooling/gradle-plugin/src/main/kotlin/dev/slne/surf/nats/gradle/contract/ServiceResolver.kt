@@ -16,19 +16,20 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
     private val problems get() = types.problems
 
     /**
-     * Returns the methods of [service] in rpc order and reports options, names and payload types that cannot be
-     * generated.
+     * Returns the methods of [service] in rpc order and reports options, names and payload types
+     * that cannot be generated.
      *
-     * The protocol rules of each rpc come from `ResolvedMethod.problems`: streaming rpcs are rejected, persistent
-     * rpcs cannot address `ALL_INSTANCES`, and a persistent rpc without a result must not have a call timeout above
-     * the 120-second duplicate window. Streaming rpcs have no [ContractMethod]. The other violations are reported
-     * and the method is kept.
+     * The protocol rules of each rpc come from `ResolvedMethod.problems`: streaming rpcs are
+     * rejected, persistent rpcs cannot address `ALL_INSTANCES`, and a persistent rpc without a
+     * result must not have a call timeout above the 120-second duplicate window. Streaming rpcs
+     * have no [ContractMethod]. The other violations are reported and the method is kept.
      */
     fun resolve(service: Service): List<ContractMethod> {
         val resolution = SurfProtoOptions.service(service, problems)
         validateService(service, resolution)
 
         val kotlinNames = HashMap<String, Location>()
+
         return service.rpcs.mapNotNull { method(it, resolution, kotlinNames) }
     }
 
@@ -73,7 +74,7 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
                 problems.error(
                     rpc.location,
                     "rpc ${rpc.name}: type '$type' conflicts with RPC '$typeName' in the same service. " +
-                            "Use a package-qualified type name.",
+                        "Use a package-qualified type name.",
                 )
             }
         }
@@ -131,14 +132,14 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
         if (kotlinName in RESERVED_METHOD_NAMES) {
             problems.error(
                 rpc.location,
-                "rpc ${rpc.name} maps to the Kotlin function '$kotlinName', which clashes with a member of Any"
+                "rpc ${rpc.name} maps to the Kotlin function '$kotlinName', which clashes with a member of Any",
             )
         }
 
         kotlinNames.put(kotlinName, rpc.location)?.let { previous ->
             problems.error(
                 rpc.location,
-                "rpc ${rpc.name} maps to the Kotlin function '$kotlinName', already used by the rpc at $previous"
+                "rpc ${rpc.name} maps to the Kotlin function '$kotlinName', already used by the rpc at $previous",
             )
         }
     }
@@ -161,6 +162,7 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
 
         if (protoType == ProtoType.EMPTY) {
             val serializer = mapping?.serializer ?: return null
+
             return RpcMessage(UNIT, CodeBlock.of("%T", serializer))
         }
 
@@ -168,7 +170,7 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
             problems.error(
                 rpc.location,
                 "rpc ${rpc.name}: $role type $protoType is mapped to ${mapping.kotlinClass}; only ${ProtoType.EMPTY} " +
-                        "or generated messages can be requests and responses",
+                    "or generated messages can be requests and responses",
             )
 
             return null
@@ -190,11 +192,13 @@ internal class ServiceResolver(private val types: KotlinTypeResolver) {
 
         if (className == null) {
             types.reportUnknown(protoType, rpc.location)
+
             return null
         }
 
         if (types.schema.getType(protoType) !is MessageType) {
             problems.error(rpc.location, "rpc ${rpc.name}: $role type $protoType must be a message")
+
             return null
         }
 

@@ -1,14 +1,15 @@
 package dev.slne.surf.api.paper.inventory.framework.view.pagination
 
 import dev.slne.surf.api.inventory.framework.internal.PaginationButtonGlyphs
-import dev.slne.surf.api.messages.Colors
-import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
 import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
+import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import me.devnatan.inventoryframework.component.Pagination
 
 /**
- * A [ViewContainerComponent] that renders the pagination button overlay glyph in the inventory header.
+ * A [ViewContainerComponent] that renders the pagination button overlay glyph in the inventory
+ * header.
  *
  * There are four visual states depending on whether the left and right navigation buttons are
  * available ([Pagination.canBack] / [Pagination.canAdvance]):
@@ -143,12 +144,15 @@ internal sealed class PaginationButtonGlyphComponent(
          *
          * @param geometry the header geometry describing the slot grid the bar is placed on
          */
-        fun counterAreaShift(geometry: ViewHeaderGeometry): Int =
-            geometry.columnShift(PaginationButton.LEFT.column) + GLYPH_INSET + COUNTER_AREA_OFFSET
-
+        fun counterAreaShift(geometry: ViewHeaderGeometry): Int {
+            return geometry.columnShift(
+                PaginationButton.LEFT.column,
+            ) + GLYPH_INSET + COUNTER_AREA_OFFSET
+        }
 
         /**
-         * Returns the appropriate [PaginationButtonGlyphComponent] for the given [pagination] state.
+         * Returns the appropriate [PaginationButtonGlyphComponent] for the given [pagination]
+         * state.
          *
          * Selects the subclass based on whether [Pagination.canBack] and [Pagination.canAdvance]
          * are true or false.
@@ -162,16 +166,17 @@ internal sealed class PaginationButtonGlyphComponent(
             row: Int,
             pagination: Pagination,
             geometry: ViewHeaderGeometry = ViewHeaderGeometry.DEFAULT,
-        ): PaginationButtonGlyphComponent =
-            when {
+        ): PaginationButtonGlyphComponent {
+            return when {
                 !pagination.canBack() && !pagination.canAdvance() -> Disabled(row, geometry)
                 !pagination.canBack() && pagination.canAdvance() -> DisabledLeft(row, geometry)
                 pagination.canBack() && !pagination.canAdvance() -> DisabledRight(row, geometry)
                 pagination.canBack() && pagination.canAdvance() -> Enabled(row, geometry)
                 else -> throw MatchException(
                     "Invalid pagination state: canBack=${pagination.canBack()}, canAdvance=${pagination.canAdvance()}",
-                    null
+                    null,
                 )
             }
+        }
     }
 }

@@ -18,7 +18,7 @@ private const val ID_REGEX = "[a-z][a-z0-9-_]{0,63}"
 private val idRegex = ID_REGEX.toRegex()
 
 abstract class MinestomPluginFile @Inject constructor(
-    objects: ObjectFactory
+    objects: ObjectFactory,
 ) : CommonPluginFile(objects) {
     @get:Pattern(ID_REGEX)
     @get:Input
@@ -43,11 +43,12 @@ abstract class MinestomPluginFile @Inject constructor(
     abstract val authors: ListProperty<String>
 
     @get:Nested
-    val pluginDependencies: NamedDomainObjectContainer<Dependency> =
-        objects.domainObjectContainer(Dependency::class)
+    val pluginDependencies: NamedDomainObjectContainer<Dependency> = objects.domainObjectContainer(
+        Dependency::class,
+    )
 
     abstract class Dependency @Inject constructor(
-        @get:Input val name: String
+        @get:Input val name: String,
     ) {
         @get:Input
         abstract val optional: Property<Boolean>
@@ -65,13 +66,23 @@ abstract class MinestomPluginFile @Inject constructor(
 
     override fun validate() {
         val id = id.orNull ?: invalidPluginFile("Plugin id not set")
-        if (!(idRegex.matches(id))) invalidPluginFile("Invalid plugin id! Should match $idRegex")
 
-        if (version.orNull.isNullOrBlank()) invalidPluginFile("Plugin version not set")
-        if (effectiveMain().orNull.isNullOrBlank()) invalidPluginFile("Main class not set")
+        if (!(idRegex.matches(id))) {
+            invalidPluginFile("Invalid plugin id! Should match $idRegex")
+        }
+
+        if (version.orNull.isNullOrBlank()) {
+            invalidPluginFile("Plugin version not set")
+        }
+
+        if (effectiveMain().orNull.isNullOrBlank()) {
+            invalidPluginFile("Main class not set")
+        }
 
         for (dependency in pluginDependencies) {
-            if (dependency.name.isBlank()) invalidPluginFile("Dependency id not set")
+            if (dependency.name.isBlank()) {
+                invalidPluginFile("Dependency id not set")
+            }
         }
     }
 }

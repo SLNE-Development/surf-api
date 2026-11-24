@@ -24,7 +24,10 @@ abstract class CheckAbiDumpNesting : DefaultTask() {
 
     @TaskAction
     fun check() {
-        val orphans = dumps.files.flatMap { dump -> orphanedNestedClasses(dump.readText()).map { "${dump.name}: $it" } }
+        val orphans = dumps.files.flatMap { dump ->
+            orphanedNestedClasses(dump.readText()).map { "${dump.name}: $it" }
+        }
+
         if (orphans.isNotEmpty()) {
             throw GradleException(
                 "ABI dumps list nested classes of excluded classes. Mark each with the module's internal " +
@@ -41,12 +44,19 @@ private const val GENERATED_SERIALIZER = "\$\$serializer"
  * The classes in [dump] that are nested in a class the dump does not list.
  */
 fun orphanedNestedClasses(dump: String): List<String> {
-    val classes = DUMPED_CLASS.findAll(dump).map { it.groupValues[1] }.toSet()
-    return classes.filter { name -> outerClassOf(name)?.let { it !in classes } ?: false }.sorted()
+    val classes = DUMPED_CLASS.findAll(dump)
+        .map { it.groupValues[1] }
+        .toSet()
+
+    return classes
+        .filter { name -> outerClassOf(name)?.let { it !in classes } ?: false }
+        .sorted()
 }
 
-private fun outerClassOf(name: String): String? = when {
-    name.endsWith(GENERATED_SERIALIZER) -> name.removeSuffix(GENERATED_SERIALIZER)
-    '$' in name.substringAfterLast('/') -> name.substringBeforeLast('$')
-    else -> null
+private fun outerClassOf(name: String): String? {
+    return when {
+        name.endsWith(GENERATED_SERIALIZER) -> name.removeSuffix(GENERATED_SERIALIZER)
+        '$' in name.substringAfterLast('/') -> name.substringBeforeLast('$')
+        else -> null
+    }
 }

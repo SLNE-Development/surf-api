@@ -8,17 +8,17 @@ package dev.slne.surf.api.config.environment
 sealed class EnvironmentVariableException(
     val variableName: String,
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : IllegalStateException(message, cause)
 
 /**
  * Thrown when a required environment variable is missing.
  */
 class MissingEnvironmentVariableException(
-    variableName: String
+    variableName: String,
 ) : EnvironmentVariableException(
     variableName,
-    "Required environment variable '$variableName' is missing."
+    "Required environment variable '$variableName' is missing.",
 )
 
 /**
@@ -35,7 +35,7 @@ class InvalidEnvironmentVariableException internal constructor(
     val expectedType: String,
     val rawValue: String?,
     sensitive: Boolean,
-    cause: Throwable
+    cause: Throwable,
 ) : EnvironmentVariableException(
     variableName,
     buildString {
@@ -44,6 +44,7 @@ class InvalidEnvironmentVariableException internal constructor(
         append("' has an invalid value for ")
         append(expectedType)
         append(": ")
+
         if (sensitive) {
             append("the sensitive value was not included.")
         } else {
@@ -51,7 +52,7 @@ class InvalidEnvironmentVariableException internal constructor(
             append('.')
         }
     },
-    cause.takeUnless { sensitive }
+    cause.takeUnless { sensitive },
 )
 
 /**
@@ -65,7 +66,7 @@ class EnvironmentVariableValidationException internal constructor(
     val reason: String,
     val rawValue: String?,
     sensitive: Boolean,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : EnvironmentVariableException(
     variableName,
     buildString {
@@ -73,6 +74,7 @@ class EnvironmentVariableValidationException internal constructor(
         append(variableName)
         append("' failed validation: ")
         append(reason)
+
         if (sensitive) {
             append(" The sensitive value was not included.")
         } else if (rawValue != null) {
@@ -81,13 +83,13 @@ class EnvironmentVariableValidationException internal constructor(
             append('.')
         }
     },
-    cause.takeUnless { sensitive }
+    cause.takeUnless { sensitive },
 )
 
 private fun formatRawValue(value: String): String {
     val truncated = value.length > MAX_DISPLAYED_VALUE_LENGTH
     val escaped = buildString {
-        value.take(MAX_DISPLAYED_VALUE_LENGTH).forEach { character ->
+        for (character in value.take(MAX_DISPLAYED_VALUE_LENGTH)) {
             when (character) {
                 '\n' -> append("\\n")
                 '\r' -> append("\\r")

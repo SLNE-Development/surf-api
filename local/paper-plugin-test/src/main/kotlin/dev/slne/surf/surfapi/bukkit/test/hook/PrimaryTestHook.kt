@@ -16,14 +16,17 @@ class PrimaryTestHook : SurfLifecycle {
     private val log = logger()
 
     override suspend fun onLoad() {
-        log.atInfo().log("PrimaryTestHook loaded")
+        log.atInfo()
+            .log("PrimaryTestHook loaded")
     }
 
     override suspend fun onEnable() {
-        log.atInfo().log("PrimaryTestHook enabled")
+        log.atInfo()
+            .log("PrimaryTestHook enabled")
     }
 
     override suspend fun onDisable() {
-        log.atInfo().log("PrimaryTestHook disabled")
+        log.atInfo()
+            .log("PrimaryTestHook disabled")
     }
 }

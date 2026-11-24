@@ -1,8 +1,8 @@
 package dev.slne.surf.api.paper.inventory.framework.view.icon
 
-import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.inventory.framework.view.icon.ViewIconColor
 import dev.slne.surf.api.inventory.framework.view.icon.ViewIconType
+import dev.slne.surf.api.messages.adventure.key
 import dev.slne.surf.api.paper.builder.buildItem
 import io.papermc.paper.datacomponent.DataComponentTypes
 import org.bukkit.inventory.ItemStack
@@ -11,8 +11,8 @@ import org.bukkit.inventory.ItemType
 fun viewIcon(
     icon: ViewIconType,
     color: ViewIconColor,
-    init: ItemStack.() -> Unit = {}
-) = ViewIcon(icon, color).build(init)
+    init: ItemStack.() -> Unit = {},
+): ItemStack = ViewIcon(icon, color).build(init)
 
 class ViewIcon(
     val icon: ViewIconType,
@@ -22,9 +22,11 @@ class ViewIcon(
         get() = "surf_menu_icon_${color.configName}_${icon.configName}"
 
     @Suppress("UnstableApiUsage")
-    fun build(init: ItemStack.() -> Unit) = buildItem(ItemType.PAPER) {
-        init()
+    fun build(init: ItemStack.() -> Unit): ItemStack {
+        return buildItem(ItemType.PAPER) {
+            init()
 
-        setData(DataComponentTypes.ITEM_MODEL, key("nexo", itemModel))
+            setData(DataComponentTypes.ITEM_MODEL, key("nexo", itemModel))
+        }
     }
 }

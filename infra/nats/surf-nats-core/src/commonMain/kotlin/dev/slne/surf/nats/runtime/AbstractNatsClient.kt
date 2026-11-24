@@ -6,8 +6,8 @@ import dev.slne.surf.nats.protocol.ProtocolDefaults
 /**
  * Lifecycle, logging and registration tracking shared by the JVM and the JS client.
  *
- * [R] is the registration type of the platform client. Registrations are admitted only while the client accepts new
- * work, see [ClientLifecycle.admit]. Thread-safe.
+ * [R] is the registration type of the platform client. Registrations are admitted only while the
+ * client accepts new work, see [ClientLifecycle.admit]. Thread-safe.
  */
 @InternalNatsApi
 internal abstract class AbstractNatsClient<R : Any>(val name: String) {
@@ -19,13 +19,13 @@ internal abstract class AbstractNatsClient<R : Any>(val name: String) {
 
     private val registrations = concurrentSetOf<R>()
 
-    fun checkOpen() = lifecycle.requireOpen()
+    fun checkOpen(): Unit = lifecycle.requireOpen()
 
     /**
      * Tracks [registration] until it is unregistered or the client closes it.
      *
-     * Throws [IllegalStateException] when the client is closing or closed. The registration is then closed through
-     * [closeRegistration].
+     * Throws [IllegalStateException] when the client is closing or closed. The registration is then
+     * closed through [closeRegistration].
      */
     fun registerRegistration(registration: R) {
         lifecycle.admit(
@@ -59,16 +59,26 @@ internal abstract class AbstractNatsClient<R : Any>(val name: String) {
         }
 
         if (registrations.isNotEmpty()) {
-            logger.warn("Some registrations were not closed properly: ${registrations.size} remaining")
+            logger.warn(
+                "Some registrations were not closed properly: ${registrations.size} remaining",
+            )
         }
     }
 
     /**
-     * Throws [IllegalArgumentException] when an event of [size] bytes including headers exceeds [maxPayload].
+     * Throws [IllegalArgumentException] when an event of [size] bytes including headers exceeds
+     * [maxPayload].
      *
      * Events are never offloaded.
      */
     protected fun requireEventFits(typeName: String, subject: String, size: Int, maxPayload: Long) {
-        require(size <= maxPayload) { ProtocolDefaults.eventTooLargeMessage(typeName, size, maxPayload, subject) }
+        require(size <= maxPayload) {
+            ProtocolDefaults.eventTooLargeMessage(
+                typeName,
+                size,
+                maxPayload,
+                subject,
+            )
+        }
     }
 }

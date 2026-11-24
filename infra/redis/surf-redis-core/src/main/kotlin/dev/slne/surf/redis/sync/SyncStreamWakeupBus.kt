@@ -23,8 +23,13 @@ internal class SyncStreamWakeupBus private constructor(
             .weakValues()
             .build<RedisApi, SyncStreamWakeupBus>()
 
-        fun getInstance(api: RedisApi): SyncStreamWakeupBus =
-            byApi.get(api) { SyncStreamWakeupBus(it) }
+        fun getInstance(api: RedisApi): SyncStreamWakeupBus {
+            return byApi.get(api) {
+                SyncStreamWakeupBus(
+                    it,
+                )
+            }
+        }
     }
 
     private val topic by lazy {
@@ -71,7 +76,7 @@ internal class SyncStreamWakeupBus private constructor(
 
     fun publish(streamKey: String) {
         val message = buildString(
-            streamKey.length + api.clientId.length + 1
+            streamKey.length + api.clientId.length + 1,
         ) {
             append(streamKey)
             append(MESSAGE_DELIMITER)
@@ -91,6 +96,7 @@ internal class SyncStreamWakeupBus private constructor(
 
     private fun handleWakeup(message: String) {
         val delimiter = message.lastIndexOf(MESSAGE_DELIMITER)
+
         if (delimiter <= 0 || delimiter == message.lastIndex) {
             return
         }

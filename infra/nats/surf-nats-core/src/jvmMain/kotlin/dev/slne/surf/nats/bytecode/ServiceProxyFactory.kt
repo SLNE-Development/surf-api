@@ -17,10 +17,10 @@ import kotlin.coroutines.Continuation
 /**
  * Creates the client-side proxies of generated service interfaces.
  *
- * Each interface gets one generated class, `<interface>$NatsProxy`, defined next to the interface in its class
- * loader. Every proxy method forwards its method index, request and continuation to [RpcCaller.call]. A method
- * without a request passes `Unit`. When the class already exists in that loader, it is reused if it implements the
- * interface.
+ * Each interface gets one generated class, `<interface>$NatsProxy`, defined next to the interface
+ * in its class loader. Every proxy method forwards its method index, request and continuation to
+ * [RpcCaller.call]. A method without a request passes `Unit`. When the class already exists in that
+ * loader, it is reused if it implements the interface.
  */
 @InternalNatsApi
 internal object ServiceProxyFactory {
@@ -36,7 +36,7 @@ internal object ServiceProxyFactory {
         ConstantDescs.CD_Object,
         ConstantDescs.CD_int,
         ConstantDescs.CD_Object,
-        CD_CONTINUATION
+        CD_CONTINUATION,
     )
 
     private val MTD_INIT = MethodTypeDesc.of(ConstantDescs.CD_void, CD_RPC_CALLER)
@@ -49,6 +49,7 @@ internal object ServiceProxyFactory {
         override fun computeValue(type: Class<*>): Constructor<*> {
             val proxyClass = synchronized(defineLock) {
                 val lookup = MethodHandles.privateLookupIn(type, LOOKUP)
+
                 try {
                     lookup.defineClass(generateProxyClass(serviceDescriptor.get()!!))
                 } catch (e: LinkageError) {
@@ -68,6 +69,7 @@ internal object ServiceProxyFactory {
             check(found.classLoader === type.classLoader && type.isAssignableFrom(found)) {
                 "${found.name} from ${found.classLoader} does not implement ${type.name} from ${type.classLoader}"
             }
+
             return found
         }
     }
@@ -77,6 +79,7 @@ internal object ServiceProxyFactory {
      */
     fun <S : Any> create(descriptor: ServiceDescriptor, caller: RpcCaller): S {
         serviceDescriptor.set(descriptor)
+
         try {
             @Suppress("UNCHECKED_CAST")
             return constructors.get(descriptor.type).newInstance(caller) as S
@@ -90,14 +93,16 @@ internal object ServiceProxyFactory {
         val thisClass = ClassDesc.of(type.name + $$"$NatsProxy")
 
         return ClassFile.of().build(thisClass) { classBuilder ->
-            classBuilder.withFlags(ClassFile.ACC_PUBLIC or ClassFile.ACC_FINAL or ClassFile.ACC_SYNTHETIC)
+            classBuilder.withFlags(
+                ClassFile.ACC_PUBLIC or ClassFile.ACC_FINAL or ClassFile.ACC_SYNTHETIC,
+            )
             classBuilder.withInterfaceSymbols(ClassDesc.of(type.name))
 
             // private final RpcCaller caller;
             classBuilder.withField(
                 CALLER_FIELD,
                 CD_RPC_CALLER,
-                ClassFile.ACC_PRIVATE or ClassFile.ACC_FINAL
+                ClassFile.ACC_PRIVATE or ClassFile.ACC_FINAL,
             )
 
             // public <init>(RpcCaller caller) {
@@ -107,13 +112,13 @@ internal object ServiceProxyFactory {
             classBuilder.withMethodBody(
                 ConstantDescs.INIT_NAME,
                 MTD_INIT,
-                ClassFile.ACC_PUBLIC
+                ClassFile.ACC_PUBLIC,
             ) { codeBuilder ->
                 codeBuilder.aload(0)
                     .invokespecial(
                         ConstantDescs.CD_Object,
                         ConstantDescs.INIT_NAME,
-                        ConstantDescs.MTD_void
+                        ConstantDescs.MTD_void,
                     )
                     .aload(0)
                     .aload(1)
@@ -130,24 +135,22 @@ internal object ServiceProxyFactory {
     private fun generateMethod(
         classBuilder: ClassBuilder,
         thisClass: ClassDesc,
-        descriptor: MethodDescriptor
+        descriptor: MethodDescriptor,
     ) {
         val method = descriptor.method
         val methodType = MethodTypeDesc.of(
             method.returnType.describeConstable().orElseThrow(),
-            *method.parameterTypes.map { it.describeConstable().orElseThrow() }.toTypedArray()
+            *method.parameterTypes.map { it.describeConstable().orElseThrow() }.toTypedArray(),
         )
 
-        // override interface method
         // return this.caller.call(index, request, cont), with Unit as the request of an Empty rpc
         classBuilder.withMethodBody(
             method.name,
             methodType,
-            ClassFile.ACC_PUBLIC or ClassFile.ACC_FINAL
+            ClassFile.ACC_PUBLIC or ClassFile.ACC_FINAL,
         ) { codeBuilder ->
-            // Load RpcCaller from field
             codeBuilder.aload(0).getfield(thisClass, CALLER_FIELD, CD_RPC_CALLER)
-            codeBuilder.loadConstant(descriptor.index) // index
+            codeBuilder.loadConstant(descriptor.index)
 
             val continuationSlot = if (method.parameterCount == 1) {
                 codeBuilder.getstatic(CD_UNIT, "INSTANCE", CD_UNIT)

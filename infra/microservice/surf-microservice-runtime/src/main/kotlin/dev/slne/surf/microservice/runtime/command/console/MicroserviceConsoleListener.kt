@@ -10,15 +10,15 @@ import java.io.InputStream
 import kotlin.time.Duration
 
 /**
- * Runs every non-blank line read from [input] as a command and logs its output. A command that fails with an
- * uncaught throwable does not stop the listener.
+ * Runs every non-blank line read from [input] as a command and logs its output. A command that
+ * fails with an uncaught throwable does not stop the listener.
  *
- * Reading blocks a thread of [Dispatchers.IO] that cancellation cannot interrupt. It ends with the end of [input]
- * or the process. Commands therefore run outside the reader coroutine, so [stop] can wait for them without waiting
- * for the reader.
+ * Reading blocks a thread of [Dispatchers.IO] that cancellation cannot interrupt. It ends with the
+ * end of [input] or the process. Commands therefore run outside the reader coroutine, so [stop] can
+ * wait for them without waiting for the reader.
  *
- * [start] and [stop] must not run concurrently. [stop] cancels the reader and all running commands and waits up to
- * [stopTimeout] for the commands to finish.
+ * [start] and [stop] must not run concurrently. [stop] cancels the reader and all running commands
+ * and waits up to [stopTimeout] for the commands to finish.
  */
 internal class MicroserviceConsoleListener(
     private val dispatcher: MicroserviceCommandDispatcher,
@@ -41,6 +41,7 @@ internal class MicroserviceConsoleListener(
 
         reader = scope.launch(Dispatchers.IO + CoroutineName("MicroserviceConsoleListener")) {
             val lines = input.bufferedReader()
+
             while (isActive) {
                 val line = lines.readLine() ?: break
                 if (line.isBlank()) continue
@@ -57,6 +58,7 @@ internal class MicroserviceConsoleListener(
         reader = null
 
         val commandJob = commands ?: return
+
         commands = null
         commandJob.cancel()
         withTimeoutOrNull(stopTimeout) {
@@ -73,6 +75,7 @@ internal class MicroserviceConsoleListener(
         )
 
         val result = dispatch.result
+
         if (result is MicroserviceCommandResult.Failure) {
             LoggingCommandOutput.sendError(result.message)
         }

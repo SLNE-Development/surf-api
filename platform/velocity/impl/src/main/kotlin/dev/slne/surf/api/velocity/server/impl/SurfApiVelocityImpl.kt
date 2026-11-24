@@ -20,7 +20,12 @@ class SurfApiVelocityImpl : SurfApiCoreImpl(), SurfApiVelocity {
         }
     }
 
-    override fun getPlayer(playerUuid: UUID): Player? = plugin.server.getPlayer(playerUuid).orElse(null)
+    override fun getPlayer(playerUuid: UUID): Player? {
+        return plugin.server.getPlayer(playerUuid).orElse(
+            null,
+        )
+    }
+
     override fun isPlayer(audience: Audience): Boolean {
         return audience is Player
     }

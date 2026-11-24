@@ -30,9 +30,15 @@ internal class WeaverStub : AutoCloseable {
     }
 
     /**
-     * Serves the version list of `group:name`; each entry is a version and whether it is a snapshot.
+     * Serves the version list of `group:name`; each entry is a version and whether it is a
+     * snapshot.
      */
-    fun versions(group: String, name: String, vararg versions: Pair<String, Boolean>, repository: String = REPOSITORY) {
+    fun versions(
+        group: String,
+        name: String,
+        vararg versions: Pair<String, Boolean>,
+        repository: String = REPOSITORY,
+    ) {
         val json = versions.joinToString(",", "{\"versions\":[", "]}") { (version, snapshot) ->
             "{\"version\":\"$version\",\"isSnapshot\":$snapshot,\"buildNumber\":1}"
         }
@@ -40,7 +46,8 @@ internal class WeaverStub : AutoCloseable {
     }
 
     /**
-     * Serves the archive of `group:name:version`, with its `x-weaver-sha256` header unless [sha256] is null.
+     * Serves the archive of `group:name:version`, with its `x-weaver-sha256` header unless [sha256]
+     * is null.
      */
     fun archive(
         group: String,
@@ -51,23 +58,45 @@ internal class WeaverStub : AutoCloseable {
         repository: String = REPOSITORY,
     ) {
         val headers = if (sha256 == null) emptyMap() else mapOf("x-weaver-sha256" to sha256)
-        route("GET", "${artifactPath(repository, group, name)}/$version/archive") { StubResponse(200, bytes, headers) }
+        route(
+            "GET",
+            "${artifactPath(repository, group, name)}/$version/archive",
+        ) { StubResponse(200, bytes, headers) }
     }
 
     /**
      * Accepts publishes of `group:name:version` with a success response.
      */
-    fun acceptPublish(group: String, name: String, version: String, repository: String = REPOSITORY) {
-        val body = "{\"coordinate\":\"$group:$name:$version\",\"buildNumber\":1,\"sha256\":\"${"0".repeat(64)}\"," +
-                "\"redeployed\":false}"
-        route("PUT", "${artifactPath(repository, group, name)}/$version") { StubResponse(200, body) }
+    fun acceptPublish(
+        group: String,
+        name: String,
+        version: String,
+        repository: String = REPOSITORY,
+    ) {
+        val body = "{\"coordinate\":\"$group:$name:$version\",\"buildNumber\":1,\"sha256\":\"${
+            "0".repeat(
+                64,
+            )
+        }\"," +
+            "\"redeployed\":false}"
+        route("PUT", "${artifactPath(repository, group, name)}/$version") {
+            StubResponse(
+                200,
+                body,
+            )
+        }
     }
 
     /**
      * Answers `/resolve` with an empty resolution.
      */
     fun acceptResolve() {
-        route("POST", "/api/v1/resolve") { StubResponse(200, "{\"artifacts\":[],\"conflicts\":[]}") }
+        route("POST", "/api/v1/resolve") {
+            StubResponse(
+                200,
+                "{\"artifacts\":[],\"conflicts\":[]}",
+            )
+        }
     }
 
     fun requests(method: String): List<StubRequest> = requests.filter { it.method == method }
@@ -83,10 +112,22 @@ internal class WeaverStub : AutoCloseable {
             requests += request
 
             val response = routes["${request.method} ${request.path}"]?.invoke(request)
-                ?: StubResponse(404, "{\"error\":{\"code\":\"not_found\",\"message\":\"${request.path} is unknown\"}}")
-            response.headers.forEach { (name, value) -> exchange.responseHeaders.add(name, value) }
-            exchange.sendResponseHeaders(response.status, if (response.body.isEmpty()) -1 else response.body.size.toLong())
-            if (response.body.isNotEmpty()) exchange.responseBody.use { it.write(response.body) }
+                ?: StubResponse(
+                    404,
+                    "{\"error\":{\"code\":\"not_found\",\"message\":\"${request.path} is unknown\"}}",
+                )
+            for ((name, value) in response.headers) {
+                exchange.responseHeaders.add(name, value)
+            }
+
+            exchange.sendResponseHeaders(
+                response.status,
+                if (response.body.isEmpty()) -1 else response.body.size.toLong(),
+            )
+
+            if (response.body.isNotEmpty()) {
+                exchange.responseBody.use { it.write(response.body) }
+            }
         }
     }
 
@@ -97,10 +138,16 @@ internal class WeaverStub : AutoCloseable {
     companion object {
         const val REPOSITORY = "proto-releases-public"
 
-        fun artifactPath(repository: String, group: String, name: String): String =
-            "/api/v1/repos/$repository/artifacts/$group/$name"
+        fun artifactPath(repository: String, group: String, name: String): String {
+            return "/api/v1/repos/$repository/artifacts/$group/$name"
+        }
 
-        fun sha256(bytes: ByteArray): String =
-            MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        fun sha256(bytes: ByteArray): String {
+            return MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") {
+                "%02x".format(
+                    it,
+                )
+            }
+        }
     }
 }

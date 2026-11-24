@@ -17,29 +17,41 @@ import java.lang.reflect.Type
 annotation class NegativeNumber {
     companion object {
         internal object Factory : Constraint.Factory<NegativeNumber, Number?> {
-            override fun make(data: NegativeNumber, type: Type): Constraint<Number?> = { value ->
-                if (value != null && value.toDouble() >= 0.0) {
-                    throw SerializationException("Number must be negative: $value, expected < 0")
+            override fun make(data: NegativeNumber, type: Type): Constraint<Number?> {
+                return { value ->
+                    if (value != null && value.toDouble() >= 0.0) {
+                        throw SerializationException(
+                            "Number must be negative: $value, expected < 0",
+                        )
+                    }
                 }
             }
         }
 
         internal object FactoryIntOr : Constraint.Factory<NegativeNumber, IntOr?> {
-            override fun make(data: NegativeNumber, type: Type): Constraint<IntOr?> = { intOr ->
-                val value = intOr?.value
+            override fun make(data: NegativeNumber, type: Type): Constraint<IntOr?> {
+                return { intOr ->
+                    val value = intOr?.value
 
-                if (value != null && value >= 0) {
-                    throw SerializationException("Number must be negative: $value, expected < 0")
+                    if (value != null && value >= 0) {
+                        throw SerializationException(
+                            "Number must be negative: $value, expected < 0",
+                        )
+                    }
                 }
             }
         }
 
         internal object FactoryDoubleOr : Constraint.Factory<NegativeNumber, DoubleOr?> {
-            override fun make(data: NegativeNumber, type: Type): Constraint<DoubleOr?> = { doubleOr ->
-                val value = doubleOr?.value
+            override fun make(data: NegativeNumber, type: Type): Constraint<DoubleOr?> {
+                return { doubleOr ->
+                    val value = doubleOr?.value
 
-                if (value != null && value >= 0.0) {
-                    throw SerializationException("Number must be negative: $value, expected < 0")
+                    if (value != null && value >= 0.0) {
+                        throw SerializationException(
+                            "Number must be negative: $value, expected < 0",
+                        )
+                    }
                 }
             }
         }

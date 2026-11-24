@@ -6,8 +6,8 @@ package dev.slne.surf.nats.protocol
 internal object SubjectSyntax {
 
     /**
-     * Returns whether [subject] is a valid publish subject: non-empty tokens joined by single `.`, without `*`, `>`
-     * or whitespace.
+     * Returns whether [subject] is a valid publish subject: non-empty tokens joined by single `.`,
+     * without `*`, `>` or whitespace.
      */
     fun isValid(subject: String): Boolean {
         if (subject.isEmpty()) return false
@@ -18,6 +18,7 @@ internal object SubjectSyntax {
             when {
                 char == '.' -> {
                     if (atTokenStart) return false
+
                     atTokenStart = true
                 }
 
@@ -34,10 +35,10 @@ internal object SubjectSyntax {
     // The whitespace set of java.util.regex `\s` without UNICODE_CHARACTER_CLASS.
     private fun isWhitespace(char: Char): Boolean {
         return char == ' ' ||
-                char == '\t' ||
-                char == '\n' ||
-                char == '\u000B' ||
-                char == '\u000C' ||
-                char == '\r'
+            char == '\t' ||
+            char == '\n' ||
+            char == '\u000B' ||
+            char == '\u000C' ||
+            char == '\r'
     }
 }

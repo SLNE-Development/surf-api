@@ -71,6 +71,6 @@ abstract class SurfViewDSLImpl @PublishedApi internal constructor(
 
     internal fun modifyContainer0(
         updateContext: Context,
-        block: context(ViewContainerModificationContext) () -> Unit
+        block: context(ViewContainerModificationContext) () -> Unit,
     ) = modifyContainer(updateContext, block)
 }

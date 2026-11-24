@@ -12,32 +12,45 @@ data class RedissonConnectionKey(
     val username: String?,
     val password: String?,
 ) {
-    override fun toString(): String = buildString {
-        append(
-            when {
-                unixDomainSocket -> "redis+uds://"
-                ssl -> "rediss://"
-                else -> "redis://"
+    override fun toString(): String {
+        return buildString {
+            append(
+                when {
+                    unixDomainSocket -> "redis+uds://"
+                    ssl -> "rediss://"
+                    else -> "redis://"
+                },
+            )
+
+            if (username != null || password != null) {
+                append(username ?: "")
+
+                if (password != null) {
+                    append(":***")
+                }
+
+                append('@')
             }
-        )
-        if (username != null || password != null) {
-            append(username ?: "")
-            if (password != null) append(":***")
-            append('@')
+
+            append(host)
+
+            if (!unixDomainSocket) {
+                append(':').append(port)
+            }
         }
-        append(host)
-        if (!unixDomainSocket) append(':').append(port)
     }
 
     @InternalRedisAPI
     companion object {
-        fun of(redisURI: RedisURI): RedissonConnectionKey = RedissonConnectionKey(
-            ssl = redisURI.isSsl,
-            unixDomainSocket = redisURI.isUDS,
-            host = redisURI.host,
-            port = redisURI.port,
-            username = redisURI.username,
-            password = redisURI.password,
-        )
+        fun of(redisURI: RedisURI): RedissonConnectionKey {
+            return RedissonConnectionKey(
+                ssl = redisURI.isSsl,
+                unixDomainSocket = redisURI.isUDS,
+                host = redisURI.host,
+                port = redisURI.port,
+                username = redisURI.username,
+                password = redisURI.password,
+            )
+        }
     }
 }

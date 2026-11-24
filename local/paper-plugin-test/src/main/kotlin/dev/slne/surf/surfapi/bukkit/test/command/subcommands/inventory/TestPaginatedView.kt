@@ -1,5 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory
 
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
+import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
 import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.paper.builder.displayName
 import dev.slne.surf.api.paper.inventory.framework.dsl.withItem
@@ -9,8 +11,6 @@ import dev.slne.surf.api.paper.inventory.framework.view.layoutTarget
 import dev.slne.surf.api.paper.inventory.framework.view.paginatedSurfView
 import dev.slne.surf.api.paper.inventory.framework.view.pagination.pagination
 import dev.slne.surf.api.paper.inventory.framework.view.settings
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
 import org.bukkit.inventory.ItemType
 
 /**
@@ -28,7 +28,6 @@ val testPaginatedViewDsl = paginatedSurfView("Test Pagination") {
     layoutTarget('I')
 
     containerDefaults {
-        // Die oberste Zeile bleibt leer (paginationEmptyRows), darunter die Items, unten die Buttons.
         header { darkSpacer("Paginated Inventory Test (${testPaginationEntries.size} Einträge)") }
     }
 

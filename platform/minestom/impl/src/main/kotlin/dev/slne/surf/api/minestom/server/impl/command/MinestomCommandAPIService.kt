@@ -34,6 +34,7 @@ internal class MinestomCommandAPIService {
 
         val previousActive = MinestomCommandAPIPlatform.active()
         val installed = MinestomCommandAPIPlatform(CommandManager, ownership)
+
         try {
             CommandAPI.installPlatform(installed)
         } catch (failure: Throwable) {
@@ -42,8 +43,10 @@ internal class MinestomCommandAPIService {
             } catch (discardFailure: Throwable) {
                 failure.addSuppressed(discardFailure)
             }
+
             throw failure
         }
+
         platform = installed
 
         previousUnknownCommandCallback = CommandManager.unknownCommandCallback
@@ -59,6 +62,7 @@ internal class MinestomCommandAPIService {
      */
     fun stop() {
         val installed = platform ?: return
+
         platform = null
 
         CommandManager.unknownCommandCallback = previousUnknownCommandCallback

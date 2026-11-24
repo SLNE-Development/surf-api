@@ -7,17 +7,19 @@ import java.io.Serial
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 import net.minestom.server.crypto.SignatureValidator as ServiceSignatureValidator
 
-internal val EXPIRED_PROFILE_PUBLIC_KEY: Component =
-    Component.translatable("multiplayer.disconnect.expired_public_key")
+internal val EXPIRED_PROFILE_PUBLIC_KEY: Component = Component.translatable(
+    "multiplayer.disconnect.expired_public_key",
+)
 
-internal val INVALID_PROFILE_PUBLIC_KEY_SIGNATURE: Component =
-    Component.translatable("multiplayer.disconnect.invalid_public_key_signature")
+internal val INVALID_PROFILE_PUBLIC_KEY_SIGNATURE: Component = Component.translatable(
+    "multiplayer.disconnect.invalid_public_key_signature",
+)
 
-
-internal class ProfilePublicKeyValidationException(val component: Component) : Exception(null, null, false, false) {
+internal class ProfilePublicKeyValidationException(val component: Component) :
+    Exception(null, null, false, false) {
     companion object {
         @Serial
         private const val serialVersionUID: Long = -4832597595024741094L
@@ -26,7 +28,7 @@ internal class ProfilePublicKeyValidationException(val component: Component) : E
 
 internal fun PlayerPublicKey.createValidated(
     validator: ServiceSignatureValidator,
-    profileId: UUID
+    profileId: UUID,
 ): PlayerPublicKey {
     if (!validateSignature(validator, profileId)) {
         throw ProfilePublicKeyValidationException(INVALID_PROFILE_PUBLIC_KEY_SIGNATURE)
@@ -36,14 +38,15 @@ internal fun PlayerPublicKey.createValidated(
 }
 
 @Suppress("UnstableApiUsage")
-internal fun PlayerPublicKey.createSignatureValidator(): SignatureValidator =
-    SignatureValidator.from(publicKey(), KeyUtils.SignatureAlgorithm.SHA256withRSA.name)
+internal fun PlayerPublicKey.createSignatureValidator(): SignatureValidator {
+    return SignatureValidator.from(publicKey(), KeyUtils.SignatureAlgorithm.SHA256withRSA.name)
+}
 
 internal fun PlayerPublicKey.hasExpired() = expiresAt().isBefore(Instant.now())
 
 internal fun PlayerPublicKey.validateSignature(
     validator: ServiceSignatureValidator,
-    profileId: UUID
+    profileId: UUID,
 ): Boolean = validator.validate(signedPayload(profileId), signature())
 
 private fun PlayerPublicKey.signedPayload(profileId: UUID): ByteArray {

@@ -29,7 +29,8 @@ import me.devnatan.inventoryframework.context.*
  * @see AbstractSurfViewRef
  */
 @InventoryFrameworkDSL
-abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @PublishedApi internal constructor() {
+abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef>
+    @PublishedApi internal constructor() {
     @PublishedApi
     internal val stateRegistry = StateRegistry()
 
@@ -52,8 +53,9 @@ abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @Published
     internal var onClose: (context(ViewRef) CloseContext.() -> Unit)? = null
 
     @PublishedApi
-    internal var containerDefaults: (context (ViewContainerModificationContext, ViewRef) () -> Unit)? =
-        null
+    internal var containerDefaults: (
+        context(ViewContainerModificationContext, ViewRef) () -> Unit
+    )? = null
 
     private val buttonCloseHandlers = mutableListOf<(CloseContext) -> Unit>()
 
@@ -61,8 +63,8 @@ abstract class AbstractSurfViewContext<ViewRef : AbstractSurfViewRef> @Published
      * Registers a close hook for a stateful button declared in this view's DSL block.
      *
      * Called by the button factories in
-     * [ViewButtonDsl][dev.slne.surf.api.minestom.inventory.framework.view.button.statefulButton]; the
-     * hooks are fired by [fireButtonCloseHandlers].
+     * [ViewButtonDsl][dev.slne.surf.api.minestom.inventory.framework.view.button.statefulButton];
+     * the hooks are fired by [fireButtonCloseHandlers].
      */
     internal fun registerButtonCloseHandler(handler: (CloseContext) -> Unit) {
         buttonCloseHandlers.add(handler)
@@ -122,8 +124,9 @@ class PaginatedSurfViewContext @PublishedApi internal constructor() :
     internal var layoutTarget: Char? = null
 
     @PublishedApi
-    internal var paginationStateBuilder: ((AbstractPaginatedSurfView) -> PaginationStateBuilder<Context, MinestomItemComponentBuilder, *>)? =
-        null
+    internal var paginationStateBuilder: ((
+        AbstractPaginatedSurfView,
+    ) -> PaginationStateBuilder<Context, MinestomItemComponentBuilder, *>)? = null
 
     /**
      * Returns the registered layout target character.
@@ -133,21 +136,26 @@ class PaginatedSurfViewContext @PublishedApi internal constructor() :
     fun getRegisteredLayoutTarget(): Char {
         check(layoutTarget != null) {
             "Missing layout target for paginated view. " +
-                    "Please specify a layout target using the 'layoutTarget' function in the view configuration."
+                "Please specify a layout target using the 'layoutTarget' function in the view configuration."
         }
+
         return layoutTarget!!
     }
 
     /**
      * Returns the registered pagination state builder factory.
      *
-     * @throws IllegalStateException if no pagination has been configured via [pagination][dev.slne.surf.api.minestom.inventory.framework.view.pagination.pagination]
+     * @throws IllegalStateException if no pagination has been configured via
+     * [pagination][dev.slne.surf.api.minestom.inventory.framework.view.pagination.pagination]
      */
-    fun getRegisteredPaginationStateBuilder(): (AbstractPaginatedSurfView) -> PaginationStateBuilder<Context, MinestomItemComponentBuilder, *> {
+    fun getRegisteredPaginationStateBuilder(): (
+        AbstractPaginatedSurfView,
+    ) -> PaginationStateBuilder<Context, MinestomItemComponentBuilder, *> {
         check(paginationStateBuilder != null) {
             "Missing pagination configuration for paginated view. " +
-                    "Please specify pagination using one of the pagination functions (pagination, computedPagination, etc.) in the view configuration."
+                "Please specify pagination using one of the pagination functions (pagination, computedPagination, etc.) in the view configuration."
         }
+
         return paginationStateBuilder!!
     }
 }

@@ -14,6 +14,7 @@ class V1_21_11SignUpdatePacketImpl(nmsPacket: ServerboundSignUpdatePacket) :
 
     override fun getLine(line: Int): String {
         require(line in 1..4) { "Line must be between 1 and 4" }
+
         return lines[line - 1]
     }
 }

@@ -26,7 +26,7 @@ class DeadlineLimiterTest {
         assertEquals(
             Admission.EXPIRED,
             limiter.acquire(deadlineIn(Duration.ZERO), Lane.SHORT),
-            "no permit left and no time to wait"
+            "no permit left and no time to wait",
         )
     }
 
@@ -36,7 +36,11 @@ class DeadlineLimiterTest {
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.SHORT))
 
         val admitted = mutableListOf<String>()
-        val waiters = listOf("late" to 4.seconds, "earliest" to 2.seconds, "early" to 3.seconds).map { (name, left) ->
+        val waiters = listOf(
+            "late" to 4.seconds,
+            "earliest" to 2.seconds,
+            "early" to 3.seconds,
+        ).map { (name, left) ->
             launch(start = CoroutineStart.UNDISPATCHED) {
                 assertGranted(limiter.acquire(deadlineIn(left), Lane.SHORT))
                 admitted += name
@@ -87,9 +91,15 @@ class DeadlineLimiterTest {
         val expired = async(start = CoroutineStart.UNDISPATCHED) {
             limiter.acquire(deadlineIn(50.milliseconds), Lane.SHORT)
         }
-        val next = async(start = CoroutineStart.UNDISPATCHED) { limiter.acquire(deadlineIn(5.seconds), Lane.SHORT) }
+        val next = async(start = CoroutineStart.UNDISPATCHED) {
+            limiter.acquire(
+                deadlineIn(5.seconds),
+                Lane.SHORT,
+            )
+        }
 
-        // Blocks the only thread, so the timeout of the expired waiter cannot run before the release
+        // Blocks the only thread, so the timeout of the expired waiter cannot run before the
+        // release
         Thread.sleep(100)
         limiter.release(Lane.SHORT)
 
@@ -107,7 +117,12 @@ class DeadlineLimiterTest {
         val cancelled = launch(start = CoroutineStart.UNDISPATCHED) {
             limiter.acquire(deadlineIn(1.seconds), Lane.SHORT)
         }
-        val next = async(start = CoroutineStart.UNDISPATCHED) { limiter.acquire(deadlineIn(2.seconds), Lane.SHORT) }
+        val next = async(start = CoroutineStart.UNDISPATCHED) {
+            limiter.acquire(
+                deadlineIn(2.seconds),
+                Lane.SHORT,
+            )
+        }
 
         cancelled.cancelAndJoin()
         limiter.release(Lane.SHORT)
@@ -120,10 +135,15 @@ class DeadlineLimiterTest {
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.LONG))
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.SHORT))
         val handedOver = launch(start = CoroutineStart.UNDISPATCHED) {
-            if (limiter.acquire(deadlineIn(5.seconds), Lane.LONG) == Admission.GRANTED) limiter.release(Lane.LONG)
+            if (limiter.acquire(
+                    deadlineIn(5.seconds),
+                    Lane.LONG,
+                ) == Admission.GRANTED
+            ) limiter.release(Lane.LONG)
         }
 
-        // The release decides the handover on this thread; the waiter is cancelled before it is dispatched
+        // The release decides the handover on this thread; the waiter is cancelled before it is
+        // dispatched
         limiter.release(Lane.LONG)
         handedOver.cancelAndJoin()
 
@@ -136,11 +156,17 @@ class DeadlineLimiterTest {
         val limiter = DeadlineLimiter(1)
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.SHORT))
         val held = HeldDispatcher()
-        val waiter = CoroutineScope(held).async { limiter.acquire(deadlineIn(200.milliseconds), Lane.SHORT) }
+        val waiter = CoroutineScope(held).async {
+            limiter.acquire(
+                deadlineIn(200.milliseconds),
+                Lane.SHORT,
+            )
+        }
         held.runPending()
         assertEquals(1, limiter.waiterCount)
 
-        // The handover is decided before the deadline, but the waiter resumes only after its timeout has fired
+        // The handover is decided before the deadline, but the waiter resumes only after its
+        // timeout has fired
         limiter.release(Lane.SHORT)
         Thread.sleep(400)
         held.runPending()
@@ -155,7 +181,12 @@ class DeadlineLimiterTest {
         val limiter = DeadlineLimiter(2)
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.SHORT))
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.SHORT))
-        val waiter = async(start = CoroutineStart.UNDISPATCHED) { limiter.acquire(deadlineIn(5.seconds), Lane.SHORT) }
+        val waiter = async(start = CoroutineStart.UNDISPATCHED) {
+            limiter.acquire(
+                deadlineIn(5.seconds),
+                Lane.SHORT,
+            )
+        }
 
         limiter.close()
 
@@ -173,10 +204,18 @@ class DeadlineLimiterTest {
 
         assertGranted(limiter.acquire(deadlineIn(Duration.ZERO), Lane.LONG))
         assertGranted(limiter.acquire(deadlineIn(Duration.ZERO), Lane.LONG))
-        assertEquals(Admission.EXPIRED, limiter.acquire(deadlineIn(Duration.ZERO), Lane.LONG), "long share exhausted")
+        assertEquals(
+            Admission.EXPIRED,
+            limiter.acquire(deadlineIn(Duration.ZERO), Lane.LONG),
+            "long share exhausted",
+        )
         assertGranted(limiter.acquire(deadlineIn(Duration.ZERO), Lane.SHORT))
         assertGranted(limiter.acquire(deadlineIn(Duration.ZERO), Lane.SHORT))
-        assertEquals(Admission.EXPIRED, limiter.acquire(deadlineIn(Duration.ZERO), Lane.SHORT), "all permits taken")
+        assertEquals(
+            Admission.EXPIRED,
+            limiter.acquire(deadlineIn(Duration.ZERO), Lane.SHORT),
+            "all permits taken",
+        )
     }
 
     @Test
@@ -185,11 +224,24 @@ class DeadlineLimiterTest {
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.LONG))
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.SHORT))
 
-        val long = async(start = CoroutineStart.UNDISPATCHED) { limiter.acquire(deadlineIn(1.seconds), Lane.LONG) }
-        val short = async(start = CoroutineStart.UNDISPATCHED) { limiter.acquire(deadlineIn(3.seconds), Lane.SHORT) }
+        val long = async(start = CoroutineStart.UNDISPATCHED) {
+            limiter.acquire(
+                deadlineIn(1.seconds),
+                Lane.LONG,
+            )
+        }
+        val short = async(start = CoroutineStart.UNDISPATCHED) {
+            limiter.acquire(
+                deadlineIn(3.seconds),
+                Lane.SHORT,
+            )
+        }
 
         limiter.release(Lane.SHORT)
-        assertGranted(withTimeout(1.seconds) { short.await() }, "the short waiter gets the freed permit")
+        assertGranted(
+            withTimeout(1.seconds) { short.await() },
+            "the short waiter gets the freed permit",
+        )
         assertFalse(long.isCompleted, "the long waiter must wait for a long permit")
 
         limiter.release(Lane.LONG)
@@ -201,7 +253,12 @@ class DeadlineLimiterTest {
         val limiter = DeadlineLimiter(permits = 2, longPermits = 1)
         assertGranted(limiter.acquire(deadlineIn(5.seconds), Lane.LONG))
 
-        val cancelled = launch(start = CoroutineStart.UNDISPATCHED) { limiter.acquire(deadlineIn(2.seconds), Lane.LONG) }
+        val cancelled = launch(start = CoroutineStart.UNDISPATCHED) {
+            limiter.acquire(
+                deadlineIn(2.seconds),
+                Lane.LONG,
+            )
+        }
         cancelled.cancelAndJoin()
         limiter.release(Lane.LONG)
 
@@ -220,11 +277,26 @@ class DeadlineLimiterTest {
             repeat(400) { index ->
                 val lane = if (index % 3 == 0) Lane.LONG else Lane.SHORT
                 launch {
-                    if (limiter.acquire(deadlineIn(10.seconds), lane) != Admission.GRANTED) return@launch
+                    if (limiter.acquire(
+                            deadlineIn(10.seconds),
+                            lane,
+                        ) != Admission.GRANTED
+                    ) return@launch
                     peak.accumulateAndGet(running.incrementAndGet(), ::maxOf)
-                    if (lane == Lane.LONG) peakLong.accumulateAndGet(runningLong.incrementAndGet(), ::maxOf)
+
+                    if (lane == Lane.LONG) {
+                        peakLong.accumulateAndGet(
+                            runningLong.incrementAndGet(),
+                            ::maxOf,
+                        )
+                    }
+
                     delay(1.milliseconds)
-                    if (lane == Lane.LONG) runningLong.decrementAndGet()
+
+                    if (lane == Lane.LONG) {
+                        runningLong.decrementAndGet()
+                    }
+
                     running.decrementAndGet()
                     limiter.release(lane)
                 }
@@ -237,7 +309,9 @@ class DeadlineLimiterTest {
     }
 
     @Test
-    fun `permits handed over around the deadlines of their waiters are not lost`() = runBlocking(Dispatchers.Default) {
+    fun `permits handed over around the deadlines of their waiters are not lost`() = runBlocking(
+        Dispatchers.Default,
+    ) {
         val limiters = List(4) { DeadlineLimiter(permits = 2, longPermits = 1) }
 
         limiters.map { limiter -> launch { handOverAroundDeadlines(limiter) } }.joinAll()
@@ -246,25 +320,38 @@ class DeadlineLimiterTest {
     }
 
     @Test
-    fun `permits handed over to waiters cancelled at the same time are not lost`() = runBlocking(Dispatchers.Default) {
+    fun `permits handed over to waiters cancelled at the same time are not lost`() = runBlocking(
+        Dispatchers.Default,
+    ) {
         val limiter = DeadlineLimiter(permits = 2, longPermits = 1)
 
         repeat(1_000) {
             holdAllPermits(limiter)
             val waiters = List(6) { index ->
                 val lane = LANES[index % 2]
-                launch { if (limiter.acquire(deadlineIn(5.seconds), lane) == Admission.GRANTED) limiter.release(lane) }
+                launch {
+                    if (limiter.acquire(
+                            deadlineIn(5.seconds),
+                            lane,
+                        ) == Admission.GRANTED
+                    ) limiter.release(lane)
+                }
             }
             while (limiter.waiterCount < waiters.size) yield()
             LANES.forEach(limiter::release)
-            waiters.forEach { it.cancel() }
+
+            for (waiter in waiters) {
+                waiter.cancel()
+            }
+
             waiters.joinAll()
         }
 
         assertIdle(limiter)
     }
 
-    // Holds every permit, starts waiters whose deadlines are a few ms away and releases right around them
+    // Holds every permit, starts waiters whose deadlines are a few ms away and releases right
+    // around them
     private suspend fun handOverAroundDeadlines(limiter: DeadlineLimiter) = coroutineScope {
         repeat(1_000) { round ->
             holdAllPermits(limiter)
@@ -272,7 +359,10 @@ class DeadlineLimiterTest {
                 val lane = LANES[index % 2]
                 launch {
                     val deadline = deadlineIn((1 + index % 3).milliseconds)
-                    if (limiter.acquire(deadline, lane) == Admission.GRANTED) limiter.release(lane)
+
+                    if (limiter.acquire(deadline, lane) == Admission.GRANTED) {
+                        limiter.release(lane)
+                    }
                 }
             }
             val releaseAt = System.nanoTime() + 500_000L + (round % 10) * 250_000L
@@ -284,12 +374,21 @@ class DeadlineLimiterTest {
 
     private suspend fun holdAllPermits(limiter: DeadlineLimiter) {
         for (lane in LANES) {
-            check(limiter.acquire(deadlineIn(Duration.ZERO), lane) == Admission.GRANTED) { "a permit was lost" }
+            check(
+                limiter.acquire(
+                    deadlineIn(Duration.ZERO),
+                    lane,
+                ) == Admission.GRANTED,
+            ) { "a permit was lost" }
         }
     }
 
     private fun assertIdle(limiter: DeadlineLimiter) {
-        assertEquals(limiter.permits, limiter.availablePermits, "permits were lost or released twice")
+        assertEquals(
+            limiter.permits,
+            limiter.availablePermits,
+            "permits were lost or released twice",
+        )
         assertEquals(0, limiter.longPermitsInUse, "long permits were lost or released twice")
         assertEquals(0, limiter.waiterCount, "waiters were left behind")
     }
@@ -298,7 +397,9 @@ class DeadlineLimiterTest {
         assertEquals(Admission.GRANTED, admission, message)
     }
 
-    private fun deadlineIn(left: Duration): Long = System.currentTimeMillis() + left.inWholeMilliseconds
+    private fun deadlineIn(left: Duration): Long {
+        return System.currentTimeMillis() + left.inWholeMilliseconds
+    }
 
     /**
      * Holds dispatched coroutines until [runPending], so a test decides when a resumed waiter runs.

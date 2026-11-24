@@ -8,8 +8,10 @@ internal class Violation private constructor(
     private val problem: String?,
 ) {
 
-    fun under(segment: String): Violation = apply {
-        path = "$segment.$path"
+    fun under(segment: String): Violation {
+        return apply {
+            path = "$segment.$path"
+        }
     }
 
     override fun toString(): String {
@@ -19,8 +21,8 @@ internal class Violation private constructor(
     }
 
     companion object {
-        fun missing(field: String) = Violation(field, problem = null)
+        fun missing(field: String): Violation = Violation(field, problem = null)
 
-        fun invalid(field: String, problem: String) = Violation(field, problem)
+        fun invalid(field: String, problem: String): Violation = Violation(field, problem)
     }
 }

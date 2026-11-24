@@ -1,4 +1,3 @@
-
 package dev.slne.surf.nats.gradle.tasks
 
 import org.gradle.api.DefaultTask
@@ -41,7 +40,8 @@ abstract class ProtoInputsTask : DefaultTask() {
     /**
      * The proto root that weaver's `fetchProtos` fills (`weaver.protosDir`), used for imports only.
      *
-     * Empty when the `weaver` configuration declares no dependencies, so builds without them need no network.
+     * Empty when the `weaver` configuration declares no dependencies, so builds without them need
+     * no network.
      */
     @get:InputFiles
     @get:IgnoreEmptyDirectories
@@ -51,8 +51,9 @@ abstract class ProtoInputsTask : DefaultTask() {
     /**
      * Returns the configured proto-path directories followed by the weaver proto root.
      */
-    protected fun protoPath(): List<File> =
-        protoPathDirectories.files.toList() + weaverProtoPath.files
+    protected fun protoPath(): List<File> {
+        return protoPathDirectories.files.toList() + weaverProtoPath.files
+    }
 
     /**
      * Returns a file tree containing only `.proto` files from [directories].

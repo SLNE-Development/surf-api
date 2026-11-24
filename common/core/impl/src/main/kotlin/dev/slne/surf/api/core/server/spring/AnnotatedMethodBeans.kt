@@ -18,16 +18,26 @@ import org.springframework.util.ReflectionUtils
 fun beansDeclaringMethodsAnnotated(
     contexts: List<ConfigurableApplicationContext>,
     annotation: Class<out Annotation>,
-): List<Any> = contexts.flatMap { context ->
-    context.beanDefinitionNames
-        .filter { name ->
-            context.isConcreteSingleton(name) && context.getType(name)?.declaresMethodAnnotated(annotation) == true
-        }
-        .map(context::getBean)
+): List<Any> {
+    return contexts.flatMap { context ->
+        context.beanDefinitionNames
+            .filter { name ->
+                context.isConcreteSingleton(name) && context.getType(name)?.declaresMethodAnnotated(
+                    annotation,
+                ) == true
+            }
+            .map(context::getBean)
+    }
 }
 
-private fun ConfigurableApplicationContext.isConcreteSingleton(name: String): Boolean =
-    isSingleton(name) && !beanFactory.getMergedBeanDefinition(name).isAbstract
+private fun ConfigurableApplicationContext.isConcreteSingleton(name: String): Boolean {
+    return isSingleton(name) && !beanFactory.getMergedBeanDefinition(name).isAbstract
+}
 
-private fun Class<*>.declaresMethodAnnotated(annotation: Class<out Annotation>): Boolean =
-    ReflectionUtils.getAllDeclaredMethods(ClassUtils.getUserClass(this)).any { it.isAnnotationPresent(annotation) }
+private fun Class<*>.declaresMethodAnnotated(annotation: Class<out Annotation>): Boolean {
+    return ReflectionUtils.getAllDeclaredMethods(ClassUtils.getUserClass(this)).any {
+        it.isAnnotationPresent(
+            annotation,
+        )
+    }
+}

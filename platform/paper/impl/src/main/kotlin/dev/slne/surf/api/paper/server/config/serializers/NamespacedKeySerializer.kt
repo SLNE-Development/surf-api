@@ -6,13 +6,21 @@ import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
 
-internal object NamespacedKeySerializer : ScalarSerializer.Annotated<NamespacedKey>(NamespacedKey::class.java) {
+internal object NamespacedKeySerializer :
+    ScalarSerializer.Annotated<NamespacedKey>(NamespacedKey::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): NamespacedKey {
         return NamespacedKey.fromString(obj.toString())
-            ?: throw SerializationException(NamespacedKey::class.java, "$obj($type) is not a valid NamespacedKey")
+            ?: throw SerializationException(
+                NamespacedKey::class.java,
+                "$obj($type) is not a valid NamespacedKey",
+            )
     }
 
-    override fun serialize(type: AnnotatedType, item: NamespacedKey, typeSupported: Predicate<Class<*>>): Any {
+    override fun serialize(
+        type: AnnotatedType,
+        item: NamespacedKey,
+        typeSupported: Predicate<Class<*>>,
+    ): Any {
         return item.toString()
     }
 }

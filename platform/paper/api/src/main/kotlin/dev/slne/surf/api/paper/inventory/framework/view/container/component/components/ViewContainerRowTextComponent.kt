@@ -2,12 +2,12 @@ package dev.slne.surf.api.paper.inventory.framework.view.container.component.com
 
 import dev.slne.surf.api.inventory.framework.internal.ViewSlotGeometry
 import dev.slne.surf.api.inventory.framework.internal.layoutViewText
-import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.inventory.framework.view.container.component.ViewContainerComponent
-import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
 import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
+import dev.slne.surf.api.messages.builder.SurfComponentBuilder
+import dev.slne.surf.api.paper.inventory.framework.view.settings.SurfViewSettingsDefaults
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -93,14 +93,19 @@ class ViewContainerRowTextComponent(
         charSpacing = metrics.charSpacing,
         uppercase = metrics.uppercase,
         spaceShift = metrics.spaceShift,
-        advance = metrics::advance
+        advance = metrics::advance,
     )
 
     override val textureWidth = laidOut.width
 
     override val positionalShift = alignment.calculateShift(
         textureWidth,
-        geometry.columnSpanOptions(columns, metrics.charWidths, metrics.charSize, metrics.charSpacing)
+        geometry.columnSpanOptions(
+            columns,
+            metrics.charWidths,
+            metrics.charSize,
+            metrics.charSpacing,
+        ),
     )
 
     /**
@@ -137,6 +142,7 @@ class ViewContainerRowTextComponent(
         result = 31 * result + font.hashCode()
         result = 31 * result + alignment.hashCode()
         result = 31 * result + columns.hashCode()
+
         return result
     }
 }

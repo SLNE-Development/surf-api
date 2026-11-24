@@ -68,7 +68,11 @@ interface SimpleRedisCache<K : Any, V : Any> : Disposable, Initializable {
      * @param loader Suspended lambda to load the nullable value if it is not present.
      * @return The existing or newly loaded value, or `null`.
      */
-    suspend fun cachedOrLoadNullable(key: K, cacheNull: Boolean = false, loader: suspend () -> V?): V?
+    suspend fun cachedOrLoadNullable(
+        key: K,
+        cacheNull: Boolean = false,
+        loader: suspend () -> V?,
+    ): V?
 
     /**
      * Remove an entry from the cache.

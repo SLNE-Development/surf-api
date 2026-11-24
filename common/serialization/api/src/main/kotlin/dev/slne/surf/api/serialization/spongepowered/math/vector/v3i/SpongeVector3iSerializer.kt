@@ -12,8 +12,10 @@ typealias SerializableVector3i = @Serializable(with = SpongeVector3iSerializer::
 
 object SpongeVector3iSerializer : KSerializer<Vector3i> {
     private val arraySerializer = IntArraySerializer()
-    override val descriptor =
-        SerialDescriptor("surf.api.sponge.Vector3i", arraySerializer.descriptor)
+    override val descriptor = SerialDescriptor(
+        "surf.api.sponge.Vector3i",
+        arraySerializer.descriptor,
+    )
 
     override fun serialize(
         encoder: Encoder,
@@ -21,12 +23,13 @@ object SpongeVector3iSerializer : KSerializer<Vector3i> {
     ) {
         encoder.encodeSerializableValue(
             arraySerializer,
-            intArrayOf(value.x(), value.y(), value.z())
+            intArrayOf(value.x(), value.y(), value.z()),
         )
     }
 
     override fun deserialize(decoder: Decoder): Vector3i {
         val (x, y, z) = decoder.decodeSerializableValue(arraySerializer)
+
         return Vector3i(x, y, z)
     }
 }

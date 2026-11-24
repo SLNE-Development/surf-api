@@ -12,16 +12,18 @@ internal data class AccumulatedConditions(
 internal class MinestomConditions {
     fun commonForPaths(paths: List<CommandPath>): AccumulatedConditions {
         val first = paths.firstOrNull() ?: return AccumulatedConditions()
+
         val permissions = LinkedHashSet<String>(first.permissions.size)
 
-        first.permissions.forEach { permission ->
+        for (permission in first.permissions) {
             if (paths.all { path -> permission in path.permissions }) {
                 permissions += permission
             }
         }
 
         val requirements = ArrayList<(CommandSender) -> Boolean>(first.requirements.size)
-        first.requirements.forEach { requirement ->
+
+        for (requirement in first.requirements) {
             if (
                 paths.all { path ->
                     path.requirements.any { candidate ->
@@ -45,6 +47,6 @@ internal class MinestomConditions {
         requirements: List<(CommandSender) -> Boolean>,
     ): Boolean {
         return permissions.all(sender::hasPermission) &&
-                requirements.all { requirement -> requirement(sender) }
+            requirements.all { requirement -> requirement(sender) }
     }
 }

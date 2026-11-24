@@ -90,7 +90,7 @@ object ConfigurationTasks {
      * A step that hands the player over to the play phase in place of [JOIN_WORLD] has to call
      * this right before it sends the finish configuration packet.
      */
-    fun stopKeepAlive(player: Player) = ConfigurationPhase.stopKeepAlive(player)
+    fun stopKeepAlive(player: Player): Unit = ConfigurationPhase.stopKeepAlive(player)
 
     val playerCount = ConfigurationTask { context ->
         if (context.isFirstConfig) PlayerEvents.admit(context.player)
@@ -114,7 +114,7 @@ object ConfigurationTasks {
         val event = context.event
 
         context.player.sendPacket(
-            UpdateEnabledFeaturesPacket(event.featureFlags.map { it.name() })
+            UpdateEnabledFeaturesPacket(event.featureFlags.map { it.name() }),
         )
 
         if (event.willClearChat()) {
@@ -135,13 +135,14 @@ object ConfigurationTasks {
         } catch (_: TimeoutException) {
             LOGGER.warn("Player {} failed to respond to known packs query", player.username)
             player.playerConnection.disconnect()
+
             return@ConfigurationTask
         }
 
         val excludeVanilla = knownPacks.contains(SelectKnownPacksPacket.MINECRAFT_CORE)
 
         player.sendPackets(
-            Registries.registryDataPackets(MinecraftServer.getRegistries(), excludeVanilla)
+            Registries.registryDataPackets(MinecraftServer.getRegistries(), excludeVanilla),
         )
         MinecraftServer.getConnectionManager().sendRegistryTags(player)
     }
@@ -173,7 +174,7 @@ object ConfigurationTasks {
             } catch (_: TimeoutException) {
                 LOGGER.warn(
                     "Player {} did not send their settings, continuing with the defaults",
-                    context.player.username
+                    context.player.username,
                 )
             }
         }
@@ -187,8 +188,9 @@ object ConfigurationTasks {
             }
         }
 
-        private fun settingsFuture(player: Player): CompletableFuture<Unit> =
-            received.computeIfAbsent(player) { CompletableFuture() }
+        private fun settingsFuture(player: Player): CompletableFuture<Unit> {
+            return received.computeIfAbsent(player) { CompletableFuture() }
+        }
     }
 
     /**
@@ -212,6 +214,7 @@ object ConfigurationTasks {
 
             if (!player.isOnline) {
                 pending.remove(player, future)
+
                 return
             }
 
@@ -220,7 +223,7 @@ object ConfigurationTasks {
             } else {
                 LOGGER.warn(
                     "Configuration ran again for {} while its code of conduct was still pending",
-                    player.username
+                    player.username,
                 )
             }
 
@@ -247,11 +250,17 @@ object ConfigurationTasks {
             player: Player,
         ) {
             val future = pending.remove(player)
+
             if (future == null) {
-                LOGGER.warn("Player {} accepted a code of conduct that was never sent", player.username)
+                LOGGER.warn(
+                    "Player {} accepted a code of conduct that was never sent",
+                    player.username,
+                )
                 player.playerConnection.disconnect()
+
                 return
             }
+
             future.complete(Unit)
         }
     }

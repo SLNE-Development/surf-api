@@ -63,7 +63,7 @@ class DialogBodyBuilder {
 
             return DialogBody.PlainMessage(
                 message,
-                width ?: DialogBody.PlainMessage.DEFAULT_WIDTH
+                width ?: DialogBody.PlainMessage.DEFAULT_WIDTH,
             )
         }
     }
@@ -98,7 +98,7 @@ class DialogBodyBuilder {
         ) {
             description = DialogBody.PlainMessage(
                 message,
-                width ?: DialogBody.PlainMessage.DEFAULT_WIDTH
+                width ?: DialogBody.PlainMessage.DEFAULT_WIDTH,
             )
         }
 
@@ -138,5 +138,6 @@ class DialogBodyBuilder {
     }
 }
 
-fun dialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> =
-    DialogBodyBuilder().apply(block).build()
+fun dialogBody(block: DialogBodyBuilder.() -> Unit): MutableList<DialogBody> {
+    return DialogBodyBuilder().apply(block).build()
+}

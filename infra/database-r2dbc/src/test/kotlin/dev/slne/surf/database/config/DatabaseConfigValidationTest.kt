@@ -8,12 +8,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Checks the value ranges of [DatabaseConfig] that the drivers and servers impose. Nothing here connects to a database.
+ * Checks the value ranges of [DatabaseConfig] that the drivers and servers impose. Nothing here
+ * connects to a database.
  */
 class DatabaseConfigValidationTest {
 
-    private fun configWithLockTimeout(millis: Long) =
-        DatabaseConfig(pool = PoolConfig(timeouts = PoolConfig.Timeouts(lockTimeoutMillis = millis)))
+    private fun configWithLockTimeout(millis: Long) = DatabaseConfig(
+        pool = PoolConfig(
+            timeouts = PoolConfig.Timeouts(
+                lockTimeoutMillis = millis,
+            ),
+        ),
+    )
 
     @Test
     fun `accepts the defaults`() {
@@ -28,7 +34,7 @@ class DatabaseConfigValidationTest {
 
     @Test
     fun `rejects a lock timeout outside the range PostgreSQL accepts`() {
-        listOf(0L, -1L, Int.MAX_VALUE + 1L, 3_000_000_000L, Long.MAX_VALUE).forEach { millis ->
+        for (millis in listOf(0L, -1L, Int.MAX_VALUE + 1L, 3_000_000_000L, Long.MAX_VALUE)) {
             val failure = assertFailsWith<IllegalArgumentException>("$millis must be rejected") {
                 configWithLockTimeout(millis).validate()
             }

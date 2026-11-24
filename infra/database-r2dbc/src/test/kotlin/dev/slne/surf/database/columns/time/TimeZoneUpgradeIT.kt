@@ -2,13 +2,7 @@ package dev.slne.surf.database.columns.time
 
 import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.table.AuditableTable
-import dev.slne.surf.database.testing.DatabaseContainers
-import dev.slne.surf.database.testing.OutsideUtcVendor
-import dev.slne.surf.database.testing.TestDatabase
-import dev.slne.surf.database.testing.connectionDetails
-import dev.slne.surf.database.testing.toLegacyTestDatabase
-import dev.slne.surf.database.testing.toTestDatabase
-import dev.slne.surf.database.testing.withJvmZone
+import dev.slne.surf.database.testing.*
 import kotlinx.coroutines.flow.single
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Table
@@ -36,19 +30,20 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Rows written by version 2.3 of the library read as the README's upgrade notes describe, and the README's fix
- * statements restore them.
+ * Rows written by version 2.3 of the library read as the README's upgrade notes describe, and the
+ * README's fix statements restore them.
  *
- * Version 2.3 is emulated by [toLegacyTestDatabase] on the same database. The fix statements are the README's
- * templates with only `t`, `c`, `'J'` and `'S'` substituted, run over the migration data source in a UTC session.
+ * Version 2.3 is emulated by [toLegacyTestDatabase] on the same database. The fix statements are
+ * the README's templates with only `t`, `c`, `'J'` and `'S'` substituted, run over the migration
+ * data source in a UTC session.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class TimeZoneUpgradeIT {
 
     /**
-     * One column per Exposed type and column flavour. `plain` is `timestamp` (PostgreSQL) or `DATETIME(6)`
-     * (MariaDB), `zoned` is `timestamptz` or `TIMESTAMP(6)`. Row [APP_ROW] holds values the application wrote,
-     * row [DEFAULT_ROW] the columns' `CURRENT_TIMESTAMP` defaults.
+     * One column per Exposed type and column flavour. `plain` is `timestamp` (PostgreSQL) or
+     * `DATETIME(6)` (MariaDB), `zoned` is `timestamptz` or `TIMESTAMP(6)`. Row [APP_ROW] holds
+     * values the application wrote, row [DEFAULT_ROW] the columns' `CURRENT_TIMESTAMP` defaults.
      */
     private class LegacyTimes : Table(TABLE) {
         val id = integer("id")
@@ -64,14 +59,16 @@ class TimeZoneUpgradeIT {
         /**
          * The instant of every column of [row], reading `datetime()` values as UTC wall-clock time.
          */
-        fun instants(row: ResultRow): Map<String, Instant> = mapOf(
-            libraryPlain.name to row[libraryPlain].toInstant(),
-            libraryZoned.name to row[libraryZoned].toInstant(),
-            exposedPlain.name to row[exposedPlain],
-            exposedZoned.name to row[exposedZoned],
-            localPlain.name to row[localPlain].toInstant(ZoneOffset.UTC),
-            localZoned.name to row[localZoned].toInstant(ZoneOffset.UTC),
-        )
+        fun instants(row: ResultRow): Map<String, Instant> {
+            return mapOf(
+                libraryPlain.name to row[libraryPlain].toInstant(),
+                libraryZoned.name to row[libraryZoned].toInstant(),
+                exposedPlain.name to row[exposedPlain],
+                exposedZoned.name to row[exposedZoned],
+                localPlain.name to row[localPlain].toInstant(ZoneOffset.UTC),
+                localZoned.name to row[localZoned].toInstant(ZoneOffset.UTC),
+            )
+        }
     }
 
     private class LegacyAuditedRows : AuditableTable(AUDITED_TABLE) {
@@ -89,13 +86,21 @@ class TimeZoneUpgradeIT {
     }
 
     /**
-     * How [column] in [row] reads after the upgrade, relative to the value written, and the README fix for it.
+     * How [column] in [row] reads after the upgrade, relative to the value written, and the README
+     * fix for it.
      */
-    private data class Expectation(val column: String, val row: Int, val shift: Duration, val fix: String? = null)
+    private data class Expectation(
+        val column: String,
+        val row: Int,
+        val shift: Duration,
+        val fix: String? = null,
+    )
 
     @ParameterizedTest
     @EnumSource(OutsideUtcVendor::class)
-    fun legacyRowsReadAsDocumentedAndTheFixesRestoreThem(vendor: OutsideUtcVendor) = withJvmZone(JVM_ZONE) {
+    fun legacyRowsReadAsDocumentedAndTheFixesRestoreThem(vendor: OutsideUtcVendor) = withJvmZone(
+        JVM_ZONE,
+    ) {
         val details = vendor.container().connectionDetails(fresh = true)
         val table = LegacyTimes()
 
@@ -115,15 +120,18 @@ class TimeZoneUpgradeIT {
         }
 
         val testDb = details.toTestDatabase()
+
         try {
             val expectations = expectations(vendor)
             assertRows(testDb, table, expectations, writtenAt, afterFix = false)
 
             for (expectation in expectations) {
                 val fix = expectation.fix ?: continue
+
                 val statement = vendor.substitute(fix, TABLE, expectation.column)
                 executeInUtcSession(testDb, "$statement WHERE id = ${expectation.row}")
             }
+
             assertRows(testDb, table, expectations, writtenAt, afterFix = true)
         } finally {
             testDb.close()
@@ -143,6 +151,7 @@ class TimeZoneUpgradeIT {
         }
 
         val testDb = details.toTestDatabase()
+
         try {
             val row = suspendTransaction(testDb.database) { table.selectAll().single() }
             assertEquals(REGULAR, row[table.value].toInstant())
@@ -158,10 +167,15 @@ class TimeZoneUpgradeIT {
         val table = writeLegacyAuditedRow(details, vendor)
 
         val testDb = details.toTestDatabase()
+
         try {
             if (vendor == OutsideUtcVendor.POSTGRESQL) {
-                executeInUtcSession(testDb, POSTGRESQL_CREATE_TRIGGER.replace("<table>", AUDITED_TABLE))
+                executeInUtcSession(
+                    testDb,
+                    POSTGRESQL_CREATE_TRIGGER.replace("<table>", AUDITED_TABLE),
+                )
             }
+
             val fix = when (vendor) {
                 OutsideUtcVendor.POSTGRESQL -> POSTGRESQL_AUDITABLE_FIX
                 OutsideUtcVendor.MARIADB -> MARIADB_AUDITABLE_FIX
@@ -175,7 +189,14 @@ class TimeZoneUpgradeIT {
             suspendTransaction(testDb.database) {
                 table.update({ table.id eq APP_ROW }) { it[expiresAt] = REGULAR.plusSeconds(1) }
             }
-            assertTrue(vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW) > updatedAtBefore)
+            assertTrue(
+                vendor.epochMicros(
+                    testDb,
+                    AUDITED_TABLE,
+                    "updated_at",
+                    APP_ROW,
+                ) > updatedAtBefore,
+            )
         } finally {
             testDb.close()
         }
@@ -188,10 +209,14 @@ class TimeZoneUpgradeIT {
         val table = writeLegacyAuditedRow(details, vendor)
 
         val testDb = details.toTestDatabase()
+
         try {
             val updatedAtBefore = vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW)
 
-            executeInUtcSession(testDb, vendor.substitute(POSTGRESQL_FIX, AUDITED_TABLE, "expires_at"))
+            executeInUtcSession(
+                testDb,
+                vendor.substitute(POSTGRESQL_FIX, AUDITED_TABLE, "expires_at"),
+            )
 
             assertFixedAndUpdatedAtKept(testDb, vendor, table, updatedAtBefore)
         } finally {
@@ -202,7 +227,10 @@ class TimeZoneUpgradeIT {
     /**
      * Creates [LegacyAuditedRows] as version 2.3 left it and writes row [APP_ROW] with it.
      */
-    private suspend fun writeLegacyAuditedRow(details: ConnectionDetails, vendor: OutsideUtcVendor): LegacyAuditedRows {
+    private suspend fun writeLegacyAuditedRow(
+        details: ConnectionDetails,
+        vendor: OutsideUtcVendor,
+    ): LegacyAuditedRows {
         val table = LegacyAuditedRows()
         writeAsLegacy(details) {
             SchemaUtils.create(table)
@@ -210,11 +238,13 @@ class TimeZoneUpgradeIT {
             if (vendor == OutsideUtcVendor.POSTGRESQL) {
                 exec("DROP TRIGGER ${AUDITED_TABLE}_set_updated_at ON $AUDITED_TABLE")
             }
+
             table.insert {
                 it[id] = APP_ROW
                 it[expiresAt] = REGULAR
             }
         }
+
         return table
     }
 
@@ -224,15 +254,22 @@ class TimeZoneUpgradeIT {
         table: LegacyAuditedRows,
         updatedAtBefore: Long,
     ) {
-        assertEquals(updatedAtBefore, vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW))
+        assertEquals(
+            updatedAtBefore,
+            vendor.epochMicros(testDb, AUDITED_TABLE, "updated_at", APP_ROW),
+        )
         val fixed = suspendTransaction(testDb.database) {
             table.selectAll().where { table.id eq APP_ROW }.single()
         }
         assertEquals(REGULAR, fixed[table.expiresAt])
     }
 
-    private suspend fun writeAsLegacy(details: ConnectionDetails, block: suspend R2dbcTransaction.() -> Unit) {
+    private suspend fun writeAsLegacy(
+        details: ConnectionDetails,
+        block: suspend R2dbcTransaction.() -> Unit,
+    ) {
         val legacy = details.toLegacyTestDatabase()
+
         try {
             suspendTransaction(legacy.database) { block() }
         } finally {
@@ -278,7 +315,11 @@ class TimeZoneUpgradeIT {
         }
     }
 
-    private fun OutsideUtcVendor.substitute(template: String, table: String, column: String): String {
+    private fun OutsideUtcVendor.substitute(
+        template: String,
+        table: String,
+        column: String,
+    ): String {
         // CONVERT_TZ accepts named zones only with the MariaDB time zone tables loaded.
         val jvmZone = if (this == OutsideUtcVendor.MARIADB) JVM_OFFSET.id else JVM_ZONE
         return template
@@ -345,7 +386,12 @@ class TimeZoneUpgradeIT {
                 Expectation("library_zoned", DEFAULT_ROW, Duration.ZERO),
                 Expectation("exposed_plain", APP_ROW, jvm, MARIADB_JVM_WALL_CLOCK_FIX),
                 Expectation("exposed_plain", DEFAULT_ROW, server, MARIADB_SERVER_WALL_CLOCK_FIX),
-                Expectation("exposed_zoned", APP_ROW, jvm.minus(server), MARIADB_JVM_IN_SERVER_SESSION_FIX),
+                Expectation(
+                    "exposed_zoned",
+                    APP_ROW,
+                    jvm.minus(server),
+                    MARIADB_JVM_IN_SERVER_SESSION_FIX,
+                ),
                 Expectation("exposed_zoned", DEFAULT_ROW, Duration.ZERO),
                 Expectation("local_plain", APP_ROW, Duration.ZERO),
                 Expectation("local_plain", DEFAULT_ROW, server, MARIADB_SERVER_WALL_CLOCK_FIX),

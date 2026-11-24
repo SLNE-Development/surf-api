@@ -7,21 +7,31 @@ import org.bukkit.Keyed
 import org.spongepowered.configurate.serialize.SerializationException
 
 class RegistryValueSerializer<T : Keyed> : RegistryEntrySerializer<T, T> {
-    constructor(type: TypeToken<T>, registryKey: RegistryKey<T>, omitMinecraftNamespace: Boolean) : super(
+    constructor(
+        type: TypeToken<T>,
+        registryKey: RegistryKey<T>,
+        omitMinecraftNamespace: Boolean,
+    ) : super(
         type,
         registryKey,
-        omitMinecraftNamespace
+        omitMinecraftNamespace,
     )
 
-    constructor(type: Class<T>, registryKey: RegistryKey<T>, omitMinecraftNamespace: Boolean) : super(
+    constructor(
+        type: Class<T>,
+        registryKey: RegistryKey<T>,
+        omitMinecraftNamespace: Boolean,
+    ) : super(
         type,
         registryKey,
-        omitMinecraftNamespace
+        omitMinecraftNamespace,
     )
 
     override fun convertFromResourceKey(key: Key): T {
         val value = registry().get(key)
-            ?: throw SerializationException("Missing value in $registryKey with string key: ${key.asString()}")
+            ?: throw SerializationException(
+                "Missing value in $registryKey with string key: ${key.asString()}",
+            )
 
         return value
     }

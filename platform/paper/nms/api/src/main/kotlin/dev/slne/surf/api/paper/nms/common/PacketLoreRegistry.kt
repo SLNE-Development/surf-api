@@ -11,7 +11,13 @@ import org.bukkit.plugin.Plugin
  * its version-specific packet lore listener.
  */
 interface PacketLoreRegistry {
-    fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler, priority: Short)
+    fun register(
+        plugin: Plugin,
+        identifier: NamespacedKey,
+        listener: SurfPaperPacketLoreHandler,
+        priority: Short,
+    )
+
     fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler, priority: Short)
     fun unregister(identifier: NamespacedKey)
     fun unregister(plugin: Plugin)

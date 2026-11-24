@@ -10,48 +10,48 @@ import org.jetbrains.annotations.Contract
 object SkipOperations {
     /**
      * Represents a skip operator for calculating the time interval until the next sunrise in a
-     * Minecraft world. The value of this variable is a lambda expression that takes a World object as
-     * input and calculates the time to add to the world.
+     * Minecraft world. The value of this variable is a lambda expression that takes a World object
+     * as input and calculates the time to add to the world.
      */
     @JvmField
     val NEXT_SUNRISE = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 22600L)) }
 
     /**
      * Represents a skip operator for calculating the time interval until the next sunset in a
-     * Minecraft world. The value of this variable is a lambda expression that takes a World object as
-     * input and calculates the time to add to the world.
+     * Minecraft world. The value of this variable is a lambda expression that takes a World object
+     * as input and calculates the time to add to the world.
      */
     @JvmField
     val NEXT_SUNSET = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 11800L)) }
 
     /**
      * Represents a skip operator for calculating the time interval until the next morning in a
-     * Minecraft world. The value of this variable is a lambda expression that takes a World object as
-     * input and calculates the time to add to the world.
+     * Minecraft world. The value of this variable is a lambda expression that takes a World object
+     * as input and calculates the time to add to the world.
      */
     @JvmField
     val NEXT_DAY = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 500L)) }
 
     /**
-     * Represents a skip operator for calculating the time interval until the next noon in a Minecraft
-     * world. The value of this variable is a lambda expression that takes a World object as input and
-     * calculates the time to add to the world.
+     * Represents a skip operator for calculating the time interval until the next noon in a
+     * Minecraft world. The value of this variable is a lambda expression that takes a World object
+     * as input and calculates the time to add to the world.
      */
     @JvmField
     val NEXT_NOON = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 6000L)) }
 
     /**
      * Represents a skip operator for calculating the time interval until the next afternoon in a
-     * Minecraft world. The value of this variable is a lambda expression that takes a World object as
-     * input and calculates the time to add to the world.
+     * Minecraft world. The value of this variable is a lambda expression that takes a World object
+     * as input and calculates the time to add to the world.
      */
     @JvmField
     val NEXT_NIGHT = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 13000L)) }
 
     /**
      * Represents a skip operator for calculating the time interval until the next midnight in a
-     * Minecraft world. The value of this variable is a lambda expression that takes a World object as
-     * input and calculates the time to add to the world.
+     * Minecraft world. The value of this variable is a lambda expression that takes a World object
+     * as input and calculates the time to add to the world.
      */
     @JvmField
     val NEXT_MIDNIGHT = SkipOperation { normalizeTimeToAdd(calculateMargin(it, 18000L)) }
@@ -68,8 +68,8 @@ object SkipOperations {
     }
 
     /**
-     * Normalizes the time to add based on a given margin. If the margin is negative, it adds 24000 to
-     * make it positive.
+     * Normalizes the time to add based on a given margin. If the margin is negative, it adds 24000
+     * to make it positive.
      *
      * @param margin The time margin to normalize
      * @return The normalized time margin
@@ -77,6 +77,7 @@ object SkipOperations {
     @Contract(pure = true)
     private fun normalizeTimeToAdd(margin: Long): Long {
         var margin = margin
+
         if (margin < 0L) {
             margin += 24000L
         }

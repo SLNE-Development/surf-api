@@ -7,8 +7,8 @@ import java.nio.file.Path
 /**
  * Platform facts the bundled NATS integration needs before the first plugin connects.
  *
- * Each platform entry point calls [install] once, before any plugin context is created. The first plugin that
- * uses NATS fails to connect when [install] was not called.
+ * Each platform entry point calls [install] once, before any plugin context is created. The first
+ * plugin that uses NATS fails to connect when [install] was not called.
  */
 @InternalSurfApi
 object NatsPlatform {
@@ -17,10 +17,11 @@ object NatsPlatform {
     private var installed = false
 
     /**
-     * Points the NATS runtime at the `nats` subfolder of surf-api's data folder and carries a configuration of the
-     * retired platform plugins over into it.
+     * Points the NATS runtime at the `nats` subfolder of surf-api's data folder and carries a
+     * configuration of the retired platform plugins over into it.
      *
-     * Calling it again with the same folder does nothing; another folder fails with [IllegalStateException].
+     * Calling it again with the same folder does nothing; another folder fails with
+     * [IllegalStateException].
      *
      * @param dataDirectory surf-api's own data folder
      */

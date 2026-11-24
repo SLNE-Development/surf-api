@@ -21,6 +21,7 @@ class InstanceParserTest {
     @Test
     fun `an instance resolves by its uuid`(env: Env) {
         val instance = env.process().instance().createInstanceContainer(DimensionType.OVERWORLD)
+
         try {
             assertEquals(instance, parser.parse(StringReader(instance.uuid.toString())))
         } finally {
@@ -31,6 +32,7 @@ class InstanceParserTest {
     @Test
     fun `an instance resolves by its unique dimension name`(env: Env) {
         val instance = env.process().instance().createInstanceContainer(DimensionType.THE_END)
+
         try {
             assertEquals(instance, parser.parse(StringReader("minecraft:the_end")))
         } finally {
@@ -42,6 +44,7 @@ class InstanceParserTest {
     fun `an ambiguous dimension name is rejected at the start of the token`(env: Env) {
         val first = env.process().instance().createInstanceContainer(DimensionType.THE_NETHER)
         val second = env.process().instance().createInstanceContainer(DimensionType.THE_NETHER)
+
         try {
             val failure = assertThrows(CommandSyntaxException::class.java) {
                 parser.parse(StringReader("minecraft:the_nether"))

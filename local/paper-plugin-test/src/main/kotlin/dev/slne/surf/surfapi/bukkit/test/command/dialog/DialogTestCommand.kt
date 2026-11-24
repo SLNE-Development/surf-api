@@ -5,7 +5,9 @@ import dev.slne.surf.surfapi.bukkit.test.command.dialog.subcommands.paginationDi
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.subcommands.searchDialogTestCommand
 import kotlinx.coroutines.CoroutineScope
 
-fun dialogTestCommand(pluginScope: CoroutineScope) = commandAPICommand("dialogtest") {
-    paginationDialogTestCommand(pluginScope)
-    searchDialogTestCommand()
+fun dialogTestCommand(pluginScope: CoroutineScope) {
+    commandAPICommand("dialogtest") {
+        paginationDialogTestCommand(pluginScope)
+        searchDialogTestCommand()
+    }
 }

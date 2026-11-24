@@ -41,8 +41,10 @@ object RedisPlatform {
      */
     fun pluginNameOf(clazz: Class<*>): String = installation().pluginNameResolver(clazz)
 
-    private fun installation() = checkNotNull(installed) {
-        "RedisPlatform is not installed; the platform entry point must call RedisPlatform.install before any plugin loads"
+    private fun installation(): RedisPlatform.Installed {
+        return checkNotNull(installed) {
+            "RedisPlatform is not installed; the platform entry point must call RedisPlatform.install before any plugin loads"
+        }
     }
 
     private class Installed(

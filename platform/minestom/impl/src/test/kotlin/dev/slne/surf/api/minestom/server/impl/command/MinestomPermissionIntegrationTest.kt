@@ -81,6 +81,7 @@ class MinestomPermissionIntegrationTest {
         env.process().connection().setPlayerProvider { connection, profile ->
             TestPermissionPlayer(connection, profile, permissionsByName[profile.name].orEmpty())
         }
+
         try {
             withPlatform(env) { manager ->
                 val executions = AtomicInteger()
@@ -91,9 +92,14 @@ class MinestomPermissionIntegrationTest {
                     .register()
                 val instance = env.createEmptyInstance()
                 val players = mutableListOf<Player>()
+
                 try {
-                    val allowed = connect(env.createConnection(profile("Allowed")), instance).also(players::add)
-                    val denied = connect(env.createConnection(profile("Denied")), instance).also(players::add)
+                    val allowed = connect(env.createConnection(profile("Allowed")), instance).also(
+                        players::add,
+                    )
+                    val denied = connect(env.createConnection(profile("Denied")), instance).also(
+                        players::add,
+                    )
 
                     assertTrue(allowed is TestPermissionPlayer)
                     assertTrue(denied is TestPermissionPlayer)
@@ -120,6 +126,7 @@ class MinestomPermissionIntegrationTest {
                 .register()
             val instance = env.createEmptyInstance()
             var player: Player? = null
+
             try {
                 player = connect(env.createConnection(), instance)
 
@@ -147,10 +154,14 @@ class MinestomPermissionIntegrationTest {
         }
     }
 
-    private inline fun withPlatform(env: Env, block: (net.minestom.server.command.CommandManager) -> Unit) {
+    private inline fun withPlatform(
+        env: Env,
+        block: (net.minestom.server.command.CommandManager) -> Unit,
+    ) {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             block(manager)
         } finally {
@@ -169,9 +180,9 @@ class MinestomPermissionIntegrationTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 
     private fun profile(name: String) = GameProfile(UUID.randomUUID(), name)
-
 }

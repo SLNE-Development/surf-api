@@ -1,15 +1,17 @@
 package dev.slne.surf.api.common.collection
 
 /**
- * A specialized implementation of [MutableSet] that transforms elements between two types, `O` and `M`, using
- * the provided transformation functions. This enables a dynamic view of a set where elements are transformed
- * on-the-fly during iteration or when performing operations.
+ * A specialized implementation of [MutableSet] that transforms elements between two types, `O` and
+ * `M`, using the provided transformation functions. This enables a dynamic view of a set where
+ * elements are transformed on-the-fly during iteration or when performing operations.
  *
  * @param O The type of the elements in the underlying set.
  * @param M The type of the transformed elements in this set.
  * @property fromSet The underlying set containing elements of type `O`.
- * @property toTransformer A function that transforms elements of type `O` to type `M`. Can return null to filter out elements.
- * @property fromTransformer A function that transforms elements of type `M` to type `O`. Can return null to filter out elements.
+ * @property toTransformer A function that transforms elements of type `O` to type `M`. Can return
+ * null to filter out elements.
+ * @property fromTransformer A function that transforms elements of type `M` to type `O`. Can return
+ * null to filter out elements.
  */
 @Suppress("UNCHECKED_CAST")
 class TransformingObjectSet<O, M>(
@@ -23,11 +25,13 @@ class TransformingObjectSet<O, M>(
      *
      * @return An iterator over the transformed elements of type `M`.
      */
-    override fun iterator() = object : MutableIterator<M> {
-        private val iterator = fromSet.iterator()
-        override fun remove() = iterator.remove()
-        override fun next(): M = toTransformer(iterator.next()) as M
-        override fun hasNext() = iterator.hasNext()
+    override fun iterator(): MutableIterator<M> {
+        return object : MutableIterator<M> {
+            private val iterator = fromSet.iterator()
+            override fun remove() = iterator.remove()
+            override fun next(): M = toTransformer(iterator.next()) as M
+            override fun hasNext() = iterator.hasNext()
+        }
     }
 
     /**
@@ -36,7 +40,7 @@ class TransformingObjectSet<O, M>(
      * @param element The element of type `M` to add.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun add(element: M) = fromSet.add(transformFrom(element) as O)
+    override fun add(element: M): Boolean = fromSet.add(transformFrom(element) as O)
 
     /**
      * Removes a transformed element from the underlying set.
@@ -44,7 +48,7 @@ class TransformingObjectSet<O, M>(
      * @param element The element of type `M` to remove.
      * @return `true` if the element was removed, `false` otherwise.
      */
-    override fun remove(element: M) = fromSet.remove(transformFrom(element) as O)
+    override fun remove(element: M): Boolean = fromSet.remove(transformFrom(element) as O)
 
     /**
      * Adds all transformed elements from the given collection to the underlying set.
@@ -52,8 +56,9 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun addAll(elements: Collection<M>) =
-        fromSet.addAll(elements.mapNotNull(::transformFrom))
+    override fun addAll(elements: Collection<M>): Boolean {
+        return fromSet.addAll(elements.mapNotNull(::transformFrom))
+    }
 
     /**
      * Removes all transformed elements in the given collection from the underlying set.
@@ -61,8 +66,9 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun removeAll(elements: Collection<M>) =
-        fromSet.removeAll(elements.mapNotNull(::transformFrom))
+    override fun removeAll(elements: Collection<M>): Boolean {
+        return fromSet.removeAll(elements.mapNotNull(::transformFrom))
+    }
 
     /**
      * Retains only the transformed elements in the given collection in the underlying set.
@@ -70,13 +76,14 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if the underlying set was modified, `false` otherwise.
      */
-    override fun retainAll(elements: Collection<M>) =
-        fromSet.retainAll(elements.mapNotNull(::transformFrom))
+    override fun retainAll(elements: Collection<M>): Boolean {
+        return fromSet.retainAll(elements.mapNotNull(::transformFrom))
+    }
 
     /**
      * Removes all elements from the underlying set.
      */
-    override fun clear() = fromSet.clear()
+    override fun clear(): Unit = fromSet.clear()
 
     /**
      * Returns the number of elements in the transformed set.
@@ -90,7 +97,7 @@ class TransformingObjectSet<O, M>(
      *
      * @return `true` if the underlying set is empty, `false` otherwise.
      */
-    override fun isEmpty() = fromSet.isEmpty()
+    override fun isEmpty(): Boolean = fromSet.isEmpty()
 
     /**
      * Checks if the transformed set contains the specified element.
@@ -98,7 +105,7 @@ class TransformingObjectSet<O, M>(
      * @param element The element of type `M` to check.
      * @return `true` if the element is in the transformed set, `false` otherwise.
      */
-    override fun contains(element: M) = fromSet.contains(transformFrom(element) as O)
+    override fun contains(element: M): Boolean = fromSet.contains(transformFrom(element) as O)
 
     /**
      * Checks if the transformed set contains all elements in the specified collection.
@@ -106,8 +113,9 @@ class TransformingObjectSet<O, M>(
      * @param elements A collection of elements of type `M`.
      * @return `true` if all elements are in the transformed set, `false` otherwise.
      */
-    override fun containsAll(elements: Collection<M>) =
-        fromSet.containsAll(elements.mapNotNull(::transformFrom))
+    override fun containsAll(elements: Collection<M>): Boolean {
+        return fromSet.containsAll(elements.mapNotNull(::transformFrom))
+    }
 
     /**
      * Transforms an element of type `M` to type `O` using the provided [fromTransformer].

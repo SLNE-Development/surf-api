@@ -16,7 +16,8 @@ class PaperChatListener {
 
     @NatsListener
     fun onChat(event: TestChatEvent) {
-        log.atInfo().log("event from %s: %s", event.origin, event.message)
+        log.atInfo()
+            .log("event from %s: %s", event.origin, event.message)
         Bukkit.broadcast(Component.text("[nats event] ${event.origin}: ${event.message}"))
     }
 }

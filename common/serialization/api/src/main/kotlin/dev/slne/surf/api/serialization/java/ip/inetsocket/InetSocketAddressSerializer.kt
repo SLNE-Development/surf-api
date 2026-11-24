@@ -10,7 +10,9 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
 import java.net.InetSocketAddress
 
-typealias SerializableInetSocketAddress = @Serializable(with = InetSocketAddressSerializer::class) InetSocketAddress
+typealias SerializableInetSocketAddress = @Serializable(
+    with = InetSocketAddressSerializer::class,
+) InetSocketAddress
 
 object InetSocketAddressSerializer : KSerializer<InetSocketAddress> {
     override val descriptor = buildClassSerialDescriptor("surf.api.java.ip.InetSocketAddress") {
@@ -21,30 +23,34 @@ object InetSocketAddressSerializer : KSerializer<InetSocketAddress> {
     override fun serialize(
         encoder: Encoder,
         value: InetSocketAddress,
-    ) = encoder.encodeStructure(descriptor) {
-        encodeStringElement(descriptor, 0, value.hostName)
-        encodeIntElement(descriptor, 1, value.port)
+    ) {
+        encoder.encodeStructure(descriptor) {
+            encodeStringElement(descriptor, 0, value.hostName)
+            encodeIntElement(descriptor, 1, value.port)
+        }
     }
 
-    override fun deserialize(decoder: Decoder) = decoder.decodeStructure(descriptor) {
-        var hostname: String? = null
-        var port: Int? = null
+    override fun deserialize(decoder: Decoder): InetSocketAddress {
+        return decoder.decodeStructure(descriptor) {
+            var hostname: String? = null
+            var port: Int? = null
 
-        if (decodeSequentially()) {
-            hostname = decodeStringElement(descriptor, 0)
-            port = decodeIntElement(descriptor, 1)
-        } else while (true) {
-            when (val index = decodeElementIndex(descriptor)) {
-                0 -> hostname = decodeStringElement(descriptor, 0)
-                1 -> port = decodeIntElement(descriptor, 1)
-                CompositeDecoder.DECODE_DONE -> break
-                else -> error("Unexpected index: $index")
+            if (decodeSequentially()) {
+                hostname = decodeStringElement(descriptor, 0)
+                port = decodeIntElement(descriptor, 1)
+            } else while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> hostname = decodeStringElement(descriptor, 0)
+                    1 -> port = decodeIntElement(descriptor, 1)
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
             }
+
+            require(hostname != null) { "Hostname must not be null" }
+            require(port != null) { "Port must not be null" }
+
+            InetSocketAddress(hostname, port)
         }
-
-        require(hostname != null) { "Hostname must not be null" }
-        require(port != null) { "Port must not be null" }
-
-        InetSocketAddress(hostname, port)
     }
 }

@@ -14,7 +14,10 @@ class ConnectionDetailsTest {
 
     @Test
     fun configuredPortWins() {
-        val details = ConnectionDetails(databaseType = DatabaseType.POSTGRESQL, port = IntOr.Default(6000))
+        val details = ConnectionDetails(
+            databaseType = DatabaseType.POSTGRESQL,
+            port = IntOr.Default(6000),
+        )
 
         assertEquals(6000, details.resolvedPort)
     }

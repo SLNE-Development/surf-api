@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service
 class Dependent(private val base: Base) : SurfLifecycle {
     override suspend fun onLoad() = Journal.record("load:dependent")
     override suspend fun onEnable() = Journal.record("enable:dependent")
+
     /**
      * Times out on purpose: a hook's own cancellation must not cost the others their onDisable.
      */

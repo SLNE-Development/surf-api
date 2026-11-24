@@ -33,7 +33,7 @@ class ToastTest(name: String) : CommandAPICommand(name) {
                 icon(ItemType.PLAYER_HEAD) {
                     setData(
                         DataComponentTypes.PROFILE,
-                        ResolvableProfile.resolvableProfile(player.playerProfile)
+                        ResolvableProfile.resolvableProfile(player.playerProfile),
                     )
                 }
 
