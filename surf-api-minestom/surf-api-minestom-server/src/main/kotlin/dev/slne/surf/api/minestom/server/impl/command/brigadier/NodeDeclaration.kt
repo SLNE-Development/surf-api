@@ -142,14 +142,14 @@ internal class NodeDeclarations {
             ArgumentKind.Position2D -> ArgumentType.RelativeVec2(name)
             ArgumentKind.BlockPosition -> ArgumentType.RelativeBlockPosition(name)
 
-            ArgumentKind.ResourceLocation -> ArgumentType.ResourceLocation(name)
+            ArgumentKind.ResourceLocation -> ArgumentType.Key(name)
             ArgumentKind.Time -> ArgumentType.Time(name)
             ArgumentKind.TeamColor -> ArgumentType.TeamColor(name)
             ArgumentKind.Particle -> ArgumentType.Particle(name)
 
             // Sound and potion effect are declared as resource locations.
-            ArgumentKind.Sound -> ArgumentType.ResourceLocation(name)
-            ArgumentKind.PotionEffect -> ArgumentType.ResourceLocation(name)
+            ArgumentKind.Sound -> ArgumentType.Key(name)
+            ArgumentKind.PotionEffect -> ArgumentType.Key(name)
             ArgumentKind.Biome -> ArgumentType.Resource(name, BuiltinRegistries.BIOME.name())
             ArgumentKind.Enchantment ->
                 ArgumentType.Resource(name, BuiltinRegistries.ENCHANTMENT.name())
