@@ -60,10 +60,6 @@ internal class PaperPluginSurfPlugin :
                     registerRequired("surf-redis-paper")
                 }
 
-                if (extension.withSurfNats.get()) {
-                    registerRequired("surf-nats-paper")
-                }
-
                 extension.bootstrapDependencies.orNull?.execute(this)
             }
 
@@ -75,10 +71,6 @@ internal class PaperPluginSurfPlugin :
 
                 if (extension.withSurfRedis.get() && !extension.surfRedisRelocation.isPresent) {
                     registerRequired("surf-redis-paper")
-                }
-
-                if (extension.withSurfNats.get()) {
-                    registerRequired("surf-nats-paper")
                 }
 
                 if (extension.installSurfNpc.get()) {

@@ -38,7 +38,7 @@ class ReflectionSymbolProcessor(environment: SymbolProcessorEnvironment) : Symbo
         resolver.getSymbolsWithAnnotation(ClassNames.GENERATE_REFLECTION)
             .filterIsInstance<KSClassDeclaration>()
             .forEach { declaration ->
-                if (!declaration.validate()) {
+                if (!declaration.validate(enableNewFeatures = true)) {
                     deferred += declaration
                     return@forEach
                 }

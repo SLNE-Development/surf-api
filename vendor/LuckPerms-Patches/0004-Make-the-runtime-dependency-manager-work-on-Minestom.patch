@@ -20,7 +20,7 @@ facts broke the dependency manager, which was stubbed out with no-ops.
    instead, keeping them off the host application's class path
 
 diff --git a/common/build.gradle b/common/build.gradle
-index 2209c5b6f04f97baea0b3eb92f9794764a26dbe2..36ddb2f2f9f4e889c32a67d7e6a76fab57affd24 100644
+index c5be9150ca99ea6d2a031f91f8faf0d0ea5fbb95..0ad79b68c58fd68595bca22f953a8f2e9b44afaa 100644
 --- a/common/build.gradle
 +++ b/common/build.gradle
 @@ -2,6 +2,38 @@ plugins {
@@ -61,9 +61,9 @@ index 2209c5b6f04f97baea0b3eb92f9794764a26dbe2..36ddb2f2f9f4e889c32a67d7e6a76fab
 +    artifact(shadowJar)
  }
  
- test {
+ // Adventure 5 requires Java 21
 diff --git a/minestom/build.gradle b/minestom/build.gradle
-index b568ab7d8e800113f3c2bf90e9678032e6c78011..ac55c4c19bd8c5d9a3efc42ffa65b93b486e6b8c 100644
+index b601c59d41277ed452b83daf0361af4c522d48b9..15b8b389203a41cb8823da6e5d3d874f8f06817d 100644
 --- a/minestom/build.gradle
 +++ b/minestom/build.gradle
 @@ -2,6 +2,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
@@ -73,8 +73,8 @@ index b568ab7d8e800113f3c2bf90e9678032e6c78011..ac55c4c19bd8c5d9a3efc42ffa65b93b
 +    alias(libs.plugins.shadow)
  }
  
- // minestom requires java 21+
-@@ -19,9 +20,17 @@ dependencies {
+ // Minestom requires Java 25
+@@ -22,9 +23,17 @@ dependencies {
          exclude group: "org.spongepowered", module: "configurate-gson"
          exclude group: "org.spongepowered", module: "configurate-hocon"
          exclude group: "me.lucko.configurate", module: "configurate-toml"
@@ -92,10 +92,11 @@ index b568ab7d8e800113f3c2bf90e9678032e6c78011..ac55c4c19bd8c5d9a3efc42ffa65b93b
  
      // testing
      testImplementation(project(":common")) {
-@@ -63,6 +72,39 @@ java {
+@@ -73,3 +82,36 @@ java {
+         languageVersion.set(JavaLanguageVersion.of(25)) // Minestom has a minimum Java version of 25
      }
  }
- 
++
 +// Rewrite references to the libraries the dependency manager downloads at runtime, so they match
 +// the relocated jars it produces (see the Dependency enum). Only this module's own classes are
 +// shaded - no dependencies are bundled.
@@ -128,12 +129,8 @@ index b568ab7d8e800113f3c2bf90e9678032e6c78011..ac55c4c19bd8c5d9a3efc42ffa65b93b
 +    artifacts.clear()
 +    artifact(shadowJar)
 +}
-+
- publishing {
-     repositories {
-         maven{
 diff --git a/minestom/src/main/java/me/lucko/luckperms/minestom/LPMinestomBootstrap.java b/minestom/src/main/java/me/lucko/luckperms/minestom/LPMinestomBootstrap.java
-index 9e9d5611c33ebca4463c32f78c08fab0c10ce826..30ac8d166cc834ea41db3e5ca201b24160e4e536 100644
+index 9e9d5611c33ebca4463c32f78c08fab0c10ce826..53254922d3a45b71ce9d6bbe7c33ce95aecf37bf 100644
 --- a/minestom/src/main/java/me/lucko/luckperms/minestom/LPMinestomBootstrap.java
 +++ b/minestom/src/main/java/me/lucko/luckperms/minestom/LPMinestomBootstrap.java
 @@ -15,7 +15,7 @@ import me.lucko.luckperms.common.plugin.logging.PluginLogger;
@@ -166,7 +163,7 @@ index 9e9d5611c33ebca4463c32f78c08fab0c10ce826..30ac8d166cc834ea41db3e5ca201b241
          this.schedulerAdapter = new MinestomSchedulerAdapter(this);
 +        this.classPathAppender = classPathAppender != null
 +                ? classPathAppender
-+                : InstrumentationClassPathAppender.createOrFallBack(this.logger);
++                : InstrumentationClassPathAppender.create();
          this.plugin = new LPMinestomPlugin(this, contextProviders, configurationAdapter, permissionSuggestions, commandRegistry);
      }
  
@@ -228,7 +225,7 @@ index 898e8f4bc789a4f2540c34b8ec379345bff067a8..5a239f97bad17052dd7f4ba31e5794db
  
  }
 diff --git a/minestom/src/main/java/me/lucko/luckperms/minestom/LuckPermsMinestom.java b/minestom/src/main/java/me/lucko/luckperms/minestom/LuckPermsMinestom.java
-index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f347386a3c7fb 100644
+index fd3b00b03c185096307969557d9c07f226337f75..8b3ec409330b40dea012b62c4e7879e543fd0d96 100644
 --- a/minestom/src/main/java/me/lucko/luckperms/minestom/LuckPermsMinestom.java
 +++ b/minestom/src/main/java/me/lucko/luckperms/minestom/LuckPermsMinestom.java
 @@ -8,7 +8,9 @@ import java.util.function.Consumer;
@@ -241,7 +238,7 @@ index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f3473
  import net.luckperms.api.LuckPerms;
  import net.luckperms.api.LuckPermsProvider;
  import net.minestom.server.command.builder.Command;
-@@ -159,6 +161,22 @@ public final class LuckPermsMinestom {
+@@ -159,6 +161,23 @@ public final class LuckPermsMinestom {
          @NotNull Builder logger(@NotNull Logger logger);
  
  
@@ -252,7 +249,8 @@ index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f3473
 +         * <p>If unset, LuckPerms appends to the system class loader using the instrumentation API,
 +         * which requires an agent to be installed - see {@link LuckPermsAgent}. Applications that
 +         * run LuckPerms inside a class loader they control should pass an appender for that class
-+         * loader instead.</p>
++         * loader instead. {@link #enable()} throws {@link IllegalStateException} if this is unset and
++         * no agent is installed.</p>
 +         *
 +         * @param appender the appender to use
 +         * @return the builder instance
@@ -264,7 +262,7 @@ index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f3473
          /**
           * Enables LuckPerms
           *
-@@ -177,6 +195,7 @@ public final class LuckPermsMinestom {
+@@ -177,6 +196,7 @@ public final class LuckPermsMinestom {
          private @Nullable CommandRegistry commandRegistry;
          private @NotNull Function<LPMinestomPlugin, ConfigurationAdapter> configurationAdapter = EnvironmentVariableConfigAdapter::new;
          private @NotNull Logger logger = LoggerFactory.getLogger(LuckPermsMinestom.class);
@@ -272,7 +270,7 @@ index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f3473
  
          private BuilderImpl(@NotNull Path dataDirectory) {
              this.dataDirectory = dataDirectory;
-@@ -234,6 +253,12 @@ public final class LuckPermsMinestom {
+@@ -234,6 +254,12 @@ public final class LuckPermsMinestom {
              return this;
          }
  
@@ -285,7 +283,7 @@ index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f3473
          @Override
          public @NotNull LuckPerms enable() {
              bootstrap = new LPMinestomBootstrap(
-@@ -242,7 +267,8 @@ public final class LuckPermsMinestom {
+@@ -242,7 +268,8 @@ public final class LuckPermsMinestom {
                      this.contextProviders,
                      this.configurationAdapter,
                      this.permissionSuggestions,
@@ -297,10 +295,10 @@ index fd3b00b03c185096307969557d9c07f226337f75..69834720b5682f4afdf681c6734f3473
              return LuckPermsProvider.get();
 diff --git a/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/InstrumentationClassPathAppender.java b/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/InstrumentationClassPathAppender.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d3ea06fc70f11fb1624729e62313db1388462687
+index 0000000000000000000000000000000000000000..80e0f8d5c8fbee23e08bb232d29e3a25d1868d70
 --- /dev/null
 +++ b/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/InstrumentationClassPathAppender.java
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,56 @@
 +package me.lucko.luckperms.minestom.dependencies;
 +
 +import java.io.IOException;
@@ -309,7 +307,6 @@ index 0000000000000000000000000000000000000000..d3ea06fc70f11fb1624729e62313db13
 +import java.nio.file.Path;
 +import java.util.jar.JarFile;
 +import me.lucko.luckperms.common.plugin.classpath.ClassPathAppender;
-+import me.lucko.luckperms.common.plugin.logging.PluginLogger;
 +import org.jetbrains.annotations.NotNull;
 +
 +/**
@@ -319,25 +316,25 @@ index 0000000000000000000000000000000000000000..d3ea06fc70f11fb1624729e62313db13
 +public final class InstrumentationClassPathAppender implements ClassPathAppender {
 +
 +    /**
-+     * Creates an appender, if an agent has made an {@link Instrumentation} instance available.
++     * Creates an appender from the {@link Instrumentation} instance an agent has made available.
 +     *
-+     * @param logger the logger to warn on, if no agent is installed
-+     * @return the appender, or {@link NoopClassPathAppender} if no agent is installed
++     * <p>Without an appender LuckPerms cannot load its core libraries (caffeine, okhttp, the event
++     * bus, ...), so a missing agent is a configuration error rather than a degraded mode.</p>
++     *
++     * @return the appender
++     * @throws IllegalStateException if no agent is installed
 +     */
-+    public static @NotNull ClassPathAppender createOrFallBack(@NotNull PluginLogger logger) {
++    public static @NotNull ClassPathAppender create() {
 +        Instrumentation instrumentation = LuckPermsAgent.getInstrumentation();
-+        if (instrumentation != null) {
-+            return new InstrumentationClassPathAppender(instrumentation);
++        if (instrumentation == null) {
++            throw new IllegalStateException("LuckPerms cannot load its runtime dependencies: no agent " +
++                    "has made the instrumentation API available and no ClassPathAppender was supplied. " +
++                    "Either add 'Launcher-Agent-Class: " + LuckPermsAgent.class.getName() + "' to the " +
++                    "manifest of your application jar, start the server with '-javaagent:<your-jar>', " +
++                    "or supply your own ClassPathAppender via LuckPermsMinestom.Builder#classPathAppender.");
 +        }
 +
-+        logger.warn("Unable to append jars to the class path at runtime, so LuckPerms cannot load " +
-+                "its own dependencies. Any storage or messaging backend that is not already on the " +
-+                "class path will fail to initialise. To fix this, either add 'Launcher-Agent-Class: " +
-+                LuckPermsAgent.class.getName() + "' to the manifest of your application jar, start " +
-+                "the server with '-javaagent:<your-jar>', or supply your own ClassPathAppender via " +
-+                "LuckPermsMinestom.Builder#classPathAppender.");
-+
-+        return NoopClassPathAppender.INSTANCE;
++        return new InstrumentationClassPathAppender(instrumentation);
 +    }
 +
 +    private final @NotNull Instrumentation instrumentation;
@@ -422,3 +419,72 @@ index 0000000000000000000000000000000000000000..f950496f47b83a58cc5fb793dde975aa
 +    }
 +
 +}
+diff --git a/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/NoopClassPathAppender.java b/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/NoopClassPathAppender.java
+deleted file mode 100644
+index d98fcb7c88a68fde8874793590aae31655d02809..0000000000000000000000000000000000000000
+--- a/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/NoopClassPathAppender.java
++++ /dev/null
+@@ -1,20 +0,0 @@
+-package me.lucko.luckperms.minestom.dependencies;
+-
+-import java.nio.file.Path;
+-import me.lucko.luckperms.common.plugin.classpath.ClassPathAppender;
+-import org.jetbrains.annotations.NotNull;
+-
+-public final class NoopClassPathAppender implements ClassPathAppender {
+-
+-    public static final @NotNull NoopClassPathAppender INSTANCE = new NoopClassPathAppender();
+-
+-    private NoopClassPathAppender() {
+-
+-    }
+-
+-    @Override
+-    public void addJarToClasspath(Path file) {
+-        // no-op
+-    }
+-
+-}
+diff --git a/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/NoopDependencyManager.java b/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/NoopDependencyManager.java
+deleted file mode 100644
+index 18ba6524169121e78de04bef85373dda0ee5f20e..0000000000000000000000000000000000000000
+--- a/minestom/src/main/java/me/lucko/luckperms/minestom/dependencies/NoopDependencyManager.java
++++ /dev/null
+@@ -1,37 +0,0 @@
+-package me.lucko.luckperms.minestom.dependencies;
+-
+-import java.util.Set;
+-import me.lucko.luckperms.common.dependencies.Dependency;
+-import me.lucko.luckperms.common.dependencies.DependencyManager;
+-import me.lucko.luckperms.common.storage.StorageType;
+-import org.jetbrains.annotations.NotNull;
+-
+-public final class NoopDependencyManager implements DependencyManager {
+-
+-    public static final @NotNull NoopDependencyManager INSTANCE = new NoopDependencyManager();
+-
+-    private NoopDependencyManager() {
+-
+-    }
+-
+-    @Override
+-    public void loadDependencies(Set<Dependency> dependencies) {
+-        // no-op
+-    }
+-
+-    @Override
+-    public void loadStorageDependencies(Set<StorageType> storageTypes, boolean redis, boolean rabbitmq, boolean nats) {
+-        // no-op
+-    }
+-
+-    @Override
+-    public ClassLoader obtainClassLoaderWith(Set<Dependency> dependencies) {
+-        return NoopDependencyManager.class.getClassLoader();
+-    }
+-
+-    @Override
+-    public void close() {
+-        // no-op
+-    }
+-
+-}
