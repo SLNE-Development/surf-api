@@ -5,11 +5,11 @@ Subject: [PATCH] Build the Minestom module against Minestom 26.3
 
 
 diff --git a/minestom/build.gradle b/minestom/build.gradle
-index ac55c4c19bd8c5d9a3efc42ffa65b93b486e6b8c..ee88b3a4c6bbefd51ea720b402013c9fd17a3cb4 100644
+index 15b8b389203a41cb8823da6e5d3d874f8f06817d..b5c0b79fd74882db11fb7e574a5b68461fb65a92 100644
 --- a/minestom/build.gradle
 +++ b/minestom/build.gradle
-@@ -8,11 +8,16 @@ plugins {
- // minestom requires java 21+
+@@ -11,11 +11,16 @@ tasks.withType(JavaCompile).configureEach {
+ }
  
  repositories {
 +    // experimental 26.3 builds

@@ -290,16 +290,6 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             }
         }
 
-        if (extension.withSurfNats.get()) {
-            dependencies {
-                val notation = "dev.slne.surf.nats:surf-nats-api:+"
-                add(COMPILE_ONLY, notation)
-                if (testingEnabled) {
-                    add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
-                }
-            }
-        }
-
         if (extension.withSurfDatabaseR2dbc.get()) {
             dependencies {
                 add(
