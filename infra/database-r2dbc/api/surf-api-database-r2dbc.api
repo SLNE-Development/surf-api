@@ -157,8 +157,8 @@ public final class dev/slne/surf/database/config/DatabaseConfig {
 }
 
 public final class dev/slne/surf/database/config/DatabaseConfig$Companion {
-	public final fun load (Ldev/slne/surf/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/database/config/DatabaseConfig;
-	public static synthetic fun load$default (Ldev/slne/surf/database/config/DatabaseConfig$Companion;Ldev/slne/surf/api/config/SurfConfigApi;Ljava/nio/file/Path;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public final fun load (Ljava/nio/file/Path;Ljava/lang/String;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public static synthetic fun load$default (Ldev/slne/surf/database/config/DatabaseConfig$Companion;Ljava/nio/file/Path;Ljava/lang/String;ILjava/lang/Object;)Ldev/slne/surf/database/config/DatabaseConfig;
 }
 
 public final class dev/slne/surf/database/config/DatabaseType : java/lang/Enum {
@@ -232,7 +232,6 @@ public final class dev/slne/surf/database/config/PoolConfig$Timeouts {
 
 public final class dev/slne/surf/database/logger/ComponentSqlLogger : org/jetbrains/exposed/v1/core/SqlLogger {
 	public fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;)V
-	public synthetic fun <init> (Lnet/kyori/adventure/text/logger/slf4j/ComponentLogger;Lorg/slf4j/event/Level;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun log (Lorg/jetbrains/exposed/v1/core/statements/StatementContext;Lorg/jetbrains/exposed/v1/core/Transaction;)V
 }
 
@@ -283,9 +282,6 @@ public final class dev/slne/surf/database/migration/MigrationSpec {
 	public final fun baselineVersion (Ljava/lang/String;)V
 	public final fun classLoader (Ljava/lang/ClassLoader;)V
 	public final fun classNames ([Ljava/lang/String;)V
-	public final fun classPackage (Ljava/lang/String;)V
-	public final fun classPackage (Ljava/lang/String;Z)V
-	public static synthetic fun classPackage$default (Ldev/slne/surf/database/migration/MigrationSpec;Ljava/lang/String;ZILjava/lang/Object;)V
 	public final fun classes ([Ldev/slne/surf/database/migration/SurfMigration;)V
 	public final fun sql ([Ljava/lang/String;)V
 }
@@ -436,7 +432,7 @@ public final class dev/slne/surf/database/reliability/operation/StoredReply$Comp
 
 public class dev/slne/surf/database/spring/SurfDatabaseAutoConfiguration {
 	public fun <init> ()V
-	public fun surfDatabaseConfig (Ldev/slne/surf/api/config/SurfConfigApi;Lorg/springframework/core/env/Environment;)Ldev/slne/surf/database/config/DatabaseConfig;
+	public fun surfDatabaseConfig (Lorg/springframework/core/env/Environment;)Ldev/slne/surf/database/config/DatabaseConfig;
 }
 
 public abstract interface class dev/slne/surf/database/spring/SurfDatabaseConfigurer {

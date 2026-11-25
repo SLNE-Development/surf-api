@@ -2,6 +2,7 @@ package dev.slne.surf.api.spring.context
 
 import dev.slne.surf.api.spring.BootstrapComponent
 import dev.slne.surf.api.spring.SurfBootstrapLifecycle
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
@@ -53,6 +54,7 @@ internal fun scanComponents(
 ) {
     ClassPathBeanDefinitionScanner(context, selection != ScanSelection.BOOTSTRAP).apply {
         setResourceLoader(restrictedResolver(classLoader, source))
+
         when (selection) {
             ScanSelection.ALL -> {}
             ScanSelection.BOOTSTRAP -> addIncludeFilter(BootstrapComponentsFilter)
@@ -75,10 +77,43 @@ fun findAnnotatedClasses(
 ): List<Class<*>> {
     val provider = object : ClassPathScanningCandidateComponentProvider(false) {
         override fun getRegistry(): BeanDefinitionRegistry = context
-    }.apply {
-        setResourceLoader(restrictedResolver(plugin.classLoader, plugin.source))
-        addIncludeFilter(AnnotationTypeFilter(annotation))
     }
+
+    return findCandidates(provider, plugin, annotation)
+}
+
+/**
+ * Finds the interfaces in [plugin]'s packages that carry [annotation], the way
+ * [findAnnotatedClasses] finds classes.
+ *
+ * @param context the plugin context whose bean factory evaluates conditions
+ * @param plugin the plugin whose own source is read
+ * @param annotation the annotation an interface must carry
+ * @return the interfaces, loaded without initialization
+ */
+fun findAnnotatedInterfaces(
+    context: AnnotationConfigApplicationContext,
+    plugin: PluginDescriptor,
+    annotation: Class<out Annotation>,
+): List<Class<*>> {
+    val provider = object : ClassPathScanningCandidateComponentProvider(false) {
+        override fun getRegistry(): BeanDefinitionRegistry = context
+
+        override fun isCandidateComponent(beanDefinition: AnnotatedBeanDefinition): Boolean {
+            return beanDefinition.metadata.isInterface && !beanDefinition.metadata.isAnnotation
+        }
+    }
+
+    return findCandidates(provider, plugin, annotation)
+}
+
+private fun findCandidates(
+    provider: ClassPathScanningCandidateComponentProvider,
+    plugin: PluginDescriptor,
+    annotation: Class<out Annotation>,
+): List<Class<*>> {
+    provider.setResourceLoader(restrictedResolver(plugin.classLoader, plugin.source))
+    provider.addIncludeFilter(AnnotationTypeFilter(annotation))
 
     return plugin.basePackages.asSequence()
         .flatMap(provider::findCandidateComponents)
@@ -93,6 +128,7 @@ fun findAnnotatedClasses(
  */
 private fun restrictedResolver(classLoader: ClassLoader, source: Path?): ResourcePatternResolver {
     val resolver = PathMatchingResourcePatternResolver(PluginResourceLoader(classLoader))
+
     return source?.let { PluginSourceResourceResolver(resolver, it) } ?: resolver
 }
 

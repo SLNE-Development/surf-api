@@ -3,69 +3,84 @@
 package dev.slne.surf.api.serialization.adventure.sound.stop
 
 import dev.slne.surf.api.serialization.adventure.key.AdventureKeySerializer
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.*
-import kotlinx.serialization.serializer
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
 import net.kyori.adventure.sound.SoundStop
 
-typealias SerializableSoundStop = @Serializable(with = AdventureSoundStopSerializer::class) SoundStop
+typealias SerializableSoundStop = @Serializable(
+    with = AdventureSoundStopSerializer::class,
+) SoundStop
 
 object AdventureSoundStopSerializer : KSerializer<SoundStop> {
+    private val keySerializer = ContextualSerializer(
+        Key::class,
+        AdventureKeySerializer,
+        emptyArray(),
+    )
+
     override val descriptor = buildClassSerialDescriptor("surf.api.SoundStop") {
         element("source", serializer<Sound.Source>().descriptor, isOptional = true)
-        element("sound", AdventureKeySerializer.descriptor, isOptional = true)
+        element("sound", keySerializer.descriptor, isOptional = true)
     }
 
     override fun serialize(
         encoder: Encoder,
         value: SoundStop,
-    ) = encoder.encodeStructure(descriptor) {
-        encodeNullableSerializableElement(
-            descriptor,
-            0,
-            serializer<Sound.Source>(),
-            value.source()
-        )
+    ) {
+        encoder.encodeStructure(descriptor) {
+            encodeNullableSerializableElement(
+                descriptor,
+                0,
+                serializer<Sound.Source>(),
+                value.source(),
+            )
 
-        encodeNullableSerializableElement(
-            descriptor,
-            1,
-            AdventureKeySerializer,
-            value.sound()
-        )
+            encodeNullableSerializableElement(
+                descriptor,
+                1,
+                keySerializer,
+                value.sound(),
+            )
+        }
     }
 
-    override fun deserialize(decoder: Decoder): SoundStop = decoder.decodeStructure(descriptor) {
-        var source: Sound.Source? = null
-        var sound: Key? = null
+    override fun deserialize(decoder: Decoder): SoundStop {
+        return decoder.decodeStructure(descriptor) {
+            var source: Sound.Source? = null
+            var sound: Key? = null
 
-        if (decodeSequentially()) {
-            source = decodeNullableSerializableElement(descriptor, 0, serializer<Sound.Source>())
-            sound = decodeNullableSerializableElement(descriptor, 1, AdventureKeySerializer)
-        } else while (true) {
-            when (val index = decodeElementIndex(descriptor)) {
-                0 -> source =
-                    decodeNullableSerializableElement(descriptor, 0, serializer<Sound.Source>())
+            if (decodeSequentially()) {
+                source = decodeNullableSerializableElement(
+                    descriptor,
+                    0,
+                    serializer<Sound.Source>(),
+                )
+                sound = decodeNullableSerializableElement(descriptor, 1, keySerializer)
+            } else while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> source = decodeNullableSerializableElement(
+                        descriptor,
+                        0,
+                        serializer<Sound.Source>(),
+                    )
 
-                1 -> sound =
-                    decodeNullableSerializableElement(descriptor, 1, AdventureKeySerializer)
+                    1 -> sound = decodeNullableSerializableElement(descriptor, 1, keySerializer)
 
-                CompositeDecoder.DECODE_DONE -> break
-                else -> error("Unexpected index: $index")
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
             }
-        }
 
-        when {
-            source == null && sound == null -> SoundStop.all()
-            source != null && sound != null -> SoundStop.namedOnSource(sound, source)
-            source != null -> SoundStop.source(source)
-            sound != null -> SoundStop.named(sound)
-            else -> throw MatchException("Unreachable", null)
+            when {
+                source == null && sound == null -> SoundStop.all()
+                source != null && sound != null -> SoundStop.namedOnSource(sound, source)
+                source != null -> SoundStop.source(source)
+                sound != null -> SoundStop.named(sound)
+                else -> throw MatchException("Unreachable", null)
+            }
         }
     }
 }

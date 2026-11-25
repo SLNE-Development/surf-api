@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.server.nms.v26_3.bridges
 import dev.slne.surf.api.paper.dialog.noticeDialogWithBuilder
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toNmsBlock
 import dev.slne.surf.api.paper.server.nms.v26_3.extensions.toNmsItem
@@ -14,12 +15,10 @@ import net.minecraft.core.component.DataComponentMap
 import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.protocol.common.ClientboundClearDialogPacket
-import net.minecraft.resources.ResourceKey
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.component.Compostable
 import net.minecraft.world.level.block.Block
-import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProvider
 import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders
 import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt
 import org.bukkit.Bukkit
@@ -32,6 +31,7 @@ import kotlin.math.abs
 
 @NmsUseWithCaution
 @Suppress("ClassName")
+@NmsComponent
 class V26_3SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     override fun nextEntityId(): Int {
@@ -57,8 +57,10 @@ class V26_3SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     override fun addCompostable(material: Material, levelIncreaseChance: Float) {
         require(material.isItem) { "material must be an item" }
+
         if (levelIncreaseChance <= 0f) {
             removeCompostable(material)
+
             return
         }
 
@@ -85,8 +87,10 @@ class V26_3SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     private fun compostableLayers(levelIncreaseChance: Float): ResolvableInt {
         if (levelIncreaseChance >= 1f) return ResolvableInt.Constant(1)
 
-        val nearest =
-            VANILLA_COMPOSTABLE_CHANCES.minBy { (_, chance) -> abs(chance - levelIncreaseChance) }
+        val nearest = VANILLA_COMPOSTABLE_CHANCES.minBy { (_, chance) ->
+            abs(chance - levelIncreaseChance)
+        }
+
         return ResolvableInt.fromKey(nearest.key)
     }
 
@@ -125,22 +129,22 @@ class V26_3SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     }
 
     override fun getServerIp(): InetSocketAddress {
-        val channels =
-            V26_3NmsReflections.getConnectionChannelFutures(MinecraftServer.getServer().connection)
-        val channel =
-            channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
+        val channels = V26_3NmsReflections.getConnectionChannelFutures(
+            MinecraftServer.getServer().connection,
+        )
+        val channel = channels.firstOrNull()
+            ?: error("No channels found in server connection listener proxy")
 
         return channel.channel().localAddress() as? InetSocketAddress
             ?: error("Local address is not an instance of InetSocketAddress")
     }
 
     companion object {
-        private val VANILLA_COMPOSTABLE_CHANCES: Map<ResourceKey<ContextIntProvider>, Float> =
-            mapOf(
-                ContextIntProviders.COMPOSTABLE_LOW to 0.3f,
-                ContextIntProviders.COMPOSTABLE_LOW_MEDIUM to 0.5f,
-                ContextIntProviders.COMPOSTABLE_MEDIUM to 0.65f,
-                ContextIntProviders.COMPOSTABLE_MEDIUM_HIGH to 0.85f,
-            )
+        private val VANILLA_COMPOSTABLE_CHANCES = mapOf(
+            ContextIntProviders.COMPOSTABLE_LOW to 0.3f,
+            ContextIntProviders.COMPOSTABLE_LOW_MEDIUM to 0.5f,
+            ContextIntProviders.COMPOSTABLE_MEDIUM to 0.65f,
+            ContextIntProviders.COMPOSTABLE_MEDIUM_HIGH to 0.85f,
+        )
     }
 }

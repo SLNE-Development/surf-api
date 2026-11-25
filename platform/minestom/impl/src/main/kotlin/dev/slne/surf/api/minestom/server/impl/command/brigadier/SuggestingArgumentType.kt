@@ -17,7 +17,9 @@ import dev.slne.surf.api.minestom.command.suggestion.SuggestionFilter
 import dev.slne.surf.api.minestom.command.suggestion.SuggestionInfo
 import dev.slne.surf.api.minestom.coroutine.minestomAsyncScope
 import dev.slne.surf.api.minestom.server.impl.command.includesBuiltIns
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import net.minestom.server.MinecraftServer
@@ -54,6 +56,7 @@ internal class SuggestingArgumentType(
         builder: SuggestionsBuilder,
     ): CompletableFuture<Suggestions> {
         val sender = context.source as? CommandSender ?: return Suggestions.empty()
+
         val provider = definition.suggestions
         val future = CompletableFuture<Suggestions>()
 
@@ -74,10 +77,13 @@ internal class SuggestingArgumentType(
                     entries
                 }
 
-                filtered.forEach { entry ->
+                for (entry in filtered) {
                     builder.suggest(entry.suggestion, entry.tooltip?.let(::ComponentMessage))
                 }
             } catch (failure: Throwable) {
+                if (failure is CancellationException) {
+                    ensureActive()
+                }
                 MinecraftServer.LOGGER.error(
                     "Failed suggestions for argument '{}'",
                     definition.nodeName,
@@ -89,7 +95,10 @@ internal class SuggestingArgumentType(
             // per element), so the results are merged instead of assumed to share [builder].
             val own = builder.build()
             future.complete(
-                if (builtIns == null) own else Suggestions.merge(builder.input, listOf(builtIns, own)),
+                if (builtIns == null) own else Suggestions.merge(
+                    builder.input,
+                    listOf(builtIns, own),
+                ),
             )
         }
 
@@ -119,11 +128,21 @@ internal class SuggestingArgumentType(
             is SuggestionMode.Replace<*> -> mode.provider.suggest(info)
             is SuggestionMode.IncludeSafe<*> ->
                 (mode.provider as SafeSuggestions<Any?>).suggest(info)
-                    .map { tooltip -> StringTooltip(stringify(tooltip.suggestion), tooltip.tooltip) }
+                    .map { tooltip ->
+                        StringTooltip(
+                            stringify(tooltip.suggestion),
+                            tooltip.tooltip,
+                        )
+                    }
 
             is SuggestionMode.ReplaceSafe<*> ->
                 (mode.provider as SafeSuggestions<Any?>).suggest(info)
-                    .map { tooltip -> StringTooltip(stringify(tooltip.suggestion), tooltip.tooltip) }
+                    .map { tooltip ->
+                        StringTooltip(
+                            stringify(tooltip.suggestion),
+                            tooltip.tooltip,
+                        )
+                    }
         }
     }
 
@@ -135,17 +154,18 @@ internal class SuggestingArgumentType(
     private fun <S> previousArguments(context: CommandContext<S>): CommandArguments {
         val parsed = mutableListOf<ParsedArgument>()
 
-        context.nodes.forEach { parsedNode ->
-            val node = parsedNode.node as? ArgumentCommandNode<*, *> ?: return@forEach
+        for (parsedNode in context.nodes) {
+            val node = parsedNode.node as? ArgumentCommandNode<*, *> ?: continue
+
             val name = node.name
             val value = runCatching { context.getArgument(name, Any::class.java) }.getOrNull()
-                ?: return@forEach
+                ?: continue
 
             parsed += ParsedArgument(
                 name = name,
                 value = value,
                 raw = context.input.substring(parsedNode.range.start, parsedNode.range.end),
-                present = true,
+                isPresent = true,
             )
         }
 
@@ -159,14 +179,17 @@ internal class SuggestingArgumentType(
  * Safe providers return typed values that the argument stringifies itself, so they are always
  * filtered by prefix.
  */
-private fun SuggestionMode<*>.filterPolicy(): SuggestionFilter = when (this) {
-    is SuggestionMode.Include<*> -> provider.filterPolicy
-    is SuggestionMode.Replace<*> -> provider.filterPolicy
-    else -> SuggestionFilter.PREFIX
+private fun SuggestionMode<*>.filterPolicy(): SuggestionFilter {
+    return when (this) {
+        is SuggestionMode.Include<*> -> provider.filterPolicy
+        is SuggestionMode.Replace<*> -> provider.filterPolicy
+        else -> SuggestionFilter.PREFIX
+    }
 }
 
 /**
  * Whether this definition carries a suggestion provider of its own.
  */
-internal fun ArgumentDefinition<*>.hasCustomSuggestions(): Boolean =
-    suggestions != SuggestionMode.BuiltIns
+internal fun ArgumentDefinition<*>.hasCustomSuggestions(): Boolean {
+    return suggestions != SuggestionMode.BuiltIns
+}

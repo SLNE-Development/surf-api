@@ -153,7 +153,7 @@ public final class dev/slne/surf/api/minestom/server/impl/command/CommandAPIHook
 	public static final fun declare (Lnet/minestom/server/network/packet/server/play/DeclareCommandsPacket;Lnet/minestom/server/entity/Player;)Lnet/minestom/server/network/packet/server/play/DeclareCommandsPacket;
 	public static final fun execute (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)Lnet/minestom/server/command/builder/CommandResult;
 	public static final fun owns (Ljava/lang/String;)Z
-	public static final fun reportUnknown (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)V
+	public final fun reportUnknown (Lnet/minestom/server/command/CommandSender;Ljava/lang/String;)V
 }
 
 public final class dev/slne/surf/api/minestom/server/impl/command/CommandAPITranslations {

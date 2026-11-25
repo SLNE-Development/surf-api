@@ -6,20 +6,14 @@ import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsService
 import dev.slne.surf.nats.event.NatsListener
+import dev.slne.surf.nats.paper.types.ItemStackSerializer
 import dev.slne.surf.nats.service
-import dev.slne.surf.nats.test.proto.v1.CalcService
-import dev.slne.surf.nats.test.proto.v1.Count
-import dev.slne.surf.nats.test.proto.v1.Created
-import dev.slne.surf.nats.test.proto.v1.FailRequest
-import dev.slne.surf.nats.test.proto.v1.FireRequest
-import dev.slne.surf.nats.test.proto.v1.HealthReply
-import dev.slne.surf.nats.test.proto.v1.InlineRequest
-import dev.slne.surf.nats.test.proto.v1.MixedRequest
-import dev.slne.surf.nats.test.proto.v1.Text
-import dev.slne.surf.nats.test.proto.v1.UnsignedReply
-import dev.slne.surf.nats.test.proto.v1.UnsignedRequest
+import dev.slne.surf.nats.test.proto.v1.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.protobuf.ProtoBuf
+import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.seconds
@@ -31,26 +25,30 @@ import kotlin.time.Duration.Companion.seconds
 @NatsService
 class ConsumerCalcService : CalcService {
 
-    override suspend fun mixed(request: MixedRequest) = Text("${request.a + request.b}:${request.label}")
+    override suspend fun mixed(request: MixedRequest): Text {
+        return Text("${request.a + request.b}:${request.label}")
+    }
 
     override suspend fun health(): HealthReply = unused()
-    override suspend fun fire(request: FireRequest) = unused()
+    override suspend fun fire(request: FireRequest): Nothing = unused()
     override suspend fun fail(request: FailRequest): Text = unused()
     override suspend fun innerTimeout(): Text = unused()
     override suspend fun count(): Count = unused()
-    override suspend fun slowFire() = unused()
+    override suspend fun slowFire(): Nothing = unused()
     override suspend fun gated(): Text = unused()
     override suspend fun unsigned(request: UnsignedRequest): UnsignedReply = unused()
     override suspend fun inline(request: InlineRequest): Text = unused()
     override suspend fun slow(): Text = unused()
     override suspend fun missing(): Text = unused()
 
-    private fun unused(): Nothing = throw UnsupportedOperationException("Not part of the NATS probe")
+    private fun unused(): Nothing {
+        throw UnsupportedOperationException("Not part of the NATS probe")
+    }
 }
 
 /**
  * Proves that the NATS integration bundled into surf-api serves a plugin on a real server, over a
- * real broker.
+ * real broker, and that the Paper serializers of surf-nats read what they write on that server.
  *
  * The plugin serves [CalcService] through [ConsumerCalcService] and listens for [Created]. surf-api
  * registers both after the enable hooks, so [roundTrip] runs once the server is up.
@@ -71,7 +69,8 @@ class ConsumerNatsProbe(private val client: NatsClient) {
     }
 
     /**
-     * Calls [CalcService] through a service proxy and publishes an event to this class's own listener.
+     * Calls [CalcService] through a service proxy and publishes an event to this class's own
+     * listener.
      *
      * A service proxy obtained from the client reaches the service through the broker. The injected
      * [CalcService] would be [ConsumerCalcService] itself, because a local implementation wins.
@@ -80,30 +79,58 @@ class ConsumerNatsProbe(private val client: NatsClient) {
      */
     suspend fun roundTrip(): Result {
         val remote = client.service<CalcService>()
+
         return Result(
-            rpc = check("rpc") { remote.mixed(MixedRequest(1, 2L, 0.5, true, "probe")).value == "3:probe" },
+            rpc = check("rpc") {
+                remote.mixed(
+                    MixedRequest(
+                        1,
+                        2L,
+                        0.5,
+                        true,
+                        "probe",
+                    ),
+                ).value == "3:probe"
+            },
             event = check("event") { publishAndAwaitEvent() },
+            itemStack = check("itemStack") { roundTripItemStack() },
         )
+    }
+
+    /**
+     * Writes an item stack with [ItemStackSerializer] and reads it back, which needs the server's
+     * own item format.
+     */
+    private fun roundTripItemStack(): Boolean {
+        val item = ItemStack.of(Material.DIAMOND, 3)
+        val bytes = ProtoBuf.encodeToByteArray(ItemStackSerializer, item)
+
+        return ProtoBuf.decodeFromByteArray(ItemStackSerializer, bytes) == item
     }
 
     private suspend fun publishAndAwaitEvent(): Boolean {
         val id = nextEventId.incrementAndGet()
         awaitedEvent = CompletableDeferred()
         client.publish(Created(id))
+
         return withTimeout(EVENT_TIMEOUT) { awaitedEvent.await() } == id
     }
 
-    private suspend fun check(name: String, probe: suspend () -> Boolean): String = try {
-        if (probe()) "ok" else "mismatch"
-    } catch (failure: Exception) {
-        log.atWarning().withCause(failure).log("The nats probe '%s' failed", name)
-        "failed:${failure.javaClass.simpleName}"
+    private suspend fun check(name: String, probe: suspend () -> Boolean): String {
+        return try {
+            if (probe()) "ok" else "mismatch"
+        } catch (failure: Exception) {
+            log.atWarning()
+                .withCause(failure)
+                .log("The nats probe '%s' failed", name)
+            "failed:${failure.javaClass.simpleName}"
+        }
     }
 
     /**
      * The outcome of [roundTrip]: one entry per round trip.
      */
-    data class Result(val rpc: String, val event: String)
+    data class Result(val rpc: String, val event: String, val itemStack: String)
 
     private companion object {
         val EVENT_TIMEOUT = 10.seconds
@@ -115,14 +142,22 @@ class ConsumerNatsProbe(private val client: NatsClient) {
  * server is up, because the NATS services register only after the enable phase.
  */
 @Service
-class SpikeNatsCommand(private val probe: ConsumerNatsProbe) : CommandAPICommand(SharedBeanReport.NATS_COMMAND) {
+class SpikeNatsCommand(private val probe: ConsumerNatsProbe) :
+    CommandAPICommand(SharedBeanReport.NATS_COMMAND) {
 
     private val log = logger()
 
     init {
         anyExecutorSuspend { _, _ ->
             val result = probe.roundTrip()
-            log.atInfo().log("%s nats=%s natsEvent=%s", SharedBeanReport.SPIKE_MARKER, result.rpc, result.event)
+            log.atInfo()
+                .log(
+                    "%s nats=%s natsEvent=%s natsItemStack=%s",
+                    SharedBeanReport.SPIKE_MARKER,
+                    result.rpc,
+                    result.event,
+                    result.itemStack,
+                )
         }
     }
 }

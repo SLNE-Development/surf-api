@@ -1,13 +1,13 @@
 package dev.slne.surf.nats.config
 
 import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.NatsInstance
 import java.nio.file.Path
 
 /**
  * Locates the directory of the NATS `config.yml`.
  *
- * A host that embeds NATS installs the directory; otherwise the data path of the platform [NatsInstance] applies.
+ * The host that embeds NATS installs the directory through `EmbeddedNats.useConfigDirectory` before
+ * the first connection.
  */
 @InternalNatsApi
 internal object NatsConfigLocation {
@@ -28,7 +28,13 @@ internal object NatsConfigLocation {
     }
 
     /**
-     * Returns the installed directory, or the data path of the [NatsInstance].
+     * Returns the installed directory.
+     *
+     * @throws IllegalStateException if no directory is installed yet.
      */
-    fun resolve(): Path = installed ?: NatsInstance.get().dataPath
+    fun resolve(): Path {
+        return checkNotNull(installed) {
+            "The NATS configuration directory is not set, call EmbeddedNats.useConfigDirectory first"
+        }
+    }
 }

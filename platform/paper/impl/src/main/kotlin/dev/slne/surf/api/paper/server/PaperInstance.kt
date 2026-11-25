@@ -1,15 +1,12 @@
 package dev.slne.surf.api.paper.server
 
 import dev.slne.surf.api.core.server.CoreInstance
-import dev.slne.surf.api.paper.SurfApiPaper
-import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.common.NmsProvider
-import dev.slne.surf.api.paper.server.impl.SurfApiPaperImpl
 import dev.slne.surf.api.paper.server.listener.ListenerManager
 import dev.slne.surf.api.paper.server.packet.PacketApiLoader
+import dev.slne.surf.api.shared.internal.nms.NmsVersion
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.Bukkit
 
-@OptIn(NmsUseWithCaution::class)
 object PaperInstance : CoreInstance() {
 
     override suspend fun onLoad() {
@@ -23,13 +20,14 @@ object PaperInstance : CoreInstance() {
 
         val pluginVersion = plugin.pluginMeta.version
         val mcVersion = Bukkit.getMinecraftVersion()
-        val nmsVersion = NmsProvider.current.version
+        val nmsVersion: NmsVersion by surfBean()
 
-        plugin.logger.info("\u001B[36m\u001B[1mLoading surf-api v$pluginVersion for minecraft $mcVersion with nms $nmsVersion")
+        plugin.logger.info(
+            "\u001B[36m\u001B[1mLoading surf-api v$pluginVersion for minecraft $mcVersion with nms $nmsVersion",
+        )
 
         PacketApiLoader.onEnable()
         ListenerManager.registerListeners()
-        (SurfApiPaper.INSTANCE as SurfApiPaperImpl).onEnable()
     }
 
     override suspend fun onDisable() {

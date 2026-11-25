@@ -21,7 +21,7 @@ object ListenerManager {
 
         BlockDataListener.register()
 
-        SuspendRequirementServiceImpl.get().getEventListener().register()
+        SuspendRequirementServiceImpl.instance.getEventListener().register()
     }
 
     /**

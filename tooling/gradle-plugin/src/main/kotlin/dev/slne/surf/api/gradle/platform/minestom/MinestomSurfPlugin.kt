@@ -1,24 +1,21 @@
 package dev.slne.surf.api.gradle.platform.minestom
 
+import dev.slne.surf.api.gradle.generated.Constants
 import dev.slne.surf.api.gradle.generators.GeneratePluginFile
 import dev.slne.surf.api.gradle.generators.pluginfiles.MinestomPluginFile
 import dev.slne.surf.api.gradle.generators.pluginfiles.dto.MinestomPluginFileDto
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
+import dev.slne.surf.api.gradle.platform.common.CommonSurfPlugin
 import dev.slne.surf.api.gradle.platform.common.CommonSurfPluginWithPluginFile
-import dev.slne.surf.api.gradle.pluginclass.GeneratedPluginClass
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
+import dev.slne.surf.api.gradle.pluginclass.GeneratedPluginClass
 import dev.slne.surf.api.gradle.util.minestomSnapshots
+import dev.slne.surf.api.gradle.util.pluginUrl
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.kotlin.dsl.create
-import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.getByType
-import org.gradle.kotlin.dsl.invoke
-import org.gradle.kotlin.dsl.register
-import org.gradle.kotlin.dsl.repositories
-import org.gradle.kotlin.dsl.withType
+import org.gradle.kotlin.dsl.*
 
 /**
  * A plugin for a surf Minestom server, loaded from its `plugins` directory or shaded into it.
@@ -27,7 +24,11 @@ import org.gradle.kotlin.dsl.withType
  * class path index the server finds shaded plugins through.
  */
 internal class MinestomSurfPlugin :
-    CommonSurfPluginWithPluginFile<MinestomSurfExtension, MinestomPluginFile, MinestomPluginFileDto>(
+    CommonSurfPluginWithPluginFile<
+        MinestomSurfExtension,
+        MinestomPluginFile,
+        MinestomPluginFileDto,
+    >(
         "minestom",
         SurfApiPlatform.MINESTOM,
         PLUGIN_FILE_NAME,
@@ -51,13 +52,13 @@ internal class MinestomSurfPlugin :
         target.registerClassPathIndex()
     }
 
-    override fun createPluginFile(project: Project) =
-        project.extensions.create<MinestomPluginFile>("minestomPluginFile").apply {
+    override fun createPluginFile(project: Project): MinestomPluginFile {
+        return project.extensions.create<MinestomPluginFile>("minestomPluginFile").apply {
             id.convention(project.name.lowercase())
             name.convention(project.provider { project.name })
             version.convention(project.provider { project.version.toString() })
             description.convention(project.provider { project.description ?: "" })
-            url.convention(project.providers.gradleProperty("url"))
+            url.convention(project.pluginUrl())
 
             val ext = project.extensions.getByType(MinestomSurfExtension::class.java)
             authors.convention(ext.authors)
@@ -71,9 +72,11 @@ internal class MinestomSurfPlugin :
                 }
             }
         }
+    }
 
-    override fun createPluginFileDto(pluginFile: MinestomPluginFile) =
-        MinestomPluginFileDto.fromFile(pluginFile)
+    override fun createPluginFileDto(pluginFile: MinestomPluginFile): MinestomPluginFileDto {
+        return MinestomPluginFileDto.fromFile(pluginFile)
+    }
 
     /**
      * Writes the files a server reads plugins on its own class path from: a service entry with
@@ -95,17 +98,21 @@ internal class MinestomSurfPlugin :
             pluginFileJson.set(mainClass)
         }
 
-        val generateCopy = tasks.register<GeneratePluginFile>("generateMinestomPluginClassPathFile") {
+        val generateCopy = tasks.register<GeneratePluginFile>(
+            "generateMinestomPluginClassPathFile",
+        ) {
             group = "surf-api"
             fileName.set(mainClass.map { main -> "$CLASSPATH_DIRECTORY$main.json" })
             outputDir.set(outputDirectory.map { it.dir("descriptor") })
-            pluginFileJson.set(mainClass.map {
-                pluginFile.validate()
-                GeneratePluginFile.json.encodeToString(
-                    MinestomPluginFileDto.serializer(),
-                    MinestomPluginFileDto.fromFile(pluginFile),
-                )
-            })
+            pluginFileJson.set(
+                mainClass.map {
+                    pluginFile.validate()
+                    GeneratePluginFile.json.encodeToString(
+                        MinestomPluginFileDto.serializer(),
+                        MinestomPluginFileDto.fromFile(pluginFile),
+                    )
+                },
+            )
         }
 
         plugins.withType<JavaPlugin> {
@@ -117,19 +124,26 @@ internal class MinestomSurfPlugin :
     }
 
     override fun Project.platformTestDependencies(extension: MinestomSurfExtension) {
+        SurfTestingConfigurer.addSurfRuntimeLibraries(
+            this,
+            Constants.MINESTOM_RUNTIME_TEST_LIBRARIES,
+        )
+
         val testing = extension.testing
         if (!testing.minestomTesting.get()) return
+
         dependencies {
             add(
                 SurfTestingConfigurer.TEST_IMPLEMENTATION,
-                "net.minestom:testing:${testing.minestomTestingVersion.get()}"
+                "net.minestom:testing:${testing.minestomTestingVersion.get()}",
             )
         }
     }
 
     internal companion object {
         const val PLUGIN_FILE_NAME = "minestom-plugin.json"
-        const val CLASSPATH_INDEX = "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin"
+        const val CLASSPATH_INDEX =
+            "META-INF/services/dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin"
         const val CLASSPATH_DIRECTORY = "META-INF/surf-minestom-plugins/"
     }
 }
@@ -138,7 +152,11 @@ internal class MinestomSurfPlugin :
  * The relocations every surf Minestom jar applies, plugins and servers alike, so that a plugin's
  * bytecode refers to the same packages as the server it runs in.
  */
-internal fun dev.slne.surf.api.gradle.platform.common.CommonSurfPlugin<*>.applyMinestomRelocations() {
-    applyRelocation("net.kyori.adventure.nbt", "kyori.nbt", listOf("net.kyori.adventure.nbt.api.**"))
+internal fun CommonSurfPlugin<*>.applyMinestomRelocations() {
+    applyRelocation(
+        "net.kyori.adventure.nbt",
+        "kyori.nbt",
+        listOf("net.kyori.adventure.nbt.api.**"),
+    )
     applyRelocation("me.devnatan.inventoryframework", "devnatan.inventoryframework")
 }

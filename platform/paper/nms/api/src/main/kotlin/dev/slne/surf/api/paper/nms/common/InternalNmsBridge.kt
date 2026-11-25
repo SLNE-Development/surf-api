@@ -17,9 +17,5 @@ interface InternalNmsBridge : SurfPaperNmsBridge {
         packet: Packet,
         player: Player?,
     ): Packet?
-
-    companion object {
-        fun get() = SurfPaperNmsBridge.INSTANCE as InternalNmsBridge
-    }
 }
 

@@ -11,7 +11,7 @@ import java.util.*
  * Entity selector produced by [EntitySelectorParser].
  *
  * [find] resolves a selector given as a bare [playerName] or [uuid] directly; [predicates] do not
- * apply to those forms. Any other selector takes its candidates from the sender for [self], from
+ * apply to those forms. Any other selector takes its candidates from the sender for [isSelf], from
  * the online players, or, when [includesEntities] is set, from the entities of the searched
  * instances. Candidates are filtered by [predicates], ordered by [sorter] and truncated to the
  * smaller of [limit] and [maxResults].
@@ -30,31 +30,42 @@ internal class EntitySelector(
     val sorter: ((Pos) -> Comparator<Entity>)?,
     val limit: Int,
     val position: (Pos) -> Pos,
-    val self: Boolean,
+    val isSelf: Boolean,
     val playerName: String?,
     val uuid: UUID?,
     private val worldLimited: Boolean = false,
 ) {
     fun find(sender: CommandSender): List<Entity> {
-        playerName?.let { name ->
-            return listOfNotNull(MinecraftServer.getConnectionManager().getOnlinePlayerByUsername(name))
+        if (playerName != null) {
+            return listOfNotNull(
+                MinecraftServer.getConnectionManager().getOnlinePlayerByUsername(
+                    playerName,
+                ),
+            )
         }
-        uuid?.let { id ->
-            return listOfNotNull(findByUuid(id))
+
+        if (uuid != null) {
+            return listOfNotNull(findByUuid(uuid))
         }
 
         val origin = position((sender as? Entity)?.position ?: Pos.ZERO)
-        if (self) {
+
+        if (isSelf) {
             val entity = sender as? Entity ?: return emptyList()
+
             return if (matches(origin, entity)) listOf(entity) else emptyList()
         }
 
         val senderInstance = (sender as? Entity)?.instance
         val candidates = if (includesEntities) {
-            instancesToSearch(senderInstance).asSequence().flatMap { it.entities.asSequence() }
+            instancesToSearch(senderInstance)
+                .asSequence()
+                .flatMap { it.entities.asSequence() }
         } else {
             MinecraftServer.getConnectionManager().onlinePlayers.asSequence()
-                .filter { player -> !worldLimited || senderInstance == null || player.instance === senderInstance }
+                .filter { player ->
+                    !worldLimited || senderInstance == null || player.instance === senderInstance
+                }
         }
 
         val filtered = candidates
@@ -64,10 +75,16 @@ internal class EntitySelector(
         val comparator = sorter?.invoke(origin) ?: return filtered.take(resultLimit).toList()
 
         if (resultLimit == 1) return listOfNotNull(filtered.minWithOrNull(comparator))
-        return filtered.toList().sortedWith(comparator).take(resultLimit)
+
+        return filtered
+            .toList()
+            .sortedWith(comparator)
+            .take(resultLimit)
     }
 
-    private fun matches(origin: Pos, entity: Entity): Boolean = predicates.all { predicate -> predicate(origin, entity) }
+    private fun matches(origin: Pos, entity: Entity): Boolean {
+        return predicates.all { predicate -> predicate(origin, entity) }
+    }
 
     private fun findByUuid(id: UUID): Entity? {
         MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(id)?.let { return it }
@@ -76,10 +93,11 @@ internal class EntitySelector(
             .find { entity -> entity.uuid == id }
     }
 
-    private fun instancesToSearch(senderInstance: Instance?): Collection<Instance> =
-        if (worldLimited && senderInstance != null) {
+    private fun instancesToSearch(senderInstance: Instance?): Collection<Instance> {
+        return if (worldLimited && senderInstance != null) {
             listOf(senderInstance)
         } else {
             MinecraftServer.getInstanceManager().instances
         }
+    }
 }

@@ -2,10 +2,11 @@ package dev.slne.surf.api.minestom.server.chat.impl.signature
 
 import net.minestom.server.crypto.MessageSignature
 
-
 internal data class LastSeenTrackedEntry(
     val signature: MessageSignature,
-    val pending: Boolean
+    val isPending: Boolean,
 ) {
-    fun acknowledge(): LastSeenTrackedEntry = if (!pending) this else copy(pending = false)
+    fun acknowledge(): LastSeenTrackedEntry {
+        return if (isPending) copy(isPending = false) else this
+    }
 }

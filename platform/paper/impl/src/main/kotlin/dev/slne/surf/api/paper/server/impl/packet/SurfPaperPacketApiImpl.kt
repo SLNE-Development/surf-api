@@ -1,7 +1,6 @@
 package dev.slne.surf.api.paper.server.impl.packet
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.PacketLoreRegistry
 import dev.slne.surf.api.paper.packet.SurfPaperPacketApi
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandler
@@ -11,14 +10,15 @@ import org.springframework.stereotype.Service
 
 @NmsUseWithCaution
 @Service
-class SurfPaperPacketApiImpl : SurfPaperPacketApi {
-    private val packetLoreRegistry: PacketLoreRegistry = NmsProvider.current.createPacketLoreRegistry()
+class SurfPaperPacketApiImpl(
+    private val packetLoreRegistry: PacketLoreRegistry,
+) : SurfPaperPacketApi {
 
     override fun registerPacketLoreListener(
         plugin: Plugin,
         identifier: NamespacedKey,
         listener: SurfPaperPacketLoreHandler,
-        priority: Short
+        priority: Short,
     ) {
         packetLoreRegistry.register(plugin, identifier, listener, priority)
     }
@@ -26,7 +26,7 @@ class SurfPaperPacketApiImpl : SurfPaperPacketApi {
     override fun registerPacketLoreListenerGlobal(
         plugin: Plugin,
         listener: SurfPaperPacketLoreHandler,
-        priority: Short
+        priority: Short,
     ) {
         packetLoreRegistry.register(plugin, listener, priority)
     }

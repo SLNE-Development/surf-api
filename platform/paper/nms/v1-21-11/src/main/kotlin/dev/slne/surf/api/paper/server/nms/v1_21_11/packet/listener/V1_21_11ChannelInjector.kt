@@ -1,12 +1,12 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.packet.listener
 
-import dev.slne.surf.api.reflection.Field
-import dev.slne.surf.api.reflection.SurfProxy
-import dev.slne.surf.api.reflection.SurfReflection
-import dev.slne.surf.api.reflection.createProxy
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
+import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.common.*
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
+import dev.slne.surf.api.reflection.ReflectedField
+import dev.slne.surf.api.reflection.ReflectionProxy
+import dev.slne.surf.api.reflection.reflectionProxy
 import io.netty.channel.Channel
 import io.papermc.paper.connection.PaperPlayerLoginConnection
 import io.papermc.paper.connection.ReadablePlayerCookieConnectionImpl
@@ -22,13 +22,18 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.player.PlayerJoinEvent
 
-@Suppress("ClassName", "UnstableApiUsage")
-object V1_21_11ChannelInjector : AbstractChannelInjector<V1_21_11ChannelInjector.PacketHandler>() {
-    private val log = logger()
+@Suppress("UnstableApiUsage")
+@OptIn(NmsUseWithCaution::class)
+@NmsComponent
+class V1_21_11ChannelInjector(
+    private val packetBridgeHandler: NmsPacketBridgeHandler,
+    private val nmsBridge: InternalNmsBridge,
+    private val packetListenerApi: InternalPacketListenerApiBridge,
+) : AbstractChannelInjector<V1_21_11ChannelInjector.PacketHandler>() {
 
     override fun registerChannelInitializeListener(
         key: Key,
-        listener: (Channel) -> Unit
+        listener: (Channel) -> Unit,
     ) {
         ChannelInitializeListenerHolder.addListener(key, listener)
     }
@@ -37,12 +42,16 @@ object V1_21_11ChannelInjector : AbstractChannelInjector<V1_21_11ChannelInjector
         ChannelInitializeListenerHolder.removeListener(key)
     }
 
-    override fun createPacketHandler() = PacketHandler()
+    override fun createPacketHandler(): PacketHandler {
+        return PacketHandler(packetBridgeHandler, nmsBridge, packetListenerApi)
+    }
+
     override fun getNmsChannelHandlerName(): String = HandlerNames.PACKET_HANDLER
 
     @EventHandler
     fun onPlayerLogin(event: PlayerConnectionValidateLoginEvent) {
         val paperConnection = event.connection
+
         if (paperConnection is PaperPlayerLoginConnection) {
             val profile = paperConnection.authenticatedProfile
 
@@ -50,12 +59,19 @@ object V1_21_11ChannelInjector : AbstractChannelInjector<V1_21_11ChannelInjector
                 event.kickMessage(createFailedToInjectPacketListenerDisconnectReason())
 
                 log.atWarning()
-                    .log("Failed to inject packet listener for player (${paperConnection.unsafeProfile}) with unauthenticated profile: ${paperConnection.address} - ${paperConnection.clientAddress}")
+                    .log(
+                        "Failed to inject packet listener for player (%s) with unauthenticated " +
+                            "profile: %s - %s",
+                        paperConnection.unsafeProfile,
+                        paperConnection.address,
+                        paperConnection.clientAddress,
+                    )
+
                 return
             }
 
-            val connection =
-                ReadablePlayerCookieConnectionImplProxy.instance.getConnection(paperConnection)
+            val cookieConnections = ReadablePlayerCookieConnectionImplProxy.instance
+            val connection = cookieConnections.getConnection(paperConnection)
             val channel = connection.channel
             getOrInjectPacketHandler(channel).connection = connection
         }
@@ -70,13 +86,18 @@ object V1_21_11ChannelInjector : AbstractChannelInjector<V1_21_11ChannelInjector
         getOrInjectPacketHandler(channel).connection = connection
     }
 
-    class PacketHandler : AbstractPacketHandler() {
+    class PacketHandler(
+        packetBridgeHandler: NmsPacketBridgeHandler,
+        nmsBridge: InternalNmsBridge,
+        packetListenerApi: InternalPacketListenerApiBridge,
+    ) : AbstractPacketHandler(packetBridgeHandler, nmsBridge, packetListenerApi) {
         @Volatile
         var connection: Connection? = null
 
         override fun isPacket(msg: Any): Boolean = msg is Packet<*>
         override fun getPlayerFromConnection(): Any? {
             val connection = this.connection ?: return NO_CONNECTION_SENTINEL
+
             return connection.player as ServerPlayer?
         }
 
@@ -85,14 +106,18 @@ object V1_21_11ChannelInjector : AbstractChannelInjector<V1_21_11ChannelInjector
         }
     }
 
-    @SurfProxy(ReadablePlayerCookieConnectionImpl::class)
+    private companion object {
+        private val log = logger()
+    }
+
+    @ReflectionProxy(ReadablePlayerCookieConnectionImpl::class)
     interface ReadablePlayerCookieConnectionImplProxy {
 
-        @Field("connection", Field.Type.GETTER)
+        @ReflectedField("connection")
         fun getConnection(instance: ReadablePlayerCookieConnectionImpl): Connection
 
         companion object {
-            val instance = SurfReflection.instance.createProxy<ReadablePlayerCookieConnectionImplProxy>()
+            val instance = reflectionProxy<ReadablePlayerCookieConnectionImplProxy>()
         }
     }
 }

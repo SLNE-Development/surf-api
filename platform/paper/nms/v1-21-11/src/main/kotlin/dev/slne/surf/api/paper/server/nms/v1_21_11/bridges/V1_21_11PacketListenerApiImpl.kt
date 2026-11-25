@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.InternalPacketListenerApiBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListenerResult
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
@@ -20,8 +21,10 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
-    private typealias ListenerMethodsMap = ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>
+    private typealias ListenerMethodsMap =
+        ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>
 
     private val log = logger()
 
@@ -32,13 +35,13 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
     private val normalizedListenerType = MethodType.methodType(
         Any::class.java,
         Packet::class.java,
-        ServerPlayer::class.java
+        ServerPlayer::class.java,
     )
 
     private val toBukkitPlayerHandle: MethodHandle = lookup.findStatic(
         V1_21_11PacketListenerApiImpl::class.java,
         "toBukkitPlayer",
-        MethodType.methodType(Player::class.java, ServerPlayer::class.java)
+        MethodType.methodType(Player::class.java, ServerPlayer::class.java),
     )
 
     companion object {
@@ -58,7 +61,9 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
             } catch (e: IllegalAccessException) {
                 log.atSevere()
                     .withCause(e)
-                    .log("Failed to register listener method '${method.declaringClass.name}#${method.name}' due to illegal access")
+                    .log(
+                        "Failed to register listener method '${method.declaringClass.name}#${method.name}' due to illegal access",
+                    )
             }
         }
     }
@@ -66,23 +71,31 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
     private fun registerListenerMethod(
         listener: PacketListener,
         method: Method,
-        listenerMethods: ConcurrentMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>
+        listenerMethods: ConcurrentMap<Class<*>, CopyOnWriteArraySet<ListenerMethod>>,
     ) {
-        require(!Modifier.isStatic(method.modifiers)) { "Listener method must not be static: ${method.declaringClass.name}#${method.name}" }
-        require(method.parameterCount in 1..2) { "Listener method must have 1 or 2 parameters (Packet and optional ServerPlayer/Player): ${method.declaringClass.name}#${method.name}" }
+        require(!Modifier.isStatic(method.modifiers)) {
+            "Listener method must not be static: ${method.declaringClass.name}#${method.name}"
+        }
+        require(method.parameterCount in 1..2) {
+            "Listener method must have 1 or 2 parameters (Packet and optional ServerPlayer/Player): ${method.declaringClass.name}#${method.name}"
+        }
 
         val packetParameterType = method.parameterTypes[0]
-        require(Packet::class.java.isAssignableFrom(packetParameterType)) { "Packet parameter must be a subclass of Packet: ${method.declaringClass.name}#${method.name}" }
+        require(Packet::class.java.isAssignableFrom(packetParameterType)) {
+            "Packet parameter must be a subclass of Packet: ${method.declaringClass.name}#${method.name}"
+        }
 
         val playerParameterType = method.parameterTypes.getOrNull(1)
-        val hasServerPlayerParameter =
-            playerParameterType != null && ServerPlayer::class.java.isAssignableFrom(
-                playerParameterType
+        val hasServerPlayerParameter = playerParameterType != null &&
+            ServerPlayer::class.java.isAssignableFrom(
+                playerParameterType,
             )
 
         if (playerParameterType != null) {
             val isBukkitPlayer = Player::class.java.isAssignableFrom(playerParameterType)
-            require(isBukkitPlayer || hasServerPlayerParameter) { "Second parameter must be either ServerPlayer or a Bukkit Player: ${method.declaringClass.name}#${method.name}" }
+            require(isBukkitPlayer || hasServerPlayerParameter) {
+                "Second parameter must be either ServerPlayer or a Bukkit Player: ${method.declaringClass.name}#${method.name}"
+            }
         }
 
         val privateLookupIn = try {
@@ -93,8 +106,9 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
         }
 
         val methodHandle = createNormalizedInvokerHandle(listener, method, privateLookupIn)
-        val listeners =
-            listenerMethods.computeIfAbsent(packetParameterType) { CopyOnWriteArraySet() }
+        val listeners = listenerMethods.computeIfAbsent(packetParameterType) {
+            CopyOnWriteArraySet()
+        }
         val invoker = createInvoker(methodHandle, method.returnType)
 
         listeners.add(ListenerMethod(listener, invoker))
@@ -103,7 +117,7 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
     private fun createNormalizedInvokerHandle(
         listener: PacketListener,
         method: Method,
-        lookup: MethodHandles.Lookup
+        lookup: MethodHandles.Lookup,
     ): MethodHandle {
         val bound = lookup.unreflect(method).bindTo(listener)
         val parameterTypes = method.parameterTypes
@@ -134,9 +148,10 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
     @Suppress("UNCHECKED_CAST")
     private fun createInvoker(
         mh: MethodHandle,
-        returnType: Class<*>
+        returnType: Class<*>,
     ): ListenerInvoker {
         val resultConverter = createResultConverter(returnType) as ListenerResultConverter<Any?>
+
         return { packet, player ->
             @Suppress("USELESS_CAST")
             val result: Any? = mh.invokeExact(packet as Packet<*>, player as ServerPlayer?)
@@ -144,24 +159,32 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
         }
     }
 
-    private fun createResultConverter(returnType: Class<*>): ListenerResultConverter<*> = when {
-        returnType == Void.TYPE -> ListenerResultConverter<Unit> { _, p -> p }
-        returnType == PacketListenerResult::class.java -> ListenerResultConverter<PacketListenerResult> { result, packet ->
-            if (result == PacketListenerResult.CANCEL) null else packet
-        }
+    private fun createResultConverter(returnType: Class<*>): ListenerResultConverter<*> {
+        return when {
+            returnType == Void.TYPE -> ListenerResultConverter<Unit> { _, p -> p }
+            returnType == PacketListenerResult::class.java -> {
+                ListenerResultConverter<PacketListenerResult> { result, packet ->
+                    if (result == PacketListenerResult.CANCEL) null else packet
+                }
+            }
 
-        Packet::class.java.isAssignableFrom(returnType) -> ListenerResultConverter<Packet<*>?> { result, original ->
-            result
-        }
+            Packet::class.java.isAssignableFrom(
+                returnType,
+            ) -> ListenerResultConverter<Packet<*>?> { result, original ->
+                result
+            }
 
-        else -> error("Unsupported return type for packet listener method: $returnType! Only void, PacketListenerResult, or a subclass of Packet is supported.")
+            else -> error(
+                "Unsupported return type for packet listener method: $returnType! Only void, PacketListenerResult, or a subclass of Packet is supported.",
+            )
+        }
     }
-
 
     override fun unregisterListeners(listener: PacketListener) {
         for (methods in clientboundListenerMethods.values) {
             methods.removeIf { it.listener == listener }
         }
+
         for (methods in serverboundListenerMethods.values) {
             methods.removeIf { it.listener == listener }
         }
@@ -172,6 +195,7 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
         serverPlayer as ServerPlayer?
 
         val methods = clientboundListenerMethods[packet.javaClass] ?: return packet
+
         var result: Packet<*>? = packet
 
         try {
@@ -193,6 +217,7 @@ class V1_21_11PacketListenerApiImpl : InternalPacketListenerApiBridge {
         serverPlayer as ServerPlayer?
 
         val methods = serverboundListenerMethods[packet.javaClass] ?: return packet
+
         var result: Packet<*>? = packet
 
         try {

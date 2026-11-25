@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 import ca.spottedleaf.moonrise.common.util.TickThread
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPortalBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -12,6 +13,7 @@ import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
 @Suppress("ClassName")
+@NmsComponent
 class V1_21_11SurfPaperNmsPortalBridgeImpl : SurfPaperNmsPortalBridge {
 
     override fun findNearestNetherPortal(
@@ -26,7 +28,12 @@ class V1_21_11SurfPaperNmsPortalBridgeImpl : SurfPaperNmsPortalBridge {
         maxZExclusive: Int,
     ): Location? {
         val level = world.toNms()
-        TickThread.ensureTickThread(level, x shr 4, z shr 4, "Cannot search for portals asynchronously")
+        TickThread.ensureTickThread(
+            level,
+            x shr 4,
+            z shr 4,
+            "Cannot search for portals asynchronously",
+        )
 
         val found = level.portalForcer
             .findClosestPortalPosition(BlockPos(x, y, z), level.worldBorder, searchRadius)

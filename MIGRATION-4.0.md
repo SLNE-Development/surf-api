@@ -60,11 +60,11 @@ If you depended on any of these directly, you were depending on an implementatio
 the matching aggregate from section 2, and use an `-impl` coordinate only where you need the
 implementation itself.
 
-## 4. The Minestom feature artifacts were renamed, with aliases
+## 4. The Minestom feature artifacts were renamed, without aliases
 
 The eight Minestom server features moved from `surf-api-minestom-server-<feature>` to
-`surf-api-minestom-<feature>-impl`, and each publishes a relocation POM, so an old coordinate
-still resolves and Gradle tells you the new name:
+`surf-api-minestom-<feature>-impl`. 4.0 publishes no relocation POM for the old names, so a build
+file that names one fails to resolve it:
 
 `bootstrap`, `console`, `luckperms`, `npc`, `player-visibility`, `plugins`, `signed-chat`,
 `spark`.
@@ -76,7 +76,7 @@ You do not normally name these at all: the `withXxx()` calls in the Gradle block
 
 | Artifact | What it is |
 |---|---|
-| `surf-api-registry-keys` | The four generated key classes (block types, item types, sounds, advancements), 40 848 lines that used to sit inside `surf-api-core` and only change with the Minecraft version. A separate module, so a core change does not recompile them. |
+| `surf-api-registry-keys` | The four generated key holders (`BlockTypeKeys`, `ItemTypeKeys`, `SoundKeys`, `VanillaAdvancementKeys`) that used to sit inside `surf-api-core` and only change with the Minecraft version. A separate module, so a core change does not recompile them. All four are Kotlin `object`s with `@JvmField` keys now: `BlockTypeKeys.STONE` reads as before, and the fields keep their `public static final Key` descriptors. |
 | `surf-api-spring-api` | The contracts a plugin writes its beans against: `SurfLifecycle`, `SurfBootstrapLifecycle`, `@PluginApi`, `@BootstrapComponent` and `@ConditionalOnPlugin`. Exports `spring-context`. |
 | `surf-api-spring-impl` | The context manager behind the root, import and plugin contexts. |
 | `surf-api-standalone-testing` | Starts surf-api's standalone runtime once per test JVM; see section 13. |
@@ -84,14 +84,14 @@ You do not normally name these at all: the `withXxx()` calls in the Gradle block
 | `surf-api-inventory-api` | The platform-neutral half of the inventory framework: view settings, header geometry, text alignment, the container component base and the DSL markers. Paper and Minestom each carried their own copy; see section 12. |
 | `surf-api-common-api` | The shared base `surf-api-core` grew around: `util` (including `logger`), `collection`, `math`, `random`, `font`. Nothing in it names anything else of surf-api's, so every other domain can depend on it. |
 | `surf-api-serialization-api` | The kotlinx-serialization serializers: `SurfSerializerModule`, the Adventure serializers, the JDK ones (UUID, dates, IP, numbers) and the SpongePowered math ones. |
-| `surf-api-config-api` | The configuration surface: `SurfConfigApi`, `@SurfConfig` and `ConfigHandle`, the `SpongeYmlConfigClass` / `SpongeJsonConfigClass` companions, the 23 constraint annotations, the helper types, the managers and the migrations. |
-| `surf-api-config-impl` | The config service and the `ConfigHandle` registration for plugin contexts. |
+| `surf-api-config-api` | The configuration surface: `@SurfConfig`, `ConfigHandle`, `ConfigHandles`, `configHandle` / `surfConfig`, the 23 constraint annotations, the helper types and the migrations. |
+| `surf-api-config-impl` | The `ConfigHandle` registration for plugin contexts. |
 | `surf-api-messages-api` | The text surface: `Colors`, `CommonComponents`, `ComponentMessage`, the `buildText` / `sendText` builders, the colour palettes, the message bundles, pagination, the configured MiniMessage instance, the action bar and `Rarity`. |
 | `surf-api-event-api` | `SurfEventBus` and the event contracts: `SurfEvent`, `SurfSyncEvent`, `SurfAsyncEvent`, `SurfCancellableEvent`, `@SurfEventHandler`, `SurfEventPriority`. |
-| `surf-api-nbt-api` | The Adventure binary-tag surface: `CollectionBinaryTag`, `FastCompoundBinaryTag` and `InternalNbtBridge`. |
-| `surf-api-reflection-api` | `SurfReflection` and the `@SurfProxy` annotations. Separate from nbt: they share no import, and a consumer of the NMS layer should not need a tag module to get a dynamic proxy. |
+| `surf-api-nbt-api` | The Adventure binary-tag surface: `CollectionBinaryTag` and `FastCompoundBinaryTag`. |
+| `surf-api-reflection-api` | `@ReflectionProxy` interfaces and `reflectionProxy<T>()` (section 20). Separate from nbt: they share no import, and a consumer of the NMS layer should not need a tag module to get a reflection proxy. |
 | `surf-api-command-api` | What all three platforms' command layers share: `SurfCommandUtil`, `CommandExceptionBuilder`, `WrapperCommandExceptionComponent`, `SuspendArgumentHelper` and `CommandRegistrar`. A module of its own, so that a plugin pulling in the colour palette does not also get CommandAPI on its compile classpath. |
-| `surf-api-luckperms-api` | The LuckPerms lookup helpers. A module of its own for the same reason. |
+| `surf-api-luckperms-api` | `SurfLuckPerms` and the LuckPerms extensions. A module of its own for the same reason. |
 
 **You do not name these in a build file, except `surf-api-standalone-testing`.** Every coordinate
 that carried these types before re-exports them, so `surf-api-core`, `surf-api-paper`,
@@ -154,7 +154,7 @@ references", and it touches only `import` lines, never a build file.
 
 **This is the change most likely to touch your code.**
 
-surf-api no longer uses, exposes or exports [fastutil]. Its public signatures use the JDK
+surf-api no longer exposes or exports [fastutil]. Its public signatures use the JDK
 collection types, and the helper bridge `fast-util-util.kt`, with 1 096 functions such as
 `toObjectList` and `toInt2ObjectMap`, was deleted.
 
@@ -184,7 +184,7 @@ Configurate handles.
 
 ### Where fastutil stays
 
-Five modules keep it on the **compile** classpath only, and it reaches no published artifact:
+These modules keep it on the **compile** classpath only, so it never reaches yours:
 
 - the four `surf-api-paper-nms-v*` modules, for `CreativeOrderComparator`: one map is keyed
   through Paper's own `ItemStackLinkedSet.TYPE_AND_TAG` hash strategy and one through reference
@@ -211,7 +211,7 @@ the IDE knows it as a bean and suggests it as a constructor parameter.
 
 In 3.x, many api interfaces declared `companion object : Foo by service`, so `Foo.doThing()` and
 `Foo.INSTANCE` reached the service from anywhere. In 4.0 these companions either no longer exist
-or carry an `INSTANCE` or `instance` property annotated `@InternalSurfApi`. That annotation is an
+or carry an `instance` property annotated `@InternalSurfApi`. That annotation is an
 opt-in at error level: plugin code that reads the property does not compile. `@InternalSurfApi`
 declarations may change in any release. `@PublishedSurfApi` marks the few internal declarations
 that surf-api's public `inline` functions call; plugins must not call them either, but they stay
@@ -236,12 +236,13 @@ exception: it sees only surf-api's bootstrap components (section 15).
 |---|---|
 | `SurfApiCore.instance`, `SurfApiCore.getPlayer(…)` and the other delegated calls | Inject `SurfApiCore`, or the platform type `SurfApiPaper` or `SurfApiVelocity`. |
 | `SurfApiPaper.INSTANCE`, `SurfApiVelocity.INSTANCE` | Inject `SurfApiPaper` or `SurfApiVelocity`. |
-| `SurfConfigApi.instance`, `surfConfigApi` | Inject `SurfConfigApi`, or declare the file with `@SurfConfig` (section 17). `SpongeYmlConfigClass` and `SpongeJsonConfigClass` companions keep working. |
+| `SurfConfigApi.instance`, `surfConfigApi` | Removed with `SurfConfigApi`. Declare the file with `@SurfConfig` or open it with `ConfigHandles.open` (section 17). |
 | `surfSpongeConfigSerializers` | Removed. Register serializers from a `ConfigSerializerRegistrar` bean (section 17). |
 | `SurfEventBus.INSTANCE`, `SurfEventBus.registerListeners(…)` and the other delegated calls | Inject `SurfEventBus`, or annotate methods of a bean with `@SurfEventHandler` (section 17). `call()` on an event is unchanged. |
-| `SurfReflection.INSTANCE`, `surfReflection` | Inject `SurfReflection`; `createProxy<T>()` is an extension on it. |
+| `SurfReflection.INSTANCE`, `surfReflection` | Removed with `SurfReflection`. Inject the `@ReflectionProxy` interface or call `reflectionProxy<T>()` (section 20). |
 | `ActionBarService.instance` | Removed. Call the `Audience.sendActionBar(…)` extension, or inject `ActionBarService`. |
-| `InternalPaginationBridge.INSTANCE`, `InternalNbtBridge.INSTANCE` | Internal to surf-api; no replacement. |
+| `InternalPaginationBridge.INSTANCE` | Internal to surf-api; no replacement. |
+| `InternalNbtBridge.INSTANCE` | Removed. `CompoundBinaryTag.fast()` no longer needs a bean. |
 | Paper: `SurfGlowingApi`, `SurfPaperPacketApi`, `SurfPaperPacketListenerApi`, `SurfPaperVisualizerApi`, `TickThreadGuard`, `SurfPaperPAPIHook`, `SuspendRequirementService` | Inject the interface. |
 | Paper: `BlockPdcProvider.INSTANCE` | Call the `Block.pdc()` extension, or inject `BlockPdcProvider`. |
 | Paper NMS: `SurfPaperNmsBridge`, `SurfPaperNmsCommonBridge`, `SurfPaperNmsCommandArgumentTypesBridge`, `SurfPaperNmsEntityBridge`, `SurfPaperNmsGlowingBridge`, `SurfPaperNmsItemBridge`, `SurfPaperNmsLootTableBridge`, `SurfPaperNmsNbtBridge`, `SurfPaperNmsPlayerBridge`, `SurfPaperNmsPortalBridge`, `SurfPaperNmsStatsBridge`, `SurfPaperNmsPacketBridges`, `SurfPaperNmsBlockPackets`, `SurfPaperNmsSpawnPackets`, `SurfPaperNmsPlayerChatPackets`, `SurfPaperNmsPlayerPackets`, `SurfPaperNmsPlayerToastPackets` | Inject the interface. |
@@ -249,6 +250,7 @@ exception: it sees only surf-api's bootstrap components (section 15).
 | Paper: `SurfScoreboardApi.INSTANCE` | Removed with the scoreboard API; see section 18. |
 | Paper and Minestom: `ViewFrameAccessor.INSTANCE`, the top-level `viewFrame` | Inject `ViewFrame` (`me.devnatan.inventoryframework.ViewFrame`) or `ViewFrameAccessor`. The extension functions of the inventory framework, such as `register()`, keep working. |
 | `SurfComponentApi`, `surfComponentApi` | Removed; see section 9. |
+| `LuckPermsAccess.luckperms`, `getUser`, `loadUser`, `getOrLoadUser` | Inject `SurfLuckPerms` (`luckPerms`, `getUser`, `loadUser`, `getOrLoadUser`, `prefix`, `suffix`, `metaValue`), or inject `LuckPerms` itself as `ObjectProvider<LuckPerms>` or a `@Lazy` parameter: LuckPerms enables after the root context is built. Outside a bean, call `uuid.getLuckPermsUserOrNull()`, `uuid.getLuckPermsUser()` or `uuid.loadLuckPermsUser()`. On Minestom `SurfLuckPerms` is a root bean when the server build includes the LuckPerms feature module (Gradle `withLuckPerms()`), and its members throw until the runtime feature has loaded; the `LuckPerms` bean exists only between feature load and disable. Without the module, inject `ObjectProvider<SurfLuckPerms>`. |
 
 `PluginManager.instance` on Minestom stays public.
 
@@ -261,8 +263,8 @@ exception: it sees only surf-api's bootstrap components (section 15).
   before any plugin loads. Code that runs during surf-api's own class initialisation, before the
   root context exists, gets an `IllegalStateException` saying that surf-api's root context has not
   been started yet.
-- **Bean metadata is not generated at build time.** The KSP processor of the surf Gradle plugins
-  writes no `META-INF/surf-api/beans/` index. Spring finds a plugin's beans by scanning its jar;
+- **Bean metadata is not generated at build time.** No `META-INF/surf-api/beans/` index is
+  written. Spring finds a plugin's beans by scanning its jar;
   see section 15.
 
 ## 9. The component framework was replaced by Spring beans
@@ -334,8 +336,10 @@ Three differences are not renames and need a decision:
   beans finished initialising, which puts a bean's dependencies first. `onDisable` runs in reverse.
   Move work that relied on the chaining into the phase it belongs to.
 - **Hooks block the platform thread.** On Paper, `onLoad`, `onEnable` and `onDisable` run on the
-  main thread and block it, so a hook must not wait for work dispatched to the main thread, a
-  region thread or the Bukkit scheduler. Constructors and `@PostConstruct` only wire objects.
+  main thread and block it. A hook may wait for work on the injected `PaperDispatchers.main`,
+  which the blocked phase runs itself; it must not wait for a task handed to the Bukkit scheduler
+  directly, or on Folia for region or entity work. Constructors and `@PostConstruct` only wire
+  objects.
 
 A plugin's beans see surf-api's beans and the beans its direct surf-plugin dependencies export;
 surf-api never sees the plugin's beans. To export a bean to other plugins, implement an interface
@@ -363,16 +367,39 @@ manifest, and a manifest agent only applies when the JVM starts on that jar: lau
 class off a classpath skips the mixin transformer with no error. If you want a task, write one in
 your own build; it has to be an `Exec`, not a `JavaExec`, for the same reason.
 
-## 11. Hidden binary-compatibility declarations were removed
+## 11. Compatibility shims were removed
 
-The inventory framework carried `@Deprecated(level = DeprecationLevel.HIDDEN)` overloads and one
-hidden class (`ViewContainerBackHintComponent`); `PacketOperation.kt` carried a hidden non-inline
-`PacketOperation(block)`, which is why the inline one was named `PacketOperationInline` on the JVM
-and is simply `PacketOperation` in 4.0. They existed only so that plugins compiled against an older
-surf-api still linked. No plugin compiled against 3.x links against 4.0.0, so they are removed.
+3.x kept old signatures, hidden overloads and deprecated declarations so that plugins compiled
+against an earlier release still linked. A plugin compiled against 3.x does not link against 4.0.0
+anyway, so 4.0.0 drops all of them:
 
-If you compile against 4.0.0 you will not notice: a hidden declaration was never visible from
-source.
+- **Hidden declarations.** The inventory framework's `@Deprecated(level = DeprecationLevel.HIDDEN)`
+  overloads and `ViewContainerBackHintComponent`, the hidden `CommonComponents.getEM_DASH()` next to
+  the `EM_DASH` field, and the hidden non-inline `PacketOperation(block)` in `PacketOperation.kt`. The inline one was named `PacketOperationInline` on the JVM and is simply
+  `PacketOperation` now. A hidden declaration was never visible from source, so you will not notice.
+- **`@IntroducedAt` parameters.** Parameters added after 3.0 no longer have a synthetic overload
+  with the old signature. Source that passes or omits them compiles as before; only bytecode
+  compiled against the old overload has to be recompiled. This covers
+  `CoroutineScope.runAtFixedRate` and `runWithFixedDelay` (`catchExceptions`, `taskName`),
+  `miniMessageArgument` and the `MiniMessageArgument` constructor (`greedy`),
+  `SurfApiStandaloneBootstrap.bootstrap` (`application`) and `enable` (`registerShutdownHook`),
+  and the Paper and Minestom `SimpleViewSettings` and `PaginatedViewSettings` constructors and
+  their `copy`.
+- **`@JvmOverloads` and `@JvmStatic`.** No declaration generates Java overloads or static
+  bridges any more; section 20 lists them under "Java consumers are no longer supported".
+- **Deprecated declarations.**
+
+| Removed | Replacement |
+|---|---|
+| `RandomSelector.pick(RandomGenerator)`, `flow(RandomGenerator)` | `pick()`, `flow()`; pass the generator when you create the selector |
+| `User.getMeta<T>(key)`, `User.getMeta<T>(key, default)` | `getMetaValue(key)` for the raw string; for other types a parsing transform such as `getMeta(key) { it.toIntOrNull() }` or `getMeta(key, default) { it.toIntOrNull() }` |
+| `RedisApi.create(pluginDataPath, pluginsPath, serializerModule)` | `RedisApi.create(serializerModule)` |
+| `SurfPaperNmsNbtBridge.getNbtString(itemStack, key)` | No direct replacement; Paper exposes no custom data component. Read item data through `itemStack.persistentDataContainer` and write it with `itemStack.editPersistentDataContainer { }`. PDC values live under `PublicBukkitValues`, so raw keys at the custom data root that other code wrote are not readable this way |
+| `forEachPlayerInRegion(action, concurrent)` | `forEachPlayerInRegion(plugin, action, concurrent)` |
+| `SurfVisualizer.viewers` (`Set<Player>`) | `viewerUuids`; resolve online players with `Bukkit.getPlayer(uuid)` |
+| `BlockStateFactory`, its `Builder` and `BlockStateFactoryImpl` in `dev.slne.surf.api.common.util.blockstate` | packetevents' `WrappedBlockState` directly: `stateType.createBlockState()` and its setters (`setAge`, `setFacing`, ...) |
+
+- **Relocation POMs.** `publishRelocationFrom` is gone from the build; see section 4.
 
 ## 12. The platform-neutral half of the inventory framework moved packages
 
@@ -452,6 +479,15 @@ into a microservice, which gets `surf-api-database-r2dbc` from the
 | `dev.slne.surf.nats` | `dev.slne.surf.api.gradle.nats` |
 | `dev.slne.surf.microservice` | `dev.slne.surf.api.gradle.microservice` |
 
+**The standalone modules are removed.** `surf-api-nats-standalone` (`SurfNatsStandalone`, `NatsInstance`) and
+`surf-api-redis-standalone` (`StandaloneRedisInstance`) are gone. NATS runs in a Spring context: the plugin context
+of a surf-api plugin, or a Spring Boot context that `SurfApiStandaloneBootstrap.adopt` makes surf-api's root context
+with `surf-api-nats-spring` on the class path, as in a microservice. Redis runs in the plugin contexts of Paper,
+Velocity and Minestom. A program that started surf-nats itself becomes such a Spring Boot application, usually a
+microservice. `RedisInstance` is internal API (`@InternalSurfApi`): only the surf-api runtimes implement it, so a
+program can no longer provide its own. Outside Paper, Velocity and Minestom, the runtime for Redis is surf-api
+standalone, which does not bundle the Redis integration yet.
+
 **Redis and NATS platform plugins.** The `surf-redis-<platform>` and `surf-nats-<platform>`
 plugins are gone: surf-api bundles both integrations on Paper, Velocity and Minestom. This changes
 three things on a running server:
@@ -489,8 +525,15 @@ destructuring operators from `dev.slne.surf.redis.util`. The surf-nats README ma
 its replacement under "Migrating from surf-redis and surf-rabbitmq". Sync structures and caches are
 unchanged.
 
-**Tests that use surf-api beans.** surf-api's beans, and the API that reads them such as config
-classes, work only while surf-api's root context runs, which a plain JUnit test never starts. Add
+**The static factories need surf-api's root context.** `RedisApi.create(...)` and
+`NatsClient.create(...)` no longer find their implementations through `ServiceLoader`; they read
+beans of surf-api's root context. A call before that context exists, such as in a Paper plugin's
+bootstrapper, fails with `IllegalStateException`. surf-redis and surf-nats ship no
+`META-INF/services` files for them any more, so a shaded copy needs no service-file merging for
+these lookups. Inject `RedisApi` and `NatsClient` instead of creating them where you can.
+
+**Tests that use surf-api beans.** surf-api's beans, and the API that reads them such as
+`ConfigHandles.open`, `RedisApi.create` and `NatsClient.create`, work only while surf-api's root context runs, which a plain JUnit test never starts. Add
 `surf-api-standalone-testing` to the test runtime:
 
 ```kotlin
@@ -547,6 +590,7 @@ the KSP processor `surf-microservice-processor`, which listed the main class and
 | `MicroserviceHealthContributor`, `MicroserviceHealthCheckResult`, `MicroserviceHealthStatus` | A Spring Boot `HealthIndicator` bean. The bean name without the `HealthIndicator` suffix is the component name. |
 | `Microservice.commands`, command registration in `onBootstrap` | `MicroserviceCommand` beans, or `MicroserviceCommands.register` and `microserviceCommand` at any time |
 | `surf-nats-standalone` and `SurfNatsStandalone` in a microservice | The NATS beans of the Spring context. Remove your own start and shutdown calls. |
+| `MigrationSpec.classPackage(...)` | `classes(...)` or `classNames(...)`. A microservice needs neither: it runs every `SurfMigration` below the package of its `@SpringBootApplication` class. |
 
 **Behavior that changed.**
 
@@ -556,9 +600,9 @@ the KSP processor `surf-microservice-processor`, which listed the main class and
 - A `@NatsService`, `@NatsTransactional` or `@NatsListener` bean is always created eagerly, even
   with `spring.main.lazy-initialization=true`. A bean of these kinds that is first created after
   the application was enabled fails.
-- A `@NatsTransactional` bean fails the start unless exactly one `NatsServiceInterceptorProvider`
-  answers for it and declares `handlesTransactional`. A custom provider that handled
-  `@NatsTransactional` before has to override `handlesTransactional` or step aside.
+- A `@NatsTransactional` bean needs the reliability module of surf-microservice; without it the
+  start fails. `NatsServiceInterceptorProvider` and `Class.isNatsTransactional()` are internal
+  (`@InternalNatsApi`): custom interceptor providers are not supported.
 - A `DatabaseConfig` bean of the application is validated and used as it is, without the
   `SURF_DATABASE_*` overrides. `SURF_CONFIG_DIRECTORY` has no effect in a microservice: use
   `SURF_MICROSERVICE_CONFIG_DIR`.
@@ -596,8 +640,7 @@ history table `flyway_schema_history_<name>` and the owner of the stored replies
 once every instance of the old version is gone.
 
 **Added.** `MigrationSpec.classNames(vararg binaryNames)` loads exactly the named migration
-classes. `NatsServiceInterceptorProvider.handlesTransactional` is a member with a default, so
-existing providers still compile. `SurfProperties.CONFIG_DIRECTORY` names the directory property.
+classes. `SurfProperties.CONFIG_DIRECTORY` names the directory property.
 
 Section 13 lists the plugin ids and coordinates. The version of `surf-api-database-r2dbc` defaults
 to the major version of the plugin followed by `.+`, for example `4.+`. A pin such as
@@ -614,7 +657,7 @@ plugin's Spring context, and its lifecycle methods are `final`:
 | Platform | Base class | Lifecycle |
 |---|---|---|
 | Paper | `SurfPaperPlugin` and `SurfPaperBootstrapper` (`dev.slne.surf.api.paper.plugin`) | `onLoad`, `onEnable`, `onDisable` and `bootstrap` are `final`. |
-| Velocity | `SurfVelocityPlugin` (`dev.slne.surf.api.velocity.plugin`) | The constructor loads the plugin; surf-api enables it in its `ProxyInitializeEvent` handler and disables it in its `ProxyShutdownEvent` handler. |
+| Velocity | `SurfVelocityPlugin` (`dev.slne.surf.api.velocity.plugin`) | Guice's member injection loads the plugin after its constructor; surf-api enables it in its `ProxyInitializeEvent` handler and disables it in its `ProxyShutdownEvent` handler. |
 | Minestom | `SurfMinestomPlugin` (`dev.slne.surf.api.minestom.plugin`) | The overridable `onLoad`, `onEnable` and `onDisable` are removed. |
 
 Move the code of your old `onLoad`, `onEnable` and `onDisable` overrides, and of mccoroutine's
@@ -640,8 +683,19 @@ class unless you need one. A plugin that keeps its own class names it in the bui
 `mainClass(…)` and `bootstrapper(…)` in `surfPaperPluginApi { }`, `main` in
 `velocityPluginFile { }` or `minestomPluginFile { }`. The class extends the base class of its
 platform; `checkSurfPluginClasses` fails `check` and the jar tasks otherwise.
-`verifyPluginClasses = false` turns the check off. A Velocity class needs an `@Inject` constructor
-that takes the `PluginContainer` and passes it to `SurfVelocityPlugin`.
+`verifyPluginClasses = false` turns the check off. `SurfVelocityPlugin` has a no-argument
+constructor, so a Velocity class takes only what it needs itself:
+
+```kotlin
+// before
+class ShopPlugin @Inject constructor(container: PluginContainer) : SurfVelocityPlugin(container)
+// after
+class ShopPlugin @Inject constructor(val proxy: ProxyServer) : SurfVelocityPlugin()
+```
+
+The plugin's context is built once the constructor and the property initializers finished, so the
+plugin instance is complete when beans receive it. `@Inject` fields and methods of the subclass are
+injected after the context loaded.
 
 `generatePluginClass = false` turns generation off for a module that applies a platform plugin but is
 not a plugin itself.
@@ -685,6 +739,21 @@ Minestom. Spring injects its `@Autowired` fields and setters, runs the `Aware` c
 
 Inject the instance by its concrete type, or as `org.bukkit.plugin.Plugin` on Paper.
 
+### Platform beans in every context
+
+surf-api registers three beans that 3.x did not have:
+
+- `surfPluginLogger`, the plugin's `ComponentLogger`, in every full plugin context on Paper,
+  Velocity and Minestom. It also satisfies an injection of `org.slf4j.Logger`. It is a fallback
+  bean: a `Logger` or `ComponentLogger` bean that the plugin declares itself wins, so an existing
+  logger bean keeps working without `@Primary`.
+- `surfBukkitServer`, the `org.bukkit.Server`, in surf-api's root context on Paper. Every plugin
+  context can inject it. A plugin that declares its own `Server` bean now has two candidates and
+  marks its own `@Primary` or injects it with `@Qualifier`.
+- `surfApiPlugin`, surf-api's own `Plugin`, in surf-api's root context on Paper. It is a fallback
+  bean, so `Plugin` in a plugin context still resolves to the plugin itself; only a
+  `List<Plugin>` or `ObjectProvider<Plugin>` injection also sees it.
+
 ### Build checks and compiler settings
 
 - **Spring ships inside surf-api.** A Paper, Velocity or Minestom plugin compiles against it with
@@ -693,19 +762,36 @@ Inject the instance by its concrete type, or as `org.bukkit.plugin.Plugin` on Pa
   classes, whether they come from a Spring coordinate or inside another artifact, such as a fat jar.
   The failure names the artifact. `allowBundledSpring = true` in the platform block turns the check
   off.
+- **`checkInternalApiUsage` fails the build when plugin code uses internal API.** It runs with
+  `check` and reads the bytecode of the main classes. A reference fails when the referenced
+  declaration of a dependency, or a class enclosing it, carries an annotation that is itself
+  annotated `@InternalAPIMarker`: `@InternalSurfApi`, `@InternalRedisAPI`,
+  `@InternalMicroserviceApi` or another plugin's own marker. An inherited member counts where it is
+  declared, so a call to an internal member of a public base class fails too, and so does a call
+  that relies on an internal function's or constructor's default arguments.
+  `@PublishedSurfApi` declarations and references between the project's own classes pass;
+  `@OptIn` does not exempt a reference. Replace the internal calls with public API. A surf library
+  built against that internal API allows the marker in the platform block:
+  `allowInternalApi("dev.slne.surf.api.shared.api.util.InternalSurfApi")`. The check does not cover
+  `@InternalNatsApi`, a multiplatform marker that carries no `@InternalAPIMarker`; its `@OptIn`
+  requirement still applies.
+- **`withApiValidation()` no longer excludes `@InternalSurfApi` from the ABI dump.** Pass the
+  markers to exclude: `withApiValidation("com.example.InternalExampleApi")`. Without arguments the
+  dump keeps every public declaration.
+- **The plugin file's website defaults to the `origin` Git remote.** `paper-plugin.yml`'s `website`
+  and the `url` of `velocity-plugin.json` and `minestom-plugin.json` take, in this order, the value
+  set in the build script, the `url` Gradle property and the `origin` remote as an `https` URL:
+  `git@github.com:org/repo.git` becomes `https://github.com/org/repo`, and credentials, port and
+  `.git` are dropped. Set the property or the value explicitly to publish another URL. Paper reads
+  `url` through `providers.gradleProperty` like Velocity and Minestom, so `ext.url` in a build
+  script and `url` in a subproject's own `gradle.properties` no longer count; use the root
+  `gradle.properties`, `-Purl=...` or the `paper { website = ... }` block.
 - **The surf Gradle plugins apply `kotlin("plugin.spring")` and set `javaParameters = true`.**
   Classes annotated with Spring stereotypes are open, and constructor parameter names reach the
   bytecode.
-- **The KSP processor `surf-api-processor` generates only the NMS provider index and the
-  `@GenerateReflection` accessors.** Its unused annotation helpers are removed:
-  `findAllByDistance`, `findAnnotationRecursive`, `findAllAnnotationsRecursive`,
-  `findMetaAnnotations`, the `KSAnnotated.findAnnotationRecursive` and
-  `KSAnnotated.findAllAnnotationsRecursive` extensions, both `collectArgumentValues` overloads,
-  `collectArgumentValuesGrouped` and `AnnotationUtils.FoundAnnotation`.
-  `AnnotationUtils.findAnnotatedClasses(resolver, annotationFqName)` finds direct annotations only.
-- **`NmsProvider` implementations are found through `META-INF/surf-api/nms-providers/*.json`**,
-  which the KSP processor generates. The NMS modules ship no
-  `META-INF/services/dev.slne.surf.api.paper.nms.common.NmsProvider` file.
+- **`surf-api-processor` is removed.** The surf Gradle plugins no longer add it to the `ksp`
+  configuration; they still apply the KSP Gradle plugin. Its only remaining job, the NMS provider
+  index under `META-INF/surf-api/nms-providers`, is gone with the provider (section 20).
 
 ### Standalone programs
 
@@ -796,9 +882,166 @@ when the plugin's context starts, so a broken file fails the plugin's start. `Co
 `value`, `reload()`, `edit { }`, `update { }` and `save()`. `@SurfConfig` also works as a
 meta-annotation on an annotation of your own.
 
-`SpongeYmlConfigClass` and `SpongeJsonConfigClass` companions keep working. A plugin registers
-serializers for its own types through a `ConfigSerializerRegistrar` bean, which runs before the
-plugin's first handle opens its file; `surfSpongeConfigSerializers` is removed.
+A plugin registers serializers for its own types through a `ConfigSerializerRegistrar` bean, which
+runs before the plugin's first handle opens its file; `surfSpongeConfigSerializers` is removed.
+
+#### Removed configuration API
+
+| Removed | Replacement |
+|---|---|
+| `SpongeYmlConfigClass`, `SpongeJsonConfigClass` and their base `SpongeConfigClass` (`getConfig`, `edit`, `save`, `reloadFromFile`, `init`, `isInitialized`, `manager`, `migration`, `versionKey`) | `@SurfConfig` with an injected `ConfigHandle`, `configHandle<T>()` or `by surfConfig<T>()`; `ConfigHandles.open` for other files. Recipes below. |
+| `SurfConfigApi`: `createSpongeYmlConfig`, `createSpongeJsonConfig`, `createSpongeYmlConfigManager`, `createSpongeJsonConfigManager`, `getSpongeConfig`, `reloadSpongeConfig`, `getSpongeConfigManagerForConfig` and their reified extensions | `ConfigHandles.open<T>(path, format, migrations)`. Nothing tracks configs by class any more; keep the returned handle. |
+| `ConfigMigrationBuilder`, `MigrationResult` | `ConfigMigrations` and `configMigrations<T> { }` |
+| `SpongeConfigManager` | Internal (`@InternalSurfApi`); use `ConfigHandle` |
+| `SpongeConfigSerializers.ComponentSerializer`, `SpongeConfigSerializers.LinkedListSerializer` | Internal; every handle still registers both, so `Component` and `LinkedList` fields keep working |
+| `YamlConfigFileNamePattern`, `JsonConfigFileNamePattern` | Nothing; `ConfigHandles.open` takes any path |
+| The fallback that read config classes annotated with Configurate's original `org.spongepowered.configurate` packages | Nothing. surf-api still relocates Configurate to `dev.slne.surf.api.libs.configurate`, and the surf-api Gradle plugins relocate it in a plugin's jar as well. Opening a config class whose annotations were not relocated fails with a `LoadConfigException` that names them. |
+| `DatabaseConfig.load(configApi, directory, fileName)`, `SurfDatabaseAutoConfiguration.surfDatabaseConfig(configApi, environment)` | `DatabaseConfig.load(directory, fileName)`, `surfDatabaseConfig(environment)` |
+
+Behaviour changes:
+
+- `ConfigHandle.reload()` no longer writes the file back. It writes only when a migration changed
+  the file, and it takes an optional `validate` check (recipe 5).
+- `ConfigHandle.reload()` on an emptied file keeps the current value and logs a warning instead of
+  installing the defaults. Opening a missing file still writes the defaults.
+- `ConfigHandle` is `AutoCloseable`. A closed handle keeps its last `value` and rejects every other
+  call. The handles of `@SurfConfig` classes close with their plugin's context.
+- surf-redis, surf-nats and surf-database-r2dbc read their `config.yml` and `database.yml` once
+  through `ConfigHandles.open`. The files and keys are unchanged.
+
+#### Recipe 1: static access through a companion
+
+Before:
+
+```kotlin
+@ConfigSerializable
+data class ShopConfig(val discount: Double = 0.0) {
+    companion object : SpongeYmlConfigClass<ShopConfig>(
+        ShopConfig::class.java, plugin.dataPath, "shop.yml"
+    )
+}
+
+val discount = ShopConfig.getConfig().discount
+```
+
+After: declare the file, then inject the handle into beans. Code that is not a bean reads it
+statically; surf-api finds the plugin's context through the class loader of `ShopConfig`:
+
+```kotlin
+@ConfigSerializable
+@SurfConfig("shop.yml")
+data class ShopConfig(val discount: Double = 0.0)
+
+object Prices {
+    private val config by surfConfig<ShopConfig>()
+
+    fun price(base: Double) = base * (1 - config.discount)
+}
+```
+
+Every read of the delegate returns the current value. `configHandle<ShopConfig>()` returns the
+handle itself, for `edit`, `update`, `save` and `reload`. Both work from the moment the plugin's
+context starts, bean constructors included, and throw `IllegalStateException` before that and after
+the context closed.
+
+#### Recipe 2: a path known only at runtime
+
+Before:
+
+```kotlin
+val manager = configApi.createSpongeYmlConfigManager<ArenaConfig>(arenaFolder, "arena.yml")
+val arena = manager.config
+```
+
+After:
+
+```kotlin
+ConfigHandles.open<ArenaConfig>(arenaFolder.resolve("arena.yml")).use { handle ->
+    val arena = handle.value
+}
+```
+
+The caller owns the handle: keep it open while it reads or edits the file, close it afterwards.
+Without a format, a `.json` file opens as JSON and any other as YAML; pass a `ConfigFormat` to
+override the extension.
+
+#### Recipe 3: loading before the plugin's context exists
+
+Before: `MyConfig.init()` in `onLoad`, or a `Condition` that reads `MyConfig.getConfig()`.
+
+After: a `@SurfConfig` file is loaded while the plugin's context starts, before any `onLoad` hook,
+so `init()` calls simply go. Code that runs earlier, such as a Spring `Condition` evaluated during
+the component scan, opens the file itself:
+
+```kotlin
+val earlyConfig: ConfigHandle<MyConfig> by lazy {
+    ConfigHandles.open(plugin.dataPath.resolve("my-config.yml"))
+}
+```
+
+surf-api's root context must be running, because the serializers come from it. On Paper it starts
+in the load phase, so a bootstrapper cannot read a config through surf-api.
+
+#### Recipe 4: lambda migrations and a custom version key
+
+Before:
+
+```kotlin
+companion object : SpongeYmlConfigClass<MyConfig>(MyConfig::class.java, folder, "my.yml") {
+    init {
+        versionKey("meta", "version")
+        migration(1, RenameServerVersion)
+        migration(3) { node -> node.node("legacy").raw(null) }
+    }
+}
+```
+
+After: declare a `ConfigMigrations<MyConfig>` bean in the plugin. Versions stay explicit and may
+leave gaps:
+
+```kotlin
+@ConfigSerializable
+@SurfConfig("my.yml")
+data class MyConfig(val release: String = "1.0.0")
+
+@Configuration
+class MyConfigBeans {
+
+    @Bean
+    fun myConfigMigrations() = configMigrations<MyConfig> {
+        versionKey("meta", "version")
+        version(1, RenameServerVersion)
+        version(3) { node -> node.node("legacy").raw(null) }
+    }
+}
+```
+
+A root-level version key also fits into the annotation: `@SurfConfig("my.yml", versionKey =
+"version")`. Migrations go either into `@SurfConfig(migrations = [...])`, numbered by position, or
+into the bean, and so does the version key; declaring either in both places fails the plugin's
+start. For `ConfigHandles.open`, pass the same
+object as `migrations`.
+
+#### Recipe 5: reloading with validation
+
+Before:
+
+```kotlin
+val reloaded = MyConfig.reloadFromFile()
+check(reloaded.port in 1..65535)
+```
+
+The file was rewritten and the new value installed before the check ran.
+
+After:
+
+```kotlin
+config.reload { candidate -> check(candidate.port in 1..65535) { "Invalid port" } }
+```
+
+`reload` reads the file into a candidate, migrates it in memory and installs it only when
+`validate` returns. If `validate` throws, the old value and the file stay untouched and the
+exception propagates.
 
 ### Listeners and commands
 
@@ -834,6 +1077,58 @@ time.
 On Velocity the listener beans are registered while Velocity fires `ProxyInitializeEvent`, so their
 handlers for that event never run. A bean that has to act once the proxy is up overrides
 `SurfLifecycle.onEnable`.
+
+### PlaceholderAPI expansions
+
+On Paper, a class annotated with `@PapiExpansion` (`dev.slne.surf.api.paper.hook.papi`) is a
+component that exists only while PlaceholderAPI is installed. surf-api registers it with the
+plugin's enable phase and unregisters it on disable. Its `@Placeholder` methods replace
+`PapiPlaceholder` subclasses, and `PapiExpansionFallback` replaces `parseWithNoParams`.
+
+Before:
+
+```kotlin
+class CoinsPlaceholder : PapiPlaceholder("coins") {
+    override fun parse(player: OfflinePlayer, args: List<String>) = coins(player).toString()
+}
+
+@Service
+class CoinsExpansion(private val papiHook: SurfPaperPAPIHook) : SurfLifecycle {
+    private val expansion = PapiExpansion("example", listOf(CoinsPlaceholder()))
+
+    override suspend fun onEnable() = papiHook.register(expansion)
+    override suspend fun onDisable() = papiHook.unregister(expansion)
+}
+```
+
+After:
+
+```kotlin
+@PapiExpansion("example")
+class CoinsExpansion(private val coins: CoinService) {
+
+    @Placeholder("coins")
+    fun coins(player: OfflinePlayer?): String? = player?.let { coins.balance(it).toString() }
+}
+```
+
+A `@Placeholder` method takes `OfflinePlayer?`, `OfflinePlayer` or `Player`, optionally followed by
+the arguments as one `String`, and returns `String?` or `Component?`. A non-null `OfflinePlayer`
+skips requests without a player, and `Player` skips players that are offline; both resolve those to
+`null`. The author and version default to the plugin's. A class listed in `placeholders` is used as
+its Kotlin `object`, as its bean in the plugin's context, or created through the context and
+destroyed on disable; several matching beans fail the plugin's enable.
+
+The hand-built `PapiExpansion` class and `SurfPaperPAPIHook` still work, with these changes:
+
+- `%identifier_%` now reaches `parseWithNoParams`; before, it never did.
+- A request without a player resolves to `null`; before, it threw.
+- Identifiers and placeholder names must not be empty, also reject `}`, and identifiers are unique
+  ignoring case.
+- `register` throws `IllegalStateException` when PlaceholderAPI rejects the expansion; before,
+  the rejection was ignored.
+- `unregister` removes only the instance that was registered, not any expansion with the same
+  identifier.
 
 ## 18. The legacy scoreboard API was removed
 
@@ -873,7 +1168,6 @@ What the sidebar API does not cover:
 - A score is a fixed `Component`; other `ScoreFormat` values are not supported.
 - Viewer lines render on a background dispatcher, not on the viewer's entity thread. A line that
   reads entity or world state switches with `withContext(dispatchers.entity(viewer))`.
-- The sidebar API is Kotlin-only, so a Java plugin cannot build sidebars with dynamic lines.
 
 ## 19. Dependencies and published jars
 
@@ -910,10 +1204,8 @@ versions.
 **BouncyCastle relocation.** The surf-api Paper and Velocity plugins relocate
 BouncyCastle, which jnats uses for NKey authentication, together with `io.nats` to
 `dev.slne.surf.nats.libs`, and leave out BouncyCastle's native `libbc` libraries. BouncyCastle then
-runs its Java implementation. The shaded jars of `infra/nats`, such as the `-all` jar of
-`surf-api-nats-standalone`, relocate BouncyCastle the same way; they relocated only `io.nats`
-before. Code that used `org.bouncycastle` classes through such a jar declares BouncyCastle itself.
-On Minestom, `io.nats` and BouncyCastle stay unrelocated.
+runs its Java implementation. Code that used `org.bouncycastle` classes through a surf-nats jar
+declares BouncyCastle itself. On Minestom, `io.nats` and BouncyCastle stay unrelocated.
 
 **No `-all` variants.** The surf-api modules built on surf-api's own conventions (every api, impl and
 aggregate module outside `infra/`) do not publish a `shadowRuntimeElements` variant, so no
@@ -923,6 +1215,49 @@ artifact instead of the `all` classifier or `Bundling.SHADOWED`. The shaded runt
 GitHub release; their plain artifacts stay in the Maven repository. The `shadow` publications of
 the `infra/` libraries, such as the `-all` jars of `surf-api-redis-api` and
 `surf-api-redis-spring`, are unchanged.
+
+**Third-party libraries are compile-only.** The api modules, and with them `surf-api-core`,
+`surf-api-paper`, `surf-api-velocity` and `surf-api-minestom`, declare the Kotlin stdlib,
+kotlin-reflect, kotlinx-coroutines, kotlinx-serialization, Adventure, Adventure NBT, Configurate,
+Spring, glm, aedile, inventory-framework, the CommandAPI Kotlin DSLs, wyck and the utility
+libraries (Guava, dazzleconf, the Commons libraries, flogger, spongepowered math) as
+`compileOnlyApi`. A plugin still compiles against them, but they no longer reach its runtime
+classpath: the surf-api runtime on the server ships them.
+
+- A test that runs plugin code without a server would lose these libraries at runtime. The surf
+  Gradle plugins add them to `testRuntimeOnly`: `surf-api-standalone` for
+  `dev.slne.surf.api.gradle.core` projects, and for Paper, Velocity and Minestom plugin projects the
+  libraries the platform's surf-api runtime ships, minus those its server API already brings. Delete
+  `testRuntimeOnly` lines that only declared such libraries. Velocity plugin tests also get
+  `velocity-api` on `testImplementation`, as Paper plugin tests get `paper-api`.
+- Only Gradle builds can consume surf-api. `compileOnlyApi` exists only in Gradle module metadata;
+  the Maven POMs leave these libraries out, so a Maven build cannot compile against surf-api.
+- `surf-api-standalone` and `surf-api-minestom-server` keep shipping everything at runtime.
+- `kotlinx-coroutines-reactor`, `kotlinx-coroutines-reactive` and `reactor-core` left the api
+  modules' compile classpath as well. `surf-api-redis-api`, whose types extend Reactor's, declares
+  them itself; other code that uses them declares them with `compileOnly`. The surf-api runtime
+  still ships them.
+
+**Exposed and r2dbc-spi are dependencies.** The `surf-api-database-r2dbc` jar no longer bundles
+Exposed or `io.r2dbc:r2dbc-spi`; it declares both as dependencies, under their own packages, and
+Exposed brings `kotlinx-datetime`. The PostgreSQL R2DBC driver stays bundled but keeps its own
+package `io.r2dbc.postgresql`, because Exposed refers to its JSON codec. The R2DBC pool, the
+MariaDB driver, the JDBC drivers, Netty and Flyway stay bundled and relocated below
+`dev.slne.surf.database.libs`. Rewrite the imports:
+
+```kotlin
+// before
+import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import dev.slne.surf.database.libs.io.r2dbc.spi.IsolationLevel
+// after
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import io.r2dbc.spi.IsolationLevel
+```
+
+`MicroserviceReliabilityAutoConfiguration.atomicOperations` takes the unrelocated
+`org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase`. A project that declares Exposed or `r2dbc-spi`
+itself shares the library's copy; Gradle picks one version. Do not add
+`org.postgresql:r2dbc-postgresql`: the bundled copy conflicts with a second one.
 
 **Relocation helpers of the Gradle plugin.** `CommonSurfPlugin.addRelocationsForDependency` is
 removed without replacement; add relocations on the `shadowJar` task. The plugins' shadow jar tasks
@@ -936,11 +1271,168 @@ no longer apply a `dev.slne.surf.redis` relocation for a project dependency.
 | `SurfMinestomPlugin.onLoad`, `onEnable`, `onDisable` | `SurfLifecycle` beans (section 15) |
 | `extractCallingPluginScopeOrThrow` | Nothing; see section 16. |
 | The `object` `PlayerLookupService` and its nested `LookupResult` | `PlayerLookupService` is an interface now; inject it. `getUuid`, `getUsername` and `getCacheStats` keep their signatures. |
+| `SurfTypeParameterMatcher` | Spring's `GenericTypeResolver.resolveTypeArgument(type, Generic::class.java)`, or `ResolvableType` for several type parameters; then `isInstance` on the resolved class |
+| `mockBukkit` and `mockBukkitVersion` in the `testing { }` block of the surf Gradle plugins | Nothing; surf-api no longer tests against MockBukkit. Mock the few Bukkit statics a test needs with mockk (`mockkStatic(Bukkit::class)`). |
 | `dev.slne.surf.api.shared.api.annotation.AnnotationUtils` (`findAnnotation`, `clearCache`) | Spring's `org.springframework.core.annotation.AnnotationUtils.findAnnotation(type, annotationType)`, which searches the same places and caches; `MergedAnnotations` when attributes or `@AliasFor` matter. |
+| `IntOr.Disabled.enabled()`, `DoubleOr.Disabled.enabled()` | `isEnabled()` |
+| `SurfVisualizer.visibleTo(player)` | `isVisibleTo(player)` |
+| `SystemChatPacket.overlay` (`getOverlay`) | `isOverlay` (`isOverlay()`); `setOverlay` is unchanged |
+| `LastSeenMessagesValidatorMirror.LastSeenTrackedEntry.pending` | `isPending`; the serialized field is still named `pending` |
+| Minestom `ParsedArgument.present`, `ArgumentDefinition.greedy` and the `Argument.greedy` override point | `isPresent`, `isGreedy` |
+| `NatsEventDeduplicator.firstDelivery(eventId)` and `firstDelivery()` | `isFirstDelivery(eventId)` and `isFirstDelivery()` |
+| `SurfComponentBuilder` as an interface | An abstract class that only surf-api implements. Builder blocks and calls are unchanged; a class of your own that implements it no longer compiles. |
+| The colour interfaces in `dev.slne.surf.api.messages.builder` and `.builder.colors` (`ComponentBuilderColor`, `ComponentBuilderColors`, `SurfComponentBuilderColors`, `MinecraftComponentBuilderColors` and the 26 `*ComponentBuilderColor` interfaces) | Plain members of `SurfComponentBuilder`: `primary(...)`, `red(...)`, `appendErrorPrefix()` and the rest. Calls inside a builder block are unchanged; delete imports of these interfaces. |
+| `coloredComponent(value, color, ...)` | `colored(value, color, ...)` |
+| `appendAsync { }`, `appendNewlineAsync { }`, `appendNewInfoPrefixedLineAsync { }` and the success, warning and error variants | `append { }`, `appendNewline { }`, `appendNewInfoPrefixedLine { }` and so on. They are `inline`, so the block may suspend. |
+| `CommonComponents.renderKickDisconnectMessage` and `renderDisconnectMessage` overloads that take a builder (generic `B : TextComponent.Builder` or `SurfComponentBuilder`) | `builder.appendKickDisconnectMessage(...)` and `builder.appendDisconnectMessage(...)`, or the overloads without a builder. |
+| `TextComponent.Builder` as the receiver of the `renderKickDisconnectMessage` and `renderDisconnectMessage` blocks | `SurfComponentBuilder`. A bare `text("...", color)` in such a block now appends the text; before, it created a component and discarded it. |
+| Style calls (`color`, `decorate`, `clickEvent`, `hoverEvent`, `style`) on the receiver of a `renderKickDisconnectMessage` or `renderDisconnectMessage` block styled the whole message | They style only the block's own part, which is appended as a child component. Style the whole message on the returned component. `appendKickDisconnectMessage` and `appendDisconnectMessage` now write header, headline, message and footer directly into the outer builder instead of one child component, so style that builder to style the whole message. |
+| Paper: `suspend fun OfflinePlayer.getLuckPermsUser()` | `OfflinePlayer.loadLuckPermsUser()`; Velocity gains `Player.loadLuckPermsUser()`. |
+| File facades `UtilBukkit.getLuckPermsUser`, `getLuckPermsUserOrNull`, `getPrefixedName` (Paper) and `LuckPermsAccessKt` (the `User` and `Audience` extensions) | `UtilLuckPerms` and `LuckPermsExtensions`. Kotlin callers only recompile. The message of `Audience.getLuckPermsUser()` for a missing user changed. |
+| `CompoundBinaryTag.fast(synchronize = true)`, `buildFast(synchronize = true)` | `fast(concurrent = true)`, `buildFast(concurrent = true)`. A concurrent tag is backed by a `ConcurrentHashMap` instead of a synchronized map, and `keySet()` of every tag is a read-only view. |
+| `dev.slne.surf.api.paper.command.util.idOrThrow` (`PlayerProfile.idOrThrow()`) | `dev.slne.surf.api.paper.util.idOrThrow`; only the import changes. The facade class changed from `AsyncPlayerProfileArgumentUtilsKt` to `UtilPlayerProfile`. |
+| `SurfCommandUtil.failWithMessage(...)` and `failWithBuilder(...)` returned `Unit` | They return `Nothing`, so Kotlin code after the call is unreachable and the call ends a branch. Java sees `Void` instead of `void`; a call used as a statement compiles unchanged. |
+| NATS health indicator (`nats`): up with the detail `connection: none` while the context has no connection | `UNKNOWN` with the detail `connection: no client` while the context has no `NatsClient`; `DOWN` while a client exists and the connection is not `CONNECTED`, including before it connected. `microservicectl health` now reports only `DOWN` and `OUT_OF_SERVICE` as unhealthy, so a microservice that uses nothing of NATS stays healthy. |
+| `NmsProvider`, `NmsProvider.current`, `@NmsProviderMarker`, `NmsProviderMeta`, `NmsProviderConfig` and the twenty bridge proxies in `dev.slne.surf.api.paper.server.proxy` | Inject the bridge interface (`SurfPaperNmsItemBridge`, `SurfGlowingApi`, `TickThreadGuard`, ...). Each NMS version module contributes its implementations as beans through a configuration annotated with `@ConditionalOnMinecraftVersion`. |
+| `NmsVersionResolver.current`, `NmsVersion.NEWEST` | `NmsVersionResolver.resolve(minecraftVersion)`, or inject the selected `NmsVersion` bean. |
+| NMS version fallback: a server without bindings of its own version ran on the newest bindings | It runs on the newest bindings not newer than the server; a server older than every supported version fails surf-api's bootstrap. |
+| `byIdMap`, `byByteIdMap`, `byStringIdMap` and `byEnumMap` (facade `SurfUtil`) | The standard library: `values.associateBy { it.id }`, `enumEntries<E>().associateBy(...)`, `associateWith(...)`. |
+| `setFinalField`, `setStaticFinalField` (facade `SurfUtil`) | Nothing; surf-api no longer writes `final` fields. |
+| `ById`, `ById.ByByteId`, `ById.build(enumClass)`, `ByEnum`, `ToByteFunction` in `dev.slne.surf.api.common.util` | Nothing. Declare the interface in your project; replace `ById.build(E::class.java)` with `enumEntries<E>().associateBy { it.id() }`. |
+| `Colors.SPACER`, `DARK_SPACER` and the 16 Minecraft colours (`BLACK` to `WHITE`) typed `NamedTextColor` | Typed `TextColor`, same values. A `NamedTextColor` variable or parameter fed from them no longer compiles; declare `TextColor`, or use `NamedTextColor.RED` and so on. |
+| `Rarity.displayName` and `Rarity.asComponent()` returned `TextComponent` | They return `Component`. |
+| `LazyIntList(defaultValueGenerator: () -> Int)` | `LazyIntList(IntSupplier)`. A lambda (`LazyIntList { 0 }`) still compiles; a stored `() -> Int` needs `LazyIntList(generator::invoke)`. A negative index throws `IllegalArgumentException`. |
+| `ComponentSqlLogger(level = ...)` with a logger named after the calling class | Pass the logger: `ComponentSqlLogger(ComponentLogger.logger("MyService"), level)`. |
+| `ComponentMessage.COMPONENT_MESSAGE_PREFIX` | Internal (`@InternalSurfApi`); no replacement. |
+| `SurfStandaloneApiImpl.dataFolder` (`api-data`) | Nothing; choose the data directory of your program yourself. |
+
+### Nested values in the kotlinx serializers resolve through the serializers module
+
+The serializers of `surf-api-serialization-api` and the Paper serializers write a nested UUID,
+`Component`, `Key`, `URI`, `BigInteger`, `InetAddress`, `LocalDate` or `LocalTime` through a
+`ContextualSerializer`. The surf-api serializer stays the fallback, so a format without a matching
+contextual serializer writes the same as in 3.x. A contextual serializer in the format's module now
+wins.
+
+**Redis JSON changes shape.** surf-redis registers `JavaUUIDStringSerializer` for `UUID`, so a UUID
+nested in `PlayerSerializer`, `OfflinePlayerSerializer`, `LocationSerializer` or
+`AdventureResourcePackInfoSerializer` is now a string where it was a byte array:
+
+```json
+// before
+{"world_uuid":[0,17,34,51,68,85,102,119,-120,-103,-86,-69,-52,-35,-18,-1],"x":1.0,...}
+// after
+{"world_uuid":"00112233-4455-6677-8899-aabbccddeeff","x":1.0,...}
+```
+
+Values written by 3.x cannot be read back; there is no tolerant decoder. Clear or rewrite such keys
+when you upgrade.
+
+Further serializer changes:
+
+- `SurfPaperSerializerModule.bukkit` registers the Location, ItemStack, OfflinePlayer and BlockData
+  serializers as contextual serializers; `SurfPaperSerializerModule.all` adds
+  `SurfSerializerModule.all`.
+- `AdventureTextColorSerializer` rejects a value outside `0` to `0xFFFFFF` with a
+  `SerializationException`; it used to truncate it.
+- New: `BigDecimalStringSerializer` (`BigDecimal.toString()`) and `InetAddressBytesSerializer` (the
+  raw 4 or 16 address bytes).
+- The `surf-api-nats-types` serializers for single-field messages (`UuidSerializer`,
+  `ComponentSerializer`, `KeySerializer`, `TextColorSerializer`, `ShadowColorSerializer`,
+  `IpAddressSerializer`, `BigIntegerSerializer`, `BigDecimalSerializer` and the Paper
+  `ItemStackSerializer`) wrap the surf-api serializers in `ProtoWrapperSerializer`. Their names
+  and wire format are unchanged.
+
+### Reflection proxies replace `SurfReflection` and `@GenerateReflection`
+
+surf-api has one reflection front-end. A `@ReflectionProxy` interface names its target class, and
+each abstract method binds one member of it. surf-api implements the interface at runtime as a
+hidden class that calls constant method handles; nothing is generated at compile time.
+
+```kotlin
+// before
+@SurfProxy(qualifiedName = "org.spigotmc.RestartCommand")
+interface RestartCommandProxy {
+    @Static
+    fun restart()
+}
+val proxy = surfReflection.createProxy<RestartCommandProxy>()
+
+// after
+@ReflectionProxy(targetName = "org.spigotmc.RestartCommand")
+interface RestartCommandProxy {
+    @ReflectedStatic
+    @ReflectedMethod
+    fun restart()
+}
+val proxy = reflectionProxy<RestartCommandProxy>() // or inject RestartCommandProxy
+```
+
+| Removed | Replacement |
+|---|---|
+| `SurfReflection`, `createProxy<T>()`, `createProxy(clazz, classLoader)` | `reflectionProxy<T>()`, `ReflectionProxies.get(type)`, or inject the interface: every plugin context registers a lazy bean for each `@ReflectionProxy` interface in the plugin's packages. |
+| `@SurfProxy(value)`, `@SurfProxy(qualifiedName = …)` | `@ReflectionProxy(target)`, `@ReflectionProxy(targetName = …)` |
+| `@Field(name, Field.Type.GETTER)`, `@Field(name, Field.Type.SETTER)` | `@ReflectedField(name)`, `@ReflectedField(name, FieldAccess.SET)` |
+| `@Field(overrideFinal = true)` | Nothing. Writing a `final` field fails when the proxy is created. |
+| `@Constructor` | `@ReflectedConstructor` |
+| `@Static` | `@ReflectedStatic` next to `@ReflectedMethod` or `@ReflectedField` |
+| `@Name("…")` | The `name` of `@ReflectedMethod` or `@ReflectedField` |
+| A method without annotation, bound to the method of the same name | `@ReflectedMethod`. Every abstract method needs exactly one of `@ReflectedMethod`, `@ReflectedField` and `@ReflectedConstructor`. |
+| `@GenerateReflection`, `generatedReflectionAccessor<T>()`, `GeneratedReflectionAccessors` and the `surf-api-processor` code generation behind them | A `@ReflectionProxy` interface per target class; `companion object : X by reflectionProxy<X>()` keeps static call sites. |
+| `@ReflectedMethod`, `@ReflectedField`, `@ReflectedConstructor` in `dev.slne.surf.api.shared.api.reflection` with `target`, `targetName`, `isStatic`, `descriptor`, `type`, `invocation` | The annotations of the same name in `dev.slne.surf.api.reflection`. The target moves to `@ReflectionProxy`, `isStatic` becomes `@ReflectedStatic`, and members are matched by name and parameter types. |
+| `@ReflectedVarHandle`, `@ConstantIntArgument` and the other constant-argument annotations, `ReflectionInvocationMode`, `ReflectedFieldAccess`, `UnspecifiedReflectionTarget` | Nothing. Read and write the field with `@ReflectedField`. |
+| `xyz.jpenilla:reflection-remapper` on the Paper compile classpath and the `ReflectionProxyFactory.reflectionProxy<I>()` extension | Nothing; Paper is Mojang-mapped. Declare the dependency yourself if you still use it. |
+
+A proxy is created once per interface and validates every method at creation: a member that does
+not exist, an ambiguous overload, a `suspend` method or a `final` write throws one
+`ReflectionProxyException` listing every problem. Calls propagate the member's exceptions
+unchanged instead of wrapping them in `ProxyInvocationException`.
+
+The hidden-class invoker infrastructure in `dev.slne.surf.api.common.invoker` was rewritten on the
+ClassFile API and is internal (`@InternalSurfApi`) now. `HiddenInvokerUtil`, `InvokerClassData`,
+the template-class `InvokerFactory`, `SuspendInvokerSupport` and the `@InternalInvokerApi`
+opt-in are removed. There is no public replacement: a library that defined its own invoker
+templates generates its own hidden classes or binds its handles with `LambdaMetafactory`.
+
+### Java consumers are no longer supported
+
+surf-api 4.0 targets Kotlin consumers built with Gradle. Java plugins and Java sources in a plugin
+are not supported, and the api no longer generates declarations whose only purpose is calling it
+from Java. Kotlin source compiles unchanged; the Kotlin call resolves to the same declaration.
+
+- **`@JvmStatic` bridges removed:** `ConfigHandles.open`, `ConfigFormat.ofPath`,
+  `EnvironmentVariables.from` (both overloads), `ConfigMigrations.builder` and `none`,
+  `SurfComponentBuilder.builder`, `ReflectionProxies.get`, `SurfCommandUtil.createException`,
+  `failWithMessage` and `failWithBuilder`, `RedisUtf8String.read` and `write`, and the
+  Minestom implementation's `CommandAPIHook.reportUnknown`. Call them through the companion or the
+  `object`, as Kotlin always did.
+- **`@JvmOverloads` removed:** `ConfigHandles.open`, `RandomSelector.fromFlow`, `fromIterable` and
+  both `fromWeightedIterable` factories, and the constructors of `SurfMessageBundle`, `PapiExpansion`
+  and `RedisCodecException`. Default arguments still work from Kotlin.
+- **`ConfigHandles.open` picks the format from the extension.** Its `format` parameter is
+  `ConfigFormat?` and defaults to `null`: `.json` opens as JSON, every other extension as YAML. A
+  `.json` file opened without a format was read as YAML before.
+- **Generated NATS enums:** the `forNumber` function of an enum that the surf-nats Gradle plugin
+  generates is no longer `@JvmStatic`. Kotlin calls `Enum.forNumber(n)` as before.
+- **Java API sources became Kotlin.** `RedisVarInt` and `RedisVarLong` are `object`s, and
+  `UUIDCodec.INSTANCE` lives in the companion of `UUIDCodec`; Kotlin calls compile unchanged.
+- **The NMS packet listeners are Kotlin interfaces.** `NmsPacketListener`,
+  `NmsClientboundPacketListener` and `NmsServerboundPacketListener` keep their package, type
+  parameter and handler methods, but a lambda no longer converts to them:
+  `NmsClientboundPacketListener<P> { packet, player -> ... }` fails to compile. Such a lambda never
+  received packets, because the packet type is resolved from the type argument of the implementing
+  class. Implement the interface in a class or `object` instead. The internal `getPacketClass()`
+  member is gone.
+- **`@SurfConfig.versionKey` defaults to empty.** Empty leaves the key to a `ConfigMigrations<C>`
+  bean, or to `_config_version`. A version key declared both in `@SurfConfig` and in the bean's
+  builder now fails the plugin's start instead of letting the bean win.
+
+`@JvmField` constants and `@file:JvmName` facades stay where they shape the bytecode, for example
+the registry-key fields and the `UtilBukkit` facade.
 
 ## 21. Checklist for a downstream repository
 
-1. Replace any coordinate from section 3; the others keep working.
+1. Replace any coordinate from sections 3 and 4; the others keep working.
 2. Rewrite the moved package prefixes (section 6), `core.util` → `common.util` and the rest. This
    touches the most files, and `logger()` accounts for most of them. No build file changes.
 3. Remove every fastutil type and every `to*` bridge helper (section 7). Compile.
@@ -960,10 +1452,12 @@ no longer apply a `dev.slne.surf.redis` relocation for a project dependency.
     `surfPluginDependency` and export shared beans through `@PluginApi`.
 11. Replace mccoroutine: inject `CoroutineScope` and `PaperDispatchers`, and dispatch to the server
     thread explicitly where code needs it (section 16).
-12. Move config files to `@SurfConfig` with `ConfigHandle` where a bean reads them, and serializer
-    registration to `ConfigSerializerRegistrar` beans (section 17).
+12. Replace every `SpongeYmlConfigClass` / `SpongeJsonConfigClass` companion and `SurfConfigApi` call
+    with `@SurfConfig` or `ConfigHandles.open`, following the recipes in section 17, and move
+    serializer registration to `ConfigSerializerRegistrar` beans.
 13. Remove your own listener and command registration for beans that surf-api registers
-    (section 17).
+    (section 17), and consider turning hand-built PlaceholderAPI expansions into `@PapiExpansion`
+    classes.
 14. Search for `dev.slne.surf.api.paper.scoreboard` and `net.megavex`, and move scoreboards to the
     sidebar API (section 18).
 15. Remove any bundled Spring from your plugin jar, and declare DataFixerUpper, Reactor Netty,
@@ -979,3 +1473,13 @@ no longer apply a `dev.slne.surf.redis` relocation for a project dependency.
     implicit retries, call `retryingTransaction` or restore them in a `SurfDatabaseConfigurer`.
 18. Add `surf-api-standalone-testing` to the test runtime of modules whose tests use surf-api's
     beans (section 13).
+19. Convert Java sources in your plugin to Kotlin; Java consumers are no longer supported
+    (section 20).
+20. Replace every `dev.slne.surf.database.libs.org.jetbrains.exposed` import with
+    `org.jetbrains.exposed`, and give plugin tests that run without a server the libraries
+    surf-api now only compiles against (section 19).
+21. Turn every `@SurfProxy` and `@GenerateReflection` interface into a `@ReflectionProxy`
+    interface and replace `createProxy` and `generatedReflectionAccessor` with
+    `reflectionProxy<T>()` or injection (section 20).
+22. Run `./gradlew check` and replace every internal API use that `checkInternalApiUsage` reports;
+    pass your own internal markers to `withApiValidation(...)` (section 15).

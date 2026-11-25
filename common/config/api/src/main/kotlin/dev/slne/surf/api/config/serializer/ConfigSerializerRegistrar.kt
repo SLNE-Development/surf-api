@@ -6,9 +6,9 @@ package dev.slne.surf.api.config.serializer
  * Declare it as a bean of the plugin. surf-api calls every registrar of the plugin's context once
  * while the context starts, at the latest before the first `ConfigHandle` of the plugin opens its
  * file, so the plugin's `@SurfConfig` classes can use the registered types. The registrars also run
- * when the plugin declares no `@SurfConfig` class. The registry is shared by all plugins, so
- * configs read through a `SpongeYmlConfigClass` or `SpongeJsonConfigClass` companion see the
- * registered types once the plugin's context has started.
+ * when the plugin declares no `@SurfConfig` class. The registry is shared by all plugins, so a
+ * file opened through `ConfigHandles.open` sees the registered types once the plugin's context
+ * has started, but not before.
  *
  * ```kotlin
  * @Component

@@ -44,10 +44,8 @@ Kotlin and Java configuration:
   and `javaParameters = true`, which Spring needs to match constructor parameters by name
 - `JavaCompile` gets UTF-8 and `-parameters`
 - `withSourcesJar()` and `withJavadocJar()`
-- the `surf-api-processor` KSP processor, added to the `ksp` configuration
-  (`configureSurfProcessor`). It generates the code behind `@GenerateReflection` and the NMS
-  provider index for `@NmsProviderMarker`. It collects no bean metadata: Spring finds a plugin's
-  beans by scanning its classes.
+- no surf-api KSP processor and no generated bean index: Spring finds a plugin's beans by scanning
+  its classes. The KSP Gradle plugin is still applied for a plugin's own processors.
 - `gradleApi()` and `gradleTestKit()` are removed from every configuration except `compileOnly`
 
 Dependencies added in `afterEvaluate`:
@@ -84,7 +82,18 @@ Shadow relocations, all below the prefix `Constants.RELOCATION_PREFIX`
 These match the relocations of surf-api's own jar, so a plugin's bytecode names the packages the
 server really contains. Further relocations go directly on the plugin's `shadowJar` task.
 
-`withApiValidation()` turns on Kotlin's `abiValidation()`.
+`withApiValidation(vararg excludedMarkers)` turns on Kotlin's `abiValidation()`; the dump leaves
+out declarations annotated with one of `excludedMarkers`. It excludes nothing by default.
+
+`checkInternalApiUsage` runs with `check` and fails when the plugin's main classes reference a
+dependency's internal API: a declaration, or a class enclosing it, annotated with an annotation that
+carries `@InternalAPIMarker`, such as `@InternalSurfApi`, `@InternalRedisAPI` or another plugin's
+own marker. An inherited member is checked where it is declared, and a default-argument call where
+its function or constructor is declared. `@PublishedSurfApi` declarations pass, because inlined
+surf-api code references them. References between the plugin's own classes pass too.
+`@InternalNatsApi` carries no `@InternalAPIMarker`, so the check does not cover it. A surf library built against that internal API allows
+the marker with `allowInternalApi("dev.slne.surf.api.shared.api.util.InternalSurfApi")`; an
+`@OptIn` in the source does not exempt a reference.
 
 ## The generated plugin classes
 
@@ -145,6 +154,9 @@ Because surf configures these in `afterEvaluate`, a value set earlier in a `pape
 overwritten. Everything surf does not touch - `name`, `version`, `description`, `website`,
 `permissions`, `load`, `prefix` - stays with plugin-yml and belongs in `paper { }`; surf fills
 `name`, `version`, `description`, `website` and `author` from the project when they are unset.
+`website` falls back to the `url` Gradle property (`providers.gradleProperty`, so an `ext` property
+does not count) and then to the `origin` Git remote as an `https` URL without credentials, port or
+`.git` suffix. Git runs only when neither is set.
 
 Dependency blocks take the plugin-yml container, so either form works:
 
@@ -217,20 +229,15 @@ in favour of the Canvas api. `SurfApiPaper.isCanvasMc` is the runtime probe.
 
 `CommonSurfExtension.testing` (a `SurfTestingExtension`) is **on by default**. It gives the project
 JUnit 5, mockk and lincheck with versions baked into the plugin, and `AbstractPaperSurfPlugin`
-adds the Paper (or Canvas) api to `testImplementation`.
-
-```kotlin
-surfPaperPluginApi {
-    testing {
-        mockBukkit.set(true)   // off by default
-    }
-}
-```
-
-`mockBukkit` resolves `org.mockbukkit.mockbukkit:mockbukkit-v<major.minor>` from
-`Constants.MINECRAFT_VERSION`. When the api is on `compileOnly`/`compileOnlyApi`, it is mirrored
-onto `testImplementation` so tests can see it. `testing { enabled.set(false) }` switches all of it
-off.
+adds the Paper (or Canvas) api to `testImplementation`. There is no MockBukkit: a test that needs
+Bukkit statics mocks them with mockk, `mockkStatic(Bukkit::class)`. When the api is on
+`compileOnly`/`compileOnlyApi`, it is mirrored onto `testImplementation` so tests can see it.
+`SurfTestingConfigurer.addSurfRuntimeLibraries` puts the libraries the surf-api Paper runtime
+ships on `testRuntimeOnly`: `Constants.COMMON_RUNTIME_TEST_LIBRARIES` and
+`PAPER_RUNTIME_TEST_LIBRARIES`, generated from the version catalog by the plugin's
+`generateConstants`. Velocity and Minestom plugins do the same with their own lists; Velocity also
+puts `velocity-api` on `testImplementation`. `PluginTestRuntimeBuildTest` covers all three.
+`testing { enabled.set(false) }` switches all of it off.
 
 The api's implementation only exists at runtime through the `surf-paper-api` plugin, so a unit test
 can exercise contracts and pure helpers but not the service-backed Paper features.

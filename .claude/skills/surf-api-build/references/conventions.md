@@ -10,9 +10,9 @@ accessors on the convention classpath.
 surf.module-api   ->  core-convention
 surf.module-impl  ->  core-convention
 surf.aggregate    ->  core-convention
-api-validation    ->  core-convention          (opt-in, applied next to a role)
+api-validation    ->  kotlin("jvm")            (opt-in, applied next to a role or the surf plugin)
 vendor-bundle-convention -> core-convention    (opt-in)
-surf.ksp-processor -> com.google.devtools.ksp  (opt-in, applied next to a role)
+surf.nms-shared-26 -> kotlin("jvm")           (opt-in, the 26.x NMS modules)
 
 core-convention   ->  publish-convention, java-toolchain-convention, test-convention,
                       java, java-library, kotlin("jvm"), kotlin("plugin.serialization"),
@@ -49,22 +49,21 @@ The root `build.gradle.kts` also adds, for every subproject with a Kotlin extens
 `optIn("dev.slne.surf.api.shared.api.util.InternalSurfApi")` and `-Xcontext-parameters`, and strips
 `gradleApi()`/`gradleTestKit()` from every configuration except `compileOnly`.
 
-## surf.ksp-processor
+## surf.nms-shared-26
 
-```kotlin
-plugins { id("com.google.devtools.ksp") }
-dependencies { ksp(project(":surf-api-processor")) }
-```
+Compiles `platform/paper/nms/shared-26/src/main/kotlin` into the module and fails configuration
+for a project name without `-nms-v26-<minor>`. The shared sources are written as the version that
+`shared-26/template.properties` names (`v26_3`). That module adds the directory as a Kotlin source
+directory of `main` as it is and fails configuration if it holds a file with the path of a shared
+one. Every other module registers `copyNmsTemplate`, a `Sync` to
+`build/generated/nms-template/kotlin` that replaces the template's package segment and class
+prefix in paths and content with the module's own, derived from the project name
+(`surf-api-paper-nms-v26-1` gives `v26_1` and `V26_1`), and adds that directory instead. A file in
+such a module's own `src/main/kotlin` with the same path replaces the shared file. The nms-module-generator template applies it to every 26.x
+module it creates.
 
-The processor generates the implementations behind `@GenerateReflection` interfaces and the NMS
-provider index under `META-INF/surf-api/nms-providers` for `@NmsProviderMarker` classes. Every
-module that declares either annotation applies it next to its role; the four
-`platform/paper/nms/v*` modules do, and the nms-module-generator template emits it. A module that
-forgets it still compiles, but its `@GenerateReflection` interfaces get no generated
-implementation and `NmsProvider` fails with "No NmsProvider implementations found" at runtime.
-
-The infra modules and local test plugins that apply the surf Gradle plugin get KSP from that
-plugin instead.
+The infra modules and local test plugins that apply the surf Gradle plugin get the KSP Gradle
+plugin from that plugin.
 
 ## java-toolchain-convention
 
@@ -84,29 +83,25 @@ consume them with `testImplementation(testFixtures(projects.surfApiMinestomImpl)
 
 `maven-publish`, the `slne-repository-releases` Reposilite repository with credentials from
 `SLNE_RELEASES_REPO_USERNAME` / `SLNE_RELEASES_REPO_PASSWORD`, and one `maven` publication from the
-`java` component. `relocation.kt` adds extra publications on top of this one.
+`java` component.
 
 ## api-validation
 
-```kotlin
-extensions.configure<KotlinJvmProjectExtension> { abiValidation() }
-```
-
-That is the whole plugin: the experimental Kotlin ABI validation, opted in with
-`@file:OptIn(ExperimentalAbiValidation::class)`. It gives the project `checkKotlinAbi` and
-`updateKotlinAbi`, and a dump at `<moduleDir>/api/<project.name>.api`.
+Applies `kotlin("jvm")` and nothing else, so it goes next to a role or, in infra, next to the surf
+Gradle plugin. It turns on the experimental Kotlin ABI validation, excludes `@InternalSurfApi`
+declarations from the dump and registers `checkInlineInternalApi`, wired into `check`. The project
+gets `checkKotlinAbi` and `updateKotlinAbi`, and a dump at `<moduleDir>/api/<project.name>.api`.
 
 Applied by `foundation/annotations`, `foundation/spring/api`, the `common/*/api` modules (`common`,
 `messages`, `event`, `nbt`, `reflection`, `command`, `luckperms`, `core`, `inventory`,
 `serialization`, `config`), `platform/paper/api`, `platform/minestom/api`, `platform/velocity/api`,
-`platform/minestom/impl` and `platform/standalone/impl`.
+`platform/minestom/impl` and `platform/standalone/impl`, and next to the surf Gradle plugin by the
+infra modules `surf-redis-api`, `surf-redis-spring`, `surf-nats-spring`, `infra/database-r2dbc`
+and the four `infra/microservice` modules. Infra modules with an internal annotation of their own
+exclude it in an additional `kotlin { abiValidation { filters { ... } } }` block.
 
-The infra modules configure the same Kotlin feature without buildSrc: a
-`kotlin { abiValidation { filters { exclude { annotatedWith.add(...) } } } }` block in the four
-`infra/microservice` modules, `surf-nats-api` and `surf-redis-api`, and
-`surfCoreApi { withApiValidation() }` in `surf-redis-api`, `surf-redis-spring`, `surf-nats-spring`
-and `infra/database-r2dbc`. Every checked-in dump is a file matching `*/api/*.api`;
-`surf-nats-api` also has a `.klib.api` for its JS target.
+`surf-nats-api` is Kotlin Multiplatform and keeps its own `abiValidation` block, which also writes a
+`.klib.api` for its JS target. Every checked-in dump is a file matching `*/api/*.api`.
 
 `surf.module-api`'s doc comment states why this is not bundled into the api role: a module whose
 surface is generated from the Minecraft version has a dump that changes with every version bump,
@@ -140,8 +135,8 @@ fun surfModuleRole(projectName: String): SurfModuleRole = when {
 ```
 
 `-impl` is the spelling for every platform and domain implementation. `-internal` matches only
-`surf-api-internal`, which holds the NMS provider metadata shared by the KSP processor and the
-provider loader. `-nms-v<digit>` matches the four NMS bridges. `AGGREGATE` is never returned by this
+`surf-api-internal`, which holds the `NmsVersion` list shared by the Paper runtime and the
+nms-module-generator. `-nms-v<digit>` matches the four NMS bridges. `AGGREGATE` is never returned by this
 function; it exists for the role declared by applying `surf.aggregate`, so the
 `surf-api-minestom-server` aggregate classifies as `API` by name.
 
@@ -194,21 +189,17 @@ implementation module, or move the type the API needs into an API module of its 
 `strict` comes from `providers.gradleProperty("surf.apiBoundary.strict").map { it.toBooleanStrict() }
 .orElse(true)`: it throws by default, and `-Psurf.apiBoundary.strict=false` logs a warning instead.
 
-## surf.aggregate and surfRuntime
+## surf.aggregate
 
-```kotlin
-const val SURF_RUNTIME = "surfRuntime"
-```
-
-`surf.aggregate` registers it as resolvable-but-not-consumable, makes `runtimeOnly` extend from it,
-and in `afterEvaluate` requires that no source set has a non-empty source directory:
+`surf.aggregate` applies `core-convention` and in `afterEvaluate` requires that no source set has a
+non-empty source directory:
 
 ```
 :surf-api-paper applies surf.aggregate but carries sources: src/main/kotlin. An aggregate only declares dependencies.
 ```
 
-API modules go on `api` (consumer compile classpath) and implementations on `surfRuntime` (shipped,
-never visible at compile time). No aggregate declares a `surfRuntime` dependency.
+Every aggregate exports its modules with plain `api(...)`. The runtime of `surf-api-standalone`
+and `surf-api-minestom-server` comes from the implementation module each exports.
 
 ## Shadow-jar helpers
 
@@ -284,36 +275,6 @@ their shaded jar: code compiled against their published coordinate sees the pack
 relocates, and inside this build it has to see the same ones. The platform impl modules take
 `shadowed(projects.surfApiRedis.surfApiRedisSpring)`; the microservice modules take
 `shadowed(projects.surfApiDatabaseR2dbc)`.
-
-## relocation.kt
-
-```kotlin
-fun Project.publishRelocationFrom(vararg oldArtifactIds: String)
-```
-
-For each old artifact id it creates an extra `MavenPublication` named `relocation` + the id in
-PascalCase, with `artifactId` set to the old id and a POM carrying
-`<distributionManagement><relocation>` pointing at `project.group:project.name:project.version` and
-the message "The module was renamed to <name>." A consumer resolving the old coordinate gets a POM
-with no artifact, so the build keeps resolving and the warning names the new coordinate.
-
-It requires that the old id differs from the module's own name. Users, all from the Minestom
-restructure:
-
-```
-surf-api-minestom-bootstrap-impl          <- surf-api-minestom-server-bootstrap
-surf-api-minestom-console-impl            <- surf-api-minestom-server-console
-surf-api-minestom-luckperms-impl          <- surf-api-minestom-server-luckperms
-surf-api-minestom-npc-impl                <- surf-api-minestom-server-npc
-surf-api-minestom-player-visibility-impl  <- surf-api-minestom-server-player-visibility
-surf-api-minestom-plugins-impl            <- surf-api-minestom-server-plugins
-surf-api-minestom-signed-chat-impl        <- surf-api-minestom-server-signed-chat
-surf-api-minestom-spark-impl              <- surf-api-minestom-server-spark
-```
-
-Consumers of the surf Gradle plugin resolve those coordinates directly, which is why they need a
-marker. The renamed `api`/`impl` pairs behind an aggregate do not: a consumer only ever sees the
-aggregate coordinate.
 
 ## buildSrc tests
 

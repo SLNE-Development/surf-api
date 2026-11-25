@@ -1,6 +1,7 @@
 package dev.slne.surf.surfapi.bukkit.test.config
 
-import dev.slne.surf.api.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.ConfigHandle
+import dev.slne.surf.api.config.ConfigHandles
 import dev.slne.surf.api.config.constraints.*
 import dev.slne.surf.api.config.serializer.collection.map.ThrowExceptions
 import dev.slne.surf.api.config.serializer.collection.map.WriteKeyBack
@@ -32,7 +33,6 @@ import kotlin.time.Duration.Companion.seconds
 
 @ConfigSerializable
 data class ModernSerializerTestConfig(
-    // scalar serializers
     val component: Component = Component.text("Hello <world>"),
     val key: Key = Key.key("minecraft:stone"),
     val duration: ConfigDuration = ConfigDuration(30.seconds),
@@ -45,7 +45,6 @@ data class ModernSerializerTestConfig(
     val file: File = File("plugins/Surf/test.yml"),
     val textColor: TextColor = TextColor.color(0x55FFFF),
 
-    // wrapper types
     val booleanOrDefault: BooleanOrDefault = BooleanOrDefault.USE_DEFAULT,
     val durationOrDisabled: DurationOrDisabled = DurationOrDisabled.DISABLED,
     val intOrDefault: IntOr.Default = IntOr.Default.USE_DEFAULT,
@@ -59,7 +58,6 @@ data class ModernSerializerTestConfig(
     @BelowZeroToEmpty
     val belowZeroDoubleDisabled: DoubleOr.Disabled = DoubleOr.Disabled.DISABLED,
 
-    // numeric constraints
     @PositiveNumber
     val positiveNumber: Int = 1,
 
@@ -96,7 +94,6 @@ data class ModernSerializerTestConfig(
     @Contains("surf")
     val containsString: String = "hello-surf-api",
 
-    // collection constraints
     @NotEmpty
     val notEmptyList: List<String> = listOf("one"),
 
@@ -109,21 +106,18 @@ data class ModernSerializerTestConfig(
     @NoDuplicates
     val noDuplicatesList: List<String> = listOf("one", "two"),
 
-    // duration constraints
     @MinDuration(seconds = 5)
     val minDuration: ConfigDuration = ConfigDuration(10.seconds),
 
     @MaxDuration(seconds = 300)
     val maxDuration: ConfigDuration = ConfigDuration(5.minutes),
 
-    // key / enum-ish constraints
     @Namespace("minecraft")
     val namespacedKey: Key = Key.key("minecraft:dirt"),
 
     @DisallowValues("DISABLED", "NONE")
     val mode: TestMode = TestMode.ENABLED,
 
-    // path constraints
     @ExistingFile
     val existingFile: Path = Path.of("plugins/SurfPaperPluginTest/test.yml"),
 
@@ -133,7 +127,6 @@ data class ModernSerializerTestConfig(
     @WritablePath
     val writablePath: Path = Path.of("plugins/SurfPaperPluginTest/test.yml"),
 
-    // map serializers
     val normalMap: Map<String, Int> = mapOf(
         "one" to 1,
         "two" to 2,
@@ -147,7 +140,6 @@ data class ModernSerializerTestConfig(
         Key.key("minecraft:stone") to 1,
     ),
 
-    // int-keyed map serializers
     val intKeyedMap: Map<Int, String> = mapOf(
         1 to "one",
         2 to "two",
@@ -158,20 +150,25 @@ data class ModernSerializerTestConfig(
         2 to 2,
     ),
 
-    // paper
     val stack: ItemStack = ItemType.BOOK.createItemStack(),
 
     val location: Location = Location(plugin.server.worlds.first(), 0.0, 0.0, 0.0),
 
     val itemType: ItemType = ItemType.STONE,
     val material: Material = Material.STONE,
-    val selectedGameRules: List<GameRule<*>> = listOf(GameRules.ADVANCE_TIME, GameRules.MAX_BLOCK_MODIFICATIONS),
-) {
-    companion object : SpongeYmlConfigClass<ModernSerializerTestConfig>(
-        ModernSerializerTestConfig::class.java,
-        plugin.dataPath,
-        "modern-serializer-test-config.yml"
-    )
+    val selectedGameRules: List<GameRule<*>> = listOf(
+        GameRules.ADVANCE_TIME,
+        GameRules.MAX_BLOCK_MODIFICATIONS,
+    ),
+)
+
+/**
+ * The handle of `modern-serializer-test-config.yml`, opened on first use.
+ *
+ * Its defaults read the server's worlds, so it cannot open while the plugin's context starts.
+ */
+val modernSerializerTestConfig: ConfigHandle<ModernSerializerTestConfig> by lazy {
+    ConfigHandles.open(plugin.dataPath.resolve("modern-serializer-test-config.yml"))
 }
 
 enum class TestMode {

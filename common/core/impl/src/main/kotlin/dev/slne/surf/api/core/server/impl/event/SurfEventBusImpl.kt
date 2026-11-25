@@ -1,10 +1,9 @@
 package dev.slne.surf.api.core.server.impl.event
 
-import dev.slne.surf.api.common.invoker.HiddenInvokerUtil
+import dev.slne.surf.api.common.invoker.InvokerMethods
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.core.server.impl.event.invoker.SurfEventInvokerFactory
 import dev.slne.surf.api.event.*
-import dev.slne.surf.api.shared.api.util.InternalInvokerApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.springframework.stereotype.Service
@@ -15,17 +14,19 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
 
-@OptIn(InternalInvokerApi::class)
+private typealias HandlersByPriority =
+    ConcurrentHashMap<SurfEventPriority, CopyOnWriteArrayList<SurfEventHandlerEntry>>
+
 @Service
 class SurfEventBusImpl : SurfEventBus {
     companion object {
         private val log = logger()
     }
 
-    private val handlers =
-        ConcurrentHashMap<Class<out SurfEvent>, ConcurrentHashMap<SurfEventPriority, CopyOnWriteArrayList<SurfEventHandlerEntry>>>()
+    private val handlers = ConcurrentHashMap<Class<out SurfEvent>, HandlersByPriority>()
 
-    private val dispatchCache = ConcurrentHashMap<Class<out SurfEvent>, Array<SurfEventHandlerEntry>>()
+    private val dispatchCache =
+        ConcurrentHashMap<Class<out SurfEvent>, Array<SurfEventHandlerEntry>>()
     private val emptyHandlers = emptyArray<SurfEventHandlerEntry>()
 
     private val nextOrder = AtomicLong()
@@ -35,6 +36,7 @@ class SurfEventBusImpl : SurfEventBus {
         require(handlerMethods.isNotEmpty()) {
             "No @SurfEventHandler methods found on ${listener.javaClass.name}"
         }
+
         for ((method, annotation, eventType) in handlerMethods) {
             registerMethodHandler(listener, method, annotation, eventType)
         }
@@ -54,7 +56,7 @@ class SurfEventBusImpl : SurfEventBus {
         eventClass: Class<T>,
         priority: SurfEventPriority,
         ignoreCancelled: Boolean,
-        handler: (T) -> Unit
+        handler: (T) -> Unit,
     ): Any {
         val token = Any()
 
@@ -64,7 +66,7 @@ class SurfEventBusImpl : SurfEventBus {
             handler as (SurfSyncEvent) -> Unit,
             priority,
             ignoreCancelled,
-            nextOrder.getAndIncrement()
+            nextOrder.getAndIncrement(),
         )
         addHandler(eventClass, entry)
 
@@ -75,7 +77,7 @@ class SurfEventBusImpl : SurfEventBus {
         eventClass: Class<T>,
         priority: SurfEventPriority,
         ignoreCancelled: Boolean,
-        handler: suspend (T) -> Unit
+        handler: suspend (T) -> Unit,
     ): Any {
         val token = Any()
 
@@ -85,7 +87,7 @@ class SurfEventBusImpl : SurfEventBus {
             handler as suspend (SurfAsyncEvent) -> Unit,
             priority,
             ignoreCancelled,
-            nextOrder.getAndIncrement()
+            nextOrder.getAndIncrement(),
         )
         addHandler(eventClass, entry)
 
@@ -94,10 +96,12 @@ class SurfEventBusImpl : SurfEventBus {
 
     override fun callSync(event: SurfSyncEvent): SurfSyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
+
         val cancellable = event as? SurfCancellableEvent
 
         for (handler in matching) {
             if (handler.skipWhenCancelled && cancellable?.isCancelled == true) continue
+
             try {
                 handler as SurfEventHandlerEntry.SyncInvoker
                 handler.invoker.invoke(event)
@@ -106,7 +110,7 @@ class SurfEventBusImpl : SurfEventBus {
                     .withCause(t)
                     .log(
                         "Error dispatching sync event %s to handler for %s",
-                        event.javaClass.name, handler.token
+                        event.javaClass.name, handler.token,
                     )
             }
         }
@@ -116,6 +120,7 @@ class SurfEventBusImpl : SurfEventBus {
 
     override suspend fun callAsync(event: SurfAsyncEvent): SurfAsyncEvent {
         val matching = collectMatching(event.javaClass) ?: return event
+
         val cancellable = event as? SurfCancellableEvent
 
         for (handler in matching) {
@@ -137,7 +142,7 @@ class SurfEventBusImpl : SurfEventBus {
                         .log(
                             "Async event handler for %s cancelled itself: %s",
                             event.javaClass.name,
-                            handler.token
+                            handler.token,
                         )
 
                     continue
@@ -147,7 +152,7 @@ class SurfEventBusImpl : SurfEventBus {
                     .withCause(t)
                     .log(
                         "Error dispatching async event %s to handler for %s",
-                        event.javaClass.name, handler.token
+                        event.javaClass.name, handler.token,
                     )
             }
         }
@@ -166,11 +171,12 @@ class SurfEventBusImpl : SurfEventBus {
 
     private fun collectMatching(concreteType: Class<out SurfEvent>): Array<SurfEventHandlerEntry>? {
         val handlers = dispatchCache.computeIfAbsent(concreteType, ::buildMatchingHandlers)
+
         return handlers.takeIf { it.isNotEmpty() }
     }
 
     private fun buildMatchingHandlers(
-        concreteType: Class<out SurfEvent>
+        concreteType: Class<out SurfEvent>,
     ): Array<SurfEventHandlerEntry> {
         val result = mutableListOf<SurfEventHandlerEntry>()
 
@@ -188,7 +194,7 @@ class SurfEventBusImpl : SurfEventBus {
 
         result.sortWith(
             compareBy<SurfEventHandlerEntry> { it.priority.ordinal }
-                .thenBy { it.order }
+                .thenBy { it.order },
         )
 
         return result.toTypedArray()
@@ -200,18 +206,18 @@ class SurfEventBusImpl : SurfEventBus {
         annotation: SurfEventHandler,
         eventType: Class<out SurfEvent>,
     ) {
-        val isSuspend = HiddenInvokerUtil.isSuspendFunction(method)
+        val isSuspend = InvokerMethods.isSuspendFunction(method)
 
         when {
             SurfSyncEvent::class.java.isAssignableFrom(eventType) -> {
                 require(!isSuspend) {
                     "@SurfEventHandler ${method.declaringClass.name}.${method.name} " +
-                            "is for SurfSyncEvent ${eventType.name} and must not be suspend"
+                        "is for SurfSyncEvent ${eventType.name} and must not be suspend"
                 }
 
                 @Suppress("UNCHECKED_CAST")
-                val invoker = SurfEventInvokerFactory.syncFactory.create(
-                    listener, method, eventType as Class<out SurfSyncEvent>
+                val invoker = SurfEventInvokerFactory.createSync(
+                    listener, method, eventType as Class<out SurfSyncEvent>,
                 )
                 addHandler(
                     eventType,
@@ -220,15 +226,15 @@ class SurfEventBusImpl : SurfEventBus {
                         invoker,
                         annotation.priority,
                         annotation.ignoreCancelled,
-                        nextOrder.getAndIncrement()
-                    )
+                        nextOrder.getAndIncrement(),
+                    ),
                 )
             }
 
             SurfAsyncEvent::class.java.isAssignableFrom(eventType) -> {
                 @Suppress("UNCHECKED_CAST")
-                val invoker = SurfEventInvokerFactory.asyncFactory.create(
-                    listener, method, eventType as Class<out SurfAsyncEvent>
+                val invoker = SurfEventInvokerFactory.createAsync(
+                    listener, method, eventType as Class<out SurfAsyncEvent>,
                 )
                 addHandler(
                     eventType,
@@ -237,14 +243,14 @@ class SurfEventBusImpl : SurfEventBus {
                         invoker,
                         annotation.priority,
                         annotation.ignoreCancelled,
-                        nextOrder.getAndIncrement()
-                    )
+                        nextOrder.getAndIncrement(),
+                    ),
                 )
             }
 
             else -> error(
                 "@SurfEventHandler ${method.declaringClass.name}.${method.name} parameter " +
-                        "type ${eventType.name} is not a SurfSyncEvent or SurfAsyncEvent"
+                    "type ${eventType.name} is not a SurfSyncEvent or SurfAsyncEvent",
             )
         }
     }
@@ -257,15 +263,19 @@ class SurfEventBusImpl : SurfEventBus {
     private fun collectHandlerMethods(type: Class<*>): List<HandlerMethod> {
         val out = mutableListOf<HandlerMethod>()
         var current: Class<*>? = type
+
         while (current != null && current != Any::class.java) {
             for (method in current.declaredMethods) {
                 if (method.isSynthetic || method.isBridge) continue
                 val annotation = method.getAnnotation(SurfEventHandler::class.java) ?: continue
+
                 val eventType = validateAndExtractEventType(method)
                 out += HandlerMethod(method, annotation, eventType)
             }
+
             current = current.superclass
         }
+
         return out
     }
 
@@ -274,31 +284,32 @@ class SurfEventBusImpl : SurfEventBus {
         // Suspend functions have a trailing Continuation parameter, which we
         // accept here – the rest of the signature must still describe exactly
         // one event parameter.
-        val effectiveParamCount = if (HiddenInvokerUtil.isSuspendFunction(method)) {
+        val effectiveParamCount = if (InvokerMethods.isSuspendFunction(method)) {
             params.size - 1
         } else {
             params.size
         }
         require(effectiveParamCount == 1) {
             "@SurfEventHandler ${method.declaringClass.name}.${method.name} must take exactly " +
-                    "one parameter (the event type), but takes $effectiveParamCount"
+                "one parameter (the event type), but takes $effectiveParamCount"
         }
         val eventParam = params[0]
         require(SurfEvent::class.java.isAssignableFrom(eventParam)) {
             "@SurfEventHandler ${method.declaringClass.name}.${method.name} parameter type " +
-                    "${eventParam.name} must be a subclass of SurfEvent"
+                "${eventParam.name} must be a subclass of SurfEvent"
         }
 
         require(!Modifier.isStatic(method.modifiers)) {
             "@SurfEventHandler ${method.declaringClass.name}.${method.name} must not be static"
         }
 
-        val canAccess = HiddenInvokerUtil.canAccess(method.declaringClass, method, SurfEventInvokerFactory.lookup)
+        val canAccess = InvokerMethods.canAccess(method, SurfEventInvokerFactory.lookup)
+
         if (!canAccess) {
             throw IllegalAccessException(
                 "Cannot access @SurfEventHandler ${method.declaringClass.name}.${method.name} " +
-                        "because it is declared in a class that is not accessible from " +
-                        "${method.declaringClass.name}"
+                    "because it is declared in a class that is not accessible from " +
+                    "${method.declaringClass.name}",
             )
         }
 

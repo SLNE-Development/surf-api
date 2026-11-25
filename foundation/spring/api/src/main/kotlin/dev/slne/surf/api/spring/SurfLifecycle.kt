@@ -5,8 +5,8 @@ package dev.slne.surf.api.spring
  *
  * Each hook defaults to doing nothing. Within one context, [onLoad] and [onEnable] run in the order
  * in which the beans finished initializing, so a bean's dependencies run before the bean itself;
- * [onDisable] runs in the reverse order. `@Order` or [org.springframework.core.Ordered] moves a bean
- * ahead of the beans that declare no order.
+ * [onDisable] runs in the reverse order. `@Order` or [org.springframework.core.Ordered] moves a
+ * bean ahead of the beans that declare no order.
  *
  * The hooks of one phase run one after another, never concurrently. A hook that throws aborts the
  * phase and fails the plugin, except in [onDisable], where the failure is logged and the remaining
@@ -16,8 +16,11 @@ package dev.slne.surf.api.spring
  * phases that already ran.
  *
  * On Paper the hooks block the thread that calls the phase, which is the main thread for load,
- * enable and disable. A hook must not wait for work dispatched to the main or a region thread or to
- * the Bukkit scheduler; such work may only be launched without waiting for it.
+ * enable and disable. A hook may wait for work dispatched through `PaperDispatchers.main`: while
+ * the phase runs, the blocked thread runs that work itself, and on a server without regionized
+ * ticking the same holds for `region` and `entity` work. A hook must not wait for region or entity
+ * work on a regionized server such as Folia, nor for tasks handed to the Bukkit scheduler directly;
+ * such work may only be launched without waiting for it.
  */
 interface SurfLifecycle {
 
@@ -57,7 +60,8 @@ interface SurfLifecycle {
  * as LuckPerms, nor on the concrete plugin class; it may hold the plugin as
  * `org.bukkit.plugin.Plugin`, which works from the load phase on. No server exists yet: the Bukkit
  * server API is unavailable, and the main and region threads do not tick, so dispatching to them
- * never completes. Hooks run in initialization order, `@Order` first, like those of [SurfLifecycle].
+ * never completes. Hooks run in initialization order, `@Order` first, like those of
+ * [SurfLifecycle].
  */
 interface SurfBootstrapLifecycle {
 

@@ -13,6 +13,7 @@ import dev.slne.surf.api.paper.visualizer.visualizer.ExperimentalVisualizerApi
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerSingleLocation
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.World
@@ -64,6 +65,7 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
 
     private fun getActiveVisualizers(player: Player): List<AbstractSurfVisualizerImpl> {
         val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
+
         return visualizerUuids.mapNotNull { uid ->
             visualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
         }
@@ -71,6 +73,7 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
 
     private fun getActiveAreaVisualizers(player: Player): List<SurfVisualizerAreaImpl> {
         val visualizerUuids = playerToVisualizers[player.uniqueId] ?: return emptyList()
+
         return visualizerUuids.mapNotNull { uid ->
             areaVisualizers.getIfPresent(uid)?.takeIf { !it.isClosed() && it.isVisualizing() }
         }
@@ -87,15 +90,22 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
 
     fun processChunkReceiveUpdateForPlayer(player: Player, chunk: Chunk) {
         val activeAreas = getActiveAreaVisualizers(player)
-        activeAreas.forEach { it.onChunkBecameVisible(player, chunk) }
+
+        for (activeArea in activeAreas) {
+            activeArea.onChunkBecameVisible(player, chunk)
+        }
 
         val active = getActiveVisualizers(player)
-        active.forEach { it.onPlayerReceiveChunk(player, chunk) }
+        for (visualizer in active) {
+            visualizer.onPlayerReceiveChunk(player, chunk)
+        }
     }
 
     fun processChunkUnloadForPlayer(player: Player, chunk: Chunk) {
         val active = getActiveVisualizers(player)
-        active.forEach { it.onPlayerUnloadChunk(player, chunk) }
+        for (visualizer in active) {
+            visualizer.onPlayerUnloadChunk(player, chunk)
+        }
     }
 
     fun processPlayerQuit(player: Player) {
@@ -103,6 +113,7 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
 
         for (active in visualizers.asMap().values) {
             if (active.isClosed()) continue
+
             active.removeViewer(player)
         }
     }
@@ -113,6 +124,6 @@ class SurfBukkitVisualizerApiImpl : SurfPaperVisualizerApi {
     }
 
     companion object {
-        val INSTANCE get() = SurfPaperVisualizerApi.instance as SurfBukkitVisualizerApiImpl
+        internal val instance by surfBean<SurfBukkitVisualizerApiImpl>()
     }
 }

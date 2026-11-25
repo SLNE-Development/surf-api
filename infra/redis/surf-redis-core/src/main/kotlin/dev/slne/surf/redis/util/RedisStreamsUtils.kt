@@ -32,7 +32,7 @@ fun <K : Any, V : Any> RStreamReactive<K, V>.pollContinuously(
     shouldPoll: () -> Boolean = { true },
     handler: Result<Map<StreamMessageId, Map<K, V>>>.() -> Unit,
 ): Disposable {
-    val scheduler = RedisInstance.get().streamPollScheduler
+    val scheduler = RedisInstance.instance.streamPollScheduler
 
     val fallback = Flux.interval(
         pollInterval.toJavaDuration(),

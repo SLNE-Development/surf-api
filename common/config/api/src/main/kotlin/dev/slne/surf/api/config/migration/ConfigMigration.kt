@@ -3,20 +3,14 @@ package dev.slne.surf.api.config.migration
 import org.spongepowered.configurate.ConfigurationNode
 
 /**
- * Represents a single configuration migration step.
+ * Upgrades the raw node tree of a configuration file to one version.
  *
- * Each migration is responsible for transforming the raw [ConfigurationNode] tree
- * from one schema version to the next. Migrations are applied in version order
- * (lowest to highest) and only when the config's current version is lower than
- * the migration's target version.
- *
- * Implementations should be stateless and side-effect-free (aside from mutating
- * the provided node tree).
- *
- * ## Example
+ * A migration runs only when the file's stored version is below the version it is registered
+ * under, see [ConfigMigrations]. It must not depend on state outside the node tree. Keys in the
+ * tree are lower-case-dashed, such as `max-players`.
  *
  * ```kotlin
- * object RenameServerVersionMigration : ConfigMigration {
+ * object RenameServerVersion : ConfigMigration {
  *     override fun migrate(node: ConfigurationNode) {
  *         val old = node.node("server", "version")
  *         if (!old.virtual()) {
@@ -26,16 +20,16 @@ import org.spongepowered.configurate.ConfigurationNode
  *     }
  * }
  * ```
+ *
+ * As a `fun interface`, a migration can also be a lambda:
+ * `ConfigMigration { node -> node.node("legacy").raw(null) }`.
  */
 fun interface ConfigMigration {
 
     /**
-     * Applies this migration to the given configuration node tree.
+     * Upgrades [node] in place.
      *
-     * The [node] is the **root** node of the configuration. Implementations
-     * can freely read, modify, move, or remove any child nodes.
-     *
-     * @param node the root configuration node to transform
+     * @param node the root node of the file
      */
     fun migrate(node: ConfigurationNode)
 }

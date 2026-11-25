@@ -21,5 +21,24 @@ surf-api runtime and microservices are wired with Spring application contexts.
   bytecode: mark it `@PublishedSurfApi`, which the dumps keep. `checkInlineInternalApi` enforces this.
   The dump filter skips nested classes, so a companion or `Key` object of an internal class carries
   the marker itself; `checkAbiDumpNesting` enforces this.
+- **4.0 is the breaking release:** until 4.0.0 ships, write no compatibility shims (`@IntroducedAt`,
+  `DeprecationLevel.HIDDEN` overloads, `@Deprecated` bridges, relocation POMs). Remove a public
+  declaration outright and record it in `MIGRATION-4.0.md`. The global binary-compatibility rules apply
+  again from 4.0.x on.
+- **Opt-ins:** the root build opts every module into `@InternalSurfApi` and `@PublishedSurfApi`, and
+  `infra/nats` into `InternalNatsApi`; never write `@OptIn` for a marker the module's build already opts
+  into.
+- **Static bean access:** an internal static accessor is a companion `@InternalSurfApi val instance by
+  surfBean<T>()`, without `@JvmStatic` and without a private top-level backing property. Code that is
+  itself a bean injects the dependency instead.
+- **Dead internal code:** an unused declaration in an impl module or an internal package is deleted, not
+  kept; public API is removed only deliberately and recorded in `MIGRATION-4.0.md`.
+- **Consumers:** only Kotlin projects built with Gradle are supported. Write no Java-facing API
+  (`@JvmOverloads`, `@JvmStatic` or facades only Java needs); `@JvmField`/`@JvmName` stay where they
+  shape the bytecode Kotlin relies on. `*-api` modules declare third-party libraries `compileOnlyApi`,
+  because the surf-api runtime jar provides them.
+- **Service lookup:** surf-api's own services, Redis and NATS included, are beans of the root context,
+  reached statically through `instance by surfBean<T>()`. `ServiceLoader` is reserved for
+  `ContextContributor`, which must be found before any context exists.
 - **Golden files:** the JS tests compare the protoc plugin output with
   `infra/nats/surf-nats-core/src/jsTest/protoc/golden`. Keep those files exactly as generated.

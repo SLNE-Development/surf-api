@@ -48,9 +48,12 @@ sits below the root context and also references the plugin's own bootstrap beans
 full context can inject them. See [Lifecycle](#lifecycle).
 
 surf-api's static entry points read their beans lazily from the installed root context through
-`surfBean`, which keeps the bean of the first root it read. `SurfEventBus.INSTANCE` resolves the bus
-again after a new root context is installed, so `call()` and the automatically registered
-`@SurfEventHandler` beans use the bus that the current root's beans inject. The entry points are not
+`surfBean`. The property caches the bean together with the root it came from and resolves it again
+when `SurfContexts` holds another root, so `SurfEventBus.instance` is always the bus that the
+current root's beans inject: `call()` and the automatically registered `@SurfEventHandler` beans use
+it. While no root is installed, such as during shutdown, the property keeps the bean it read last.
+Each entry point is a companion property `@InternalSurfApi val instance by surfBean<T>()`, and a
+class that is itself a bean injects the dependency instead. The entry points are not
 part of the public API: plugins inject a service or call the extension and top-level functions that
 wrap it. An accessor used only in its own module is `internal`; one that other surf-api modules
 use is public but carries `@InternalSurfApi`, whose error-level opt-in keeps plugins from compiling
@@ -63,9 +66,20 @@ class loader, such as one shaded into a Minestom server, must live outside `dev.
 its base package must not contain it either; otherwise the plugin's beans would land in the root
 context or surf-api's beans in the plugin context. `SurfContextManager` rejects such a plugin.
 
-Platform objects that surf-api's beans need are singletons of the root context: the Minestom
-server is injectable as `SurfMinestomServer`. The inventory framework's `ViewFrame` is a root bean
-on Paper and Minestom, next to a `ViewFrameAccessor` bean that wraps it; a plugin injects either.
+Platform objects that surf-api's beans need are singletons of the root context: the Paper server
+is injectable as `org.bukkit.Server`, the Minestom server as `SurfMinestomServer`. The inventory
+framework's `ViewFrame` is a root bean on Paper and Minestom, next to a `ViewFrameAccessor` bean
+that wraps it; a plugin injects either.
+
+LuckPerms is a root bean as well, named `luckPerms`. On Paper and Velocity a lazy `@Bean` method
+reads it from `LuckPermsProvider`, because LuckPerms registers its api only when it enables, which
+can be after the root context is built. On Minestom `withLuckPerms()` registers the running api as
+a singleton once the feature has loaded, after the root refresh, and removes it again when the
+feature is disabled. The helpers sit in the `SurfLuckPerms` root bean, which resolves `LuckPerms`
+through an `ObjectProvider` on every call, so injecting it never forces LuckPerms early. A plugin
+bean that wants `LuckPerms` itself injects it as `ObjectProvider<LuckPerms>` or with `@Lazy`.
+`SurfLuckPermsImpl` is no component: standalone runtimes and Minestom servers without the feature
+have no LuckPerms classes, so each platform that has them publishes it with a `@Bean` method.
 
 ### Exports
 
@@ -110,8 +124,8 @@ code shared by several platforms can list a plugin's per-platform names. The ann
 repeatable; every repetition must hold.
 
 The plugin named in `@ConditionalOnPlugin` must be a declared dependency, optional for a soft one.
-On Velocity the condition is evaluated in the plugin's constructor, and Velocity only knows the
-plugins it constructed before.
+On Velocity the condition is evaluated in the plugin's load phase, and Velocity only knows the
+plugins it created before.
 
 ## Plugin integration
 
@@ -125,6 +139,13 @@ named class extends `SurfPaperPlugin`, `SurfPaperBootstrapper`, `SurfVelocityPlu
 overridden. `verifyPluginClasses = false` turns the check off for a plugin that is not a surf
 plugin yet.
 
+`SurfVelocityPlugin` has a no-argument constructor and loads the plugin from a private Guice
+`@Inject` method that takes the `PluginContainer`. Velocity creates each plugin with
+`Injector.getInstance`, which runs the constructors and then injects members, superclass members
+first, before Velocity creates the next plugin. The context is therefore built after the subclass
+constructor and its property initializers, while the dependency order of the load phases stays
+intact. `@Inject` fields and methods of the subclass are injected only after the load phase.
+
 On Paper, `surfPluginDependency("name")` declares another surf plugin as both bootstrap and server
 dependency, required, with joined class path and loaded before. Other plugins stay plain server
 dependencies: a required bootstrap dependency on a plugin without a bootstrapper makes Paper skip
@@ -137,8 +158,9 @@ other singleton: it injects `@Autowired` members, runs the `Aware` callbacks, `@
 every `BeanPostProcessor` on it, and calls `@PreDestroy` and `DisposableBean.destroy` when it
 closes. Only Spring's inferred `close()` or `shutdown()` call is suppressed, because the platform
 owns the instance. Cleanup belongs in either `onDisable` or `@PreDestroy`, not both, or it runs
-twice. The surf-api plugin itself is not a bean of the root context, so `Plugin` inside a plugin
-context resolves to that plugin's own instance.
+twice. The surf-api plugin itself is a fallback bean of the root context, for surf-api's own
+beans; the plugin's primary instance wins over it, so `Plugin` inside a plugin context resolves to
+that plugin's own instance.
 
 Component scanning starts at the longest common package of the plugin's own sources and reads only
 the plugin's own jar. The Gradle plugin computes that package from the `package` declarations of
@@ -175,7 +197,7 @@ surf-api drives each plugin context through the platform's phases:
 | Platform | Refresh | `onLoad` | `onEnable` | `onDisable` and close |
 |---|---|---|---|---|
 | Paper | plugin bootstrapper, followed by `onBootstrap` | plugin `onLoad` | plugin `onEnable` | plugin `onDisable` |
-| Velocity | plugin constructor | plugin constructor | `ProxyInitializeEvent` | `ProxyShutdownEvent` |
+| Velocity | Guice member injection | Guice member injection | `ProxyInitializeEvent` | `ProxyShutdownEvent` |
 | Minestom | plugin manager load | plugin manager load | plugin manager enable | teardown |
 | Standalone | `bootstrap` (root only) | `bootstrap` | `enable` | `shutdown` |
 
@@ -214,14 +236,56 @@ bootstrap context's beans run before those of the plugin context, and `onDisable
 The plugin instance is injectable as `org.bukkit.plugin.Plugin` in the bootstrap context as a proxy
 that forwards to the instance once Paper created it; it compares equal to the instance, the way
 Bukkit compares plugins, so listeners and tasks registered through it are cleaned up with the
-plugin. The plugin context injects the instance itself under every type it has.
+plugin. The plugin context injects the instance itself under every type it has. The proxy
+(`PluginInstanceHolder` in `platform/paper/impl`) forwards every call reflectively and throws
+until Paper has created the instance in the load phase. Keep it for registration and setup; code
+that runs per tick injects the instance in the plugin context instead.
 
 The plugin's hooks block the thread Paper calls the phase on, which is the main thread for load,
-enable and disable, so a hook must not wait for work dispatched to the main or a region thread.
-A plugin whose load phase failed is never enabled; Paper disables it instead.
+enable and disable. A hook may wait for `PaperDispatchers.main` work, which the blocked phase runs
+itself (see [Paper dispatchers](#paper-dispatchers)); it must not wait for Folia region or entity
+work or for a task handed to the Bukkit scheduler directly. A plugin whose load phase failed is
+never enabled; Paper disables it instead.
 
 There is no hot reload or unloading. At shutdown, contexts close in reverse dependency order:
 consumers and their import contexts first, then providers, then the root context.
+
+### Startup steps
+
+Every context surf-api builds, root, plugin and import contexts alike, records Spring startup
+steps. With `-Dsurf.startup.jfr=true` all of them share one `FlightRecorderApplicationStartup`, so
+Java Flight Recorder captures surf-api's steps and Spring's own (`spring.context.refresh`, bean
+instantiation and so on) with consistent parent ids. Without the property the steps go to
+`ApplicationStartup.DEFAULT` and cost nothing. Start the recording with the JVM, for example
+`-XX:StartFlightRecording=filename=startup.jfr`, and open it in JDK Mission Control under
+*Spring Application*.
+
+| Step | Tag | Covers |
+|---|---|---|
+| `surf.context.build` | `displayName` | component scan, contributors and refresh of one context |
+| `surf.plugin.bootstrap` | `plugin` | the `onBootstrap` hooks |
+| `surf.plugin.load` | `plugin` | the `onLoad` hooks |
+| `surf.plugin.enable` | `plugin` | the `onEnable` hooks and the `afterEnable` phase listeners |
+| `surf.plugin.disable` | `plugin` | the `beforeDisable` phase listeners and the `onDisable` hooks |
+
+The root contexts tag their phase steps with `surf-api`, or with the hosted application's name.
+A context that `SurfApiStandaloneBootstrap.adopt` takes over keeps an application startup its
+creator installed, and its refresh is not a `surf.context.build` step, because the caller runs it.
+
+Independently of the property, each plugin logs one info line after its enable phase, through the
+logger `dev.slne.surf.api.spring.context.PluginContext` (`SurfRootContext` for the root contexts):
+
+```text
+Plugin 'shop' started: build 41 ms, bootstrap 0 ms, load 3 ms, enable 12 ms
+```
+
+The build duration sums the bootstrap context and the plugin context on Paper. The import context
+of a plugin records only Spring's own refresh step, outside the plugin's `surf.context.build` step
+and its build duration.
+
+The root contexts log the same line, starting with `Root context of 'surf-api'` (or the hosted
+application's name). On Paper the root bootstrap context logs a line of its own, starting with
+`Root bootstrap context of 'surf-api'`.
 
 ## Coroutines
 
@@ -324,12 +388,18 @@ receives, in this order:
 2. The plugin's components, found by the component scan.
 3. The plugin's `CoroutineScope`, as primary bean.
 4. The contributions of every `ContextContributor` bean in the root context.
-5. The platform's beans: the plugin instance, as primary bean, on every platform; the plugin's
+5. The platform's beans: the plugin instance, as primary bean, and the plugin's `ComponentLogger`
+   (`surfPluginLogger`, named after the plugin, as fallback bean) on every platform; the plugin's
    `PaperDispatchers`, as primary bean, on Paper; `ProxyServer` and the plugin's
    `PluginContainer` on Velocity.
 
-surf-api ships three contributors in its Paper and Velocity plugin jars and its Minestom runtime:
+The root context holds the platform's server: `org.bukkit.Server` on Paper, `SurfMinestomServer`
+on Minestom; on Velocity every plugin context holds `ProxyServer`. surf-api registers no `Path`
+bean: the data folder is no unique type, and a plugin reads it from its platform.
+
+surf-api ships four contributors in its Paper and Velocity plugin jars and its Minestom runtime:
 `SurfConfigContributor` registers a `ConfigHandle` for every `@SurfConfig` class,
+`ReflectionProxyContributor` a lazy bean for every `@ReflectionProxy` interface,
 `NatsContextContributor` the plugin's NATS client and the NATS post-processors, and
 `RedisContextContributor` the plugin's `RedisApi`. Bootstrap contexts get no contributions,
 because the root context does not exist yet in Paper's bootstrap phase.
@@ -357,23 +427,38 @@ data class ShopConfig(val discount: Double = 0.0)
 - The path is relative to the plugin's data folder, may contain subfolders and must not leave it.
   Its extension picks the format: `.yml` or `.yaml` for YAML, `.json` for JSON.
 - A migration's version is its position in `migrations`, starting at 1, so a migration is only
-  ever appended. Each one is a Kotlin `object` or has a constructor without parameters.
-- Beans inject `ConfigHandle<ShopConfig>`, which offers `value`, `reload()`, `edit { }` for classes
-  with mutable properties, `update { it.copy(...) }` for immutable ones, and `save()`. Injecting the
-  data class directly would hand out a stale value after a reload. The handle serializes its
-  operations, because Configurate's loader and node are not thread-safe.
+  ever appended. Each one is a Kotlin `object` or has a constructor without parameters. A
+  `ConfigMigrations<ShopConfig>` bean replaces the array with explicit, sparse versions and lambda
+  migrations; declaring both fails the start. `versionKey` names the root-level key of the stored
+  version.
+- Beans inject `ConfigHandle<ShopConfig>`, which offers `value`, `reload(validate)`, `edit { }` for
+  classes with mutable properties, `update { it.copy(...) }` for immutable ones, and `save()`.
+  Injecting the data class directly would hand out a stale value after a reload. The handle
+  serializes its operations, because Configurate's loader and node are not thread-safe.
+- `reload` migrates a candidate in memory and installs it only after `validate` returns, so a
+  rejected file leaves value and file untouched. It writes the file only when a migration ran:
+  rewriting on every reload would drop the formatting an operator chose.
 - The config contributor finds `@SurfConfig` classes in the plugin's own jar, the same way the
   component scan does, and registers one handle per class with the class as its exact type
   argument. The class itself is no bean.
 - The file is read, migrated and written back with its defaults when the plugin's context starts,
   so a broken file fails the plugin's start instead of its first use.
-- Handles do not go through `SurfConfigApi`'s global registry, which would keep a plugin's classes
-  alive after the plugin is gone.
+- Code that is not a bean reads a handle through `configHandle<ShopConfig>()` or
+  `by surfConfig<ShopConfig>()`. The contributor registers the plugin's context in
+  `SurfConfigContexts` before the refresh, keyed weakly by the plugin's class loader, and removes
+  it when the context closes. A lookup picks the active context whose loader sees the class and
+  that declares the contributor's handle bean (`SurfConfigContexts.handleBeanName`), because a
+  shaded application shares surf-api's loader with other plugins. Other `ConfigHandle` beans of
+  the class are ignored. No registry keyed by class exists: one would keep a plugin's classes alive after the
+  plugin is gone, which is why `SurfConfigApi` and its companion classes were removed.
+- Files outside a plugin's data folder, files whose path is known only at runtime and files read
+  before a context exists go through `ConfigHandles.open(path, format, migrations)`. The caller
+  owns and closes that handle.
 - A plugin registers serializers for its own types through `ConfigSerializerRegistrar` beans, which
   run before its first handle opens; the static accessor to the serializer registry is internal.
 
-Microservices use the same mechanism for their own configuration and for the database and NATS
-files.
+Microservices use the same mechanism for their own configuration. surf-database-r2dbc, surf-nats
+and surf-redis read their files once through `ConfigHandles.open` and close the handle again.
 
 ## Events, listeners and commands
 
@@ -400,7 +485,8 @@ registers the beans of the root context, which hosts the application, before its
 and `shutdown` unregisters them after the `onDisable` hooks. Microservices adopt their context
 through `SurfApiStandaloneBootstrap.adopt` and take the same path. `CommandApiCommandBeans`
 registers the commands on Paper and Velocity, which run CommandAPI; Minestom registers its own
-`CommandAPICommand` and `CommandTree` beans.
+`CommandAPICommand` and `CommandTree` beans. On Paper, `PapiExpansionBeans` registers the
+`@PapiExpansion` beans with PlaceholderAPI in the same step and unregisters them on disable.
 
 surf-api registers commands in the enable phase, before the `onEnable` hooks run. A command is
 either a bean that extends `CommandAPICommand` or `CommandTree`, or a `CommandRegistrar` bean that
@@ -431,8 +517,9 @@ drain and unregister before its dependencies close.
 Further behavior is a separate annotation rather than an attribute of `@NatsService`, so the
 annotation stays small as features are added. `@NatsTransactional` marks a microservice handler
 whose database writes, deduplication claim and stored reply commit atomically through
-`AtomicOperations`. The semantics come from the reliability module's
-`NatsServiceInterceptorProvider`, and the start fails without that module.
+`AtomicOperations`. The semantics come from surf-microservice's reliability module, which
+registers its interceptor through the internal `NatsServiceInterceptorProvider` (`@InternalNatsApi`,
+no extension point for consumers); the start fails without that module.
 
 A consumer injects a generated service interface directly to call the remote service:
 
@@ -517,7 +604,18 @@ surf-api's root scan covers. Its configuration is `redis/config.yml` in surf-api
 seeded the same way as the NATS configuration from a surf-redis platform plugin's data folder, such
 as `surf-redis-paper`.
 
-Microservices do not use Redis. `surf-redis-standalone` serves other standalone applications.
+`RedisInstance`, the process-wide networking, is `@InternalSurfApi`: Redis runs only inside a
+surf-api runtime, never in a program that implements it itself. `RedisInstance`,
+`RedisComponentProvider` and `RedisCredentialsProvider` are beans of the root context, declared by
+`RedisBeans` in `surf-redis-spring`; the instance is lazy, so the networking starts only when a
+plugin first uses Redis. surf-redis's static entry points, such as `RedisApi.create`, read them
+through `surfBean`, so they work only while a root context is installed. The NATS factory behind
+`NatsClient.create` is a root bean in the same way, declared by `NatsCoreBeans` in
+`surf-nats-core` under surf-api's package, so every root that has surf-nats-core on its class path
+finds it. Neither library looks anything up through `ServiceLoader` any more; surf-api uses it
+only to find the `ContextContributor`s of a root that hosts an application. Outside Paper, Velocity and
+Minestom that runtime is surf-api standalone, which does not bundle Redis yet. Microservices do not
+use Redis.
 
 ## Microservices
 
@@ -537,8 +635,8 @@ of the integrations.
 - NATS uses the same contributor as plugin contexts; the client is named after the microservice, and
   a `NatsClient` bean of the application wins over that fallback, which keeps a pre-4.0 client name
   (see the NATS client name in `MIGRATION-4.0.md`). `@NatsTransactional` service beans get the
-  reliability module's interceptor through `NatsServiceInterceptorProvider`; the stored replies
-  belong to the microservice name.
+  reliability module's interceptor through the internal `NatsServiceInterceptorProvider`; the
+  stored replies belong to the microservice name.
 - Health checks are Spring Boot `HealthIndicator` beans (`spring-boot-health`, no Actuator
   endpoint). Boot's own indicators are off by default (`management.health.defaults.enabled`). The
   `health` command and `microservicectl health` read the `HealthContributorRegistry`.
@@ -564,17 +662,21 @@ The database library is built on Exposed with R2DBC and serves microservices onl
   `AutoConfiguration.imports`) provides `DatabaseConfig`, `SurfMigrationRunner` and the
   `R2dbcDatabase`. `AtomicOperations` takes the `R2dbcDatabase`.
 - `DatabaseConfig` is read once from `<surf.config-directory>/database.yml` (default `config`)
-  with the `SURF_DATABASE_*` overrides, unless the application defines the bean. It is not a
-  `ConfigHandle`: the pool cannot be reconfigured while it runs, and saving a handle would write
-  the overrides, the password included, into the file.
+  with the `SURF_DATABASE_*` overrides, unless the application defines the bean. It is read
+  through `ConfigHandles.open` and the handle is closed again, so it is not exposed as a
+  `ConfigHandle` bean: the pool cannot be reconfigured while it runs, and saving a handle would
+  write the overrides, the password included, into the file.
 - Every `MigrationSet` bean runs in `@Order` order before the `R2dbcDatabase` bean exists. The
   sets' checks and `ExposedMigration`s use the database before it is handed out. A failed
   migration fails the start and releases the pool. `ReliabilityMigrationSet` is the library's
   reliability schema; the module that uses `AtomicOperations` registers it.
 - The runner supports named sets, per-set history tables, `{vendor}` locations,
   `baselineOnMigrate`, `failOnMissingLocations` and UTC sessions, on its own JDBC data source.
-- The pool and the migration data source are not beans. With R2DBC, Flyway and Exposed relocated,
-  Spring Boot's R2DBC and Flyway auto-configurations never match, so none is excluded.
+- The pool and the migration data source are not beans. Flyway and the R2DBC pool are relocated
+  and Spring Boot's `spring-boot-r2dbc` module is absent, so Spring Boot's R2DBC and Flyway
+  auto-configurations never match and none is excluded. Exposed and `r2dbc-spi` are unrelocated
+  dependencies of the database jar; the bundled PostgreSQL R2DBC driver keeps its own package,
+  because Exposed refers to its JSON codec.
 - `R2dbcDatabase.retryingTransaction` runs the whole transaction again after a transient conflict:
   deadlock or serialization failure (PostgreSQL `40P01` and `40001`, MariaDB `1213`), and on
   MariaDB under REPEATABLE READ a row changed since the snapshot (`1020`, from
@@ -600,18 +702,24 @@ The database library is built on Exposed with R2DBC and serves microservices onl
 - The Gradle plugins apply `kotlin("plugin.spring")` and enable `javaParameters`.
 - Spring versions come from the Spring Framework BOM, which `surf-api-spring-api` exports as an
   `api` platform; `surf-api-bom` aligns the surf-api modules.
-- Components are found by Spring's classpath scan; there is no generated bean index. The surf KSP
-  processor generates only the `@GenerateReflection` accessors and the NMS provider index under
-  `META-INF/surf-api/nms-providers/`. The surf Gradle plugins run it on every project they
-  configure, the `infra/` modules included. surf-api's own modules, which build on
-  `core-convention` instead, run it only when they apply the `surf.ksp-processor` convention, as
-  the Paper NMS version modules do.
+- Components are found by Spring's classpath scan; there is no generated bean index and no surf
+  KSP processor.
+- The Paper NMS version modules contribute beans only for the selected version. The Paper runtime
+  resolves an `NmsVersion` in its bootstrap phase, the exact server version or else the newest
+  older one, and registers it in the root bootstrap context. Each version module declares one
+  `@Configuration` with `@ConditionalOnMinecraftVersion`, which the root scan evaluates against
+  that bean before it registers the configuration. The configuration's `@ComponentScan` includes
+  only `@NmsComponent` classes, which are no Spring stereotype, so the root scan of
+  `dev.slne.surf.api` never registers a bean of another version. The configuration's `@Bean`
+  methods only group the packet listeners and publish the scoreboard factory; every other bean is
+  an `@NmsComponent` class with constructor injection, and the module holds no singleton
+  `object`s that other beans reach statically.
 - The Paper and Velocity plugin jars relocate jnats and the BouncyCastle it signs NKey challenges
   with to `dev.slne.surf.nats.libs` (`relocateNats()` in `buildSrc`) and leave out BouncyCastle's
   `libbc-*` native libraries, which JNI binds to the original class names; BouncyCastle then uses
-  its Java implementation. The shadow jars of `infra/nats`, such as the `surf-api-nats-standalone`
-  `-all` jar, apply the same relocation. Minestom has no surf-api plugin jar, so `io.nats` and
-  BouncyCastle stay unrelocated on the server class path.
+  its Java implementation. The shadow jars of `infra/nats`, such as the microservice jar of
+  `surf-api-nats-test-microservice`, apply the same relocation. Minestom has no surf-api plugin
+  jar, so `io.nats` and BouncyCastle stay unrelocated on the server class path.
 - The Paper plugin jar does not bundle Guava, Gson or `slf4j-api`; the server provides them.
 - The api modules export neither Reactor Netty nor Netty. The Minestom and standalone runtimes ship
   only `netty-buffer` and `netty-common`, versioned by `netty-bom`, because packetevents links
@@ -626,8 +734,8 @@ The database library is built on Exposed with R2DBC and serves microservices onl
   their shaded jar.
 - The `checkContextContributors` task of the Paper, Velocity and Minestom implementation modules,
   run by `check`, fails when the merged `META-INF/services` file of the shadow jar lacks the
-  config, NATS or Redis `ContextContributor`; a missing one would only show as missing beans at
-  startup.
+  config, reflection, NATS or Redis `ContextContributor`; a missing one would only show as
+  missing beans at startup.
 
 ## Rejected alternatives
 
@@ -682,9 +790,11 @@ present plugin's API type, a bootstrap bean with a `@BootstrapComponent` depende
 plugin proxy comparing equal to the instance. It fails on any context failure in the log.
 
 `local/velocity-shared-bean-test` does the same on a Velocity proxy without Redis and NATS: the
-constructor-injected export, private beans, the plugin instance, the thread context class loader,
-`@ConditionalOnPlugin`, CGLIB configuration classes, the Velocity and surf event listeners, the
-absence of JVM shutdown hooks, a command bean run from the console, and the phase order.
+constructor-injected export, private beans, the plugin instance, a main class whose constructor and
+property initializer finished before its context was built, the logger bean, the thread context
+class loader, `@ConditionalOnPlugin`, CGLIB configuration classes, the Velocity and surf event
+listeners, the absence of JVM shutdown hooks, a command bean run from the console, and the phase
+order.
 
 Both boot tests download the server or proxy and three third-party plugins from pinned URLs with
 checksums. A missing network, a moved release or a changed checksum aborts the test, which Gradle
@@ -778,6 +888,6 @@ Run the steps one after another, never two Gradle invocations in parallel:
    - The `-all` jars of `surf-api-paper-impl` and `surf-api-velocity-impl` contain no entry under
      `io/netty/`, `reactor/netty/`, `net/megavex/`, `io/nats/` or `org/bouncycastle/`; the
      relocated copies live below `dev/slne/`.
-   - The `-all` jar of `surf-api-nats-standalone` contains no entry under `io/nats/` or
-     `org/bouncycastle/`, and its `META-INF/services/java.security.Provider` names only classes
+   - The microservice jar of `surf-api-nats-test-microservice` contains no entry under `io/nats/`
+     or `org/bouncycastle/`, and its `META-INF/services/java.security.Provider` names only classes
      below `dev.slne.surf.nats.libs.`.

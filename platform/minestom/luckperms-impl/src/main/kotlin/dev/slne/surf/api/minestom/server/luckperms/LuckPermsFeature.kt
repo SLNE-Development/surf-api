@@ -1,18 +1,20 @@
 package dev.slne.surf.api.minestom.server.luckperms
 
+import dev.slne.surf.api.minestom.permission.MinestomPermissions
+import dev.slne.surf.api.minestom.permission.PermissionProvider
+import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
-import dev.slne.surf.api.minestom.server.SurfMinestomFeature
 import dev.slne.surf.api.minestom.server.luckperms.config.LuckPermsConfigAdapter
-import dev.slne.surf.api.minestom.permission.MinestomPermissions
-import dev.slne.surf.api.minestom.permission.PermissionProvider
+import dev.slne.surf.api.spring.SurfContexts
 import me.lucko.luckperms.minestom.CommandRegistry
 import me.lucko.luckperms.minestom.LuckPermsMinestom
 import net.kyori.adventure.util.TriState
 import net.luckperms.api.LuckPerms
 import net.luckperms.api.model.user.User
 import net.luckperms.api.util.Tristate
+import org.springframework.context.ApplicationContext
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
@@ -47,6 +49,10 @@ class LuckPermsFeatureBuilder internal constructor() {
 /**
  * Runs LuckPerms on this server and resolves every permission check of the surf api with it.
  *
+ * Loading the feature registers the running api as the `LuckPerms` bean [LUCK_PERMS_BEAN] of
+ * surf-api's root context, so plugins inject it or [dev.slne.surf.api.luckperms.SurfLuckPerms].
+ * Disabling it removes the bean and the permission provider it installed.
+ *
  * LuckPerms downloads its libraries at runtime and adds them to the system class path through the
  * instrumentation API. The server jar therefore has to declare the LuckPerms agent in the
  * manifest:
@@ -68,6 +74,10 @@ class LuckPermsFeature internal constructor(
 
     private var instance: LuckPerms? = null
 
+    private val permissionProvider = PermissionProvider { player, permission ->
+        permissionValue(player.uuid, permission)
+    }
+
     /**
      * The LuckPerms api; throws [IllegalStateException] before [load] and after [disable].
      */
@@ -84,19 +94,39 @@ class LuckPermsFeature internal constructor(
         if (settings.registerCommands) {
             builder.commandRegistry(CommandRegistry.minestom())
         }
-        settings.customizers.forEach { customizer -> builder.customizer() }
 
-        instance = builder.enable()
-        MinestomPermissions.installProvider(PermissionProvider { player, permission ->
-            permissionValue(player.uuid, permission)
-        })
+        for (customizer in settings.customizers) {
+            builder.customizer()
+        }
+
+        val luckPerms = builder.enable()
+
+        try {
+            LuckPermsRootBean.register(SurfContexts.root, luckPerms)
+        } catch (failure: Throwable) {
+            val cleanupFailure = runCatching { LuckPermsMinestom.disable() }.exceptionOrNull()
+
+            if (cleanupFailure != null) {
+                failure.addSuppressed(cleanupFailure)
+            }
+
+            throw failure
+        }
+
+        instance = luckPerms
+        MinestomPermissions.installProvider(permissionProvider)
     }
 
     override fun disable(api: SurfMinestomServer) {
         if (instance == null) return
 
         instance = null
-        LuckPermsMinestom.disable()
+
+        try {
+            releaseLuckPerms(permissionProvider, SurfContexts.rootOrNull)
+        } finally {
+            LuckPermsMinestom.disable()
+        }
     }
 
     /**
@@ -121,11 +151,35 @@ class LuckPermsFeature internal constructor(
         const val ID = "luckperms"
 
         /**
+         * The name of the `LuckPerms` bean the feature registers in surf-api's root context.
+         */
+        const val LUCK_PERMS_BEAN = LuckPermsRootBean.NAME
+
+        /**
          * The installed LuckPerms feature.
          */
         val instance: LuckPermsFeature
             get() = SurfMinestomServer.instance.feature(ID) as? LuckPermsFeature
-                ?: error("LuckPerms is not installed, call withLuckPerms() in surfMinestomServer { }")
+                ?: error(
+                    "LuckPerms is not installed, call withLuckPerms() in surfMinestomServer { }",
+                )
+    }
+}
+
+/**
+ * Uninstalls [permissionProvider] and removes the LuckPerms bean from [root].
+ *
+ * A permission provider that the server installed after the feature's own stays in place.
+ *
+ * @param root surf-api's root context, or `null` when none is installed
+ */
+internal fun releaseLuckPerms(permissionProvider: PermissionProvider, root: ApplicationContext?) {
+    if (MinestomPermissions.provider === permissionProvider) {
+        MinestomPermissions.installProvider(null)
+    }
+
+    if (root != null) {
+        LuckPermsRootBean.remove(root)
     }
 }
 

@@ -1,7 +1,7 @@
 # Adding support for a new Minecraft version
 
-The scaffolding lives in `surf-api-generator/nms-module-generator/`, an **included build**:
-`settings.gradle.kts` has `pluginManagement { includeBuild("surf-api-generator/nms-module-generator") }`.
+The scaffolding lives in `tooling/nms-module-generator/`, an **included build**:
+`settings.gradle.kts` has `pluginManagement { includeBuild("tooling/nms-module-generator") }`.
 Its own `settings.gradle.kts` names it `gradle-nms-module-generator`, and its `build.gradle.kts`
 registers the plugin id `dev.slne.surf.api.generator.nms-module-generator` with
 `implementationClass = "dev.slne.surf.api.generator.nms.GenerateNmsModulePlugin"`.
@@ -9,7 +9,7 @@ registers the plugin id `dev.slne.surf.api.generator.nms-module-generator` with
 The repository root applies it:
 
 ```kotlin
-import dev.slne.surf.api.generator.nms.NmsVersion
+import dev.slne.surf.api.shared.internal.nms.NmsVersion
 
 plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.24" apply false
@@ -23,31 +23,29 @@ nmsGenerator {
 ```
 
 Those two lines are also the record of the last generation that was run. `v26-3` was generated from
-`v26-2`, which is why `glow/entity/V26_3EntityGlowingData.kt` carries a prefix that `v26-1`'s
-equivalent file does not.
+`v26-2`.
 
-## The two `NmsVersion` enums
+## The one `NmsVersion` enum
 
-They are different types with different jobs, and both need the new entry.
+`foundation/internal/src/main/kotlin/dev/slne/surf/api/shared/internal/nms/NmsVersion.kt` is the
+only list of versions. The runtime selects from it, and the generator's build copies the file into
+its own sources (`syncNmsVersion` in `nms-module-generator/build.gradle.kts`), since an included
+build cannot depend on `:surf-api-internal`. Keep the file free of dependencies beyond the Kotlin
+standard library.
 
-| | `surf-api-generator/nms-module-generator/.../NmsVersion.kt` | `foundation/internal/.../nms/NmsVersion.kt` |
-| --- | --- | --- |
-| Package | `dev.slne.surf.api.generator.nms` | `dev.slne.surf.api.shared.internal.nms` |
-| Used by | the Gradle task, at generation time | the running server, for matching and discovery |
-| Members | `versionId`, `classPrefix`, `paperDevBundle`, derived `slug` / `modulePath` / `gradlePath` | `versionPrefix`, its numeric `components`, `matches(...)`; companion `matching(...)`, `NEWEST_FIRST`, `NEWEST` |
-| Entry | `V26_3(versionId = "v26_3", classPrefix = "V26_3", paperDevBundle = "26.3.build.+")` | `V26_3("26.3")` |
-
-The generator's enum derives everything else:
+An entry carries `versionPrefix` and `paperDevBundle`: `V26_3("26.3", "26.3.build.+")`. The
+generator derives the rest in `NmsVersionModules.kt`:
 
 ```kotlin
-val slug get() = versionId.replace('_', '-')            // "v26-3"
-val modulePath get() = "platform/paper/nms/$slug"       // the directory
-val gradlePath get() = ":surf-api-paper-nms-$slug"      // the flat project path
+val NmsVersion.versionId get() = name.lowercase()               // "v26_3"
+val NmsVersion.classPrefix get() = name                         // "V26_3"
+val NmsVersion.slug get() = versionId.replace('_', '-')         // "v26-3"
+val NmsVersion.modulePath get() = "platform/paper/nms/$slug"    // the directory
+val NmsVersion.gradlePath get() = ":surf-api-paper-nms-$slug"   // the flat project path
 ```
 
-The comment in `settings.gradle.kts` explains why the version list there is literal: *"NmsVersion
-lives in the included build and is not on the settings classpath, so the versions stay literal
-here."*
+The version list in `settings.gradle.kts` stays literal, because the generator build is not on the
+settings classpath.
 
 ## The DSL
 
@@ -105,20 +103,27 @@ else it:
 2. **`prepareTargetDirectory()` deletes the target's `src/main/kotlin` recursively** and recreates
    it. Any hand-written file that lives only in the target module is gone. Everything outside
    `src/main/kotlin` (resources, `build.gradle.kts`, `api/` dumps) is untouched.
-3. `copyAndTransformSources()` — walks the reference tree for `*.kt`, skips exclusions, and for each
-   file rewrites the relative path with `transformPath` (`versionId` then `classPrefix` replaced) and
-   the content with `transformContent` (same two replacements, then every transformation). Returns the
-   count.
+3. `copyAndTransformSources()` — walks the reference's own `*.kt` files, skips exclusions, replaces
+   the reference's `versionId` and `classPrefix` with the target's in path and content, then applies
+   every transformation. For a 26.x reference those files are only its deltas to `shared-26`; a
+   26.x target gets the shared sources through `surf.nms-shared-26`. Only when the reference is
+   26.x and the target is not are the shared files the reference does not override copied as well,
+   with the version in `shared-26/template.properties` replaced. Returns the count.
 4. `generateBuildFile()` — writes `build.gradle.kts` from an inline template with the target's
    `paperDevBundle` substituted, **only when the file does not already exist**; otherwise logs
    *"build.gradle.kts already exists, skipping"*. The template applies `surf.module-impl`,
-   `surf.ksp-processor` and paperweight and declares `compileOnly(libs.fastutil)`, like the
-   existing modules.
+   `surf.nms-shared-26` for a 26.x target, and paperweight, and declares
+   `compileOnly(libs.fastutil)`, like the existing modules.
 
-The blanket `classPrefix` replacement is what makes `@NmsProviderMarker(NmsVersion.V26_2)` become
-`@NmsProviderMarker(NmsVersion.V26_3)` and `override val version: NmsVersion = NmsVersion.V26_3` —
-the enum constant names are the class prefixes. That only holds because the two enums use the same
-constant names; keep it that way.
+A shared file that needs a change for the target only is not copied; override it in the target
+module by copying it from `build/generated/nms-template/kotlin` after the first build.
+
+The shared sources stay written as the template module (`shared-26/template.properties`). A new
+26.x module compiles copies of them like the other older modules. To make the newest module the
+template module, so that IntelliJ analyses the shared files against the newest dev bundle, rename
+the package segment and class prefix in `shared-26` to the new version, set `version` in
+`template.properties`, and move any override the new module holds into `shared-26` while the
+previous template module gets an override for each file whose shared version no longer fits it.
 
 ## What the task tells you afterwards
 
@@ -126,53 +131,48 @@ Its lifecycle log prints three next steps:
 
 1. add the target `slug` to the NMS version list in `settings.gradle.kts`, declared as
    `module("<modulePath>")` with project path `<gradlePath>`,
-2. register the target in the runtime `NmsVersion` enum,
+2. add `runtimeOnly(project("<gradlePath>"))` to `platform/paper/impl/build.gradle.kts`,
 3. review the generated sources and fix remaining compilation errors.
 
 ## What it does not tell you
 
-- **The generator's own enum entry** has to exist *before* you can even name the target in
+- **The `NmsVersion` entry** has to exist *before* you can even name the target in
   `nmsGenerator { }`, so this is step 1 in practice, not a follow-up.
-- **`platform/paper/impl/build.gradle.kts`** needs `runtimeOnly(projects.surfApiPaperNmsV264)`.
-  Without it the module is built but never on the server's classpath, and `NmsProvider.current`
-  silently falls back to another version — or fails with *"No NmsProvider implementations found"* if
-  it is the only one.
+- **Without the `runtimeOnly` line** the module is built but never on the server's classpath, and
+  no configuration matches the selected version: surf-api's load phase fails with
+  `NoSuchBeanDefinitionException` for the first bridge.
 - **`paper { apiVersion = "…" }`** in that same file is the Paper plugin descriptor's target version.
   Bump it when the new version becomes the version the plugin is published against.
 - **The literal list in `settings.gradle.kts`** is a `listOf("v1-21-11", "v26-1", "v26-2", "v26-3")`
   — add the slug there, not a new `includeModule` line.
 - **Nothing updates `tooling/bom`.** `surf-api-bom` builds its constraints from
   `rootProject.subprojects`, so a newly included module is covered automatically.
+- **The registry keys follow `mcVersion`, not the NMS modules.** After bumping `mcVersion` in
+  `gradle.properties`, run `./gradlew :surf-api-registry-key-generator:generateRegistryKeys`. It
+  downloads the server jar, runs the vanilla data generator and rewrites the key objects in
+  `foundation/registry-keys`; commit the result.
 
 ## Checklist
 
 ```
-[ ] 1. generator NmsVersion entry: versionId, classPrefix, paperDevBundle
+[ ] 1. foundation/internal NmsVersion entry: V26_4("26.4", "26.4.build.+")
 [ ] 2. root build.gradle.kts: referenceVersion / targetVersion (+ transformations)
 [ ] 3. ./gradlew generateNmsModule [-PforceOverwrite]
-[ ] 4. foundation/internal NmsVersion entry: V26_4("26.4")
-[ ] 5. settings.gradle.kts: add "v26-4" to the version list
-[ ] 6. platform/paper/impl/build.gradle.kts: runtimeOnly(projects.surfApiPaperNmsV264)
-[ ] 7. platform/paper/impl/build.gradle.kts: paper { apiVersion = "26.4" } if it is now the target
-[ ] 8. ./gradlew :surf-api-paper-nms-v26-4:build   and fold fixes back into step 2
+[ ] 4. settings.gradle.kts: add "v26-4" to the version list
+[ ] 5. platform/paper/impl/build.gradle.kts: runtimeOnly(projects.surfApiPaperNmsV264)
+[ ] 6. platform/paper/impl/build.gradle.kts: paper { apiVersion = "26.4" } if it is now the target
+[ ] 7. ./gradlew :surf-api-paper-nms-v26-4:build   and fold fixes back into step 2
 ```
 
-## When the module builds but the wrong provider loads
+## When the module builds but the wrong version loads
 
-`NmsProvider.current` logs `Discovered %s NmsProviders: %s` at info before selecting. Read that line
-first.
-
-- **`No NmsProvider implementations found`** — no `META-INF/surf-api/nms-providers/*.json` on the
-  classpath, and surf-api's load phase fails. Either KSP did not run (the module must apply
-  `surf.ksp-processor`, which adds `ksp(project(":surf-api-processor"))`), or the provider class lost
-  its `@NmsProviderMarker`, or the module is missing from `runtimeOnly` in `platform/paper/impl`.
-- **`No NMS bindings for Minecraft …, falling back to the newest surf-api has`** (from
-  `NmsVersionResolver`) or **`No exact match for NmsProvider version …, using fallback`** (from
-  `NmsProvider`) — no `NmsVersion` entry matched the server's `Bukkit.getMinecraftVersion()`, or no
-  provider was found for the matched entry. Check the new entry's `versionPrefix` and that its module
-  ships. `NmsVersion.matches` compares version components as numbers, and the fallback takes the
-  newest version by number (`NmsVersion.NEWEST_FIRST`), so the enum's declaration order does not
-  matter.
-- **`Failed to load NmsProvider implementation. Implementation must have a constructor with a single
-  argument of type JavaPlugin`** — the generated provider lost its `(plugin: JavaPlugin)` primary
-  constructor.
+- **`No NMS bindings for Minecraft …, using the newest older ones`** (from `NmsVersionResolver`) —
+  no `NmsVersion` entry matched the server's `ServerBuildInfo.minecraftVersionId()`. Check the new
+  entry's `versionPrefix`. `NmsVersion.matches` compares version components as numbers, and the
+  fallback takes the newest older version by number (`NmsVersion.NEWEST_FIRST`), so the enum's
+  declaration order does not matter.
+- **`surf-api has no NMS bindings for Minecraft …`** — the server is older than every entry; the
+  bootstrap fails.
+- **`NoSuchBeanDefinitionException` for a bridge** — the selected entry has no configuration on the
+  classpath: the module is missing from `runtimeOnly`, or its `@ConditionalOnMinecraftVersion` names
+  another entry.

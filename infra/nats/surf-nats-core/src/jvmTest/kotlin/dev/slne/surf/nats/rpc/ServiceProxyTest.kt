@@ -1,7 +1,7 @@
 package dev.slne.surf.nats.rpc
 
 import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsInstance
+import dev.slne.surf.nats.TestNats
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.codec.NatsHeaders
@@ -9,15 +9,7 @@ import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.fixtures.Tag
-import dev.slne.surf.nats.test.proto.v1.CalcService
-import dev.slne.surf.nats.test.proto.v1.FireRequest
-import dev.slne.surf.nats.test.proto.v1.Health
-import dev.slne.surf.nats.test.proto.v1.HealthReply
-import dev.slne.surf.nats.test.proto.v1.InlineRequest
-import dev.slne.surf.nats.test.proto.v1.MixedRequest
-import dev.slne.surf.nats.test.proto.v1.Text
-import dev.slne.surf.nats.test.proto.v1.UnsignedReply
-import dev.slne.surf.nats.test.proto.v1.UnsignedRequest
+import dev.slne.surf.nats.test.proto.v1.*
 import io.nats.client.Message
 import io.nats.client.impl.Headers
 import kotlinx.coroutines.CoroutineScope
@@ -43,10 +35,10 @@ class ServiceProxyTest {
     private var clientCounter = 0
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @Test
     fun `request message arrives and the result is decoded`() = withService { client, calc ->
@@ -76,8 +68,14 @@ class ServiceProxyTest {
             calc.inline(InlineRequest(2.seconds, 3.seconds, Tag("c"), null))
         }
 
-        assertEquals(InlineRequest(1.5.seconds, null, Tag("a"), Tag("b")), received.poll(5, TimeUnit.SECONDS))
-        assertEquals(InlineRequest(2.seconds, 3.seconds, Tag("c"), null), received.poll(5, TimeUnit.SECONDS))
+        assertEquals(
+            InlineRequest(1.5.seconds, null, Tag("a"), Tag("b")),
+            received.poll(5, TimeUnit.SECONDS),
+        )
+        assertEquals(
+            InlineRequest(2.seconds, 3.seconds, Tag("c"), null),
+            received.poll(5, TimeUnit.SECONDS),
+        )
     }
 
     @Test
@@ -100,7 +98,10 @@ class ServiceProxyTest {
         }
 
         assertEquals(UnsignedRequest(1, 2, null), received.poll(5, TimeUnit.SECONDS))
-        assertEquals(InlineRequest(1.seconds, null, Tag("t"), null), received.poll(5, TimeUnit.SECONDS))
+        assertEquals(
+            InlineRequest(1.seconds, null, Tag("t"), null),
+            received.poll(5, TimeUnit.SECONDS),
+        )
     }
 
     @Test
@@ -114,7 +115,10 @@ class ServiceProxyTest {
         }.use { calc.health() }
 
         val remaining = deadline.get() - start
-        assertTrue(remaining in 4_000..6_000, "deadline should be about 5s ahead, was ${remaining}ms")
+        assertTrue(
+            remaining in 4_000..6_000,
+            "deadline should be about 5s ahead, was ${remaining}ms",
+        )
     }
 
     @Test
@@ -129,14 +133,29 @@ class ServiceProxyTest {
 
     @Test
     fun `response with a nullable field set`() = withService { client, calc ->
-        respond(client, "health") { reply(client, client.method("health"), HealthReply(Health(17.5)), it) }.use {
+        respond(client, "health") {
+            reply(
+                client,
+                client.method("health"),
+                HealthReply(Health(17.5)),
+                it,
+            )
+        }.use {
             assertEquals(HealthReply(Health(17.5)), calc.health())
         }
     }
 
     @Test
     fun `unit method returns after an empty reply`() = withService { client, calc ->
-        respond(client, "fire") { request -> NatsConnectionManager.connection().publish(request.replyTo, ByteArray(0)) }.use {
+        respond(
+            client,
+            "fire",
+        ) { request ->
+            NatsConnectionManager.connection().publish(
+                request.replyTo,
+                ByteArray(0),
+            )
+        }.use {
             calc.fire(FireRequest())
         }
     }
@@ -145,7 +164,11 @@ class ServiceProxyTest {
     fun `remote error becomes NatsRemoteException`() = withService { client, calc ->
         respond(client, "health") { request ->
             val headers = Headers().add(ProtocolHeaders.ERROR, "java.lang.IllegalStateException")
-            NatsConnectionManager.connection().publish(request.replyTo, headers, "boom".encodeToByteArray())
+            NatsConnectionManager.connection().publish(
+                request.replyTo,
+                headers,
+                "boom".encodeToByteArray(),
+            )
         }.use {
             val exception = assertFailsWith<NatsRemoteException> { calc.health() }
             assertEquals("java.lang.IllegalStateException", exception.remoteType)
@@ -207,25 +230,37 @@ class ServiceProxyTest {
         }
     }
 
-    private fun withService(block: suspend CoroutineScope.(NatsClientImpl, CalcService) -> Unit) = runTest {
+    private fun withService(
+        block: suspend CoroutineScope.(NatsClientImpl, CalcService) -> Unit,
+    ) = runTest {
         (NatsClient.create("rpc-proxy-${clientCounter++}") as NatsClientImpl).use { client ->
             withContext(Dispatchers.Default) { block(client, client.service<CalcService>()) }
         }
     }
 
-    private fun NatsClientImpl.method(name: String) =
-        serviceDescriptor(CalcService::class.java).methods.single { it.kotlinName == name }
+    private fun NatsClientImpl.method(name: String): MethodDescriptor {
+        return serviceDescriptor(CalcService::class.java).methods.single { it.kotlinName == name }
+    }
 
-    private fun respond(client: NatsClientImpl, methodName: String, handler: (Message) -> Unit): AutoCloseable {
+    private fun respond(
+        client: NatsClientImpl,
+        methodName: String,
+        handler: (Message) -> Unit,
+    ): AutoCloseable {
         val connection = NatsConnectionManager.connection()
         val dispatcher = connection.createDispatcher()
         dispatcher.subscribe(client.method(methodName).subject) { handler(it) }
         connection.flush(Duration.ofSeconds(5))
+
         return AutoCloseable { connection.closeDispatcher(dispatcher) }
     }
 
     private fun decodeRequest(method: MethodDescriptor, request: Message): Any {
-        return NatsCodec.decode(method.request, request.data, request.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE))
+        return NatsCodec.decode(
+            method.request,
+            request.data,
+            request.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE),
+        )
     }
 
     private fun reply(

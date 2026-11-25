@@ -14,12 +14,15 @@ internal const val RUN_MICROSERVICE_TASK_NAME = "runMicroservice"
 private const val RUN_DIRECTORY = "run"
 
 /**
- * Registers `runMicroservice`, which runs [applicationJar] with `java -jar` on the project's Java toolchain.
+ * Registers `runMicroservice`, which runs [applicationJar] with `java -jar` on the project's Java
+ * toolchain.
  *
- * The working directory is `run/` in the project directory, so configuration and data survive `clean`.
- * Standard input is forwarded for the microservice console.
+ * The working directory is `run/` in the project directory, so configuration and data survive
+ * `clean`. Standard input is forwarded for the microservice console.
  */
-internal fun Project.registerRunMicroservice(applicationJar: TaskProvider<out AbstractArchiveTask>) {
+internal fun Project.registerRunMicroservice(
+    applicationJar: TaskProvider<out AbstractArchiveTask>,
+) {
     val runDirectory = layout.projectDirectory.dir(RUN_DIRECTORY).asFile
     val jarFile = applicationJar.flatMap { it.archiveFile }
     val launcher = extensions.getByType<JavaToolchainService>()

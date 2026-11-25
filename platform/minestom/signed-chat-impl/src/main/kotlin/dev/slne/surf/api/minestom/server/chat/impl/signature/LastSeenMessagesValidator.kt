@@ -4,7 +4,7 @@ import net.minestom.server.crypto.MessageSignature
 import java.io.Serial
 
 internal class LastSeenMessagesValidator(
-    private val lastSeenCount: Int = LastSeenMessages.LAST_SEEN_MESSAGES_MAX_LENGTH
+    private val lastSeenCount: Int = LastSeenMessages.LAST_SEEN_MESSAGES_MAX_LENGTH,
 ) {
 
     private val trackedMessages = MutableList<LastSeenTrackedEntry?>(lastSeenCount) { null }
@@ -22,9 +22,10 @@ internal class LastSeenMessagesValidator(
 
     fun applyOffset(offset: Int) {
         val maxOffset = trackedMessages.size - lastSeenCount
+
         if (offset !in 0..maxOffset) {
             throw ValidationException(
-                "Advanced last seen window by $offset messages, but expected at most $maxOffset"
+                "Advanced last seen window by $offset messages, but expected at most $maxOffset",
             )
         }
 
@@ -36,9 +37,10 @@ internal class LastSeenMessagesValidator(
 
         val lastSeenEntries = ArrayList<MessageSignature>(update.acknowledged.cardinality())
         val ackLength = update.acknowledged.length()
+
         if (ackLength > lastSeenCount) {
             throw ValidationException(
-                "Last seen update contained $ackLength messages, but maximum window size is $lastSeenCount"
+                "Last seen update contained $ackLength messages, but maximum window size is $lastSeenCount",
             )
         }
 
@@ -49,16 +51,16 @@ internal class LastSeenMessagesValidator(
             if (acknowledged) {
                 if (message == null) {
                     throw ValidationException(
-                        "Last seen update acknowledged unknown or previously ignored message at index $i"
+                        "Last seen update acknowledged unknown or previously ignored message at index $i",
                     )
                 }
 
                 trackedMessages[i] = message.acknowledge()
                 lastSeenEntries.add(message.signature)
             } else {
-                if (message != null && !message.pending) {
+                if (message != null && !message.isPending) {
                     throw ValidationException(
-                        "Last seen update ignored previously acknowledged message at index $i and signature ${message.signature}"
+                        "Last seen update ignored previously acknowledged message at index $i and signature ${message.signature}",
                     )
                 }
 
@@ -67,9 +69,10 @@ internal class LastSeenMessagesValidator(
         }
 
         val lastSeen = LastSeenMessages(lastSeenEntries)
+
         if (!update.verifyChecksum(lastSeen)) {
             throw ValidationException(
-                "Checksum mismatch on last seen update: the client and server must have desynced"
+                "Checksum mismatch on last seen update: the client and server must have desynced",
             )
         }
 

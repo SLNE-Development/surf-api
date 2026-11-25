@@ -10,7 +10,7 @@ dependencies {
     compileOnlyApi(libs.brigadier)
     compileOnlyApi(libs.adventure.api)
 
-    api(libs.bundles.kotlin.coroutines)
+    compileOnlyApi(libs.bundles.kotlin.coroutines)
 }
 
 description = "surf-api-command-api"

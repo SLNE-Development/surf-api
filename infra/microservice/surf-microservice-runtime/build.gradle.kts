@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     id("dev.slne.surf.api.gradle.standalone")
+    `api-validation`
     id("com.github.gmazzo.buildconfig") version "6.0.9"
 }
 
@@ -15,6 +16,10 @@ kotlin {
             }
         }
     }
+}
+
+surfStandaloneApi {
+    allowInternalApi("dev.slne.surf.microservice.api.InternalMicroserviceApi")
 }
 
 repositories {

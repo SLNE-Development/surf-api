@@ -5,6 +5,7 @@ import dev.jorel.commandapi.executors.CommandExecutor
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.event.SurfSyncEvent
+import dev.slne.surf.api.luckperms.SurfLuckPerms
 import dev.slne.surf.api.paper.plugin.SurfPaperPlugin
 import dev.slne.surf.api.paper.sharedbean.provider.ProviderInternals
 import dev.slne.surf.api.paper.sharedbean.provider.SharedGreeting
@@ -12,9 +13,11 @@ import dev.slne.surf.api.spring.ConditionalOnPlugin
 import dev.slne.surf.api.spring.SurfBootstrapLifecycle
 import dev.slne.surf.api.spring.SurfLifecycle
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.luckperms.api.LuckPerms
 import net.luckperms.api.LuckPermsProvider
 import org.apache.commons.logging.LogFactory
+import org.bukkit.Server
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.server.ServerLoadEvent
@@ -24,7 +27,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Lazy
 import org.springframework.context.support.AbstractApplicationContext
 import org.springframework.stereotype.Service
 
@@ -41,17 +43,21 @@ class SharedGreetingConsumer(
     private val probes: List<HookProbe>,
     private val configuration: ConsumerConfiguration,
     private val luckPerms: ObjectProvider<LuckPerms>,
+    private val surfLuckPerms: SurfLuckPerms,
     private val bootstrapProbe: ConsumerBootstrapProbe,
     private val eventListener: SpikeEventListener,
     private val coroutineProbe: ConsumerCoroutineProbe,
     private val configProbe: ConsumerConfigProbe,
     private val redisProbe: ConsumerRedisProbe,
+    private val server: Server,
+    private val pluginLogger: ComponentLogger,
 ) : SurfLifecycle {
 
     private val log = logger()
-    private val contextClassLoaderIsPlugin = Thread.currentThread().contextClassLoader === javaClass.classLoader
+    private val contextClassLoaderIsPlugin = Thread.currentThread()
+        .contextClassLoader === javaClass.classLoader
 
-    override suspend fun onLoad() = phase("load")
+    override suspend fun onLoad(): Unit = phase("load")
 
     override suspend fun onEnable() {
         phase("enable")
@@ -59,38 +65,42 @@ class SharedGreetingConsumer(
         val instanceLoader = greeting.javaClass.classLoader
         val interfaceLoader = SharedGreeting::class.java.classLoader
 
-        log.atInfo().log(
-            "%s greeting=%s sameLoader=%s privateVisible=%s pluginIsSelf=%s ownPluginIsSelf=%s " +
+        log.atInfo()
+            .log(
+                "%s greeting=%s sameLoader=%s privateVisible=%s pluginIsSelf=%s ownPluginIsSelf=%s " +
                     "pluginIdentity=%s proxyEquals=%s tccl=%s probes=%s configProxy=%s " +
                     "luckPermsBean=%s surfEvent=%s shutdownHooks=%s logImpl=%s scopeSurvivesLoad=%s surfConfig=%s " +
-                    "redis=%s redisson=%s",
-            SharedBeanReport.MARKER,
-            greeting.greet(),
-            instanceLoader === interfaceLoader,
-            providerInternals.ifAvailable != null,
-            plugin.name == PLUGIN_NAME,
-            ownPlugin.name == PLUGIN_NAME,
-            plugin === ownPlugin,
-            bootstrapProbe.plugin == ownPlugin && ownPlugin == bootstrapProbe.plugin &&
+                    "redis=%s redisson=%s serverBean=%s pluginLogger=%s",
+                SharedBeanReport.MARKER,
+                greeting.greet(),
+                instanceLoader === interfaceLoader,
+                providerInternals.ifAvailable != null,
+                plugin.name == PLUGIN_NAME,
+                ownPlugin.name == PLUGIN_NAME,
+                plugin === ownPlugin,
+                bootstrapProbe.plugin == ownPlugin && ownPlugin == bootstrapProbe.plugin &&
                     bootstrapProbe.plugin.hashCode() == ownPlugin.hashCode(),
-            contextClassLoaderIsPlugin,
-            probes.map { it.javaClass.simpleName }.sorted(),
-            configuration.javaClass.name.contains("CGLIB"),
-            luckPerms.ifAvailable != null,
-            eventListener.received,
-            countShutdownHooks(context),
-            LogFactory.getLog(javaClass).javaClass.simpleName,
-            coroutineProbe.scopeSurvivesLoad,
-            configProbe.surfConfig,
-            redisProbe.syncValue,
-            redisProbe.redisson,
-        )
+                contextClassLoaderIsPlugin,
+                probes.map { it.javaClass.simpleName }.sorted(),
+                configuration.javaClass.name.contains("CGLIB"),
+                luckPerms.ifAvailable.let { it != null && it === surfLuckPerms.luckPerms },
+                eventListener.received,
+                countShutdownHooks(context),
+                LogFactory.getLog(javaClass).javaClass.simpleName,
+                coroutineProbe.scopeSurvivesLoad,
+                configProbe.surfConfig,
+                redisProbe.syncValue,
+                redisProbe.redisson,
+                server === ownPlugin.server,
+                pluginLogger.name == ownPlugin.componentLogger.name,
+            )
     }
 
-    override suspend fun onDisable() = phase("disable")
+    override suspend fun onDisable(): Unit = phase("disable")
 
     private fun phase(name: String) {
-        log.atInfo().log("%s consumer phase=%s", SharedBeanReport.SPIKE_MARKER, name)
+        log.atInfo()
+            .log("%s consumer phase=%s", SharedBeanReport.SPIKE_MARKER, name)
     }
 
     private fun countShutdownHooks(context: ApplicationContext): Int {
@@ -116,7 +126,8 @@ class ConsumerBootstrapProbe(val plugin: Plugin) : SurfBootstrapLifecycle {
     private val log = logger()
 
     override suspend fun onBootstrap() {
-        log.atInfo().log("%s consumer phase=bootstrap", SharedBeanReport.SPIKE_MARKER)
+        log.atInfo()
+            .log("%s consumer phase=bootstrap", SharedBeanReport.SPIKE_MARKER)
     }
 }
 
@@ -150,22 +161,9 @@ class LuckPermsProbe : HookProbe {
 @Service
 @ConditionalOnPlugin("PlaceholderAPI")
 class ConsumerExpansion : PlaceholderExpansion() {
-    override fun getIdentifier() = "surfconsumer"
-    override fun getAuthor() = "SLNE Development Team"
-    override fun getVersion() = "1"
-}
-
-/**
- * Declares a bean of LuckPerms' API type. The bean is lazy because LuckPerms publishes its API only
- * when it enables, after the consumer's load phase.
- */
-@Configuration
-@ConditionalOnPlugin("LuckPerms")
-class LuckPermsConfiguration {
-
-    @Bean
-    @Lazy
-    fun luckPerms(): LuckPerms = LuckPermsProvider.get()
+    override fun getIdentifier(): String = "surfconsumer"
+    override fun getAuthor(): String = "SLNE Development Team"
+    override fun getVersion(): String = "1"
 }
 
 /**
@@ -175,7 +173,7 @@ class LuckPermsConfiguration {
 class ConsumerConfiguration {
 
     @Bean
-    fun consumerAnswer() = ConsumerAnswer(42)
+    fun consumerAnswer(): ConsumerAnswer = ConsumerAnswer(42)
 }
 
 /**
@@ -193,7 +191,8 @@ class SpikeServerListener : Listener {
 
     @EventHandler
     fun onServerLoad(event: ServerLoadEvent) {
-        log.atInfo().log("%s listener=serverLoad", SharedBeanReport.SPIKE_MARKER)
+        log.atInfo()
+            .log("%s listener=serverLoad", SharedBeanReport.SPIKE_MARKER)
     }
 }
 
@@ -207,7 +206,15 @@ class SpikeCommand : CommandAPICommand(SharedBeanReport.COMMAND) {
     private val log = logger()
 
     init {
-        executes(CommandExecutor { _, _ -> log.atInfo().log("%s command=executed", SharedBeanReport.SPIKE_MARKER) })
+        executes(
+            CommandExecutor { _, _ ->
+                log.atInfo()
+                    .log(
+                        "%s command=executed",
+                        SharedBeanReport.SPIKE_MARKER,
+                    )
+            },
+        )
     }
 }
 

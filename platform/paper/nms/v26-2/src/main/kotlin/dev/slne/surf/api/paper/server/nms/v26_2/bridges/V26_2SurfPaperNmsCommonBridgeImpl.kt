@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.server.nms.v26_2.bridges
 import dev.slne.surf.api.paper.dialog.noticeDialogWithBuilder
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNmsBlock
 import dev.slne.surf.api.paper.server.nms.v26_2.extensions.toNmsItem
@@ -22,6 +23,7 @@ import java.net.InetSocketAddress
 
 @NmsUseWithCaution
 @Suppress("ClassName")
+@NmsComponent
 class V26_2SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     override fun nextEntityId(): Int {
@@ -53,6 +55,7 @@ class V26_2SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     override fun removeCompostable(material: Material) {
         require(material.isItem) { "material must be an item" }
+
         ComposterBlock.COMPOSTABLES.removeFloat(material.toNmsItem())
     }
 
@@ -85,8 +88,11 @@ class V26_2SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     }
 
     override fun getServerIp(): InetSocketAddress {
-        val channels = V26_2NmsReflections.getConnectionChannelFutures(MinecraftServer.getServer().connection)
-        val channel = channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
+        val channels = V26_2NmsReflections.getConnectionChannelFutures(
+            MinecraftServer.getServer().connection,
+        )
+        val channel = channels.firstOrNull()
+            ?: error("No channels found in server connection listener proxy")
 
         return channel.channel().localAddress() as? InetSocketAddress
             ?: error("Local address is not an instance of InetSocketAddress")

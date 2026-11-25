@@ -1,6 +1,6 @@
 ---
 name: surf-api-config
-description: Use when touching surf-api configuration or environment variables - declaring a config file with @SurfConfig and injecting ConfigHandle, or a @ConfigSerializable class with a SpongeYmlConfigClass or SpongeJsonConfigClass companion, loading/saving/reloading, editing or updating a config, choosing a config path or file name, adding a Configurate TypeSerializer through a ConfigSerializerRegistrar, using the constraint annotations (@Range, @NotBlank, @MinSize, @Namespace, ...) or the helper types (ConfigDuration, IntOr, BooleanOrDefault, StringOrDefault), writing a versioned ConfigMigration, reading an environment variable through env/EnvironmentVariables or a property delegate, or diagnosing LoadConfigException, SerializationConfigException, a "@SurfConfig path" failure, "No config found for", MissingEnvironmentVariableException and InvalidEnvironmentVariableException.
+description: Use when touching surf-api configuration or environment variables - declaring a config file with @SurfConfig and injecting ConfigHandle, reading one statically with configHandle or by surfConfig, opening any file with ConfigHandles.open, loading/saving/reloading or validating a reload, editing or updating a config, choosing a config path or file name, adding a Configurate TypeSerializer through a ConfigSerializerRegistrar, using the constraint annotations (@Range, @NotBlank, @MinSize, @Namespace, ...) or the helper types (ConfigDuration, IntOr, BooleanOrDefault, StringOrDefault), writing a versioned ConfigMigration or a ConfigMigrations bean, reading an environment variable through env/EnvironmentVariables or a property delegate, or diagnosing LoadConfigException, SerializationConfigException, a "@SurfConfig path" failure, "No running context holds the config handle", MissingEnvironmentVariableException and InvalidEnvironmentVariableException.
 ---
 
 # surf-api configuration and environment variables
@@ -58,15 +58,21 @@ What `@SurfConfig(path, migrations)` means:
   Its extension picks the format, case-insensitively: `.yml` or `.yaml` for YAML, `.json` for JSON.
 - `migrations` run in order; a migration's version is its position in the array, starting at 1, so
   only ever append. Each entry is a Kotlin `object` or a class with a constructor without
-  parameters. See `references/migrations.md`.
+  parameters. A `ConfigMigrations<C>` bean replaces the array with explicit versions and lambdas;
+  both together fail the start. See `references/migrations.md`.
+- `versionKey` names the root-level key of the stored version. Empty, the default, leaves it to
+  a `ConfigMigrations<C>` bean or to `_config_version`; a key in both places fails the start.
 - `@SurfConfig` also works as a meta-annotation: a custom annotation that carries
   `@SurfConfig("path")` can go on the config class instead.
 
-How it is wired (`impl/handle/SurfConfigContributor.kt`, `impl/handle/SpongeConfigHandle.kt`):
+How it is wired (`impl/handle/SurfConfigContributor.kt`, `impl/handle/SurfConfigFile.kt`,
+`manager/SpongeConfigHandle.kt`):
 
 - surf-api finds `@SurfConfig` classes in the plugin's own jar, the same way the component scan
   does, and registers one singleton `ConfigHandle<C>` per class, with the class as its exact type
   argument. The config class itself is not a bean and must not be a Spring component.
+- `SurfConfigFile.kt` resolves the path, the format and the migrations; `ConfigHandles.open` opens
+  the file.
 - The file is read, migrated and written back with its defaults while the plugin's context starts.
   A broken file, a bad path or an unconstructible migration fails the plugin's start, not its first
   use.
@@ -77,77 +83,70 @@ How it is wired (`impl/handle/SurfConfigContributor.kt`, `impl/handle/SpongeConf
 | Member | Effect |
 | --- | --- |
 | `value` | the current configuration |
-| `reload()` | re-read the file, apply pending migrations, install and return the new value; keeps the current value if the file holds no configuration |
+| `reload(validate = {})` | read the file into a candidate, migrate it in memory, install it once `validate` returns; writes the file only when a migration ran; a throwing `validate` leaves value and file untouched |
 | `edit { }` | change the current value in place as receiver, then save; for classes with `var` properties |
 | `update { it.copy(...) }` | replace the value with the result, save, return it; for immutable classes |
 | `save()` | write the current value to the file |
+| `close()` | reject every further call except `value`; `@SurfConfig` handles close with their context |
 
-`reload`, `edit`, `update` and `save` run one at a time. `value` is not locked: it returns whatever
+`reload`, `edit`, `update`, `save` and `close` run one at a time. `value` is not locked: it returns whatever
 the last load, `reload` or `update` installed, and an `edit` in progress is visible to readers.
 Read `config.value` where you use it instead of caching the data class; that is why beans inject the
 handle and not `C`.
 
-## Configs outside a plugin context: companion classes
+## Reading a config outside a bean
 
-Code that is not a bean - a library such as `infra/redis/.../RedisConfig.kt` or
-`infra/nats/.../NatsConfig.kt` - declares the config through a **companion object** that extends
-`SpongeYmlConfigClass<C>` or `SpongeJsonConfigClass<C>`. Properties must be `var` to `edit` them.
+Code that is not a bean reads a `@SurfConfig` class statically (`config/ConfigAccess.kt`):
 
 ```kotlin
-@ConfigSerializable
-data class LibraryConfig(
-    @Comment("Greeting sent on join")
-    var message: String = "Hello",
-    var number: Int = 42,
-) {
-    companion object : SpongeYmlConfigClass<LibraryConfig>(
-        LibraryConfig::class.java,
-        Path("config", "my-library"),
-        "library.yml"
-    )
+object ShopPrices {
+    private val config by surfConfig<ShopConfig>()
+
+    fun price(base: Double) = base * (1 - config.discount)
 }
+
+val handle = configHandle<ShopConfig>()
 ```
 
-Constructor parameters are `(configClass: Class<C>, configFolder: Path, fileName: String)`, in that
-order. The file name is checked against `^[a-zA-Z0-9_-]+\.(yml|yaml)$` (YAML) or
-`^[a-zA-Z0-9_-]+\.(json)$` (JSON) - see `config/common.kt`. Those are IntelliJ `@Pattern`
-annotations: the IDE warns, nothing throws at runtime.
+- `by surfConfig<C>()` returns the handle's current value on every read; `configHandle<C>()`
+  returns the handle.
+- The owning context is found through `C`'s class loader: `SurfConfigContributor` registers each
+  plugin context in `SurfConfigContexts` (`@InternalSurfApi`) before its refresh and removes it on
+  close. Among the active contexts whose loader sees `C`, the one holding the handle bean the
+  contributor registered for `C` wins; other `ConfigHandle<C>` beans are ignored. Two such
+  contexts fail the lookup with "has a config handle in more than one context".
+- It works from the plugin's bean constructors on: during the refresh, the handle is created on
+  demand.
+- Before the context exists and after it closed: `IllegalStateException` "No running context holds
+  the config handle of …; its plugin's context has not started yet or is closed". A class without
+  `@SurfConfig`: "… is not annotated with @SurfConfig".
+- The delegate caches the handle with its context and resolves it again once that context is
+  inactive, so a restarted plugin reads its new handle.
 
-What the companion gives you (`SpongeConfigClass`):
+## Opening any file: `ConfigHandles`
 
-| Member | Effect |
-| --- | --- |
-| `getConfig(): C` | the current in-memory instance |
-| `edit(save = true) { ... }` | mutate the current instance as receiver, then save unless `save = false` |
-| `save()` | write the current instance back to disk |
-| `reloadFromFile()` | re-read, apply migrations, **replace** the instance, return it |
-| `init()` | no-op that forces the lazy manager, i.e. loads the file now |
-| `isInitialized()` | whether the manager (and so the file) has been touched yet |
-| `manager` | the `SpongeConfigManager<C>` |
-| `migration(version, …)`, `versionKey(vararg path)` | protected; call from the companion's `init` block |
-
-The manager is `by lazy`, so **nothing is read from disk until the first access**. Call
-`LibraryConfig.init()` during startup if you want load failures early and on the right thread.
-
-The companion creates its manager through surf-api's `SurfConfigApi` bean, which also tracks it per
-`Class` in `SpongeConfigTracker` (impl). A bean can inject `SurfConfigApi` and use the same
-operations directly; the static accessors `surfConfigApi` and `SurfConfigApi.instance` are
-`@InternalSurfApi`:
+For files whose path is known only at runtime, files read before a plugin's context exists (a
+Spring `Condition` evaluated during the component scan) and libraries that are not beans (`infra/nats/.../NatsConfig.kt`,
+`infra/redis/.../RedisConfig.kt`, `DatabaseConfig.load`):
 
 ```kotlin
-@Service
-class ReportFiles(private val configApi: SurfConfigApi) {
-    fun open(folder: Path) = configApi.createSpongeYmlConfigManager<ReportConfig>(folder, "reports.yml")
+ConfigHandles.open<ReportConfig>(folder.resolve("reports.yml")).use { handle ->
+    render(handle.value)
 }
+
+ConfigHandles.open(
+    path,
+    format = ConfigFormat.JSON,
+    migrations = configMigrations<ReportConfig> { version(1, RenameTitle) },
+)
 ```
 
-Reified extensions exist for `createSpongeYmlConfig`, `createSpongeJsonConfig`, the two
-`…ConfigManager` functions and `getSpongeConfig`. `reloadSpongeConfig` and
-`getSpongeConfigManagerForConfig` have **no reified form** - pass `MyConfig::class.java`. Asking for
-a config that was never created throws `IllegalStateException` - "No config found for …" from
-`getSpongeConfig`, "No config manager found for …" from `getSpongeConfigManagerForConfig` and
-`reloadSpongeConfig`. Registering the same class twice replaces the earlier manager. `@SurfConfig`
-handles are not tracked there, so `getSpongeConfig` fails for them too.
+- Without a `format`, `.json` opens as JSON and any other extension as YAML; an explicit
+  `ConfigFormat` overrides the extension.
+- The folder is created; the file is read, migrated and written back with its defaults right away.
+- The caller owns the handle and closes it. Nothing tracks it by class; there is no global registry.
+- The serializers come from `SpongeConfigSerializers.instance`, so surf-api's root context must be
+  running; on Paper that rules out the bootstrap phase. A plugin's `ConfigSerializerRegistrar`s have run only once its context started.
 
 ## Serializers
 
@@ -197,24 +196,22 @@ Per-annotation and per-type detail: `references/constraints-and-types.md`.
 
 ## Migrations
 
-With `@SurfConfig`, list them in `migrations`; the first entry upgrades to version 1. In a companion
-class, register them in the companion's `init` block, keyed by the version they upgrade **to**:
+With `@SurfConfig`, list them in `migrations`; the first entry upgrades to version 1. For explicit,
+sparse versions and lambdas, declare a `ConfigMigrations<C>` bean instead, or pass one to
+`ConfigHandles.open`:
 
 ```kotlin
-companion object : SpongeYmlConfigClass<LibraryConfig>(
-    LibraryConfig::class.java, Path("config", "my-library"), "library.yml"
-) {
-    init {
-        migration(1, RenameServerVersionMigration)   // object : ConfigMigration
-        migration(2) { node -> node.node("deprecated-field").raw(null) }
-    }
+@Bean
+fun libraryMigrations() = configMigrations<LibraryConfig> {
+    version(1, RenameServerVersionMigration)
+    version(4) { node -> node.node("deprecated-field").raw(null) }
 }
 ```
 
-They run on the initial load and on every reload, lowest version first, and the reached version is
-stored under `_config_version`. A file that has no version field counts as `-1`, so **every**
-migration runs the first time such a file is loaded. Details, `versionKey`, `MigrationResult` and
-`addMigration`: `references/migrations.md`.
+They run when the file opens and on every reload, lowest version first, and the reached version is
+stored under `_config_version` unless `@SurfConfig(versionKey = …)` or the builder's
+`versionKey(…)` names another. A file that has no version field counts as `-1`, so **every**
+migration runs the first time such a file is loaded. Details: `references/migrations.md`.
 
 ## Environment variables
 
@@ -238,37 +235,46 @@ behaviour: `references/environment-variables.md`.
 
 ## Traps
 
-- **Registrars need a `@SurfConfig` class.** `ConfigSerializerRegistrar` beans run when the
-  plugin's first handle opens. A plugin without any `@SurfConfig` class never runs its registrars,
-  and a companion config loaded before that point does not see their serializers either.
-- **Register serializers first.** `buildSerializersModule()` is consumed when a manager is
-  constructed. A serializer registered after a config loaded is invisible to that config.
-- **Reload swaps the instance.** `ConfigHandle.reload()`, `update { }` and `reloadFromFile()`
-  install a new `C`; anything that cached the old one keeps stale data. Read `handle.value` or
-  `MyConfig.getConfig()` (backed by the `@Volatile` `manager.config`) at the point of use.
-- **`ConfigHandle.edit` always saves.** Only the companion's `edit(save = false)` skips the write.
-- **Lazy load in companions.** `MyConfig.getConfig()` is the first disk touch. A missing serializer
-  or a bad file surfaces there, unless you call `init()`. `@SurfConfig` files load at context start.
-- **Path failures name the class.** `SpongeConfigHandle.open` rejects a path with
+- **Registrars run with the context.** `ConfigSerializerRegistrar` beans run once while the plugin's
+  context starts, before its first handle opens. A file opened with `ConfigHandles.open` before
+  that point does not see their serializers.
+- **Register serializers first.** `buildSerializersModule()` is consumed when a file is opened. A
+  serializer registered afterwards is invisible to that handle.
+- **Reload swaps the instance.** `ConfigHandle.reload()` and `update { }` install a new `C`;
+  anything that cached the old one keeps stale data. Read `handle.value` or a `surfConfig`
+  delegate at the point of use.
+- **`ConfigHandle.edit` always saves.**
+- **Static access needs a running context.** `configHandle<C>()` and `surfConfig<C>()` fail before
+  the plugin's context starts and after it closes. A Spring `Condition` runs during the component
+  scan, before that: open the file with `ConfigHandles.open` there.
+- **Migrations in one place.** `@SurfConfig(migrations = …)` and a `ConfigMigrations<C>` bean
+  together fail the start. Name the `@Configuration` class differently from its `@Bean` method.
+- **Path failures name the class.** `SurfConfigFile` rejects a path with
   "`@SurfConfig path '…' of … must be relative`", "`… leaves the data folder …`" or
   "`… must end in .yml, .yaml or .json`"; a migration that cannot be created fails with
   "`Migration … of … must be an object or have a constructor without parameters`". A plugin without
   a data folder fails with "`… declares @SurfConfig classes …, but has no data folder`".
 - **Dashed keys.** Migrations and raw `node.node(...)` paths use `max-players`, never `maxPlayers`.
-- **`_config_version`.** The default version key is `DEFAULT_VERSION_KEY`, `"_config_version"`, a
-  single root-level key.
+- **`_config_version`.** The default version key is `ConfigMigrations.DEFAULT_VERSION_KEY`,
+  `"_config_version"`, a single root-level key.
 - **Maps swallow bad entries.** The default `MapSerializer` logs and skips an invalid entry instead
   of failing the load. Annotate the type `@ThrowExceptions` when you want the failure.
-- **Defaults are rewritten.** After load the manager re-serializes and saves, so unknown keys you
-  hand-wrote stay, but every default appears in the file. `shouldCopyDefaults(true)`.
+- **Defaults are written on open, not on reload.** Opening re-serializes and saves, so unknown keys
+  you hand-wrote stay, but every default appears in the file (`shouldCopyDefaults(true)`). A
+  reload without a migration leaves the file untouched. A reload of an emptied file keeps the
+  current value and logs a warning; it never falls back to the defaults.
+- **Configurate is relocated.** surf-api's jars load Configurate from
+  `dev.slne.surf.api.libs.configurate`, and the surf-api Gradle plugins relocate a plugin's
+  references the same way. A config class whose annotations still name
+  `org.spongepowered.configurate` fails to open with a `LoadConfigException` listing them; build
+  the plugin with the Gradle plugin.
 - **JSON has no comments.** `@Comment` is silently lost in a JSON file.
-- **Save failures are unchecked.** `save()`, `reload()`, `edit`, `update` and `reloadFromFile()`
-  wrap `ConfigurateException` in `UncheckedIOException`; load failures throw `LoadConfigException`
-  or `SerializationConfigException`. None of them are declared in Kotlin signatures.
-- **No runtime, no config.** A companion config resolves `SurfConfigApi` from surf-api's root
-  context on first access. Without a running platform runtime that read fails with "surf-api's
-  root context has not been started yet …". `ConfigHandle` exists only in a context surf-api
-  builds.
+- **Save failures are unchecked.** `save()`, `reload()`, `edit` and `update` wrap
+  `ConfigurateException` in `UncheckedIOException`; opening throws `LoadConfigException` or
+  `SerializationConfigException`. None of them are declared in Kotlin signatures.
+- **No runtime, no config.** Opening a file reads `SpongeConfigSerializers` from surf-api's root
+  context. Without a running platform runtime that fails with "surf-api's root context has not been
+  started yet …".
 
 Build setup for a module that uses configs: `surf-api-build`. Injecting the handle and the beans
 every plugin context provides: `surf-api-components`.

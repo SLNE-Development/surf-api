@@ -19,7 +19,6 @@ import kotlin.OptIn
 import kotlin.String
 import kotlin.collections.List
 import kotlin.collections.Map
-import kotlin.jvm.JvmStatic
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -45,7 +44,6 @@ public enum class PunishmentType(
         /**
          * Returns the entry with the Protobuf number [number], or `null` if there is none.
          */
-        @JvmStatic
         public fun forNumber(number: Int): PunishmentType? = when (number) {
             0 -> PunishmentType.UNSPECIFIED
             1 -> PunishmentType.BAN

@@ -1,15 +1,12 @@
 package dev.slne.surf.api.nats
 
+import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.PluginDescriptor
-import dev.slne.surf.nats.InternalNatsApi
-import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsService
-import dev.slne.surf.nats.NatsServiceInterceptorProvider
-import dev.slne.surf.nats.NatsTransactional
+import dev.slne.surf.nats.*
+import dev.slne.surf.nats.connection.NatsConnectionHealth
 import dev.slne.surf.nats.embedded.EmbeddedNats
 import dev.slne.surf.nats.embedded.NatsClientControl
 import dev.slne.surf.nats.event.NatsListener
-import dev.slne.surf.nats.isNatsTransactional
 import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
 import dev.slne.surf.nats.test.proto.v1.BroadcastRequest
 import dev.slne.surf.nats.test.proto.v1.Created
@@ -23,6 +20,7 @@ import org.springframework.beans.factory.config.BeanDefinitionCustomizer
 import org.springframework.beans.factory.support.AbstractBeanDefinition
 import org.springframework.boot.LazyInitializationBeanFactoryPostProcessor
 import org.springframework.boot.health.autoconfigure.registry.HealthContributorRegistryAutoConfiguration
+import org.springframework.boot.health.contributor.Status
 import org.springframework.boot.health.registry.HealthContributorRegistry
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean
@@ -32,21 +30,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.function.Supplier
 import kotlin.concurrent.thread
-import kotlin.test.assertContains
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * A fake connect step stands in for the shared connection, so no NATS server is needed.
  */
-@OptIn(InternalNatsApi::class)
 class NatsContextContributorTest {
 
     class NotifierConsumer(val notifier: NotifierService)
@@ -87,24 +75,38 @@ class NatsContextContributorTest {
      * Answers for every bean, like a metrics provider; it does not handle `@NatsTransactional`.
      */
     class GenericProvider : NatsServiceInterceptorProvider {
-        override fun interceptorFor(bean: Any, beanClass: Class<*>, client: NatsClient) =
-            NatsPersistentInterceptor { call -> call.proceed() }
+        override fun interceptorFor(
+            bean: Any,
+            beanClass: Class<*>,
+            client: NatsClient,
+        ) = NatsPersistentInterceptor { call -> call.proceed() }
     }
 
     /**
-     * Answers for every bean except `@NatsTransactional` ones, like a metrics provider that steps aside.
+     * Answers for every bean except `@NatsTransactional` ones, like a metrics provider that steps
+     * aside.
      */
     class SteppingAsideProvider : NatsServiceInterceptorProvider {
-        override fun interceptorFor(bean: Any, beanClass: Class<*>, client: NatsClient) =
-            NatsPersistentInterceptor { call -> call.proceed() }.takeUnless { beanClass.isNatsTransactional() }
+        override fun interceptorFor(
+            bean: Any,
+            beanClass: Class<*>,
+            client: NatsClient,
+        ) = NatsPersistentInterceptor { call -> call.proceed() }.takeUnless {
+            beanClass.isNatsTransactional()
+        }
     }
 
     class TransactionalProvider(private val asked: MutableList<Class<*>> = CopyOnWriteArrayList()) :
         NatsServiceInterceptorProvider {
         override val handlesTransactional = true
 
-        override fun interceptorFor(bean: Any, beanClass: Class<*>, client: NatsClient): NatsPersistentInterceptor {
+        override fun interceptorFor(
+            bean: Any,
+            beanClass: Class<*>,
+            client: NatsClient,
+        ): NatsPersistentInterceptor {
             asked += beanClass
+
             return NatsPersistentInterceptor { call -> call.proceed() }
         }
     }
@@ -122,10 +124,18 @@ class NatsContextContributorTest {
 
     private companion object {
         const val RACE_ROUNDS = 500
+        val connectedHealth = NatsConnectionHealth("demo", connected = true, status = "CONNECTED")
     }
 
+    /**
+     * surf-api's root context with the `NatsClientFactory` that surf-nats-core declares.
+     */
+    private val root = AnnotationConfigApplicationContext("dev.slne.surf.api.nats.core").apply {
+        SurfContexts.install(this)
+    }
     private val context = AnnotationConfigApplicationContext()
     private val connected = ArrayList<NatsClientControl>()
+    private val healthClients = ArrayList<NatsClient>()
     private val plugin = PluginDescriptor(
         name = "Contributor Demo",
         classLoader = javaClass.classLoader,
@@ -133,10 +143,22 @@ class NatsContextContributorTest {
         basePackages = listOf("dev.slne.surf.api.nats.none"),
     )
 
-    private fun contribute() = NatsContextContributor().contribute(context, plugin) { connected += it }
+    private fun contribute() = NatsContextContributor().contribute(
+        context,
+        plugin,
+    ) { connected += it }
 
     @AfterEach
-    fun closeContext() = context.close()
+    fun closeContext() {
+        context.close()
+
+        for (healthClient in healthClients) {
+            healthClient.close()
+        }
+
+        SurfContexts.uninstall()
+        root.close()
+    }
 
     @Test
     fun `a transactional bean that is not a NATS service fails the refresh`() {
@@ -156,7 +178,10 @@ class NatsContextContributorTest {
         val failure = assertFailsWith<Exception> { context.refresh() }
 
         assertContains(rootCauseOf(failure).message.orEmpty(), "NatsServiceInterceptorProvider")
-        assertTrue(connected.isEmpty(), "nothing connects, so no service answers before the failure")
+        assertTrue(
+            connected.isEmpty(),
+            "nothing connects, so no service answers before the failure",
+        )
     }
 
     @Test
@@ -167,7 +192,10 @@ class NatsContextContributorTest {
 
         val failure = assertFailsWith<Exception> { context.refresh() }
 
-        assertContains(rootCauseOf(failure).message.orEmpty(), "does not declare handlesTransactional")
+        assertContains(
+            rootCauseOf(failure).message.orEmpty(),
+            "does not declare handlesTransactional",
+        )
     }
 
     @Test
@@ -209,11 +237,16 @@ class NatsContextContributorTest {
         context.registerBean<NatsServiceInterceptorProvider> { TransactionalProvider(asked) }
         context.refresh()
 
-        // The fake connection never opens, so registering the service itself may fail after the provider answered.
-        val enable = runCatching { runBlocking { context.getBean(NatsPhaseListener::class.java).afterEnable() } }
+        // The fake connection never opens, so registering the service itself may fail after the
+        // provider answered.
+        val enable = runCatching {
+            runBlocking { context.getBean(NatsPhaseListener::class.java).afterEnable() }
+        }
 
         assertEquals(listOf<Class<*>>(TransactionalNotifierImpl::class.java), asked)
-        enable.exceptionOrNull()?.let { assertFalse(it.message.orEmpty().contains("NatsServiceInterceptorProvider")) }
+        enable.exceptionOrNull()?.let {
+            assertFalse(it.message.orEmpty().contains("NatsServiceInterceptorProvider"))
+        }
     }
 
     @Test
@@ -240,6 +273,74 @@ class NatsContextContributorTest {
     }
 
     @Test
+    fun `the health indicator is unknown while the context has no client`() {
+        val indicator = healthIndicator(connection = connectedHealth)
+
+        val health = indicator.health()
+
+        assertEquals(Status.UNKNOWN, health.status)
+        assertEquals("no client", health.details["connection"])
+    }
+
+    @Test
+    fun `the health indicator is down while a client exists and nothing is connected`() {
+        val indicator = healthIndicator(connection = null, hasClient = true)
+
+        val health = indicator.health()
+
+        assertEquals(Status.DOWN, health.status)
+        assertEquals("none", health.details["connection"])
+        assertEquals("NATS client is not connected yet.", health.details["error"])
+    }
+
+    @Test
+    fun `the health indicator is down while the connection reconnects`() {
+        val reconnecting = NatsConnectionHealth("demo", connected = false, status = "RECONNECTING")
+        val indicator = healthIndicator(connection = reconnecting, hasClient = true)
+
+        val health = indicator.health()
+
+        assertEquals(Status.DOWN, health.status)
+        assertEquals("NATS connection is reconnecting.", health.details["error"])
+    }
+
+    @Test
+    fun `the health indicator is up while a client exists and the connection is connected`() {
+        val indicator = healthIndicator(connection = connectedHealth, hasClient = true)
+
+        val health = indicator.health()
+
+        assertEquals(Status.UP, health.status)
+        assertEquals("demo", health.details["connection"])
+    }
+
+    @Test
+    fun `the health indicator sees the client the context created`() {
+        contribute()
+        context.register(NotifierConsumer::class.java)
+        context.refresh()
+
+        val indicator = context.getBean(NATS_HEALTH_BEAN, NatsHealthIndicator::class.java)
+
+        assertNotEquals(Status.UNKNOWN, indicator.health().status)
+    }
+
+    private fun healthIndicator(
+        connection: NatsConnectionHealth?,
+        hasClient: Boolean = false,
+    ): NatsHealthIndicator {
+        val nats = NatsPluginContext(context, plugin.name) { }
+
+        if (hasClient) {
+            val client = NatsClient.create("health-test-${healthClients.size}")
+            healthClients += client
+            nats.clientCreated(client)
+        }
+
+        return NatsHealthIndicator(nats) { connection }
+    }
+
+    @Test
     fun `a context that never uses NATS creates no client and connects nothing`() {
         contribute()
         context.refresh()
@@ -254,10 +355,17 @@ class NatsContextContributorTest {
         context.register(NotifierConsumer::class.java)
         context.refresh()
 
-        val definition = context.getBeanDefinition(NatsServiceProxyRegistrar.proxyBeanName(NotifierService::class.java))
+        val definition = context.getBeanDefinition(
+            NatsServiceProxyRegistrar.proxyBeanName(
+                NotifierService::class.java,
+            ),
+        )
         assertTrue(definition.isLazyInit)
         assertTrue(definition.isFallback)
-        assertTrue(definition.dependsOn.isNullOrEmpty(), "the service proxy resolves the client by type, not by name")
+        assertTrue(
+            definition.dependsOn.isNullOrEmpty(),
+            "the service proxy resolves the client by type, not by name",
+        )
         assertNotNull(context.getBean(NotifierConsumer::class.java).notifier)
     }
 
@@ -268,13 +376,19 @@ class NatsContextContributorTest {
         context.refresh()
 
         assertEquals(1, connected.size, "only the connector at the end of the refresh connects")
-        assertEquals(NatsClientNames.of(plugin.name), context.getBean(NATS_CLIENT_BEAN, NatsClient::class.java).name)
+        assertEquals(
+            NatsClientNames.of(plugin.name),
+            context.getBean(NATS_CLIENT_BEAN, NatsClient::class.java).name,
+        )
     }
 
     @Test
     fun `a service proxy requested after the refresh connects the client it creates`() {
         contribute()
-        context.registerBean(NotifierConsumer::class.java, BeanDefinitionCustomizer { it.isLazyInit = true })
+        context.registerBean(
+            NotifierConsumer::class.java,
+            BeanDefinitionCustomizer { it.isLazyInit = true },
+        )
         context.refresh()
         assertTrue(connected.isEmpty())
 
@@ -286,6 +400,7 @@ class NatsContextContributorTest {
     @Test
     fun `a lazy service proxy needs no connection to be created`() {
         val client = NatsClient.create("lazy-proxy-test")
+
         try {
             val proxy = EmbeddedNats.control(client).lazyService(NotifierService::class)
 
@@ -303,7 +418,10 @@ class NatsContextContributorTest {
 
         assertIs<NotifierImpl>(context.getBean(NotifierConsumer::class.java).notifier)
         val beanName = context.getBeanNamesForType(NotifierImpl::class.java).single()
-        assertTrue(beanName.endsWith("NotifierImpl"), "the annotation value does not become the bean name: $beanName")
+        assertTrue(
+            beanName.endsWith("NotifierImpl"),
+            "the annotation value does not become the bean name: $beanName",
+        )
     }
 
     @Test
@@ -332,7 +450,10 @@ class NatsContextContributorTest {
 
         val failure = assertFailsWith<BeanCreationException> { context.refresh() }
 
-        assertContains(rootCauseOf(failure).message.orEmpty(), "implements no generated NATS service interface")
+        assertContains(
+            rootCauseOf(failure).message.orEmpty(),
+            "implements no generated NATS service interface",
+        )
     }
 
     @Test
@@ -374,7 +495,10 @@ class NatsContextContributorTest {
     @Test
     fun `a lazy service bean is created while the context starts and connects the client`() {
         contribute()
-        context.registerBean(LazyNotifierImpl::class.java, BeanDefinitionCustomizer { it.isLazyInit = true })
+        context.registerBean(
+            LazyNotifierImpl::class.java,
+            BeanDefinitionCustomizer { it.isLazyInit = true },
+        )
         context.refresh()
 
         assertTrue(isCreated(LazyNotifierImpl::class.java))
@@ -401,10 +525,14 @@ class NatsContextContributorTest {
         assertTrue(connected.isEmpty())
         context.getBean("lazyNotifier")
 
-        // The fake connection never opens, so registering the service itself may fail; the client must exist and
-        // have been connected first.
-        val enable = runCatching { runBlocking { context.getBean(NatsPhaseListener::class.java).afterEnable() } }
-        enable.exceptionOrNull()?.let { assertFalse(it.message.orEmpty().contains("was not created")) }
+        // The fake connection never opens, so registering the service itself may fail; the client
+        // must exist and have been connected first.
+        val enable = runCatching {
+            runBlocking { context.getBean(NatsPhaseListener::class.java).afterEnable() }
+        }
+        enable.exceptionOrNull()?.let {
+            assertFalse(it.message.orEmpty().contains("was not created"))
+        }
 
         assertTrue(context.beanFactory.containsSingleton(NATS_CLIENT_BEAN))
         assertEquals(1, connected.size)
@@ -420,7 +548,10 @@ class NatsContextContributorTest {
 
         val failure = assertFailsWith<BeanCreationException> { context.getBean("lazyNotifier") }
 
-        assertContains(rootCauseOf(failure).message.orEmpty(), "created after the plugin registered")
+        assertContains(
+            rootCauseOf(failure).message.orEmpty(),
+            "created after the plugin registered",
+        )
     }
 
     @Test
@@ -432,7 +563,10 @@ class NatsContextContributorTest {
 
         val failure = assertFailsWith<BeanCreationException> { context.getBean("lazyListener") }
 
-        assertContains(rootCauseOf(failure).message.orEmpty(), "created after the plugin registered")
+        assertContains(
+            rootCauseOf(failure).message.orEmpty(),
+            "created after the plugin registered",
+        )
     }
 
     @Test
@@ -450,9 +584,13 @@ class NatsContextContributorTest {
     @Test
     fun `the health indicator is registered although the plugin's loader hides the health module`() {
         context.classLoader = object : ClassLoader(javaClass.classLoader) {
-            override fun loadClass(name: String, resolve: Boolean): Class<*> =
-                if (name.startsWith("org.springframework.boot.health")) throw ClassNotFoundException(name)
-                else super.loadClass(name, resolve)
+            override fun loadClass(name: String, resolve: Boolean): Class<*> {
+                if (name.startsWith("org.springframework.boot.health")) {
+                    throw ClassNotFoundException(name)
+                }
+
+                return super.loadClass(name, resolve)
+            }
         }
         contribute()
 
@@ -480,7 +618,13 @@ class NatsContextContributorTest {
         context.register(FacadeConfiguration::class.java)
         context.refresh()
 
-        assertTrue(context.containsBeanDefinition(NatsServiceProxyRegistrar.proxyBeanName(NotifierService::class.java)))
+        assertTrue(
+            context.containsBeanDefinition(
+                NatsServiceProxyRegistrar.proxyBeanName(
+                    NotifierService::class.java,
+                ),
+            ),
+        )
         assertNotNull(context.getBean(Facade::class.java).notifier)
     }
 
@@ -488,7 +632,11 @@ class NatsContextContributorTest {
     fun `a client created concurrently with the connect point is connected exactly by one side`() {
         repeat(RACE_ROUNDS) { round ->
             val connectedNow = CopyOnWriteArrayList<NatsClientControl>()
-            val nats = NatsPluginContext(AnnotationConfigApplicationContext(), "race", connectedNow::add)
+            val nats = NatsPluginContext(
+                AnnotationConfigApplicationContext(),
+                "race",
+                connectedNow::add,
+            )
             val client = NatsClient.create("race-client-$round")
             val start = CountDownLatch(1)
             val threads = listOf(
@@ -505,29 +653,45 @@ class NatsContextContributorTest {
     }
 
     /**
-     * Runs the enable phase. The fake connection never opens, so registering a service may fail afterwards.
+     * Runs the enable phase. The fake connection never opens, so registering a service may fail
+     * afterwards.
      */
     @IgnorableReturnValue
-    private fun enableIgnoringFailure() =
-        runCatching { runBlocking { context.getBean(NatsPhaseListener::class.java).afterEnable() } }
+    private fun enableIgnoringFailure() = runCatching {
+        runBlocking {
+            context.getBean(
+                NatsPhaseListener::class.java,
+            ).afterEnable()
+        }
+    }
 
-    private fun isCreated(type: Class<*>) =
-        context.beanFactory.containsSingleton(context.getBeanNamesForType(type).single())
+    private fun isCreated(type: Class<*>) = context.beanFactory.containsSingleton(
+        context.getBeanNamesForType(
+            type,
+        ).single(),
+    )
 
     /**
-     * Registers a lazy bean whose declared class says nothing about its NATS annotations, like a `@Bean` method that
-     * returns a supertype.
+     * Registers a lazy bean whose declared class says nothing about its NATS annotations, like a
+     * `@Bean` method that returns a supertype.
      */
     private fun registerLazy(name: String, create: () -> Any) {
-        context.registerBean(name, Any::class.java, Supplier<Any> { create() }, BeanDefinitionCustomizer { it.isLazyInit = true })
+        context.registerBean(
+            name,
+            Any::class.java,
+            Supplier<Any> { create() },
+            BeanDefinitionCustomizer { it.isLazyInit = true },
+        )
     }
 
     private fun registerOwnClient(name: String): NatsClient {
         val own = NatsClient.create(name)
         context.registerBean(name, NatsClient::class.java, Supplier { own })
+
         return own
     }
 
-    private fun rootCauseOf(failure: Throwable): Throwable =
-        generateSequence(failure) { it.cause }.last()
+    private fun rootCauseOf(failure: Throwable): Throwable {
+        return generateSequence(failure) { it.cause }.last()
+    }
 }

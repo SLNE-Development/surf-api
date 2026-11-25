@@ -9,7 +9,7 @@ dependencies {
     compileOnlyApi(libs.luckperms)
     compileOnlyApi(libs.adventure.api)
 
-    api(libs.bundles.kotlin.coroutines)
+    compileOnlyApi(libs.bundles.kotlin.coroutines)
 }
 
 description = "surf-api-luckperms-api"

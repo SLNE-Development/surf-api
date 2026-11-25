@@ -1,6 +1,5 @@
 package dev.slne.surf.microservice.reliability.test
 
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import dev.slne.surf.database.migration.SurfMigrationRunner
 import dev.slne.surf.database.reliability.ReliabilityMigrationSet
 import dev.slne.surf.database.reliability.operation.AtomicOperations
@@ -11,16 +10,18 @@ import dev.slne.surf.microservice.reliability.operation.ActiveOperation
 import dev.slne.surf.microservice.reliability.operation.PendingEvent
 import dev.slne.surf.nats.descriptor.NatsEvent
 import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
- * Runs code as a handler of a transactional service, so that services can be tested with the [TransactionalEvents]
- * they receive in production.
+ * Runs code as a handler of a transactional service, so that services can be tested with the
+ * [TransactionalEvents] they receive in production.
  *
- * [runInHandler] runs its block like a `@NatsTransactional` service runs a persistent handler: in one READ COMMITTED
- * transaction on the test database, which `suspendTransaction` on that database joins. Nothing is sent to NATS.
- * [published] lists the events each committed block would publish. A block that throws rolls back and adds nothing.
+ * [runInHandler] runs its block like a `@NatsTransactional` service runs a persistent handler: in
+ * one READ COMMITTED transaction on the test database, which `suspendTransaction` on that database
+ * joins. Nothing is sent to NATS. [published] lists the events each committed block would publish.
+ * A block that throws rolls back and adds nothing.
  *
  * Thread-safe. Blocks may run concurrently.
  *
@@ -48,10 +49,11 @@ public class TransactionalHandlerFixture private constructor(
     public val events: TransactionalEvents = TransactionalEvents()
 
     /**
-     * Gets the events of all committed [runInHandler] blocks since the creation or the last [clear].
+     * Gets the events of all committed [runInHandler] blocks since the creation or the last
+     * [clear].
      *
-     * Returns a snapshot. Events of one block keep their publish order. Blocks that commit concurrently may
-     * interleave.
+     * Returns a snapshot. Events of one block keep their publish order. Blocks that commit
+     * concurrently may interleave.
      */
     public val published: List<PublishedTransactionalEvent>
         get() = committed.toList()
@@ -59,14 +61,18 @@ public class TransactionalHandlerFixture private constructor(
     /**
      * Returns the events of type [E] in [published], in the same order.
      */
-    public inline fun <reified E : NatsEvent> publishedOf(): List<E> = published.map { it.event }.filterIsInstance<E>()
+    public inline fun <reified E : NatsEvent> publishedOf(): List<E> {
+        return published
+            .map { it.event }
+            .filterIsInstance<E>()
+    }
 
     /**
      * Runs [block] as a transactional handler and returns its result.
      *
-     * Must not be called inside an open transaction. After a deadlock or serialization failure the block runs again,
-     * as the redelivery does in production. Only the events of the run that commits are recorded. An exception from
-     * [block] rolls back the transaction and is rethrown.
+     * Must not be called inside an open transaction. After a deadlock or serialization failure the
+     * block runs again, as the redelivery does in production. Only the events of the run that
+     * commits are recorded. An exception from [block] rolls back the transaction and is rethrown.
      *
      * @throws IllegalStateException if called inside an open transaction
      */
@@ -83,6 +89,7 @@ public class TransactionalHandlerFixture private constructor(
         }
 
         events.mapTo(committed) { PublishedTransactionalEvent(it.event, it.aggregateId) }
+
         return checkNotNull(result).getOrThrow()
     }
 
@@ -100,13 +107,15 @@ public class TransactionalHandlerFixture private constructor(
         private val EMPTY_REPLY = StoredReply("none", ByteArray(0))
 
         /**
-         * Creates a fixture on [database] after migrating the reliability schema there with [migrationRunner].
+         * Creates a fixture on [database] after migrating the reliability schema there with
+         * [migrationRunner].
          *
          * surf-nats must be on the test classpath, but NATS need not be started.
          *
          * @param database the test database, which must be MariaDB or PostgreSQL
          * @param migrationRunner the migration runner of [database]
-         * @param owner the owner under which the fixture stores its operations, in production the microservice name
+         * @param owner the owner under which the fixture stores its operations, in production the
+         * microservice name
          */
         public suspend fun create(
             database: R2dbcDatabase,
@@ -114,6 +123,7 @@ public class TransactionalHandlerFixture private constructor(
             owner: String = DEFAULT_OWNER,
         ): TransactionalHandlerFixture {
             migrationRunner.migrate(ReliabilityMigrationSet())
+
             return TransactionalHandlerFixture(AtomicOperations(database), owner)
         }
     }

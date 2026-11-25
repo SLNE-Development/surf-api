@@ -12,20 +12,14 @@ dependencies {
     api(projects.surfApiConfigApi)
 
     compileOnlyApi(libs.minestom.server)
-    api(libs.minestom.brigadier)
+    compileOnlyApi(libs.minestom.brigadier)
     compileOnlyApi(libs.minestom.npc) { exclude(group = "net.minestom") }
 
-    api(libs.adventure.text.minimessage)
+    compileOnlyApi(libs.adventure.text.minimessage)
 
-    api(libs.guava)
-    api(libs.dazzleconf)
-    api(libs.spongepowered.math)
-    api(libs.commons.lang3)
-    api(libs.commons.text)
-    api(libs.flogger)
-    api(libs.commons.math4.core)
-    api(libs.commons.math3)
-    api(libs.inventory.framework.platform.minestom)
+    compileOnlyApi(libs.guava)
+    compileOnlyApi(libs.bundles.surf.runtime.utils)
+    compileOnlyApi(libs.inventory.framework.platform.minestom)
 
     testImplementation(libs.minestom.server)
     testImplementation(libs.minestom.testing)
@@ -33,8 +27,11 @@ dependencies {
 
 description = "surf-api-minestom-api"
 
-private fun <T : ModuleDependency> T.exclude(provider: Provider<MinimalExternalModuleDependency>) =
-    provider.get().module.apply { exclude(group, name) }
+private fun <T : ModuleDependency> T.exclude(
+    provider: Provider<MinimalExternalModuleDependency>,
+): ModuleIdentifier {
+    return provider.get().module.apply { exclude(group, name) }
+}
 
 tasks {
     test {

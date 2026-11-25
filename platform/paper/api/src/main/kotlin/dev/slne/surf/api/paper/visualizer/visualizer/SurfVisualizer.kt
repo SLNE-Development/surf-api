@@ -92,7 +92,7 @@ interface SurfVisualizer : AutoCloseable {
      * @param player The player for whom the visibility of the visualizer is to be checked.
      * @return `true` if the visualizer is visible to the specified player, `false` otherwise.
      */
-    fun visibleTo(player: Player): Boolean
+    fun isVisibleTo(player: Player): Boolean
 
     /**
      * Updates the visualizer using the specified update strategy.

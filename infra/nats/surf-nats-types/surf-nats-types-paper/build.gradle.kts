@@ -5,14 +5,6 @@ plugins {
     alias(libs.plugins.weaver)
 }
 
-surfRawPaperApi {
-    testing {
-        mockBukkit.set(true)
-        // The surf-api default (4.116.1) is not published for mockbukkit-v26.3.
-        mockBukkitVersion.set("4.118.0")
-    }
-}
-
 kotlin {
     compilerOptions {
         optIn.add("kotlinx.serialization.ExperimentalSerializationApi")
@@ -22,10 +14,13 @@ kotlin {
 dependencies {
     api(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesCommon)
     weaver(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesCommon)
+
+    testRuntimeOnly(libs.bundles.kotlin.serialization)
 }
 
-// Published to weaver so that contracts importing these protos validate on the registry. The conventions match those
-// of the dev.slne.surf.nats plugin; the plugin jar bundles the same src/main/proto directory.
+// Published to weaver so that contracts importing these protos validate on the registry. The
+// conventions match those of the dev.slne.surf.nats plugin; the plugin jar bundles the same
+// src/main/proto directory.
 weaver {
     url = providers.environmentVariable("WEAVER_URL").orElse("https://weaver.slne.dev")
     repositories("proto-releases-public")

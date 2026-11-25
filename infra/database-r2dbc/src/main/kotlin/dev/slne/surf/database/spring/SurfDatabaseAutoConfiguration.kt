@@ -1,7 +1,6 @@
 package dev.slne.surf.database.spring
 
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.config.SurfConfigApi
 import dev.slne.surf.api.spring.SurfProperties
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.validate
@@ -21,39 +20,40 @@ import kotlin.io.path.Path
 /**
  * Provides a database as beans, built from `database.yml`.
  *
- * - [DatabaseConfig]: read from `<directory>/database.yml` with the `SURF_DATABASE_*` overrides, unless the application
- *   defines the bean. The directory is the property [SurfProperties.CONFIG_DIRECTORY] and defaults to `config`. Outside
- *   a microservice, the environment variable `SURF_CONFIG_DIRECTORY` sets it; a microservice sets the property from
- *   `SURF_MICROSERVICE_CONFIG_DIR`, so `SURF_CONFIG_DIRECTORY` has no effect there. An application's own bean is
- *   validated and then used verbatim: the `SURF_DATABASE_*` overrides do not apply to it.
- * - [SurfMigrationRunner]: runs every [MigrationSet] bean in `@Order` order while the context starts; a failed
- *   migration fails the start and releases the pool.
- * - [R2dbcDatabase]: created only after the migrations ran, so every bean that injects it sees the migrated schema.
- *   Every [SurfDatabaseConfigurer] bean customizes it.
+ * - [DatabaseConfig]: read from `<directory>/database.yml` with the `SURF_DATABASE_*` overrides,
+ *   unless the application defines the bean. The directory is the property
+ *   [SurfProperties.CONFIG_DIRECTORY] and defaults to `config`. Outside a microservice, the
+ *   environment variable `SURF_CONFIG_DIRECTORY` sets it; a microservice sets the property from
+ *   `SURF_MICROSERVICE_CONFIG_DIR`, so `SURF_CONFIG_DIRECTORY` has no effect there. An
+ *   application's own bean is validated and then used verbatim: the `SURF_DATABASE_*` overrides do
+ *   not apply to it.
+ * - [SurfMigrationRunner]: runs every [MigrationSet] bean in `@Order` order while the context
+ *   starts; a failed migration fails the start and releases the pool.
+ * - [R2dbcDatabase]: created only after the migrations ran, so every bean that injects it sees the
+ *   migrated schema. Every [SurfDatabaseConfigurer] bean customizes it.
  *
- * Exposed's `defaultMaxAttempts` is set to 1, so a transaction never runs again on its own: a block with side effects
- * outside the database must not repeat unnoticed. Retries are explicit, through `retryingTransaction`. The setting is
- * applied before the configurers, so a [SurfDatabaseConfigurer] can restore Exposed's default.
+ * Exposed's `defaultMaxAttempts` is set to 1, so a transaction never runs again on its own: a block
+ * with side effects outside the database must not repeat unnoticed. Retries are explicit, through
+ * `retryingTransaction`. The setting is applied before the configurers, so a
+ * [SurfDatabaseConfigurer] can restore Exposed's default.
  *
- * The connection pool and the JDBC data source of the migrations are not beans of their own, so neither Spring Boot's
- * R2DBC and Flyway auto-configurations nor application code pick them up. In the published jar, R2DBC, Flyway and
- * Exposed are relocated, which keeps Spring Boot's conditions on those libraries from matching as well. When the
- * context closes, the database is unregistered from Exposed and the pool and its event loop are disposed.
+ * The connection pool and the JDBC data source of the migrations are not beans of their own, so
+ * neither Spring Boot's R2DBC and Flyway auto-configurations nor application code pick them up. In
+ * the published jar, R2DBC and Flyway are relocated, which keeps Spring Boot's conditions on those
+ * libraries from matching as well. When the context closes, the database is unregistered from
+ * Exposed and the pool and its event loop are disposed.
  */
 @AutoConfiguration
 class SurfDatabaseAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    fun surfDatabaseConfig(
-        configApi: SurfConfigApi,
-        environment: Environment,
-    ): DatabaseConfig {
+    fun surfDatabaseConfig(environment: Environment): DatabaseConfig {
         val directory = Path(
-            environment[SurfProperties.CONFIG_DIRECTORY] ?: SurfProperties.DEFAULT_CONFIG_DIRECTORY
+            environment[SurfProperties.CONFIG_DIRECTORY] ?: SurfProperties.DEFAULT_CONFIG_DIRECTORY,
         )
 
-        return DatabaseConfig.load(configApi, directory)
+        return DatabaseConfig.load(directory)
     }
 
     @Bean(RESOURCES_BEAN, destroyMethod = "close")
@@ -64,12 +64,16 @@ class SurfDatabaseAutoConfiguration {
     ): SurfDatabaseResources {
         config.validate()
         val ordered = configurers.orderedStream().toList()
+
         return SurfDatabaseResources.open(
             config,
-            environment[SurfProperties.APPLICATION_NAME] ?: DEFAULT_POOL_NAME
+            environment[SurfProperties.APPLICATION_NAME] ?: DEFAULT_POOL_NAME,
         ) {
             defaultMaxAttempts = NO_IMPLICIT_RETRIES
-            ordered.forEach { it.configure(this) }
+
+            for (customizer in ordered) {
+                customizer.configure(this)
+            }
         }
     }
 

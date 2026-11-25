@@ -14,16 +14,17 @@ object RedisExpirableUtils {
 
     fun refreshContinuously(
         ttl: Duration,
-        vararg objects: RExpirableReactive
+        vararg objects: RExpirableReactive,
     ): Disposable {
         if (ttl == Duration.ZERO || ttl.isNegative()) return Disposables.disposed()
+
         val delay = Math.clamp(ttl.inWholeSeconds - 2, 1L, 15L)
         val objectNames = objects.joinToString(", ") { it.name }
         val javaTtl = ttl.toJavaDuration()
         val refresh = Mono.`when`(objects.map { it.expire(javaTtl) }).then()
         val interval = Mono.delay(
             java.time.Duration.ofSeconds(delay),
-            RedisInstance.get().ttlRefreshScheduler
+            RedisInstance.instance.ttlRefreshScheduler,
         )
 
         return refresh

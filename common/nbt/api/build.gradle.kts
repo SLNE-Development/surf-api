@@ -4,10 +4,10 @@ plugins {
 }
 
 dependencies {
-    api(projects.surfApiSpringApi)
     api(projects.surfApiAnnotations)
 
-    api(libs.adventure.nbt)
+    compileOnlyApi(libs.kotlin.stdlib)
+    compileOnlyApi(libs.adventure.nbt)
 }
 
 description = "surf-api-nbt-api"

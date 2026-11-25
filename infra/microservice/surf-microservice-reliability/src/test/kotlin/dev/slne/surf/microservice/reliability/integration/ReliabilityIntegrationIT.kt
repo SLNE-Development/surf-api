@@ -1,7 +1,7 @@
+@file:OptIn(InternalNatsApi::class)
+
 package dev.slne.surf.microservice.reliability.integration
 
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import dev.slne.surf.database.reliability.operation.AtomicOperations
 import dev.slne.surf.microservice.api.MicroserviceInfo
 import dev.slne.surf.microservice.reliability.MicroserviceReliabilityAutoConfiguration
@@ -11,12 +11,15 @@ import dev.slne.surf.microservice.reliability.operation.StoredReplyCleanup
 import dev.slne.surf.microservice.reliability.operation.TransactionalInterceptor
 import dev.slne.surf.microservice.reliability.support.OpenedDatabase
 import dev.slne.surf.microservice.reliability.support.TestVendor
+import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsServiceInterceptorProvider
 import dev.slne.surf.nats.NatsTransactional
 import io.mockk.mockk
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.getBean
@@ -25,18 +28,12 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.support.registerBean
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.nio.file.Path
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * [MicroserviceReliabilityAutoConfiguration] in a context with a microservice identity and a database, on both
- * supported vendors.
+ * [MicroserviceReliabilityAutoConfiguration] in a context with a microservice identity and a
+ * database, on both supported vendors.
  */
 @Testcontainers(disabledWithoutDocker = true)
 class ReliabilityIntegrationIT {
@@ -60,10 +57,14 @@ class ReliabilityIntegrationIT {
             val client = mockk<NatsClient>()
 
             assertIs<TransactionalInterceptor>(
-                provider.interceptorFor(TransactionalService(), TransactionalService::class.java, client)
+                provider.interceptorFor(
+                    TransactionalService(),
+                    TransactionalService::class.java,
+                    client,
+                ),
             )
             assertIs<TransactionalInterceptor>(
-                provider.interceptorFor(InheritingService(), InheritingService::class.java, client)
+                provider.interceptorFor(InheritingService(), InheritingService::class.java, client),
             )
             assertNull(provider.interceptorFor(PlainService(), PlainService::class.java, client))
         }
@@ -74,6 +75,7 @@ class ReliabilityIntegrationIT {
     fun `the cleanup runs while the context runs`(vendor: TestVendor) {
         val opened = reliable(vendor)
         val cleanup = opened.context.getBean<StoredReplyCleanup>()
+
         try {
             assertTrue(cleanup.isRunning, "the cleanup must start with the context")
 
@@ -85,6 +87,7 @@ class ReliabilityIntegrationIT {
         } finally {
             opened.close()
         }
+
         assertFalse(cleanup.isRunning, "the cleanup must not outlive the closed context")
     }
 
@@ -115,13 +118,21 @@ class ReliabilityIntegrationIT {
         vendor: TestVendor,
         configure: AnnotationConfigApplicationContext.() -> Unit = {},
     ): OpenedDatabase = vendor.freshDatabase().open("reliability-integration") {
-        beanFactory.registerSingleton("microserviceInfo", MicroserviceInfo(SERVICE_NAME, Path.of("unused")))
+        beanFactory.registerSingleton(
+            "microserviceInfo",
+            MicroserviceInfo(SERVICE_NAME, Path.of("unused")),
+        )
         configure()
         register(MicroserviceReliabilityAutoConfiguration::class.java)
     }
 
-    private suspend fun storedReplyCount(database: R2dbcDatabase): Long = suspendTransaction(db = database) {
-        exec("SELECT COUNT(*) FROM surf_atomic_operations") { row -> (row.get(0) as Number).toLong() }!!.single()!!
+    private suspend fun storedReplyCount(database: R2dbcDatabase): Long {
+        return suspendTransaction(db = database) {
+            val counts = exec("SELECT COUNT(*) FROM surf_atomic_operations") { row ->
+                (row.get(0) as Number).toLong()
+            }
+            counts!!.single()!!
+        }
     }
 
     @NatsTransactional

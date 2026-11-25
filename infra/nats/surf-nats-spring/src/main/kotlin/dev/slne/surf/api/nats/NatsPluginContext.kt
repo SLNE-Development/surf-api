@@ -17,28 +17,31 @@ import org.springframework.beans.factory.getBeanProvider
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 /**
- * The NATS state of one plugin context: its clients, the connection and the beans to register once the plugin is
- * enabled.
+ * The NATS state of one plugin context: its clients, the connection and the beans to register once
+ * the plugin is enabled.
  *
- * The context's [NatsClient] bean is resolved by type, so a client the plugin declares itself wins over the
- * contributed fallback named after the plugin. The services, listeners and service proxies of the plugin all use
- * that one client. The fallback is created when a bean first asks for it, or when the plugin has `@NatsService` or
- * `@NatsListener` beans and no client of its own.
+ * The context's [NatsClient] bean is resolved by type, so a client the plugin declares itself wins
+ * over the contributed fallback named after the plugin. The services, listeners and service proxies
+ * of the plugin all use that one client. The fallback is created when a bean first asks for it, or
+ * when the plugin has `@NatsService` or `@NatsListener` beans and no client of its own.
  *
- * [NatsBeanPostProcessor] reports every client the context creates through [clientCreated]. The clients created by
- * the end of the refresh connect once right after it, on `Dispatchers.IO`, so every plugin that uses NATS is
- * connected before `onLoad`. A client created after that point connects while it is created, which blocks the
- * caller. A plugin that uses nothing of NATS never creates a client and never connects.
+ * [NatsBeanPostProcessor] reports every client the context creates through [clientCreated]. The
+ * clients created by the end of the refresh connect once right after it, on `Dispatchers.IO`, so
+ * every plugin that uses NATS is connected before `onLoad`. A client created after that point
+ * connects while it is created, which blocks the caller. A plugin that uses nothing of NATS never
+ * creates a client and never connects.
  *
- * Recording a client and passing the connect point are transitions guarded by one lock: whichever side observes the
- * other's effect connects the client. The connection itself opens outside the lock, and
- * [NatsClientControl.connect] is idempotent.
+ * Recording a client and passing the connect point are transitions guarded by one lock: whichever
+ * side observes the other's effect connects the client. The connection itself opens outside the
+ * lock, and [NatsClientControl.connect] is idempotent.
  *
- * The interceptors of all recorded services are resolved and validated before the connection opens, so a
- * misconfigured `@NatsTransactional` bean fails the refresh before any service answers. [registerRecorded] closes
- * recording: a service or listener bean that is created afterwards could never be served and fails its creation.
+ * The interceptors of all recorded services are resolved and validated before the connection opens,
+ * so a misconfigured `@NatsTransactional` bean fails the refresh before any service answers.
+ * [registerRecorded] closes recording: a service or listener bean that is created afterwards could
+ * never be served and fails its creation.
  *
- * @param connect opens the connection of a client; the default connects through the shared connection
+ * @param connect opens the connection of a client; the default connects through the shared
+ * connection
  */
 internal class NatsPluginContext(
     private val context: AnnotationConfigApplicationContext,
@@ -47,8 +50,8 @@ internal class NatsPluginContext(
 ) {
 
     /**
-     * Name of the fallback client. Derived on first use, so a plugin that uses nothing of NATS never fails over its
-     * name.
+     * Name of the fallback client. Derived on first use, so a plugin that uses nothing of NATS
+     * never fails over its name.
      */
     val clientName: String by lazy { NatsClientNames.of(pluginName) }
 
@@ -73,8 +76,13 @@ internal class NatsPluginContext(
     fun createClient(): NatsClient = NatsClient.create(clientName)
 
     /**
-     * Records [created], a client the context just created, and connects it right away when the context already
-     * passed its connect point.
+     * Whether the context created a client, which makes the plugin a user of NATS.
+     */
+    fun hasClient(): Boolean = synchronized(lock) { clients.isNotEmpty() }
+
+    /**
+     * Records [created], a client the context just created, and connects it right away when the
+     * context already passed its connect point.
      *
      * A client that fails to connect is closed again, so its name stays available.
      */
@@ -95,7 +103,8 @@ internal class NatsPluginContext(
     }
 
     /**
-     * Connects the clients the context created if the plugin uses NATS, and passes the connect point either way.
+     * Connects the clients the context created if the plugin uses NATS, and passes the connect
+     * point either way.
      *
      * A plugin without a client and without NATS beans never connects.
      */
@@ -111,18 +120,21 @@ internal class NatsPluginContext(
             clients.toList()
         }
 
-        pending.forEach { connect(EmbeddedNats.control(it)) }
+        for (connection in pending) {
+            connect(EmbeddedNats.control(connection))
+        }
     }
 
     /**
      * Records that bean [beanName] serves [interfaces].
      *
-     * @throws IllegalStateException if another bean of the plugin already serves one of them, or if the recorded beans
-     * were registered already
+     * @throws IllegalStateException if another bean of the plugin already serves one of them, or if
+     * the recorded beans were registered already
      */
     fun recordService(beanName: String, interfaces: List<Class<*>>) {
         synchronized(lock) {
             requireRecordable(beanName, beanName in serviceBeans)
+
             for (type in interfaces) {
                 val owner = servicesByInterface[type]
                 check(owner == null || owner == beanName) {
@@ -130,13 +142,17 @@ internal class NatsPluginContext(
                 }
             }
 
-            interfaces.forEach { servicesByInterface[it] = beanName }
+            for (serviceInterface in interfaces) {
+                servicesByInterface[serviceInterface] = beanName
+            }
+
             serviceBeans[beanName] = interfaces
         }
     }
 
     /**
-     * Records that bean [beanName], whose class behind any proxy is [beanClass], has `@NatsListener` methods.
+     * Records that bean [beanName], whose class behind any proxy is [beanClass], has
+     * `@NatsListener` methods.
      *
      * @throws IllegalStateException if the recorded beans were registered already
      */
@@ -148,14 +164,16 @@ internal class NatsPluginContext(
     }
 
     /**
-     * Registers the recorded services and listeners with the plugin's client, using the final beans.
+     * Registers the recorded services and listeners with the plugin's client, using the final
+     * beans.
      *
-     * Resolves the client by type, which creates and connects the fallback when no bean asked for a client before.
-     * Each service is registered with the interceptor of the first [NatsServiceInterceptorProvider] that handles it.
-     * Every interceptor is resolved before the first service is registered. Closes recording, see [recordService].
+     * Resolves the client by type, which creates and connects the fallback when no bean asked for a
+     * client before. Each service is registered with the interceptor of the first
+     * [NatsServiceInterceptorProvider] that handles it. Every interceptor is resolved before the
+     * first service is registered. Closes recording, see [recordService].
      *
-     * @throws IllegalStateException if a [dev.slne.surf.nats.NatsTransactional] service bean has no provider that
-     * handles it, or more than one
+     * @throws IllegalStateException if a [dev.slne.surf.nats.NatsTransactional] service bean has no
+     * provider that handles it, or more than one
      */
     suspend fun registerRecorded() {
         val hasRecorded = synchronized(lock) {
@@ -171,12 +189,12 @@ internal class NatsPluginContext(
         val listeners = synchronized(lock) { listenerBeans.toMap() }
 
         for (service in services) {
-            service.interfaces.forEach {
+            for (serviceInterface in service.interfaces) {
                 registerService(
                     resolved,
-                    it,
+                    serviceInterface,
                     service.bean,
-                    service.interceptor
+                    service.interceptor,
                 )
             }
         }
@@ -187,34 +205,41 @@ internal class NatsPluginContext(
     }
 
     /**
-     * Stops the inbound work of the clients the context created: drains their handlers while the plugin's beans are
-     * still alive. Publishing and calling stay possible until a client closes with the context.
+     * Stops the inbound work of the clients the context created: drains their handlers while the
+     * plugin's beans are still alive. Publishing and calling stay possible until a client closes
+     * with the context.
      */
     suspend fun stopAcceptingIfCreated() {
         val created = synchronized(lock) { clients.toList() }
         if (created.isEmpty()) return
+
         withContext(Dispatchers.IO) {
-            created.forEach { EmbeddedNats.control(it).stopAccepting() }
+            for (connection in created) {
+                EmbeddedNats.control(connection).stopAccepting()
+            }
         }
     }
 
     /**
-     * Whether the plugin has `@NatsService` or `@NatsListener` beans but no client yet, which makes the connect point
-     * create one.
+     * Whether the plugin has `@NatsService` or `@NatsListener` beans but no client yet, which makes
+     * the connect point create one.
      */
-    private fun needsClient(): Boolean = synchronized(lock) {
-        clients.isEmpty() && (serviceBeans.isNotEmpty() || listenerBeans.isNotEmpty())
+    private fun needsClient(): Boolean {
+        return synchronized(lock) {
+            clients.isEmpty() && (serviceBeans.isNotEmpty() || listenerBeans.isNotEmpty())
+        }
     }
 
     private fun requireRecordable(beanName: String, alreadyRecorded: Boolean) {
         check(alreadyRecorded || !registrationClosed) {
             "Bean '$beanName' uses NATS annotations but was created after the plugin registered its NATS beans, so " +
-                    "it would never be served; make it non-lazy so the context creates it while it starts"
+                "it would never be served; make it non-lazy so the context creates it while it starts"
         }
     }
 
     /**
-     * Resolves the final bean and the interceptor of every recorded service, once per bean, and validates them.
+     * Resolves the final bean and the interceptor of every recorded service, once per bean, and
+     * validates them.
      */
     private fun prepareServices(): Map<String, PreparedService> {
         val services = synchronized(lock) { serviceBeans.toMap() }
@@ -243,6 +268,7 @@ internal class NatsPluginContext(
         client: NatsClient,
     ): NatsPersistentInterceptor? {
         val beanClass = AopProxyUtils.ultimateTargetClass(bean)
+
         if (!beanClass.isNatsTransactional()) {
             return providers.firstNotNullOfOrNull { it.interceptorFor(bean, beanClass, client) }
         }
@@ -253,20 +279,20 @@ internal class NatsPluginContext(
 
         check(answers.isNotEmpty()) {
             "Bean '$beanName' (${beanClass.name}) is @NatsTransactional, but no NatsServiceInterceptorProvider handles " +
-                    "it; add the reliability module of surf-microservice"
+                "it; add the reliability module of surf-microservice"
         }
 
         check(answers.size == 1) {
             "Bean '$beanName' (${beanClass.name}) is @NatsTransactional, but ${answers.size} " +
-                    "NatsServiceInterceptorProviders handle it (${answers.joinToString { it.first.javaClass.name }}); " +
-                    "an interceptor cannot be chained, so exactly one provider may answer for it"
+                "NatsServiceInterceptorProviders handle it (${answers.joinToString { it.first.javaClass.name }}); " +
+                "an interceptor cannot be chained, so exactly one provider may answer for it"
         }
 
         val (provider, interceptor) = answers.single()
         check(provider.handlesTransactional) {
             "Bean '$beanName' (${beanClass.name}) is @NatsTransactional, but its only provider " +
-                    "${provider.javaClass.name} does not declare handlesTransactional; add the reliability module of " +
-                    "surf-microservice"
+                "${provider.javaClass.name} does not declare handlesTransactional; add the reliability module of " +
+                "surf-microservice"
         }
 
         return interceptor
@@ -279,6 +305,7 @@ internal class NatsPluginContext(
         interceptor: NatsPersistentInterceptor?,
     ) {
         val implementation = type.cast(bean)
+
         when (interceptor) {
             null -> client.registerService(type.kotlin, implementation)
             else -> client.registerService(type.kotlin, implementation, interceptor)
@@ -290,7 +317,7 @@ internal class NatsPluginContext(
         check(beanClass.isInstance(bean)) {
             val interfaces = AopProxyUtils.proxiedUserInterfaces(bean).joinToString { it.name }
             "Bean '$beanName' is proxied as $interfaces, " +
-                    "which cannot call the @NatsListener methods of ${beanClass.name}; proxy the class instead"
+                "which cannot call the @NatsListener methods of ${beanClass.name}; proxy the class instead"
         }
 
         return bean
@@ -306,10 +333,11 @@ internal class NatsPluginContext(
 }
 
 /**
- * Connects the plugin's clients once every singleton of the context exists, which is inside the context's refresh.
+ * Connects the plugin's clients once every singleton of the context exists, which is inside the
+ * context's refresh.
  *
- * A failing connection fails the refresh, so the plugin does not load, and closing the context releases what the
- * clients held.
+ * A failing connection fails the refresh, so the plugin does not load, and closing the context
+ * releases what the clients held.
  */
 internal class NatsConnector(private val nats: NatsPluginContext) : SmartInitializingSingleton {
 
@@ -319,8 +347,8 @@ internal class NatsConnector(private val nats: NatsPluginContext) : SmartInitial
 }
 
 /**
- * Connects [control] with surf-api's class loader as thread context class loader, so the threads the first
- * connection starts do not pin a plugin's loader.
+ * Connects [control] with surf-api's class loader as thread context class loader, so the threads
+ * the first connection starts do not pin a plugin's loader.
  */
 internal fun connectShared(control: NatsClientControl) {
     NatsPlatform.requireInstalled()

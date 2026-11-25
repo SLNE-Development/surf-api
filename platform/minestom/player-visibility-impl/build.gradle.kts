@@ -8,5 +8,3 @@ dependencies {
 }
 
 description = "surf-api-minestom-player-visibility-impl"
-
-publishRelocationFrom("surf-api-minestom-server-player-visibility")

@@ -10,5 +10,3 @@ dependencies {
 }
 
 description = "surf-api-minestom-console-impl"
-
-publishRelocationFrom("surf-api-minestom-server-console")

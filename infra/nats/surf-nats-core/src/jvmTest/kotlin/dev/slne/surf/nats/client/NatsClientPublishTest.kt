@@ -2,7 +2,7 @@ package dev.slne.surf.nats.client
 
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.NatsConstants
-import dev.slne.surf.nats.NatsInstance
+import dev.slne.surf.nats.TestNats
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsEvent
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.time.Duration
-import java.util.UUID
+import java.util.*
 import kotlin.test.*
 import dev.slne.surf.nats.test.proto.v1.VersionedChanged as VersionedChangedV1
 import dev.slne.surf.nats.test.proto.v2.VersionedChanged as VersionedChangedV2
@@ -27,21 +27,29 @@ import dev.slne.surf.nats.test.proto.v2.VersionedChanged as VersionedChangedV2
 class NatsClientPublishTest {
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @Test
-    fun `event is published as protobuf with headers on the subject of its proto name`() = withClient("publish-proto") { client ->
+    fun `event is published as protobuf with headers on the subject of its proto name`() = withClient(
+        "publish-proto",
+    ) { client ->
         val event = Created(42)
 
         val message = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Created", event)
 
         val contentType = message.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
         assertEquals("application/protobuf", contentType)
-        assertEquals("publish-proto@${NatsConnectionManager.instanceId}", message.headers.getFirst(ProtocolHeaders.ORIGIN))
-        assertEquals(NatsConstants.VERSION, message.headers.getFirst(ProtocolHeaders.SENDER_VERSION))
+        assertEquals(
+            "publish-proto@${NatsConnectionManager.instanceId}",
+            message.headers.getFirst(ProtocolHeaders.ORIGIN),
+        )
+        assertEquals(
+            NatsConstants.VERSION,
+            message.headers.getFirst(ProtocolHeaders.SENDER_VERSION),
+        )
 
         assertContentEquals(byteArrayOf(0x08, 0x2a), message.data)
         assertEquals(event, NatsCodec.decode(Created.serializer(), message.data, contentType))
@@ -52,7 +60,10 @@ class NatsClientPublishTest {
         val first = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Created", Created(1))
         val second = publishAndReceive(client, "surf.evt.surf.nats.test.v1.Created", Created(1))
 
-        val ids = listOf(first, second).map { assertNotNull(it.headers.getFirst(ProtocolHeaders.EVENT_ID)) }
+        val ids = listOf(
+            first,
+            second,
+        ).map { assertNotNull(it.headers.getFirst(ProtocolHeaders.EVENT_ID)) }
         ids.forEach(UUID::fromString)
         assertNotEquals(ids[0], ids[1])
     }
@@ -68,12 +79,26 @@ class NatsClientPublishTest {
 
     @Test
     fun `major versions of an event are published on separate subjects`() = withClient("publish-versions") { client ->
-        val v1 = publishAndReceive(client, "surf.evt.surf.nats.test.v1.VersionedChanged", VersionedChangedV1("one"))
-        val v2 = publishAndReceive(client, "surf.evt.surf.nats.test.v2.VersionedChanged", VersionedChangedV2("two", 2))
+        val v1 = publishAndReceive(
+            client,
+            "surf.evt.surf.nats.test.v1.VersionedChanged",
+            VersionedChangedV1("one"),
+        )
+        val v2 = publishAndReceive(
+            client,
+            "surf.evt.surf.nats.test.v2.VersionedChanged",
+            VersionedChangedV2("two", 2),
+        )
 
         val contentType = ProtocolHeaders.PROTOBUF_CONTENT_TYPE
-        assertEquals(VersionedChangedV1("one"), NatsCodec.decode(VersionedChangedV1.serializer(), v1.data, contentType))
-        assertEquals(VersionedChangedV2("two", 2), NatsCodec.decode(VersionedChangedV2.serializer(), v2.data, contentType))
+        assertEquals(
+            VersionedChangedV1("one"),
+            NatsCodec.decode(VersionedChangedV1.serializer(), v1.data, contentType),
+        )
+        assertEquals(
+            VersionedChangedV2("two", 2),
+            NatsCodec.decode(VersionedChangedV2.serializer(), v2.data, contentType),
+        )
     }
 
     @Test
@@ -109,9 +134,14 @@ class NatsClientPublishTest {
     private fun publishAndReceive(client: NatsClient, subject: String, event: NatsEvent): Message {
         val connection = NatsConnectionManager.connection()
         val subscription = connection.subscribe(subject)
+
         try {
             client.publish(event)
-            return assertNotNull(subscription.nextMessage(Duration.ofSeconds(5)), "no message on $subject")
+
+            return assertNotNull(
+                subscription.nextMessage(Duration.ofSeconds(5)),
+                "no message on $subject",
+            )
         } finally {
             subscription.unsubscribe()
         }

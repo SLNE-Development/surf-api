@@ -60,13 +60,13 @@ interface DoubleOr {
      * ```
      */
     data class Default(
-        override val value: Double?
+        override val value: Double?,
     ) : DoubleOr {
 
         /**
          * Returns the configured double value, or [fallback] if this value is `default`.
          */
-        override fun or(fallback: Double) = value ?: fallback
+        override fun or(fallback: Double): Double = value ?: fallback
 
         companion object {
             private const val DEFAULT_VALUE = "default"
@@ -95,7 +95,7 @@ interface DoubleOr {
             override fun serialize(
                 type: AnnotatedType,
                 item: Default,
-                typeSupported: Predicate<Class<*>>
+                typeSupported: Predicate<Class<*>>,
             ): Any {
                 return item.value ?: DEFAULT_VALUE
             }
@@ -112,24 +112,24 @@ interface DoubleOr {
      *     val threshold: DoubleOr.Disabled = DoubleOr.Disabled.DISABLED
      * )
      *
-     * if (config.threshold.enabled()) {
+     * if (config.threshold.isEnabled()) {
      *     val threshold = config.threshold.doubleValue()
      * }
      * ```
      */
     data class Disabled(
-        override val value: Double?
+        override val value: Double?,
     ) : DoubleOr {
 
         /**
          * Returns the configured double value, or [fallback] if this value is `disabled`.
          */
-        override fun or(fallback: Double) = value ?: fallback
+        override fun or(fallback: Double): Double = value ?: fallback
 
         /**
          * Returns `true` if this value contains an explicit double.
          */
-        fun enabled(): Boolean = value != null
+        fun isEnabled(): Boolean = value != null
 
         /**
          * Returns `true` if this value is enabled and its double value matches [predicate].
@@ -165,7 +165,7 @@ interface DoubleOr {
             override fun serialize(
                 type: AnnotatedType,
                 item: Disabled,
-                typeSupported: Predicate<Class<*>>
+                typeSupported: Predicate<Class<*>>,
             ): Any {
                 return item.value ?: DISABLED_VALUE
             }
@@ -182,7 +182,7 @@ private fun parseDouble(type: AnnotatedType, obj: Any, emptyValue: String): Doub
                 obj.toDoubleOrNull()
                     ?: throw SerializationException(
                         Double::class.java,
-                        "$obj($type) is not a double or '$emptyValue'"
+                        "$obj($type) is not a double or '$emptyValue'",
                     )
             }
         }
@@ -191,7 +191,7 @@ private fun parseDouble(type: AnnotatedType, obj: Any, emptyValue: String): Doub
 
         else -> throw SerializationException(
             Double::class.java,
-            "$obj($type) is not a double or '$emptyValue'"
+            "$obj($type) is not a double or '$emptyValue'",
         )
     }
 }

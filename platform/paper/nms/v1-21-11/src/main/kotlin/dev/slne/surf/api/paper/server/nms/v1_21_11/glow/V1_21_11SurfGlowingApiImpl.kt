@@ -4,14 +4,13 @@ import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.glow.SurfGlowingApi
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
-import dev.slne.surf.api.paper.nms.common.NmsProvider
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.V1_21_11SurfPaperNmsGlowingBridgeImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.block.BlockGlowingData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.block.BlockPlayerData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.entity.EntityGlowingData
 import dev.slne.surf.api.paper.server.nms.v1_21_11.glow.entity.EntityPlayerData
-import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
 import dev.slne.surf.api.paper.util.isChunkVisible
 import io.papermc.paper.adventure.PaperAdventure
 import kotlinx.coroutines.launch
@@ -20,15 +19,18 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @NmsUseWithCaution
-object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
+@NmsComponent
+class V1_21_11SurfGlowingApiImpl(
+    private val glowingBridge: V1_21_11SurfPaperNmsGlowingBridgeImpl,
+    private val plugin: Plugin,
+) : SurfGlowingApi {
     private val entityPlayerData = ConcurrentHashMap<UUID, EntityPlayerData>()
     private val blockPlayerData = ConcurrentHashMap<UUID, BlockPlayerData>()
-
-    val glowingFlag = 1 shl V1_21_11NmsReflections.getEntityFlagGlowing()
 
     override fun makeGlowing(
         target: Entity,
@@ -40,7 +42,7 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
             teamIdFor(target),
             viewer,
             color,
-            V1_21_11SurfPaperNmsGlowingBridgeImpl.getCurrentFlags(target)
+            glowingBridge.getCurrentFlags(target),
         )
     }
 
@@ -63,19 +65,24 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
                 targetId,
                 teamId,
                 nmsColor,
-                otherFlags
+                otherFlags,
+                glowingBridge,
             )
             playerData.entities[targetId] = newData
 
             operation.add(newData.sendGlowingFlag(enabled = true, ignorePacket = true))
+
             if (nmsColor != null) {
                 operation.add(newData.sendTeamColor())
             }
+
             operation.execute(viewer)
+
             return
         }
 
         if (nmsColor == glowingData.color) return
+
         if (nmsColor == null) {
             operation.add(glowingData.removeFromTeam())
             glowingData.color = null
@@ -99,10 +106,15 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
         val blockData = playerData.blocks[blockLocation]
 
         if (blockData == null) {
-            val newData = BlockGlowingData(playerData, blockLocation, color)
+            val newData = BlockGlowingData(
+                playerData,
+                blockLocation,
+                color,
+                glowingApi = this,
+                glowingBridge = glowingBridge,
+            )
             playerData.blocks[blockLocation] = newData
 
-            val plugin = NmsProvider.current.plugin
             val runtime = SurfPaperPluginRuntime.get()
             runtime.coroutineScope(plugin).launch(runtime.dispatchers(plugin).entity(viewer)) {
                 if (viewer.isChunkVisible(blockLocation)) {
@@ -132,6 +144,7 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
     override fun removeGlowing(targetId: Int, viewer: Player) {
         val playerData = entityPlayerData[viewer.uniqueId] ?: return
         val glowingData = playerData.entities.remove(targetId) ?: return
+
         val operation = glowingData.sendGlowingFlag(enabled = false) + glowingData.removeFromTeam()
         operation.execute(viewer)
     }
@@ -147,6 +160,7 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
         val blockData = playerData.blocks.remove(blockLocation) ?: return
 
         blockData.remove()
+
         if (playerData.blocks.isEmpty()) {
             blockPlayerData.remove(viewer.uniqueId)
         }
@@ -154,12 +168,9 @@ object V1_21_11SurfGlowingApiImpl : SurfGlowingApi {
 
     private fun teamIdFor(entity: Entity) = (entity as? Player)?.name ?: entity.uniqueId.toString()
 
+    fun getEntityPlayerData(player: Player): EntityPlayerData? = entityPlayerData[player.uniqueId]
 
-    fun getEntityPlayerData(player: Player): EntityPlayerData? =
-        entityPlayerData[player.uniqueId]
-
-    fun getBlockPlayerData(player: Player): BlockPlayerData? =
-        blockPlayerData[player.uniqueId]
+    fun getBlockPlayerData(player: Player): BlockPlayerData? = blockPlayerData[player.uniqueId]
 
     fun removeAllGlowingOnQuit(player: Player) {
         val uuid = player.uniqueId

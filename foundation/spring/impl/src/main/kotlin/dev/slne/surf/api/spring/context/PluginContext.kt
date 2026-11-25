@@ -4,15 +4,18 @@ import dev.slne.surf.api.spring.util.FailureCollector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
+import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.support.GenericApplicationContext
 
 /**
- * A refreshed context together with the driver of its lifecycle hooks.
+ * A refreshed context together with the driver of its lifecycle hooks and the durations of its
+ * startup phases.
  */
 internal class ManagedContext(
     val context: AnnotationConfigApplicationContext,
     val hooks: LifecycleHookRunner,
+    val timings: PhaseTimings = PhaseTimings(),
 )
 
 /**
@@ -34,10 +37,13 @@ class PluginBootstrapContext internal constructor(
     val context: AnnotationConfigApplicationContext get() = managed.context
 
     /**
-     * Runs the bootstrap hooks with the plugin's class loader as thread context class loader.
+     * Runs the bootstrap hooks with the plugin's class loader as thread context class loader, as
+     * the [StartupPhase.BOOTSTRAP] step.
      */
-    suspend fun bootstrap(): Unit = withContext(ContextClassLoaderElement(descriptor.classLoader)) {
-        managed.hooks.bootstrap()
+    suspend fun bootstrap() {
+        withContext(ContextClassLoaderElement(descriptor.classLoader)) {
+            managed.measure(StartupPhase.BOOTSTRAP, descriptor.name) { managed.hooks.bootstrap() }
+        }
     }
 }
 
@@ -51,7 +57,12 @@ class PluginBootstrapContext internal constructor(
  * elements of [coroutineScope] except its job and dispatcher, so the plugin's class loader is the
  * thread context class loader whichever thread they resume on.
  *
- * [ContextPhaseListener] beans of [context] run after the enable hooks and before the disable hooks.
+ * [ContextPhaseListener] beans of [context] run after the enable hooks and before the disable
+ * hooks.
+ *
+ * Each phase function runs as the startup step of its [StartupPhase], tagged with the plugin's
+ * name, on [context]'s application startup. After the enable phase, one info line reports the
+ * durations of the context builds and of the bootstrap, load and enable phases.
  *
  * [coroutineScope] is the plugin's `CoroutineScope` bean. It is cancelled once the disable hooks
  * have run, or when the plugin's contexts close without them, whichever comes first.
@@ -68,6 +79,7 @@ class PluginContext internal constructor(
     val coroutineScope: CoroutineScope,
 ) {
 
+    private val log = LogFactory.getLog(PluginContext::class.java)
     private val hookContext = hookElements(coroutineScope)
     private val managed = listOfNotNull(bootstrap, own)
 
@@ -80,7 +92,15 @@ class PluginContext internal constructor(
      * Every context that holds the plugin's own beans: its bootstrap context, if any, and
      * [context].
      */
-    val beanContexts: List<AnnotationConfigApplicationContext> get() = managed.map(ManagedContext::context)
+    val beanContexts: List<AnnotationConfigApplicationContext>
+        get() = managed.map(
+            ManagedContext::context,
+        )
+
+    /**
+     * The phase durations of the bootstrap context, if any, and of [context].
+     */
+    internal val startupTimings: List<PhaseTimings> get() = managed.map(ManagedContext::timings)
 
     /**
      * Runs the load hooks.
@@ -89,17 +109,35 @@ class PluginContext internal constructor(
      * [dev.slne.surf.api.spring.SurfBootstrapLifecycle.onBootstrap] runs before `onLoad` on every
      * platform.
      */
-    suspend fun load(): Unit = withContext(hookContext) {
-        if (bootstrap == null) own.hooks.bootstrap()
-        managed.forEach { it.hooks.load() }
+    suspend fun load() {
+        withContext(hookContext) {
+            if (bootstrap == null) {
+                own.measure(StartupPhase.BOOTSTRAP, descriptor.name) { own.hooks.bootstrap() }
+            }
+
+            own.measure(StartupPhase.LOAD, descriptor.name) {
+                for (context in managed) {
+                    context.hooks.load()
+                }
+            }
+        }
     }
 
     /**
-     * Runs the enable hooks.
+     * Runs the enable hooks, then logs the startup durations at info level.
      */
-    suspend fun enable(): Unit = withContext(hookContext) {
-        managed.forEach { it.hooks.enable() }
-        own.context.runAfterEnable()
+    suspend fun enable() {
+        withContext(hookContext) {
+            own.measure(StartupPhase.ENABLE, descriptor.name) {
+                for (context in managed) {
+                    context.hooks.enable()
+                }
+
+                own.context.runAfterEnable()
+            }
+        }
+
+        log.info(describeStartup("Plugin '${descriptor.name}'", *startupTimings.toTypedArray()))
     }
 
     /**
@@ -109,8 +147,13 @@ class PluginContext internal constructor(
     suspend fun disable() {
         try {
             withContext(hookContext) {
-                own.context.runBeforeDisable("plugin '${descriptor.name}'")
-                managed.asReversed().forEach { it.hooks.disable() }
+                own.measure(StartupPhase.DISABLE, descriptor.name) {
+                    own.context.runBeforeDisable("plugin '${descriptor.name}'")
+
+                    for (context in managed.asReversed()) {
+                        context.hooks.disable()
+                    }
+                }
             }
         } finally {
             coroutineScope.cancel("Plugin '${descriptor.name}' is disabled")
@@ -132,10 +175,12 @@ class PluginContext internal constructor(
 }
 
 /**
- * Closes every non-null context in order, even if one of them fails, and rethrows the first failure.
+ * Closes every non-null context in order, even if one of them fails, and rethrows the first
+ * failure.
  */
 internal fun closeContexts(vararg contexts: GenericApplicationContext?) {
     val failures = FailureCollector()
+
     for (context in contexts) {
         try {
             context?.close()
@@ -143,5 +188,6 @@ internal fun closeContexts(vararg contexts: GenericApplicationContext?) {
             failures.add(exception)
         }
     }
+
     failures.throwIfAny()
 }

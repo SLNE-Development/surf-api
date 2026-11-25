@@ -8,6 +8,7 @@ import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
 import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerPackets
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.packets.V1_21_11PacketOperationImpl
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import io.papermc.paper.adventure.PaperAdventure
@@ -22,23 +23,33 @@ import org.bukkit.inventory.ItemStack
 import java.util.*
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
 
     override fun openSignEditor(
         position: BlockPosition,
         frontSide: Boolean,
-    ) = V1_21_11PacketOperationImpl.simple { ClientboundOpenSignEditorPacket(position.toNms(), frontSide) }
+    ): V1_21_11PacketOperationImpl {
+        return V1_21_11PacketOperationImpl.simple {
+            ClientboundOpenSignEditorPacket(
+                position.toNms(),
+                frontSide,
+            )
+        }
+    }
 
     override fun openInventory(
         syncId: Int,
         type: InventoryType,
         title: Component,
-    ) = V1_21_11PacketOperationImpl.simple {
-        ClientboundOpenScreenPacket(
-            syncId,
-            type.toNms(),
-            title.toNms()
-        )
+    ): V1_21_11PacketOperationImpl {
+        return V1_21_11PacketOperationImpl.simple {
+            ClientboundOpenScreenPacket(
+                syncId,
+                type.toNms(),
+                title.toNms(),
+            )
+        }
     }
 
     override fun setInventorySlot(
@@ -46,17 +57,20 @@ class V1_21_11SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
         revision: Int,
         slot: Int,
         item: ItemStack,
-    ) = V1_21_11PacketOperationImpl.simple {
-        ClientboundContainerSetSlotPacket(
-            syncId,
-            revision,
-            slot,
-            item.toNms()
-        )
+    ): V1_21_11PacketOperationImpl {
+        return V1_21_11PacketOperationImpl.simple {
+            ClientboundContainerSetSlotPacket(
+                syncId,
+                revision,
+                slot,
+                item.toNms(),
+            )
+        }
     }
 
-    override fun closeInventory(syncId: Int) =
-        V1_21_11PacketOperationImpl.simple { ClientboundContainerClosePacket(syncId) }
+    override fun closeInventory(syncId: Int): V1_21_11PacketOperationImpl {
+        return V1_21_11PacketOperationImpl.simple { ClientboundContainerClosePacket(syncId) }
+    }
 
     override fun createNewPlayerInfoUpdate(
         profileId: UUID,
@@ -68,38 +82,42 @@ class V1_21_11SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
         showHat: Boolean,
         listOrder: Int,
         chatSession: RemoteChatSessionData?,
-    ): PacketOperation = V1_21_11PacketOperationImpl.simple {
-        val entries = listOf(
-            ClientboundPlayerInfoUpdatePacket.Entry(
-                profileId,
-                (profile as CraftPlayerProfile).buildGameProfile(),
-                listed,
-                latency,
-                gameMode.toNms(),
-                PaperAdventure.asVanilla(displayName),
-                showHat,
-                listOrder,
-                chatSession?.let { sessionData ->
-                    RemoteChatSession.Data(
-                        sessionData.sessionId,
-                        ProfilePublicKey.Data(
-                            sessionData.expiresAt,
-                            sessionData.key,
-                            sessionData.keySignature
+    ): PacketOperation {
+        return V1_21_11PacketOperationImpl.simple {
+            val entries = listOf(
+                ClientboundPlayerInfoUpdatePacket.Entry(
+                    profileId,
+                    (profile as CraftPlayerProfile).buildGameProfile(),
+                    listed,
+                    latency,
+                    gameMode.toNms(),
+                    PaperAdventure.asVanilla(displayName),
+                    showHat,
+                    listOrder,
+                    chatSession?.let { sessionData ->
+                        RemoteChatSession.Data(
+                            sessionData.sessionId,
+                            ProfilePublicKey.Data(
+                                sessionData.expiresAt,
+                                sessionData.key,
+                                sessionData.keySignature,
+                            ),
                         )
-                    )
-                }
+                    },
+                ),
             )
-        )
 
-        ClientboundPlayerInfoUpdatePacket(
-            createNewPlayerInfoUpdateActions,
-            entries
-        )
+            ClientboundPlayerInfoUpdatePacket(
+                createNewPlayerInfoUpdateActions,
+                entries,
+            )
+        }
     }
 
-    override fun removePlayerInfoUpdate(profileIds: List<UUID>): PacketOperation = V1_21_11PacketOperationImpl.simple {
-        ClientboundPlayerInfoRemovePacket(profileIds)
+    override fun removePlayerInfoUpdate(profileIds: List<UUID>): PacketOperation {
+        return V1_21_11PacketOperationImpl.simple {
+            ClientboundPlayerInfoRemovePacket(profileIds)
+        }
     }
 
     companion object {
@@ -111,7 +129,7 @@ class V1_21_11SurfPaperNmsPlayerPacketsImpl : SurfPaperNmsPlayerPackets {
             ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
             ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
             ClientboundPlayerInfoUpdatePacket.Action.UPDATE_HAT,
-            ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LIST_ORDER
+            ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LIST_ORDER,
         )
     }
 }

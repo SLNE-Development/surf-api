@@ -2,28 +2,49 @@ package dev.slne.surf.api.paper.nms.common
 
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.shared.internal.nms.NmsVersion
-import org.bukkit.Bukkit
 
+/**
+ * Selects the NMS version module for the running server.
+ *
+ * The Paper runtime registers the result of [resolve] as a singleton named [BEAN_NAME] in
+ * surf-api's root bootstrap context, before the root context scans for version modules.
+ * [ConditionalOnMinecraftVersion] reads that bean, so exactly one version module contributes beans.
+ */
 object NmsVersionResolver {
+
+    /**
+     * The name of the bean that holds the selected [NmsVersion].
+     */
+    const val BEAN_NAME = "surfNmsVersion"
+
     private val log = logger()
 
     /**
-     * The NMS version of the currently running Minecraft server.
+     * Selects the bindings for a server reporting [minecraftVersion] through [NmsVersion.select].
      *
-     * Detected at runtime from `Bukkit.getMinecraftVersion()`.
-     * Uses latest provided NMS version if no exact match is found.
+     * A server without bindings of its own version runs on the newest older ones; a warning names
+     * both versions.
+     *
+     * @param minecraftVersion the version the server reports, such as `26.3.1`
+     * @return the selected version
+     * @throws IllegalStateException if the server is older than every supported version
      */
-    val current: NmsVersion by lazy {
-        val mcVersion = Bukkit.getMinecraftVersion()
-
-        NmsVersion.matching(mcVersion) ?: NmsVersion.NEWEST.also { fallback ->
-            log.atWarning().log(
-                "No NMS bindings for Minecraft %s, falling back to the newest surf-api has: %s. " +
-                        "Anything that reads a field or calls a method that moved since then will " +
-                        "fail at the point it is used, not here.",
-                mcVersion,
-                fallback.versionPrefix,
-            )
+    fun resolve(minecraftVersion: String): NmsVersion {
+        val selected = checkNotNull(NmsVersion.select(minecraftVersion)) {
+            "surf-api has no NMS bindings for Minecraft $minecraftVersion; the oldest supported " +
+                "version is ${NmsVersion.NEWEST_FIRST.last().versionPrefix}"
         }
+
+        if (!selected.matches(minecraftVersion)) {
+            log.atWarning()
+                .log(
+                    "No NMS bindings for Minecraft %s, using the newest older ones: %s. A reflected " +
+                        "member that changed since then fails where it is used.",
+                    minecraftVersion,
+                    selected.versionPrefix,
+                )
+        }
+
+        return selected
     }
 }

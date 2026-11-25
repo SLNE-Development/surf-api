@@ -11,11 +11,13 @@ interface PacketOperation {
     fun add(operation: PacketOperation): PacketOperation
     fun isEmpty(): Boolean
 
-    operator fun plus(other: PacketOperation) = add(other)
+    operator fun plus(other: PacketOperation): PacketOperation = add(other)
 
     companion object {
-        @OptIn(NmsUseWithCaution::class) // not really nms here
-        fun start(): PacketOperation = SurfPaperNmsPacketBridges.INSTANCE.createEmptyPacketOperation()
+        @OptIn(NmsUseWithCaution::class)
+        fun start(): PacketOperation {
+            return SurfPaperNmsPacketBridges.instance.createEmptyPacketOperation()
+        }
     }
 }
 

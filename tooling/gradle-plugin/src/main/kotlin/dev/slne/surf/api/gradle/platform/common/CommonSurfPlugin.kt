@@ -2,6 +2,7 @@ package dev.slne.surf.api.gradle.platform.common
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import dev.slne.surf.api.gradle.generated.Constants
+import dev.slne.surf.api.gradle.internalapi.CheckInternalApiUsage
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.util.slnePublic
@@ -9,8 +10,11 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.*
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
@@ -28,7 +32,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         "org.jetbrains.kotlin.plugin.jpa",
         "org.jetbrains.kotlin.plugin.serialization",
         "com.gradleup.shadow",
-        "com.google.devtools.ksp"
+        "com.google.devtools.ksp",
     )
 
     private val relocations = mutableListOf<Relocation>()
@@ -39,28 +43,33 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     protected abstract val extensionClass: Class<E>
 
-    override fun apply(target: Project) = with(target) {
-        val extension = extensions.create(
-            "surf${platformName.replaceFirstChar { it.uppercase() }}Api",
-            extensionClass
-        )
+    override fun apply(target: Project) {
+        with(target) {
+            val extension = extensions.create(
+                "surf${platformName.replaceFirstChar { it.uppercase() }}Api",
+                extensionClass,
+            )
 
-        applyRepositories()
-        applyPlugins()
-        configure()
-        setupPublication()
+            applyRepositories()
+            applyPlugins()
+            configure()
+            registerInternalApiCheck(extension)
+            setupPublication()
 
-        afterEvaluate {
-            try {
-                extension.validate()
-            } catch (e: Exception) {
-                logger.error(
-                    "Failed to validate extension. Please check your configuration and try again.",
-                    e
-                )
-                return@afterEvaluate
+            afterEvaluate {
+                try {
+                    extension.validate()
+                } catch (e: Exception) {
+                    logger.error(
+                        "Failed to validate extension. Please check your configuration and try again.",
+                        e,
+                    )
+
+                    return@afterEvaluate
+                }
+
+                afterEvaluated(extension)
             }
-            afterEvaluated(extension)
         }
     }
 
@@ -87,12 +96,20 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
      * Calls [action] for every relocation the shadow jar applies, with [to] already below the surf
      * relocation prefix.
      */
-    internal fun forEachRelocation(action: (from: String, to: String, excludes: List<String>) -> Unit) {
-        relocations.forEach { action(it.from, "${Constants.RELOCATION_PREFIX}.${it.to}", it.excludes) }
+    internal fun forEachRelocation(
+        action: (from: String, to: String, excludes: List<String>) -> Unit,
+    ) {
+        for (relocation in relocations) {
+            action(
+                relocation.from,
+                "${Constants.RELOCATION_PREFIX}.${relocation.to}",
+                relocation.excludes,
+            )
+        }
     }
 
     private fun Project.applyPlugins() {
-        commonPlugins.forEach { pluginId ->
+        for (pluginId in commonPlugins) {
             applyPlugin(pluginId)
         }
 
@@ -127,12 +144,14 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
 
     private fun Project.configure() {
         tasks.withType<ShadowJar> {
-            relocations.forEach { relocation ->
+            for (relocation in relocations) {
                 relocate(
                     relocation.from,
-                    "${Constants.RELOCATION_PREFIX}.${relocation.to}"
+                    "${Constants.RELOCATION_PREFIX}.${relocation.to}",
                 ) {
-                    relocation.excludes.forEach { exclude(it) }
+                    for (pattern in relocation.excludes) {
+                        exclude(pattern)
+                    }
                 }
             }
         }
@@ -156,34 +175,42 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies.remove(project.dependencies.gradleTestKit())
         }
 
-        configureSurfProcessor()
         configureKotlin()
         configure0()
     }
 
-    private fun Project.configureKotlin() = configure<KotlinJvmProjectExtension> {
-        jvmToolchain(Constants.JAVA_VERSION)
-        compilerOptions {
-            freeCompilerArgs.addAll(
-                listOf(
-                    "-Xjsr305=strict",
-                    "-Xcontext-parameters",
-                    "-Xreturn-value-checker=check",
-                )
-            )
-            javaParameters = true
+    /**
+     * Registers `checkInternalApiUsage` on the main classes and runs it with `check`.
+     */
+    private fun Project.registerInternalApiCheck(extension: E) {
+        val main = extensions.getByType<SourceSetContainer>().named(SourceSet.MAIN_SOURCE_SET_NAME)
+        val checkInternalApiUsage = tasks.register<CheckInternalApiUsage>(
+            CHECK_INTERNAL_API_USAGE,
+        ) {
+            group = LifecycleBasePlugin.VERIFICATION_GROUP
+            description = "Fails when the project references internal API of its dependencies."
+            classes.from(main.map { it.output.classesDirs })
+            classpath.from(main.map { it.compileClasspath })
+            allowedMarkers.set(extension.allowedInternalApiMarkers)
+            passMarker.set(layout.buildDirectory.file("surf/$CHECK_INTERNAL_API_USAGE/passed"))
         }
+        tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) { dependsOn(checkInternalApiUsage) }
     }
 
-    /**
-     * Runs surf-api's KSP processor on the project.
-     *
-     * The processor generates the NMS provider index and the code behind `@GenerateReflection`.
-     * Without it a plugin that declares either compiles and then misses the generated classes at
-     * runtime. It collects no bean metadata: Spring finds the beans by scanning the plugin.
-     */
-    private fun Project.configureSurfProcessor() = dependencies {
-        add("ksp", Constants.SURF_PROCESSOR)
+    private fun Project.configureKotlin() {
+        configure<KotlinJvmProjectExtension> {
+            jvmToolchain(Constants.JAVA_VERSION)
+            compilerOptions {
+                freeCompilerArgs.addAll(
+                    listOf(
+                        "-Xjsr305=strict",
+                        "-Xcontext-parameters",
+                        "-Xreturn-value-checker=check",
+                    ),
+                )
+                javaParameters = true
+            }
+        }
     }
 
     protected open fun Project.configure0() {
@@ -196,6 +223,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 val scope = extension.surfApiScope.orNull ?: platform.scope
                 add(scope, platform.dependency)
+
                 if (testingEnabled && (scope == COMPILE_ONLY || scope == "compileOnlyApi")) {
                     add(SurfTestingConfigurer.TEST_IMPLEMENTATION, platform.dependency)
                 }
@@ -206,6 +234,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 val notation = "dev.slne.surf.core:${it.module}:+"
                 add(COMPILE_ONLY, notation)
+
                 if (testingEnabled) {
                     add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                 }
@@ -216,6 +245,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
             dependencies {
                 val notation = "dev.slne.surf.api:surf-api-redis-api:${Constants.SURF_API_VERSION}"
                 add(COMPILE_ONLY, notation)
+
                 if (testingEnabled) {
                     add(SurfTestingConfigurer.TEST_IMPLEMENTATION, notation)
                 }
@@ -228,7 +258,7 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
                 abiValidation {
                     filters {
                         exclude {
-                            annotatedWith.add("dev.slne.surf.api.shared.api.util.InternalSurfApi")
+                            annotatedWith.addAll(extension.apiValidationExcludedMarkers)
                         }
                     }
                 }
@@ -243,11 +273,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
         afterEvaluated0(extension)
     }
 
-    private fun Project.setupPublication() = configure<PublishingExtension> {
-        publications {
-//            publications.create<MavenPublication>("maven") {
-//                from(components["java"])
-//            }
+    private fun Project.setupPublication() {
+        configure<PublishingExtension> {
+            publications {
+            }
         }
     }
 
@@ -255,6 +284,10 @@ abstract class CommonSurfPlugin<E : CommonSurfExtension>(
     }
 
     protected open fun Project.platformTestDependencies(extension: E) {
+    }
+
+    private companion object {
+        const val CHECK_INTERNAL_API_USAGE = "checkInternalApiUsage"
     }
 
     private data class Relocation(

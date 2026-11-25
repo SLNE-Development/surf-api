@@ -1,6 +1,6 @@
 public class dev/slne/surf/microservice/reliability/MicroserviceReliabilityAutoConfiguration {
 	public fun <init> ()V
-	public fun atomicOperations (Ldev/slne/surf/database/libs/org/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;Ldev/slne/surf/microservice/reliability/ReliabilityConfig;)Ldev/slne/surf/database/reliability/operation/AtomicOperations;
+	public fun atomicOperations (Lorg/jetbrains/exposed/v1/r2dbc/R2dbcDatabase;Ldev/slne/surf/microservice/reliability/ReliabilityConfig;)Ldev/slne/surf/database/reliability/operation/AtomicOperations;
 	public fun reliabilityConfig ()Ldev/slne/surf/microservice/reliability/ReliabilityConfig;
 	public fun reliabilityMigrationSet ()Ldev/slne/surf/database/reliability/ReliabilityMigrationSet;
 	public fun transactionalEvents ()Ldev/slne/surf/microservice/reliability/TransactionalEvents;

@@ -16,14 +16,18 @@ surf-api is itself a Paper plugin. `platform/paper/impl/build.gradle.kts` names 
 (`provides = ["SurfPaperAPI"]`), with `PaperMain` as `main` and `PaperBoostrapper` as
 `bootstrapper` (the typo is the real class name). It requires `CommandAPI`, `packetevents` and
 `LuckPerms` to load before it, and soft-depends on PlaceholderAPI, ProtocolLib, ProtocolSupport,
-the Via stack and Geyser-Spigot.
+the Via stack and Geyser-Spigot. LuckPerms is a lazy root bean (`luckPerms`), because it enables
+after surf-api's root context is built; inject `SurfLuckPerms`, `ObjectProvider<LuckPerms>` or a
+`@Lazy` `LuckPerms`, never a plain `LuckPerms` constructor parameter. `Player.getLuckPermsUser()`,
+`getLuckPermsUserOrNull()`, `getPrefixedName()` and `OfflinePlayer.loadLuckPermsUser()` wrap it;
+Velocity has the same `Player` extensions.
 
 Your plugin is a separate jar that compiles against `surf-api-paper` and declares `surf-paper-api`
 as a required bootstrap and server dependency loading `BEFORE` it. surf-api builds a Spring context
 for your plugin below its own root context, and your code lives in the beans of that context. The
 Paper-only features are interfaces whose implementations are beans of surf-api's root context, so a
 bean gets them by constructor injection. Where an interface has a `companion object` accessor
-(`INSTANCE`), it is `@InternalSurfApi`, an error-level opt-in that plugins do not compile against.
+(`instance`), it is `@InternalSurfApi`, an error-level opt-in that plugins do not compile against.
 
 surf-api's jar carries Spring, `kotlin-reflect` and `kotlinx-coroutines-reactor` under their own
 package names, and Redis and NATS with Redisson, `io.nats` and BouncyCastle relocated. It does not
@@ -109,8 +113,8 @@ The phases, in order:
 | --- | --- |
 | bootstrap (`SurfPaperBootstrapper.bootstrap`) | builds the **bootstrap context**: only the components that implement `SurfBootstrapLifecycle` or carry `@BootstrapComponent`, then runs `onBootstrap` |
 | load (`SurfPaperPlugin.onLoad`) | builds the **plugin context** with every other component, below the import context that holds its dependencies' exports and below the bootstrap context, then runs `onLoad` |
-| enable (`SurfPaperPlugin.onEnable`) | registers the context's Bukkit `Listener` beans, its commands (`CommandAPICommand` and `CommandTree` beans, `CommandRegistrar` beans) and its `@SurfEventHandler` beans, then runs `onEnable` |
-| disable (`SurfPaperPlugin.onDisable`) | runs `onDisable` in reverse order, unregisters the `@SurfEventHandler` beans and closes the contexts; Paper itself unregisters the Bukkit listeners |
+| enable (`SurfPaperPlugin.onEnable`) | registers the context's Bukkit `Listener` beans, its commands (`CommandAPICommand` and `CommandTree` beans, `CommandRegistrar` beans), its `@SurfEventHandler` beans and its `@PapiExpansion` beans, then runs `onEnable` |
+| disable (`SurfPaperPlugin.onDisable`) | runs `onDisable` in reverse order, unregisters the `@SurfEventHandler` and `@PapiExpansion` beans and closes the contexts; Paper itself unregisters the Bukkit listeners |
 
 Rules that follow from it:
 
@@ -122,13 +126,15 @@ Rules that follow from it:
   dependencies and no server exists yet, so a bootstrap bean must not use the Bukkit server API,
   another plugin's API or the main and region threads.
 - **Hooks block the server thread.** `onLoad`, `onEnable` and `onDisable` run on the thread Paper
-  calls the phase on, which is the main thread. A hook must not wait for work dispatched to the main
-  or a region thread or to the Bukkit scheduler; see `SurfLifecycle` in
-  `foundation/spring/api/.../spring/SurfLifecycle.kt`. A plugin whose load phase failed is never
-  enabled.
+  calls the phase on, which is the main thread. `PluginDispatchers.lifecycle` runs
+  `PaperDispatchers.main` work inside the blocked phase, so a hook may wait for it; on Folia it must
+  not wait for region or entity work, and it must never wait for a task handed to the Bukkit
+  scheduler directly. A plugin whose load phase failed is never enabled.
 - **The plugin instance is a bean.** The plugin context injects it under every type it has
   (`Plugin`, `JavaPlugin`, the concrete class). The bootstrap context injects it only as
-  `org.bukkit.plugin.Plugin`, a proxy that works from the load phase on. Spring manages the instance
+  `org.bukkit.plugin.Plugin`, a proxy (`PluginInstanceHolder`) that forwards every call
+  reflectively and throws before the load phase. Use it for registration, not in code that runs per
+  tick; inject the instance in the plugin context there. Spring manages the instance
   like any other singleton: `@Autowired` members, `@PostConstruct`, every `BeanPostProcessor`, and
   `@PreDestroy` and `DisposableBean.destroy` when the context closes.
 - **Every plugin context holds a `CoroutineScope`** (a `SupervisorJob` on `Dispatchers.Default`,
@@ -147,7 +153,7 @@ The api's own lifecycle, for reference: `PaperBoostrapper.bootstrap` installs NA
 surf-api's root bootstrap context through `PaperSpringRuntime` and runs `PaperInstance.bootstrap()`.
 `PaperMain.onLoad` starts bStats, builds the root context (`loadRoot`, which also installs it for
 surf-api's static entry points) and runs `PaperInstance.onLoad()`. `onEnable` runs the root's enable
-hooks, then `PaperInstance.onEnable()` (packet api, listeners, the `SurfApiPaper` implementation).
+hooks, then `PaperInstance.onEnable()` (packet api, listeners).
 `onDisable` closes the plugin contexts that are still open, tears surf-api down and closes the root
 last. `PaperInstance` extends `CoreInstance` (`common/core/impl/.../core/server/CoreInstance.kt`),
 whose `bootstrap`/`onLoad`/`onEnable`/`onDisable` are `@MustBeInvokedByOverriders`.
@@ -185,14 +191,14 @@ Details and examples: **`references/paper-features.md`**.
 | `visualizer/` | block-display outlines for single locations, many locations or a whole area, shown to chosen viewers. `@ExperimentalVisualizerApi` - a warning-level opt-in. |
 | `glow/` | `SurfGlowingApi` makes an entity, a block or a location glow for one viewer only, in a chosen `NamedTextColor`. |
 | `region/` | the injected `TickThreadGuard`'s `ensureTickThread(...)` - asserts the current thread owns a position, chunk, entity, bounding box or the global tick, for code that has to be correct on Folia. |
-| `hook/` | the PlaceholderAPI bridge: build a `PapiExpansion` out of `PapiPlaceholder`s and register it with `SurfPaperPAPIHook`. PlaceholderAPI is a soft dependency. |
+| `hook/` | the PlaceholderAPI bridge: a `@PapiExpansion` bean with `@Placeholder` methods, registered with its plugin and present only while PlaceholderAPI is installed; hand-built expansions still register through `SurfPaperPAPIHook`. |
 | `permission/` | `PermissionRegistry` - an abstract class whose `create(permission)` registers a Bukkit `Permission` with the plugin manager and returns the node string, so permission constants are declared and registered in one place. |
 | `time/` | smooth time skipping: `SkipOperations` (NEXT_SUNRISE, NEXT_SUNSET, NEXT_DAY, NEXT_NOON, NEXT_NIGHT, NEXT_MIDNIGHT) and `TimeSkipResult`, driven through `skipTimeSmoothly` on the injected `SurfApiPaper`. |
 | `coroutine/` | `PaperDispatchers`, `entity.withEntity { }` and `Int.ticks` - see Folia in `references/project-setup.md`. |
 
 Smaller Paper-side helpers worth knowing: `extensions/` (`server`, `pluginManager`), `event/`
 (`listen<T> { }`, `Listener.register()`), `util/` (`bukkit-util.kt` with `doInChunkAsync`,
-`chunkX`/`chunkZ`, `position-util.kt`, `reflection-remapper-util.kt`), `builder/item-stack.kt` and
+`chunkX`/`chunkZ`, `position-util.kt`), `builder/item-stack.kt` and
 `serializer/bukkit/` (Configurate serializers for `ItemStack`, `Location`, `BlockData`, players and
 more).
 

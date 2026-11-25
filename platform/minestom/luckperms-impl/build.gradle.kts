@@ -5,10 +5,11 @@ plugins {
 
 dependencies {
     api(projects.surfApiMinestomImpl)
+    implementation(projects.surfApiCoreImpl)
     compileOnlyApi(libs.minestom.server)
     bundled(libs.minestom.luckperms)
+
+    testImplementation(libs.luckperms)
 }
 
 description = "surf-api-minestom-luckperms-impl"
-
-publishRelocationFrom("surf-api-minestom-server-luckperms")

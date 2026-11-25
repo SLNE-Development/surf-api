@@ -11,14 +11,13 @@ dependencies {
     compileOnly(libs.paper.api)
     compileOnlyApi(libs.packetevents.spigot)
     compileOnlyApi(libs.commandapi.paper)
-    compileOnlyApi(libs.reflection.remapper)
     compileOnlyApi(libs.more.persistent.data.types)
-    api(libs.bundles.inventory.framework)
-    api(libs.commandapi.bukkit.kotlin)
-    api(libs.wyck)
+    compileOnlyApi(libs.bundles.inventory.framework)
+    compileOnlyApi(libs.commandapi.bukkit.kotlin)
+    compileOnlyApi(libs.wyck)
 
-    testImplementation(libs.mockbukkit)
     testImplementation(libs.paper.api)
+    testImplementation(libs.bundles.kotlin.serialization)
 }
 
 description = "surf-api-paper-api"

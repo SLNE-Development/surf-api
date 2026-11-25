@@ -4,9 +4,9 @@ public abstract interface class dev/slne/surf/api/command/CommandRegistrar {
 
 public final class dev/slne/surf/api/command/SurfCommandUtil {
 	public static final field INSTANCE Ldev/slne/surf/api/command/SurfCommandUtil;
-	public static final fun createException (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/api/command/exception/WrapperCommandExceptionComponent;
-	public static final fun failWithBuilder (Ldev/slne/surf/api/command/builder/CommandExceptionBuilder;)V
-	public static final fun failWithMessage (Lnet/kyori/adventure/text/ComponentLike;)V
+	public final fun createException (Lnet/kyori/adventure/text/ComponentLike;)Ldev/slne/surf/api/command/exception/WrapperCommandExceptionComponent;
+	public final fun failWithBuilder (Ldev/slne/surf/api/command/builder/CommandExceptionBuilder;)Ljava/lang/Void;
+	public final fun failWithMessage (Lnet/kyori/adventure/text/ComponentLike;)Ljava/lang/Void;
 }
 
 public final class dev/slne/surf/api/command/args/SuspendArgumentHelperKt {

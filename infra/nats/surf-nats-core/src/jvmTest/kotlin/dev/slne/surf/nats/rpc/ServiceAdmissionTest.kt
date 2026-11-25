@@ -16,9 +16,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.Assumptions.assumeTrue
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -28,7 +28,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
-// LimitedPersistentService runs one handler at a time, LaneService two with one long (test config.yml)
+// LimitedPersistentService runs one handler at a time, LaneService two with one long (test
+// config.yml)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ServiceAdmissionTest {
 
@@ -37,10 +38,10 @@ class ServiceAdmissionTest {
     private val defaultFireMaxDuration = RpcDefaults.FIRE_MAX_DURATION
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @AfterEach
     fun resetDefaults() {
@@ -59,18 +60,21 @@ class ServiceAdmissionTest {
         override suspend fun block(): Text {
             blockCalls.incrementAndGet()
             blocking.complete(Unit)
+
             try {
                 gate.await()
             } catch (e: CancellationException) {
                 blockCancelled.complete(Unit)
                 throw e
             }
+
             return Text("block")
         }
 
         // Runs until its timeout cancels it
         override suspend fun quick(): Text {
             val startedAt = System.currentTimeMillis()
+
             try {
                 awaitCancellation()
             } finally {
@@ -112,11 +116,16 @@ class ServiceAdmissionTest {
 
         service.record()
 
-        eventually("the fire must be dead-lettered", timeout = 20.seconds) { messageCount(streams.dlqStream) == 1L }
+        eventually(
+            "the fire must be dead-lettered",
+            timeout = 20.seconds,
+        ) { messageCount(streams.dlqStream) == 1L }
         val dead = jsm().getLastMessage(streams.dlqStream, streams.dlqSubject)
         val error = assertNotNull(dead.headers).getFirst(ProtocolHeaders.ERROR)
         assertEquals(NoHandlerSlotException::class.java.name, error)
-        eventually("the work queue must be empty after the dead letter") { messageCount(streams.stream) == 0L }
+        eventually("the work queue must be empty after the dead letter") {
+            messageCount(streams.stream) == 0L
+        }
         assertNull(impl.recorded.tryReceive().getOrNull(), "the fire must not run")
 
         impl.gate.complete(Unit)
@@ -133,48 +142,63 @@ class ServiceAdmissionTest {
             ProtocolHeaders.DEADLINE to (System.currentTimeMillis() - 1_000).toString(),
         )
 
-        eventually("the expired fire must be dead-lettered") { messageCount(streams.dlqStream) == 1L }
+        eventually("the expired fire must be dead-lettered") {
+            messageCount(streams.dlqStream) == 1L
+        }
         val dead = jsm().getLastMessage(streams.dlqStream, streams.dlqSubject)
         assertEquals(
             DeadlineExpiredException::class.java.name,
-            assertNotNull(dead.headers).getFirst(ProtocolHeaders.ERROR)
+            assertNotNull(dead.headers).getFirst(ProtocolHeaders.ERROR),
         )
-        eventually("the work queue must be empty after the dead letter") { messageCount(streams.stream) == 0L }
+        eventually("the work queue must be empty after the dead letter") {
+            messageCount(streams.stream) == 0L
+        }
         assertNull(impl.recorded.tryReceive().getOrNull(), "the expired fire must not run")
     }
 
     @Test
-    fun `persistent rpc without a deadline header loses the time it waited for a handler slot`() =
-        withClient { client, streams ->
-            val impl = LimitedImpl()
-            client.registerService<LimitedPersistentService>(impl)
-            val service = client.service<LimitedPersistentService>()
-            val blocked = async { withNatsCallTimeout(30.seconds) { service.block() } }
-            withTimeout(5.seconds) { impl.blocking.await() }
+    fun `persistent rpc without a deadline header loses the time it waited for a handler slot`() = withClient { client, streams ->
+        val impl = LimitedImpl()
+        client.registerService<LimitedPersistentService>(impl)
+        val service = client.service<LimitedPersistentService>()
+        val blocked = async { withNatsCallTimeout(30.seconds) { service.block() } }
+        withTimeout(5.seconds) { impl.blocking.await() }
 
-            val quick = client.method("quick")
-            val timeoutMillis = quick.timeout.inWholeMilliseconds
-            val ack = publishExternal(quick.subject)
-            // The responder counts from the publish time the server stamps, so the test reads the same timestamp
-            val publishedAt = jsm().getMessage(streams.stream, ack.seqno).time!!.toInstant().toEpochMilli()
-            val deadline = publishedAt + timeoutMillis
-            assumeTrue(deadline - System.currentTimeMillis() > 1_500, "the server clock is too far behind")
+        val quick = client.method("quick")
+        val timeoutMillis = quick.timeout.inWholeMilliseconds
+        val ack = publishExternal(quick.subject)
+        // The responder counts from the publish time the server stamps, so the test reads the same
+        // timestamp
+        val publishedAt = jsm().getMessage(
+            streams.stream,
+            ack.seqno,
+        ).time!!.toInstant().toEpochMilli()
+        val deadline = publishedAt + timeoutMillis
+        assumeTrue(
+            deadline - System.currentTimeMillis() > 1_500,
+            "the server clock is too far behind",
+        )
 
-            // Free the slot halfway to the deadline
-            delay((publishedAt + timeoutMillis / 2 - System.currentTimeMillis()).milliseconds)
-            impl.gate.complete(Unit)
-            blocked.await()
+        // Free the slot halfway to the deadline
+        delay((publishedAt + timeoutMillis / 2 - System.currentTimeMillis()).milliseconds)
+        impl.gate.complete(Unit)
+        blocked.await()
 
-            val run = withTimeout(5.seconds) { impl.quickRuns.receive() }
-            val ranFor = run.endedAt - run.startedAt
-            val leftAtStart = deadline - run.startedAt
-            assertTrue(
-                ranFor in (leftAtStart - 300)..(leftAtStart + 300),
-                "the rpc ran for $ranFor ms instead of the $leftAtStart ms left until its deadline"
-            )
-            assertTrue(ranFor < timeoutMillis - 500, "the rpc ran for $ranFor ms, close to its full timeout")
-            eventually("the timed out rpc must be removed from the work queue") { messageCount(streams.stream) == 0L }
+        val run = withTimeout(5.seconds) { impl.quickRuns.receive() }
+        val ranFor = run.endedAt - run.startedAt
+        val leftAtStart = deadline - run.startedAt
+        assertTrue(
+            ranFor in (leftAtStart - 300)..(leftAtStart + 300),
+            "the rpc ran for $ranFor ms instead of the $leftAtStart ms left until its deadline",
+        )
+        assertTrue(
+            ranFor < timeoutMillis - 500,
+            "the rpc ran for $ranFor ms, close to its full timeout",
+        )
+        eventually("the timed out rpc must be removed from the work queue") {
+            messageCount(streams.stream) == 0L
         }
+    }
 
     @Test
     fun `draining registration drops core requests waiting for a handler slot`() = withClient { client, _ ->
@@ -199,25 +223,28 @@ class ServiceAdmissionTest {
     }
 
     @Test
-    fun `fire calls and methods with a long timeout share the long handler slots`() =
-        withClient(LaneService::class.java) { client, _ ->
-            val impl = LaneImpl()
-            client.registerService<LaneService>(impl)
-            val service = client.service<LaneService>()
+    fun `fire calls and methods with a long timeout share the long handler slots`() = withClient(
+        LaneService::class.java,
+    ) { client, _ ->
+        val impl = LaneImpl()
+        client.registerService<LaneService>(impl)
+        val service = client.service<LaneService>()
 
-            service.hold()
-            service.hold()
-            eventually("the first fire must hold the long slot") { impl.holds.get() == 1 }
-            delay(500.milliseconds)
-            assertEquals(1, impl.holds.get(), "the second fire ran while the long slot was taken")
+        service.hold()
+        service.hold()
+        eventually("the first fire must hold the long slot") { impl.holds.get() == 1 }
+        delay(500.milliseconds)
+        assertEquals(1, impl.holds.get(), "the second fire ran while the long slot was taken")
 
-            assertEquals(Text("short"), withNatsCallTimeout(2.seconds) { service.short() })
-            // The declared 30 s timeout makes the call long, not the second its caller waits
-            assertFailsWith<NatsCallTimeoutException> { withNatsCallTimeout(1.seconds) { service.slow() } }
-
-            impl.gate.complete(Unit)
-            eventually("the second fire must run once the long slot is free") { impl.holds.get() == 2 }
+        assertEquals(Text("short"), withNatsCallTimeout(2.seconds) { service.short() })
+        // The declared 30 s timeout makes the call long, not the second its caller waits
+        assertFailsWith<NatsCallTimeoutException> {
+            withNatsCallTimeout(1.seconds) { service.slow() }
         }
+
+        impl.gate.complete(Unit)
+        eventually("the second fire must run once the long slot is free") { impl.holds.get() == 2 }
+    }
 
     @Test
     fun `draining registration redelivers fires waiting for a handler slot`() = withClient { client, _ ->
@@ -235,11 +262,18 @@ class ServiceAdmissionTest {
         }
         withContext(Dispatchers.IO) { registration.close() }
         blocked.await()
-        assertNull(draining.recorded.tryReceive().getOrNull(), "the draining registration must not run the fire")
+        assertNull(
+            draining.recorded.tryReceive().getOrNull(),
+            "the draining registration must not run the fire",
+        )
 
         val next = LimitedImpl()
         client.registerService<LimitedPersistentService>(next).use {
-            assertEquals(2, withTimeout(10.seconds) { next.recorded.receive() }, "the fire was redelivered")
+            assertEquals(
+                2,
+                withTimeout(10.seconds) { next.recorded.receive() },
+                "the fire was redelivered",
+            )
         }
     }
 
@@ -265,16 +299,29 @@ class ServiceAdmissionTest {
         blocked.cancel() // the cancelled handler never replies
     }
 
-    private fun NatsClientImpl.method(name: String): MethodDescriptor =
-        serviceDescriptor(LimitedPersistentService::class.java).methods.single { it.kotlinName == name }
+    private fun NatsClientImpl.method(name: String): MethodDescriptor {
+        return serviceDescriptor(LimitedPersistentService::class.java).methods.single {
+            it.kotlinName == name
+        }
+    }
 
     // Publishes like an external producer without Surf-Deadline unless extraHeaders carries one
-    private fun publishExternal(subject: String, vararg extraHeaders: Pair<String, String>): PublishAck {
+    private fun publishExternal(
+        subject: String,
+        vararg extraHeaders: Pair<String, String>,
+    ): PublishAck {
         val headers = Headers()
             .add(NatsJetStreamConstants.MSG_ID_HDR, UUID.randomUUID().toString())
             .add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
-        extraHeaders.forEach { (name, value) -> headers.add(name, value) }
-        return NatsConnectionManager.connection().jetStream().publish(subject, headers, ByteArray(0))
+        for ((name, value) in extraHeaders) {
+            headers.add(name, value)
+        }
+
+        return NatsConnectionManager.connection().jetStream().publish(
+            subject,
+            headers,
+            ByteArray(0),
+        )
     }
 
     private fun withClient(
@@ -283,11 +330,15 @@ class ServiceAdmissionTest {
     ) = runBlocking(Dispatchers.Default) {
         val client = NatsClient.create("admission-${clientCounter++}") as NatsClientImpl
         val streams = client.serviceDescriptor(serviceType).streams!!
+
         try {
             coroutineScope { block(client, streams) }
         } finally {
             withContext(Dispatchers.IO) { client.close() }
-            for (stream in listOf(streams.stream, streams.dlqStream)) runCatching { jsm().deleteStream(stream) }
+            for (stream in listOf(
+                streams.stream,
+                streams.dlqStream,
+            )) runCatching { jsm().deleteStream(stream) }
             JetStreamProvisioner.invalidate(streams)
         }
     }

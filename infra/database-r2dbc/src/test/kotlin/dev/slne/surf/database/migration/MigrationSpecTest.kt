@@ -12,13 +12,14 @@ class MigrationSpecTest {
         override fun migrate(connection: Connection) = Unit
     }
 
-    private fun spec(block: MigrationSpec.() -> Unit = { sql("db/migrations") }) =
-        MigrationSpec(javaClass.classLoader).apply(block)
+    private fun spec(block: MigrationSpec.() -> Unit = { sql("db/migrations") }) = MigrationSpec(
+        javaClass.classLoader,
+    ).apply(block)
 
     @Test
     fun rejectsInvalidNames() {
-        listOf("my-plugin", "", "a".repeat(41)).forEach {
-            assertThrows<IllegalArgumentException> { spec().build(it) }
+        for (pluginId in listOf("my-plugin", "", "a".repeat(41))) {
+            assertThrows<IllegalArgumentException> { spec().build(pluginId) }
         }
     }
 
@@ -56,44 +57,49 @@ class MigrationSpecTest {
 
     @Test
     fun acceptsValidBaselineVersions() {
-        listOf("0", "1", "2.1", "10.0.3").forEach {
-            assertEquals(it, spec { sql("db/migrations"); baselineVersion(it) }.build("p").baselineVersion)
+        for (version in listOf("0", "1", "2.1", "10.0.3")) {
+            assertEquals(
+                version,
+                spec { sql("db/migrations"); baselineVersion(version) }.build("p").baselineVersion,
+            )
         }
     }
 
     @Test
     fun acceptsValidNames() {
-        listOf("p", "plugin_2", "a".repeat(40), "My_Plugin").forEach {
-            assertEquals("flyway_schema_history_${it.lowercase()}", spec().build(it).historyTable)
+        for (pluginId in listOf("p", "plugin_2", "a".repeat(40), "My_Plugin")) {
+            assertEquals(
+                "flyway_schema_history_${pluginId.lowercase()}",
+                spec().build(pluginId).historyTable,
+            )
         }
     }
 
     @Test
-    fun rejectsBlankSqlLocationOrPackage() {
-        listOf<MigrationSpec.(String) -> Unit>({ sql(it) }, { classPackage(it) }).forEach { add ->
-            listOf("", " ").forEach {
-                assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().add(it) }
+    fun rejectsBlankSqlLocationOrClassName() {
+        for (add in listOf<MigrationSpec.(String) -> Unit>({ sql(it) }, { classNames(it) })) {
+            for (location in listOf("", " ")) {
+                assertThrows<IllegalArgumentException>("'$location' must be rejected") {
+                    spec().add(location)
+                }
             }
         }
     }
 
     @Test
     fun eachEntryAloneIsEnough() {
-        assertEquals(listOf("one"), spec { classes(V1()) }.build("p").migrations.map { it.description })
+        assertEquals(
+            listOf("one"),
+            spec { classes(V1()) }.build("p").migrations.map { it.description },
+        )
         assertEquals(listOf("a.B"), spec { classNames("a.B") }.build("p").classNames)
-        assertEquals(listOf("a.b"), spec { classPackage("a.b") }.build("p").packages)
     }
 
     @Test
-    fun duplicateLocationsAndPackagesAreDeduplicated() {
-        val plan = spec {
-            sql("db/migrations", "classpath:db/migrations")
-            classPackage("a.b")
-            classPackage("a.b")
-        }.build("p")
+    fun duplicateLocationsAreDeduplicated() {
+        val plan = spec { sql("db/migrations", "classpath:db/migrations") }.build("p")
 
         assertEquals(listOf("db/migrations"), plan.sqlPaths)
-        assertEquals(listOf("a.b"), plan.packages)
     }
 
     @Test
@@ -108,8 +114,10 @@ class MigrationSpecTest {
 
     @Test
     fun rejectsBlankClassNames() {
-        listOf("", " ").forEach {
-            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().classNames(it) }
+        for (className in listOf("", " ")) {
+            assertThrows<IllegalArgumentException>("'$className' must be rejected") {
+                spec().classNames(className)
+            }
         }
     }
 
@@ -117,7 +125,10 @@ class MigrationSpecTest {
     fun keepsMigrationOrder() {
         val first = V1()
         val second = V1()
-        assertEquals(listOf<SurfMigration>(first, second), spec { classes(first); classes(second) }.build("p").migrations)
+        assertEquals(
+            listOf<SurfMigration>(first, second),
+            spec { classes(first); classes(second) }.build("p").migrations,
+        )
     }
 
     @Test
@@ -134,7 +145,12 @@ class MigrationSpecTest {
 
     @Test
     fun lastBaselineVersionWins() {
-        assertEquals("3", spec { sql("db"); baselineVersion("2"); baselineVersion("3") }.build("p").baselineVersion)
+        assertEquals(
+            "3",
+            spec { sql("db"); baselineVersion("2"); baselineVersion("3") }
+                .build("p")
+                .baselineVersion,
+        )
     }
 
     @Test
@@ -146,8 +162,12 @@ class MigrationSpecTest {
 
     @Test
     fun rejectsInvalidBaselineVersions() {
-        listOf("", " ", "v1", "1.", ".1", "1..2", "1_2", "abc", "1 2").forEach {
-            assertThrows<IllegalArgumentException>("'$it' must be rejected") { spec().baselineVersion(it) }
+        for (version in listOf("", " ", "v1", "1.", ".1", "1..2", "1_2", "abc", "1 2")) {
+            assertThrows<IllegalArgumentException>("'$version' must be rejected") {
+                spec().baselineVersion(
+                    version,
+                )
+            }
         }
     }
 }

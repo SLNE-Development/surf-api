@@ -62,7 +62,9 @@ class SurfContextManager(
      * @throws IllegalArgumentException if [root] does not descend from [bootstrapRoot]
      */
     fun attachRoot(root: ConfigurableApplicationContext) {
-        require(generateSequence<ApplicationContext>(root) { it.parent }.any { it === bootstrapRoot }) {
+        require(
+            generateSequence<ApplicationContext>(root) { it.parent }.any { it === bootstrapRoot },
+        ) {
             "The root context must descend from the root bootstrap context"
         }
 
@@ -72,13 +74,13 @@ class SurfContextManager(
     /**
      * Builds the bootstrap context of the plugin described by [descriptor].
      *
-     * It contains only the components of the plugin that implement [SurfBootstrapLifecycle] or carry
-     * [BootstrapComponent]; their dependencies must come from surf-api's root bootstrap context or be
-     * such components themselves. Run its hooks through [PluginBootstrapContext.bootstrap], then
-     * call [start] for the same plugin.
+     * It contains only the components of the plugin that implement [SurfBootstrapLifecycle] or
+     * carry [BootstrapComponent]; their dependencies must come from surf-api's root bootstrap
+     * context or be such components themselves. Run its hooks through
+     * [PluginBootstrapContext.bootstrap], then call [start] for the same plugin.
      *
-     * @throws IllegalArgumentException if the plugin shares surf-api's class loader and its packages
-     * overlap [SurfRootContext.SURF_API_PACKAGE]
+     * @throws IllegalArgumentException if the plugin shares surf-api's class loader and its
+     * packages overlap [SurfRootContext.SURF_API_PACKAGE]
      * @throws IllegalStateException if the plugin already has a context
      * @throws PluginContextException if the context cannot be built; nothing of it stays open
      */
@@ -101,6 +103,7 @@ class SurfContextManager(
             }
             val bootstrap = PluginBootstrapContext(descriptor, managed)
             synchronized(lock) { bootstrapped[descriptor.name] = bootstrap }
+
             return bootstrap
         } catch (exception: Throwable) {
             release(descriptor.name)
@@ -117,11 +120,11 @@ class SurfContextManager(
      * If the plugin was [bootstrap]ped, the full context leaves out the bootstrap beans and injects
      * them through its import context instead. [coroutineScope] becomes the context's primary
      * `CoroutineScope` bean and is owned by the returned [PluginContext] from then on; it is
-     * cancelled if the context cannot be built. [configure] runs before the refresh and may register
-     * further beans or singletons, such as the platform's plugin instance.
+     * cancelled if the context cannot be built. [configure] runs before the refresh and may
+     * register further beans or singletons, such as the platform's plugin instance.
      *
-     * @throws IllegalArgumentException if the plugin shares surf-api's class loader and its packages
-     * overlap [SurfRootContext.SURF_API_PACKAGE]
+     * @throws IllegalArgumentException if the plugin shares surf-api's class loader and its
+     * packages overlap [SurfRootContext.SURF_API_PACKAGE]
      * @throws IllegalStateException if the plugin already has a full context
      * @throws PluginContextException if the context cannot be built; nothing of it stays open,
      * including its bootstrap context
@@ -133,16 +136,22 @@ class SurfContextManager(
     ): PluginContext {
         checkOutsideRootScan(descriptor)
         val bootstrap = synchronized(lock) {
-            check(descriptor.name !in started) { "Plugin '${descriptor.name}' already has a context" }
+            check(descriptor.name !in started) {
+                "Plugin '${descriptor.name}' already has a context"
+            }
             bootstrapped.remove(descriptor.name)
         }
-        if (bootstrap == null) reserve(descriptor.name)
+
+        if (bootstrap == null) {
+            reserve(descriptor.name)
+        }
 
         try {
             val pluginContext = withContextClassLoader(descriptor.classLoader) {
                 buildPluginContext(descriptor, bootstrap?.managed, coroutineScope, configure)
             }
             register(pluginContext)
+
             return pluginContext
         } catch (exception: Throwable) {
             coroutineScope.cancel("The context of plugin '${descriptor.name}' could not be built")
@@ -250,7 +259,9 @@ class SurfContextManager(
         configure: (AnnotationConfigApplicationContext) -> Unit,
     ): PluginContext {
         val dependencies = synchronized(lock) {
-            descriptor.dependencies.mapNotNull { started[resolve(it)] }.distinct()
+            descriptor.dependencies
+                .mapNotNull { started[resolve(it)] }
+                .distinct()
         }
         val ownBootstrapBeans = bootstrap
             ?.let { collectReferences(descriptor.name, it.context, descriptor.classLoader) }
@@ -266,12 +277,14 @@ class SurfContextManager(
                 descriptor,
                 importContext,
                 displayName,
-                selection
+                selection,
             ) { context ->
                 registerCoroutineScope(context, coroutineScope, primary = true)
-                root.getBeansOfType<ContextContributor>().values.forEach {
-                    it.contribute(context, descriptor)
+
+                for (contributor in root.getBeansOfType<ContextContributor>().values) {
+                    contributor.contribute(context, descriptor)
                 }
+
                 configure(context)
             }
         } catch (exception: Throwable) {
@@ -294,7 +307,7 @@ class SurfContextManager(
             importContext,
             managed,
             ownExports,
-            coroutineScope
+            coroutineScope,
         )
     }
 
@@ -317,7 +330,7 @@ class SurfContextManager(
                 descriptor.classLoader,
                 descriptor.basePackages,
                 selection,
-                descriptor.source
+                descriptor.source,
             )
             configure(context)
         }
@@ -325,13 +338,20 @@ class SurfContextManager(
 
     private fun register(pluginContext: PluginContext) {
         val descriptor = pluginContext.descriptor
+
         synchronized(lock) {
             started[descriptor.name] = pluginContext
-            descriptor.aliases.forEach { aliases[it] = descriptor.name }
-            descriptor.dependencies
+
+            for (alias in descriptor.aliases) {
+                aliases[alias] = descriptor.name
+            }
+
+            val providers = descriptor.dependencies
                 .map(::resolve)
                 .filter(started::containsKey)
-                .forEach { provider -> importers.getOrPut(provider, ::HashSet) += descriptor.name }
+            for (provider in providers) {
+                importers.getOrPut(provider, ::HashSet) += descriptor.name
+            }
         }
     }
 
@@ -343,13 +363,20 @@ class SurfContextManager(
         assert(Thread.holdsLock(lock)) { "collectClosableLocked must be called under lock" }
 
         val closable = mutableListOf<PluginContext>()
+
         while (true) {
             val next = pendingClose.firstOrNull { importers[it].isNullOrEmpty() } ?: break
+
             pendingClose -= next
             val pluginContext = started.remove(next) ?: continue
+
             reserved -= next
             importers -= next
-            importers.values.forEach { it -= next }
+
+            for (importer in importers.values) {
+                importer -= next
+            }
+
             aliases.values.removeAll { it == next }
             closable += pluginContext
         }
@@ -371,8 +398,10 @@ class SurfContextManager(
         checkOutsideRootScan(descriptor, rootClassLoader)
     }
 
-    private fun reserve(name: String) = synchronized(lock) {
-        check(reserved.add(name)) { "Plugin '$name' already has a context" }
+    private fun reserve(name: String) {
+        synchronized(lock) {
+            check(reserved.add(name)) { "Plugin '$name' already has a context" }
+        }
     }
 
     private fun release(name: String) = synchronized(lock) { reserved -= name }
@@ -400,7 +429,9 @@ private data class ClosableContexts(
  * Builds and refreshes a context below [parent] for the owner named [owner], with a lifecycle
  * driver installed before the refresh.
  *
- * [prepare] registers the context's beans. The context is closed again if anything fails.
+ * [prepare] registers the context's beans. The context is closed again if anything fails. The
+ * context uses [ContextStartup.current] as its application startup; [prepare] and the refresh run
+ * as one [StartupPhase.BUILD] step tagged with [displayName].
  */
 internal fun buildManagedContext(
     owner: String,
@@ -410,24 +441,33 @@ internal fun buildManagedContext(
     prepare: (AnnotationConfigApplicationContext) -> Unit,
 ): ManagedContext {
     val hooks = LifecycleHookRunner(owner)
+    val timings = PhaseTimings()
     val context = AnnotationConfigApplicationContext(PluginBeanFactory())
 
     context.parent = parent
     context.classLoader = classLoader
     context.setResourceLoader(PluginResourceLoader(classLoader))
     context.displayName = displayName
+    context.applicationStartup = ContextStartup.current()
 
     hooks.install(context.beanFactory)
 
     try {
-        prepare(context)
-        context.refresh()
+        context.applicationStartup.measure(
+            StartupPhase.BUILD,
+            DISPLAY_NAME_TAG,
+            displayName,
+            timings,
+        ) {
+            prepare(context)
+            context.refresh()
+        }
     } catch (exception: Throwable) {
         context.close()
         throw exception
     }
 
-    return ManagedContext(context, hooks)
+    return ManagedContext(context, hooks, timings)
 }
 
 /**
@@ -453,14 +493,14 @@ internal fun checkOutsideRootScan(descriptor: PluginDescriptor, rootClassLoader:
     val overlapping = descriptor.basePackages.filter(::overlapsRootScan)
     require(overlapping.isEmpty()) {
         "'${descriptor.name}' shares surf-api's class loader, and its packages $overlapping overlap " +
-                "${SurfRootContext.SURF_API_PACKAGE}, which surf-api's root context scans; move it to a package of its own"
+            "${SurfRootContext.SURF_API_PACKAGE}, which surf-api's root context scans; move it to a package of its own"
     }
 }
 
 private fun overlapsRootScan(basePackage: String): Boolean {
     val rootPackage = SurfRootContext.SURF_API_PACKAGE
     return basePackage.isEmpty() ||
-            basePackage == rootPackage ||
-            basePackage.startsWith("$rootPackage.") ||
-            rootPackage.startsWith("$basePackage.")
+        basePackage == rootPackage ||
+        basePackage.startsWith("$rootPackage.") ||
+        rootPackage.startsWith("$basePackage.")
 }

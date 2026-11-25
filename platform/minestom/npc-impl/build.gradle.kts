@@ -21,5 +21,3 @@ tasks.test {
 }
 
 description = "surf-api-minestom-npc-impl"
-
-publishRelocationFrom("surf-api-minestom-server-npc")

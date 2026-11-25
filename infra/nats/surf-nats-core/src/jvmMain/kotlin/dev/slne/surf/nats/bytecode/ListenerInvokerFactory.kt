@@ -1,44 +1,27 @@
 package dev.slne.surf.nats.bytecode
 
+import dev.slne.surf.api.common.invoker.InvokerFactory
+import dev.slne.surf.api.common.invoker.InvokerMethods
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.util.isSuspend
 import org.jetbrains.annotations.TestOnly
-import java.lang.constant.ClassDesc
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.lang.reflect.Method
-import java.lang.reflect.Modifier
 import kotlin.coroutines.Continuation
 
 /**
- * Creates a [ListenerInvoker] per listener method as a hidden class that calls the method through a constant
- * [MethodHandle].
+ * Creates a [ListenerInvoker] per listener method as a hidden class that calls the method through a
+ * constant [MethodHandle].
  *
- * All invokers share one generated class template. Each hidden class gets its own handle as class data.
+ * All invokers share one generated class template. Each hidden class gets its own handle as class
+ * data.
  */
 @InternalNatsApi
 internal object ListenerInvokerFactory {
 
-    /**
-     * @see ListenerInvoker
-     */
-    private val INVOKER_TYPE = MethodType.methodType(
-        Any::class.java,
-        Any::class.java,
-        Continuation::class.java
-    )
-
     private val LOOKUP = MethodHandles.lookup()
-
-    private val invokerClassBytes by lazy {
-        HandleInvokerClasses.generate(
-            ClassDesc.of(ListenerInvoker::class.java.packageName, "ListenerInvokerImpl"),
-            ClassDesc.of(ListenerInvoker::class.java.name),
-            "invoke",
-            INVOKER_TYPE.describeConstable().orElseThrow(),
-        )
-    }
+    private val factory = InvokerFactory(ListenerInvoker::class.java, LOOKUP)
 
     /**
      * Creates an invoker of [method] on [target]. [target] may be `null` only for a static method.
@@ -46,43 +29,30 @@ internal object ListenerInvokerFactory {
      * A non-suspending [method] is adapted to return `Unit` and ignore the continuation.
      */
     fun create(target: Any?, method: Method): ListenerInvoker {
-        val handle = adaptHandle(target, method)
-        val hidden = LOOKUP.defineHiddenClassWithClassData(invokerClassBytes, handle, true)
-        return hidden
-            .findConstructor(hidden.lookupClass(), MethodType.methodType(Void.TYPE))
-            .invoke() as ListenerInvoker
+        return factory.create(adaptHandle(target, method))
     }
 
     /**
      * Turns [method] into a [MethodHandle] with the shape `(Object, Continuation) -> Object`.
      */
     private fun adaptHandle(target: Any?, method: Method): MethodHandle {
-        var handle = MethodHandles.privateLookupIn(method.declaringClass, LOOKUP)
-            .unreflect(method)
-
-        if (!Modifier.isStatic(method.modifiers)) {
-            handle = handle.bindTo(requireNotNull(target) {
-                "Listener instance required for non-static $method"
-            })
-        }
+        val handle = InvokerMethods.bind(method, target, LOOKUP)
 
         // suspend methods are already of the shape Object(event, continuation)
-        if (!method.isSuspend()) {
-            // void(event) -> Object(event) (always returns Unit)
-            handle = MethodHandles.filterReturnValue(
-                handle,
-                MethodHandles.constant(Any::class.java, Unit)
-            )
+        if (method.isSuspend()) return handle
 
-            // Object(event) -> Object(event, continuation) (ignores continuation)
-            handle = MethodHandles.dropArguments(handle, 1, Continuation::class.java)
-        }
+        // void(event) -> Object(event) (always returns Unit)
+        val returningUnit = MethodHandles.filterReturnValue(
+            handle,
+            MethodHandles.constant(Any::class.java, Unit),
+        )
 
-        return handle.asType(INVOKER_TYPE)
+        // Object(event) -> Object(event, continuation) (ignores continuation)
+        return MethodHandles.dropArguments(returningUnit, 1, Continuation::class.java)
     }
 
     @TestOnly
     internal fun createInvokerClass(): ByteArray {
-        return invokerClassBytes
+        return factory.classBytes
     }
 }

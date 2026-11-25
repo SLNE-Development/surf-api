@@ -7,9 +7,16 @@ import org.bukkit.block.Block
 import org.springframework.stereotype.Service
 
 @Service
-class BlockPdcProviderImpl : BlockPdcProvider {
+class BlockPdcProviderImpl(
+    private val tickThreadGuard: TickThreadGuard,
+) : BlockPdcProvider {
     override fun getPdc(block: Block): CustomBlockPersistentDataContainer {
-        TickThreadGuard.INSTANCE.ensureTickThread(block.world, block.location, "Cannot get PDC of block off tick thread!")
+        tickThreadGuard.ensureTickThread(
+            block.world,
+            block.location,
+            "Cannot get PDC of block off tick thread!",
+        )
+
         return CustomBlockData(block)
     }
 }

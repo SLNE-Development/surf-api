@@ -1,10 +1,8 @@
 package dev.slne.surf.api.velocity.sharedbean.provider
 
 import com.google.common.flogger.FluentLogger
-import com.google.inject.Inject
 import com.velocitypowered.api.plugin.Dependency
 import com.velocitypowered.api.plugin.Plugin
-import com.velocitypowered.api.plugin.PluginContainer
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.spring.SurfLifecycle
 import dev.slne.surf.api.velocity.plugin.SurfVelocityPlugin
@@ -15,16 +13,17 @@ import org.springframework.stereotype.Service
  * The exported [SharedGreeting], which logs every phase of its context it goes through.
  */
 @Service
-class SharedGreetingImpl(private val internals: ProviderInternals) : SharedGreeting, SurfLifecycle, DisposableBean {
+class SharedGreetingImpl(private val internals: ProviderInternals) : SharedGreeting, SurfLifecycle,
+    DisposableBean {
 
     private val log = logger()
 
-    override fun greet() = SharedGreeting.GREETING
+    override fun greet(): String = SharedGreeting.GREETING
 
-    override suspend fun onLoad() = logPhase(log, "load")
-    override suspend fun onEnable() = logPhase(log, "enable")
-    override suspend fun onDisable() = logPhase(log, "disable")
-    override fun destroy() = logPhase(log, "destroy")
+    override suspend fun onLoad(): Unit = logPhase(log, "load")
+    override suspend fun onEnable(): Unit = logPhase(log, "enable")
+    override suspend fun onDisable(): Unit = logPhase(log, "disable")
+    override fun destroy(): Unit = logPhase(log, "destroy")
 
     companion object {
 
@@ -43,6 +42,8 @@ class ProviderInternals
 
 /**
  * The provider's main class; its package is the root of the provider's component scan.
+ *
+ * It declares no constructor, like the main class the surf Gradle plugin generates.
  */
 @Plugin(
     id = "surf-shared-bean-provider",
@@ -52,8 +53,9 @@ class ProviderInternals
     authors = ["SLNE Development Team"],
     dependencies = [Dependency(id = "surf-api-velocity")],
 )
-class SharedBeanProviderPlugin @Inject constructor(container: PluginContainer) : SurfVelocityPlugin(container)
+class SharedBeanProviderPlugin : SurfVelocityPlugin()
 
 private fun logPhase(log: FluentLogger, name: String) {
-    log.atInfo().log("%s provider phase=%s", SharedGreetingImpl.PROVIDER_MARKER, name)
+    log.atInfo()
+        .log("%s provider phase=%s", SharedGreetingImpl.PROVIDER_MARKER, name)
 }

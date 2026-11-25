@@ -7,12 +7,11 @@ val groupId = findProperty("group") as String
 val javaVersion = findProperty("javaVersion") as String
 val snapshot = (findProperty("snapshot") as String).toBooleanStrict()
 val baseVersion = findProperty("version") as String
-val processorVersion = findProperty("processorVersion") as String
 // endregion
 
 plugins {
-    // Before kotlin-dsl: puts the Kotlin Gradle plugin of the version catalog on the classpath instead of the one
-    // embedded in Gradle.
+    // Before kotlin-dsl: puts the Kotlin Gradle plugin of the version catalog on the classpath
+    // instead of the one embedded in Gradle.
     alias(libs.plugins.kotlin.jvm)
     `java-library`
     `kotlin-dsl`
@@ -26,7 +25,10 @@ plugins {
 group = groupId
 version = buildString {
     append(baseVersion)
-    if (snapshot) append("-SNAPSHOT")
+
+    if (snapshot) {
+        append("-SNAPSHOT")
+    }
 }
 
 kotlin {
@@ -52,13 +54,17 @@ val pluginDependencies = listOf(
 
 dependencies {
     compileOnly(gradleApi())
-    pluginDependencies.forEach { dep -> api(dep) }
+
+    for (dep in pluginDependencies) {
+        api(dep)
+    }
 
     implementation("com.palantir.javapoet:javapoet:0.22.0")
     implementation(libs.asm)
+    // checkInternalApiUsage reads the Kotlin metadata of referenced declarations.
+    implementation(libs.kotlin.metadata.jvm)
     implementation(libs.bundles.kotlin.serialization)
 
-    // surf-nats: contract generation
     implementation(libs.wire.schema) {
         exclude(group = "com.google.guava")
         exclude(group = "com.palantir.javapoet")
@@ -67,11 +73,11 @@ dependencies {
     implementation(libs.kotlinpoet)
     // Applied by the surf-nats plugin for Kotlin/JVM projects.
     implementation(libs.kotlin.serialization.plugin)
-    // Applied by the surf-nats plugin to every project; only the conventions and the wiring come from here.
+    // Applied by the surf-nats plugin to every project; only the conventions and the wiring come
+    // from here.
     implementation(libs.weaver.gradle.plugin)
     compileOnly(libs.kotlin.gradle.api)
 
-    // surf-microservice: Docker tasks
     implementation(libs.bmuschko.docker.remote.api)
 
     testImplementation(kotlin("test"))
@@ -84,8 +90,8 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 
-    // The microservice tests put the surf-api plugins on the plugin classpath of their TestKit builds. They are part
-    // of this plugin, so that is its own runtime classpath.
+    // The microservice tests put the surf-api plugins on the plugin classpath of their TestKit
+    // builds. They are part of this plugin, so that is its own runtime classpath.
     val pluginClasspath = sourceSets.main.map { it.runtimeClasspath }
     inputs.files(pluginClasspath)
         .withNormalizer(ClasspathNormalizer::class)
@@ -97,8 +103,8 @@ tasks.test {
 
 testing {
     suites {
-        // A Kotlin/JVM consumer that applies the surf-nats plugin without any surf-api platform plugin. Its plugin
-        // jar brings the serialization plugin to the other tests.
+        // A Kotlin/JVM consumer that applies the surf-nats plugin without any surf-api platform
+        // plugin. Its plugin jar brings the serialization plugin to the other tests.
         register<JvmTestSuite>("plainJvmTest") {
             useJUnitJupiter(libs.versions.junit.asProvider())
             dependencies {
@@ -194,8 +200,59 @@ gradlePlugin {
 
 val fullVersion = version.toString()
 
-val constantsOutputDir =
-    layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
+fun notations(vararg libraries: Provider<*>): List<String> {
+    return libraries.flatMap { library ->
+        when (val resolved = library.get()) {
+            is Iterable<*> -> resolved.map { it.toString() }
+            else -> listOf(resolved.toString())
+        }
+    }
+}
+
+/**
+ * The libraries each surf-api plugin runtime ships and its api modules declare `compileOnlyApi`,
+ * minus those the platform's own api brings. The Gradle plugin adds them to `testRuntimeOnly`.
+ */
+val surfRuntimeTestLibraries = mapOf(
+    "COMMON" to notations(
+        libs.kotlin.stdlib,
+        libs.kotlin.reflect,
+        libs.bundles.kotlin.coroutines.asProvider(),
+        libs.bundles.kotlin.serialization,
+        libs.spring.context,
+        libs.bundles.configurate,
+        libs.adventure.nbt,
+        libs.caffeine.asProvider(),
+        libs.caffeine.courotines,
+        libs.glm,
+        libs.aide.reflection,
+        libs.bundles.surf.runtime.utils,
+        libs.flogger.slf4j.backend,
+    ),
+    "PAPER" to notations(
+        libs.more.persistent.data.types,
+        libs.inventory.framework.api,
+        libs.bundles.inventory.framework,
+        libs.commandapi.bukkit.kotlin,
+        libs.wyck,
+    ),
+    "VELOCITY" to notations(libs.commandapi.velocity.kotlin),
+    "MINESTOM" to notations(
+        libs.adventure.text.minimessage,
+        libs.guava,
+        libs.minestom.brigadier,
+        libs.inventory.framework.api,
+        libs.inventory.framework.platform.minestom,
+    ),
+)
+
+fun notationList(name: String, notations: List<String>): String {
+    val elements = notations.joinToString("\n") { notation -> "|        \"$notation\"," }
+
+    return "|    val ${name}_RUNTIME_TEST_LIBRARIES = listOf(\n$elements\n|    )"
+}
+
+val constantsOutputDir = layout.buildDirectory.dir("generated/dev/slne/surf/api/gradle/generated")
 val generateConstants = tasks.register("generateConstants") {
     description = "Generates the Constants.kt file with build information."
 
@@ -211,31 +268,33 @@ val generateConstants = tasks.register("generateConstants") {
     inputs.property("libs.versions.placeholder.api", libs.versions.placeholder.api.get())
     inputs.property(
         "libs.versions.luckpermsplugin.bukkit",
-        libs.versions.luckpermsplugin.bukkit.get()
+        libs.versions.luckpermsplugin.bukkit.get(),
     )
     inputs.property(
         "libs.versions.packetevents",
-        libs.versions.packetevents.plugin.get()
+        libs.versions.packetevents.plugin.get(),
     )
     inputs.property("group", groupId)
-    inputs.property("processorVersion", processorVersion)
     inputs.property("version", fullVersion)
     inputs.property("libs.versions.junit", libs.versions.junit.asProvider().get())
     inputs.property(
         "libs.versions.junit.platform.launcher",
-        libs.versions.junit.platform.launcher.get()
+        libs.versions.junit.platform.launcher.get(),
     )
     inputs.property("libs.versions.mockk", libs.versions.mockk.get())
     inputs.property("libs.versions.lincheck", libs.versions.lincheck.get())
-    inputs.property("libs.versions.mockbukkit", libs.versions.mockbukkit.get())
     inputs.property("libs.versions.minestom.testing", libs.versions.minestom.testing.get())
     inputs.property("libs.versions.kotlinxCoroutines", libs.versions.kotlinxCoroutines.get())
     inputs.property("libs.minestom.server", libs.minestom.server.get().toString())
     inputs.property("libs.versions.log4j", libs.versions.log4j.get())
     inputs.property("libs.versions.asm", libs.versions.asm.get())
+    inputs.property("surfRuntimeTestLibraries", surfRuntimeTestLibraries.toString())
     outputs.dir(constantsOutputDir)
 
     doLast {
+        val runtimeTestLibraryConstants = surfRuntimeTestLibraries
+            .map { (name, notations) -> notationList(name, notations) }
+            .joinToString("\n|\n")
         val content = """
             |package dev.slne.surf.api.gradle.generated
             |
@@ -246,7 +305,6 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val PAPER_API = "${libs.paper.api.get()}"
             |    const val CANVAS_API = "${libs.canvas.api.get()}"
             |    const val VELOCITY_API = "${libs.velocity.api.get()}"
-            |    const val SURF_PROCESSOR = "$groupId:surf-api-processor:$processorVersion${if (snapshot) "-SNAPSHOT" else ""}"
             |
             |    const val JAVA_VERSION = $javaVersion
             |    const val MINECRAFT_VERSION = "$mcVersion"
@@ -261,7 +319,6 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val TEST_JUNIT_PLATFORM_LAUNCHER_VERSION = "${libs.versions.junit.platform.launcher.get()}"
             |    const val TEST_MOCKK_VERSION = "${libs.versions.mockk.get()}"
             |    const val TEST_LINCHECK_VERSION = "${libs.versions.lincheck.get()}"
-            |    const val TEST_MOCKBUKKIT_VERSION = "${libs.versions.mockbukkit.get()}"
             |    const val TEST_MINESTOM_TESTING_VERSION = "${libs.versions.minestom.testing.get()}"
             |    const val TEST_COROUTINES_VERSION = "${libs.versions.kotlinxCoroutines.get()}"
             |
@@ -270,6 +327,8 @@ val generateConstants = tasks.register("generateConstants") {
             |    const val ASM_VERSION = "${libs.versions.asm.get()}"
             |
             |    const val SURF_API_FULL_VERSION = "$fullVersion"
+            |
+            $runtimeTestLibraryConstants
             |}
         """.trimMargin()
 
@@ -280,8 +339,12 @@ val generateConstants = tasks.register("generateConstants") {
 
 // surf-nats: the proto files the plugin bundles are the ones of the type modules.
 val bundledProtoDirs = listOf(
-    layout.projectDirectory.dir("../../infra/nats/surf-nats-types/surf-nats-types-common/src/main/proto"),
-    layout.projectDirectory.dir("../../infra/nats/surf-nats-types/surf-nats-types-paper/src/main/proto"),
+    layout.projectDirectory.dir(
+        "../../infra/nats/surf-nats-types/surf-nats-types-common/src/main/proto",
+    ),
+    layout.projectDirectory.dir(
+        "../../infra/nats/surf-nats-types/surf-nats-types-paper/src/main/proto",
+    ),
 )
 
 buildConfig {
@@ -294,17 +357,22 @@ buildConfig {
         buildConfigField("KOTLINX_SERIALIZATION_VERSION", libs.versions.kotlinx.serialization)
     }
     forClass("dev.slne.surf.nats.gradle.schema", "BundledProtoPaths") {
-        buildConfigField("PATHS", provider {
-            bundledProtoDirs.flatMap { dir ->
-                val root = dir.asFile
-                fileTree(root) { include("**/*.proto") }.files.map { it.relativeTo(root).invariantSeparatorsPath }
-            }.sorted()
-        })
+        buildConfigField(
+            "PATHS",
+            provider {
+                bundledProtoDirs.flatMap { dir ->
+                    val root = dir.asFile
+                    fileTree(root) { include("**/*.proto") }.files.map {
+                        it.relativeTo(root).invariantSeparatorsPath
+                    }
+                }.sorted()
+            },
+        )
     }
     forClass("dev.slne.surf.microservice.gradle.generated", "Constants") {
         buildConfigField(
             "SURF_MICROSERVICE_VERSION",
-            provider { project.version.toString() }.map { "${it.substringBefore('.')}.+" }
+            provider { project.version.toString() }.map { "${it.substringBefore('.')}.+" },
         )
     }
 }
@@ -315,7 +383,10 @@ sourceSets {
 
         // Same protocol rules as the surf-nats-core runtime (also compiled there for JVM and JS).
         kotlin.srcDir("../../infra/nats/surf-nats-core/src/protocol/kotlin")
-        bundledProtoDirs.forEach { resources.srcDir(it) }
+
+        for (bundledProtoDir in bundledProtoDirs) {
+            resources.srcDir(bundledProtoDir)
+        }
     }
     test {
         kotlin.srcDir("../../infra/nats/surf-nats-core/src/protocolTest/kotlin")

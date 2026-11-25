@@ -1,25 +1,14 @@
-/**
- * Version alignment for consumers.
- *
- * A consumer that imports this platform gets one version for every surf-api module, so a transitive
- * path cannot pull a second version of a sibling module into the graph. The constraints are built
- * from the subproject names and this project's own coordinates rather than from the other projects'
- * state, because those projects are not configured yet while this one is.
- */
-
 plugins {
     `java-platform`
     `maven-publish`
 }
 
 /**
- * Modules that `settings.gradle.kts` only includes outside CI, plus the KSP processor of the Gradle
- * plugin.
+ * Modules that `settings.gradle.kts` only includes outside CI.
  */
 val notPublished = setOf(
     "surf-api-bom",
-    "surf-api-processor",
-    "surf-api-generator",
+    "surf-api-registry-key-generator",
     "surf-api-paper-plugin-test",
     "surf-api-minestom-example",
     "surf-api-minestom-example-plugin",
@@ -39,12 +28,14 @@ version = findProperty("version") as String + if (snapshot) "-SNAPSHOT" else ""
 dependencies {
     constraints {
         // The infra repositories are project trees whose parent projects only group modules.
-        rootProject.subprojects
+        val publishedModules = rootProject.subprojects
             .filter { it.subprojects.isEmpty() }
             .map { it.name }
             .filterNot { it in notPublished }
             .sorted()
-            .forEach { api("$group:$it:$version") }
+        for (module in publishedModules) {
+            api("$group:$module:$version")
+        }
     }
 }
 

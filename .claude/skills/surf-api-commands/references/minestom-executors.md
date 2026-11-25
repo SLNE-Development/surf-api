@@ -100,7 +100,7 @@ path, which the Brigadier bridge calls.
 ## `CommandArguments`
 
 `executor/CommandArguments.kt`. Built by the platform from
-`ParsedArgument(name, value: Any?, raw: String?, present: Boolean)` entries — `of(list)` requires the
+`ParsedArgument(name, value: Any?, raw: String?, isPresent: Boolean)` entries — `of(list)` requires the
 names to be unique; `empty()` for none.
 
 ```kotlin

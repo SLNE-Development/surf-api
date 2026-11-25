@@ -9,7 +9,7 @@ thread-safe while being configured, every `with*`/`set*` returns `this`. A blank
 `init`.
 
 Subclasses override `kind: ArgumentKind<T>`, `rawType: ArgumentType<T>` (the Brigadier parser),
-`stringify(value): String` and optionally `greedy` and `listDelimiter`.
+`stringify(value): String` and optionally `isGreedy` and `listDelimiter`.
 
 Configuration available on every argument:
 
@@ -30,7 +30,7 @@ form, `setOptional(optional = true)` or `setOptional(default = true)`. The DSL f
 
 `toDefinition(): ArgumentDefinition<T>` is the immutable snapshot the platform compiles:
 `nodeName`, `kind`, `optional`, `defaultValue`, `permissions`, `requirements`, `suggestions`,
-`greedy`, `rawType`, `stringify`, `listDelimiter`.
+`isGreedy`, `rawType`, `stringify`, `listDelimiter`.
 
 `ArgumentKind<T>` is a sealed interface with one case per argument type; it is protocol metadata for
 the platform, *not* something to implement outside the package. `UnsupportedArgumentType<T>` is the

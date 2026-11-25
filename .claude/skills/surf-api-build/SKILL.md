@@ -1,6 +1,6 @@
 ---
 name: surf-api-build
-description: Use when touching the surf-api Gradle build - adding, renaming, moving or splitting a module, writing or repairing a build.gradle.kts, choosing between surf.module-api, surf.module-impl and surf.aggregate, applying surf.ksp-processor, fixing a checkApiBoundary, checkContextContributors or "applies surf.aggregate but carries sources" failure, merging Spring registries or service files into a shadow jar, turning ABI validation on or off, working in the imported infra/ builds, deciding whether a module belongs in surf-api-bom, or working out a module's published coordinate and Gradle path.
+description: Use when touching the surf-api Gradle build - adding, renaming, moving or splitting a module, writing or repairing a build.gradle.kts, choosing between surf.module-api, surf.module-impl and surf.aggregate, applying surf.nms-shared-26, fixing a checkApiBoundary, checkContextContributors or "applies surf.aggregate but carries sources" failure, merging Spring registries or service files into a shadow jar, turning ABI validation on or off, working in the imported infra/ builds, deciding whether a module belongs in surf-api-bom, or working out a module's published coordinate and Gradle path.
 ---
 
 # surf-api build and module layout
@@ -20,9 +20,8 @@ The first path segment groups modules and carries no meaning beyond grouping:
 | `platform/` | `paper/`, `minestom/`, `velocity/`, `standalone/`, plus the `paper/nms/` bridges |
 | `aggregate/` | the six coordinates downstream projects depend on; no code |
 | `infra/` | the imported NATS, Redis and microservice builds and `database-r2dbc`, each with its own root script |
-| `tooling/` | `bom` and `gradle-plugin/processor`; `tooling/gradle-plugin` itself is an included build |
+| `tooling/` | `bom` and the local-only `registry-key-generator`; `tooling/gradle-plugin` and `tooling/nms-module-generator` are included builds |
 | `local/` | samples and boot harnesses, never published, excluded in CI |
-| `surf-api-generator/` | stays at the repository root: local-only, with thousands of registry data files |
 
 ## The published name comes from the directory
 
@@ -35,8 +34,6 @@ foundation/spring/impl    ->  surf-api-spring-impl
 platform/paper/nms/v26-3  ->  surf-api-paper-nms-v26-3
 aggregate/paper           ->  surf-api-paper
 ```
-
-A single-segment path keeps its directory name verbatim (`surf-api-generator`).
 
 `includeModule` calls `include(name)` and points `projectDir` at the directory, so **the Gradle
 path is flat** and equals the published name: `:surf-api-paper-impl`, accessor
@@ -55,7 +52,7 @@ published name is the last segment. `infra/database-r2dbc` is a single module in
 | --- | --- | --- |
 | `surf.module-api` | a module whose types consumers compile against | `core-convention` + registers `checkApiBoundary` and wires it into `check` |
 | `surf.module-impl` | a module wired in at runtime and shaded into a platform jar | `core-convention` + fails configuration unless the project name marks it as an implementation |
-| `surf.aggregate` | a coordinate that only groups other modules | `core-convention` + a `surfRuntime` configuration + fails if the project carries sources |
+| `surf.aggregate` | a coordinate that only groups other modules | `core-convention` + fails if the project carries sources |
 
 `surfModuleRole(projectName)` in `buildSrc/src/main/kotlin/SurfModuleRole.kt` classifies by name:
 an `-impl` suffix, an `-internal` suffix or a `-nms-v<digit>` match mean `IMPL`; everything else is
@@ -64,12 +61,16 @@ implementation module `...-impl`.
 
 These projects apply bare `core-convention` and get no role check: `platform/paper/nms/api` (it
 depends on `surf-api-internal`, which classifies as `IMPL`), `platform/standalone/testing`, every
-`local/` module and `surf-api-generator`. `tooling/gradle-plugin/processor` applies only
-`publish-convention` and `java-toolchain-convention`, with a version of its own. Most `infra/`
-modules apply the surf Gradle plugin (`dev.slne.surf.api.gradle.core` and friends) the way a
-downstream project does; `surf-nats-api` and `surf-nats-core` are Kotlin Multiplatform modules
-configured by `infra/nats`'s own build script. The root build sets the group and version of every
-`infra/` module.
+`local/` module and `tooling/registry-key-generator`. Most `infra/` modules apply the surf Gradle
+plugin (`dev.slne.surf.api.gradle.core` and friends) the way a downstream project does;
+`surf-nats-api` and `surf-nats-core` are Kotlin Multiplatform modules configured by
+`infra/nats`'s own build script. The root build sets the group and version of every `infra/`
+module. The surf Gradle plugin's `checkInternalApiUsage` runs in their `check` as in any
+downstream project; `surf-redis-api`, `surf-redis-core`, `surf-redis-spring`, `surf-nats-spring`,
+`surf-microservice-runtime`, `surf-microservice-database` and `surf-microservice-reliability`
+allow the markers they are built against with `allowInternalApi(...)`. `InternalRedisAPI` carries `@InternalAPIMarker` directly;
+`InternalNatsApi` lives in common code and gets it through the optional expect annotation
+`InternalApiMarker`, whose JVM actual is a typealias to `InternalAPIMarker`.
 
 ## What `core-convention` gives every module
 
@@ -81,10 +82,10 @@ configured by `infra/nats`'s own build script. The root build sets the group and
   so every bundled copy reaches the transformer, and relocates Adventure NBT and Configurate below
   `relocationPrefix`
 
-KSP is not part of it. A module that declares `@GenerateReflection` or `@NmsProviderMarker` applies
-`surf.ksp-processor` next to its role; the four `platform/paper/nms/v*` modules do. Without it the
-module still compiles, but `NmsProvider` finds no provider at runtime ("No NmsProvider
-implementations found"). Detail for every convention: `references/conventions.md`.
+KSP is not part of it, and surf-api has no KSP processor of its own. The 26.x NMS modules apply
+`surf.nms-shared-26` next to `surf.module-impl`; it compiles the shared sources of
+`platform/paper/nms/shared-26` into the module with the module's package and class prefix, minus
+the files the module overrides. Detail for every convention: `references/conventions.md`.
 
 ## Shadow jars of the platform runtimes
 
@@ -101,7 +102,7 @@ NATS and Redis integrations. Their `shadowJar` blocks call buildSrc helpers:
 
 Each of the three registers `checkContextContributors`, a `CheckShadowServiceFile` task wired into
 `check`. It fails when the shadow jar's `META-INF/services/dev.slne.surf.api.spring.context.ContextContributor`
-lacks the config, NATS or Redis contributor; a lost contributor otherwise shows up only as missing
+lacks the config, reflection, NATS or Redis contributor; a lost contributor otherwise shows up only as missing
 beans at startup.
 
 ## ABI validation is a separate opt-in
@@ -113,11 +114,12 @@ It is **not** part of `surf.module-api`. Three mechanisms produce a tracked dump
   `foundation/spring/api`, the eleven `common/*/api` modules, `platform/{paper,minestom,velocity}/api`,
   and the implementation modules `platform/minestom/impl` and `platform/standalone/impl`, whose
   surface an aggregate re-exports
-- a `kotlin { abiValidation { filters { ... } } }` block in an infra module, which excludes its
-  internal annotation: the four `infra/microservice` modules, `surf-nats-api` (also a `.klib.api`
-  for its JS target) and `surf-redis-api`
-- `surfCoreApi { withApiValidation() }` from the surf Gradle plugin: `surf-redis-api`,
-  `surf-redis-spring`, `surf-nats-spring` and `database-r2dbc`
+- `` `api-validation` `` next to the surf Gradle plugin in the infra modules with a JVM dump:
+  `surf-redis-api`, `surf-redis-spring`, `surf-nats-spring`, `database-r2dbc` and the four
+  `infra/microservice` modules. Those that have an internal annotation of their own exclude it in
+  an additional `kotlin { abiValidation { filters { ... } } }` block
+- `surf-nats-api` is Kotlin Multiplatform, which `api-validation` does not support; its own
+  `abiValidation` block also writes a `.klib.api` for the JS target
 
 `foundation/registry-keys` stays out on purpose: its surface is generated, so a dump would change
 with every Minecraft version. CI runs `./gradlew checkKotlinAbi`; refresh with
@@ -129,8 +131,8 @@ with every Minecraft version. CI runs `./gradlew checkKotlinAbi`; refresh with
 Both live in `foundation/annotations` and are opt-ins at error level, so plugin code cannot call
 either; the root build opts every surf-api module in.
 
-- `@InternalSurfApi`: used only between surf-api's modules. The `api-validation` convention and
-  `withApiValidation()` exclude it from the dumps, so it may change in any release.
+- `@InternalSurfApi`: used only between surf-api's modules. The `api-validation` convention
+  excludes it from the dumps, so it may change in any release.
 - `@PublishedSurfApi`: internal as well, but referenced from a public `inline` function. The
   compiler copies that function's body into the calling plugin, so the declaration is part of the
   plugin's bytecode. The dumps keep it; change it only as you would public API.
@@ -159,6 +161,31 @@ a warning for a transitional local build.
 When it fires, move the type you need into the matching `-api` module, or make the consuming
 module an implementation module. Implementations are wired in at runtime, never compiled against.
 
+## Where third-party libraries go
+
+The surf-api runtime jar of each platform ships the libraries, so the api modules only compile
+against them:
+
+- An `*-api` module declares every third-party library - the Kotlin stdlib, kotlin-reflect,
+  coroutines, serialization, Adventure, Configurate, Spring and the utility libraries - as
+  `compileOnlyApi`. A consumer still compiles against it; nothing reaches a runtime classpath.
+- The runtime dependency sits on the implementation module that ships it: `surf-api-spring-impl`
+  (Spring, stdlib), `surf-api-config-impl` (Configurate), `surf-api-core-impl` (Kotlin libraries,
+  reactor, Adventure NBT, glm, aedile), and the platform impls for what only their platform
+  needs. `surf-api-standalone` and `surf-api-minestom-server` reach these through the impl module
+  they export, so they carry real runtime dependencies; the plugin coordinates do not.
+- fastutil is not part of this scheme: no api module depends on it. The Paper NMS version
+  modules declare it `compileOnly` against the copy the server ships.
+- A new `compileOnlyApi` library needs such a runtime home, or the shadow jars lose it. Compare
+  `jar tf` of the paper, velocity, minestom and standalone impl shadow jars before and after.
+- The catalog bundles `adventure`, `configurate`, `surf-runtime-utils`, `kotlin-coroutines`
+  (`kotlinx-coroutines-core` only) and `kotlin-coroutines-reactor` (the reactor bridges and
+  reactor-core, pinned for the database and Redis jars) group the libraries that travel together.
+
+`test-convention` makes `testImplementation` extend the module's own `compileOnlyApi`, not the
+`compileOnlyApi` of its project dependencies. A test of an api module that needs such a library at
+runtime declares it with `testRuntimeOnly`.
+
 ## Aggregates
 
 `aggregate/{core,paper,minestom,minestom-server,velocity,standalone}` are the coordinates
@@ -172,26 +199,23 @@ breaks a downstream coordinate as long as the aggregate keeps exporting the righ
 
 `tooling/bom` is a `java-platform` that constrains every leaf subproject to one version. The
 constraints come from `rootProject.subprojects` names, so the infra modules are included.
-`notPublished` lists what the BOM leaves out: `surf-api-bom`, `surf-api-processor` (own version),
-`surf-api-generator`, `surf-api-paper-plugin-test`, `surf-api-minestom-example`,
+`notPublished` lists what the BOM leaves out: `surf-api-bom`,
+`surf-api-registry-key-generator`, `surf-api-paper-plugin-test`, `surf-api-minestom-example`,
 `surf-api-minestom-example-plugin` and the six `local/*-shared-bean-*` modules. Add every module
 that `settings.gradle.kts` includes only outside CI to that set; otherwise it becomes a constraint
 in a locally built BOM but not in a CI-built one.
 
 ## Renaming a module
 
-`publishRelocationFrom(vararg oldArtifactIds)` in `buildSrc/src/main/kotlin/relocation.kt`
-publishes a POM for each old coordinate with a `<distributionManagement><relocation>` block pointing
-at this module. Add it when consumers resolve the old coordinate directly - the eight
-`platform/minestom/*-impl` feature modules do, e.g.
-`publishRelocationFrom("surf-api-minestom-server-npc")`. It rejects a relocation from the module's
-own artifact id. Checklist: `references/adding-a-module.md`.
+Until 4.0.0 ships, a renamed module publishes no relocation POM, and a consumer that names an old
+coordinate fails to resolve it. Record the rename in `MIGRATION-4.0.md`. Checklist:
+`references/adding-a-module.md`.
 
 ## Traps
 
 - **No implicit Kotlin stdlib.** `gradle.properties` sets `kotlin.stdlib.default.dependency=false`.
   A module with no project dependency, and nothing else pulling the stdlib in, declares
-  `api(libs.kotlin.stdlib)` itself, as `foundation/registry-keys` does.
+  `compileOnlyApi(libs.kotlin.stdlib)` itself, as `foundation/registry-keys` does.
 - **ABI dumps are named after the project.** Renaming a module strands its dump under the old file
   name and `checkKotlinAbi` reports the whole surface as new. Rename
   `<moduleDir>/api/<old-name>.api` in the same change.
@@ -224,8 +248,8 @@ after touching `buildSrc`.
 
 `platform/minestom/luckperms-impl` is included only once `vendor/LuckPerms` exists; create it with
 `git submodule update --init --recursive` and then `./gradlew applyPatches` from `vendor/`. CI
-errors out instead of skipping it. The `local/` modules and `surf-api-generator` are excluded
-whenever the `CI` environment variable is true.
+errors out instead of skipping it. The `local/` modules and `tooling/registry-key-generator` are
+excluded whenever the `CI` environment variable is true.
 
 ## References
 
@@ -234,5 +258,5 @@ Read on demand:
 - `references/module-layout.md` - every included module with its Gradle path, the `name`
   overrides, `includeInfra`, the included builds, the aggregates and the BOM.
 - `references/conventions.md` - what each `buildSrc` plugin and helper does, the role
-  classification, `checkApiBoundary`, the shadow-jar helpers and `surfRuntime` in detail.
+  classification, `checkApiBoundary`, the shadow-jar helpers and `surf.aggregate` in detail.
 - `references/adding-a-module.md` - the end-to-end checklist for a new, renamed or moved module.

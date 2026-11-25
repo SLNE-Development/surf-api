@@ -11,19 +11,19 @@ object VisualizerListener : Listener {
 
     @EventHandler
     fun onPlayerChunkLoad(event: PlayerChunkLoadEvent) {
-        SurfBukkitVisualizerApiImpl.INSTANCE.processChunkReceiveUpdateForPlayer(
+        SurfBukkitVisualizerApiImpl.instance.processChunkReceiveUpdateForPlayer(
             event.player,
-            event.chunk
+            event.chunk,
         )
     }
 
     @EventHandler
     fun onPlayerChunkUnload(event: PlayerChunkUnloadEvent) {
-        SurfBukkitVisualizerApiImpl.INSTANCE.processChunkUnloadForPlayer(event.player, event.chunk)
+        SurfBukkitVisualizerApiImpl.instance.processChunkUnloadForPlayer(event.player, event.chunk)
     }
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        SurfBukkitVisualizerApiImpl.INSTANCE.processPlayerQuit(event.player)
+        SurfBukkitVisualizerApiImpl.instance.processPlayerQuit(event.player)
     }
 }

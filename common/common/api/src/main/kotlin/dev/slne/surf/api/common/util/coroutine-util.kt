@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalVersionOverloading::class)
-
 package dev.slne.surf.api.common.util
 
 import kotlinx.coroutines.*
@@ -18,7 +16,9 @@ private fun createTaskLogging(
 ): TaskLogging {
     val normalizedTaskName = taskName?.takeIf { it.isNotBlank() }
     val resolvedName = normalizedTaskName ?: defaultName
-    val logger = getCallerClass(1)?.let(ComponentLogger::logger) ?: ComponentLogger.logger(defaultName)
+    val logger = getCallerClass(1)?.let(ComponentLogger::logger) ?: ComponentLogger.logger(
+        defaultName,
+    )
 
     return TaskLogging(
         name = resolvedName,
@@ -33,7 +33,10 @@ private fun CoroutineScope.handleTaskException(
 ) {
     if (throwable is CancellationException) {
         ensureActive()
-        logging.logger.warn("A Task tried to cancel itself while the job was still active. Ignoring.")
+        logging.logger.warn(
+            "A Task tried to cancel itself while the job was still active. Ignoring.",
+        )
+
         return
     }
 
@@ -86,8 +89,8 @@ private fun CoroutineScope.handleTaskException(
 fun CoroutineScope.runAtFixedRate(
     period: Duration,
     initialDelay: Duration = Duration.ZERO,
-    @IntroducedAt("3.29.0") catchExceptions: Boolean = true,
-    @IntroducedAt("3.29.0") taskName: String? = null,
+    catchExceptions: Boolean = true,
+    taskName: String? = null,
     block: suspend CoroutineScope.() -> Unit,
 ): Job {
     require(period > Duration.ZERO) { "period must be positive" }
@@ -105,6 +108,7 @@ fun CoroutineScope.runAtFixedRate(
         }
 
         var nextRun = System.nanoTime()
+
         while (isActive) {
             nextRun += period.inWholeNanoseconds
 
@@ -121,6 +125,7 @@ fun CoroutineScope.runAtFixedRate(
             ensureActive()
 
             val waitNanos = nextRun - System.nanoTime()
+
             if (waitNanos > 0) {
                 delay(waitNanos.nanoseconds)
             }
@@ -169,8 +174,8 @@ fun CoroutineScope.runAtFixedRate(
 fun CoroutineScope.runWithFixedDelay(
     delay: Duration,
     initialDelay: Duration = Duration.ZERO,
-    @IntroducedAt("3.29.0") catchExceptions: Boolean = true,
-    @IntroducedAt("3.29.0") taskName: String? = null,
+    catchExceptions: Boolean = true,
+    taskName: String? = null,
     block: suspend CoroutineScope.() -> Unit,
 ): Job {
     require(delay > Duration.ZERO) { "delay must be positive" }
@@ -226,7 +231,8 @@ fun CoroutineScope.runWithFixedDelay(
  *   is treated as a self-cancellation attempt, logged as a warning, and ignored.
  *
  * Error handling:
- * - Non-cancellation exceptions thrown by [block] are logged and the next execution is still attempted.
+ * - Non-cancellation exceptions thrown by [block] are logged and the next execution is still
+ *   attempted.
  * - Non-cancellation exceptions thrown by [predicate] are logged and the loop stops, because
  *   the continuation condition could not be evaluated successfully.
  *
@@ -249,15 +255,16 @@ fun CoroutineScope.runUntil(
     initialDelay: Duration = Duration.ZERO,
     predicate: suspend () -> Boolean,
     block: suspend CoroutineScope.() -> Unit,
-): Job = runUntil(
-    delay = delay,
-    initialDelay = initialDelay,
-    catchExceptions = true,
-    predicate = predicate,
-    taskName = null,
-    block = block,
-)
-
+): Job {
+    return runUntil(
+        delay = delay,
+        initialDelay = initialDelay,
+        catchExceptions = true,
+        predicate = predicate,
+        taskName = null,
+        block = block,
+    )
+}
 
 /**
  * Starts a coroutine that repeatedly executes [block] with a fixed [delay] between executions

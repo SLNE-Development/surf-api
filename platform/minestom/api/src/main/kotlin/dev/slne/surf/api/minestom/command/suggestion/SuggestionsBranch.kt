@@ -31,8 +31,10 @@ class SuggestionsBranch private constructor(
     /**
      * Adds [branches] as alternative continuations after this branch's own positions.
      */
-    fun branch(vararg branches: SuggestionsBranch): SuggestionsBranch = apply {
-        this.branches += branches
+    fun branch(vararg branches: SuggestionsBranch): SuggestionsBranch {
+        return apply {
+            this.branches += branches
+        }
     }
 
     /**
@@ -48,12 +50,14 @@ class SuggestionsBranch private constructor(
     suspend fun getNextSuggestion(
         sender: CommandSender,
         vararg previousRaw: String,
-    ): ArgumentSuggestions? = traverse(
-        mode = TraversalMode.NEXT,
-        sender = sender,
-        rawArguments = listOf(*previousRaw),
-        processed = emptyList(),
-    ).provider
+    ): ArgumentSuggestions? {
+        return traverse(
+            mode = TraversalMode.NEXT,
+            sender = sender,
+            rawArguments = listOf(*previousRaw),
+            processed = emptyList(),
+        ).provider
+    }
 
     /**
      * Verifies that [previousRaw] is a complete, valid sequence for this branch.
@@ -90,6 +94,7 @@ class SuggestionsBranch private constructor(
         }
 
         val currentProcessed = processed.toMutableList()
+
         for (provider in suggestions) {
             if (currentProcessed.size == rawArguments.size) {
                 if (mode == TraversalMode.NEXT) {
@@ -101,6 +106,7 @@ class SuggestionsBranch private constructor(
                 }
 
                 val missingInfo = suggestionInfo(sender, currentProcessed, "")
+
                 if (provider.suggest(missingInfo).isNotEmpty()) {
                     throw syntax("Expected more arguments", rawArguments, currentProcessed)
                 }
@@ -109,8 +115,10 @@ class SuggestionsBranch private constructor(
             }
 
             val candidate = rawArguments[currentProcessed.size]
+
             if (provider != null) {
                 val info = suggestionInfo(sender, currentProcessed, "")
+
                 if (provider.suggest(info).none { it.suggestion == candidate }) {
                     val message =
                         if (currentProcessed.isEmpty()) "Unknown command" else "Unknown argument"
@@ -164,7 +172,7 @@ class SuggestionsBranch private constructor(
         currentArgument: String,
     ): SuggestionInfo {
         val parsed = processed.mapIndexed { index, raw ->
-            ParsedArgument(index.toString(), raw, raw, present = true)
+            ParsedArgument(index.toString(), raw, raw, isPresent = true)
         }
 
         return SuggestionInfo(
@@ -172,7 +180,7 @@ class SuggestionsBranch private constructor(
             previousArgs = CommandArguments.of(parsed),
             currentInput = processed.joinToString(
                 " ",
-                postfix = if (processed.isEmpty()) "" else " "
+                postfix = if (processed.isEmpty()) "" else " ",
             ),
             currentArg = currentArgument,
         )
@@ -182,11 +190,13 @@ class SuggestionsBranch private constructor(
         message: String,
         rawArguments: List<String>,
         processed: List<String>,
-    ) = CommandSyntaxException(
-        component = Component.text(message),
-        input = rawArguments.joinToString(" "),
-        cursor = processed.joinToString(" ").length + if (processed.isEmpty()) 0 else 1,
-    )
+    ): CommandSyntaxException {
+        return CommandSyntaxException(
+            component = Component.text(message),
+            input = rawArguments.joinToString(" "),
+            cursor = processed.joinToString(" ").length + if (processed.isEmpty()) 0 else 1,
+        )
+    }
 
     private data class TraversalResult(val provider: ArgumentSuggestions?)
 
@@ -201,7 +211,8 @@ class SuggestionsBranch private constructor(
          *
          * A `null` entry marks a position without suggestions that accepts any value.
          */
-        fun suggest(vararg suggestions: ArgumentSuggestions?): SuggestionsBranch =
-            SuggestionsBranch(listOf(*suggestions))
+        fun suggest(vararg suggestions: ArgumentSuggestions?): SuggestionsBranch {
+            return SuggestionsBranch(listOf(*suggestions))
+        }
     }
 }

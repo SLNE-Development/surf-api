@@ -28,7 +28,7 @@ Minestom code.**
 | File | Holds |
 | --- | --- |
 | `CommandRegistrar.kt` | `fun interface CommandRegistrar { fun register() }` - a bean that registers commands in the enable phase; names no CommandAPI type, so Minestom uses it too |
-| `SurfCommandUtil.kt` | `createException(message: ComponentLike)`, `failWithMessage(message)`, `failWithBuilder(builder)` — all `@JvmStatic` on an `object` |
+| `SurfCommandUtil.kt` | `createException(message: ComponentLike)`, `failWithMessage(message)`, `failWithBuilder(builder)` — all `@JvmStatic` on an `object`; the two `fail*` functions return `Nothing` |
 | `exception/WrapperCommandExceptionComponent.kt` | a `WrapperCommandSyntaxException` whose Brigadier message is a `ComponentMessage`, so a `Component` survives to the client |
 | `builder/CommandExceptionBuilder.kt` | formats a parse failure: optional detail message, then `At position <cursor>: ` plus the last `CONTEXT_AMOUNT = 10` characters underlined and a `command.context.here` marker. `build()` uses `Colors.ERROR_PREFIX`; `build(prefix)` takes another |
 | `args/SuspendArgumentHelper.kt` | `suspend CommandArguments.awaiting<T>(nodeName)` and `awaitingOrNull<T>(nodeName)` — `await()` a `Deferred<T>` stored as an argument value; `awaiting` errors with *"Argument … is missing"* |
@@ -43,7 +43,7 @@ Minestom code.**
 
 | Class | Shape |
 | --- | --- |
-| `MiniMessageArgument(nodeName, greedy = false)` | `CustomArgument<Component, String>` over a `GreedyStringArgument` or `TextArgument`; a `ParsingException` becomes a `CustomArgumentException.fromAdventureComponent(CommandExceptionBuilder(…).build())`. `greedy` is annotated `@IntroducedAt("3.32.0")`, so the file opts into `ExperimentalVersionOverloading`. DSL: `CommandAPICommand.miniMessageArgument(nodeName, optional, greedy) { }` and the `CommandTree` form |
+| `MiniMessageArgument(nodeName, greedy = false)` | `CustomArgument<Component, String>` over a `GreedyStringArgument` or `TextArgument`; a `ParsingException` becomes a `CustomArgumentException.fromAdventureComponent(CommandExceptionBuilder(…).build())`. DSL: `CommandAPICommand.miniMessageArgument(nodeName, optional, greedy) { }` and the `CommandTree` form |
 | `AdventureCompoundBinaryTagArgument(nodeName)` | `SafeOverrideableArgument<CompoundBinaryTag, CompoundBinaryTag>`, `CommandAPIArgumentType.NBT_COMPOUND`, parsed through `SurfPaperNmsCommandArgumentTypesBridge` (`@NmsUseWithCaution`). DSL on `CommandAPICommand`, `CommandTree` and `Argument<*>` |
 | `AsyncSignedMessageArgument(nodeName)` | `Argument<Deferred<SignedMessage>>`, `CommandAPIArgumentType.CHAT`, NMS-backed. Read it as `args.awaiting<SignedMessage>(nodeName)` inside a suspending executor — that is the whole point of the `Deferred` |
 | `SuspendCustomArgument<T, B>(base, scope: CoroutineScope? = null)` | abstract `CustomArgument<Deferred<T>, B>`. Override `suspend fun CoroutineScope.parse(info: CustomArgumentInfo<B>): T`; `parseArgument` returns `scope.async { … }` and turns a `CustomArgumentException` into a Brigadier exception. `null` means the declaring plugin's scope on the server thread, as for the suspending executors |
@@ -110,7 +110,8 @@ anything that must be enforced inside the executor as well.
 
 `awaitAsyncPlayerProfileOptional(nodeName)` / `awaitAsyncPlayerProfile(nodeName)` await a
 `CompletableFuture<List<PlayerProfile>>` argument and return its first profile, unwrapping a
-`RuntimeException` to its cause; `PlayerProfile.idOrThrow()` for the UUID.
+`RuntimeException` to its cause. `PlayerProfile.idOrThrow()` for the UUID lives in
+`dev.slne.surf.api.paper.util` (`player-profile-util.kt`), not in `command/util`.
 
 ## Velocity additions
 

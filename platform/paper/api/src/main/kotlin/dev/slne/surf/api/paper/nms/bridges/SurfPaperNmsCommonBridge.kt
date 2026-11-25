@@ -1,16 +1,14 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.nms.bridges
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import dev.slne.surf.api.spring.surfBean
 import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.block.data.BlockData
 import org.bukkit.entity.Player
 import java.net.InetSocketAddress
-import dev.slne.surf.api.spring.SurfApiBean
 
 @NmsUseWithCaution
 @SurfApiBean
@@ -41,9 +39,6 @@ interface SurfPaperNmsCommonBridge {
 
     companion object {
         @InternalSurfApi
-        val INSTANCE get() = bridge
+        val instance by surfBean<SurfPaperNmsCommonBridge>()
     }
 }
-
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsCommonBridge>()

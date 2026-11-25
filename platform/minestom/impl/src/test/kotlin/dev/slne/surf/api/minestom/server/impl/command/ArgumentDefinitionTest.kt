@@ -71,14 +71,23 @@ class ArgumentDefinitionTest {
         assertThrows<IllegalArgumentException> { LiteralArgument("choice", "two words") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "one", "") }
-        assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "one", "two words") }
+        assertThrows<IllegalArgumentException> {
+            MultiLiteralArgument(
+                "choice",
+                "one",
+                "two words",
+            )
+        }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "one\ttwo") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "ns:fast") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "a/b") }
         assertThrows<IllegalArgumentException> { MultiLiteralArgument("choice", "ä") }
         assertEquals(
             listOf("a-b.c+d_1"),
-            (MultiLiteralArgument("choice", "a-b.c+d_1").toDefinition().kind as ArgumentKind.MultiLiteral).literals,
+            (MultiLiteralArgument(
+                "choice",
+                "a-b.c+d_1",
+            ).toDefinition().kind as ArgumentKind.MultiLiteral).literals,
         )
 
         val source = arrayOf("one", "two")
@@ -94,7 +103,12 @@ class ArgumentDefinitionTest {
     @Test
     fun `enum arguments use stable values and formatter`() {
         val source = mutableListOf(AccessLevel.STAFF, AccessLevel.GUEST)
-        val definition = EnumArgument("access", source) { it.name.lowercase().replace("staff", "team") }
+        val definition = EnumArgument("access", source) {
+            it.name.lowercase().replace(
+                "staff",
+                "team",
+            )
+        }
             .toDefinition()
         source.clear()
 
@@ -140,9 +154,14 @@ class ArgumentDefinitionTest {
             CommandArgument("command").toDefinition(),
         )
 
-        assertEquals(listOf(false, false, true, true), definitions.map { it.greedy })
+        assertEquals(listOf(false, false, true, true), definitions.map { it.isGreedy })
         assertEquals(
-            listOf(ArgumentKind.Word, ArgumentKind.Text, ArgumentKind.GreedyString, ArgumentKind.Command),
+            listOf(
+                ArgumentKind.Word,
+                ArgumentKind.Text,
+                ArgumentKind.GreedyString,
+                ArgumentKind.Command,
+            ),
             definitions.map { it.kind },
         )
     }
@@ -164,9 +183,22 @@ class ArgumentDefinitionTest {
         assertEquals("\"left\u000Bright\"", verticalTabSerialized)
         assertEquals(
             verticalTabValue,
-            ArgumentType.String("text").parse(env.process().command().consoleSender, verticalTabSerialized),
+            ArgumentType.String("text").parse(
+                env.process().command().consoleSender,
+                verticalTabSerialized,
+            ),
         )
-        listOf("plain", "a:b", "héllo", "C:\\temp", "tab\there", "new\nline", "say \"hi\"", "back\\slash").forEach { value ->
+        val values = listOf(
+            "plain",
+            "a:b",
+            "héllo",
+            "C:\\temp",
+            "tab\there",
+            "new\nline",
+            "say \"hi\"",
+            "back\\slash",
+        )
+        for (value in values) {
             assertEquals(value, StringArgumentType.string().parse(StringReader(stringify(value))))
         }
     }
@@ -177,12 +209,13 @@ class ArgumentDefinitionTest {
         val floats = FloatArgument("float").toDefinition().stringify
         val floatRange = FloatRangeArgument("range").toDefinition().stringify
 
-        listOf(1.0E-4, 1.2345678E7, -1.0E20, 12.5, 0.0).forEach { value ->
+        for (value in listOf(1.0E-4, 1.2345678E7, -1.0E20, 12.5, 0.0)) {
             val text = doubles(value)
             assertFalse('E' in text, text)
             assertEquals(value, text.toDouble())
         }
-        listOf(1.0E-4f, 1.2345678E7f, -Float.MAX_VALUE, 12.5f).forEach { value ->
+
+        for (value in listOf(1.0E-4f, 1.2345678E7f, -Float.MAX_VALUE, 12.5f)) {
             val text = floats(value)
             assertFalse('E' in text, text)
             assertEquals(value, text.toFloat())
@@ -190,11 +223,37 @@ class ArgumentDefinitionTest {
 
         assertFalse('E' in floatRange(Range.Float(1.0E-4f, 1.2345678E7f)))
         assertFalse('E' in floatRange(Range.Float(-Float.MAX_VALUE, Float.MAX_VALUE)))
-        assertFalse('E' in PositionArgument("pos").toDefinition().stringify(Vec(1.0E-4, 2.0, 3.0E10)))
-        assertFalse('E' in Position2DArgument("pos").toDefinition().stringify(Vec(1.0E-4, 0.0, 3.0E10)))
-        assertFalse('E' in RotationArgument("rot").toDefinition().stringify(Rotation(1.0E-4f, 1.2345678E7f)))
+        assertFalse(
+            'E' in PositionArgument("pos").toDefinition().stringify(
+                Vec(
+                    1.0E-4,
+                    2.0,
+                    3.0E10,
+                ),
+            ),
+        )
+        assertFalse(
+            'E' in Position2DArgument("pos").toDefinition().stringify(
+                Vec(
+                    1.0E-4,
+                    0.0,
+                    3.0E10,
+                ),
+            ),
+        )
+        assertFalse(
+            'E' in RotationArgument("rot").toDefinition().stringify(
+                Rotation(
+                    1.0E-4f,
+                    1.2345678E7f,
+                ),
+            ),
+        )
         assertFalse('E' in AngleArgument("angle").toDefinition().stringify(1.0E-4f))
-        assertEquals("1.5 2.0 3.0", PositionArgument("pos").toDefinition().stringify(Vec(1.5, 2.0, 3.0)))
+        assertEquals(
+            "1.5 2.0 3.0",
+            PositionArgument("pos").toDefinition().stringify(Vec(1.5, 2.0, 3.0)),
+        )
     }
 
     @Test
@@ -202,15 +261,23 @@ class ArgumentDefinitionTest {
         assertEquals(ArgumentKind.Boolean, BooleanArgument("flag").toDefinition().kind)
         assertEquals(ArgumentKind.Long(1, 2), LongArgument("long", 1, 2).toDefinition().kind)
         assertEquals(ArgumentKind.Float(1f, 2f), FloatArgument("float", 1f, 2f).toDefinition().kind)
-        assertEquals(ArgumentKind.Double(1.0, 2.0), DoubleArgument("double", 1.0, 2.0).toDefinition().kind)
-        assertEquals(ArgumentKind.Literal("confirm"), LiteralArgument("action", "confirm").toDefinition().kind)
+        assertEquals(
+            ArgumentKind.Double(1.0, 2.0),
+            DoubleArgument("double", 1.0, 2.0).toDefinition().kind,
+        )
+        assertEquals(
+            ArgumentKind.Literal("confirm"),
+            LiteralArgument("action", "confirm").toDefinition().kind,
+        )
     }
 
     @Test
     fun `optional defaults retain constant and sender aware suppliers`(env: Env) {
         val sender = env.process().command().consoleSender
         val constant = IntegerArgument("constant").setOptional(4).toDefinition()
-        val supplier: (net.minestom.server.command.CommandSender) -> Int = { if (it === sender) 8 else 0 }
+        val supplier: (net.minestom.server.command.CommandSender) -> Int = {
+            if (it === sender) 8 else 0
+        }
         val supplied = IntegerArgument("supplied").setOptional(supplier).toDefinition()
         val absent = IntegerArgument("absent").setOptional(true).toDefinition()
         val required = IntegerArgument("required").setOptional(false).toDefinition()
@@ -229,7 +296,9 @@ class ArgumentDefinitionTest {
     @Test
     fun `named boolean optional overloads distinguish defaults from optionality`(env: Env) {
         val sender = env.process().command().consoleSender
-        val falseDefault = BooleanArgument("false-default").setOptional(default = false).toDefinition()
+        val falseDefault = BooleanArgument("false-default")
+            .setOptional(default = false)
+            .toDefinition()
         val trueDefault = BooleanArgument("true-default").setOptional(default = true).toDefinition()
         val required = BooleanArgument("required").setOptional(optional = false).toDefinition()
         val optional = BooleanArgument("optional").setOptional(optional = true).toDefinition()
@@ -267,14 +336,18 @@ class ArgumentDefinitionTest {
 
         assertEquals(setOf("lobby.first"), snapshot.permissions)
         assertEquals(listOf(firstRequirement), snapshot.requirements)
-        snapshot.requirements.forEach { it(env.process().command().consoleSender) }
+
+        for (requirement in snapshot.requirements) {
+            requirement(env.process().command().consoleSender)
+        }
+
         assertEquals(listOf("first"), calls)
         assertEquals(SuggestionMode.BuiltIns, snapshot.suggestions)
         assertThrows<UnsupportedOperationException> {
             (snapshot.permissions as MutableSet<String>).add("mutated")
         }
         assertThrows<UnsupportedOperationException> {
-            (snapshot.requirements as MutableList<(net.minestom.server.command.CommandSender) -> Boolean>).clear()
+            (snapshot.requirements as MutableList<*>).clear()
         }
     }
 
@@ -283,23 +356,25 @@ class ArgumentDefinitionTest {
         val strings = ArgumentSuggestions.strings("one")
         val safe = SafeSuggestions.suggest(1)
 
-        assertEquals(SuggestionMode.BuiltIns, IntegerArgument("built-in").toDefinition().suggestions)
-        assertSame(
-            strings,
-            (IntegerArgument("replace").replaceSuggestions(strings).toDefinition().suggestions as SuggestionMode.Replace).provider,
+        assertEquals(
+            SuggestionMode.BuiltIns,
+            IntegerArgument("built-in").toDefinition().suggestions,
         )
-        assertSame(
-            strings,
-            (IntegerArgument("include").includeSuggestions(strings).toDefinition().suggestions as SuggestionMode.Include).provider,
-        )
-        assertSame(
-            safe,
-            (IntegerArgument("replace-safe").replaceSafeSuggestions(safe).toDefinition().suggestions as SuggestionMode.ReplaceSafe).provider,
-        )
-        assertSame(
-            safe,
-            (IntegerArgument("include-safe").includeSafeSuggestions(safe).toDefinition().suggestions as SuggestionMode.IncludeSafe).provider,
-        )
+        val replace = IntegerArgument("replace").replaceSuggestions(strings).toDefinition()
+        assertSame(strings, (replace.suggestions as SuggestionMode.Replace).provider)
+
+        val include = IntegerArgument("include").includeSuggestions(strings).toDefinition()
+        assertSame(strings, (include.suggestions as SuggestionMode.Include).provider)
+
+        val replaceSafe = IntegerArgument("replace-safe")
+            .replaceSafeSuggestions(safe)
+            .toDefinition()
+        assertSame(safe, (replaceSafe.suggestions as SuggestionMode.ReplaceSafe).provider)
+
+        val includeSafe = IntegerArgument("include-safe")
+            .includeSafeSuggestions(safe)
+            .toDefinition()
+        assertSame(safe, (includeSafe.suggestions as SuggestionMode.IncludeSafe).provider)
     }
 
     private enum class AccessLevel {

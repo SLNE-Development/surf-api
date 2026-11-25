@@ -7,16 +7,12 @@ import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
 interface InternalPacketListenerApiBridge : SurfPaperPacketListenerApi {
     fun handleClientboundPacket(
         packet: Any,
-        serverPlayer: Any?
+        serverPlayer: Any?,
     ): Any?
 
     fun handleServerboundPacket(
         packet: Any,
-        serverPlayer: Any?
+        serverPlayer: Any?,
     ): Any?
-
-    companion object {
-        fun get() = SurfPaperPacketListenerApi.INSTANCE as InternalPacketListenerApiBridge
-    }
 }
 

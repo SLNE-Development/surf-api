@@ -3,7 +3,6 @@ package dev.slne.surf.api.paper.server.impl
 import com.google.common.io.ByteStreams
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.api.paper.SurfApiPaper
-import dev.slne.surf.api.paper.server.hook.SurfBukkitHookManager
 import dev.slne.surf.api.paper.server.plugin
 import dev.slne.surf.api.paper.server.time.TimeHandler
 import dev.slne.surf.api.paper.time.SkipOperations
@@ -22,10 +21,6 @@ import java.util.*
 @Service
 class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
 
-    fun onEnable() {
-        SurfBukkitHookManager.onEnable()
-    }
-
     private val buildInfo = ServerBuildInfo.buildInfo()
     override val isFolia: Boolean = buildInfo.isBrandCompatible(Key.key("papermc", "folia"))
     override val isCanvasMc: Boolean = buildInfo.isBrandCompatible(Key.key("canvasmc", "canvas"))
@@ -42,60 +37,67 @@ class SurfApiPaperImpl : SurfApiCoreImpl(), SurfApiPaper {
         }
     }
 
-    override fun getPlayer(playerUuid: UUID) = Bukkit.getPlayer(playerUuid)
+    override fun getPlayer(playerUuid: UUID): Player? = Bukkit.getPlayer(playerUuid)
     override fun isPlayer(audience: Audience): Boolean {
         return audience is Player
     }
 
     val dataFolder get() = plugin.dataPath
 
-    override suspend fun skipTimeSmoothly(world: World, timeToAdd: Long) =
-        skipTimeSmoothly(world, timeToAdd, timeToAdd / TimeHandler.DEFAULT_SKIP_AMOUNT)
-
+    override suspend fun skipTimeSmoothly(world: World, timeToAdd: Long): TimeSkipResult {
+        return skipTimeSmoothly(world, timeToAdd, timeToAdd / TimeHandler.DEFAULT_SKIP_AMOUNT)
+    }
 
     override suspend fun skipTimeSmoothly(
         world: World,
         timeToAdd: Long,
         duration: Long,
-    ) = TimeHandler.skipTimeSmoothly(world, timeToAdd, duration)
+    ): TimeSkipResult = TimeHandler.skipTimeSmoothly(world, timeToAdd, duration)
 
     override suspend fun skipTimeSmoothly(
         world: World,
         skipOperation: SkipOperations.SkipOperation,
     ): TimeSkipResult {
         val timeToAdd = skipOperation.timeToAdd(world)
+
         return skipTimeSmoothly(world, timeToAdd, timeToAdd / TimeHandler.DEFAULT_SKIP_AMOUNT)
     }
 
-    override suspend fun skipTimeSmoothly(timeToAdd: Long) = coroutineScope {
-        val worlds = Bukkit.getWorlds()
-        worlds.associateWith {
-            async {
-                skipTimeSmoothly(it, timeToAdd)
-            }
-        }.mapValues { (_, def) -> def.await() }
+    override suspend fun skipTimeSmoothly(timeToAdd: Long): Map<World, TimeSkipResult> {
+        return coroutineScope {
+            val worlds = Bukkit.getWorlds()
+            worlds.associateWith {
+                async {
+                    skipTimeSmoothly(it, timeToAdd)
+                }
+            }.mapValues { (_, def) -> def.await() }
+        }
     }
 
     override suspend fun skipTimeSmoothly(
         timeToAdd: Long,
         duration: Long,
-    ) = coroutineScope {
-        val worlds = Bukkit.getWorlds()
-        worlds.associateWith {
-            async {
-                skipTimeSmoothly(it, timeToAdd, duration)
-            }
-        }.mapValues { (_, def) -> def.await() }
+    ): Map<World, TimeSkipResult> {
+        return coroutineScope {
+            val worlds = Bukkit.getWorlds()
+            worlds.associateWith {
+                async {
+                    skipTimeSmoothly(it, timeToAdd, duration)
+                }
+            }.mapValues { (_, def) -> def.await() }
+        }
     }
 
     override suspend fun skipTimeSmoothly(
         skipOperation: SkipOperations.SkipOperation,
-    ) = coroutineScope {
-        val worlds = Bukkit.getWorlds()
-        worlds.associateWith {
-            async {
-                skipTimeSmoothly(it, skipOperation)
-            }
-        }.mapValues { (_, def) -> def.await() }
+    ): Map<World, TimeSkipResult> {
+        return coroutineScope {
+            val worlds = Bukkit.getWorlds()
+            worlds.associateWith {
+                async {
+                    skipTimeSmoothly(it, skipOperation)
+                }
+            }.mapValues { (_, def) -> def.await() }
+        }
     }
 }

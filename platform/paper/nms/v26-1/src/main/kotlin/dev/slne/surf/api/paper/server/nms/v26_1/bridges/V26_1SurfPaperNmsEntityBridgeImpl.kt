@@ -6,6 +6,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException
 import dev.jorel.commandapi.exceptions.WrapperCommandSyntaxException
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsEntityBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.AdventureNBT
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v26_1.extensions.toNmsHolder
@@ -40,6 +41,7 @@ import net.minecraft.world.entity.EntityType as NmsEntityType
 
 @NmsUseWithCaution
 @Suppress("ClassName")
+@NmsComponent
 class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
 
     @Suppress("UnstableApiUsage")
@@ -47,14 +49,14 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         world: World,
         type: EntityType,
         pos: FinePosition,
-        tag: CompoundBinaryTag
+        tag: CompoundBinaryTag,
     ) {
         val worldNMS = world.toNms()
         TickThread.ensureTickThread(
             worldNMS,
             pos.chunkX,
             pos.chunkZ,
-            "Cannot create entity asynchronously"
+            "Cannot create entity asynchronously",
         )
 
         val source = MinecraftServer.getServer().createCommandSourceStack()
@@ -66,7 +68,7 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
                 type.toNmsHolder(),
                 pos.toNms(),
                 AdventureNBT.toNms(tag),
-                false
+                false,
             )
         } catch (e: CommandSyntaxException) {
             throw WrapperCommandSyntaxException(e)
@@ -90,19 +92,19 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
             nmsEntity.save(output)
 
             val additions = output.child("surf-api-addtions")
-            nmsEntity.passengersAndSelf
-                .filter { it.type.canSerialize() }
-                .forEach { entity ->
-                    val tag = additions.child(entity.uuid.toString())
+            val entities = nmsEntity.passengersAndSelf.filter { it.type.canSerialize() }
+            for (entity in entities) {
+                val tag = additions.child(entity.uuid.toString())
 
-                    tag.store("Pose", CODEC, entity.pose)
+                tag.store("Pose", CODEC, entity.pose)
 
-                    val living = entity.asLivingEntity()
-                    if (living != null) {
-                        tag.putInt("ArrowCount", living.arrowCount)
-                        tag.putInt("Stingers", living.stingerCount)
-                    }
+                val living = entity.asLivingEntity()
+
+                if (living != null) {
+                    tag.putInt("ArrowCount", living.arrowCount)
+                    tag.putInt("Stingers", living.stingerCount)
                 }
+            }
 
             serializeTagToBytes(output.buildResult())
         }
@@ -115,7 +117,7 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         y: Double,
         z: Double,
         yaw: Float,
-        pitch: Float
+        pitch: Float,
     ): Entity? {
         val level = world.toNms()
         TickThread.ensureTickThread(level, x, z, "Cannot restore vehicle asynchronously")
@@ -127,35 +129,47 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
             MinecraftServer.getServer().fixerUpper,
             tag,
             dataVersion,
-            SharedConstants.getCurrentVersion().dataVersion().version
+            SharedConstants.getCurrentVersion().dataVersion().version,
         )
 
         val entity = ProblemReporter.ScopedCollector(VEHICLE_LOGGER).use { reporter ->
             val input = TagValueInput.create(reporter, level.registryAccess(), tag)
             val additions = input.child("surf-api-addtions").map { additionsInput ->
                 require(additionsInput is TagValueInput)
+
                 additionsInput.input.keySet()
-                    .mapNotNull(fun(uuidStr: String): Pair<UUID, (NmsEntity) -> Unit>? {
-                        val uuid = runCatching { UUID.fromString(uuidStr) }.getOrNull() ?: return null
-                        val addition = additionsInput.child(uuidStr).getOrNull() ?: return null
+                    .mapNotNull(
+                        fun(uuidStr: String): Pair<UUID, (NmsEntity) -> Unit>? {
+                            val uuid = runCatching { UUID.fromString(uuidStr) }.getOrNull()
+                                ?: return null
+                            val addition = additionsInput.child(uuidStr).getOrNull() ?: return null
 
-                        val pose = addition.read("Pose", CODEC).getOrNull()
-                        val arrowCount = addition.getInt("ArrowCount").getOrNull()
-                        val stingerCount = addition.getInt("Stingers").getOrNull()
+                            val pose = addition.read("Pose", CODEC).getOrNull()
+                            val arrowCount = addition.getInt("ArrowCount").getOrNull()
+                            val stingerCount = addition.getInt("Stingers").getOrNull()
 
-                        return uuid to { entity ->
-                            if (pose != null) entity.pose = pose
-                            if (arrowCount != null) entity.asLivingEntity()?.arrowCount = arrowCount
-                            if (stingerCount != null) entity.asLivingEntity()?.stingerCount = stingerCount
-                        }
-                    })
+                            return uuid to { entity ->
+                                if (pose != null) entity.pose = pose
+
+                                if (arrowCount != null) {
+                                    entity.asLivingEntity()
+                                        ?.arrowCount = arrowCount
+                                }
+
+                                if (stingerCount != null) {
+                                    entity.asLivingEntity()
+                                        ?.stingerCount = stingerCount
+                                }
+                            }
+                        },
+                    )
                     .toMap()
             }.getOrNull().orEmpty()
 
             NmsEntityType.loadEntityRecursive(
                 input,
                 level,
-                EntitySpawnReason.LOAD
+                EntitySpawnReason.LOAD,
             ) { entity ->
                 additions[entity.uuid]?.invoke(entity)
                 entity
@@ -183,6 +197,7 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
         try {
             val baos = ByteArrayOutputStream()
             NbtIo.writeCompressed(compound, baos)
+
             return baos.toByteArray()
         } catch (ex: IOException) {
             throw RuntimeException(ex)
@@ -190,6 +205,8 @@ class V26_1SurfPaperNmsEntityBridgeImpl : SurfPaperNmsEntityBridge {
     }
 
     companion object {
-        private val VEHICLE_LOGGER = ComponentLogger.logger("V26_1SurfPaperNmsEntityBridgeImpl Vehicle")
+        private val VEHICLE_LOGGER = ComponentLogger.logger(
+            "V26_1SurfPaperNmsEntityBridgeImpl Vehicle",
+        )
     }
 }

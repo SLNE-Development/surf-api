@@ -6,9 +6,8 @@ import dev.slne.surf.api.paper.event.register
 import dev.slne.surf.api.paper.event.unregister
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.AbstractChannelInjector
-import dev.slne.surf.api.paper.nms.common.NmsProvider
+import dev.slne.surf.api.paper.nms.common.NmsPacketListeners
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
-import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.server.command.SuspendRequirementServiceImpl
 import dev.slne.surf.api.paper.server.packet.lore.PluginDisablePacketLoreListener
 import dev.slne.surf.api.paper.server.plugin
@@ -16,8 +15,6 @@ import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 
 @OptIn(NmsUseWithCaution::class)
 object PacketApiLoader {
-
-    private var versionPacketListeners: List<PacketListener> = emptyList()
 
     fun onLoad() {
         setupPacketEvents()
@@ -27,36 +24,32 @@ object PacketApiLoader {
     fun onEnable() {
         packetEvents.init()
 
-        // Register version-specific packet listeners from NmsProvider
-        val provider = NmsProvider.current
-        provider.initialize()
-        
-        versionPacketListeners = provider.createPacketListeners()
-        for (listener in versionPacketListeners) {
-            SurfPaperPacketListenerApi.INSTANCE.registerListeners(listener)
+        for (listener in NmsPacketListeners.instance.listeners) {
+            SurfPaperPacketListenerApi.instance.registerListeners(listener)
         }
 
-        SurfPaperPacketListenerApi.INSTANCE.registerListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
+        SurfPaperPacketListenerApi.instance.registerListeners(
+            SuspendRequirementServiceImpl.instance.getCommandSendPacketBlockerListener(),
+        )
 
-        AbstractChannelInjector.instance.register()
+        AbstractChannelInjector.instance.register(plugin)
         PluginDisablePacketLoreListener.register()
     }
 
     @OptIn(NmsUseWithCaution::class)
     fun onDisable() {
-        val provider = NmsProvider.current
-
         packetEvents.terminate()
-        for (listener in versionPacketListeners) {
-            SurfPaperPacketListenerApi.INSTANCE.unregisterListeners(listener)
-        }
-        versionPacketListeners = emptyList()
 
-        SurfPaperPacketListenerApi.INSTANCE.unregisterListeners(SuspendRequirementServiceImpl.get().getCommandSendPacketBlockerListener())
+        for (listener in NmsPacketListeners.instance.listeners) {
+            SurfPaperPacketListenerApi.instance.unregisterListeners(listener)
+        }
+
+        SurfPaperPacketListenerApi.instance.unregisterListeners(
+            SuspendRequirementServiceImpl.instance.getCommandSendPacketBlockerListener(),
+        )
 
         PluginDisablePacketLoreListener.unregister()
         AbstractChannelInjector.instance.unregister()
-        provider.shutdown()
     }
 
     private fun setupPacketEvents() {

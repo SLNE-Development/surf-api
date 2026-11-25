@@ -3,21 +3,20 @@ package dev.slne.surf.surfapi.bukkit.test
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.destroystokyo.paper.event.server.ServerTickStartEvent
 import dev.jorel.commandapi.CommandAPI
+import dev.slne.surf.api.config.ConfigHandle
 import dev.slne.surf.api.paper.event.listen
 import dev.slne.surf.api.paper.inventory.framework.register
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.packet.listener.SurfPaperPacketListenerApi
-import dev.slne.surf.api.paper.test.command.SurfApiTestCommand
-import dev.slne.surf.api.paper.test.command.subcommands.reflection.Reflection
-import dev.slne.surf.api.paper.test.listener.ChatListener
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfLifecycle
+import dev.slne.surf.surfapi.bukkit.test.command.SurfApiTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.dialog.dialogTestCommand
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.TestInventoryView
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testInventoryViewDsl
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.inventory.testPaginatedViewDsl
-import dev.slne.surf.surfapi.bukkit.test.config.ModernTestConfig
 import dev.slne.surf.surfapi.bukkit.test.config.MyPluginConfig
+import dev.slne.surf.surfapi.bukkit.test.config.randomiseModernTestConfig
+import dev.slne.surf.surfapi.bukkit.test.listener.ChatListener
 import kotlinx.coroutines.CoroutineScope
 import net.minecraft.server.MinecraftServer
 import org.bukkit.inventory.ItemType
@@ -34,11 +33,11 @@ class TestPluginLifecycle(
     private val plugin: Plugin,
     private val packetListeners: SurfPaperPacketListenerApi,
     private val pluginScope: CoroutineScope,
+    private val myPluginConfig: ConfigHandle<MyPluginConfig>,
 ) : SurfLifecycle {
 
     override suspend fun onLoad() {
-        ModernTestConfig.init()
-        ModernTestConfig.randomise()
+        randomiseModernTestConfig()
 
         packetListeners.registerListeners(ChatListener())
         TestInventoryView.register()
@@ -49,9 +48,8 @@ class TestPluginLifecycle(
     override suspend fun onEnable() {
         SurfApiTestCommand().register()
         dialogTestCommand(pluginScope)
-        Reflection::class.java.classLoader // initialize Reflection
 
-        MyPluginConfig.init()
+        plugin.logger.info("Running release ${myPluginConfig.value.release}")
 
         Runtime.getRuntime().addShutdownHook(thread(start = false) { clearInventories() })
 
@@ -76,10 +74,14 @@ class TestPluginLifecycle(
 
     private fun clearInventories() {
         for (player in plugin.server.onlinePlayers) {
-            player.scheduler.run(plugin, {
-                player.inventory.clear()
-                player.inventory.addItem(ItemType.DIAMOND.createItemStack(64))
-            }, null)
+            player.scheduler.run(
+                plugin,
+                {
+                    player.inventory.clear()
+                    player.inventory.addItem(ItemType.DIAMOND.createItemStack(64))
+                },
+                null,
+            )
         }
     }
 }

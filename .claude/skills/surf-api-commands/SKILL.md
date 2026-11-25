@@ -119,7 +119,7 @@ commandTree("warp") {
 `withRequirement`, the four suggestion functions, `addExecutor` (via `CommandExecutable`) and
 `then(child)`. It snapshots into an immutable `ArgumentDefinition<T>` carrying `nodeName`,
 `kind: ArgumentKind<T>`, `optional`, `defaultValue`, `permissions`, `requirements`,
-`suggestions: SuggestionMode<T>`, `greedy`, `rawType: ArgumentType<T>`, `stringify` and
+`suggestions: SuggestionMode<T>`, `isGreedy`, `rawType: ArgumentType<T>`, `stringify` and
 `listDelimiter`.
 
 Groups, by file:
@@ -145,7 +145,7 @@ behaviour and the `CustomArgument`/`ListArgument` rules: `references/minestom-ar
 
 ## Reading arguments in an executor
 
-`command/executor/CommandArguments.kt`. It is built from `ParsedArgument(name, value, raw, present)`
+`command/executor/CommandArguments.kt`. It is built from `ParsedArgument(name, value, raw, isPresent)`
 entries and offers:
 
 ```kotlin

@@ -45,6 +45,12 @@ The LuckPerms feature (`platform/minestom/luckperms-impl`) is only in the build 
 `cd vendor && ./gradlew applyPatches`. Otherwise `settings.gradle.kts` logs a warning and skips it
 (and fails in CI). See the `surf-api-build` skill.
 
+The runtime `withLuckPerms()` registers the running LuckPerms api as the root bean `luckPerms` once
+the feature has loaded, and removes it and its permission provider when the feature is disabled.
+`SurfLuckPerms` (users, prefixes, meta) is a root bean whenever the Gradle `withLuckPerms()` puts
+the feature module on the class path; its members throw until the runtime feature has loaded.
+Without the module there is no bean, so inject `ObjectProvider<SurfLuckPerms>`.
+
 ## Writing a plugin
 
 The plugin class carries no logic and has no lifecycle methods. The Gradle plugin generates it

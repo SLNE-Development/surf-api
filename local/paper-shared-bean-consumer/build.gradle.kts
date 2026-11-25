@@ -1,5 +1,4 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription
-import org.gradle.api.attributes.Usage
 
 plugins {
     `core-convention`
@@ -14,7 +13,7 @@ description = "surf-api-paper-shared-bean-consumer"
  * the probes call and serve. Everything else they need, Spring and surf-api included, is supplied
  * by surf-api's plugin at runtime, so the configuration is not transitive.
  */
-val bundled: Configuration by configurations.creating {
+val bundled = configurations.create("bundled") {
     isCanBeConsumed = false
     isTransitive = false
     attributes {
@@ -23,7 +22,6 @@ val bundled: Configuration by configurations.creating {
 }
 
 dependencies {
-    // Only compiled against: surf-api's own paper plugin supplies these at runtime, Spring included.
     compileOnlyApi(projects.surfApiPaperApi)
     compileOnly(libs.paper.api)
 
@@ -41,13 +39,20 @@ dependencies {
     // shaded Redis api, the one whose Redisson packages are the relocated ones that plugin carries.
     compileOnly(shadowed(projects.surfApiRedis.surfApiRedisApi))
     compileOnly(projects.surfApiNats.surfApiNatsApi)
+    compileOnly(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesPaper)
+    compileOnly(libs.kotlinx.serialization.protobuf)
 
     bundled(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestFixtures)
     compileOnly(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestFixtures)
 }
 
-tasks.jar {
-    from(bundled.elements.map { jars -> jars.map { zipTree(it) } })
+/**
+ * The jar the test server runs: this plugin's classes and [bundled], with Configurate relocated
+ * like in every plugin the surf Gradle plugin builds, so `@ConfigSerializable` is the annotation
+ * surf-api's plugin reads.
+ */
+tasks.shadowJar {
+    configurations.set(listOf(bundled))
 }
 
 paper {

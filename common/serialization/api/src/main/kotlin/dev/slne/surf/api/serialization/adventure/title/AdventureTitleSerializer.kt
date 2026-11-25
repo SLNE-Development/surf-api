@@ -3,6 +3,7 @@
 package dev.slne.surf.api.serialization.adventure.title
 
 import dev.slne.surf.api.serialization.adventure.component.AdventureComponentSerializer
+import kotlinx.serialization.ContextualSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -17,90 +18,102 @@ import kotlin.time.toJavaDuration
 import kotlin.time.toKotlinDuration
 
 typealias SerializableTitle = @Serializable(with = AdventureTitleSerializer::class) Title
-typealias SerializableTitleTimes = @Serializable(with = AdventureTitleSerializer.AdventureTitleTimes::class) Title.Times
+typealias SerializableTitleTimes = @Serializable(
+    with = AdventureTitleSerializer.AdventureTitleTimes::class,
+) Title.Times
 
 object AdventureTitleSerializer : KSerializer<Title> {
+    private val componentSerializer = ContextualSerializer(
+        Component::class,
+        AdventureComponentSerializer,
+        emptyArray(),
+    )
+
     override val descriptor = buildClassSerialDescriptor("surf.api.Title") {
-        element("title", AdventureComponentSerializer.descriptor)
-        element("subtitle", AdventureComponentSerializer.descriptor)
+        element("title", componentSerializer.descriptor)
+        element("subtitle", componentSerializer.descriptor)
         element("times", AdventureTitleTimes.descriptor, isOptional = true)
     }
 
     override fun serialize(
         encoder: Encoder,
         value: Title,
-    ) = encoder.encodeStructure(descriptor) {
-        encodeSerializableElement(
-            descriptor,
-            0,
-            AdventureComponentSerializer,
-            value.title()
-        )
-        encodeSerializableElement(
-            descriptor,
-            1,
-            AdventureComponentSerializer,
-            value.subtitle()
-        )
-        encodeNullableSerializableElement(
-            descriptor,
-            2,
-            AdventureTitleTimes,
-            value.times()
-        )
-    }
-
-    override fun deserialize(decoder: Decoder): Title = decoder.decodeStructure(descriptor) {
-        var title: Component? = null
-        var subtitle: Component? = null
-        var times: Title.Times? = null
-
-        if (decodeSequentially()) {
-            title = decodeSerializableElement(
+    ) {
+        encoder.encodeStructure(descriptor) {
+            encodeSerializableElement(
                 descriptor,
                 0,
-                AdventureComponentSerializer
+                componentSerializer,
+                value.title(),
             )
-            subtitle = decodeSerializableElement(
+            encodeSerializableElement(
                 descriptor,
                 1,
-                AdventureComponentSerializer
+                componentSerializer,
+                value.subtitle(),
             )
-            times = decodeNullableSerializableElement(
+            encodeNullableSerializableElement(
                 descriptor,
                 2,
-                AdventureTitleTimes
+                AdventureTitleTimes,
+                value.times(),
             )
-        } else while (true) {
-            when (val index = decodeElementIndex(descriptor)) {
-                0 -> title = decodeSerializableElement(
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): Title {
+        return decoder.decodeStructure(descriptor) {
+            var title: Component? = null
+            var subtitle: Component? = null
+            var times: Title.Times? = null
+
+            if (decodeSequentially()) {
+                title = decodeSerializableElement(
                     descriptor,
                     0,
-                    AdventureComponentSerializer
+                    componentSerializer,
                 )
-
-                1 -> subtitle = decodeSerializableElement(
+                subtitle = decodeSerializableElement(
                     descriptor,
                     1,
-                    AdventureComponentSerializer
+                    componentSerializer,
                 )
-
-                2 -> times = decodeNullableSerializableElement(
+                times = decodeNullableSerializableElement(
                     descriptor,
                     2,
-                    AdventureTitleTimes
+                    AdventureTitleTimes,
                 )
+            } else while (true) {
+                when (val index = decodeElementIndex(descriptor)) {
+                    0 -> title = decodeSerializableElement(
+                        descriptor,
+                        0,
+                        componentSerializer,
+                    )
 
-                CompositeDecoder.DECODE_DONE -> break
-                else -> error("Unexpected index: $index")
+                    1 -> subtitle = decodeSerializableElement(
+                        descriptor,
+                        1,
+                        componentSerializer,
+                    )
+
+                    2 -> times = decodeNullableSerializableElement(
+                        descriptor,
+                        2,
+                        AdventureTitleTimes,
+                    )
+
+                    CompositeDecoder.DECODE_DONE -> break
+                    else -> error("Unexpected index: $index")
+                }
             }
-        }
 
-        Title.title(
-            title ?: error("Title cannot be null"),
-            subtitle ?: error("Subtitle cannot be null"),
-            times
-        )
+            Title.title(
+                title ?: error("Title cannot be null"),
+                subtitle ?: error("Subtitle cannot be null"),
+                times,
+            )
+        }
     }
 
     object AdventureTitleTimes : KSerializer<Title.Times> {
@@ -113,57 +126,67 @@ object AdventureTitleSerializer : KSerializer<Title> {
         override fun serialize(
             encoder: Encoder,
             value: Title.Times,
-        ) = encoder.encodeStructure(descriptor) {
-            encodeSerializableElement(
-                descriptor,
-                0,
-                Duration.serializer(),
-                value.fadeIn().toKotlinDuration()
-            )
-            encodeSerializableElement(
-                descriptor,
-                1,
-                Duration.serializer(),
-                value.stay().toKotlinDuration()
-            )
-            encodeSerializableElement(
-                descriptor,
-                2,
-                Duration.serializer(),
-                value.fadeOut().toKotlinDuration()
-            )
+        ) {
+            encoder.encodeStructure(descriptor) {
+                encodeSerializableElement(
+                    descriptor,
+                    0,
+                    Duration.serializer(),
+                    value.fadeIn().toKotlinDuration(),
+                )
+                encodeSerializableElement(
+                    descriptor,
+                    1,
+                    Duration.serializer(),
+                    value.stay().toKotlinDuration(),
+                )
+                encodeSerializableElement(
+                    descriptor,
+                    2,
+                    Duration.serializer(),
+                    value.fadeOut().toKotlinDuration(),
+                )
+            }
         }
 
         override fun deserialize(
             decoder: Decoder,
-        ): Title.Times = decoder.decodeStructure(descriptor) {
-            var fadeIn: Duration = Duration.ZERO
-            var stay: Duration = Duration.ZERO
-            var fadeOut: Duration = Duration.ZERO
+        ): Title.Times {
+            return decoder.decodeStructure(descriptor) {
+                var fadeIn: Duration = Duration.ZERO
+                var stay: Duration = Duration.ZERO
+                var fadeOut: Duration = Duration.ZERO
 
-            if (decodeSequentially()) {
-                fadeIn = decodeSerializableElement(descriptor, 0, Duration.serializer())
-                stay = decodeSerializableElement(descriptor, 1, Duration.serializer())
-                fadeOut = decodeSerializableElement(descriptor, 2, Duration.serializer())
-            } else while (true) {
-                when (val index = decodeElementIndex(descriptor)) {
-                    0 -> fadeIn =
-                        decodeSerializableElement(descriptor, 0, Duration.serializer())
+                if (decodeSequentially()) {
+                    fadeIn = decodeSerializableElement(descriptor, 0, Duration.serializer())
+                    stay = decodeSerializableElement(descriptor, 1, Duration.serializer())
+                    fadeOut = decodeSerializableElement(descriptor, 2, Duration.serializer())
+                } else while (true) {
+                    when (val index = decodeElementIndex(descriptor)) {
+                        0 -> fadeIn = decodeSerializableElement(
+                            descriptor,
+                            0,
+                            Duration.serializer(),
+                        )
 
-                    1 -> stay = decodeSerializableElement(descriptor, 1, Duration.serializer())
-                    2 -> fadeOut =
-                        decodeSerializableElement(descriptor, 2, Duration.serializer())
+                        1 -> stay = decodeSerializableElement(descriptor, 1, Duration.serializer())
+                        2 -> fadeOut = decodeSerializableElement(
+                            descriptor,
+                            2,
+                            Duration.serializer(),
+                        )
 
-                    CompositeDecoder.DECODE_DONE -> break
-                    else -> error("Unexpected index: $index")
+                        CompositeDecoder.DECODE_DONE -> break
+                        else -> error("Unexpected index: $index")
+                    }
                 }
-            }
 
-            Title.Times.times(
-                fadeIn.toJavaDuration(),
-                stay.toJavaDuration(),
-                fadeOut.toJavaDuration()
-            )
+                Title.Times.times(
+                    fadeIn.toJavaDuration(),
+                    stay.toJavaDuration(),
+                    fadeOut.toJavaDuration(),
+                )
+            }
         }
     }
 }

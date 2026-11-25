@@ -11,6 +11,11 @@ import java.util.stream.Stream
  * This interface mirrors the CompoundBinaryTag API but cannot extend it since CompoundBinaryTag
  * became sealed in Adventure 5.1.1. All operations (put, remove, etc.) mutate the tag directly,
  * unlike the standard CompoundBinaryTag which is immutable.
+ *
+ * A tag from `fast()` or `buildFast()` is not thread-safe unless it was created with
+ * `concurrent = true`. A concurrent tag allows concurrent reads and writes; its iteration,
+ * [stream] and [keySet] are weakly consistent views, and [asBinaryTag] takes a snapshot that may
+ * miss concurrent writes.
  */
 interface FastCompoundBinaryTag : BinaryTagLike {
 
@@ -62,18 +67,21 @@ interface FastCompoundBinaryTag : BinaryTagLike {
 }
 
 /**
- * Wraps this CompoundBinaryTag in a mutable FastCompoundBinaryTag for improved performance.
+ * Copies the entries of this tag into a new mutable [FastCompoundBinaryTag].
  *
- * @param synchronize If true, wraps the underlying map with synchronization for thread-safe access
- * @return A mutable FastCompoundBinaryTag holding this tag's entries
+ * @param concurrent whether the copy may be read and written by several threads at once
+ * @return a mutable copy of this tag, independent of the original
  */
-fun CompoundBinaryTag.fast(synchronize: Boolean = false) =
-    InternalNbtBridge.instance.wrapCompoundBinaryTag(this, synchronize)
+fun CompoundBinaryTag.fast(concurrent: Boolean = false): FastCompoundBinaryTag {
+    return FastCompoundBinaryTagImpl(concurrent).put(this)
+}
 
 /**
- * Builds and wraps the result in a mutable FastCompoundBinaryTag.
+ * Builds the tag and copies its entries into a new mutable [FastCompoundBinaryTag].
  *
- * @param synchronize If true, wraps the underlying map with synchronization for thread-safe access
- * @return A mutable FastCompoundBinaryTag holding the built tag's entries
+ * @param concurrent whether the copy may be read and written by several threads at once
+ * @return a mutable copy of the built tag
  */
-fun CompoundBinaryTag.Builder.buildFast(synchronize: Boolean = false) = build().fast(synchronize)
+fun CompoundBinaryTag.Builder.buildFast(concurrent: Boolean = false): FastCompoundBinaryTag {
+    return build().fast(concurrent)
+}

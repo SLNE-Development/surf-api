@@ -1,119 +1,124 @@
 package dev.slne.surf.api.reflection
 
-import java.lang.annotation.Inherited
 import kotlin.reflect.KClass
 
 /**
- * Marks a proxy method as a constructor invocation for the target class.
+ * Declares an interface as a reflection proxy for the class [target] or [targetName].
  *
- * When applied to a method in a [SurfProxy] interface, this annotation indicates that calling
- * the method should invoke a constructor of the target class. The method's parameters must match
- * the constructor's parameter types.
+ * Every abstract method of the interface carries exactly one of [ReflectedMethod], [ReflectedField]
+ * or [ReflectedConstructor] and is bound to the matching member of the target class when the proxy
+ * is created. Default methods stay as written. Instance members take the receiver as their first
+ * parameter; members marked [ReflectedStatic] take none.
  *
- * Example:
+ * Parameter and return types of a proxy method may be supertypes of the member's types, such as
+ * `Any` for a class that is not visible at compile time; the proxy casts them. Calls run through a
+ * generated hidden class with constant method handles and propagate the member's exceptions
+ * unchanged.
+ *
+ * Obtain a proxy with [reflectionProxy] or inject it: every plugin context registers a lazy bean
+ * for each `@ReflectionProxy` interface in the plugin's packages.
+ *
  * ```kotlin
- * @SurfProxy(qualifiedName = "com.example.TargetClass")
- * interface TargetProxy {
- *     @Constructor
- *     fun create(name: String, value: Int): Any
+ * @ReflectionProxy(targetName = "org.spigotmc.RestartCommand")
+ * interface RestartCommandProxy {
+ *     @ReflectedStatic
+ *     @ReflectedMethod
+ *     fun restart()
  * }
  * ```
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER
-)
-annotation class Constructor
-
-/**
- * Marks a proxy method as a field getter or setter for the target class.
  *
- * Use this annotation to access fields (including private ones) on the target class.
- * For instance fields, the first parameter must be the instance object.
- * For setters, the last parameter is the value to set.
- *
- * @param name The field name in the target class. If empty, uses the method name
- * @param type Whether this method should get ([Type.GETTER]) or set ([Type.SETTER]) the field value
- * @param overrideFinal When true, allows setting final fields using reflection. Use with caution
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER
-)
-annotation class Field(
-    val name: String = "",
-    val type: Type,
-    val overrideFinal: Boolean = false
-) {
-    enum class Type {
-        SETTER,
-        GETTER
-    }
-}
-
-/**
- * Overrides the name of the target method or field.
- *
- * This annotation takes precedence over names specified in other annotations like [Field] or [Static].
- * Use it when the proxy method name differs from the target member name.
- *
- * @param value The actual name of the method or field in the target class
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER
-)
-annotation class Name(val value: String)
-
-/**
- * Marks a proxy method as invoking a static method or accessing a static field in the target class.
- *
- * Static methods do not require an instance parameter. When used with [Field], this accesses
- * a static field instead of an instance field.
- *
- * @param name The static member name in the target class. If empty, uses the method name
- */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER
-)
-annotation class Static(val name: String = "")
-
-/**
- * Designates an interface as a reflection proxy for a target class.
- *
- * Apply this annotation to an interface to enable proxy creation via [SurfReflection].
- * Specify the target class either by [value] or [qualifiedName], but not both.
- *
- * Methods in the annotated interface can use [Field], [Constructor], [Static], and [Name]
- * annotations to define reflective operations on the target class.
- *
- * @param value The target class to proxy. Use `Unit::class` if providing [qualifiedName] instead
- * @param qualifiedName The fully qualified name of the target class as a string. Use this when
- *        the target class is not accessible at compile time or is in a different module
- *
- * Example:
- * ```kotlin
- * @SurfProxy(qualifiedName = "com.example.HiddenClass")
- * interface HiddenClassProxy {
- *     @Constructor
- *     fun newInstance(): Any
- *
- *     @Field(name = "value", type = Field.Type.GETTER)
- *     fun getValue(instance: Any): String
- * }
- * ```
+ * @property target the target class; leave it at `Unit::class` when [targetName] names it
+ * @property targetName the binary name of the target class, for a class that is not visible at
+ * compile time; loaded through the interface's class loader
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-@Inherited
-annotation class SurfProxy(val value: KClass<*> = Unit::class, val qualifiedName: String = "")
+@MustBeDocumented
+annotation class ReflectionProxy(
+    val target: KClass<*> = Unit::class,
+    val targetName: String = "",
+)
 
+/**
+ * Binds a proxy method to a method of the target class or its superclasses.
+ *
+ * The target method is selected by name and parameter count; an exact parameter-type match wins,
+ * and otherwise the single method whose parameter types are compatible with the proxy method's.
+ *
+ * @property name the target method's name; empty for the proxy method's own name, which on a
+ * property accessor is the JVM accessor name, such as `getFoo`, so set it explicitly there
+ */
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER,
+)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ReflectedMethod(val name: String = "")
+
+/**
+ * Binds a proxy method to a field of the target class or its superclasses.
+ *
+ * | [access] | instance signature | [ReflectedStatic] signature |
+ * | --- | --- | --- |
+ * | [FieldAccess.GET] | `(receiver): T` | `(): T` |
+ * | [FieldAccess.SET] | `(receiver, value)` | `(value)` |
+ *
+ * Writing a `final` field is not supported: a [FieldAccess.SET] binding to one fails when the
+ * proxy is created.
+ *
+ * @property name the field's name; empty for the proxy method's own name, which on a property
+ * accessor is the JVM accessor name, such as `getFoo`, so set it explicitly there
+ * @property access whether the proxy method reads or writes the field
+ */
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER,
+)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ReflectedField(
+    val name: String = "",
+    val access: FieldAccess = FieldAccess.GET,
+)
+
+/**
+ * How a [ReflectedField] proxy method accesses its field.
+ */
+enum class FieldAccess {
+    /**
+     * Reads the field.
+     */
+    GET,
+
+    /**
+     * Writes the field.
+     */
+    SET,
+}
+
+/**
+ * Binds a proxy method to a constructor of the target class.
+ *
+ * The proxy method's parameters select the constructor as for [ReflectedMethod]; it returns the
+ * new instance as the target class or one of its supertypes.
+ */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ReflectedConstructor
+
+/**
+ * Marks a [ReflectedMethod] or [ReflectedField] proxy method as bound to a static member, so it
+ * takes no receiver parameter.
+ */
+@Target(
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER,
+)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class ReflectedStatic

@@ -23,12 +23,16 @@ microservices: the Gradle plugin `dev.slne.surf.api.gradle.microservice` adds it
 the microservice disables the database (see [the surf-microservice README](../microservice/README.md#configure-the-build)). Paper, Velocity and Minestom
 plugins do not use it.
 
-The published jar bundles Exposed, R2DBC, the MariaDB and PostgreSQL drivers, Netty and Flyway, relocated
-below `dev.slne.surf.database.libs`. Import Exposed from the relocated packages, for example:
+The published jar bundles the R2DBC pool, the MariaDB driver, the JDBC drivers, Netty and Flyway,
+relocated below `dev.slne.surf.database.libs`. It also bundles the PostgreSQL R2DBC driver, which
+keeps its own package `io.r2dbc.postgresql` because Exposed refers to its JSON codec; do not add a
+second copy. Exposed and `io.r2dbc:r2dbc-spi` are regular dependencies of the jar under their own
+packages, so import them as usual:
 
 ```kotlin
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
+import io.r2dbc.spi.IsolationLevel
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 ```
 
 ---
@@ -129,16 +133,13 @@ class ItemMigrations : MigrationSet {
         sql("db/migrations")                                   // V<n>__<desc>.sql files on the classpath
         classes(V2_BackfillItems)                              // code migrations
         classNames("dev.slne.surf.items.migrations.V3_Seed")   // code migrations by binary class name
-        classPackage("dev.slne.surf.items.migrations")         // scan a package for code migrations
     }
 }
 ```
 
-At least one of `sql`, `classes`, `classNames` or `classPackage` is required; each may be given more than once.
+At least one of `sql`, `classes` or `classNames` is required; each may be given more than once.
 `name` must match `[a-z0-9_]{1,40}` (it is lowercased). `classNames` loads exactly the named classes, each a
-Kotlin `object` or a class with a public constructor without parameters, and touches no other class of their
-package. `classPackage` scans a package and fails when it has no migration classes, unless you pass
-`required = false`.
+Kotlin `object` or a class with a public constructor without parameters, and touches no other class.
 
 A set can override `beforeMigrate(database)` and `afterMigrate(database)` to check the server or the
 migrated tables. A set must not inject the `R2dbcDatabase` bean, which exists only after every set
@@ -374,8 +375,7 @@ define your own bean and the configuration uses it:
 
 ```kotlin
 @Bean
-fun databaseConfig(configApi: SurfConfigApi): DatabaseConfig =
-    DatabaseConfig.load(configApi, Path("config/shared"), "storage.yml")
+fun databaseConfig(): DatabaseConfig = DatabaseConfig.load(Path("config/shared"), "storage.yml")
 ```
 
 `DatabaseConfig.load` applies the environment overrides, too.

@@ -425,8 +425,9 @@ class CacheHealthIndicator(private val cache: Cache) : HealthIndicator {
 
 The component name is the bean name without the `HealthIndicator` suffix: `cacheHealthIndicator` reports `cache`. A
 composite contributor reports each of its indicators as `name[instance]`. An unhealthy result shows the detail `error`
-as its message, otherwise the status description. The runtime runs all indicators concurrently and reports an
-indicator that throws or takes longer than 3 seconds as unhealthy. Reactive contributors are not checked.
+as its message, otherwise the status description. Only `DOWN` and `OUT_OF_SERVICE` are unhealthy; `UNKNOWN` counts
+as healthy, as in Spring Boot's aggregation. The runtime runs all indicators concurrently and reports an indicator that
+throws or takes longer than 3 seconds as unhealthy. Reactive contributors are not checked.
 
 The `database` indicator (`SELECT 1` within 2.5 seconds) and the `nats` indicator of surf-nats are contributed
 automatically. Spring Boot's own indicators, such as disk space, are off. Set a property such as

@@ -15,8 +15,4 @@ abstract class SurfApiCoreImpl protected constructor() : SurfApiCore {
     override fun toString(): String {
         return ToStringBuilder.reflectionToString(this)
     }
-
-    companion object {
-        fun get() = SurfApiCore.instance as SurfApiCoreImpl
-    }
 }

@@ -66,6 +66,7 @@ open class CustomArgument<T, B> internal constructor(
         val baseDefinition = base.toDefinition()
         requireParsable(baseDefinition.kind, nodeName, "base")
         val defaultValue = baseDefinition.defaultValue
+
         when {
             defaultValue != null -> setOptional { sender ->
                 parser(CustomArgumentInfo(sender, "", defaultValue(sender)))
@@ -73,6 +74,7 @@ open class CustomArgument<T, B> internal constructor(
 
             baseDefinition.optional -> setOptional(optional = true)
         }
+
         baseDefinition.permissions.forEach(::withPermission)
         baseDefinition.requirements.forEach(::withRequirement)
     }
@@ -82,8 +84,8 @@ open class CustomArgument<T, B> internal constructor(
 
     override val rawType: ArgumentType<T> = CustomArgumentType(base.toDefinition().rawType, parser)
 
-    override val greedy: Boolean
-        get() = base.toDefinition().greedy
+    override val isGreedy: Boolean
+        get() = base.toDefinition().isGreedy
 
     override val listDelimiter: Char?
         get() = base.toDefinition().listDelimiter
@@ -122,11 +124,14 @@ private class CustomArgumentType<T, B>(
     private val baseType: ArgumentType<B>,
     private val parser: (CustomArgumentInfo<B>) -> T,
 ) : ArgumentType<T> {
-    override fun parse(reader: StringReader): T = throw CUSTOM_ARGUMENT_NEEDS_SENDER.createWithContext(reader)
+    override fun parse(reader: StringReader): T {
+        return throw CUSTOM_ARGUMENT_NEEDS_SENDER.createWithContext(reader)
+    }
 
     override fun <S> parse(reader: StringReader, source: S): T {
         val start = reader.cursor
-        val sender = source as? CommandSender ?: throw CUSTOM_ARGUMENT_NEEDS_SENDER.createWithContext(reader)
+        val sender = source as? CommandSender
+            ?: throw CUSTOM_ARGUMENT_NEEDS_SENDER.createWithContext(reader)
 
         val baseValue = baseType.parse(reader, source)
         val consumed = reader.string.substring(start, reader.cursor)
@@ -196,7 +201,8 @@ class ListArgument<T>(
         require(!delimiter.isWhitespace() && delimiter != '\u0000') {
             "List delimiter must be a visible non-whitespace character"
         }
-        require(!elementDefinition.greedy) { "List elements cannot consume remaining input" }
+        require(!elementDefinition.isGreedy) { "List elements cannot consume remaining input" }
+
         elementDefinition.permissions.forEach(::withPermission)
         elementDefinition.requirements.forEach(::withRequirement)
     }
@@ -204,20 +210,26 @@ class ListArgument<T>(
     override val kind: ArgumentKind<List<T>>
         get() = ArgumentKind.List(element.toDefinition(), delimiter, allowEmpty)
 
-    override val rawType: ArgumentType<List<T>> =
-        ListArgumentType(element.toDefinition().rawType, delimiter, allowEmpty)
+    override val rawType: ArgumentType<List<T>> = ListArgumentType(
+        element.toDefinition().rawType,
+        delimiter,
+        allowEmpty,
+    )
 
-    override val greedy = true
+    override val isGreedy = true
 
     override val listDelimiter: Char = delimiter
 
     override fun stringify(value: List<T>): String {
         val elementDefinition = element.toDefinition()
+
         return value.joinToString(delimiter.toString(), transform = elementDefinition.stringify)
     }
 }
 
-private val LIST_ARGUMENT_EMPTY = SimpleCommandExceptionType(LiteralMessage("List must not be empty"))
+private val LIST_ARGUMENT_EMPTY = SimpleCommandExceptionType(
+    LiteralMessage("List must not be empty"),
+)
 
 /**
  * Parses elements with [elementType], separated by [delimiter] and optional spaces.
@@ -231,10 +243,13 @@ private class ListArgumentType<T>(
     private val delimiter: Char,
     private val allowEmpty: Boolean,
 ) : ArgumentType<List<T>> {
-    override fun parse(reader: StringReader): List<T> = parseList(reader) { r -> elementType.parse(r) }
+    override fun parse(reader: StringReader): List<T> {
+        return parseList(reader) { r -> elementType.parse(r) }
+    }
 
-    override fun <S> parse(reader: StringReader, source: S): List<T> =
-        parseList(reader) { r -> elementType.parse(r, source) }
+    override fun <S> parse(reader: StringReader, source: S): List<T> {
+        return parseList(reader) { r -> elementType.parse(r, source) }
+    }
 
     /**
      * Suggests entries for the element after the last delimiter and keeps the earlier elements.
@@ -245,7 +260,9 @@ private class ListArgumentType<T>(
     ): CompletableFuture<Suggestions> {
         val typed = builder.remaining
         val elementStart = typed.lastIndexOf(delimiter) + 1
-        val offset = builder.start + elementStart + typed.drop(elementStart).takeWhile(Char::isWhitespace).length
+        val offset = builder.start + elementStart + typed.drop(elementStart)
+            .takeWhile(Char::isWhitespace)
+            .length
 
         return elementType.listSuggestions(context, builder.createOffset(offset))
     }
@@ -253,23 +270,29 @@ private class ListArgumentType<T>(
     private inline fun parseList(reader: StringReader, parseElement: (StringReader) -> T): List<T> {
         val start = reader.cursor
         skipWhitespace(reader)
+
         if (!reader.canRead()) {
             if (allowEmpty) return emptyList()
+
             reader.cursor = start
             throw LIST_ARGUMENT_EMPTY.createWithContext(reader)
         }
 
         val values = ArrayList<T>()
+
         while (true) {
             val elementStart = reader.cursor
             val value = parseElement(reader)
+
             if (!allowEmpty && reader.cursor == elementStart) {
                 reader.cursor = elementStart
                 throw LIST_ARGUMENT_EMPTY.createWithContext(reader)
             }
+
             values += value
 
             skipWhitespace(reader)
+
             if (reader.canRead() && reader.peek() == delimiter) {
                 reader.skip()
                 skipWhitespace(reader)
@@ -277,6 +300,7 @@ private class ListArgumentType<T>(
                 break
             }
         }
+
         return values
     }
 
@@ -292,8 +316,9 @@ private class ListArgumentType<T>(
  *
  * The result is stringified with `toString()`, which matters for safe suggestions.
  */
-fun <T, R> Argument<T>.map(mapper: (T) -> R): Argument<R> =
-    CustomArgument(this, parser = { info -> mapper(info.baseValue) })
+fun <T, R> Argument<T>.map(mapper: (T) -> R): Argument<R> {
+    return CustomArgument(this, parser = { info -> mapper(info.baseValue) })
+}
 
 /**
  * Returns an argument that parses like this one but rejects values for which [predicate] is
@@ -303,12 +328,14 @@ fun <T, R> Argument<T>.map(mapper: (T) -> R): Argument<R> =
  */
 fun <T> Argument<T>.filter(predicate: (T) -> Boolean): Argument<T> {
     val definition = toDefinition()
+
     return CustomArgument(
         base = this,
         parser = { info ->
             if (!predicate(info.baseValue)) {
                 CommandAPI.failWithString("Invalid value for $nodeName")
             }
+
             info.baseValue
         },
         formatter = definition.stringify,

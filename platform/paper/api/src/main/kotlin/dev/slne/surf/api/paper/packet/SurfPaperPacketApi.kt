@@ -1,32 +1,25 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.packet
 
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandler
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLoreHandlerSimple
 import dev.slne.surf.api.paper.packet.lore.SurfPaperPacketLorePriority
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import dev.slne.surf.api.spring.surfBean
+import dev.slne.surf.api.spring.SurfApiBean
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.Plugin
-import dev.slne.surf.api.spring.SurfApiBean
 
 /**
  * The SurfBukkitPacketApi interface extends packet handling capabilities for Bukkit environments.
  *
  * Provides methods for registering and unregistering lore listeners, enabling dynamic modification
- * of item stack lore based on custom logic. Includes global registration for all items and utilities
- * for managing these listeners efficiently.
- *
- * Prefer the overloads that accept an explicit [Plugin] parameter over the deprecated ones,
- * as automatic caller-plugin detection via `getCallingPlugin` is unreliable across different
- * call-site configurations.
+ * of item stack lore based on custom logic. Includes global registration for all items and
+ * utilities for managing these listeners efficiently.
  */
 @SurfApiBean
 interface SurfPaperPacketApi {
 
     /**
-     * Registers a listener for modifying the lore of a specific item stack identified by [identifier].
+     * Registers a listener for modifying the lore of a specific item stack identified by
+     * [identifier].
      *
      * This is the preferred overload. The [plugin] reference is used to properly manage the
      * listener lifecycle — all listeners registered under a plugin are automatically cleaned up
@@ -47,11 +40,12 @@ interface SurfPaperPacketApi {
         plugin: Plugin,
         identifier: NamespacedKey,
         listener: SurfPaperPacketLoreHandler,
-        priority: Short
+        priority: Short,
     )
 
     /**
-     * Registers a listener for modifying the lore of a specific item stack identified by [identifier].
+     * Registers a listener for modifying the lore of a specific item stack identified by
+     * [identifier].
      *
      * This is the preferred overload. The [plugin] reference is used to properly manage the
      * listener lifecycle — all listeners registered under a plugin are automatically cleaned up
@@ -70,7 +64,8 @@ interface SurfPaperPacketApi {
     }
 
     /**
-     * Registers a simplified listener for modifying the lore of a specific item stack identified by [identifier].
+     * Registers a simplified listener for modifying the lore of a specific item stack identified by
+     * [identifier].
      *
      * This is the preferred overload. Delegates to
      * [registerPacketLoreListener(Plugin, NamespacedKey, SurfPaperPacketLoreHandler, Short)].
@@ -86,13 +81,19 @@ interface SurfPaperPacketApi {
         plugin: Plugin,
         identifier: NamespacedKey,
         listener: SurfPaperPacketLoreHandlerSimple,
-        priority: Short
+        priority: Short,
     ) {
-        registerPacketLoreListener(plugin, identifier, listener as SurfPaperPacketLoreHandler, priority)
+        registerPacketLoreListener(
+            plugin,
+            identifier,
+            listener as SurfPaperPacketLoreHandler,
+            priority,
+        )
     }
 
     /**
-     * Registers a simplified listener for modifying the lore of a specific item stack identified by [identifier].
+     * Registers a simplified listener for modifying the lore of a specific item stack identified by
+     * [identifier].
      *
      * This is the preferred overload. Delegates to
      * [registerPacketLoreListener(Plugin, NamespacedKey, SurfPaperPacketLoreHandler, Short)].
@@ -107,7 +108,12 @@ interface SurfPaperPacketApi {
         identifier: NamespacedKey,
         listener: SurfPaperPacketLoreHandlerSimple,
     ) {
-        registerPacketLoreListener(plugin, identifier, listener as SurfPaperPacketLoreHandler, listener.priority)
+        registerPacketLoreListener(
+            plugin,
+            identifier,
+            listener as SurfPaperPacketLoreHandler,
+            listener.priority,
+        )
     }
 
     /**
@@ -128,7 +134,7 @@ interface SurfPaperPacketApi {
     fun registerPacketLoreListenerGlobal(
         plugin: Plugin,
         listener: SurfPaperPacketLoreHandler,
-        priority: Short
+        priority: Short,
     )
 
     /**
@@ -161,7 +167,7 @@ interface SurfPaperPacketApi {
     fun registerPacketLoreListenerGlobal(
         plugin: Plugin,
         listener: SurfPaperPacketLoreHandlerSimple,
-        priority: Short
+        priority: Short,
     ) {
         registerPacketLoreListenerGlobal(plugin, listener as SurfPaperPacketLoreHandler, priority)
     }
@@ -198,5 +204,3 @@ interface SurfPaperPacketApi {
      */
     fun unregisterPacketLoreListener(plugin: Plugin)
 }
-
-private val api by surfBean<SurfPaperPacketApi>()

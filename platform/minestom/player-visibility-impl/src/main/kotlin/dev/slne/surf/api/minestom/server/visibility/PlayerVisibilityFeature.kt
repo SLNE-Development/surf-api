@@ -6,7 +6,6 @@ import dev.slne.surf.api.minestom.server.SurfMinestomServer
 import dev.slne.surf.api.minestom.server.SurfMinestomServerBuilder
 import dev.slne.surf.api.minestom.server.SurfMinestomServerDsl
 import dev.slne.surf.api.minestom.visibility.PlayerVisibility
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import net.minestom.server.entity.Entity
 import net.minestom.server.entity.Player
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent
@@ -50,7 +49,9 @@ class PlayerVisibilitySettings internal constructor() {
 
     internal fun validate() {
         require(maxVisible > 0) { "maxVisible must be greater than 0" }
-        require(activateAt >= maxVisible) { "activateAt must be greater than or equal to maxVisible" }
+        require(activateAt >= maxVisible) {
+            "activateAt must be greater than or equal to maxVisible"
+        }
         require(deactivateBelow in 1..maxVisible && deactivateBelow < activateAt) {
             "deactivateBelow must be between 1 and maxVisible, and less than activateAt"
         }
@@ -68,7 +69,6 @@ class PlayerVisibilitySettings internal constructor() {
  * configuration on. Restrict what a player sees through [PlayerVisibility.updateViewerRule];
  * calling `Player#updateViewerRule` directly removes the limit for that player.
  */
-@OptIn(InternalSurfApi::class)
 class PlayerVisibilityFeature internal constructor(
     private val settings: PlayerVisibilitySettings,
 ) : SurfMinestomFeature, PlayerVisibility.Provider {
@@ -112,8 +112,9 @@ class PlayerVisibilityFeature internal constructor(
         handlers.clear()
     }
 
-    internal fun handler(player: Player): PlayerVisibilityHandler? =
-        handlers[player.uuid]?.takeIf { it.isFor(player) }
+    internal fun handler(player: Player): PlayerVisibilityHandler? {
+        return handlers[player.uuid]?.takeIf { it.isFor(player) }
+    }
 
     /**
      * Returns the handler of [player], creating and initializing it when it does not exist yet.
@@ -139,6 +140,7 @@ class PlayerVisibilityFeature internal constructor(
         }
 
         stale?.close()
+
         if (current === created) {
             created.init()
         }
@@ -148,19 +150,23 @@ class PlayerVisibilityFeature internal constructor(
 
     override fun updateViewerRule(player: Player, predicate: Predicate<in Entity>?): Boolean {
         val handler = handlerFor(player) ?: return false
+
         handler.requestRule(predicate)
+
         return true
     }
 
     override fun refreshViewerRule(player: Player): Boolean {
         val handler = handlerFor(player) ?: return false
+
         handler.requestRuleRefresh()
+
         return true
     }
 
     override fun isLimited(player: Player): Boolean = handler(player)?.visibilityLimited == true
 
-    override fun manages(player: Player): Boolean = handler(player) != null
+    override fun isManaged(player: Player): Boolean = handler(player) != null
 
     companion object {
         const val ID = "player-visibility"
@@ -173,7 +179,9 @@ class PlayerVisibilityFeature internal constructor(
  * @throws IllegalArgumentException If the settings violate their documented constraints.
  * @see PlayerVisibilityFeature
  */
-fun SurfMinestomServerBuilder.withPlayerVisibility(block: PlayerVisibilitySettings.() -> Unit = {}) {
+fun SurfMinestomServerBuilder.withPlayerVisibility(
+    block: PlayerVisibilitySettings.() -> Unit = {},
+) {
     val settings = PlayerVisibilitySettings().apply(block)
     settings.validate()
     install(PlayerVisibilityFeature(settings))

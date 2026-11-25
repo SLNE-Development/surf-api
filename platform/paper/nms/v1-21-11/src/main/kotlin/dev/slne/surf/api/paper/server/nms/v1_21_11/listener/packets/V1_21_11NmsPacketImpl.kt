@@ -6,18 +6,23 @@ import net.minecraft.network.PacketListener
 import net.minecraft.network.protocol.Packet
 
 @NmsUseWithCaution
-abstract class V1_21_11NmsPacketImpl<Nms : Packet<out Listener>, Listener : PacketListener>(var nmsPacket: Nms) :
+abstract class V1_21_11NmsPacketImpl<Nms : Packet<out Listener>, Listener : PacketListener>(
+    var nmsPacket: Nms,
+) :
     NmsPacket {
     val nmsClass = nmsPacket.javaClass
 
-    override val packetClass =
-        javaClass.interfaces.find { NmsPacket::class.java.isAssignableFrom(it) }
-            ?: error("No packet interface found for ${javaClass.name}")
+    override val packetClass = javaClass.interfaces.find {
+        NmsPacket::class.java.isAssignableFrom(it)
+    }
+        ?: error("No packet interface found for ${javaClass.name}")
 
     companion object {
-        @JvmStatic
         fun getFromApi(nmsPacket: NmsPacket): V1_21_11NmsPacketImpl<*, *> {
-            require(nmsPacket is V1_21_11NmsPacketImpl<*, *>) { "Invalid NmsPacket implementation: " + nmsPacket.javaClass.getName() }
+            require(nmsPacket is V1_21_11NmsPacketImpl<*, *>) {
+                "Invalid NmsPacket implementation: " + nmsPacket.javaClass.getName()
+            }
+
             return nmsPacket
         }
     }

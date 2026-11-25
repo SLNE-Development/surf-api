@@ -8,9 +8,8 @@ import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.command.executors.CoroutineScopeProvider
 import dev.slne.surf.api.paper.command.requirement.SuspendRequirementService
 import dev.slne.surf.api.paper.coroutine.withEntity
-import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.CommandSendPacketBlockerListener
-import dev.slne.surf.api.paper.nms.common.NmsProvider
+import dev.slne.surf.api.spring.surfBean
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import kotlinx.coroutines.*
 import org.bukkit.command.CommandSender
@@ -24,25 +23,22 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @Service
 class SuspendRequirementServiceImpl(
-    private val serviceScope: CoroutineScope
+    private val serviceScope: CoroutineScope,
+    private val commandSendPacketBlockerListener: CommandSendPacketBlockerListener,
 ) : SuspendRequirementService {
     companion object {
         private val log = logger()
 
-        fun get() = SuspendRequirementService.instance as SuspendRequirementServiceImpl
+        internal val instance by surfBean<SuspendRequirementServiceImpl>()
     }
 
     private val requirements = Caffeine.newBuilder()
         .build<UUID, Requirement>()
 
-    private val blockedCommandPackets = ConcurrentHashMap.newKeySet<UUID>()
+    private val blockedCommandPackets = commandSendPacketBlockerListener.blockedPlayers
     private val ready = ConcurrentHashMap.newKeySet<UUID>()
 
     private val listener = EventListener()
-
-    @OptIn(NmsUseWithCaution::class)
-    private val commandSendPacketBlockerListener =
-        NmsProvider.current.createCommandSendPacketBlockerListener(blockedCommandPackets)
 
     fun getCommandSendPacketBlockerListener(): CommandSendPacketBlockerListener {
         return commandSendPacketBlockerListener
@@ -52,10 +48,12 @@ class SuspendRequirementServiceImpl(
         return listener
     }
 
-    override fun <Impl : ExecutableCommand<Impl, CommandSender>> ExecutableCommand<Impl, CommandSender>.withSuspendRequirement(
+    override fun <
+        Impl : ExecutableCommand<Impl, CommandSender>,
+    > ExecutableCommand<Impl, CommandSender>.withSuspendRequirement(
         scope: CoroutineScopeProvider,
         requirement: suspend CoroutineScope.(Player) -> Boolean,
-        allowIfNonPlayer: Boolean
+        allowIfNonPlayer: Boolean,
     ) {
         val id = UUID.randomUUID()
         register(id, scope, requirement)
@@ -71,13 +69,14 @@ class SuspendRequirementServiceImpl(
     private fun register(
         id: UUID,
         scope: CoroutineScopeProvider,
-        requirement: suspend CoroutineScope.(Player) -> Boolean
+        requirement: suspend CoroutineScope.(Player) -> Boolean,
     ) {
         requirements.put(id, Requirement(scope, requirement))
     }
 
     private fun testCached(id: UUID, sender: Player): Boolean {
         val requirement = requirements.getIfPresent(id) ?: return false
+
         return requirement.testCached(sender)
     }
 
@@ -125,13 +124,16 @@ class SuspendRequirementServiceImpl(
             blockedCommandPackets.remove(event.playerUniqueId)
             ready.remove(event.playerUniqueId)
             commandSendPacketBlockerListener.removeReceivedFirstCommandPacket(event.playerUniqueId)
-            requirements.asMap().values.forEach { it.invalidate(event.playerUniqueId) }
+
+            for (cache in requirements.asMap().values) {
+                cache.invalidate(event.playerUniqueId)
+            }
         }
     }
 
     data class Requirement(
         val scope: CoroutineScopeProvider,
-        val requirement: suspend CoroutineScope.(Player) -> Boolean
+        val requirement: suspend CoroutineScope.(Player) -> Boolean,
     ) {
         private val cached = Caffeine.newBuilder()
             .build<UUID, Boolean>()
@@ -154,12 +156,14 @@ class SuspendRequirementServiceImpl(
             try {
                 withContext(scope().coroutineContext.minusKey(Job)) {
                     val isRequirementMet = requirement(sender)
-                    if (sender.isConnected) { // check if this player instance is still connected
+
+                    if (sender.isConnected) {
                         cached.put(sender.uniqueId, isRequirementMet)
                     }
                 }
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
+
                 log.atWarning()
                     .withCause(e)
                     .log("Failed to check requirement for sender $sender! Not updating cache.")

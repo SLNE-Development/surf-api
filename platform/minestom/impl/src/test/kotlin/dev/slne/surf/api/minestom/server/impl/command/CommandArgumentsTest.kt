@@ -15,8 +15,8 @@ class CommandArgumentsTest {
     fun `resolves values explicitly and by property delegate`() {
         val arguments = CommandArguments.of(
             listOf(
-                ParsedArgument("target", "Deniz", "Deniz", present = true),
-                ParsedArgument("reason", null, null, present = false),
+                ParsedArgument("target", "Deniz", "Deniz", isPresent = true),
+                ParsedArgument("reason", null, null, isPresent = false),
             ),
         )
 
@@ -34,8 +34,8 @@ class CommandArgumentsTest {
     fun `explicit get honors a nullable requested type`() {
         val arguments = CommandArguments.of(
             listOf(
-                ParsedArgument("target", "Deniz", "Deniz", present = true),
-                ParsedArgument("reason", null, null, present = false),
+                ParsedArgument("target", "Deniz", "Deniz", isPresent = true),
+                ParsedArgument("reason", null, null, isPresent = false),
             ),
         )
 
@@ -50,9 +50,9 @@ class CommandArgumentsTest {
     @Test
     fun `keeps parsed arguments ordered and distinguishes absent values`() {
         val supplied = mutableListOf(
-            ParsedArgument("target", "Deniz", "Deniz", present = true),
-            ParsedArgument("limit", 3, "3", present = false),
-            ParsedArgument("reason", null, null, present = false),
+            ParsedArgument("target", "Deniz", "Deniz", isPresent = true),
+            ParsedArgument("limit", 3, "3", isPresent = false),
+            ParsedArgument("reason", null, null, isPresent = false),
         )
         val arguments = CommandArguments.of(supplied)
         supplied.clear()
@@ -69,7 +69,12 @@ class CommandArgumentsTest {
         assertThrows<IllegalArgumentException> { arguments.get<String>("reason") }
         assertThrows<IllegalArgumentException> { arguments.get<String>("missing") }
         assertThrows<IllegalArgumentException> {
-            CommandArguments.of(listOf(ParsedArgument("target", "one", "one", true), ParsedArgument("target", "two", "two", true)))
+            CommandArguments.of(
+                listOf(
+                    ParsedArgument("target", "one", "one", true),
+                    ParsedArgument("target", "two", "two", true),
+                ),
+            )
         }
     }
 

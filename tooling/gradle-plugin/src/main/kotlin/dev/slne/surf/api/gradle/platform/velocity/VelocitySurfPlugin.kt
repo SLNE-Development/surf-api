@@ -5,7 +5,9 @@ import dev.slne.surf.api.gradle.generators.pluginfiles.VelocityPluginFile
 import dev.slne.surf.api.gradle.generators.pluginfiles.dto.VelocityPluginFileDto
 import dev.slne.surf.api.gradle.platform.SurfApiPlatform
 import dev.slne.surf.api.gradle.platform.common.CommonSurfPluginWithPluginFile
+import dev.slne.surf.api.gradle.platform.common.testing.SurfTestingConfigurer
 import dev.slne.surf.api.gradle.pluginclass.GeneratedPluginClass
+import dev.slne.surf.api.gradle.util.pluginUrl
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.dependencies
@@ -13,7 +15,11 @@ import org.gradle.kotlin.dsl.invoke
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
 internal class VelocitySurfPlugin :
-    CommonSurfPluginWithPluginFile<VelocitySurfExtension, VelocityPluginFile, VelocityPluginFileDto>(
+    CommonSurfPluginWithPluginFile<
+        VelocitySurfExtension,
+        VelocityPluginFile,
+        VelocityPluginFileDto,
+    >(
         "velocity",
         SurfApiPlatform.VELOCITY,
         "velocity-plugin.json",
@@ -27,31 +33,43 @@ internal class VelocitySurfPlugin :
     override fun Project.configure0() {
         dependencies {
             add(COMPILE_ONLY, Constants.VELOCITY_API)
-//            add("annotationProcessor", Constants.VELOCITY_API)
         }
     }
 
+    override fun Project.platformTestDependencies(extension: VelocitySurfExtension) {
+        dependencies {
+            add(SurfTestingConfigurer.TEST_IMPLEMENTATION, Constants.VELOCITY_API)
+        }
+
+        SurfTestingConfigurer.addSurfRuntimeLibraries(
+            this,
+            Constants.VELOCITY_RUNTIME_TEST_LIBRARIES,
+        )
+    }
+
     override fun createPluginFile(
-        project: Project
-    ) = project.extensions.create<VelocityPluginFile>("velocityPluginFile").apply {
-        id.convention(project.name.lowercase())
-        name.convention(project.provider { project.name })
-        version.convention(project.provider { project.version.toString() })
-        description.convention(project.provider { project.description ?: "" })
-        url.convention(project.providers.gradleProperty("url"))
+        project: Project,
+    ): VelocityPluginFile {
+        return project.extensions.create<VelocityPluginFile>("velocityPluginFile").apply {
+            id.convention(project.name.lowercase())
+            name.convention(project.provider { project.name })
+            version.convention(project.provider { project.version.toString() })
+            description.convention(project.provider { project.description ?: "" })
+            url.convention(project.pluginUrl())
 
-        val ext = project.extensions.getByType(VelocitySurfExtension::class.java)
-        val coreEnabled = ext.coreModule.map { true }.orElse(false)
+            val ext = project.extensions.getByType(VelocitySurfExtension::class.java)
+            val coreEnabled = ext.coreModule.map { true }.orElse(false)
 
-        pluginDependencies {
-            register("surf-api-velocity") {
-                optional.convention(false)
-                enabled.convention(true)
-            }
+            pluginDependencies {
+                register("surf-api-velocity") {
+                    optional.convention(false)
+                    enabled.convention(true)
+                }
 
-            register("surf-core-velocity") {
-                optional.convention(false)
-                enabled.convention(coreEnabled)
+                register("surf-core-velocity") {
+                    optional.convention(false)
+                    enabled.convention(coreEnabled)
+                }
             }
         }
     }

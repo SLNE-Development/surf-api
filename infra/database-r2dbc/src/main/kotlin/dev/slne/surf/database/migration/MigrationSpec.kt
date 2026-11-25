@@ -5,31 +5,32 @@ import dev.slne.surf.database.config.DatabaseType
 /**
  * Describes the migrations of one plugin.
  *
- * Every entry is optional, but at least one of [sql], [classes], [classNames] or [classPackage] must be given. Each
+ * Every entry is optional, but at least one of [sql], [classes] or [classNames] must be given. Each
  * may be called more than once; repeated entries are registered once.
  *
- * All migrations must be idempotent (for example `CREATE TABLE IF NOT EXISTS`): the history of a plugin starts at its
- * [baselineVersion], and the target database may already contain objects created before migrations were introduced.
+ * All migrations must be idempotent (for example `CREATE TABLE IF NOT EXISTS`): the history of a
+ * plugin starts at its [baselineVersion], and the target database may already contain objects
+ * created before migrations were introduced.
  */
 class MigrationSpec internal constructor(private var loader: ClassLoader) {
     private val sqlPaths = LinkedHashSet<String>()
     private val migrations = LinkedHashSet<SurfMigration>()
     private val names = LinkedHashSet<String>()
-    private val packages = LinkedHashSet<String>()
-    private val optionalPackages = LinkedHashSet<String>()
     private var baseline = "0"
 
     /**
-     * Adds classpath locations that contain `V<version>__<description>.sql` files, for example `db/migrations`. A
-     * `classpath:` prefix is optional.
+     * Adds classpath locations that contain `V<version>__<description>.sql` files, for example
+     * `db/migrations`. A `classpath:` prefix is optional.
      *
-     * Every [VENDOR_PLACEHOLDER] in a location is replaced by the [vendor][DatabaseType.vendor] of the migrated
-     * database, so `db/migrations/{vendor}` reads `db/migrations/mariadb` on MariaDB and `db/migrations/postgresql` on
-     * PostgreSQL. A resolved location that does not exist fails `migrate()` like any other missing location.
+     * Every [VENDOR_PLACEHOLDER] in a location is replaced by the [vendor][DatabaseType.vendor] of
+     * the migrated database, so `db/migrations/{vendor}` reads `db/migrations/mariadb` on MariaDB
+     * and `db/migrations/postgresql` on PostgreSQL. A resolved location that does not exist fails
+     * `migrate()` like any other missing location.
      */
     fun sql(vararg locations: String) {
         for (location in locations) {
             require(location.isNotBlank()) { "SQL location must not be blank" }
+
             sqlPaths += location.removePrefix(CLASSPATH_PREFIX).trim('/')
         }
     }
@@ -42,40 +43,32 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
     }
 
     /**
-     * Adds code migrations by binary class name, such as `com.acme.db.V2_Seed` or `com.acme.Migrations$V3_Backfill` for
-     * a nested class. Exactly the named classes are loaded through the [classLoader], when `migrate()` runs; no other
-     * class is touched, unlike [classPackage].
+     * Adds code migrations by binary class name, such as `com.acme.db.V2_Seed` or
+     * `com.acme.Migrations$V3_Backfill` for a nested class. Exactly the named classes are loaded
+     * through the [classLoader], when `migrate()` runs; no other class is touched.
      *
-     * Each class must be a concrete [SurfMigration]: a Kotlin `object`, or a class with a public no-argument
-     * constructor. `migrate()` fails if a class cannot be loaded, is no concrete migration or cannot be instantiated.
+     * Each class must be a concrete [SurfMigration]: a Kotlin `object`, or a class with a public
+     * no-argument constructor. `migrate()` fails if a class cannot be loaded, is no concrete
+     * migration or cannot be instantiated.
      *
      * @throws IllegalArgumentException if a name is blank
      */
     fun classNames(vararg binaryNames: String) {
         for (binaryName in binaryNames) {
             require(binaryName.isNotBlank()) { "Class name must not be blank" }
+
             names += binaryName.trim()
         }
     }
 
     /**
-     * Adds a package that is scanned, including subpackages and named nested classes, for [SurfMigration] objects and
-     * subclasses with a public no-argument constructor. `migrate()` fails if the package contains none, unless
-     * [required] is `false`.
-     */
-    @OptIn(ExperimentalVersionOverloading::class)
-    fun classPackage(packageName: String, @IntroducedAt("4.0.0") required: Boolean = true) {
-        require(packageName.isNotBlank()) { "Package name must not be blank" }
-        if (required) packages += packageName else optionalPackages += packageName
-    }
-
-    /**
-     * Sets the version at which the plugin's history is baselined. Defaults to `"0"`, so that a brand-new plugin on a
-     * shared, non-empty database still runs its `V1`.
+     * Sets the version at which the plugin's history is baselined. Defaults to `"0"`, so that a
+     * brand-new plugin on a shared, non-empty database still runs its `V1`.
      *
-     * On a non-empty database without history, migrations up to and including the baseline are treated as already
-     * applied, so every migration above it must be idempotent. On an empty database no baseline is written and every
-     * migration runs, including those at or below the baseline.
+     * On a non-empty database without history, migrations up to and including the baseline are
+     * treated as already applied, so every migration above it must be idempotent. On an empty
+     * database no baseline is written and every migration runs, including those at or below the
+     * baseline.
      *
      * @param version Dot-separated numbers, for example `"0"`, `"1"` or `"2.1"`.
      * @throws IllegalArgumentException if [version] does not match `\d+(\.\d+)*`
@@ -88,8 +81,8 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
     }
 
     /**
-     * Sets the class loader used to find SQL files and load scanned classes. Defaults to the class loader of the
-     * plugin that called `migrate()`.
+     * Sets the class loader used to find SQL files and load named classes. Defaults to the class
+     * loader of the plugin that called `migrate()`.
      */
     fun classLoader(loader: ClassLoader) {
         this.loader = loader
@@ -97,12 +90,11 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
 
     internal fun build(name: String): MigrationPlan {
         val normalizedName = name.lowercase()
-        require(NAME_REGEX.matches(normalizedName)) { "Migration name '$name' must match [a-z0-9_]{1,40}" }
-        require(
-            sqlPaths.isNotEmpty() || migrations.isNotEmpty() || names.isNotEmpty() ||
-                packages.isNotEmpty() || optionalPackages.isNotEmpty()
-        ) {
-            "Migration '$name' needs at least one of sql(), classes(), classNames() or classPackage()"
+        require(NAME_REGEX.matches(normalizedName)) {
+            "Migration name '$name' must match [a-z0-9_]{1,40}"
+        }
+        require(sqlPaths.isNotEmpty() || migrations.isNotEmpty() || names.isNotEmpty()) {
+            "Migration '$name' needs at least one of sql(), classes() or classNames()"
         }
 
         return MigrationPlan(
@@ -111,16 +103,15 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
             sqlPaths = sqlPaths.toList(),
             migrations = migrations.toList(),
             classNames = names.toList(),
-            packages = packages.toList(),
-            optionalPackages = optionalPackages.toList(),
             baselineVersion = baseline,
-            classLoader = loader
+            classLoader = loader,
         )
     }
 
     companion object {
         /**
-         * Placeholder in [sql] locations for the [vendor][DatabaseType.vendor] of the migrated database.
+         * Placeholder in [sql] locations for the [vendor][DatabaseType.vendor] of the migrated
+         * database.
          */
         const val VENDOR_PLACEHOLDER = "{vendor}"
 
@@ -134,11 +125,10 @@ class MigrationSpec internal constructor(private var loader: ClassLoader) {
  * Validated migration settings of one plugin.
  *
  * @property name Migration name as passed to `migrate()`, used in error messages.
- * @property sqlPaths Classpath paths of the SQL locations, without `classpath:` prefix and surrounding slashes. They
- * may still contain [MigrationSpec.VENDOR_PLACEHOLDER].
- * @property classNames binary names of the migration classes to load, without any other class of their package
- * @property packages scanned packages that must contain a migration class
- * @property optionalPackages scanned packages that may contain none
+ * @property sqlPaths Classpath paths of the SQL locations, without `classpath:` prefix and
+ * surrounding slashes. They may still contain [MigrationSpec.VENDOR_PLACEHOLDER].
+ * @property classNames binary names of the migration classes to load, without any other class of
+ * their package
  */
 internal data class MigrationPlan(
     val name: String,
@@ -146,8 +136,6 @@ internal data class MigrationPlan(
     val sqlPaths: List<String>,
     val migrations: List<SurfMigration>,
     val classNames: List<String>,
-    val packages: List<String>,
-    val optionalPackages: List<String>,
     val baselineVersion: String,
-    val classLoader: ClassLoader
+    val classLoader: ClassLoader,
 )

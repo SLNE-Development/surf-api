@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.region
 
 import ca.spottedleaf.moonrise.common.util.TickThread
 import dev.slne.surf.api.paper.extensions.server
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.region.TickThreadGuard
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.util.chunkX
@@ -14,6 +15,7 @@ import org.bukkit.entity.Entity
 import org.bukkit.util.BoundingBox
 
 @Suppress("UnstableApiUsage")
+@NmsComponent
 class V1_21_11TickThreadGuard : TickThreadGuard {
 
     override fun ensureTickThread(world: World, pos: Position, reason: String) {
@@ -24,13 +26,13 @@ class V1_21_11TickThreadGuard : TickThreadGuard {
         world: World,
         pos: Position,
         blockRadius: Int,
-        reason: String
+        reason: String,
     ) {
         TickThread.ensureTickThread(
             world.toNms(),
             BlockPos(pos.blockX(), pos.blockY(), pos.blockZ()),
             blockRadius,
-            reason
+            reason,
         )
     }
 
@@ -38,7 +40,7 @@ class V1_21_11TickThreadGuard : TickThreadGuard {
         world: World,
         chunkX: Int,
         chunkZ: Int,
-        reason: String
+        reason: String,
     ) {
         TickThread.ensureTickThread(world.toNms(), chunkX, chunkZ, reason)
     }
@@ -51,7 +53,7 @@ class V1_21_11TickThreadGuard : TickThreadGuard {
         TickThread.ensureTickThread(
             world.toNms(),
             AABB(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ),
-            reason
+            reason,
         )
     }
 
@@ -59,7 +61,7 @@ class V1_21_11TickThreadGuard : TickThreadGuard {
         world: World,
         blockX: Double,
         blockZ: Double,
-        reason: String
+        reason: String,
     ) {
         TickThread.ensureTickThread(world.toNms(), blockX, blockZ, reason)
     }

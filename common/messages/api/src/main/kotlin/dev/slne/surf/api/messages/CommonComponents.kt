@@ -18,14 +18,7 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.TextColor
 import kotlin.time.Duration
 
-/**
- * Builds a [TextComponent] using the provided configuration block.
- *
- * @param block Configuration block for the text component builder.
- * @return A built [TextComponent] instance.
- */
-@PublishedApi
-internal inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextComponent {
+private inline fun buildText0(block: TextComponent.Builder.() -> Unit): TextComponent {
     return Component.text().apply(block).asComponent() as TextComponent
 }
 
@@ -110,7 +103,8 @@ object CommonComponents {
     }
 
     /**
-     * A footer message indicating the user should try again later and contact support if the issue persists.
+     * A footer message indicating the user should try again later and contact support if the issue
+     * persists.
      *
      * **Output:**
      * ```
@@ -136,13 +130,9 @@ object CommonComponents {
     }
 
     /**
-     * Renders a structured kick message with custom content and footer.
+     * Renders a kick message from two builder blocks.
      *
-     * @param messageRenderer Block to render the main message content.
-     * @param footerRenderer Block to render the footer content.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example:**
+     * **Output:**
      * ```
      * CASTCRAFTER
      * COMMUNITY SERVER
@@ -152,468 +142,253 @@ object CommonComponents {
      * <empty>
      * <empty>
      * <empty>
-     * [Custom message content]
+     * [message]
      * <empty>
      * <empty>
      * <empty>
-     * [Footer content]
+     * [footer]
      * ```
+     *
+     * @param messageRenderer builds the message below the kick headline
+     * @param footerRenderer builds the footer below the message
+     * @return the kick message
      */
     inline fun renderKickDisconnectMessage(
-        messageRenderer: TextComponent.Builder.() -> Unit,
-        footerRenderer: TextComponent.Builder.() -> Unit = { },
-    ) = renderKickDisconnectMessage(Component.text(), messageRenderer, footerRenderer)
-
-    /**
-     * Renders a structured kick message with custom content and footer using a provided builder.
-     *
-     * @param B The type of builder.
-     * @param builder The builder to use for constructing the message.
-     * @param messageRenderer Block to render the main message content.
-     * @param footerRenderer Block to render the footer content.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example:**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * DU WURDEST VOM SERVER GEWORFEN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Custom message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Footer content]
-     * ```
-     */
-    inline fun <B : TextComponent.Builder> renderKickDisconnectMessage(
-        builder: B,
-        messageRenderer: B.() -> Unit,
-        footerRenderer: B.() -> Unit = { },
-    ): TextComponent {
-        with(builder) {
-            append(DISCONNECT_HEADER)
-            appendText("DU WURDEST VOM SERVER GEWORFEN", ERROR)
-            appendNewline(3)
-            messageRenderer()
-            appendNewline(3)
-            footerRenderer()
-        }
-
-        return builder.build()
-    }
-
-    inline fun renderKickDisconnectMessage(
-        builder: SurfComponentBuilder,
         messageRenderer: SurfComponentBuilder.() -> Unit,
         footerRenderer: SurfComponentBuilder.() -> Unit = { },
     ): TextComponent {
-        with(builder) {
-            append(DISCONNECT_HEADER)
-            appendText("DU WURDEST VOM SERVER GEWORFEN", ERROR)
-            appendNewline(3)
-            messageRenderer()
-            appendNewline(3)
-            footerRenderer()
-        }
-
-        return builder.build()
+        return renderKickDisconnectMessage(
+            message = SurfComponentBuilder(messageRenderer),
+            footer = SurfComponentBuilder(footerRenderer),
+        )
     }
 
+    /**
+     * Renders a kick message from a builder block, followed by [ISSUE_FOOTER] when [issue] is
+     * `true` and by [RETRY_LATER_FOOTER] otherwise.
+     *
+     * @param messageRenderer builds the message below the kick headline
+     * @param issue whether to use the issue footer
+     * @return the kick message
+     */
     inline fun renderKickDisconnectMessage(
-        builder: SurfComponentBuilder,
         messageRenderer: SurfComponentBuilder.() -> Unit,
         issue: Boolean,
-    ) = renderKickDisconnectMessage(builder, messageRenderer) {
-        if (issue) append(ISSUE_FOOTER)
-        else append(RETRY_LATER_FOOTER)
-    }
-
-    /**
-     * Renders a structured kick message with an automatic issue or retry footer.
-     *
-     * @param messageRenderer Block to render the main message content.
-     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example (issue = true):**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * DU WURDEST VOM SERVER GEWORFEN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Custom message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * Bitte versuche es später erneut.
-     * Sollte das Problem weiterhin bestehen,
-     * kontaktiere den Support in unserem Discord.
-     * <empty>
-     * <empty>
-     * discord.gg/castcrafter (clickable)
-     * ```
-     *
-     * **Output Example (issue = false):**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * DU WURDEST VOM SERVER GEWORFEN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Custom message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * Bitte versuche es später erneut.
-     * ```
-     */
-    inline fun renderKickDisconnectMessage(
-        messageRenderer: TextComponent.Builder.() -> Unit,
-        issue: Boolean,
-    ) = renderKickDisconnectMessage(Component.text(), messageRenderer, issue)
-
-    /**
-     * Renders a structured kick message with an automatic issue or retry footer using a provided builder.
-     *
-     * @param B The type of builder.
-     * @param builder The builder to use for constructing the message.
-     * @param messageRenderer Block to render the main message content.
-     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example (issue = true):**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * DU WURDEST VOM SERVER GEWORFEN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Custom message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * Bitte versuche es später erneut.
-     * Sollte das Problem weiterhin bestehen,
-     * kontaktiere den Support in unserem Discord.
-     * <empty>
-     * <empty>
-     * discord.gg/castcrafter (clickable)
-     * ```
-     *
-     * **Output Example (issue = false):**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * DU WURDEST VOM SERVER GEWORFEN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Custom message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * Bitte versuche es später erneut.
-     * ```
-     */
-    inline fun <B : TextComponent.Builder> renderKickDisconnectMessage(
-        builder: B,
-        messageRenderer: B.() -> Unit,
-        issue: Boolean,
-    ) = renderKickDisconnectMessage(builder, messageRenderer) {
-        if (issue) append(ISSUE_FOOTER)
-        else append(RETRY_LATER_FOOTER)
-    }
-
-    /**
-     * Renders a structured disconnection message with a specific reason and help suggestion.
-     *
-     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
-     * @param suggestHelp Block to render the help message content.
-     * @param footerRenderer Block to render the footer content.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example:**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * VERBINDUNG VERLOREN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Help message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Footer content]
-     * ```
-     */
-    inline fun renderDisconnectMessage(
-        disconnectReason: @NoLowercase String,
-        suggestHelp: TextComponent.Builder.() -> Unit,
-        footerRenderer: TextComponent.Builder.() -> Unit = { },
-    ) = renderDisconnectMessage(Component.text(), disconnectReason, suggestHelp, footerRenderer)
-
-    /**
-     * Renders a structured disconnection message with a specific reason and help suggestion using a provided builder.
-     *
-     * @param B The type of builder.
-     * @param builder The builder to use for constructing the message.
-     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
-     * @param suggestHelp Block to render the help message content.
-     * @param footerRenderer Block to render the footer content.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example:**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * VERBINDUNG VERLOREN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Help message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Footer content]
-     * ```
-     */
-    inline fun <B : TextComponent.Builder> renderDisconnectMessage(
-        builder: B,
-        disconnectReason: @NoLowercase String,
-        suggestHelp: B.() -> Unit,
-        footerRenderer: B.() -> Unit = { },
     ): TextComponent {
-        with(builder) {
-            append(DISCONNECT_HEADER)
-            appendText(disconnectReason.uppercase(), ERROR)
-            appendNewline(3)
-            suggestHelp()
-            appendNewline(3)
-            footerRenderer()
-        }
-
-        return builder.build()
+        return renderKickDisconnectMessage(SurfComponentBuilder(messageRenderer), issue)
     }
 
+    /**
+     * Renders a kick message with the layout of [SurfComponentBuilder.appendKickDisconnectMessage].
+     *
+     * @param message the message below the kick headline
+     * @param footer the footer below the message
+     * @return the kick message
+     */
+    fun renderKickDisconnectMessage(
+        message: Component,
+        footer: Component = Component.empty(),
+    ): TextComponent {
+        return SurfComponentBuilder.builder()
+            .appendKickDisconnectMessage(message, footer)
+            .build()
+    }
+
+    /**
+     * Renders a kick message followed by [ISSUE_FOOTER] when [issue] is `true` and by
+     * [RETRY_LATER_FOOTER] otherwise.
+     *
+     * @param message the message below the kick headline
+     * @param issue whether to use the issue footer
+     * @return the kick message
+     */
+    fun renderKickDisconnectMessage(message: Component, issue: Boolean): TextComponent {
+        return renderKickDisconnectMessage(message, disconnectFooter(issue))
+    }
+
+    /**
+     * Renders a disconnect message from builder blocks.
+     *
+     * **Output:**
+     * ```
+     * CASTCRAFTER
+     * COMMUNITY SERVER
+     * <empty>
+     * <empty>
+     * [DISCONNECT REASON]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [help]
+     * <empty>
+     * <empty>
+     * <empty>
+     * [footer]
+     * ```
+     *
+     * @param disconnectReason the headline, displayed in uppercase
+     * @param suggestHelp builds the help text below the headline
+     * @param footerRenderer builds the footer below the help text
+     * @return the disconnect message
+     */
     inline fun renderDisconnectMessage(
-        builder: SurfComponentBuilder,
         disconnectReason: @NoLowercase String,
         suggestHelp: SurfComponentBuilder.() -> Unit,
         footerRenderer: SurfComponentBuilder.() -> Unit = { },
     ): TextComponent {
-        with(builder) {
-            append(DISCONNECT_HEADER)
-            appendText(disconnectReason.uppercase(), ERROR)
-            appendNewline(3)
-            suggestHelp()
-            appendNewline(3)
-            footerRenderer()
-        }
-
-        return builder.build()
+        return renderDisconnectMessage(
+            disconnectReason = disconnectReason,
+            help = SurfComponentBuilder(suggestHelp),
+            footer = SurfComponentBuilder(footerRenderer),
+        )
     }
 
     /**
-     * Renders a structured disconnection message with an automatic issue or retry footer.
+     * Renders a disconnect message from a builder block, followed by [ISSUE_FOOTER] when [issue]
+     * is `true` and by [RETRY_LATER_FOOTER] otherwise.
      *
-     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
-     * @param suggestHelp Block to render the help message content.
-     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example (issue = false):**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * VERBINDUNG VERLOREN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Help message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * Bitte versuche es später erneut.
-     * ```
+     * @param disconnectReason the headline, displayed in uppercase
+     * @param suggestHelp builds the help text below the headline
+     * @param issue whether to use the issue footer
+     * @return the disconnect message
      */
     inline fun renderDisconnectMessage(
-        disconnectReason: @NoLowercase String,
-        suggestHelp: TextComponent.Builder.() -> Unit,
-        issue: Boolean,
-    ) = renderDisconnectMessage(Component.text(), disconnectReason, suggestHelp, issue)
-
-    /**
-     * Renders a structured disconnection message with an automatic issue or retry footer using a provided builder.
-     *
-     * @param B The type of builder.
-     * @param builder The builder to use for constructing the message.
-     * @param disconnectReason The reason for the disconnection (will be displayed in uppercase).
-     * @param suggestHelp Block to render the help message content.
-     * @param issue Whether to include an issue-related footer instead of a simple retry footer.
-     * @return The formatted disconnect message component.
-     *
-     * **Output Example (issue = false):**
-     * ```
-     * CASTCRAFTER
-     * COMMUNITY SERVER
-     * <empty>
-     * <empty>
-     * VERBINDUNG VERLOREN
-     * <empty>
-     * <empty>
-     * <empty>
-     * [Help message content]
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * <empty>
-     * Bitte versuche es später erneut.
-     * ```
-     */
-    inline fun <B : TextComponent.Builder> renderDisconnectMessage(
-        builder: B,
-        disconnectReason: @NoLowercase String,
-        suggestHelp: B.() -> Unit,
-        issue: Boolean,
-    ) = renderDisconnectMessage(builder, disconnectReason, suggestHelp) {
-        if (issue) append(ISSUE_FOOTER)
-        else append(RETRY_LATER_FOOTER)
-    }
-
-    inline fun renderDisconnectMessage(
-        builder: SurfComponentBuilder,
         disconnectReason: @NoLowercase String,
         suggestHelp: SurfComponentBuilder.() -> Unit,
         issue: Boolean,
-    ) = renderDisconnectMessage(builder, disconnectReason, suggestHelp) {
-        if (issue) append(ISSUE_FOOTER)
-        else append(RETRY_LATER_FOOTER)
+    ): TextComponent {
+        return renderDisconnectMessage(
+            disconnectReason = disconnectReason,
+            help = SurfComponentBuilder(suggestHelp),
+            issue = issue,
+        )
     }
 
     /**
-     * Formats a collection into a comma-separated list component.
+     * Renders a disconnect message with the layout of
+     * [SurfComponentBuilder.appendDisconnectMessage].
      *
-     * @param E The element type.
-     * @param collection The collection to format.
-     * @param formatter Function to convert each element to a component.
-     * @return A component representing the formatted collection.
+     * @param disconnectReason the headline, displayed in uppercase
+     * @param help the help text below the headline
+     * @param footer the footer below the help text
+     * @return the disconnect message
+     */
+    fun renderDisconnectMessage(
+        disconnectReason: @NoLowercase String,
+        help: Component,
+        footer: Component = Component.empty(),
+    ): TextComponent {
+        return SurfComponentBuilder.builder()
+            .appendDisconnectMessage(disconnectReason, help, footer)
+            .build()
+    }
+
+    /**
+     * Renders a disconnect message followed by [ISSUE_FOOTER] when [issue] is `true` and by
+     * [RETRY_LATER_FOOTER] otherwise.
      *
-     * **Example:**
-     * ```kotlin
-     * val fruits = listOf("Apple", "Banana", "Cherry")
-     * val formatted = formatCollection(fruits) { text(it) }
-     * ```
+     * @param disconnectReason the headline, displayed in uppercase
+     * @param help the help text below the headline
+     * @param issue whether to use the issue footer
+     * @return the disconnect message
+     */
+    fun renderDisconnectMessage(
+        disconnectReason: @NoLowercase String,
+        help: Component,
+        issue: Boolean,
+    ): TextComponent {
+        return renderDisconnectMessage(disconnectReason, help, disconnectFooter(issue))
+    }
+
+    private fun disconnectFooter(issue: Boolean): Component {
+        return if (issue) ISSUE_FOOTER else RETRY_LATER_FOOTER
+    }
+
+    /**
+     * Formats [collection] into a comma-separated list.
      *
      * **Output:**
      * ```
      * Apple, Banana, Cherry
      * ```
+     *
+     * @param collection the elements to format
+     * @param formatter converts an element to a component
+     * @return the formatted list
      */
     inline fun <E> formatCollection(
         collection: Iterable<E>,
         formatter: (E) -> Component,
     ): Component {
-        val joinConfig = JoinConfiguration.builder().separator(Component.text(", ", SPACER)).build()
-
-        return Component.join(joinConfig, collection.mapTo(mutableListOf(), formatter))
+        return formatCollection(collection.map(formatter))
     }
 
     /**
-     * Formats a collection into a structured list with each element on a new line, prefixed with an em dash.
+     * Joins [components] into a comma-separated list.
      *
-     * @param E The element type.
-     * @param collection The collection to format.
-     * @param linePrefix The prefix component for each line.
-     * @param formatter Function to convert each element to a component.
-     * @return A component representing the formatted collection.
+     * @param components the components to join
+     * @return the joined list
+     */
+    fun formatCollection(components: List<Component>): Component {
+        val joinConfig = JoinConfiguration.builder()
+            .separator(Component.text(", ", SPACER))
+            .build()
+
+        return Component.join(joinConfig, components)
+    }
+
+    /**
+     * Formats [collection] with each element on a new line behind [linePrefix] and an em dash.
      *
-     * **Example:**
-     * ```kotlin
-     * val fruits = listOf("Apple", "Banana", "Cherry")
-     * val formatted = formatCollectionNewLine(fruits, PREFIX) { text(it) }
-     * ```
+     * The result starts with a newline when [collection] is not empty.
      *
      * **Output:**
      * ```
      * <empty>
      * >> Surf | — Apple
      * >> Surf | — Banana
-     * >> Surf | — Cherry
      * ```
+     *
+     * @param collection the elements to format
+     * @param linePrefix the component starting each line
+     * @param formatter converts an element to a component
+     * @return the formatted list
      */
     inline fun <E> formatCollectionNewLine(
         collection: Iterable<E>,
         linePrefix: Component = PREFIX,
         formatter: (E) -> Component,
     ): Component {
-        val separator = buildText0 {
-            appendNewline()
-            append(linePrefix)
-            appendText("— ", SPACER)
-        }
-        val joinConfig = JoinConfiguration.builder().separator(separator).build()
-
-        val firstPrefix = if (collection.iterator().hasNext()) separator else Component.empty()
-
-        return firstPrefix.append(
-            Component.join(
-                joinConfig, collection.mapTo(mutableListOf(), formatter)
-            )
-        )
+        return formatCollectionNewLine(collection.map(formatter), linePrefix)
     }
 
     /**
-     * Formats a map into a structured list with each entry on a new line showing key-value pairs.
+     * Joins [components] with each one on a new line behind [linePrefix] and an em dash.
      *
-     * @param K The key type.
-     * @param V The value type.
-     * @param map The map to format.
-     * @param keyFormatter Function to convert each key to a component.
-     * @param valueFormatter Function to convert each value to a component.
-     * @param linePrefix The prefix component for each line.
-     * @param keyValueSeparator The separator component between keys and values.
-     * @return A component representing the formatted map.
+     * The result starts with a newline when [components] is not empty.
      *
-     * **Example:**
-     * ```kotlin
-     * val userData = mapOf("Name" to "Alice", "Age" to "25")
-     * val formatted = formatMap(userData, { text(it) }, { text(it) }, PREFIX, MAP_SEPERATOR)
-     * ```
+     * @param components the components to join
+     * @param linePrefix the component starting each line
+     * @return the joined list
+     */
+    fun formatCollectionNewLine(
+        components: List<Component>,
+        linePrefix: Component = PREFIX,
+    ): Component {
+        if (components.isEmpty()) return Component.empty()
+
+        val separator = lineSeparator(linePrefix)
+        val joinConfig = JoinConfiguration.builder()
+            .separator(separator)
+            .build()
+
+        return separator.append(Component.join(joinConfig, components))
+    }
+
+    /**
+     * Formats [map] with each entry on a new line behind [linePrefix] and an em dash.
+     *
+     * The result starts with a newline when [map] is not empty.
      *
      * **Output:**
      * ```
@@ -621,6 +396,13 @@ object CommonComponents {
      * >> Surf | — Name -> Alice
      * >> Surf | — Age -> 25
      * ```
+     *
+     * @param map the entries to format
+     * @param keyFormatter converts a key to a component
+     * @param valueFormatter converts a value to a component
+     * @param linePrefix the component starting each line
+     * @param keyValueSeparator the component between key and value
+     * @return the formatted map
      */
     inline fun <K, V> formatMap(
         map: Map<K, V>,
@@ -629,30 +411,49 @@ object CommonComponents {
         linePrefix: Component = PREFIX,
         keyValueSeparator: Component = MAP_SEPARATOR,
     ): Component {
-        val separator = buildText0 {
+        val entries = map.map { (key, value) -> keyFormatter(key) to valueFormatter(value) }
+
+        return formatMap(entries, linePrefix, keyValueSeparator)
+    }
+
+    /**
+     * Joins [entries] with each key-value pair on a new line behind [linePrefix] and an em dash.
+     *
+     * Keys without a color get [VARIABLE_KEY], values without a color [VARIABLE_VALUE]. The result
+     * starts with a newline when [entries] is not empty.
+     *
+     * @param entries the key and value components, in display order
+     * @param linePrefix the component starting each line
+     * @param keyValueSeparator the component between key and value
+     * @return the joined entries
+     */
+    fun formatMap(
+        entries: List<Pair<Component, Component>>,
+        linePrefix: Component = PREFIX,
+        keyValueSeparator: Component = MAP_SEPARATOR,
+    ): Component {
+        val lines = entries.map { (key, value) ->
+            buildText0 {
+                append(key.colorIfAbsent(VARIABLE_KEY))
+                append(keyValueSeparator)
+                append(value.colorIfAbsent(VARIABLE_VALUE))
+            }
+        }
+
+        return formatCollectionNewLine(lines, linePrefix)
+    }
+
+    private fun lineSeparator(linePrefix: Component): TextComponent {
+        return buildText0 {
             appendNewline()
             append(linePrefix)
             appendText("— ", SPACER)
         }
-        val joinConfig = JoinConfiguration.builder().separator(separator).build()
-        val firstPrefix = if (map.isNotEmpty()) separator else Component.empty()
-
-        return firstPrefix.append(
-            Component.join(
-                joinConfig,
-                map.mapTo(mutableListOf()) { (key, value) ->
-                    buildText0 {
-                        append(keyFormatter(key).colorIfAbsent(VARIABLE_KEY))
-                        append(keyValueSeparator)
-                        append(valueFormatter(value).colorIfAbsent(VARIABLE_VALUE))
-                    }
-                }
-            )
-        )
     }
 
     /**
-     * Formats a duration into a human-readable time representation. Supports multiple time units from centuries to seconds.
+     * Formats a duration into a human-readable time representation. Supports multiple time units
+     * from centuries to seconds.
      *
      * @param time The duration to format.
      * @param showSeconds Whether to include seconds in the output.
@@ -695,15 +496,17 @@ object CommonComponents {
                 time: Long,
                 singularForm: String,
                 pluralForm: String,
-                shortForm: String
-            ) = buildText0 {
-                append(Component.text(time, timeColor))
-                appendText(
-                    if (shortForms) shortForm
-                    else if (time == 1L) " $singularForm"
-                    else " $pluralForm",
-                    timeColor
-                )
+                shortForm: String,
+            ): TextComponent {
+                return buildText0 {
+                    append(Component.text(time, timeColor))
+                    appendText(
+                        if (shortForms) shortForm
+                        else if (time == 1L) " $singularForm"
+                        else " $pluralForm",
+                        timeColor,
+                    )
+                }
             }
         }
 
@@ -724,10 +527,13 @@ object CommonComponents {
                 value: Long,
                 singularForm: String,
                 pluralForm: String,
-                shortForm: String
+                shortForm: String,
             ) {
                 if (value > 0) {
-                    if (hasAddedComponent) append(separator)
+                    if (hasAddedComponent) {
+                        append(separator)
+                    }
+
                     append(formatter(value, singularForm, pluralForm, shortForm))
                     hasAddedComponent = true
                 }
@@ -739,6 +545,7 @@ object CommonComponents {
             addComponent(days, "Tag", "Tage", "d")
             addComponent(hours, "Stunde", "Stunden", "h")
             addComponent(minutes, "Minute", "Minuten", "m")
+
             if (showSeconds) {
                 addComponent(seconds, "Sekunde", "Sekunden", "s")
             }
@@ -765,8 +572,9 @@ object CommonComponents {
  * Apple, Banana, Cherry
  * ```
  */
-inline fun <E> Iterable<E>.joinToComponent(formatter: (E) -> Component) =
-    CommonComponents.formatCollection(this, formatter)
+inline fun <E> Iterable<E>.joinToComponent(formatter: (E) -> Component): Component {
+    return CommonComponents.formatCollection(this, formatter)
+}
 
 /**
  * Formats this collection into a structured list with each element on a new line.
@@ -794,7 +602,7 @@ inline fun <E> Iterable<E>.joinToComponent(formatter: (E) -> Component) =
 inline fun <E> Iterable<E>.joinToComponentNewLine(
     linePrefix: Component = PREFIX,
     formatter: (E) -> Component,
-) = CommonComponents.formatCollectionNewLine(this, linePrefix, formatter)
+): Component = CommonComponents.formatCollectionNewLine(this, linePrefix, formatter)
 
 /**
  * Formats this map into a structured list with each entry on a new line showing key-value pairs.
@@ -829,4 +637,12 @@ inline fun <K, V> Map<K, V>.joinToComponent(
     valueFormatter: (V) -> Component,
     linePrefix: Component = PREFIX,
     keyValueSeparator: Component = MAP_SEPARATOR,
-) = CommonComponents.formatMap(this, keyFormatter, valueFormatter, linePrefix, keyValueSeparator)
+): Component {
+    return CommonComponents.formatMap(
+        this,
+        keyFormatter,
+        valueFormatter,
+        linePrefix,
+        keyValueSeparator,
+    )
+}

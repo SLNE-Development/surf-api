@@ -8,12 +8,7 @@ import dev.slne.surf.nats.codec.presenceKind
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.descriptor.NatsResultKind
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import dev.slne.surf.nats.test.proto.v1.BroadcastRequest
-import dev.slne.surf.nats.test.proto.v1.CalcService
-import dev.slne.surf.nats.test.proto.v1.FindReply
-import dev.slne.surf.nats.test.proto.v1.FindRequest
-import dev.slne.surf.nats.test.proto.v1.FinderService
-import dev.slne.surf.nats.test.proto.v1.NotifierService
+import dev.slne.surf.nats.test.proto.v1.*
 import io.nats.client.Connection
 import io.nats.client.Message
 import kotlinx.coroutines.*
@@ -44,7 +39,9 @@ class AllInstancesRecipientsTest {
             broadcasts.send(request.message)
         }
 
-        override suspend fun lookup(request: FindRequest): FindReply = FindReply(answer(request.key).getOrNull()?.value)
+        override suspend fun lookup(request: FindRequest): FindReply {
+            return FindReply(answer(request.key).getOrNull()?.value)
+        }
     }
 
     sealed interface Behaviour {
@@ -80,45 +77,54 @@ class AllInstancesRecipientsTest {
                 val decoded = NatsCodec.decode(
                     broadcast.request,
                     request.data,
-                    request.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE)
+                    request.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE),
                 ) as BroadcastRequest
                 broadcasts.trySend(decoded.message)
             }
+
             if (announce) {
                 dispatcher.subscribe(presenceSubject) { message ->
-                    if (message.presenceKind() == ProtocolHeaders.PRESENCE_QUERY) presence(ProtocolHeaders.PRESENCE_BEAT)
+                    if (message.presenceKind() == ProtocolHeaders.PRESENCE_QUERY) presence(
+                        ProtocolHeaders.PRESENCE_BEAT,
+                    )
                 }
                 presence(ProtocolHeaders.PRESENCE_JOIN)
             }
+
             connection.flush(Duration.ofSeconds(5))
         }
 
         private fun onFind(request: Message) {
             val contentType = request.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE)
             val key = (NatsCodec.decode(find.request, request.data, contentType) as FindRequest).key
-            val headers =
-                NatsHeaders.base(client.name).put(ProtocolHeaders.ORIGIN, origin)
+            val headers = NatsHeaders.base(client.name).put(ProtocolHeaders.ORIGIN, origin)
 
             when (val answer = behaviour(key)) {
                 is Behaviour.Known -> {
-                    val data = NatsCodec.encode(checkNotNull(find.response), FindReply(answer.value))
+                    val data = NatsCodec.encode(
+                        checkNotNull(find.response),
+                        FindReply(answer.value),
+                    )
                     connection.publish(request.replyTo, headers, data)
                 }
 
                 Behaviour.Unknown -> connection.publish(
                     request.replyTo,
                     headers.add(ProtocolHeaders.ANSWER, ProtocolHeaders.ANSWER_UNKNOWN),
-                    ByteArray(0)
+                    ByteArray(0),
                 )
 
                 is Behaviour.Fail -> connection.publish(
                     request.replyTo,
                     headers.add(ProtocolHeaders.ERROR, answer.type),
-                    answer.message.encodeToByteArray()
+                    answer.message.encodeToByteArray(),
                 )
 
                 is Behaviour.Garbage -> {
-                    if (!answer.withContentType) headers.remove(ProtocolHeaders.CONTENT_TYPE)
+                    if (!answer.withContentType) {
+                        headers.remove(ProtocolHeaders.CONTENT_TYPE)
+                    }
+
                     connection.publish(request.replyTo, headers, byteArrayOf(0x7f, 0x01))
                 }
 
@@ -134,7 +140,10 @@ class AllInstancesRecipientsTest {
         }
 
         override fun close() {
-            if (announce) presence(ProtocolHeaders.PRESENCE_LEAVE)
+            if (announce) {
+                presence(ProtocolHeaders.PRESENCE_LEAVE)
+            }
+
             connection.closeDispatcher(dispatcher)
         }
     }
@@ -142,10 +151,10 @@ class AllInstancesRecipientsTest {
     private var clientCounter = 0
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @Test
     fun `first Known answer wins immediately`() = withClient { client ->
@@ -155,7 +164,15 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("7")) } }
+            val (answer, elapsed) = timed {
+                withNatsCallTimeout(5.seconds) {
+                    finder.find(
+                        FindRequest(
+                            "7",
+                        ),
+                    )
+                }
+            }
 
             assertEquals(Answer.Known(FindReply("server-7")), answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -170,7 +187,15 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Unknown },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
+            val (answer, elapsed) = timed {
+                withNatsCallTimeout(5.seconds) {
+                    finder.find(
+                        FindRequest(
+                            "1",
+                        ),
+                    )
+                }
+            }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -185,7 +210,15 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("1")) } }
+            val (answer, elapsed) = timed {
+                withNatsCallTimeout(2.seconds) {
+                    finder.find(
+                        FindRequest(
+                            "1",
+                        ),
+                    )
+                }
+            }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
@@ -193,24 +226,23 @@ class AllInstancesRecipientsTest {
     }
 
     @Test
-    fun `failure without any Known becomes NatsRemoteException once all answered`() =
-        withClient { client ->
-            withInstances(
-                FakeInstance(client) { Behaviour.Fail("java.lang.IllegalStateException", "boom") },
-                FakeInstance(client) { Behaviour.Unknown },
-                FakeInstance(client) { Behaviour.Unknown },
-            ) {
-                val finder = warmFinder(client)
-                val start = TimeSource.Monotonic.markNow()
-                val exception = assertFailsWith<NatsRemoteException> {
-                    withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) }
-                }
-
-                assertEquals("java.lang.IllegalStateException", exception.remoteType)
-                assertEquals("boom", exception.remoteMessage)
-                assertTrue(start.elapsedNow() < 2.seconds, "took ${start.elapsedNow()}")
+    fun `failure without any Known becomes NatsRemoteException once all answered`() = withClient { client ->
+        withInstances(
+            FakeInstance(client) { Behaviour.Fail("java.lang.IllegalStateException", "boom") },
+            FakeInstance(client) { Behaviour.Unknown },
+            FakeInstance(client) { Behaviour.Unknown },
+        ) {
+            val finder = warmFinder(client)
+            val start = TimeSource.Monotonic.markNow()
+            val exception = assertFailsWith<NatsRemoteException> {
+                withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) }
             }
+
+            assertEquals("java.lang.IllegalStateException", exception.remoteType)
+            assertEquals("boom", exception.remoteMessage)
+            assertTrue(start.elapsedNow() < 2.seconds, "took ${start.elapsedNow()}")
         }
+    }
 
     @Test
     fun `failure is reported after the timeout when an instance hangs`() = withClient { client ->
@@ -219,7 +251,13 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Hang },
         ) {
             val finder = warmFinder(client)
-            assertFailsWith<NatsRemoteException> { withNatsCallTimeout(1.seconds) { finder.find(FindRequest("1")) } }
+            assertFailsWith<NatsRemoteException> {
+                withNatsCallTimeout(1.seconds) {
+                    finder.find(
+                        FindRequest("1"),
+                    )
+                }
+            }
         }
     }
 
@@ -230,7 +268,10 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Known("found") },
         ) {
             val finder = warmFinder(client)
-            assertEquals(Answer.Known(FindReply("found")), withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) })
+            assertEquals(
+                Answer.Known(FindReply("found")),
+                withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) },
+            )
         }
     }
 
@@ -242,7 +283,11 @@ class AllInstancesRecipientsTest {
                 FakeInstance(client) { Behaviour.Known("found-$it") },
             ) {
                 val finder = warmFinder(client)
-                assertEquals(Answer.Known(FindReply("found-5")), withNatsCallTimeout(5.seconds) { finder.find(FindRequest("5")) }, "$garbage")
+                assertEquals(
+                    Answer.Known(FindReply("found-5")),
+                    withNatsCallTimeout(5.seconds) { finder.find(FindRequest("5")) },
+                    "$garbage",
+                )
             }
         }
     }
@@ -266,6 +311,7 @@ class AllInstancesRecipientsTest {
                 } else {
                     assertContains(exception.message.orEmpty(), "Content-Type")
                 }
+
                 assertTrue(start.elapsedNow() < 2.seconds, "$garbage took ${start.elapsedNow()}")
             }
         }
@@ -278,7 +324,15 @@ class AllInstancesRecipientsTest {
             FakeInstance(client) { Behaviour.Unknown },
         ) {
             val finder = client.service<FinderService>() // no warm-up
-            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("1")) } }
+            val (answer, elapsed) = timed {
+                withNatsCallTimeout(2.seconds) {
+                    finder.find(
+                        FindRequest(
+                            "1",
+                        ),
+                    )
+                }
+            }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
@@ -296,7 +350,15 @@ class AllInstancesRecipientsTest {
             leaving.close()
             delay(200.milliseconds) // let the leave arrive
 
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
+            val (answer, elapsed) = timed {
+                withNatsCallTimeout(5.seconds) {
+                    finder.find(
+                        FindRequest(
+                            "1",
+                        ),
+                    )
+                }
+            }
 
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -305,17 +367,28 @@ class AllInstancesRecipientsTest {
 
     @Test
     fun `unannounced instance that answers is counted for later calls`() = withClient { client ->
-        withInstances(FakeInstance(client) { if (it == "1") Behaviour.Hang else Behaviour.Unknown }) {
+        withInstances(
+            FakeInstance(client) { if (it == "1") Behaviour.Hang else Behaviour.Unknown },
+        ) {
             val hang = AtomicBoolean(false)
             FakeInstance(
                 client,
-                announce = false
+                announce = false,
             ) { if (hang.get()) Behaviour.Hang else Behaviour.Unknown }.use {
                 val finder = warmFinder(client)
-                assertEquals(Answer.Unknown, withNatsCallTimeout(1.seconds) { finder.find(FindRequest("1")) })
+                assertEquals(
+                    Answer.Unknown,
+                    withNatsCallTimeout(1.seconds) { finder.find(FindRequest("1")) },
+                )
 
                 hang.set(true)
-                val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("2")) } }
+                val (answer, elapsed) = timed {
+                    withNatsCallTimeout(2.seconds) {
+                        finder.find(
+                            FindRequest("2"),
+                        )
+                    }
+                }
                 assertEquals(Answer.Unknown, answer)
                 assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
             }
@@ -325,7 +398,9 @@ class AllInstancesRecipientsTest {
     @Test
     fun `no responders ends immediately with Unknown`() = withClient { client ->
         val finder = warmFinder(client)
-        val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
+        val (answer, elapsed) = timed {
+            withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) }
+        }
 
         assertEquals(Answer.Unknown, answer)
         assertTrue(elapsed < 2.seconds, "took $elapsed")
@@ -336,19 +411,23 @@ class AllInstancesRecipientsTest {
         client.registerService<FinderService>(FinderImpl { Answer.Known(FindReply("self-$it")) })
         val finder = warmFinder(client)
 
-        assertEquals(Answer.Known(FindReply("self-3")), withNatsCallTimeout(5.seconds) { finder.find(FindRequest("3")) })
+        assertEquals(
+            Answer.Known(FindReply("self-3")),
+            withNatsCallTimeout(5.seconds) { finder.find(FindRequest("3")) },
+        )
     }
 
     @Test
-    fun `registered service answering Unknown ends early through its own presence`() =
-        withClient { client ->
-            client.registerService<FinderService>(FinderImpl())
-            val finder = warmFinder(client)
+    fun `registered service answering Unknown ends early through its own presence`() = withClient { client ->
+        client.registerService<FinderService>(FinderImpl())
+        val finder = warmFinder(client)
 
-            val (answer, elapsed) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("3")) } }
-            assertEquals(Answer.Unknown, answer)
-            assertTrue(elapsed < 2.seconds, "took $elapsed")
+        val (answer, elapsed) = timed {
+            withNatsCallTimeout(5.seconds) { finder.find(FindRequest("3")) }
         }
+        assertEquals(Answer.Unknown, answer)
+        assertTrue(elapsed < 2.seconds, "took $elapsed")
+    }
 
     @Test
     fun `unit method fans out to every instance without waiting`() = withClient { client ->
@@ -383,50 +462,57 @@ class AllInstancesRecipientsTest {
     }
 
     @Test
-    fun `registration announces join, answers queries and leaves on close`() =
-        withClient { client ->
-            val subject = client.serviceDescriptor(FinderService::class.java).presenceSubject!!
-            val connection = NatsConnectionManager.connection()
-            val presence = connection.subscribe(subject)
-            connection.flush(Duration.ofSeconds(5))
+    fun `registration announces join, answers queries and leaves on close`() = withClient { client ->
+        val subject = client.serviceDescriptor(FinderService::class.java).presenceSubject!!
+        val connection = NatsConnectionManager.connection()
+        val presence = connection.subscribe(subject)
+        connection.flush(Duration.ofSeconds(5))
 
-            val registration = client.registerService<FinderService>(FinderImpl())
-            assertEquals(ProtocolHeaders.PRESENCE_JOIN, presence.nextPresence())
+        val registration = client.registerService<FinderService>(FinderImpl())
+        assertEquals(ProtocolHeaders.PRESENCE_JOIN, presence.nextPresence())
 
-            val query = NatsHeaders.base("external")
-                .add(ProtocolHeaders.PRESENCE, ProtocolHeaders.PRESENCE_QUERY)
-            connection.publish(subject, query, ByteArray(0))
-            assertEquals(
-                ProtocolHeaders.PRESENCE_QUERY,
-                presence.nextPresence()
-            ) // own query echoed back
-            assertEquals(ProtocolHeaders.PRESENCE_BEAT, presence.nextPresence())
+        val query = NatsHeaders.base("external")
+            .add(ProtocolHeaders.PRESENCE, ProtocolHeaders.PRESENCE_QUERY)
+        connection.publish(subject, query, ByteArray(0))
+        assertEquals(
+            ProtocolHeaders.PRESENCE_QUERY,
+            presence.nextPresence(),
+        ) // own query echoed back
+        assertEquals(ProtocolHeaders.PRESENCE_BEAT, presence.nextPresence())
 
-            registration.close()
-            assertEquals(ProtocolHeaders.PRESENCE_LEAVE, presence.nextPresence())
-            presence.unsubscribe()
-        }
+        registration.close()
+        assertEquals(ProtocolHeaders.PRESENCE_LEAVE, presence.nextPresence())
+        presence.unsubscribe()
+    }
 
     @Test
     fun `presence subject only exists for services with ALL_INSTANCES answers`() = withClient { client ->
         assertEquals(
             "surf.presence.surf.nats.test.v1.FinderService",
-            client.serviceDescriptor(FinderService::class.java).presenceSubject
+            client.serviceDescriptor(FinderService::class.java).presenceSubject,
         )
         assertNull(client.serviceDescriptor(CalcService::class.java).presenceSubject)
         assertNull(
             client.serviceDescriptor(NotifierService::class.java).presenceSubject,
-            "fan-out does not wait for answers and needs no presence"
+            "fan-out does not wait for answers and needs no presence",
         )
     }
 
     @Test
     fun `method overridden to one instance on an ALL_INSTANCES service returns its value`() = withClient { client ->
-        val lookup = client.serviceDescriptor(FinderService::class.java).methods.single { it.kotlinName == "lookup" }
+        val lookup = client.serviceDescriptor(FinderService::class.java).methods.single {
+            it.kotlinName == "lookup"
+        }
         assertEquals(Recipients.ANY_INSTANCE, lookup.recipients)
         assertEquals(NatsResultKind.VALUE, lookup.result)
 
-        client.registerService<FinderService>(FinderImpl { if (it == "none") Answer.Unknown else Answer.Known(FindReply("v-$it")) })
+        client.registerService<FinderService>(
+            FinderImpl {
+                if (it == "none") Answer.Unknown else Answer.Known(
+                    FindReply("v-$it"),
+                )
+            },
+        )
         val finder = client.service<FinderService>()
 
         assertEquals(FindReply("v-1"), finder.lookup(FindRequest("1")))
@@ -445,17 +531,30 @@ class AllInstancesRecipientsTest {
 
             withContext(Dispatchers.IO) { TestNatsServer.restart() }
             eventually("reconnect after the server restart", timeout = 30.seconds) {
-                connection.status == Connection.Status.CONNECTED && connection.statistics.reconnects > reconnects
+                connection.status == Connection.Status.CONNECTED &&
+                    connection.statistics.reconnects > reconnects
             }
-            withContext(Dispatchers.IO) { connection.flush(Duration.ofSeconds(5)) } // subscriptions are restored
+            // subscriptions are restored
+            withContext(Dispatchers.IO) { connection.flush(Duration.ofSeconds(5)) }
 
-            // Members can expire while the connection is down, the old list must not end the call early
-            val (answer, elapsed) = timed { withNatsCallTimeout(2.seconds) { finder.find(FindRequest("1")) } }
+            // Members can expire while the connection is down, the old list must not end the call
+            // early
+            val (answer, elapsed) = timed {
+                withNatsCallTimeout(2.seconds) {
+                    finder.find(
+                        FindRequest(
+                            "1",
+                        ),
+                    )
+                }
+            }
             assertEquals(Answer.Unknown, answer)
             assertTrue(elapsed >= 1.5.seconds, "ended early after $elapsed")
 
             // The members answered the new query, so calls end early again
-            val (again, quick) = timed { withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) } }
+            val (again, quick) = timed {
+                withNatsCallTimeout(5.seconds) { finder.find(FindRequest("1")) }
+            }
             assertEquals(Answer.Unknown, again)
             assertTrue(quick < 2.seconds, "took $quick")
         }
@@ -471,22 +570,27 @@ class AllInstancesRecipientsTest {
         try {
             block()
         } finally {
-            instances.forEach { it.close() }
+            for (instance in instances) {
+                instance.close()
+            }
         }
     }
 
     private suspend fun warmFinder(client: NatsClientImpl): FinderService {
         val finder = client.service<FinderService>()
         delay(RpcDefaults.PRESENCE_WARMUP + 300.milliseconds)
+
         return finder
     }
 
     private suspend fun <T> timed(block: suspend () -> T): Pair<T, kotlin.time.Duration> {
         val start = TimeSource.Monotonic.markNow()
         val result = block()
+
         return result to start.elapsedNow()
     }
 
-    private fun io.nats.client.Subscription.nextPresence(): String? =
-        nextMessage(Duration.ofSeconds(5))?.presenceKind()
+    private fun io.nats.client.Subscription.nextPresence(): String? {
+        return nextMessage(Duration.ofSeconds(5))?.presenceKind()
+    }
 }

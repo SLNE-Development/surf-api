@@ -1,11 +1,9 @@
 package dev.slne.surf.api.event
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import dev.slne.surf.api.spring.SurfContexts
-import org.jetbrains.annotations.ApiStatus
-import org.springframework.beans.factory.getBean
-import org.springframework.context.ApplicationContext
 import dev.slne.surf.api.spring.SurfApiBean
+import dev.slne.surf.api.spring.surfBean
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Central event bus for cross-plugin event dispatching.
@@ -100,7 +98,7 @@ interface SurfEventBus {
         eventClass: Class<T>,
         priority: SurfEventPriority = SurfEventPriority.NORMAL,
         ignoreCancelled: Boolean = true,
-        handler: (T) -> Unit
+        handler: (T) -> Unit,
     ): Any
 
     /**
@@ -119,44 +117,17 @@ interface SurfEventBus {
         eventClass: Class<T>,
         priority: SurfEventPriority = SurfEventPriority.NORMAL,
         ignoreCancelled: Boolean = true,
-        handler: suspend (T) -> Unit
+        handler: suspend (T) -> Unit,
     ): Any
 
     companion object {
         /**
          * The [SurfEventBus] bean of surf-api's installed root context.
          *
-         * Resolved again after the platform installs a new root context, so that it is the bus the
-         * root's beans inject. While no root context is installed, the last resolved bus stays in
-         * use.
-         *
-         * @throws IllegalStateException if no root context is installed and no bus was resolved
-         *   before
+         * @throws IllegalStateException if no root context is installed and no bus was read before
          */
         @InternalSurfApi
-        val INSTANCE: SurfEventBus get() = RootEventBus.current()
-    }
-}
-
-/**
- * Caches the [SurfEventBus] bean per installed root context.
- */
-private object RootEventBus {
-
-    private class Resolved(val root: ApplicationContext, val bus: SurfEventBus)
-
-    @Volatile
-    private var resolved: Resolved? = null
-
-    fun current(): SurfEventBus {
-        val cached = resolved
-        val installed = SurfContexts.rootOrNull
-        if (cached != null && (installed == null || installed === cached.root)) {
-            return cached.bus
-        }
-
-        val root = SurfContexts.root
-        return Resolved(root, root.getBean<SurfEventBus>()).also { resolved = it }.bus
+        val instance by surfBean<SurfEventBus>()
     }
 }
 
@@ -182,8 +153,10 @@ inline fun <reified T : SurfSyncEvent> SurfEventBus.on(
     priority: SurfEventPriority = SurfEventPriority.NORMAL,
     ignoreCancelled: Boolean = true,
     crossinline handler: (T) -> Unit,
-): Any = registerHandler(T::class.java, priority, ignoreCancelled) { event ->
-    handler(event)
+): Any {
+    return registerHandler(T::class.java, priority, ignoreCancelled) { event ->
+        handler(event)
+    }
 }
 
 /**
@@ -201,6 +174,8 @@ inline fun <reified T : SurfAsyncEvent> SurfEventBus.onAsync(
     priority: SurfEventPriority = SurfEventPriority.NORMAL,
     ignoreCancelled: Boolean = true,
     crossinline handler: suspend (T) -> Unit,
-): Any = registerAsyncHandler(T::class.java, priority, ignoreCancelled) { event ->
-    handler(event)
+): Any {
+    return registerAsyncHandler(T::class.java, priority, ignoreCancelled) { event ->
+        handler(event)
+    }
 }

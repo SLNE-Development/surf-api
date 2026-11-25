@@ -26,7 +26,7 @@ import net.minestom.server.item.Material
  * @see unregister
  */
 fun View.register() {
-    viewFrame.with(this)
+    ViewFrameAccessor.viewFrame.with(this)
 }
 
 /**
@@ -39,7 +39,7 @@ fun View.register() {
  * @see register
  */
 fun View.unregister() {
-    viewFrame.remove(this)
+    ViewFrameAccessor.viewFrame.remove(this)
 }
 
 /**
@@ -54,7 +54,7 @@ fun View.unregister() {
  * @see open
  */
 fun View.open(player: Player) {
-    viewFrame.open(javaClass, player)
+    ViewFrameAccessor.viewFrame.open(javaClass, player)
 }
 
 /**
@@ -73,7 +73,7 @@ fun View.open(player: Player) {
  * @see open
  */
 fun View.open(player: Player, data: Any) {
-    viewFrame.open(javaClass, player, data)
+    ViewFrameAccessor.viewFrame.open(javaClass, player, data)
 }
 
 /**
@@ -88,7 +88,7 @@ fun View.open(player: Player, data: Any) {
  * @see open
  */
 fun View.open(players: Collection<Player>) {
-    viewFrame.open(javaClass, players)
+    ViewFrameAccessor.viewFrame.open(javaClass, players)
 }
 
 /**
@@ -104,7 +104,7 @@ fun View.open(players: Collection<Player>) {
  * @see open
  */
 fun View.open(players: Collection<Player>, data: Any) {
-    viewFrame.open(javaClass, players, data)
+    ViewFrameAccessor.viewFrame.open(javaClass, players, data)
 }
 
 /**
@@ -123,8 +123,11 @@ fun View.open(players: Collection<Player>, data: Any) {
  * @param title DSL block used to construct the title [Component]
  * @return this [ViewConfigBuilder] for chaining
  */
-inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFrameworkDSL SurfComponentBuilder.() -> Unit): ViewConfigBuilder =
-    this.title(SurfComponentBuilder(title))
+inline fun ViewConfigBuilder.titleBuilder(
+    title: @InventoryFrameworkDSL SurfComponentBuilder.() -> Unit,
+): ViewConfigBuilder {
+    return this.title(SurfComponentBuilder(title))
+}
 
 /**
  * Modifies the [ViewConfigBuilder] of this [OpenContext] using a DSL block.
@@ -143,8 +146,11 @@ inline fun ViewConfigBuilder.titleBuilder(title: @InventoryFrameworkDSL SurfComp
  * @receiver the [OpenContext] whose config is being modified
  * @param modifier DSL block applied to the [ViewConfigBuilder]
  */
-inline fun OpenContext.modifyConfig(modifier: @InventoryFrameworkDSL ViewConfigBuilder.() -> Unit) =
-    this.modifyConfig().apply(modifier)
+inline fun OpenContext.modifyConfig(
+    modifier: @InventoryFrameworkDSL ViewConfigBuilder.() -> Unit,
+): ViewConfigBuilder {
+    return this.modifyConfig().apply(modifier)
+}
 
 /**
  * Builds a neutral outline item for this [View], typically used as a UI border or filler slot.

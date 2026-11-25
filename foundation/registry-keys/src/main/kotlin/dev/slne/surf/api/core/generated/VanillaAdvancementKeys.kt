@@ -3,6 +3,12 @@ package dev.slne.surf.api.core.generated
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.key.Key.key
 
+/**
+ * Vanilla advancement keys, grouped by tab.
+ *
+ * The keys mirror the vanilla game data and may change, including removals,
+ * with any Minecraft version.
+ */
 public object VanillaAdvancementKeys {
   public object Adventure {
     @JvmField

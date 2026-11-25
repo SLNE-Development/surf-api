@@ -2,8 +2,8 @@
 
 Source: `common/core/impl/src/main/kotlin/dev/slne/surf/api/core/server/impl/event/` -
 `SurfEventBusImpl.kt`, `SurfEventHandlerEntry.kt`, `invoker/` - plus
-`common/common/api/src/main/java/dev/slne/surf/api/common/invoker/InvokerFactory.java` and the two
-templates in `common/core/impl/src/main/java/.../impl/event/invoker/`.
+`InvokerFactory.kt`, `HandleInvokerClasses.kt` and `InvokerMethods.kt` in
+`common/common/api/src/main/kotlin/dev/slne/surf/api/common/invoker/`.
 
 Read this when you need to reason about ordering, performance or why a handler did or did not run.
 None of it is public API; `SurfEventBus` is `@ApiStatus.NonExtendable`.
@@ -88,40 +88,35 @@ hierarchies are disjoint: a `SurfSyncEvent` can only match types registered thro
 `suspend invoke(event)`. Implementations are **not** reflective calls and not lambdas: they are
 hidden classes.
 
-`SurfEventInvokerFactory` holds one `InvokerFactory` per flavour, each constructed from a template
-class plus the interface:
+`SurfEventInvokerFactory` holds one `InvokerFactory` per flavour, built from the invoker
+interface alone:
 
 ```kotlin
-val syncFactory = InvokerFactory(
-    SurfSyncEventInvokerTemplate::class.java,
-    SurfSyncEventInvoker::class.java,
-    lookup
-)
+private val syncFactory = InvokerFactory(SurfSyncEventInvoker::class.java, lookup)
 ```
 
-`InvokerFactory` reads the template's `.class` bytes once at construction. `create(target, method,
-payloadClass)` then defines a fresh hidden class from those bytes, passing class data that holds the
-listener instance, the payload class, the `Method`, a private lookup into the listener's class, and
-whether the method is a suspend function. The template's static initializer pulls that data out via
-`HiddenInvokerUtil.loadClassData`, so each generated class ends up with a `MethodHandle` already
-bound to the listener instance and a constant event type.
+`InvokerFactory` (`common/common/api/.../invoker/`) generates one class template with the ClassFile
+API: a class implementing the interface's single method by calling a `MethodHandle` loaded from its
+class data with `ldc` and `invokeExact`. `createSync` and `createAsync` adapt the handler into one
+such handle and define a fresh hidden class per handler with that handle as class data.
+`HandleInvokerClasses`, the generator underneath, is shared with surf-nats' listener and service
+invokers and with the reflection proxies.
 
 Consequences:
 
-- Dispatch is an `invokeExact` on a bound handle - no `Method.invoke`, no argument boxing array.
-- The template guards with `if (!EVENT_TYPE.isInstance(event)) return`, so a mismatch is a silent
-  no-op rather than a `ClassCastException`.
-- The async template branches on `IS_SUSPEND`: a suspend handler is invoked with the continuation,
-  a non-suspend handler is invoked directly and the invoker returns `Unit`. That is why a
-  **non-suspending** method is a perfectly valid `SurfAsyncEvent` handler.
+- Dispatch is an `invokeExact` on a constant, bound handle - no `Method.invoke`, no argument array.
+- The handle is wrapped in `MethodHandles.guardWithTest` on `eventType.isInstance(event)`, so a
+  mismatch is a silent no-op rather than a `ClassCastException`.
+- For the async flavour a non-suspend handler is adapted to return `Unit` and ignore the
+  continuation. That is why a **non-suspending** method is a valid `SurfAsyncEvent` handler.
 - Access is checked up front with `MethodHandles.privateLookupIn(declaringClass, lookup)`
-  (`HiddenInvokerUtil.canAccess`), which is why private handler methods work on the classpath, and
+  (`InvokerMethods.canAccess`), which is why private handler methods work on the classpath, and
   why a listener in a named JPMS module that is not open to surf-api fails registration with
   `IllegalAccessException`.
-- `InvokerFactory.create` wraps a `ReflectiveOperationException` in `AssertionError`.
+- The handler's own exceptions propagate unchanged through the invoker.
 
-`SurfEventInvokerFactory` is the only user of `InvokerFactory`. `HiddenInvokerUtil` is shared with
-Velocity's `SuspendingEventHandler`, so fix bugs in `HiddenInvokerUtil`, not per flavour.
+`InvokerMethods.isSuspendFunction` is shared with Velocity's `SuspendingEventHandler`, so fix
+suspend detection there, not per caller.
 
 ## Handler discovery
 

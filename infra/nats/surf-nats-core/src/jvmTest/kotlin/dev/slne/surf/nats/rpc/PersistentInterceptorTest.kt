@@ -1,49 +1,27 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsInstance
+import dev.slne.surf.nats.*
 import dev.slne.surf.nats.client.NatsClientImpl
 import dev.slne.surf.nats.codec.NatsCodec
-import dev.slne.surf.nats.eventually
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
-import dev.slne.surf.nats.jsm
-import dev.slne.surf.nats.messageCount
 import dev.slne.surf.nats.protocol.ProtocolHeaders
-import dev.slne.surf.nats.registerService
 import dev.slne.surf.nats.rpc.NatsPersistentServiceTest.OrderImpl
-import dev.slne.surf.nats.service
+import dev.slne.surf.nats.test.proto.v1.*
 import dev.slne.surf.nats.test.proto.v1.Number
-import dev.slne.surf.nats.test.proto.v1.OrderService
-import dev.slne.surf.nats.test.proto.v1.PlaceRequest
-import dev.slne.surf.nats.test.proto.v1.Text
-import dev.slne.surf.nats.test.proto.v1.TotalRequest
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import java.security.MessageDigest
-import java.util.HexFormat
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -66,10 +44,10 @@ class PersistentInterceptorTest {
     private val defaultBackoff = RpcDefaults.NAK_BACKOFF
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @AfterEach
     fun resetDefaults() {
@@ -81,7 +59,15 @@ class PersistentInterceptorTest {
         val seen = Channel<Seen>(Channel.UNLIMITED)
         val impl = OrderImpl()
         client.registerService<OrderService>(impl) { call ->
-            seen.send(Seen(call.serviceName, call.methodName, call.messageId, call.deliveryCount, call.requestFingerprint))
+            seen.send(
+                Seen(
+                    call.serviceName,
+                    call.methodName,
+                    call.messageId,
+                    call.deliveryCount,
+                    call.requestFingerprint,
+                ),
+            )
             call.proceed()
         }
 
@@ -92,7 +78,10 @@ class PersistentInterceptorTest {
         assertEquals("Total", call.methodName)
         assertEquals(impl.totalContexts.receive()!!.messageId, call.messageId)
         assertEquals(1, call.deliveryCount)
-        assertEquals(sha256(NatsCodec.encode(TotalRequest.serializer(), TotalRequest(3))), call.requestFingerprint)
+        assertEquals(
+            sha256(NatsCodec.encode(TotalRequest.serializer(), TotalRequest(3))),
+            call.requestFingerprint,
+        )
     }
 
     @Test
@@ -113,7 +102,12 @@ class PersistentInterceptorTest {
         val impl = OrderImpl()
         val stored = AtomicReference<Pair<String, ByteArray>>()
         client.registerService<OrderService>(impl) { call ->
-            stored.get()?.let { (format, bytes) -> return@registerService NatsPersistentReply.restore(format, bytes) }
+            stored.get()?.let { (format, bytes) ->
+                return@registerService NatsPersistentReply.restore(
+                    format,
+                    bytes,
+                )
+            }
             call.proceed().also { stored.set(it.format to it.bytes) }
         }
 
@@ -159,6 +153,7 @@ class PersistentInterceptorTest {
         client.registerService<OrderService>(impl) { call ->
             deliveries += call.deliveryCount
             if (call.deliveryCount == 1L) throw NatsRedeliveryException("database unavailable")
+
             call.proceed()
         }
 
@@ -168,37 +163,35 @@ class PersistentInterceptorTest {
     }
 
     @Test
-    fun `persistent rpc requesting a redelivery on its last delivery is answered with the error`() =
-        withClient { client ->
-            RpcDefaults.NAK_BACKOFF = listOf(100.milliseconds)
-            val streams = client.serviceDescriptor(OrderService::class.java).streams!!
-            val deliveries = ConcurrentLinkedQueue<Long>()
-            client.registerService<OrderService>(OrderImpl()) { call ->
-                deliveries += call.deliveryCount
-                throw NatsRedeliveryException("database unavailable")
-            }
-
-            val exception = assertFailsWith<NatsRemoteException> { total(client, 1) }
-            assertEquals(NatsRedeliveryException::class.java.name, exception.remoteType)
-            assertEquals("database unavailable", exception.remoteMessage)
-            assertEquals((1L..RpcDefaults.MAX_DELIVER.toLong()).toList(), deliveries.toList())
-            eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
+    fun `persistent rpc requesting a redelivery on its last delivery is answered with the error`() = withClient { client ->
+        RpcDefaults.NAK_BACKOFF = listOf(100.milliseconds)
+        val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+        val deliveries = ConcurrentLinkedQueue<Long>()
+        client.registerService<OrderService>(OrderImpl()) { call ->
+            deliveries += call.deliveryCount
+            throw NatsRedeliveryException("database unavailable")
         }
+
+        val exception = assertFailsWith<NatsRemoteException> { total(client, 1) }
+        assertEquals(NatsRedeliveryException::class.java.name, exception.remoteType)
+        assertEquals("database unavailable", exception.remoteMessage)
+        assertEquals((1L..RpcDefaults.MAX_DELIVER.toLong()).toList(), deliveries.toList())
+        eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
+    }
 
     @Test
-    fun `persistent rpc requesting a redelivery after its deadline is answered with the error`() =
-        withClient { client ->
-            RpcDefaults.NAK_BACKOFF = listOf(1.minutes)
-            val deliveries = ConcurrentLinkedQueue<Long>()
-            client.registerService<OrderService>(OrderImpl()) { call ->
-                deliveries += call.deliveryCount
-                throw NatsRedeliveryException("database unavailable")
-            }
-
-            val exception = assertFailsWith<NatsRemoteException> { total(client, 1) }
-            assertEquals(NatsRedeliveryException::class.java.name, exception.remoteType)
-            assertEquals(listOf(1L), deliveries.toList())
+    fun `persistent rpc requesting a redelivery after its deadline is answered with the error`() = withClient { client ->
+        RpcDefaults.NAK_BACKOFF = listOf(1.minutes)
+        val deliveries = ConcurrentLinkedQueue<Long>()
+        client.registerService<OrderService>(OrderImpl()) { call ->
+            deliveries += call.deliveryCount
+            throw NatsRedeliveryException("database unavailable")
         }
+
+        val exception = assertFailsWith<NatsRemoteException> { total(client, 1) }
+        assertEquals(NatsRedeliveryException::class.java.name, exception.remoteType)
+        assertEquals(listOf(1L), deliveries.toList())
+    }
 
     @Test
     fun `stored error reply is answered as a remote exception`() = withClient { client ->
@@ -238,7 +231,10 @@ class PersistentInterceptorTest {
         orders.place(PlaceRequest(2))
         eventually("work queue must be empty after the ack") { messageCount(streams.stream) == 0L }
         delay(300.milliseconds)
-        assertNull(impl.deliveries.tryReceive().getOrNull(), "the handler must not run for the stored fire")
+        assertNull(
+            impl.deliveries.tryReceive().getOrNull(),
+            "the handler must not run for the stored fire",
+        )
         assertEquals(0, messageCount(streams.dlqStream))
     }
 
@@ -249,6 +245,7 @@ class PersistentInterceptorTest {
         val impl = OrderImpl()
         client.registerService<OrderService>(impl) { call ->
             if (call.deliveryCount == 1L) throw NatsRedeliveryException("database unavailable")
+
             call.proceed()
         }
 
@@ -273,30 +270,50 @@ class PersistentInterceptorTest {
 
         eventually("dead letter must be stored") { messageCount(streams.dlqStream) == 1L }
         eventually("work queue must be empty after term") { messageCount(streams.stream) == 0L }
-        val deadHeaders = assertNotNull(jsm().getLastMessage(streams.dlqStream, streams.dlqSubject).headers)
-        assertEquals(NatsRemoteException::class.java.name, deadHeaders.getFirst(ProtocolHeaders.ERROR))
+        val deadHeaders = assertNotNull(
+            jsm().getLastMessage(
+                streams.dlqStream,
+                streams.dlqSubject,
+            ).headers,
+        )
+        assertEquals(
+            NatsRemoteException::class.java.name,
+            deadHeaders.getFirst(ProtocolHeaders.ERROR),
+        )
         assertNull(impl.deliveries.tryReceive().getOrNull())
     }
 
     private suspend fun total(client: NatsClient, id: Long): Number {
-        return withNatsCallTimeout(10.seconds) { client.service<OrderService>().total(TotalRequest(id)) }
+        return withNatsCallTimeout(10.seconds) {
+            client.service<OrderService>().total(
+                TotalRequest(
+                    id,
+                ),
+            )
+        }
     }
 
-    private fun sha256(bytes: ByteArray): String =
-        HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+    private fun sha256(bytes: ByteArray): String {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+    }
 
-    private fun withClient(block: suspend CoroutineScope.(NatsClientImpl) -> Unit) =
-        runTest(timeout = 2.minutes) {
-            val name = "intercept-${UUID.randomUUID().toString().take(8)}"
-            (NatsClient.create(name) as NatsClientImpl).use { client ->
-                val streams = client.serviceDescriptor(OrderService::class.java).streams!!
-                try {
-                    withContext(Dispatchers.Default) { block(client) }
-                } finally {
-                    client.close()
-                    for (stream in listOf(streams.stream, streams.dlqStream)) runCatching { jsm().deleteStream(stream) }
-                    JetStreamProvisioner.invalidate(streams)
-                }
+    private fun withClient(
+        block: suspend CoroutineScope.(NatsClientImpl) -> Unit,
+    ) = runTest(timeout = 2.minutes) {
+        val name = "intercept-${UUID.randomUUID().toString().take(8)}"
+        (NatsClient.create(name) as NatsClientImpl).use { client ->
+            val streams = client.serviceDescriptor(OrderService::class.java).streams!!
+
+            try {
+                withContext(Dispatchers.Default) { block(client) }
+            } finally {
+                client.close()
+                for (stream in listOf(
+                    streams.stream,
+                    streams.dlqStream,
+                )) runCatching { jsm().deleteStream(stream) }
+                JetStreamProvisioner.invalidate(streams)
             }
         }
+    }
 }

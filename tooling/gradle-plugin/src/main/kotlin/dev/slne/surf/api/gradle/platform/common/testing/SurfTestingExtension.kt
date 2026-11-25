@@ -20,21 +20,19 @@ open class SurfTestingExtension @Inject constructor(objects: ObjectFactory) {
 
     val mockk: Property<Boolean> = objects.property<Boolean>().convention(true)
     val lincheck: Property<Boolean> = objects.property<Boolean>().convention(true)
-    val mockBukkit: Property<Boolean> = objects.property<Boolean>().convention(false)
     val minestomTesting: Property<Boolean> = objects.property<Boolean>().convention(true)
 
-    val junitVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_JUNIT_VERSION)
-    val junitPlatformLauncherVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_JUNIT_PLATFORM_LAUNCHER_VERSION)
-    val mockkVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_MOCKK_VERSION)
-    val lincheckVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_LINCHECK_VERSION)
-    val mockBukkitVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_MOCKBUKKIT_VERSION)
-    val minestomTestingVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_MINESTOM_TESTING_VERSION)
-    val coroutinesTestVersion: Property<String> =
-        objects.property<String>().convention(Constants.TEST_COROUTINES_VERSION)
+    val junitVersion: Property<String> = objects.property<String>()
+        .convention(Constants.TEST_JUNIT_VERSION)
+    val junitPlatformLauncherVersion: Property<String> = objects.property<String>().convention(
+        Constants.TEST_JUNIT_PLATFORM_LAUNCHER_VERSION,
+    )
+    val mockkVersion: Property<String> = objects.property<String>()
+        .convention(Constants.TEST_MOCKK_VERSION)
+    val lincheckVersion: Property<String> = objects.property<String>()
+        .convention(Constants.TEST_LINCHECK_VERSION)
+    val minestomTestingVersion: Property<String> = objects.property<String>()
+        .convention(Constants.TEST_MINESTOM_TESTING_VERSION)
+    val coroutinesTestVersion: Property<String> = objects.property<String>()
+        .convention(Constants.TEST_COROUTINES_VERSION)
 }

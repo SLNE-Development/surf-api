@@ -1,10 +1,6 @@
 package dev.slne.surf.nats.rpc
 
-import dev.slne.surf.nats.LimitedService
-import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsInstance
-import dev.slne.surf.nats.registerService
-import dev.slne.surf.nats.service
+import dev.slne.surf.nats.*
 import dev.slne.surf.nats.test.proto.v1.Text
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.AfterAll
@@ -25,10 +21,10 @@ class HandlerLimitTest {
     private var clientCounter = 0
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     private class LimitedImpl : LimitedService {
         val holding = CompletableDeferred<Unit>()
@@ -38,6 +34,7 @@ class HandlerLimitTest {
         override suspend fun hold(): Text {
             holding.complete(Unit)
             gate.await()
+
             return Text("hold")
         }
 
@@ -47,6 +44,7 @@ class HandlerLimitTest {
 
         private fun record(name: String): Text {
             ran += name
+
             return Text(name)
         }
     }
@@ -60,7 +58,10 @@ class HandlerLimitTest {
         delay(200.milliseconds)
         val early = async { withNatsCallTimeout(4.seconds) { service.early() } }
         delay(200.milliseconds)
-        assertTrue(impl.ran.isEmpty(), "a call ran while the only handler slot was taken: ${impl.ran}")
+        assertTrue(
+            impl.ran.isEmpty(),
+            "a call ran while the only handler slot was taken: ${impl.ran}",
+        )
 
         impl.gate.complete(Unit)
         awaitAll(held, late, early)
@@ -72,11 +73,17 @@ class HandlerLimitTest {
         val held = async { withNatsCallTimeout(10.seconds) { service.hold() } }
         withTimeout(5.seconds) { impl.holding.await() }
 
-        assertFailsWith<NatsCallTimeoutException> { withNatsCallTimeout(300.milliseconds) { service.early() } }
+        assertFailsWith<NatsCallTimeoutException> {
+            withNatsCallTimeout(300.milliseconds) { service.early() }
+        }
 
         impl.gate.complete(Unit)
         held.await()
-        assertEquals(Text("late"), withNatsCallTimeout(2.seconds) { service.late() }, "the slot was not freed")
+        assertEquals(
+            Text("late"),
+            withNatsCallTimeout(2.seconds) { service.late() },
+            "the slot was not freed",
+        )
         assertEquals(listOf("late"), impl.ran)
     }
 

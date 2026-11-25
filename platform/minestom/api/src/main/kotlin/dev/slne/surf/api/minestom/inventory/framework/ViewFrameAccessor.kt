@@ -1,12 +1,10 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.minestom.inventory.framework
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import dev.slne.surf.api.spring.surfBean
 import me.devnatan.inventoryframework.ViewFrame
 import org.jetbrains.annotations.ApiStatus
-import dev.slne.surf.api.spring.SurfApiBean
 
 /**
  * Provides the server's inventory framework [ViewFrame].
@@ -22,9 +20,12 @@ interface ViewFrameAccessor {
      * Returns the server's [ViewFrame], the registry of all inventory views.
      */
     fun viewFrame(): ViewFrame
-}
 
-/**
- * The server's [ViewFrame], for the extension functions of this package.
- */
-internal val viewFrame: ViewFrame by surfBean<ViewFrame>()
+    @InternalSurfApi
+    companion object {
+        /**
+         * The server's [ViewFrame], for the extension functions of this package.
+         */
+        internal val viewFrame by surfBean<ViewFrame>()
+    }
+}

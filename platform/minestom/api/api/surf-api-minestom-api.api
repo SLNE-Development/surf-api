@@ -226,13 +226,13 @@ public abstract class dev/slne/surf/api/minestom/command/argument/Argument : dev
 	public synthetic fun executesConsole (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/minestom/command/executor/CommandExecutable;
 	public fun executesPlayer (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/minestom/command/argument/Argument;
 	public synthetic fun executesPlayer (Lkotlin/jvm/functions/Function2;)Ldev/slne/surf/api/minestom/command/executor/CommandExecutable;
-	protected fun getGreedy ()Z
 	protected abstract fun getKind ()Ldev/slne/surf/api/minestom/command/argument/ArgumentKind;
 	protected fun getListDelimiter ()Ljava/lang/Character;
 	public final fun getNodeName ()Ljava/lang/String;
 	protected abstract fun getRawType ()Lcom/mojang/brigadier/arguments/ArgumentType;
 	public final fun includeSafeSuggestions (Ldev/slne/surf/api/minestom/command/suggestion/SafeSuggestions;)Ldev/slne/surf/api/minestom/command/argument/Argument;
 	public final fun includeSuggestions (Ldev/slne/surf/api/minestom/command/suggestion/ArgumentSuggestions;)Ldev/slne/surf/api/minestom/command/argument/Argument;
+	protected fun isGreedy ()Z
 	public final fun replaceSafeSuggestions (Ldev/slne/surf/api/minestom/command/suggestion/SafeSuggestions;)Ldev/slne/surf/api/minestom/command/argument/Argument;
 	public final fun replaceSuggestions (Ldev/slne/surf/api/minestom/command/suggestion/ArgumentSuggestions;)Ldev/slne/surf/api/minestom/command/argument/Argument;
 	public final fun setOptional (Ljava/lang/Object;)Ldev/slne/surf/api/minestom/command/argument/Argument;
@@ -262,7 +262,6 @@ public final class dev/slne/surf/api/minestom/command/argument/ArgumentDefinitio
 	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/command/argument/ArgumentDefinition;Ljava/lang/String;Ldev/slne/surf/api/minestom/command/argument/ArgumentKind;ZLkotlin/jvm/functions/Function1;Ljava/util/Set;Ljava/util/List;Ldev/slne/surf/api/minestom/command/argument/SuggestionMode;ZLcom/mojang/brigadier/arguments/ArgumentType;Lkotlin/jvm/functions/Function1;Ljava/lang/Character;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/argument/ArgumentDefinition;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDefaultValue ()Lkotlin/jvm/functions/Function1;
-	public final fun getGreedy ()Z
 	public final fun getKind ()Ldev/slne/surf/api/minestom/command/argument/ArgumentKind;
 	public final fun getListDelimiter ()Ljava/lang/Character;
 	public final fun getNodeName ()Ljava/lang/String;
@@ -273,6 +272,7 @@ public final class dev/slne/surf/api/minestom/command/argument/ArgumentDefinitio
 	public final fun getStringify ()Lkotlin/jvm/functions/Function1;
 	public final fun getSuggestions ()Ldev/slne/surf/api/minestom/command/argument/SuggestionMode;
 	public fun hashCode ()I
+	public final fun isGreedy ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -671,10 +671,10 @@ public final class dev/slne/surf/api/minestom/command/argument/CompositeArgument
 
 public class dev/slne/surf/api/minestom/command/argument/CustomArgument : dev/slne/surf/api/minestom/command/argument/Argument {
 	public fun <init> (Ldev/slne/surf/api/minestom/command/argument/Argument;Lkotlin/jvm/functions/Function1;)V
-	protected fun getGreedy ()Z
 	protected fun getKind ()Ldev/slne/surf/api/minestom/command/argument/ArgumentKind;
 	protected fun getListDelimiter ()Ljava/lang/Character;
 	protected fun getRawType ()Lcom/mojang/brigadier/arguments/ArgumentType;
+	protected fun isGreedy ()Z
 	protected fun stringify (Ljava/lang/Object;)Ljava/lang/String;
 }
 
@@ -1438,10 +1438,10 @@ public final class dev/slne/surf/api/minestom/command/executor/ParsedArgument {
 	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/command/executor/ParsedArgument;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/String;ZILjava/lang/Object;)Ldev/slne/surf/api/minestom/command/executor/ParsedArgument;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getName ()Ljava/lang/String;
-	public final fun getPresent ()Z
 	public final fun getRaw ()Ljava/lang/String;
 	public final fun getValue ()Ljava/lang/Object;
 	public fun hashCode ()I
+	public final fun isPresent ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -2519,8 +2519,6 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public fun <init> ()V
 	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;)V
-	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lnet/kyori/adventure/key/Key;
 	public final fun component10 ()Z
 	public final fun component11 ()Z
@@ -2540,9 +2538,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public final fun component8 ()Ljava/util/Map;
 	public final fun component9 ()Z
 	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
-	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
 	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationEmptyRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;Ldev/slne/surf/api/inventory/framework/view/pagination/PaginationPageIndicator;Lnet/kyori/adventure/sound/Sound;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/PaginationViewRows;Ldev/slne/surf/api/inventory/framework/view/settings/PaginationButtonPosition;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/PaginatedViewSettings;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getBackgroundGlyph ()Z
 	public fun getCancelOnClick ()Z
@@ -2573,8 +2569,6 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public fun <init> ()V
 	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;)V
 	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;)V
-	public synthetic fun <init> (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lnet/kyori/adventure/key/Key;
 	public final fun component10 ()Z
 	public final fun component11 ()Z
@@ -2590,9 +2584,7 @@ public final class dev/slne/surf/api/minestom/inventory/framework/view/settings/
 	public final fun component8 ()Ljava/util/Map;
 	public final fun component9 ()Z
 	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
-	public final fun copy (Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
 	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;Lnet/kyori/adventure/text/format/TextColor;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewFontMetrics;Ldev/slne/surf/api/inventory/framework/view/settings/ViewHeaderGeometry;ZLjava/util/Map;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;Lnet/kyori/adventure/key/Key;Ldev/slne/surf/api/inventory/framework/view/settings/align/TextAlignment;ZZZZZLdev/slne/surf/api/inventory/framework/view/settings/ViewRows;ILjava/lang/Object;)Ldev/slne/surf/api/minestom/inventory/framework/view/settings/SimpleViewSettings;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getBackgroundGlyph ()Z
 	public fun getCancelOnClick ()Z

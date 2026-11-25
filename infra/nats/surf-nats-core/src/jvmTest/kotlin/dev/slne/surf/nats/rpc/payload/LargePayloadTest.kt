@@ -10,15 +10,14 @@ import dev.slne.surf.nats.protocol.PayloadBucket
 import dev.slne.surf.nats.protocol.ProtocolDefaults
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.rpc.Answer
+import dev.slne.surf.nats.rpc.MethodDescriptor
 import dev.slne.surf.nats.rpc.withNatsCallTimeout
 import dev.slne.surf.nats.runtime.headerLineBytes
-import dev.slne.surf.nats.test.proto.v1.Blob
-import dev.slne.surf.nats.test.proto.v1.BlobFanoutService
-import dev.slne.surf.nats.test.proto.v1.BlobService
-import dev.slne.surf.nats.test.proto.v1.CreateRequest
+import dev.slne.surf.nats.test.proto.v1.*
 import dev.slne.surf.nats.test.proto.v1.Number
-import io.nats.client.api.ObjectStoreConfiguration
 import io.nats.client.Message
+import io.nats.client.ObjectStore
+import io.nats.client.api.ObjectStoreConfiguration
 import io.nats.client.api.StorageType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -40,6 +39,7 @@ class LargePayloadTest {
 
         override suspend fun checksum(request: Blob): Number {
             calls.incrementAndGet()
+
             return Number(request.data.checksum())
         }
 
@@ -55,7 +55,9 @@ class LargePayloadTest {
             received.send(request.data)
         }
 
-        override suspend fun find(request: CreateRequest): Answer<Blob> = Answer.Known(Blob(blob(request.size)))
+        override suspend fun find(request: CreateRequest): Answer<Blob> {
+            return Answer.Known(Blob(blob(request.size)))
+        }
     }
 
     internal class Fixture(val client: NatsClientImpl, val blobs: BlobService, val impl: BlobImpl)
@@ -63,10 +65,10 @@ class LargePayloadTest {
     private var clientCounter = 0
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @Test
     fun `large request roundtrips and the request object is deleted`() = withService {
@@ -104,14 +106,19 @@ class LargePayloadTest {
 
         assertNull(reply.headers.getFirst(ProtocolHeaders.PAYLOAD_REF))
         val contentType = reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
-        assertContentEquals(blob(1_000), NatsCodec.decode(Blob.serializer(), reply.data, contentType).data)
+        assertContentEquals(
+            blob(1_000),
+            NatsCodec.decode(Blob.serializer(), reply.data, contentType).data,
+        )
     }
 
     @Test
     fun `requests are offloaded exactly above the reserved payload size`() = runTest(timeout = 2.minutes) {
         withContext(Dispatchers.Default) {
             (NatsClient.create("rpc-payload-${clientCounter++}") as NatsClientImpl).use { client ->
-                val subject = client.serviceDescriptor(BlobService::class.java).methods.single { it.kotlinName == "checksum" }.subject
+                val subject = client.serviceDescriptor(BlobService::class.java)
+                    .methods.single { it.kotlinName == "checksum" }
+                    .subject
                 val connection = NatsConnectionManager.connection()
                 val requests = Channel<Message>(Channel.UNLIMITED)
                 val dispatcher = connection.createDispatcher { request ->
@@ -121,11 +128,14 @@ class LargePayloadTest {
                 }
                 dispatcher.subscribe(subject)
                 connection.flush(Duration.ofSeconds(5))
+
                 try {
-                    // Headers at the size check: the base headers and the Surf-Deadline line (13 digits)
+                    // Headers at the size check: the base headers and the Surf-Deadline line (13
+                    // digits)
                     val headerBytes = client.headers().serializedLength() +
-                            headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
-                    val maxBody = (connection.maxPayload - headerBytes - ProtocolDefaults.PAYLOAD_REF_RESERVE).toInt()
+                        headerLineBytes(ProtocolHeaders.DEADLINE, "0".repeat(13))
+                    val reserve = ProtocolDefaults.PAYLOAD_REF_RESERVE
+                    val maxBody = (connection.maxPayload - headerBytes - reserve).toInt()
                     // Blob(data) is the field tag, a 3-byte length varint and the data
                     val atThreshold = maxBody - 4
 
@@ -161,14 +171,19 @@ class LargePayloadTest {
 
         val data = PayloadStore.resolve(reply, PayloadBucket.TRANSIENT, delete = true)
         val contentType = reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
-        assertContentEquals(blob(LARGE), NatsCodec.decode(Blob.serializer(), data, contentType).data)
+        assertContentEquals(
+            blob(LARGE),
+            NatsCodec.decode(Blob.serializer(), data, contentType).data,
+        )
     }
 
     @Test
     fun `fan-out payload is shared by all receivers and not deleted`() = withService {
         val impl = FanoutImpl()
         client.registerService<BlobFanoutService>(impl)
-        val method = client.serviceDescriptor(BlobFanoutService::class.java).methods.single { it.kotlinName == "push" }
+        val method = client.serviceDescriptor(BlobFanoutService::class.java).methods.single {
+            it.kotlinName == "push"
+        }
 
         val connection = NatsConnectionManager.connection()
         val other = connection.subscribe(method.subject)
@@ -176,20 +191,28 @@ class LargePayloadTest {
 
         val data = blob(LARGE)
         val before = liveObjects()
+
         try {
             client.service<BlobFanoutService>().push(Blob(data))
 
             assertContentEquals(data, withTimeout(30.seconds) { impl.received.receive() })
 
-            val message = assertNotNull(other.nextMessage(Duration.ofSeconds(30)), "other receiver got nothing")
+            val message = assertNotNull(
+                other.nextMessage(Duration.ofSeconds(30)),
+                "other receiver got nothing",
+            )
             val name = assertNotNull(message.headers.getFirst(ProtocolHeaders.PAYLOAD_REF))
             val request = method.decodeRequest(
                 PayloadStore.resolve(message, PayloadBucket.TRANSIENT, delete = false),
-                message.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
+                message.headers.getFirst(ProtocolHeaders.CONTENT_TYPE),
             )
             assertContentEquals(data, (request as Blob).data)
 
-            assertEquals(before + name, liveObjects(), "fan-out object must stay until the bucket TTL")
+            assertEquals(
+                before + name,
+                liveObjects(),
+                "fan-out object must stay until the bucket TTL",
+            )
             store().delete(name)
         } finally {
             other.unsubscribe()
@@ -201,7 +224,11 @@ class LargePayloadTest {
         client.registerService<BlobFanoutService>(FanoutImpl())
         val before = liveObjects()
 
-        val answer = withNatsCallTimeout(30.seconds) { client.service<BlobFanoutService>().find(CreateRequest(LARGE)) }
+        val answer = withNatsCallTimeout(30.seconds) {
+            client.service<BlobFanoutService>().find(
+                CreateRequest(LARGE),
+            )
+        }
 
         val value = assertIs<Answer.Known<Blob>>(answer).value
         assertContentEquals(blob(LARGE), value.data)
@@ -220,7 +247,10 @@ class LargePayloadTest {
         assertEquals(before, liveObjects())
 
         val small = blob(1_000)
-        assertEquals(Number(small.checksum()), withNatsCallTimeout(tooLong) { blobs.checksum(Blob(small)) })
+        assertEquals(
+            Number(small.checksum()),
+            withNatsCallTimeout(tooLong) { blobs.checksum(Blob(small)) },
+        )
     }
 
     @Test
@@ -239,7 +269,9 @@ class LargePayloadTest {
     fun `bucket is created with the payload TTL`() = withService {
         blobs.checksum(Blob(blob(LARGE)))
 
-        val status = NatsConnectionManager.connection().objectStoreManagement().getStatus(PayloadBucket.TRANSIENT.bucketName)
+        val status = NatsConnectionManager.connection().objectStoreManagement().getStatus(
+            PayloadBucket.TRANSIENT.bucketName,
+        )
         assertEquals(PayloadBucket.TRANSIENT.ttl.inWholeSeconds, status.ttl?.toSeconds())
         assertEquals(StorageType.File, status.storageType)
     }
@@ -248,15 +280,24 @@ class LargePayloadTest {
     fun `existing bucket with a different configuration is reused`() = runTest(timeout = 2.minutes) {
         withContext(Dispatchers.Default) {
             val ttl = Duration.ofMinutes(1)
-            recreateBucket(ObjectStoreConfiguration.builder(PayloadBucket.TRANSIENT.bucketName).ttl(ttl).build())
-            try {
-                (NatsClient.create("rpc-payload-${clientCounter++}") as NatsClientImpl).use { client ->
-                    val impl = BlobImpl()
-                    client.registerService<BlobService>(impl)
-                    val data = blob(LARGE)
+            recreateBucket(
+                ObjectStoreConfiguration.builder(PayloadBucket.TRANSIENT.bucketName).ttl(
+                    ttl,
+                ).build(),
+            )
 
-                    assertEquals(Number(data.checksum()), client.service<BlobService>().checksum(Blob(data)))
-                }
+            try {
+                (NatsClient.create("rpc-payload-${clientCounter++}") as NatsClientImpl)
+                    .use { client ->
+                        val impl = BlobImpl()
+                        client.registerService<BlobService>(impl)
+                        val data = blob(LARGE)
+
+                        assertEquals(
+                            Number(data.checksum()),
+                            client.service<BlobService>().checksum(Blob(data)),
+                        )
+                    }
 
                 val status = NatsConnectionManager.connection().objectStoreManagement()
                     .getStatus(PayloadBucket.TRANSIENT.bucketName)
@@ -270,11 +311,18 @@ class LargePayloadTest {
     private suspend fun recreateBucket(config: ObjectStoreConfiguration?) {
         val management = NatsConnectionManager.connection().objectStoreManagement()
         withContext(Dispatchers.IO) {
-            if (PayloadBucket.TRANSIENT.bucketName in management.bucketNames) management.delete(PayloadBucket.TRANSIENT.bucketName)
-            if (config != null) management.create(config)
+            if (PayloadBucket.TRANSIENT.bucketName in management.bucketNames) {
+                management.delete(
+                    PayloadBucket.TRANSIENT.bucketName,
+                )
+            }
+
+            if (config != null) {
+                management.create(config)
+            }
         }
-        NatsInstance.instance.disable()
-        NatsInstance.instance.load()
+        TestNats.disable()
+        TestNats.load()
     }
 
     private fun withService(block: suspend Fixture.() -> Unit) = runTest(timeout = 2.minutes) {
@@ -286,15 +334,23 @@ class LargePayloadTest {
         }
     }
 
-    private fun Fixture.method(name: String) =
-        client.serviceDescriptor(BlobService::class.java).methods.single { it.kotlinName == name }
+    private fun Fixture.method(name: String): MethodDescriptor {
+        return client.serviceDescriptor(BlobService::class.java).methods.single {
+            it.kotlinName == name
+        }
+    }
 
-    private fun store() = NatsConnectionManager.connection().objectStore(PayloadBucket.TRANSIENT.bucketName)
+    private fun store(): ObjectStore {
+        return NatsConnectionManager.connection().objectStore(PayloadBucket.TRANSIENT.bucketName)
+    }
 
     private fun liveObjects(): Set<String> {
         val management = NatsConnectionManager.connection().objectStoreManagement()
         if (PayloadBucket.TRANSIENT.bucketName !in management.bucketNames) return emptySet()
-        return store().list.filterNot { it.isDeleted }.mapTo(HashSet()) { it.objectName }
+
+        return store().list
+            .filterNot { it.isDeleted }
+            .mapTo(HashSet()) { it.objectName }
     }
 
     companion object {

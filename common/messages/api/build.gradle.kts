@@ -7,10 +7,12 @@ dependencies {
     api(projects.surfApiCommonApi)
     api(projects.surfApiAnnotations)
     api(projects.surfApiSpringApi)
-    api(libs.bundles.kotlin.coroutines)
+    compileOnlyApi(libs.bundles.kotlin.coroutines)
 
     compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.brigadier) { isTransitive = false }
+
+    testImplementation(libs.adventure.serializer.plain)
 }
 
 description = "surf-api-messages-api"

@@ -8,9 +8,9 @@ import java.io.Serial
  * Messages include the codec identity and the event or synchronized-structure context in which
  * the failure occurred.
  */
-class RedisCodecException @JvmOverloads constructor(
+class RedisCodecException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause) {
     companion object {
         @Serial

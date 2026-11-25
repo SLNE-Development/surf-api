@@ -12,5 +12,3 @@ dependencies {
 }
 
 description = "surf-api-minestom-spark-impl"
-
-publishRelocationFrom("surf-api-minestom-server-spark")

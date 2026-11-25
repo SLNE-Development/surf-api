@@ -8,9 +8,7 @@ dependencies {
     api(projects.surfApiMessagesApi)
     api(projects.surfApiSpringApi)
 
-    api(libs.configurate.yaml)
-    api(libs.configurate.jackson)
-    api(libs.configurate.kotlin)
+    compileOnlyApi(libs.bundles.configurate)
     compileOnlyApi(libs.commons.lang3)
 }
 

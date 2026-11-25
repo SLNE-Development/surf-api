@@ -60,18 +60,20 @@ object CommandAPIHook {
      * while no platform is active.
      */
     @JvmStatic
-    fun declare(packet: DeclareCommandsPacket, player: Player): DeclareCommandsPacket =
-        MinestomCommandAPIPlatform.activeMerger()?.merge(packet, player) ?: packet
+    fun declare(packet: DeclareCommandsPacket, player: Player): DeclareCommandsPacket {
+        return MinestomCommandAPIPlatform.activeMerger()?.merge(packet, player) ?: packet
+    }
 
     /**
      * Reports an input that no command registry resolved, in vanilla's layout.
      *
      * Installed as the manager's unknown command callback by [MinestomCommandAPIService].
      */
-    @JvmStatic
-    fun reportUnknown(sender: CommandSender, input: String) =
+    fun reportUnknown(sender: CommandSender, input: String) {
         reportUnknownCommand(sender, input.removePrefix("/"))
+    }
 
-    private fun ownership(): MinestomCommandOwnership? =
-        MinestomCommandAPIPlatform.activeOwnership()
+    private fun ownership(): MinestomCommandOwnership? {
+        return MinestomCommandAPIPlatform.activeOwnership()
+    }
 }

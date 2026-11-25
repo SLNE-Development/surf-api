@@ -15,7 +15,7 @@ import org.bukkit.plugin.Plugin
  * @return the configured sidebar
  */
 fun sidebar(plugin: Plugin, block: SidebarBuilder.() -> Unit): SurfViewerSidebar {
-    return SurfSidebarFactory.INSTANCE.createSidebar(plugin, block)
+    return SurfSidebarFactory.instance.createSidebar(plugin, block)
 }
 
 /**
@@ -27,8 +27,8 @@ fun sidebar(plugin: Plugin, block: SidebarBuilder.() -> Unit): SurfViewerSidebar
  */
 fun autoUpdatingSidebar(
     plugin: Plugin,
-    block: AutoUpdatingSidebarBuilder.() -> Unit
-): SurfAutoUpdatingSidebar = SurfSidebarFactory.INSTANCE.createAutoUpdatingSidebar(plugin, block)
+    block: AutoUpdatingSidebarBuilder.() -> Unit,
+): SurfAutoUpdatingSidebar = SurfSidebarFactory.instance.createAutoUpdatingSidebar(plugin, block)
 
 /**
  * Creates an automatically updating sidebar shown to all online players.
@@ -39,8 +39,8 @@ fun autoUpdatingSidebar(
  */
 fun globalSidebar(
     plugin: Plugin,
-    block: AutoUpdatingSidebarBuilder.() -> Unit
-): SurfGlobalSidebar = SurfSidebarFactory.INSTANCE.createGlobalSidebar(plugin, block)
+    block: AutoUpdatingSidebarBuilder.() -> Unit,
+): SurfGlobalSidebar = SurfSidebarFactory.instance.createGlobalSidebar(plugin, block)
 
 /**
  * Internal factory for creating sidebar implementations.
@@ -51,16 +51,16 @@ interface SurfSidebarFactory {
 
     fun createAutoUpdatingSidebar(
         plugin: Plugin,
-        block: AutoUpdatingSidebarBuilder.() -> Unit
+        block: AutoUpdatingSidebarBuilder.() -> Unit,
     ): SurfAutoUpdatingSidebar
 
     fun createGlobalSidebar(
         plugin: Plugin,
-        block: AutoUpdatingSidebarBuilder.() -> Unit
+        block: AutoUpdatingSidebarBuilder.() -> Unit,
     ): SurfGlobalSidebar
 
     @InternalSurfApi
     companion object {
-        internal val INSTANCE by surfBean<SurfSidebarFactory>()
+        internal val instance by surfBean<SurfSidebarFactory>()
     }
 }

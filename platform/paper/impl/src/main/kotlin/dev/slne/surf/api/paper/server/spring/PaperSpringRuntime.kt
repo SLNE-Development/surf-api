@@ -6,17 +6,25 @@ import dev.slne.surf.api.core.server.spring.SurfEventHandlerBeans
 import dev.slne.surf.api.paper.coroutine.PaperDispatchers
 import dev.slne.surf.api.paper.coroutine.PaperDispatchersElement
 import dev.slne.surf.api.paper.coroutine.PluginDispatchers
+import dev.slne.surf.api.paper.nms.common.NmsVersionResolver
 import dev.slne.surf.api.paper.plugin.SurfPaperBootstrapper
 import dev.slne.surf.api.paper.plugin.SurfPaperPlugin
 import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
+import dev.slne.surf.api.paper.server.hook.papi.PapiExpansionBeans
+import dev.slne.surf.api.paper.server.hook.papi.PapiExpansionRegistration
+import dev.slne.surf.api.paper.server.hook.papi.SurfPaperPAPIHookImpl
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.*
+import io.papermc.paper.ServerBuildInfo
 import io.papermc.paper.plugin.bootstrap.BootstrapContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import org.bukkit.Bukkit
 import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
+import org.springframework.beans.factory.getBean
 import org.springframework.beans.factory.getBeansOfType
 import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
@@ -28,9 +36,9 @@ import java.util.concurrent.ConcurrentHashMap
  * plugin.
  *
  * The root bootstrap context is built with the runtime, in surf-api's bootstrap phase, and holds
- * surf-api's bootstrap components; the plugins' bootstrap contexts sit below it. The root context
- * with the rest of surf-api's beans is built in surf-api's load phase by [loadRoot]; the plugins'
- * full contexts sit below it.
+ * surf-api's bootstrap components and the NMS version selected for the server; the plugins'
+ * bootstrap contexts sit below it. The root context with the rest of surf-api's beans is built in
+ * surf-api's load phase by [loadRoot]; the plugins' full contexts sit below it.
  *
  * In a plugin's bootstrap phase it builds the plugin's bootstrap context; in the load phase, after
  * Paper created the plugin instance and every plugin's classes are visible, the full context.
@@ -40,9 +48,9 @@ import java.util.concurrent.ConcurrentHashMap
  * Every plugin context and surf-api's root context hold a `CoroutineScope` and a
  * `PaperDispatchers` bean; the plugin's are primary, so its beans get its own.
  *
- * In the enable phase it registers the plugin's Bukkit listeners, commands and event bus listeners
- * before the plugin's enable hooks run. A plugin whose load phase failed is never enabled: [enable]
- * throws, and Paper disables it.
+ * In the enable phase it registers the plugin's Bukkit listeners, commands, event bus listeners and
+ * PlaceholderAPI expansions before the plugin's enable hooks run. A plugin whose load phase failed
+ * is never enabled: [enable] throws, and Paper disables it.
  */
 @Suppress("UnstableApiUsage")
 internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
@@ -52,6 +60,13 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         classLoader = surfClassLoader,
         coroutineScope = null,
         bootstrap = true,
+        configure = { context ->
+            val minecraftVersion = ServerBuildInfo.buildInfo().minecraftVersionId()
+            context.beanFactory.registerSingleton(
+                NmsVersionResolver.BEAN_NAME,
+                NmsVersionResolver.resolve(minecraftVersion),
+            )
+        },
     )
 
     private val contexts = SurfContextManager(rootBootstrap.context, PaperPluginPresence)
@@ -78,13 +93,13 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
             ROOT_OWNER,
             surfClassLoader,
             Dispatchers.Default,
-            PaperDispatchersElement(rootDispatchers)
+            PaperDispatchersElement(rootDispatchers),
         )
     }
 
     /**
-     * Runs one of surf-api's own lifecycle phases blocking on the calling thread, with work for that
-     * thread routed into the phase.
+     * Runs one of surf-api's own lifecycle phases blocking on the calling thread, with work for
+     * that thread routed into the phase.
      */
     fun <T> runRootPhase(phase: suspend () -> T): T {
         return runBlocking(PaperDispatchersElement(rootDispatchers)) {
@@ -107,6 +122,8 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
             coroutineScope = rootScope,
             parent = rootBootstrap,
             configure = { context ->
+                context.beanFactory.registerSingleton(SERVER_BEAN, Bukkit.getServer())
+                context.registerBeanDefinition(ROOT_PLUGIN_BEAN, rootPluginDefinition())
                 registerDispatchers(context, rootDispatchers, primary = false)
             },
         )
@@ -144,6 +161,7 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
             contexts.close(descriptor.name)
             throw exception
         }
+
         plugins[descriptor.name] = PaperPluginState(descriptor, instance)
     }
 
@@ -163,7 +181,12 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
             val pluginContext = contexts.start(state.descriptor, scope) { pluginContext ->
                 pluginContext.registerBeanDefinition(
                     PLUGIN_INSTANCE_BEAN,
-                    state.instance.instanceDefinition(plugin)
+                    state.instance.instanceDefinition(plugin),
+                )
+                pluginContext.registerFallbackInstance(
+                    PLUGIN_LOGGER_BEAN,
+                    ComponentLogger::class.java,
+                    plugin.componentLogger,
                 )
                 registerDispatchers(pluginContext, dispatchers, primary = true)
             }
@@ -180,20 +203,28 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         state.loadFailure?.let { failure ->
             throw IllegalStateException(
                 "Plugin '${plugin.name}' failed to load and cannot be enabled",
-                failure
+                failure,
             )
         }
         val pluginContext = contextOf(plugin)
-        val dispatchers =
-            checkNotNull(state.dispatchers) { "Plugin '${plugin.name}' has no dispatchers" }
+        val dispatchers = checkNotNull(state.dispatchers) {
+            "Plugin '${plugin.name}' has no dispatchers"
+        }
 
-        pluginContext.beanContexts.forEach { context ->
-            context.getBeansOfType<Listener>().values.forEach { listener ->
+        for (context in pluginContext.beanContexts) {
+            for (listener in context.getBeansOfType<Listener>().values) {
                 plugin.server.pluginManager.registerEvents(listener, plugin)
             }
         }
+
         CommandApiCommandBeans.register(pluginContext.beanContexts)
         SurfEventHandlerBeans.register(pluginContext.beanContexts, state.surfEventListeners)
+        PapiExpansionBeans.register(
+            pluginContext.context,
+            plugin,
+            checkNotNull(papiHook()) { "surf-api's root context is not loaded" },
+            state.papiExpansions,
+        )
 
         runBlocking {
             dispatchers.lifecycle {
@@ -205,14 +236,20 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
 
     override fun disable(plugin: SurfPaperPlugin) {
         val dispatchers = plugins[plugin.name]?.dispatchers
+
         try {
             contexts.find(plugin.name)
                 ?.let { pluginContext -> runBlocking { disable(pluginContext, dispatchers) } }
         } finally {
             dispatchers?.close()
+
             try {
                 // Bukkit listeners are unregistered by Paper itself when it disables the plugin.
-                plugins[plugin.name]?.let { state -> SurfEventHandlerBeans.unregister(state.surfEventListeners) }
+                val state = plugins[plugin.name]
+
+                if (state != null) {
+                    unregisterBeans(state)
+                }
             } finally {
                 contexts.close(plugin.name)
                 plugins.remove(plugin.name)
@@ -229,10 +266,11 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
      */
     fun closePlugins() {
         try {
-            plugins.values.forEach { state ->
+            for (state in plugins.values) {
                 runCatching { state.dispatchers?.run { beginDisable(); close() } }
                     .onFailure {
-                        log.atSevere().withCause(it)
+                        log.atSevere()
+                            .withCause(it)
                             .log("Failed to close the dispatchers of %s", state.descriptor.name)
                     }
             }
@@ -272,7 +310,9 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         return if (plugin === rootPlugin) {
             rootDispatchers
         } else {
-            checkNotNull(plugins[plugin.name]?.dispatchers) { "Plugin '${plugin.name}' does not run on surf-api or has not loaded yet" }
+            checkNotNull(plugins[plugin.name]?.dispatchers) {
+                "Plugin '${plugin.name}' does not run on surf-api or has not loaded yet"
+            }
         }
     }
 
@@ -291,7 +331,7 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
 
     private fun describe(
         bootstrapper: SurfPaperBootstrapper,
-        context: BootstrapContext
+        context: BootstrapContext,
     ): PluginDescriptor {
         val type = bootstrapper.javaClass
         val meta = context.pluginMeta
@@ -307,10 +347,54 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         )
     }
 
+    private fun unregisterBeans(state: PaperPluginState) {
+        try {
+            SurfEventHandlerBeans.unregister(state.surfEventListeners)
+        } finally {
+            unregisterPapiExpansions(state)
+        }
+    }
+
+    private fun unregisterPapiExpansions(state: PaperPluginState) {
+        val registration = state.papiExpansions
+
+        try {
+            val papiHook = papiHook()
+
+            if (papiHook != null) {
+                PapiExpansionBeans.unregister(papiHook, registration)
+            }
+        } finally {
+            val beanFactory = contexts.find(state.descriptor.name)?.context?.beanFactory
+
+            if (beanFactory != null) {
+                PapiExpansionBeans.destroyCreatedInstances(beanFactory, registration)
+            }
+        }
+    }
+
+    private fun papiHook(): SurfPaperPAPIHookImpl? {
+        return root?.context?.getBean<SurfPaperPAPIHookImpl>()
+    }
+
     private fun stateOf(plugin: SurfPaperPlugin): PaperPluginState {
         return checkNotNull(plugins[plugin.name]) {
             "Plugin '${plugin.name}' was not bootstrapped by surf-api. Its bootstrapper must extend " +
-                    "SurfPaperBootstrapper and must not have failed."
+                "SurfPaperBootstrapper and must not have failed."
+        }
+    }
+
+    /**
+     * A fallback bean definition for surf-api's own plugin, so that a plugin context's own instance
+     * wins whenever it injects [Plugin].
+     */
+    private fun rootPluginDefinition(): RootBeanDefinition {
+        val plugin = checkNotNull(rootPlugin) { "surf-api's plugin is not attached" }
+
+        return RootBeanDefinition(Plugin::class.java).apply {
+            setInstanceSupplier { plugin }
+            isFallback = true
+            destroyMethodName = ""
         }
     }
 
@@ -324,17 +408,20 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         const val BOOTSTRAP_CONTEXT_BEAN = "surfBootstrapContext"
         const val PLUGIN_PROXY_BEAN = "surfPlugin"
         const val PLUGIN_INSTANCE_BEAN = "surfPluginInstance"
+        const val PLUGIN_LOGGER_BEAN = "surfPluginLogger"
+        const val SERVER_BEAN = "surfBukkitServer"
+        const val ROOT_PLUGIN_BEAN = "surfApiPlugin"
         const val DISPATCHERS_BEAN = "surfPaperDispatchers"
         const val ROOT_OWNER = "surf-api"
 
         /**
-         * Registers [dispatchers] as the context's [PaperDispatchers] bean; a [primary] one wins over
-         * the root context's.
+         * Registers [dispatchers] as the context's [PaperDispatchers] bean; a [primary] one wins
+         * over the root context's.
          */
         fun registerDispatchers(
             context: AnnotationConfigApplicationContext,
             dispatchers: PaperDispatchers,
-            primary: Boolean
+            primary: Boolean,
         ) {
             val definition = RootBeanDefinition(PaperDispatchers::class.java).apply {
                 setInstanceSupplier { dispatchers }
@@ -363,4 +450,10 @@ private class PaperPluginState(
      * thread.
      */
     val surfEventListeners = mutableListOf<Any>()
+
+    /**
+     * The PlaceholderAPI expansions registered when the plugin was enabled; touched only on the
+     * main thread.
+     */
+    val papiExpansions = PapiExpansionRegistration()
 }

@@ -10,7 +10,9 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.repositories
 import org.jetbrains.kotlin.gradle.utils.COMPILE_ONLY
 
-internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(platformName: String) :
+internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
+    platformName: String,
+) :
     AbstractCoreSurfPlugin<E>(platformName, SurfApiPlatform.PAPER) {
 
     init {
@@ -48,27 +50,15 @@ internal abstract class AbstractPaperSurfPlugin<E : AbstractPaperSurfExtension>(
     }
 
     open fun Project.afterEvaluated2(extension: E) {
-
     }
 
     final override fun Project.platformTestDependencies(extension: E) {
-        val testing = extension.testing
-
         dependencies {
             val platformApi =
                 if (extension.useCanvasMc.get()) Constants.CANVAS_API else Constants.PAPER_API
             add(SurfTestingConfigurer.TEST_IMPLEMENTATION, platformApi)
-
-            if (testing.mockBukkit.get()) {
-                val mcMajorMinor = Constants.MINECRAFT_VERSION
-                    .split('.')
-                    .take(2)
-                    .joinToString(".")
-                add(
-                    SurfTestingConfigurer.TEST_IMPLEMENTATION,
-                    "org.mockbukkit.mockbukkit:mockbukkit-v$mcMajorMinor:${testing.mockBukkitVersion.get()}"
-                )
-            }
         }
+
+        SurfTestingConfigurer.addSurfRuntimeLibraries(this, Constants.PAPER_RUNTIME_TEST_LIBRARIES)
     }
 }

@@ -12,6 +12,12 @@ dependencies {
     implementation(projects.surfApiNats.surfApiNatsSpring)
     compileOnlyApi(libs.minestom.server)
 
+    implementation(libs.minestom.brigadier)
+    implementation(libs.adventure.text.minimessage)
+    implementation(libs.guava)
+    implementation(libs.bundles.surf.runtime.utils)
+    implementation(libs.inventory.framework.api)
+    implementation(libs.inventory.framework.platform.minestom)
     implementation(libs.packetevents.netty.common)
     runtimeOnly(platform(libs.netty.bom))
     runtimeOnly(libs.netty.buffer)
@@ -36,13 +42,14 @@ tasks.shadowJar {
     mergeSpringRegistries()
 }
 
-val checkContextContributors by tasks.registering(CheckShadowServiceFile::class) {
+val checkContextContributors = tasks.register<CheckShadowServiceFile>("checkContextContributors") {
     group = "verification"
-    description = "Checks that the shadow jar lists the config, NATS and Redis ContextContributors."
+    description = "Checks that the shadow jar lists all bundled ContextContributors."
     jar.set(tasks.shadowJar.flatMap { it.archiveFile })
     service.set("dev.slne.surf.api.spring.context.ContextContributor")
     expectedProviders.addAll(
         "dev.slne.surf.api.config.impl.handle.SurfConfigContributor",
+        "dev.slne.surf.api.core.server.impl.reflection.ReflectionProxyContributor",
         "dev.slne.surf.api.nats.NatsContextContributor",
         "dev.slne.surf.api.redis.RedisContextContributor",
     )

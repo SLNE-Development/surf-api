@@ -6,7 +6,8 @@ import dev.slne.surf.microservice.runtime.health.HealthCheckResult
 import dev.slne.surf.microservice.runtime.health.MicroserviceHealth
 
 /**
- * Reports readiness. Fails with one line per unhealthy result, which makes `microservicectl health` exit with `1`.
+ * Reports readiness. Fails with one line per unhealthy result, which makes `microservicectl health`
+ * exit with `1`.
  */
 internal class HealthCommand(
     private val health: MicroserviceHealth,
@@ -15,14 +16,22 @@ internal class HealthCommand(
 
     override suspend fun MicroserviceCommandContext.execute(args: List<String>) {
         val results = health.checkAll()
-        val failures = results.filterNot { it.healthy }
+        val failures = results.filterNot { it.isHealthy }
 
-        if (failures.isNotEmpty()) fail(describeFailures(failures))
+        if (failures.isNotEmpty()) {
+            fail(describeFailures(failures))
+        }
+
         sendLine(if (results.isEmpty()) "healthy" else "healthy (${results.size} checks)")
     }
 
-    private fun describeFailures(failures: List<HealthCheckResult>) = buildString {
-        append("unhealthy")
-        failures.forEach { failure -> append("\n- ${failure.displayName}: ${failure.message}") }
+    private fun describeFailures(failures: List<HealthCheckResult>): String {
+        return buildString {
+            append("unhealthy")
+
+            for (failure in failures) {
+                append("\n- ${failure.displayName}: ${failure.message}")
+            }
+        }
     }
 }

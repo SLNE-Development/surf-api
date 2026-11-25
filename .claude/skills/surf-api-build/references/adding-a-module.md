@@ -54,21 +54,29 @@ dependencies {
 description = "surf-api-<name>-impl"
 ```
 
+Every module directory has a `README.md`: a heading with the published name, one sentence on what
+the module does, a short list of what it contains and, for an api-only domain, where its
+implementation lives. Keep purpose and history out of `build.gradle.kts` and `settings.gradle.kts`;
+a build-script comment states only a non-obvious build constraint.
+
 Rules that bite:
 
 - **Declare the stdlib if nothing else brings it.** `kotlin.stdlib.default.dependency=false`. A
-  module with no project dependency needs `api(libs.kotlin.stdlib)` - see
-  `foundation/registry-keys/build.gradle.kts` and its comment.
+  module with no project dependency needs `compileOnlyApi(libs.kotlin.stdlib)` - see
+  `foundation/registry-keys/build.gradle.kts`.
+- **Third-party libraries are `compileOnlyApi` in an API module.** The platform runtime ships them;
+  the runtime dependency belongs on the implementation module that bundles the library (see
+  "Where third-party libraries go" in `SKILL.md`).
 - Use the version catalog (`libs.*`) and typesafe project accessors (`projects.surfApiCoreApi`).
   Typesafe accessors are on via `enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")`.
-- An API module exposes a dependency with `api`/`compileOnlyApi`, never `implementation`, when a
-  consumer compiles against its types. `compileOnlyApi` also lands on the test classpath
-  (`test-convention` makes `testImplementation` extend it).
+- An API module exposes a project dependency with `api` and a third-party library with
+  `compileOnlyApi`, never `implementation`, when a consumer compiles against its types.
+  `compileOnlyApi` also lands on the test classpath (`test-convention` makes `testImplementation`
+  extend it).
 - A module that declares beans or Spring contracts depends on `projects.surfApiSpringApi`; one that
   contributes to every plugin context through a `ContextContributor` depends on
   `projects.surfApiSpringImpl`.
-- A module that declares `@GenerateReflection` or `@NmsProviderMarker` adds
-  `id("surf.ksp-processor")` next to its role.
+- A 26.x NMS version module adds `id("surf.nms-shared-26")` next to its role.
 - Set `description` to the published name, as most modules do.
 - Extra Shadow relocations go in the module's own `tasks { shadowJar { ... } }` block on top of the
   two `core-convention` applies.
@@ -92,9 +100,8 @@ or, for a matching `api`/`impl` pair:
 includePair("common", "foo")
 ```
 
-An api-only domain gets a comment above its `includeModule` saying why no impl half exists, like
-the other `common/*/api` entries. Pass the `name` argument only when the derived name is wrong; see
-`module-layout.md` for the two precedents.
+Pass the `name` argument only when the derived name is wrong; see `module-layout.md` for the
+precedent.
 
 A `local/`-style module goes inside the `if (!ci)` block.
 
@@ -104,8 +111,8 @@ Add `` `api-validation` `` next to the role only if the module's surface is wort
 diff:
 
 - yes, if consumers outside this repository compile against it, or an aggregate re-exports it
-- no, if the surface is generated, like `foundation/registry-keys`; say so in a comment in the
-  build file, as that module does
+- no, if the surface is generated, like `foundation/registry-keys`; say so in the module's
+  `README.md`, as that module does
 
 After adding it, run `./gradlew :<module>:updateKotlinAbi` and commit the generated
 `<moduleDir>/api/<published-name>.api`.
@@ -162,14 +169,11 @@ names. A module included only outside CI, or one with a version of its own, belo
 4. Update every `projects.<accessor>` reference. The accessor is the camel-cased published name,
    so a rename changes it: `surf-api-minestom-server-npc` was `projects.surfApiMinestomServerNpc`
    and is `projects.surfApiMinestomNpcImpl`.
-5. If consumers resolve the old coordinate directly, add
-   `publishRelocationFrom("surf-api-<old-name>")`. Skip it when the module is only ever pulled in
-   transitively through an aggregate.
-6. If the new name changes its `surfModuleRole` classification - gaining or losing the `-impl`
+5. If the new name changes its `surfModuleRole` classification - gaining or losing the `-impl`
    suffix - re-check its role plugin and the `checkApiBoundary` result in every module that depends
    on it.
-7. If it was in `notPublished`, rename it there too.
-8. If the module's classes are named in a build file, such as a `checkContextContributors`
+6. If it was in `notPublished`, rename it there too.
+7. If the module's classes are named in a build file, such as a `checkContextContributors`
    provider list, update those names when the package moves.
 
 Keep the change LF-only; `.gitattributes` pins `* text=auto eol=lf`, and `*.patch` is excluded

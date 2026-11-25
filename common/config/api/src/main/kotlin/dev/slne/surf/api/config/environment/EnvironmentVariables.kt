@@ -1,17 +1,17 @@
 package dev.slne.surf.api.config.environment
 
-import java.util.UUID
+import java.util.*
 import kotlin.time.Duration
 
 /**
  * Resolves, converts, and validates environment variables without a separate configuration schema.
  *
- * Direct functions resolve immediately. Overloads without a variable name return lazy,
- * thread-safe delegates that infer the name from the property. Use [EnvironmentVariableDelegate.named]
- * when a delegated property's environment-variable name differs from its Kotlin property name.
+ * Direct functions resolve immediately. Overloads without a variable name return lazy, thread-safe
+ * delegates that infer the name from the property. Use [EnvironmentVariableDelegate.named] when a
+ * delegated property's environment-variable name differs from its Kotlin property name.
  */
 class EnvironmentVariables private constructor(
-    private val source: EnvironmentSource
+    private val source: EnvironmentSource,
 ) {
     /**
      * Resolves a required string. Present blank values are returned unchanged.
@@ -19,7 +19,7 @@ class EnvironmentVariables private constructor(
     fun required(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
     ): String = requiredConverted(name, "String", sensitive, { it }, validation)
 
     /**
@@ -29,7 +29,7 @@ class EnvironmentVariables private constructor(
         name: String,
         noinline converter: (String) -> T,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
     ): T = requiredConverted(name, targetTypeName<T>(), sensitive, converter, validation)
 
     /**
@@ -38,7 +38,7 @@ class EnvironmentVariables private constructor(
     fun optional(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
     ): String? = optionalConverted(name, "String", sensitive, { it }, validation)
 
     /**
@@ -48,7 +48,7 @@ class EnvironmentVariables private constructor(
         name: String,
         noinline converter: (String) -> T,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
     ): T? = optionalConverted(name, targetTypeName<T>(), sensitive, converter, validation)
 
     /**
@@ -57,10 +57,13 @@ class EnvironmentVariables private constructor(
     fun requiredNonBlank(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
-    ): String = required(name, sensitive) {
-        require("expected a non-blank string") { it.isNotBlank() }
-        validation()
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
+    ): String {
+        return required(name, sensitive) {
+            require("expected a non-blank string") { it.isNotBlank() }
+
+            validation()
+        }
     }
 
     /**
@@ -71,7 +74,7 @@ class EnvironmentVariables private constructor(
      */
     fun requiredSecret(
         name: String,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
     ): String = required(name, sensitive = true, validation = validation)
 
     /**
@@ -81,7 +84,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
     ): String = defaultedConverted(name, default, "String", sensitive, { it }, validation)
 
     /**
@@ -90,7 +93,7 @@ class EnvironmentVariables private constructor(
     fun int(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Int>.() -> Unit = {},
     ): Int = requiredConverted(name, "Int", sensitive, String::toInt, validation)
 
     /**
@@ -99,7 +102,7 @@ class EnvironmentVariables private constructor(
     fun optionalInt(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Int>.() -> Unit = {},
     ): Int? = optionalConverted(name, "Int", sensitive, String::toInt, validation)
 
     /**
@@ -109,7 +112,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: Int,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Int>.() -> Unit = {},
     ): Int = defaultedConverted(name, default, "Int", sensitive, String::toInt, validation)
 
     /**
@@ -118,7 +121,7 @@ class EnvironmentVariables private constructor(
     fun long(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Long>.() -> Unit = {},
     ): Long = requiredConverted(name, "Long", sensitive, String::toLong, validation)
 
     /**
@@ -127,7 +130,7 @@ class EnvironmentVariables private constructor(
     fun optionalLong(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Long>.() -> Unit = {},
     ): Long? = optionalConverted(name, "Long", sensitive, String::toLong, validation)
 
     /**
@@ -137,7 +140,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: Long,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Long>.() -> Unit = {},
     ): Long = defaultedConverted(name, default, "Long", sensitive, String::toLong, validation)
 
     /**
@@ -146,7 +149,7 @@ class EnvironmentVariables private constructor(
     fun double(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Double>.() -> Unit = {},
     ): Double = requiredConverted(name, "Double", sensitive, String::toDouble, validation)
 
     /**
@@ -155,7 +158,7 @@ class EnvironmentVariables private constructor(
     fun optionalDouble(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Double>.() -> Unit = {},
     ): Double? = optionalConverted(name, "Double", sensitive, String::toDouble, validation)
 
     /**
@@ -165,7 +168,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: Double,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Double>.() -> Unit = {},
     ): Double = defaultedConverted(name, default, "Double", sensitive, String::toDouble, validation)
 
     /**
@@ -174,7 +177,7 @@ class EnvironmentVariables private constructor(
     fun float(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Float>.() -> Unit = {},
     ): Float = requiredConverted(name, "Float", sensitive, String::toFloat, validation)
 
     /**
@@ -183,7 +186,7 @@ class EnvironmentVariables private constructor(
     fun optionalFloat(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Float>.() -> Unit = {},
     ): Float? = optionalConverted(name, "Float", sensitive, String::toFloat, validation)
 
     /**
@@ -193,7 +196,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: Float,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Float>.() -> Unit = {},
     ): Float = defaultedConverted(name, default, "Float", sensitive, String::toFloat, validation)
 
     /**
@@ -204,7 +207,7 @@ class EnvironmentVariables private constructor(
     fun boolean(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {},
     ): Boolean = requiredConverted(name, "Boolean", sensitive, ::parseBoolean, validation)
 
     /**
@@ -213,7 +216,7 @@ class EnvironmentVariables private constructor(
     fun optionalBoolean(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {},
     ): Boolean? = optionalConverted(name, "Boolean", sensitive, ::parseBoolean, validation)
 
     /**
@@ -223,7 +226,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: Boolean,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {},
     ): Boolean = defaultedConverted(name, default, "Boolean", sensitive, ::parseBoolean, validation)
 
     /**
@@ -232,7 +235,7 @@ class EnvironmentVariables private constructor(
     fun uuid(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {},
     ): UUID = requiredConverted(name, "UUID", sensitive, UUID::fromString, validation)
 
     /**
@@ -241,7 +244,7 @@ class EnvironmentVariables private constructor(
     fun optionalUuid(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {},
     ): UUID? = optionalConverted(name, "UUID", sensitive, UUID::fromString, validation)
 
     /**
@@ -251,7 +254,7 @@ class EnvironmentVariables private constructor(
         name: String,
         default: UUID,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {},
     ): UUID = defaultedConverted(name, default, "UUID", sensitive, UUID::fromString, validation)
 
     /**
@@ -260,7 +263,7 @@ class EnvironmentVariables private constructor(
     fun duration(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {},
     ): Duration = requiredConverted(name, "Duration", sensitive, Duration::parse, validation)
 
     /**
@@ -269,7 +272,7 @@ class EnvironmentVariables private constructor(
     fun optionalDuration(
         name: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {},
     ): Duration? = optionalConverted(name, "Duration", sensitive, Duration::parse, validation)
 
     /**
@@ -279,8 +282,10 @@ class EnvironmentVariables private constructor(
         name: String,
         default: Duration,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
-    ): Duration = defaultedConverted(name, default, "Duration", sensitive, Duration::parse, validation)
+        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {},
+    ): Duration {
+        return defaultedConverted(name, default, "Duration", sensitive, Duration::parse, validation)
+    }
 
     /**
      * Resolves a required enum constant by its exact constant name.
@@ -288,7 +293,7 @@ class EnvironmentVariables private constructor(
     inline fun <reified T : Enum<T>> enum(
         name: String,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
     ): T = required(name, { enumValueOf<T>(it) }, sensitive, validation)
 
     /**
@@ -297,7 +302,7 @@ class EnvironmentVariables private constructor(
     inline fun <reified T : Enum<T>> optionalEnum(
         name: String,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
     ): T? = optional(name, { enumValueOf<T>(it) }, sensitive, validation)
 
     /**
@@ -307,24 +312,28 @@ class EnvironmentVariables private constructor(
         name: String,
         default: T,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
-    ): T = defaultedConverted(
-        name,
-        default,
-        targetTypeName<T>(),
-        sensitive,
-        { enumValueOf<T>(it) },
-        validation
-    )
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
+    ): T {
+        return defaultedConverted(
+            name,
+            default,
+            targetTypeName<T>(),
+            sensitive,
+            { enumValueOf<T>(it) },
+            validation,
+        )
+    }
 
     /**
      * Creates a required string delegate using the property name as the variable name.
      */
     fun required(
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<String> = delegate { name ->
-        required(name, sensitive, validation)
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<String> {
+        return delegate { name ->
+            required(name, sensitive, validation)
+        }
     }
 
     /**
@@ -333,9 +342,11 @@ class EnvironmentVariables private constructor(
     inline fun <reified T> required(
         noinline converter: (String) -> T,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<T> = delegate { name ->
-        required(name, converter, sensitive, validation)
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<T> {
+        return delegate { name ->
+            required(name, converter, sensitive, validation)
+        }
     }
 
     /**
@@ -343,9 +354,11 @@ class EnvironmentVariables private constructor(
      */
     fun optional(
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<String?> = delegate { name ->
-        optional(name, sensitive, validation)
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<String?> {
+        return delegate { name ->
+            optional(name, sensitive, validation)
+        }
     }
 
     /**
@@ -354,9 +367,11 @@ class EnvironmentVariables private constructor(
     inline fun <reified T> optional(
         noinline converter: (String) -> T,
         sensitive: Boolean = false,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<T?> = delegate { name ->
-        optional(name, converter, sensitive, validation)
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<T?> {
+        return delegate { name ->
+            optional(name, converter, sensitive, validation)
+        }
     }
 
     /**
@@ -364,16 +379,18 @@ class EnvironmentVariables private constructor(
      */
     fun requiredNonBlank(
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<String> = delegate { name ->
-        requiredNonBlank(name, sensitive, validation)
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<String> {
+        return delegate { name ->
+            requiredNonBlank(name, sensitive, validation)
+        }
     }
 
     /**
      * Creates a required sensitive string delegate.
      */
     fun requiredSecret(
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
     ): EnvironmentVariableDelegate<String> = required(sensitive = true, validation)
 
     /**
@@ -382,25 +399,29 @@ class EnvironmentVariables private constructor(
     fun string(
         default: String,
         sensitive: Boolean = false,
-        validation: EnvironmentVariableValidation<String>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<String> = delegate { name ->
-        string(name, default, sensitive, validation)
+        validation: EnvironmentVariableValidation<String>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<String> {
+        return delegate { name ->
+            string(name, default, sensitive, validation)
+        }
     }
 
     /**
      * Creates a required [Int] delegate.
      */
     fun int(
-        validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Int>.() -> Unit = {},
     ): EnvironmentVariableDelegate<Int> = delegate { name -> int(name, validation = validation) }
 
     /**
      * Creates an optional [Int] delegate.
      */
     fun optionalInt(
-        validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Int?> = delegate { name ->
-        optionalInt(name, validation = validation)
+        validation: EnvironmentVariableValidation<Int>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Int?> {
+        return delegate { name ->
+            optionalInt(name, validation = validation)
+        }
     }
 
     /**
@@ -408,23 +429,27 @@ class EnvironmentVariables private constructor(
      */
     fun int(
         default: Int,
-        validation: EnvironmentVariableValidation<Int>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Int> = delegate { name -> int(name, default, validation = validation) }
+        validation: EnvironmentVariableValidation<Int>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Int> {
+        return delegate { name -> int(name, default, validation = validation) }
+    }
 
     /**
      * Creates a required [Long] delegate.
      */
     fun long(
-        validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<Long>.() -> Unit = {},
     ): EnvironmentVariableDelegate<Long> = delegate { name -> long(name, validation = validation) }
 
     /**
      * Creates an optional [Long] delegate.
      */
     fun optionalLong(
-        validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Long?> = delegate { name ->
-        optionalLong(name, validation = validation)
+        validation: EnvironmentVariableValidation<Long>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Long?> {
+        return delegate { name ->
+            optionalLong(name, validation = validation)
+        }
     }
 
     /**
@@ -432,25 +457,31 @@ class EnvironmentVariables private constructor(
      */
     fun long(
         default: Long,
-        validation: EnvironmentVariableValidation<Long>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Long> = delegate { name ->
-        long(name, default, validation = validation)
+        validation: EnvironmentVariableValidation<Long>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Long> {
+        return delegate { name ->
+            long(name, default, validation = validation)
+        }
     }
 
     /**
      * Creates a required [Double] delegate.
      */
     fun double(
-        validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Double> = delegate { name -> double(name, validation = validation) }
+        validation: EnvironmentVariableValidation<Double>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Double> {
+        return delegate { name -> double(name, validation = validation) }
+    }
 
     /**
      * Creates an optional [Double] delegate.
      */
     fun optionalDouble(
-        validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Double?> = delegate { name ->
-        optionalDouble(name, validation = validation)
+        validation: EnvironmentVariableValidation<Double>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Double?> {
+        return delegate { name ->
+            optionalDouble(name, validation = validation)
+        }
     }
 
     /**
@@ -458,25 +489,31 @@ class EnvironmentVariables private constructor(
      */
     fun double(
         default: Double,
-        validation: EnvironmentVariableValidation<Double>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Double> = delegate { name ->
-        double(name, default, validation = validation)
+        validation: EnvironmentVariableValidation<Double>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Double> {
+        return delegate { name ->
+            double(name, default, validation = validation)
+        }
     }
 
     /**
      * Creates a required [Float] delegate.
      */
     fun float(
-        validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Float> = delegate { name -> float(name, validation = validation) }
+        validation: EnvironmentVariableValidation<Float>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Float> {
+        return delegate { name -> float(name, validation = validation) }
+    }
 
     /**
      * Creates an optional [Float] delegate.
      */
     fun optionalFloat(
-        validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Float?> = delegate { name ->
-        optionalFloat(name, validation = validation)
+        validation: EnvironmentVariableValidation<Float>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Float?> {
+        return delegate { name ->
+            optionalFloat(name, validation = validation)
+        }
     }
 
     /**
@@ -484,27 +521,33 @@ class EnvironmentVariables private constructor(
      */
     fun float(
         default: Float,
-        validation: EnvironmentVariableValidation<Float>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Float> = delegate { name ->
-        float(name, default, validation = validation)
+        validation: EnvironmentVariableValidation<Float>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Float> {
+        return delegate { name ->
+            float(name, default, validation = validation)
+        }
     }
 
     /**
      * Creates a required strict-boolean delegate.
      */
     fun boolean(
-        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Boolean> = delegate { name ->
-        boolean(name, validation = validation)
+        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Boolean> {
+        return delegate { name ->
+            boolean(name, validation = validation)
+        }
     }
 
     /**
      * Creates an optional strict-boolean delegate.
      */
     fun optionalBoolean(
-        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Boolean?> = delegate { name ->
-        optionalBoolean(name, validation = validation)
+        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Boolean?> {
+        return delegate { name ->
+            optionalBoolean(name, validation = validation)
+        }
     }
 
     /**
@@ -512,25 +555,29 @@ class EnvironmentVariables private constructor(
      */
     fun boolean(
         default: Boolean,
-        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Boolean> = delegate { name ->
-        boolean(name, default, validation = validation)
+        validation: EnvironmentVariableValidation<Boolean>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Boolean> {
+        return delegate { name ->
+            boolean(name, default, validation = validation)
+        }
     }
 
     /**
      * Creates a required [UUID] delegate.
      */
     fun uuid(
-        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
+        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {},
     ): EnvironmentVariableDelegate<UUID> = delegate { name -> uuid(name, validation = validation) }
 
     /**
      * Creates an optional [UUID] delegate.
      */
     fun optionalUuid(
-        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<UUID?> = delegate { name ->
-        optionalUuid(name, validation = validation)
+        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<UUID?> {
+        return delegate { name ->
+            optionalUuid(name, validation = validation)
+        }
     }
 
     /**
@@ -538,27 +585,33 @@ class EnvironmentVariables private constructor(
      */
     fun uuid(
         default: UUID,
-        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<UUID> = delegate { name ->
-        uuid(name, default, validation = validation)
+        validation: EnvironmentVariableValidation<UUID>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<UUID> {
+        return delegate { name ->
+            uuid(name, default, validation = validation)
+        }
     }
 
     /**
      * Creates a required Kotlin [Duration] delegate.
      */
     fun duration(
-        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Duration> = delegate { name ->
-        duration(name, validation = validation)
+        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Duration> {
+        return delegate { name ->
+            duration(name, validation = validation)
+        }
     }
 
     /**
      * Creates an optional Kotlin [Duration] delegate.
      */
     fun optionalDuration(
-        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Duration?> = delegate { name ->
-        optionalDuration(name, validation = validation)
+        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Duration?> {
+        return delegate { name ->
+            optionalDuration(name, validation = validation)
+        }
     }
 
     /**
@@ -566,25 +619,29 @@ class EnvironmentVariables private constructor(
      */
     fun duration(
         default: Duration,
-        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<Duration> = delegate { name ->
-        duration(name, default, validation = validation)
+        validation: EnvironmentVariableValidation<Duration>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<Duration> {
+        return delegate { name ->
+            duration(name, default, validation = validation)
+        }
     }
 
     /**
      * Creates a required exact-name enum delegate.
      */
     inline fun <reified T : Enum<T>> enum(
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
     ): EnvironmentVariableDelegate<T> = delegate { name -> enum<T>(name, validation = validation) }
 
     /**
      * Creates an optional exact-name enum delegate.
      */
     inline fun <reified T : Enum<T>> optionalEnum(
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<T?> = delegate { name ->
-        optionalEnum<T>(name, validation = validation)
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<T?> {
+        return delegate { name ->
+            optionalEnum<T>(name, validation = validation)
+        }
     }
 
     /**
@@ -592,9 +649,11 @@ class EnvironmentVariables private constructor(
      */
     inline fun <reified T : Enum<T>> enum(
         default: T,
-        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {}
-    ): EnvironmentVariableDelegate<T> = delegate { name ->
-        enum(name, default, validation = validation)
+        noinline validation: EnvironmentVariableValidation<T>.() -> Unit = {},
+    ): EnvironmentVariableDelegate<T> {
+        return delegate { name ->
+            enum(name, default, validation = validation)
+        }
     }
 
     @PublishedApi
@@ -604,12 +663,14 @@ class EnvironmentVariables private constructor(
         expectedType: String,
         sensitive: Boolean,
         converter: (String) -> T,
-        validation: EnvironmentVariableValidation<T>.() -> Unit
+        validation: EnvironmentVariableValidation<T>.() -> Unit,
     ): T {
         validateName(name)
         val rawValue = source[name] ?: throw MissingEnvironmentVariableException(name)
+
         val value = convert(name, rawValue, expectedType, sensitive, converter)
         validate(name, rawValue, sensitive, value, validation)
+
         return value
     }
 
@@ -620,12 +681,14 @@ class EnvironmentVariables private constructor(
         expectedType: String,
         sensitive: Boolean,
         converter: (String) -> T,
-        validation: EnvironmentVariableValidation<T>.() -> Unit
+        validation: EnvironmentVariableValidation<T>.() -> Unit,
     ): T? {
         validateName(name)
         val rawValue = source[name] ?: return null
+
         val value = convert(name, rawValue, expectedType, sensitive, converter)
         validate(name, rawValue, sensitive, value, validation)
+
         return value
     }
 
@@ -637,7 +700,7 @@ class EnvironmentVariables private constructor(
         expectedType: String,
         sensitive: Boolean,
         converter: (String) -> T,
-        validation: EnvironmentVariableValidation<T>.() -> Unit
+        validation: EnvironmentVariableValidation<T>.() -> Unit,
     ): T {
         validateName(name)
         val rawValue = source[name]
@@ -648,6 +711,7 @@ class EnvironmentVariables private constructor(
         }
 
         validate(name, rawValue ?: default.toString(), sensitive, value, validation)
+
         return value
     }
 
@@ -655,7 +719,7 @@ class EnvironmentVariables private constructor(
     @JvmSynthetic
     internal fun <T> delegate(
         explicitName: String? = null,
-        resolver: (String) -> T
+        resolver: (String) -> T,
     ): EnvironmentVariableDelegate<T> = EnvironmentVariableDelegate(explicitName, resolver)
 
     private fun <T> convert(
@@ -663,7 +727,7 @@ class EnvironmentVariables private constructor(
         rawValue: String,
         expectedType: String,
         sensitive: Boolean,
-        converter: (String) -> T
+        converter: (String) -> T,
     ): T {
         return try {
             converter(rawValue)
@@ -675,7 +739,7 @@ class EnvironmentVariables private constructor(
                 expectedType = expectedType,
                 rawValue = rawValue.takeUnless { sensitive },
                 sensitive = sensitive,
-                cause = exception
+                cause = exception,
             )
         }
     }
@@ -685,9 +749,10 @@ class EnvironmentVariables private constructor(
         rawValue: String,
         sensitive: Boolean,
         value: T,
-        validation: EnvironmentVariableValidation<T>.() -> Unit
+        validation: EnvironmentVariableValidation<T>.() -> Unit,
     ) {
         val scope = EnvironmentVariableValidation(name, rawValue, sensitive, value)
+
         try {
             scope.validation()
         } catch (exception: EnvironmentVariableException) {
@@ -695,7 +760,7 @@ class EnvironmentVariables private constructor(
         } catch (exception: Exception) {
             throw scope.failure(
                 exception.message ?: "validation threw ${exception::class.simpleName}",
-                exception
+                exception,
             )
         }
     }
@@ -720,15 +785,14 @@ class EnvironmentVariables private constructor(
         /**
          * Creates an environment backed by [source].
          */
-        @JvmStatic
         fun from(source: EnvironmentSource): EnvironmentVariables = EnvironmentVariables(source)
 
         /**
          * Creates an environment backed by a stable copy of [values].
          */
-        @JvmStatic
         fun from(values: Map<String, String>): EnvironmentVariables {
             val snapshot = values.toMap()
+
             return EnvironmentVariables(EnvironmentSource(snapshot::get))
         }
     }

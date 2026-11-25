@@ -13,7 +13,7 @@ import net.kyori.adventure.chat.SignedMessage
 class SignedMessageArgument(nodeName: String) : Argument<SignedMessage>(nodeName) {
     override val kind = ArgumentKind.SignedMessage
     override val rawType: ArgumentType<SignedMessage> = UnsupportedArgumentType(nodeName)
-    override val greedy = true
+    override val isGreedy = true
 
     override fun stringify(value: SignedMessage): String = value.message()
 }

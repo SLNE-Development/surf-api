@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 import dev.slne.surf.api.paper.dialog.noticeDialogWithBuilder
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNmsBlock
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNmsItem
@@ -21,6 +22,7 @@ import org.bukkit.entity.Player
 import java.net.InetSocketAddress
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     @Suppress("DEPRECATION")
@@ -52,6 +54,7 @@ class V1_21_11SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
 
     override fun removeCompostable(material: Material) {
         require(material.isItem) { "material must be an item" }
+
         ComposterBlock.COMPOSTABLES.removeFloat(material.toNmsItem())
     }
 
@@ -84,9 +87,11 @@ class V1_21_11SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge {
     }
 
     override fun getServerIp(): InetSocketAddress {
-        val channels = V1_21_11NmsReflections.getConnectionChannelFutures(MinecraftServer.getServer().connection)
-        val channel =
-            channels.firstOrNull() ?: error("No channels found in server connection listener proxy")
+        val channels = V1_21_11NmsReflections.getConnectionChannelFutures(
+            MinecraftServer.getServer().connection,
+        )
+        val channel = channels.firstOrNull()
+            ?: error("No channels found in server connection listener proxy")
 
         return channel.channel().localAddress() as? InetSocketAddress
             ?: error("Local address is not an instance of InetSocketAddress")

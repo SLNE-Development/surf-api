@@ -1,6 +1,6 @@
 package dev.slne.surf.nats.config
 
-import dev.slne.surf.api.config.SpongeYmlConfigClass
+import dev.slne.surf.api.config.ConfigHandles
 import dev.slne.surf.api.config.constraints.ExistingFile
 import dev.slne.surf.api.config.type.number.IntOr
 import dev.slne.surf.nats.InternalNatsApi
@@ -14,11 +14,12 @@ import java.net.URISyntaxException
 import java.nio.file.Path
 
 /**
- * Settings of the shared NATS connection, read from `config.yml` in the directory of [NatsConfigLocation].
+ * Settings of the shared NATS connection, read from `config.yml` in the directory of
+ * [NatsConfigLocation].
  *
- * Keys are the kebab-case property names, such as `drain-timeout-seconds`. Unset numeric values fall back to the
- * jnats reconnect wait, a drain timeout of 10 seconds and the handler limits of [NatsHandlerLimits]. The
- * `*-by-service` maps are keyed by the proto full name of the service.
+ * Keys are the kebab-case property names, such as `drain-timeout-seconds`. Unset numeric values
+ * fall back to the jnats reconnect wait, a drain timeout of 10 seconds and the handler limits of
+ * [NatsHandlerLimits]. The `*-by-service` maps are keyed by the proto full name of the service.
  */
 @InternalNatsApi
 @ConfigSerializable
@@ -38,53 +39,70 @@ internal data class NatsConfig(
     val drainTimeout = drainTimeoutSeconds or RuntimeDefaults.DRAIN_TIMEOUT_SECONDS
 
     /**
-     * Returns how many handlers of the service with the proto name [serviceName] may run at the same time.
+     * Returns how many handlers of the service with the proto name [serviceName] may run at the
+     * same time.
      *
-     * The entries of this configuration for [serviceName] take precedence over its global values, and both over
-     * [defaults]. A configured total without a configured long share gets half of that total as its long share.
+     * The entries of this configuration for [serviceName] take precedence over its global values,
+     * and both over [defaults]. A configured total without a configured long share gets half of
+     * that total as its long share.
      */
-    fun handlerLimits(serviceName: String, defaults: HandlerLimits = NatsHandlerLimits.defaults): HandlerLimits {
+    fun handlerLimits(
+        serviceName: String,
+        defaults: HandlerLimits = NatsHandlerLimits.defaults,
+    ): HandlerLimits {
         return defaults.overriddenBy(
             total = maxConcurrentHandlersByService[serviceName] ?: maxConcurrentHandlers.value,
-            long = maxConcurrentLongHandlersByService[serviceName] ?: maxConcurrentLongHandlers.value,
+            long = maxConcurrentLongHandlersByService[serviceName]
+                ?: maxConcurrentLongHandlers.value,
         )
     }
 
     /**
-     * Authentication settings. At most one of [token], [username] with [password], or [credentialsFile] may be set.
+     * Authentication settings. At most one of [token], [username] with [password], or
+     * [credentialsFile] may be set.
      */
     @ConfigSerializable
     data class Auth(
         val token: String? = null,
         val username: String? = null,
         val password: String? = null,
-        @ExistingFile val credentialsFile: Path? = null
+        @ExistingFile val credentialsFile: Path? = null,
     ) {
         fun validate() {
-            ConnectRules.authProblem(token, username, password, credentialsFile?.toString())?.let(::error)
+            ConnectRules.authProblem(
+                token,
+                username,
+                password,
+                credentialsFile?.toString(),
+            )?.let(::error)
         }
 
         /**
-         * Returns these settings with empty values unset, as [ConnectRules.authProblem] treats them.
+         * Returns these settings with empty values unset, as [ConnectRules.authProblem] treats
+         * them.
          */
-        fun withoutEmptyValues(): Auth = Auth(
-            token = token?.takeUnless(String::isEmpty),
-            username = username?.takeUnless(String::isEmpty),
-            password = password?.takeUnless(String::isEmpty),
-            credentialsFile = credentialsFile?.takeUnless { it.toString().isEmpty() },
-        )
+        fun withoutEmptyValues(): Auth {
+            return Auth(
+                token = token?.takeUnless(String::isEmpty),
+                username = username?.takeUnless(String::isEmpty),
+                password = password?.takeUnless(String::isEmpty),
+                credentialsFile = credentialsFile?.takeUnless { it.toString().isEmpty() },
+            )
+        }
 
         companion object {
             /**
-             * Returns the auth settings of the `SURF_NATS_*` environment variables, or `null` when none is set.
+             * Returns the auth settings of the `SURF_NATS_*` environment variables, or `null` when
+             * none is set.
              */
             fun fromEnv(): Auth? {
                 val auth = Auth(
                     token = NatsEnvironment.SURF_NATS_TOKEN,
                     username = NatsEnvironment.SURF_NATS_USERNAME,
                     password = NatsEnvironment.SURF_NATS_PASSWORD,
-                    credentialsFile = NatsEnvironment.SURF_NATS_CREDENTIALS_FILE
+                    credentialsFile = NatsEnvironment.SURF_NATS_CREDENTIALS_FILE,
                 ).withoutEmptyValues()
+
                 return auth.takeIf { it != Auth() }
             }
         }
@@ -93,7 +111,9 @@ internal data class NatsConfig(
     fun validate() {
         check(servers.isNotEmpty()) { "NATS servers must not be empty" }
         check(drainTimeout > 0) { "NATS drain-timeout-seconds must be positive, was $drainTimeout" }
-        check(reconnectWait >= 0) { "NATS reconnect-wait-millis must not be negative, was $reconnectWait" }
+        check(reconnectWait >= 0) {
+            "NATS reconnect-wait-millis must not be negative, was $reconnectWait"
+        }
         validateHandlerLimits()
 
         for (rawServer in servers) {
@@ -118,9 +138,13 @@ internal data class NatsConfig(
                 "NATS max-concurrent-long-handlers must not exceed max-concurrent-handlers ($total), was $limit"
             }
         }
+
         for ((service, limit) in maxConcurrentHandlersByService) {
-            check(limit > 0) { "NATS max-concurrent-handlers-by-service of $service must be positive, was $limit" }
+            check(limit > 0) {
+                "NATS max-concurrent-handlers-by-service of $service must be positive, was $limit"
+            }
         }
+
         for ((service, limit) in maxConcurrentLongHandlersByService) {
             check(limit > 0) {
                 "NATS max-concurrent-long-handlers-by-service of $service must be positive, was $limit"
@@ -128,32 +152,54 @@ internal data class NatsConfig(
             val total = maxConcurrentHandlersByService[service] ?: continue
             check(limit <= total) {
                 "NATS max-concurrent-long-handlers-by-service of $service must not exceed its " +
-                        "max-concurrent-handlers-by-service ($total), was $limit"
+                    "max-concurrent-handlers-by-service ($total), was $limit"
             }
         }
     }
 
     /**
-     * Returns this configuration with each set `SURF_NATS_*` environment variable in place of its key.
+     * Returns this configuration with each set `SURF_NATS_*` environment variable in place of its
+     * key.
      *
-     * Any auth variable replaces the whole [auth] block. The per-service handler limits have no variables.
+     * Any auth variable replaces the whole [auth] block. The per-service handler limits have no
+     * variables.
      */
-    fun overwriteFromEnv() = copy(
-        servers = NatsEnvironment.SURF_NATS_SERVERS ?: servers,
-        connectionName = NatsEnvironment.SURF_NATS_CONNECTION_NAME ?: connectionName,
-        maxConcurrentHandlers = NatsEnvironment.SURF_NATS_MAX_CONCURRENT_HANDLERS?.let(IntOr::Default)
-            ?: maxConcurrentHandlers,
-        maxConcurrentLongHandlers = NatsEnvironment.SURF_NATS_MAX_CONCURRENT_LONG_HANDLERS?.let(IntOr::Default)
-            ?: maxConcurrentLongHandlers,
-        auth = (Auth.fromEnv() ?: auth).withoutEmptyValues()
-    )
+    fun overwriteFromEnv(): NatsConfig {
+        return copy(
+            servers = NatsEnvironment.SURF_NATS_SERVERS ?: servers,
+            connectionName = NatsEnvironment.SURF_NATS_CONNECTION_NAME ?: connectionName,
+            maxConcurrentHandlers = NatsEnvironment.SURF_NATS_MAX_CONCURRENT_HANDLERS?.let(
+                IntOr::Default,
+            )
+                ?: maxConcurrentHandlers,
+            maxConcurrentLongHandlers = NatsEnvironment.SURF_NATS_MAX_CONCURRENT_LONG_HANDLERS?.let(
+                IntOr::Default,
+            )
+                ?: maxConcurrentLongHandlers,
+            auth = (Auth.fromEnv() ?: auth).withoutEmptyValues(),
+        )
+    }
 
-    companion object : SpongeYmlConfigClass<NatsConfig>(
-        NatsConfig::class.java,
-        NatsConfigLocation.resolve(),
-        "config.yml"
-    )
+    companion object {
+
+        /**
+         * Reads `config.yml` in the directory of [NatsConfigLocation], writing it with its
+         * defaults if it is missing, and applies the environment overrides.
+         *
+         * @return the validated settings
+         * @throws IllegalStateException if a setting is invalid after the overrides
+         */
+        fun load(): NatsConfig {
+            val file = NatsConfigLocation.resolve().resolve(FILE_NAME)
+            val loaded = ConfigHandles.open<NatsConfig>(file).use { handle -> handle.value }
+
+            return loaded.overwriteFromEnv()
+                .also { config -> config.validate() }
+        }
+
+        private const val FILE_NAME = "config.yml"
+    }
 }
 
 @InternalNatsApi
-internal val natsConfig by lazy { NatsConfig.getConfig().overwriteFromEnv().also { it.validate() } }
+internal val natsConfig by lazy { NatsConfig.load() }

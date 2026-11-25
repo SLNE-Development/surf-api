@@ -38,6 +38,7 @@ private val NO_COMPATIBLE_EXECUTOR: Component = Component.text(
  */
 internal fun CommandPath.executableDepths(): IntRange {
     val firstOptional = arguments.indexOfFirst(ArgumentDefinition<*>::optional)
+
     return if (firstOptional == -1) {
         arguments.size..arguments.size
     } else {
@@ -104,7 +105,9 @@ internal class BrigadierCommandTree(
      */
     fun unregister(key: String) {
         synchronized(entries) {
-            if (entries.remove(key) != null) snapshot = null
+            if (entries.remove(key) != null) {
+                snapshot = null
+            }
         }
     }
 
@@ -113,14 +116,19 @@ internal class BrigadierCommandTree(
      */
     fun registered(): List<Pair<List<String>, CommandDefinition>> = current().registered
 
-    private fun current(): Snapshot = snapshot ?: synchronized(entries) {
-        snapshot ?: build().also { built -> snapshot = built }
+    private fun current(): Snapshot {
+        return snapshot ?: synchronized(entries) {
+            snapshot ?: build().also { built -> snapshot = built }
+        }
     }
 
     private fun build(): Snapshot {
         val dispatcher = CommandDispatcher<CommandSender>()
-        entries.values.forEach { entry ->
-            entry.nodes.forEach { node -> dispatcher.root.addChild(node) }
+
+        for (entry in entries.values) {
+            for (node in entry.nodes) {
+                dispatcher.root.addChild(node)
+            }
         }
 
         return Snapshot(
@@ -138,27 +146,33 @@ internal class BrigadierCommandTree(
         // Conditions shared by all paths gate the root, hiding the command from senders who can
         // use none of them.
         val shared = sharedConditions(definition)
+
         if (shared.permissions.isNotEmpty() || shared.requirements.isNotEmpty()) {
             root.requires { sender ->
                 conditions.canUse(sender, shared.permissions, shared.requirements)
             }
         }
 
-        definition.paths.forEach { path ->
+        for (path in definition.paths) {
             val executableDepths = path.executableDepths()
+
             if (0 in executableDepths) {
                 root.executes(executor(path, depth = 0))
             }
 
             val chain = chainFor(path, executableDepths)
-            if (chain != null) root.then(chain)
+
+            if (chain != null) {
+                root.then(chain)
+            }
         }
 
         return root
     }
 
-    private fun sharedConditions(definition: CommandDefinition): AccumulatedConditions =
-        conditions.commonForPaths(definition.paths)
+    private fun sharedConditions(definition: CommandDefinition): AccumulatedConditions {
+        return conditions.commonForPaths(definition.paths)
+    }
 
     private fun chainFor(
         path: CommandPath,
@@ -173,10 +187,12 @@ internal class BrigadierCommandTree(
             if (index + 1 in executableDepths) {
                 builder.executes(executor(path, depth = index + 1))
             }
+
             current?.let(builder::then)
 
             val permissions = definition.permissions
             val requirements = definition.requirements
+
             if (permissions.isNotEmpty() || requirements.isNotEmpty()) {
                 builder.requires { sender -> conditions.canUse(sender, permissions, requirements) }
             }
@@ -221,38 +237,42 @@ internal class BrigadierCommandTree(
      * sender. A suspending executor is
      * launched and reported as successful before it completes.
      */
-    private fun executor(path: CommandPath, depth: Int) = Command { context ->
-        val sender = context.source
-        if (!conditions.canUse(sender, path.permissions, path.requirements)) {
-            return@Command 0
-        }
+    private fun executor(path: CommandPath, depth: Int): Command<CommandSender> {
+        return Command { context ->
+            val sender = context.source
 
-        val selected = selectExecutor(sender, path.executors)
-            ?: run {
-                sender.sendMessage(NO_COMPATIBLE_EXECUTOR)
+            if (!conditions.canUse(sender, path.permissions, path.requirements)) {
                 return@Command 0
             }
 
-        try {
-            val arguments = argumentsOf(context, path, depth)
-            val info = ExecutionInfo(sender, arguments, context.input)
+            val selected = selectExecutor(sender, path.executors)
+                ?: run {
+                    sender.sendMessage(NO_COMPATIBLE_EXECUTOR)
 
-            when (selected) {
-                is ExecutorDefinition.Normal -> {
-                    selected.executor(info)
-                    Command.SINGLE_SUCCESS
+                    return@Command 0
                 }
 
-                is ExecutorDefinition.Resulting -> selected.executor(info)
+            try {
+                val arguments = argumentsOf(context, path, depth)
+                val info = ExecutionInfo(sender, arguments, context.input)
 
-                is ExecutorDefinition.Suspending -> {
-                    launchCommandExecutor(selected, sender, arguments, context.input)
-                    Command.SINGLE_SUCCESS
+                when (selected) {
+                    is ExecutorDefinition.Normal -> {
+                        selected.executor(info)
+                        Command.SINGLE_SUCCESS
+                    }
+
+                    is ExecutorDefinition.Resulting -> selected.executor(info)
+
+                    is ExecutorDefinition.Suspending -> {
+                        launchCommandExecutor(selected, sender, arguments, context.input)
+                        Command.SINGLE_SUCCESS
+                    }
                 }
+            } catch (failure: Throwable) {
+                handleCommandExecutorFailure(sender, context.input, failure)
+                0
             }
-        } catch (failure: Throwable) {
-            handleCommandExecutorFailure(sender, context.input, failure)
-            0
         }
     }
 
@@ -267,39 +287,46 @@ internal class BrigadierCommandTree(
         depth: Int,
     ): CommandArguments {
         val parsedNames = ArrayList<String>(context.nodes.size)
-        context.nodes.forEach { parsed ->
+
+        for (parsed in context.nodes) {
             val node = parsed.node
-            if (node is ArgumentCommandNode<*, *>) parsedNames += node.name
+
+            if (node is ArgumentCommandNode<*, *>) {
+                parsedNames += node.name
+            }
         }
 
         val valued = path.arguments.filter { argument -> argument.kind !is ArgumentKind.Literal }
+
         return CommandArguments.of(
             valued.mapTo(ArrayList(valued.size)) { definition ->
                 val name = definition.nodeName
                 val index = path.arguments.indexOf(definition)
-                val present = index < depth && name in parsedNames
+                val isPresent = index < depth && name in parsedNames
 
                 ParsedArgument(
                     name = name,
-                    value = if (present) {
+                    value = if (isPresent) {
                         context.getArgument(name, Any::class.java)
                     } else {
                         definition.defaultValue?.invoke(context.source)
                     },
-                    raw = if (present) rawOf(context, name) else null,
-                    present = present,
+                    raw = if (isPresent) rawOf(context, name) else null,
+                    isPresent = isPresent,
                 )
             },
         )
     }
 
     private fun rawOf(context: CommandContext<CommandSender>, name: String): String? {
-        context.nodes.forEach { parsed ->
+        for (parsed in context.nodes) {
             val node = parsed.node
+
             if (node is ArgumentCommandNode<*, *> && node.name == name) {
                 return context.input.substring(parsed.range.start, parsed.range.end)
             }
         }
+
         return null
     }
 
@@ -317,6 +344,7 @@ internal class BrigadierCommandTree(
             is ConsoleSender -> PreferredExecutors.console
             else -> PreferredExecutors.any
         }
+
         return preferred.firstNotNullOfOrNull { type ->
             executors.singleOrNull { executor -> executor.type == type }
         }

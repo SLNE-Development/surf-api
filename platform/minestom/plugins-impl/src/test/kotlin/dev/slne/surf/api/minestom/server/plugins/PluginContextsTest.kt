@@ -5,6 +5,7 @@ import dev.slne.minestom.fixtures.FixtureLog
 import dev.slne.minestom.fixtures.alpha.AlphaGreetingService
 import dev.slne.minestom.fixtures.alpha.AlphaPlugin
 import dev.slne.minestom.fixtures.beta.BETA_COMMAND
+import dev.slne.minestom.fixtures.beta.BETA_OWN_LOGGER
 import dev.slne.minestom.fixtures.beta.BetaPlugin
 import dev.slne.minestom.fixtures.beta.BetaService
 import dev.slne.surf.api.minestom.plugin.PluginDependency
@@ -12,7 +13,6 @@ import dev.slne.surf.api.minestom.plugin.PluginMeta
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginCandidate
 import dev.slne.surf.api.minestom.server.plugins.impl.PluginManagerImpl
 import dev.slne.surf.api.minestom.server.surfMinestomServer
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfContexts
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -29,10 +29,13 @@ import java.nio.file.Path
  * server and checks what the plugin manager does with their Spring contexts.
  */
 @EnvTest
-@OptIn(InternalSurfApi::class)
 class PluginContextsTest {
 
-    private fun candidate(id: String, main: Class<*>, vararg dependencies: String) = PluginCandidate(
+    private fun candidate(
+        id: String,
+        main: Class<*>,
+        vararg dependencies: String,
+    ) = PluginCandidate(
         PluginMeta(id, main.name, dependencies = dependencies.map { PluginDependency(it) }),
         jar = null,
     )
@@ -41,22 +44,34 @@ class PluginContextsTest {
      * Runs [block] with a manager that loaded `beta` and `alpha`, in that order, below the root
      * context of a started surf server. The manager is not enabled.
      */
-    private fun withLoadedPlugins(directory: Path, block: (PluginManagerImpl, ConfigurableApplicationContext) -> Unit) {
+    private fun withLoadedPlugins(
+        directory: Path,
+        block: (PluginManagerImpl, ConfigurableApplicationContext) -> Unit,
+    ) {
         FixtureLog.events.clear()
         BetaPlugin.greetingFromAlpha = null
         BetaPlugin.alphaInternalsVisible = null
         BetaPlugin.surfEventsHandled = 0
+        BetaPlugin.injectedLogger = null
+        AlphaPlugin.injectedLogger = null
 
         val server = surfMinestomServer {}
+
         try {
             val root = SurfContexts.root as ConfigurableApplicationContext
-            val manager = PluginManagerImpl(directory, server.eventNode, javaClass.classLoader, root)
+            val manager = PluginManagerImpl(
+                directory,
+                server.eventNode,
+                javaClass.classLoader,
+                root,
+            )
+
             try {
                 val failures = manager.load(
                     listOf(
                         candidate("beta", BetaPlugin::class.java, "alpha"),
                         candidate("alpha", AlphaPlugin::class.java),
-                    )
+                    ),
                 )
                 assertEquals(emptyMap<String, String>(), failures)
                 block(manager, root)
@@ -69,7 +84,10 @@ class PluginContextsTest {
     }
 
     @Test
-    fun `the phases run the load hooks of a plugin's beans provider first`(@TempDir directory: Path, env: Env) {
+    fun `the phases run the load hooks of a plugin's beans provider first`(
+        @TempDir directory: Path,
+        env: Env,
+    ) {
         withLoadedPlugins(directory) { manager, _ ->
             assertEquals(listOf("alpha:load", "beta:load"), FixtureLog.events)
 
@@ -91,7 +109,23 @@ class PluginContextsTest {
     }
 
     @Test
-    fun `an uncaught failure in a plugin's coroutine is logged with the plugin's id`(@TempDir directory: Path, env: Env) {
+    fun `a plugin's context injects the plugin's logger unless the plugin declares its own`(
+        @TempDir directory: Path,
+        env: Env,
+    ) {
+        withLoadedPlugins(directory) { manager, _ ->
+            val alpha = checkNotNull(manager.plugin("alpha"))
+
+            assertSame(alpha.logger, AlphaPlugin.injectedLogger)
+            assertSame(BETA_OWN_LOGGER, BetaPlugin.injectedLogger, "the plugin's own logger wins")
+        }
+    }
+
+    @Test
+    fun `an uncaught failure in a plugin's coroutine is logged with the plugin's id`(
+        @TempDir directory: Path,
+        env: Env,
+    ) {
         withLoadedPlugins(directory) { manager, _ ->
             val alpha = checkNotNull(manager.plugin("alpha"))
             val failure = IllegalStateException("failure in a coroutine of alpha")
@@ -100,19 +134,36 @@ class PluginContextsTest {
                 runBlocking { alpha.scope.launch { throw failure }.join() }
             }
 
-            val messages = events.filter { it.thrown === failure }.map { it.message.formattedMessage }
+            val messages = events.filter { it.thrown === failure }.map {
+                it.message.formattedMessage
+            }
             assertEquals(1, messages.size, "the failure is logged once")
             assertTrue("'alpha'" in messages.single(), messages.single())
         }
     }
 
     @Test
-    fun `a plugin injects the plugin api of its dependency and nothing else of it`(@TempDir directory: Path, env: Env) {
+    fun `a plugin injects the plugin api of its dependency and nothing else of it`(
+        @TempDir directory: Path,
+        env: Env,
+    ) {
         withLoadedPlugins(directory) { _, root ->
             assertEquals("hello from alpha", BetaPlugin.greetingFromAlpha)
-            assertEquals(false, BetaPlugin.alphaInternalsVisible, "alpha's private beans stay private")
-            assertEquals(0, root.getBeanNamesForType(AlphaGreetingService::class.java).size, "the root holds no plugin bean")
-            assertEquals(0, root.getBeanNamesForType(BetaService::class.java).size, "the root holds no plugin bean")
+            assertEquals(
+                false,
+                BetaPlugin.alphaInternalsVisible,
+                "alpha's private beans stay private",
+            )
+            assertEquals(
+                0,
+                root.getBeanNamesForType(AlphaGreetingService::class.java).size,
+                "the root holds no plugin bean",
+            )
+            assertEquals(
+                0,
+                root.getBeanNamesForType(BetaService::class.java).size,
+                "the root holds no plugin bean",
+            )
         }
     }
 
@@ -124,8 +175,15 @@ class PluginContextsTest {
         withLoadedPlugins(directory) { manager, _ ->
             val beta = checkNotNull(manager.plugin("beta"))
             val commands = env.process().command()
-            assertFalse(commands.commandExists(BETA_COMMAND), "no command is registered while loading")
-            assertEquals(emptyList<String>(), beta.eventNode.children.map { it.name }, "nothing is attached while loading")
+            assertFalse(
+                commands.commandExists(BETA_COMMAND),
+                "no command is registered while loading",
+            )
+            assertEquals(
+                emptyList<String>(),
+                beta.eventNode.children.map { it.name },
+                "nothing is attached while loading",
+            )
             FixtureEvent().call()
             assertEquals(0, BetaPlugin.surfEventsHandled, "no listener is registered while loading")
 
@@ -136,9 +194,16 @@ class PluginContextsTest {
             assertEquals(1, BetaPlugin.surfEventsHandled)
 
             manager.disableAll()
-            assertEquals(emptyList<String>(), beta.eventNode.children.map { it.name }, "the event node is removed")
+            assertEquals(
+                emptyList<String>(),
+                beta.eventNode.children.map { it.name },
+                "the event node is removed",
+            )
             assertNull(beta.eventNode.parent, "the plugin's own node is removed")
-            assertFalse(commands.commandExists(BETA_COMMAND), "the command is unregistered while the server still runs")
+            assertFalse(
+                commands.commandExists(BETA_COMMAND),
+                "the command is unregistered while the server still runs",
+            )
             FixtureEvent().call()
             assertEquals(1, BetaPlugin.surfEventsHandled, "the event bus listener is unregistered")
             assertEquals(emptyList<Any>(), manager.plugins.toList(), "the plugins are removed")

@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
 import com.destroystokyo.paper.profile.CraftPlayerProfile
 import com.destroystokyo.paper.profile.PlayerProfile
-import dev.slne.surf.api.paper.command.util.idOrThrow
 import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge
@@ -10,9 +9,11 @@ import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsPlayerBridge.PlayerInvent
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatMessageMirror
 import dev.slne.surf.api.paper.nms.bridges.data.chat.PlayerChatSessionSnapshot
 import dev.slne.surf.api.paper.nms.bridges.data.chat.RemoteChatSessionData
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.nms.common.dummy.DummyEntityEquipment
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11NmsReflections
+import dev.slne.surf.api.paper.util.idOrThrow
 import io.papermc.paper.adventure.PaperAdventure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,15 +55,18 @@ import kotlin.io.path.createTempFile
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     @Suppress("USELESS_ELVIS")
     override fun removeAllTrackedEntities(player: Player, swallowExceptions: Boolean) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection ?: return
+
         val level = nmsPlayer.level()
 
         val trackers = level.chunkSource.chunkMap.entityMap.values.toTypedArray()
+
         for (tracker in trackers) {
             try {
                 if (tracker.seenBy.contains(connection)) {
@@ -82,6 +86,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         for (otherPlayer in MinecraftServer.getServer().playerList.players) {
             if (otherPlayer.uuid == nmsPlayer.uuid) continue
+
             try {
                 trackedEntity.serverEntity.removePairing(otherPlayer)
             } catch (e: Throwable) {
@@ -96,9 +101,11 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     override fun restoreAllTrackedEntities(player: Player, swallowExceptions: Boolean) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection ?: return
+
         val level = nmsPlayer.level()
 
         val trackers = level.chunkSource.chunkMap.entityMap.values.toTypedArray()
+
         for (tracker in trackers) {
             try {
                 if (tracker.seenBy.remove(connection)) {
@@ -119,6 +126,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         for (otherPlayer in MinecraftServer.getServer().playerList.players) {
             if (otherPlayer.uuid == nmsPlayer.uuid) continue
+
             try {
                 if (trackedEntity.seenBy.remove(otherPlayer.connection)) {
                     trackedEntity.serverEntity.removePairing(otherPlayer)
@@ -135,9 +143,11 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     override fun resyncVehicleState(player: Player, swallowExceptions: Boolean): Int {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection ?: return 0
+
         val chunkMap = nmsPlayer.level().chunkSource.chunkMap
 
         val root = nmsPlayer.rootVehicle
+
         if (root === nmsPlayer && nmsPlayer.passengers.isEmpty()) {
             return 0
         }
@@ -145,9 +155,11 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         val chain = root.passengersAndSelf.iterator().asSequence().toSet()
 
         var resynced = 0
+
         for (entity in chain) {
             if (entity === nmsPlayer) continue
             val tracker = chunkMap.entityMap.get(entity.id) ?: continue
+
             try {
                 tracker.seenBy.add(connection)
                 tracker.serverEntity.removePairing(nmsPlayer)
@@ -160,6 +172,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         for (entity in chain) {
             if (entity.passengers.isEmpty()) continue
+
             try {
                 connection.send(ClientboundSetPassengersPacket(entity))
             } catch (e: Throwable) {
@@ -174,20 +187,21 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     override fun resyncPlayerState(player: Player) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection ?: return
+
         val gameMode = nmsPlayer.gameMode.gameModeForPlayer
 
         connection.send(
             ClientboundPlayerInfoUpdatePacket(
                 ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
-                nmsPlayer
-            )
+                nmsPlayer,
+            ),
         )
 
         connection.send(
             ClientboundGameEventPacket(
                 ClientboundGameEventPacket.CHANGE_GAME_MODE,
-                gameMode.id.toFloat()
-            )
+                gameMode.id.toFloat(),
+            ),
         )
 
         nmsPlayer.onUpdateAbilities()
@@ -196,13 +210,14 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     override fun getRemoteChatSessionData(player: Player): RemoteChatSessionData? {
         val session = player.toNms().chatSession?.asData() ?: return null
+
         val profilePublicKey = session.profilePublicKey()
 
         return RemoteChatSessionData(
             sessionId = session.sessionId(),
             expiresAt = profilePublicKey.expiresAt(),
             key = profilePublicKey.key(),
-            keySignature = profilePublicKey.keySignature()
+            keySignature = profilePublicKey.keySignature(),
         )
     }
 
@@ -212,7 +227,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     override fun applyChatSessionSnapshot(
         player: Player,
-        snapshot: PlayerChatSessionSnapshot
+        snapshot: PlayerChatSessionSnapshot,
     ) {
         throw UnsupportedOperationException("1.21.11")
     }
@@ -231,26 +246,35 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             ProfilePublicKey.Data(
                 chatSession.expiresAt,
                 chatSession.key,
-                chatSession.keySignature
-            )
+                chatSession.keySignature,
+            ),
         )
 
-
-        val signatureValidator = MinecraftServer.getServer().services().profileKeySignatureValidator()
+        val signatureValidator = MinecraftServer.getServer()
+            .services()
+            .profileKeySignatureValidator()
         if (signatureValidator == null) {
-            CHAT_LOGGER.warn("Ignoring chat session from {} due to missing Services public key", player.name)
+            CHAT_LOGGER.warn(
+                "Ignoring chat session from {} due to missing Services public key",
+                player.name,
+            )
+
             return
         }
 
         val newChatSession = newChatSessionData.validate(
             nmsPlayer.gameProfile,
-            signatureValidator
+            signatureValidator,
         )
 
         V1_21_11NmsReflections.resetPlayerChatState(connection, newChatSession)
     }
 
-    override fun runOnChatMessageChain(player: Player, scope: CoroutineScope, block: suspend () -> Unit) {
+    override fun runOnChatMessageChain(
+        player: Player,
+        scope: CoroutineScope,
+        block: suspend () -> Unit,
+    ) {
         val nmsPlayer = player.toNms()
         val connection = nmsPlayer.connection
         val chatMessageChain = V1_21_11NmsReflections.getChatMessageChain(connection)
@@ -276,7 +300,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         player: Player,
         original: SignedMessage,
         boundChatType: ChatType.Bound,
-        unsignedContent: Component
+        unsignedContent: Component,
     ) {
         if (original !is PlayerChatMessage.AdventureView) {
             if (original.isSystem) {
@@ -284,43 +308,51 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             } else {
                 player.sendMessage(unsignedContent, boundChatType)
             }
+
             return
         }
+
         val nmsPlayer = player.toNms()
 
         nmsPlayer.sendChatMessage(
             OutgoingChatMessage.create(original.playerChatMessage()),
             nmsPlayer.isTextFilteringEnabled,
             boundChatType.toNms(nmsPlayer),
-            PaperAdventure.asVanilla(unsignedContent)
+            PaperAdventure.asVanilla(unsignedContent),
         )
     }
 
     @Suppress("USELESS_ELVIS")
     override fun increaseNextChatIndex(player: Player): Int? {
         val connection = player.toNms().connection ?: return null
+
         return V1_21_11NmsReflections.getAndIncreaseNextChatIndex(connection)
     }
 
     override fun createPlayerChatMessageMirrorFromAdventure(
         adventure: SignedMessage,
-        unsignedContent: Component?
+        unsignedContent: Component?,
     ): PlayerChatMessageMirror? {
         if (adventure !is PlayerChatMessage.AdventureView) return null
+
         val nms = adventure.playerChatMessage()
         val nmsLink = nms.link
         val nmsBody = nms.signedBody()
         val nmsLastSeen = nmsBody.lastSeen()
 
-        val link = PlayerChatMessageMirror.SignedMessageLink(nmsLink.index(), nmsLink.sender(), nmsLink.sessionId())
+        val link = PlayerChatMessageMirror.SignedMessageLink(
+            nmsLink.index(),
+            nmsLink.sender(),
+            nmsLink.sessionId(),
+        )
         val lastSeen = PlayerChatMessageMirror.SignedMessageBody.LastSeenMessages(
-            nmsLastSeen.entries().map { it.bytes() }
+            nmsLastSeen.entries().map { it.bytes() },
         )
         val body = PlayerChatMessageMirror.SignedMessageBody(
             nmsBody.content(),
             nmsBody.timeStamp(),
             nmsBody.salt(),
-            lastSeen
+            lastSeen,
         )
 
         val filterMask = when (val mask = nms.filterMask()) {
@@ -338,14 +370,21 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         )
     }
 
-    override fun createAdventureChatMessageFromMirror(mirror: PlayerChatMessageMirror): SignedMessage {
+    override fun createAdventureChatMessageFromMirror(
+        mirror: PlayerChatMessageMirror,
+    ): SignedMessage {
         val mirrorLink = mirror.link
         val mirrorBody = mirror.signedBody
         val mirrorLastSeen = mirrorBody.lastSeen
 
         val link = SignedMessageLink(mirrorLink.index, mirrorLink.sender, mirrorLink.sessionId)
         val lastSeen = LastSeenMessages(mirrorLastSeen.entries.map(::MessageSignature))
-        val body = SignedMessageBody(mirrorBody.content, mirrorBody.timestamp, mirrorBody.salt, lastSeen)
+        val body = SignedMessageBody(
+            mirrorBody.content,
+            mirrorBody.timestamp,
+            mirrorBody.salt,
+            lastSeen,
+        )
 
         val filterMask = when (mirror.filterMask) {
             PlayerChatMessageMirror.FilterMask.FULLY_FILTERED -> FilterMask.FULLY_FILTERED
@@ -358,16 +397,23 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
             mirror.signature?.let(::MessageSignature),
             body,
             PaperAdventure.asVanilla(mirror.unsignedContent),
-            filterMask
+            filterMask,
         ).adventureView()
     }
 
     @Suppress("USELESS_ELVIS")
-    override fun sendPlayerChatMessage(receiver: Player, message: SignedMessage, boundChatType: ChatType.Bound) {
-        require(message is PlayerChatMessage.AdventureView) { "Only native nms messages can be sent" }
+    override fun sendPlayerChatMessage(
+        receiver: Player,
+        message: SignedMessage,
+        boundChatType: ChatType.Bound,
+    ) {
+        require(message is PlayerChatMessage.AdventureView) {
+            "Only native nms messages can be sent"
+        }
         val nmsMessage = message.playerChatMessage()
         val nmsPlayer = receiver.toNms()
         val connection = nmsPlayer.connection ?: return
+
         val messageSignatureCache = V1_21_11NmsReflections.getMessageSignatureCache(connection)
 
         synchronized(messageSignatureCache) {
@@ -380,11 +426,12 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
                     nmsMessage.signedBody().pack(messageSignatureCache),
                     nmsMessage.unsignedContent(),
                     nmsMessage.filterMask(),
-                    boundChatType.toNms(nmsPlayer)
-                )
+                    boundChatType.toNms(nmsPlayer),
+                ),
             )
 
             val signature = nmsMessage.signature()
+
             if (signature != null) {
                 messageSignatureCache.push(nmsMessage.signedBody(), signature)
                 val lastSeenMessages = V1_21_11NmsReflections.getLastSeenMessages(connection)
@@ -397,12 +444,14 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     override fun getPaperRawChatType(): ChatType {
-        return ChatType.chatType(PaperAdventure.asAdventureKey(V1_21_11NmsReflections.getPaperRawChatTypeKey()))
+        return ChatType.chatType(
+            PaperAdventure.asAdventureKey(V1_21_11NmsReflections.getPaperRawChatTypeKey()),
+        )
     }
 
     override suspend fun editOfflineInventory(
         profile: PlayerProfile,
-        edit: (PlayerInventoryEdit) -> Unit
+        edit: (PlayerInventoryEdit) -> Unit,
     ) {
         val uuid = profile.idOrThrow()
         require(server.getPlayer(uuid) == null) { "Player must be offline" }
@@ -428,6 +477,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
     private suspend fun loadPlayerTag(server: MinecraftServer, nameAndId: NameAndId): CompoundTag {
         val dataStorage = server.playerDataStorage
+
         return withContext(Dispatchers.IO) {
             dataStorage.load(nameAndId).getOrNull() ?: CompoundTag()
         }
@@ -436,14 +486,24 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     private fun buildInventoryEdit(
         server: MinecraftServer,
         root: ProblemReporter.PathElement,
-        currentTag: CompoundTag
-    ): PlayerInventoryEdit = ScopedCollector(root, OFFLINE_INVENTORY_EDIT_LOGGER).use { reporter ->
-        val input = TagValueInput.create(reporter, server.registryAccess(), currentTag)
-        val items = loadItems(input.listOrEmpty(InventoryCarrier.TAG_INVENTORY, ItemStackWithSlot.CODEC))
-        val nmsEquipment = input.read(LivingEntity.TAG_EQUIPMENT, EntityEquipment.CODEC).getOrNull()
-            ?: EntityEquipment()
+        currentTag: CompoundTag,
+    ): PlayerInventoryEdit {
+        return ScopedCollector(root, OFFLINE_INVENTORY_EDIT_LOGGER).use { reporter ->
+            val input = TagValueInput.create(reporter, server.registryAccess(), currentTag)
+            val items = loadItems(
+                input.listOrEmpty(
+                    InventoryCarrier.TAG_INVENTORY,
+                    ItemStackWithSlot.CODEC,
+                ),
+            )
+            val nmsEquipment = input.read(
+                LivingEntity.TAG_EQUIPMENT,
+                EntityEquipment.CODEC,
+            ).getOrNull()
+                ?: EntityEquipment()
 
-        PlayerInventoryEdit(items, EntityEquipmentMirror(nmsEquipment))
+            PlayerInventoryEdit(items, EntityEquipmentMirror(nmsEquipment))
+        }
     }
 
     private suspend fun saveInventoryEdit(
@@ -451,16 +511,21 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         root: ProblemReporter.PathElement,
         currentTag: CompoundTag,
         nameAndId: NameAndId,
-        inventoryEdit: PlayerInventoryEdit
+        inventoryEdit: PlayerInventoryEdit,
     ) {
         ScopedCollector(root, OFFLINE_INVENTORY_EDIT_LOGGER).use { reporter ->
-            val output = TagValueOutput.createWrappingWithContext(reporter, server.registryAccess(), currentTag)
+            val output = TagValueOutput.createWrappingWithContext(
+                reporter,
+                server.registryAccess(),
+                currentTag,
+            )
             saveItems(
                 inventoryEdit.items,
-                output.list(InventoryCarrier.TAG_INVENTORY, ItemStackWithSlot.CODEC)
+                output.list(InventoryCarrier.TAG_INVENTORY, ItemStackWithSlot.CODEC),
             )
 
             val nmsEquipment = (inventoryEdit.equipment as EntityEquipmentMirror).equipment
+
             if (!nmsEquipment.isEmpty) {
                 output.store(LivingEntity.TAG_EQUIPMENT, EntityEquipment.CODEC, nmsEquipment)
             } else {
@@ -474,7 +539,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     private suspend fun writePlayerTag(
         server: MinecraftServer,
         nameAndId: NameAndId,
-        rootTag: CompoundTag
+        rootTag: CompoundTag,
     ) {
         try {
             val playerDirPath = server.playerDataStorage.playerDir.toPath()
@@ -486,7 +551,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
                 Util.safeReplaceFile(
                     playerDirPath.resolve("$playerId.dat"),
                     tmp,
-                    playerDirPath.resolve("${playerId}.dat_old")
+                    playerDirPath.resolve("${playerId}.dat_old"),
                 )
             }
         } catch (e: Exception) {
@@ -495,7 +560,9 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         }
     }
 
-    private fun loadItems(input: ValueInput.TypedInputList<ItemStackWithSlot>): MutableList<ItemStack> {
+    private fun loadItems(
+        input: ValueInput.TypedInputList<ItemStackWithSlot>,
+    ): MutableList<ItemStack> {
         val items = NonNullList.withSize(Inventory.INVENTORY_SIZE, ItemStack.empty())
 
         for (item in input) {
@@ -507,7 +574,10 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
         return items
     }
 
-    private fun saveItems(items: List<ItemStack>, output: ValueOutput.TypedOutputList<ItemStackWithSlot>) {
+    private fun saveItems(
+        items: List<ItemStack>,
+        output: ValueOutput.TypedOutputList<ItemStackWithSlot>,
+    ) {
         for ((index, stack) in items.withIndex()) {
             if (!stack.isEmpty) {
                 output.add(ItemStackWithSlot(index, stack.toNms()))
@@ -524,6 +594,7 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         override fun getItem(slot: EquipmentSlot): ItemStack {
             val nmsSlot = CraftEquipmentSlot.getNMS(slot)
+
             return equipment.get(nmsSlot).asBukkitMirror()
         }
 
@@ -533,7 +604,9 @@ class V1_21_11SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
     }
 
     companion object {
-        private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger("OfflinePlayer Inventory Edit")
+        private val OFFLINE_INVENTORY_EDIT_LOGGER = ComponentLogger.logger(
+            "OfflinePlayer Inventory Edit",
+        )
         private val CHAT_LOGGER = ComponentLogger.logger("SurfPaperNmsPlayerBridge Chat")
     }
 }

@@ -39,7 +39,7 @@ class CommandBuilderTest {
 
         assertEquals(listOf("message", "target", "reason"), path.arguments.map { it.nodeName })
         assertEquals(listOf(false, false, true), path.arguments.map { it.optional })
-        assertTrue(path.arguments.last().greedy)
+        assertTrue(path.arguments.last().isGreedy)
         assertEquals("none", path.arguments.last().defaultValue?.invoke(nullSender()))
         assertEquals(setOf("lobby.staff", "lobby.staff.message"), path.permissions)
         assertSame(rootRequirement, path.requirements[0])
@@ -63,7 +63,10 @@ class CommandBuilderTest {
         assertEquals(setOf("broadcast", "notice"), definition.aliases)
         assertEquals("Short", definition.metadata.shortDescription)
         assertEquals(listOf("First line", "Second line"), definition.metadata.fullDescription)
-        assertEquals(listOf("/announce <message>", "/broadcast <message>"), definition.metadata.usage)
+        assertEquals(
+            listOf("/announce <message>", "/broadcast <message>"),
+            definition.metadata.usage,
+        )
         assertEquals("Long-form help", definition.metadata.help)
         assertEquals(setOf("lobby.announce"), definition.paths.single().permissions)
         assertSame(requirement, definition.paths.single().requirements.single())
@@ -79,12 +82,18 @@ class CommandBuilderTest {
             .anyExecutor { _, _ -> }
 
         val snapshot = command.toDefinition()
-        argument.withPermission("after.argument").then(StringArgument("child").anyExecutor { _, _ -> })
-        command.withAliases("tell").withPermission("after.command").withArguments(StringArgument("extra"))
+        argument.withPermission("after.argument")
+            .then(StringArgument("child").anyExecutor { _, _ -> })
+        command.withAliases("tell")
+            .withPermission("after.command")
+            .withArguments(StringArgument("extra"))
 
         assertEquals(setOf("msg"), snapshot.aliases)
         assertEquals(listOf("target"), snapshot.paths.single().arguments.map { it.nodeName })
-        assertEquals(setOf("before.argument"), snapshot.paths.single().arguments.single().permissions)
+        assertEquals(
+            setOf("before.argument"),
+            snapshot.paths.single().arguments.single().permissions,
+        )
         assertEquals(setOf("before.command"), snapshot.paths.single().permissions)
     }
 
@@ -113,11 +122,15 @@ class CommandBuilderTest {
             CommandAPICommand("valid").withAliases("valid").anyExecutor { _, _ -> }.toDefinition()
         }
         assertThrows(CommandValidationException::class.java) {
-            CommandAPICommand("valid").withAliases("Same", "same").anyExecutor { _, _ -> }.toDefinition()
+            CommandAPICommand("valid").withAliases(
+                "Same",
+                "same",
+            ).anyExecutor { _, _ -> }.toDefinition()
         }
 
         val platform = CapturingPlatform()
         CommandAPI.installPlatform(platform)
+
         try {
             assertThrows(CommandValidationException::class.java) {
                 CommandAPICommand("valid").anyExecutor { _, _ -> }.register("Bad Namespace")
@@ -142,7 +155,10 @@ class CommandBuilderTest {
     fun `required arguments after an optional suffix are rejected`() {
         assertThrows(CommandValidationException::class.java) {
             CommandAPICommand("optional")
-                .withArguments(StringArgument("first").setOptional(true), StringArgument("required"))
+                .withArguments(
+                    StringArgument("first").setOptional(true),
+                    StringArgument("required"),
+                )
                 .anyExecutor { _, _ -> }
                 .toDefinition()
         }
@@ -181,7 +197,10 @@ class CommandBuilderTest {
             .anyExecutor { _, _ -> }
             .playerExecutor { _, _ -> }
             .toDefinition()
-        assertEquals(setOf(ExecutorType.ANY, ExecutorType.PLAYER), valid.paths.single().executors.map { it.type }.toSet())
+        assertEquals(
+            setOf(ExecutorType.ANY, ExecutorType.PLAYER),
+            valid.paths.single().executors.map { it.type }.toSet(),
+        )
     }
 
     @Test
@@ -272,8 +291,14 @@ class CommandBuilderTest {
             .then(custom)
             .toDefinition()
         val command = CommandAPICommand("nested")
-            .withSubcommand(CommandAPICommand("a").withSubcommand(CommandAPICommand("b").anyExecutor { _, _ -> }))
-            .withSubcommand(CommandAPICommand("a").withSubcommand(CommandAPICommand("c").anyExecutor { _, _ -> }))
+            .withSubcommand(
+                CommandAPICommand("a")
+                    .withSubcommand(CommandAPICommand("b").anyExecutor { _, _ -> }),
+            )
+            .withSubcommand(
+                CommandAPICommand("a")
+                    .withSubcommand(CommandAPICommand("c").anyExecutor { _, _ -> }),
+            )
             .toDefinition()
 
         assertEquals(6, tree.paths.size)
@@ -294,13 +319,20 @@ class CommandBuilderTest {
             )
             .toDefinition()
 
-        val admin = definition.paths.single { path -> path.arguments.map { it.nodeName } == listOf("admin") }
-        val alias = definition.paths.single { path -> path.arguments.map { it.nodeName } == listOf("op") }
+        val admin = definition.paths.single { path ->
+            path.arguments.map { it.nodeName } == listOf("admin")
+        }
+        val alias = definition.paths.single { path ->
+            path.arguments.map { it.nodeName } == listOf("op")
+        }
 
         assertEquals(setOf("lobby.admin"), admin.arguments.single().permissions)
         assertSame(requirement, admin.arguments.single().requirements.single())
         assertEquals(setOf("lobby.admin"), alias.arguments.single().permissions)
-        assertEquals(emptySet<String>(), definition.paths.single { path -> path.arguments.isEmpty() }.permissions)
+        assertEquals(
+            emptySet<String>(),
+            definition.paths.single { path -> path.arguments.isEmpty() }.permissions,
+        )
     }
 
     @Test
@@ -308,6 +340,7 @@ class CommandBuilderTest {
         val installed = CapturingPlatform()
         val other = CapturingPlatform()
         CommandAPI.installPlatform(installed)
+
         try {
             assertThrows(IllegalStateException::class.java) { CommandAPI.installPlatform(other) }
             CommandAPI.uninstallPlatform(other)
@@ -338,6 +371,7 @@ class CommandBuilderTest {
     fun `auto registering DSL captures a frozen definition and namespace`() {
         val platform = CapturingPlatform()
         CommandAPI.installPlatform(platform)
+
         try {
             val registration = commandAPICommand("dsl", "lobby") {
                 integerArgument("amount")
@@ -346,7 +380,10 @@ class CommandBuilderTest {
 
             assertEquals("dsl", registration.name)
             assertEquals(listOf("dsl"), platform.definitions.map { it.name })
-            assertEquals(listOf("amount"), platform.definitions.single().paths.single().arguments.map { it.nodeName })
+            assertEquals(
+                listOf("amount"),
+                platform.definitions.single().paths.single().arguments.map { it.nodeName },
+            )
             assertEquals(listOf("lobby"), platform.namespaces)
         } finally {
             CommandAPI.uninstallPlatform(platform)
@@ -368,24 +405,31 @@ class CommandBuilderTest {
         assertSame(component, componentFailure.component)
     }
 
-    private fun nullSender(): CommandSender = Proxy.newProxyInstance(
-        CommandSender::class.java.classLoader,
-        arrayOf(CommandSender::class.java),
-    ) { _, _, _ -> null } as CommandSender
+    private fun nullSender(): CommandSender {
+        return Proxy.newProxyInstance(
+            CommandSender::class.java.classLoader,
+            arrayOf(CommandSender::class.java),
+        ) { _, _, _ -> null } as CommandSender
+    }
 
     private class CapturingPlatform : CommandAPIPlatform {
         val definitions = mutableListOf<CommandDefinition>()
         val namespaces = mutableListOf<String?>()
 
-        override fun register(definition: CommandDefinition, namespace: String?): RegisteredCommand {
+        override fun register(
+            definition: CommandDefinition,
+            namespace: String?,
+        ): RegisteredCommand {
             definitions += definition
             namespaces += namespace
+
             return RegisteredCommand(definition.name, definition.aliases, namespace)
         }
 
         override fun unregister(name: String): Boolean = definitions.removeIf { it.name == name }
 
-        override fun execute(sender: CommandSender, input: String): Int =
-            throw UnsupportedOperationException("This platform only captures registrations")
+        override fun execute(sender: CommandSender, input: String): Int {
+            return throw UnsupportedOperationException("This platform only captures registrations")
+        }
     }
 }

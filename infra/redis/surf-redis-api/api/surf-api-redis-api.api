@@ -37,11 +37,9 @@ public final class dev/slne/surf/redis/RedisApi {
 public final class dev/slne/surf/redis/RedisApi$Companion {
 	public final fun create (Ljava/lang/String;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Ljava/lang/String;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
-	public final fun create (Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lorg/redisson/misc/RedisURI;Ljava/lang/String;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
 	public final fun create (Lorg/redisson/misc/RedisURI;Lkotlinx/serialization/modules/SerializersModule;)Ldev/slne/surf/redis/RedisApi;
-	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Ljava/nio/file/Path;Ljava/nio/file/Path;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 	public static synthetic fun create$default (Ldev/slne/surf/redis/RedisApi$Companion;Lorg/redisson/misc/RedisURI;Lkotlinx/serialization/modules/SerializersModule;ILjava/lang/Object;)Ldev/slne/surf/redis/RedisApi;
 }
@@ -207,7 +205,6 @@ public final class dev/slne/surf/redis/codec/RedisCodec$DefaultImpls {
 
 public final class dev/slne/surf/redis/codec/RedisCodecException : java/lang/RuntimeException {
 	public static final field Companion Ldev/slne/surf/redis/codec/RedisCodecException$Companion;
-	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
@@ -218,36 +215,42 @@ public final class dev/slne/surf/redis/codec/RedisCodecException$Companion {
 public final class dev/slne/surf/redis/codec/RedisUtf8String {
 	public static final field INSTANCE Ldev/slne/surf/redis/codec/RedisUtf8String;
 	public static final field MAX_STRING_LENGTH I
-	public static final fun read (Lio/netty/buffer/ByteBuf;I)Ljava/lang/String;
-	public static synthetic fun read$default (Lio/netty/buffer/ByteBuf;IILjava/lang/Object;)Ljava/lang/String;
-	public static final fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;I)V
-	public static synthetic fun write$default (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;IILjava/lang/Object;)V
+	public final fun read (Lio/netty/buffer/ByteBuf;I)Ljava/lang/String;
+	public static synthetic fun read$default (Ldev/slne/surf/redis/codec/RedisUtf8String;Lio/netty/buffer/ByteBuf;IILjava/lang/Object;)Ljava/lang/String;
+	public final fun write (Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;I)V
+	public static synthetic fun write$default (Ldev/slne/surf/redis/codec/RedisUtf8String;Lio/netty/buffer/ByteBuf;Ljava/lang/CharSequence;IILjava/lang/Object;)V
 }
 
 public final class dev/slne/surf/redis/codec/RedisVarInt {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/RedisVarInt;
 	public static final field MAX_VARINT_SIZE I
-	public static fun getByteSize (I)I
-	public static fun hasContinuationBit (B)Z
-	public static fun read (Lio/netty/buffer/ByteBuf;)I
-	public static fun write (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
-	public static fun writeSlow (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+	public final fun getByteSize (I)I
+	public final fun hasContinuationBit (B)Z
+	public final fun read (Lio/netty/buffer/ByteBuf;)I
+	public final fun write (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
+	public final fun writeSlow (Lio/netty/buffer/ByteBuf;I)Lio/netty/buffer/ByteBuf;
 }
 
 public final class dev/slne/surf/redis/codec/RedisVarLong {
+	public static final field INSTANCE Ldev/slne/surf/redis/codec/RedisVarLong;
 	public static final field MAX_VARLONG_SIZE I
-	public static fun getByteSize (J)I
-	public static fun hasContinuationBit (B)Z
-	public static fun read (Lio/netty/buffer/ByteBuf;)J
-	public static fun write (Lio/netty/buffer/ByteBuf;J)Lio/netty/buffer/ByteBuf;
+	public final fun getByteSize (J)I
+	public final fun hasContinuationBit (B)Z
+	public final fun read (Lio/netty/buffer/ByteBuf;)J
+	public final fun write (Lio/netty/buffer/ByteBuf;J)Lio/netty/buffer/ByteBuf;
 }
 
 public class dev/slne/surf/redis/codec/UUIDCodec : org/redisson/client/codec/StringCodec {
-	public static final field INSTANCE Ldev/slne/surf/redis/codec/UUIDCodec;
+	public static final field Companion Ldev/slne/surf/redis/codec/UUIDCodec$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/ClassLoader;)V
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/nio/charset/Charset;)V
 	public fun getValueDecoder ()Lorg/redisson/client/protocol/Decoder;
+}
+
+public final class dev/slne/surf/redis/codec/UUIDCodec$Companion {
+	public final fun getINSTANCE ()Ldev/slne/surf/redis/codec/UUIDCodec;
 }
 
 public final class dev/slne/surf/redis/codec/default/DoubleBinaryCodec : dev/slne/surf/redis/codec/AbstractCodec {

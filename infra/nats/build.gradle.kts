@@ -7,23 +7,20 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 
 plugins {
-    // Puts the surf plugin classes on this script's classpath for the imports above.
     id("dev.slne.surf.api.gradle.core") apply false
-    // The surf plugin brings weaver along; declared here, the modules can request it by version.
     alias(libs.plugins.weaver) apply false
 }
 
 subprojects {
     tasks.withType<ShadowJar>().configureEach {
         relocateNats()
-        // Rewrites the BouncyCastle provider names in META-INF/services/java.security.Provider to the relocated
-        // classes. Duplicates must reach the transformer instead of being dropped by Shadow's EXCLUDE default.
+        // Rewrites the BouncyCastle provider names in META-INF/services/java.security.Provider to
+        // the relocated classes. Duplicates must reach the transformer instead of being dropped by
+        // Shadow's EXCLUDE default.
         mergeServiceFiles()
         filesMatching("META-INF/services/**") { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
     }
 
-    // Kotlin Multiplatform modules (api, core): shared toolchain, compiler options, dependency pattern (spec 12.2)
-    // and publishing. Module scripts declare their targets and their own dependencies.
     pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
         apply(plugin = "maven-publish")
 
@@ -38,13 +35,17 @@ subprojects {
 
             compilerOptions {
                 freeCompilerArgs.addAll("-Xcontext-parameters", "-Xreturn-value-checker=check")
-                optIn.addAll("dev.slne.surf.nats.InternalNatsApi", "dev.slne.surf.nats.NatsGeneratedApi")
+                optIn.addAll(
+                    "dev.slne.surf.nats.InternalNatsApi",
+                    "dev.slne.surf.nats.NatsGeneratedApi",
+                )
             }
 
             targets.withType<KotlinJvmTarget>().configureEach {
                 compilerOptions {
                     freeCompilerArgs.add("-Xjsr305=strict")
                     javaParameters = true
+                    optIn.add("dev.slne.surf.api.shared.api.util.InternalSurfApi")
                 }
             }
 
@@ -75,7 +76,7 @@ subprojects {
         }
 
         val optInInternalApi = !project.path.startsWith(":surf-api-nats:surf-api-nats-test") &&
-                !project.path.startsWith(":surf-api-nats:surf-api-nats-types")
+            !project.path.startsWith(":surf-api-nats:surf-api-nats-types")
 
         extensions.findByType<KotlinJvmExtension>()?.apply {
             compilerOptions {

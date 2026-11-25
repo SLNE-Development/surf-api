@@ -12,11 +12,13 @@ import io.papermc.paper.dialog.Dialog
 import io.papermc.paper.registry.data.dialog.DialogRegistryEntry
 import org.bukkit.entity.Player
 
-fun dialog(builder: DialogRegistryEntry.Builder.() -> Unit): Dialog =
-    Dialog.create { it.empty().apply(builder) }
+fun dialog(builder: DialogRegistryEntry.Builder.() -> Unit): Dialog {
+    return Dialog.create { it.empty().apply(builder) }
+}
 
-fun Dialog(builder: DialogRegistryEntry.Builder.() -> Unit): Dialog =
-    Dialog.create { it.empty().apply(builder) }
+fun Dialog(builder: DialogRegistryEntry.Builder.() -> Unit): Dialog {
+    return Dialog.create { it.empty().apply(builder) }
+}
 
 fun DialogRegistryEntry.Builder.base(block: DialogBaseBuilder.() -> Unit) {
     base(DialogBase(block))
@@ -28,5 +30,5 @@ fun DialogRegistryEntry.Builder.type(block: DialogTypeBuilder.() -> Unit) {
 
 @NmsUseWithCaution
 fun Player.clearDialogs(showEmptyDialogBefore: Boolean = false) {
-    SurfPaperNmsCommonBridge.INSTANCE.clearDialogs(this, showEmptyDialogBefore)
+    SurfPaperNmsCommonBridge.instance.clearDialogs(this, showEmptyDialogBefore)
 }

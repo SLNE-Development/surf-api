@@ -131,7 +131,7 @@ Two flavours each, differing only in the keyword they accept:
 
 Common members: `value: Int?` / `Double?`, `or(fallback)`, and `intValue()` / `doubleValue()`, which
 throw `NullPointerException` when the value is empty. `isDefined()` exists on `IntOr` only, not on
-`DoubleOr`. The `Disabled` flavours add `enabled()` and `test { … }`, which runs the predicate only
+`DoubleOr`. The `Disabled` flavours add `isEnabled()` and `test { … }`, which runs the predicate only
 when a value is present.
 
 All four are plain data classes with a public constructor, so `IntOr.Default(5)` or
@@ -147,7 +147,7 @@ data class RetryConfig(
 )
 
 val retries = config.maxRetries or 3
-if (config.queueLimit.enabled()) {
+if (config.queueLimit.isEnabled()) {
     val limit = config.queueLimit.intValue()
 }
 ```

@@ -39,7 +39,7 @@ object AdventureNBT {
                 val list = ListTag()
 
                 for (entry in adventure) {
-                    val nms = toNms(entry)
+                    val nms = toNms(entry, accounter)
                     list.add(nms)
                 }
 
@@ -50,7 +50,7 @@ object AdventureNBT {
                 val tag = CompoundTag()
 
                 for ((key, entry) in adventure) {
-                    val nms = toNms(entry)
+                    val nms = toNms(entry, accounter)
                     tag.put(key, nms)
                 }
 

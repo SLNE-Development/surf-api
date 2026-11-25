@@ -1,5 +1,7 @@
 package dev.slne.surf.nats.internal
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.surfBean
 import dev.slne.surf.nats.InternalNatsApi
 import dev.slne.surf.nats.NatsClient
 
@@ -14,10 +16,11 @@ public interface NatsClientFactory {
     @InternalNatsApi
     public companion object {
         /**
-         * The implementation that surf-nats-core registers as a `java.util.ServiceLoader` service.
+         * The bean of surf-api's root context that surf-nats-core declares.
          *
-         * Initialization fails when surf-nats-core is not on the classpath.
+         * @throws IllegalStateException if no root context is installed yet
          */
-        public val instance: NatsClientFactory = requiredService<NatsClientFactory>()
+        @InternalSurfApi
+        public val instance: NatsClientFactory by surfBean<NatsClientFactory>()
     }
 }

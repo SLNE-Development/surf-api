@@ -3,7 +3,6 @@ package dev.slne.surf.api.paper.server
 import dev.slne.surf.api.paper.api.metrics.Metrics
 import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.server.impl.sidebar.SidebarRegistry
-import dev.slne.surf.api.paper.server.libs.LibLoader
 import org.bukkit.plugin.java.JavaPlugin
 
 class PaperMain : JavaPlugin() {
@@ -15,7 +14,6 @@ class PaperMain : JavaPlugin() {
     override fun onLoad() {
         runtime.attachRootPlugin(this)
         runtime.runRootPhase {
-            LibLoader(classLoader).loadLibs()
             bstats = Metrics(this, BSTATS_PLUGIN_ID)
 
             runtime.loadRoot()

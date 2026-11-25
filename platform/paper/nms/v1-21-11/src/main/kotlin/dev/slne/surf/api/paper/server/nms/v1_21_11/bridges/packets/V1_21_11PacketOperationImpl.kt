@@ -24,7 +24,7 @@ class V1_21_11PacketOperationImpl : PacketOperation {
         val connection = player.toNms().connection
         val packets = operation.apply(
             player,
-            LinkedList<Packet<in ClientGamePacketListener>>()
+            LinkedList<Packet<in ClientGamePacketListener>>(),
         )
 
         if (packets.isEmpty()) {
@@ -33,6 +33,7 @@ class V1_21_11PacketOperationImpl : PacketOperation {
 
         if (packets.size == 1) {
             connection.send(packets.first())
+
             return
         }
 
@@ -40,14 +41,18 @@ class V1_21_11PacketOperationImpl : PacketOperation {
     }
 
     override fun add(operation: PacketOperation): V1_21_11PacketOperationImpl {
-        require(operation is V1_21_11PacketOperationImpl) { "operation must be an instance of V1_21_11PacketOperationImpl" }
+        require(operation is V1_21_11PacketOperationImpl) {
+            "operation must be an instance of V1_21_11PacketOperationImpl"
+        }
 
         this.operation = this.operation.andThen(operation.operation)
+
         return this
     }
 
     override fun isEmpty(): Boolean {
         val operation = operation
+
         return operation is EmptyOperation && operation.empty
     }
 
@@ -64,7 +69,7 @@ class V1_21_11PacketOperationImpl : PacketOperation {
         }
 
         companion object {
-            fun empty() = EmptyOperation()
+            fun empty(): V1_21_11PacketOperationImpl.EmptyOperation = EmptyOperation()
         }
     }
 
@@ -81,6 +86,7 @@ class V1_21_11PacketOperationImpl : PacketOperation {
 
         override fun andThen(after: Operation): Operation {
             empty = false
+
             return super.andThen(after)
         }
     }
@@ -88,25 +94,29 @@ class V1_21_11PacketOperationImpl : PacketOperation {
     companion object {
         private val logger: FluentLogger = FluentLogger.forEnclosingClass()
 
-        @JvmStatic
         fun empty(): V1_21_11PacketOperationImpl {
             return V1_21_11PacketOperationImpl()
         }
 
-        @JvmStatic
         fun complex(operation: Operation): V1_21_11PacketOperationImpl {
             return V1_21_11PacketOperationImpl(operation)
         }
 
-        @JvmStatic
-        fun multi(operation: (player: Player, packets: LinkedList<Packet<in ClientGamePacketListener>>) -> Unit): V1_21_11PacketOperationImpl {
+        fun multi(
+            operation: (
+                player: Player,
+                packets: LinkedList<Packet<in ClientGamePacketListener>>,
+            ) -> Unit,
+        ): V1_21_11PacketOperationImpl {
             return V1_21_11PacketOperationImpl { player, packets ->
                 operation(player, packets)
                 packets
             }
         }
 
-        fun simple(packetSupplier: (Player) -> Packet<in ClientGamePacketListener>): V1_21_11PacketOperationImpl {
+        fun simple(
+            packetSupplier: (Player) -> Packet<in ClientGamePacketListener>,
+        ): V1_21_11PacketOperationImpl {
             return V1_21_11PacketOperationImpl { player, packets ->
                 packets.add(packetSupplier(player))
                 packets

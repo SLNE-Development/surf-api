@@ -15,7 +15,11 @@ class MessageGenerationTest {
 
     private fun harness() = GeneratorHarness(temp)
 
-    private fun messages(body: String, vararg imports: String, input: (GeneratorHarness) -> GeneratorInput = { it.input() }): String {
+    private fun messages(
+        body: String,
+        vararg imports: String,
+        input: (GeneratorHarness) -> GeneratorInput = { it.input() },
+    ): String {
         val harness = harness().proto(
             "surf/test/v1/messages.proto",
             """
@@ -26,6 +30,7 @@ class MessageGenerationTest {
             |$body
             """.trimMargin(),
         )
+
         return harness.generateFile("surf/test/v1/Messages.kt", input(harness))
     }
 
@@ -49,7 +54,7 @@ class MessageGenerationTest {
               required string s = 13;
               required bytes by = 14;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -85,8 +90,15 @@ class MessageGenerationTest {
 
     @Test
     fun `field names become lowerCamel properties and keywords are escaped`() {
-        val text = messages("message A { required string display_name = 1; required int32 object = 2; required int32 foo_1 = 3; }")
-        assertContainsAll(text, "public val displayName: String,", "public val `object`: Int,", "public val foo1: Int,")
+        val text = messages(
+            "message A { required string display_name = 1; required int32 object = 2; required int32 foo_1 = 3; }",
+        )
+        assertContainsAll(
+            text,
+            "public val displayName: String,",
+            "public val `object`: Int,",
+            "public val foo1: Int,",
+        )
     }
 
     @Test
@@ -98,12 +110,12 @@ class MessageGenerationTest {
               required int64 a = 1;
               required int32 b = 2;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
             "public data class A(\n    @ProtoNumber(1)\n    public val a: Long,\n    @ProtoNumber(2)\n    public val b: Int,\n" +
-                    "    @ProtoNumber(3)\n    public val c: String,\n)",
+                "    @ProtoNumber(3)\n    public val c: String,\n)",
         )
     }
 
@@ -116,7 +128,7 @@ class MessageGenerationTest {
               oneof choice { string text = 4; int32 number = 2; }
               required int32 a = 3;
             }
-            """
+            """,
         )
         assertInOrder(text, "val choice:", "val a:", "val z:", "class Number(", "class Text(")
     }
@@ -185,7 +197,7 @@ class MessageGenerationTest {
               optional int32 limit = 6 [default = 10];
             }
             message B { required int32 x = 1; }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -204,7 +216,7 @@ class MessageGenerationTest {
             """
             enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }
             message A { optional Color color = 1; }
-            """
+            """,
         )
         assertContainsAll(text, "public val color: Color = Color.UNSPECIFIED,")
     }
@@ -219,7 +231,7 @@ class MessageGenerationTest {
               repeated B items = 3;
             }
             message B { required int32 x = 1; }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -280,12 +292,19 @@ class MessageGenerationTest {
               required surf.types.v1.Title title = 13;
             }
             """,
-            "surf/types/v1/sound.proto", "surf/types/v1/title.proto",
-            "surf/types/v1/offset_date_time.proto", "surf/types/v1/zoned_date_time.proto",
-            "surf/types/v1/local_date.proto", "surf/types/v1/local_time.proto", "surf/types/v1/local_date_time.proto",
-            "surf/types/v1/big_decimal.proto", "surf/types/v1/big_integer.proto",
-            "surf/types/v1/ip_address.proto", "surf/types/v1/inet_socket_address.proto",
-            "surf/types/v1/text_color.proto", "surf/types/v1/shadow_color.proto",
+            "surf/types/v1/sound.proto",
+            "surf/types/v1/title.proto",
+            "surf/types/v1/offset_date_time.proto",
+            "surf/types/v1/zoned_date_time.proto",
+            "surf/types/v1/local_date.proto",
+            "surf/types/v1/local_time.proto",
+            "surf/types/v1/local_date_time.proto",
+            "surf/types/v1/big_decimal.proto",
+            "surf/types/v1/big_integer.proto",
+            "surf/types/v1/ip_address.proto",
+            "surf/types/v1/inet_socket_address.proto",
+            "surf/types/v1/text_color.proto",
+            "surf/types/v1/shadow_color.proto",
         )
         assertContainsAll(
             text,
@@ -340,9 +359,17 @@ class MessageGenerationTest {
             input = {
                 it.input(
                     mappings = listOf(
-                        TypeMapping(ProtoType.get("surf.test.v1.Tag"), "dev.example.Tag", "dev.example.TagSerializer"),
-                        TypeMapping(ProtoType.get("google.protobuf.Timestamp"), "kotlin.time.Instant", "dev.example.InstantSerializer"),
-                    )
+                        TypeMapping(
+                            ProtoType.get("surf.test.v1.Tag"),
+                            "dev.example.Tag",
+                            "dev.example.TagSerializer",
+                        ),
+                        TypeMapping(
+                            ProtoType.get("google.protobuf.Timestamp"),
+                            "kotlin.time.Instant",
+                            "dev.example.InstantSerializer",
+                        ),
+                    ),
                 )
             },
         )
@@ -365,12 +392,19 @@ class MessageGenerationTest {
             input = {
                 it.input(
                     mappings = listOf(
-                        TypeMapping(ProtoType.get("surf.test.v1.Level"), "dev.example.Level", "dev.example.LevelSerializer"),
-                    )
+                        TypeMapping(
+                            ProtoType.get("surf.test.v1.Level"),
+                            "dev.example.Level",
+                            "dev.example.LevelSerializer",
+                        ),
+                    ),
                 )
             },
         )
-        assertContainsAll(text, "public val level: @Serializable(with = LevelSerializer::class) Level? = null,")
+        assertContainsAll(
+            text,
+            "public val level: @Serializable(with = LevelSerializer::class) Level? = null,",
+        )
         assertNotContains(text, "enum class Level")
     }
 
@@ -397,12 +431,12 @@ class MessageGenerationTest {
               map<string, bytes> parts = 3;
               required string name = 4;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
             "return natsContentEquals(this.`data`, other.`data`) && natsContentEquals(this.chunks, other.chunks) && " +
-                    "natsContentEquals(this.parts, other.parts) && this.name == other.name",
+                "natsContentEquals(this.parts, other.parts) && this.name == other.name",
             "var result = natsContentHashCode(this.`data`)",
             "result = 31 * result + natsContentHashCode(this.chunks)",
             "result = 31 * result + this.name.hashCode()",
@@ -433,13 +467,13 @@ class MessageGenerationTest {
               optional double maybe = 4;
               optional float maybe_ratio = 5;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
             "natsContentEquals(this.`data`, other.`data`) && this.`value`.toBits() == other.`value`.toBits() && " +
-                    "this.ratio.toBits() == other.ratio.toBits() && this.maybe?.toBits() == other.maybe?.toBits() && " +
-                    "this.maybeRatio?.toBits() == other.maybeRatio?.toBits()",
+                "this.ratio.toBits() == other.ratio.toBits() && this.maybe?.toBits() == other.maybe?.toBits() && " +
+                "this.maybeRatio?.toBits() == other.maybeRatio?.toBits()",
             "result = 31 * result + this.`value`.hashCode()",
         )
     }
@@ -461,7 +495,7 @@ class MessageGenerationTest {
               enum Kind { KIND_UNSPECIFIED = 0; KIND_A = 1; }
             }
             message Other { required Outer.Inner inner = 1; }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -512,7 +546,7 @@ class MessageGenerationTest {
               PUNISHMENT_TYPE_TEMP_BAN = 5;
             }
             enum HttpStatus { HTTP_STATUS_UNKNOWN = 0; HTTP_STATUS_OK = 200; }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -537,13 +571,13 @@ class MessageGenerationTest {
               PUNISHMENT_TYPE_BAN = 1;
               PUNISHMENT_TYPE_TEMP_BAN = 5;
             }
-            """
+            """,
         )
         assertInOrder(
             text,
             "TEMP_BAN(5),\n    ;\n\n    public companion object {",
             "     * Returns the entry with the Protobuf number [number], or `null` if there is none.\n",
-            "@JvmStatic\n        public fun forNumber(number: Int): PunishmentType? = when (number) {",
+            "public fun forNumber(number: Int): PunishmentType? = when (number) {",
             "public object Serializer : KSerializer<PunishmentType> {",
         )
     }
@@ -558,9 +592,11 @@ class MessageGenerationTest {
               HTTP_STATUS_NOT_FOUND = 404;
               HTTP_STATUS_TEAPOT = 418;
             }
-            """
+            """,
         )
-        val body = text.substringAfter("fun forNumber(number: Int): HttpStatus? = when (number) {\n")
+        val body = text.substringAfter(
+            "fun forNumber(number: Int): HttpStatus? = when (number) {\n",
+        )
             .substringBefore("\n        }\n")
         assertEquals(
             listOf(
@@ -573,7 +609,10 @@ class MessageGenerationTest {
             body.lines().map { it.trim() },
         )
         val branches = body.lines().map { it.trim() }.dropLast(1)
-        assertTrue(branches.all { Regex("""\d+ -> HttpStatus\.\w+""").matches(it) }, "branch is not an Int constant: $branches")
+        assertTrue(
+            branches.all { Regex("""\d+ -> HttpStatus\.\w+""").matches(it) },
+            "branch is not an Int constant: $branches",
+        )
     }
 
     @Test
@@ -584,19 +623,23 @@ class MessageGenerationTest {
               optional Kind kind = 1;
               enum Kind { KIND_UNSPECIFIED = 0; KIND_A = 1; }
             }
-            """
+            """,
         )
         assertContainsAll(
             nested,
             "public fun forNumber(number: Int): Kind? = when (number) {\n                0 -> Kind.UNSPECIFIED\n" +
-                    "                1 -> Kind.A\n                else -> null",
+                "                1 -> Kind.A\n                else -> null",
             "override fun deserialize(decoder: Decoder): Kind = Kind.forNumber(decoder.decodeInt()) ?: Kind.UNSPECIFIED",
         )
         val internal = messages(
             "enum Color { COLOR_UNSPECIFIED = 0; COLOR_RED = 1; }",
             input = { it.input(visibility = GeneratedVisibility.INTERNAL) },
         )
-        assertContainsAll(internal, "internal enum class Color(", "public fun forNumber(number: Int): Color? = when (number) {")
+        assertContainsAll(
+            internal,
+            "internal enum class Color(",
+            "public fun forNumber(number: Int): Color? = when (number) {",
+        )
         assertNotContains(internal, "internal companion", "internal fun")
     }
 
@@ -612,7 +655,7 @@ class MessageGenerationTest {
               map<fixed64, double> fixed_doubles = 4;
               map<string, int32> plain = 5;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -637,7 +680,7 @@ class MessageGenerationTest {
               repeated bool flags = 5 [packed = false];
               repeated fixed32 fixed_values = 6;
             }
-            """
+            """,
         )
         assertContainsAll(
             text,
@@ -659,7 +702,7 @@ class MessageGenerationTest {
             package surf.test.v1;
             option java_package = "dev.example.proto.v1";
             message A { required int32 a = 1; }
-            """
+            """,
         ).generate()
         assertEquals(listOf("dev/example/proto/v1/A.kt"), files.keys.toList())
         assertContainsAll(files.values.single(), "package dev.example.proto.v1")
@@ -668,7 +711,10 @@ class MessageGenerationTest {
     @Test
     fun `files without messages or services produce no Kotlin file`() {
         val files = harness()
-            .proto("surf/test/v1/a.proto", "$PROTO2\npackage surf.test.v1;\nmessage A { required int32 a = 1; }")
+            .proto(
+                "surf/test/v1/a.proto",
+                "$PROTO2\npackage surf.test.v1;\nmessage A { required int32 a = 1; }",
+            )
             .proto("surf/test/v1/empty.proto", "$PROTO2\npackage surf.test.v1;")
             .generate()
         assertEquals(listOf("surf/test/v1/A.kt"), files.keys.toList())
@@ -699,8 +745,11 @@ class MessageGenerationTest {
             }
             message Ping {}
             service CalcService { rpc Ping(surf.test.v1.Ping) returns (google.protobuf.Empty); }
-            """
-        ).generateFile("All.kt", GeneratorHarness(temp).input(visibility = GeneratedVisibility.INTERNAL))
+            """,
+        ).generateFile(
+            "All.kt",
+            GeneratorHarness(temp).input(visibility = GeneratedVisibility.INTERNAL),
+        )
         assertContainsAll(
             text,
             "internal enum class Color(",
@@ -719,7 +768,12 @@ class MessageGenerationTest {
         )
         assertNotContains(
             text,
-            "internal val", "internal fun", "internal companion", "internal object", "internal override", "internal data class A(",
+            "internal val",
+            "internal fun",
+            "internal companion",
+            "internal object",
+            "internal override",
+            "internal data class A(",
         )
     }
 }

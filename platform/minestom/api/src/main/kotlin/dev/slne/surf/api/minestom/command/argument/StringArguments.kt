@@ -41,7 +41,7 @@ class TextArgument(nodeName: String) : Argument<String>(nodeName) {
 class GreedyStringArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.GreedyString
     override val rawType: ArgumentType<String> = StringArgumentType.greedyString()
-    override val greedy = true
+    override val isGreedy = true
     override fun stringify(value: String): String = value
 }
 
@@ -83,12 +83,18 @@ class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument
     override val rawType: ArgumentType<String> = FixedSetParser(this.literals.associateWith { it })
 
     init {
-        require(this.literals.isNotEmpty()) { "Multi-literal argument must contain at least one literal" }
+        require(this.literals.isNotEmpty()) {
+            "Multi-literal argument must contain at least one literal"
+        }
         require(this.literals.all(String::isNotBlank)) { "Literal values must not be blank" }
-        require(this.literals.all { literal -> literal.all(StringReader::isAllowedInUnquotedString) }) {
+        require(
+            this.literals.all { literal -> literal.all(StringReader::isAllowedInUnquotedString) },
+        ) {
             "Multi-literal values may only contain letters, digits, '_', '-', '.' and '+'"
         }
-        require(this.literals.distinct().size == this.literals.size) { "Literal values must be unique" }
+        require(this.literals.distinct().size == this.literals.size) {
+            "Literal values must be unique"
+        }
     }
 
     override fun stringify(value: String): String = value
@@ -102,7 +108,7 @@ class MultiLiteralArgument(nodeName: String, vararg literals: String) : Argument
 class CommandArgument(nodeName: String) : Argument<String>(nodeName) {
     override val kind = ArgumentKind.Command
     override val rawType: ArgumentType<String> = StringArgumentType.greedyString()
-    override val greedy = true
+    override val isGreedy = true
 
     override fun stringify(value: String): String = value
 }

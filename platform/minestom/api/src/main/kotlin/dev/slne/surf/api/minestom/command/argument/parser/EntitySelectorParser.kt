@@ -50,26 +50,32 @@ internal class EntitySelectorParser(
         } else {
             parseNameOrUuid(reader, state)
         }
+
         finalizePredicates(state)
 
         val selector = state.toSelector(maxResults)
+
         if (selector.limit > maxResults) {
             reader.cursor = start
-            throw (if (playersOnly) ERROR_NOT_SINGLE_PLAYER else ERROR_NOT_SINGLE_ENTITY).createWithContext(
-                reader
-            )
+            throw (if (playersOnly) ERROR_NOT_SINGLE_PLAYER else ERROR_NOT_SINGLE_ENTITY)
+                .createWithContext(
+                    reader,
+                )
         }
-        if (selector.includesEntities && playersOnly && !selector.self) {
+
+        if (selector.includesEntities && playersOnly && !selector.isSelf) {
             reader.cursor = start
             throw ERROR_ONLY_PLAYERS_ALLOWED.createWithContext(reader)
         }
+
         return selector
     }
 
     /**
      * Suggests the names of the online players, then the selectors this argument accepts.
      *
-     * Selectors whose implied limit exceeds [maxResults] are omitted, as is `@e` when [playersOnly].
+     * Selectors whose implied limit exceeds [maxResults] are omitted, as is `@e` when
+     * [playersOnly].
      */
     override fun <S> listSuggestions(
         context: CommandContext<S>,
@@ -79,15 +85,23 @@ internal class EntitySelectorParser(
         val values = mutableListOf<String>()
 
         val prefix = builder.remaining
-        players.forEach { player ->
+
+        for (player in players) {
             val username = player.username
-            if (username.startsWith(prefix, ignoreCase = true)) values += username
+
+            if (username.startsWith(prefix, ignoreCase = true)) {
+                values += username
+            }
         }
+
         values.sortWith(String.CASE_INSENSITIVE_ORDER)
 
         val selectors = if (playersOnly) PLAYER_SELECTORS else ENTITY_SELECTORS
-        selectors.forEach { selector ->
-            if (maxResults > 1 || selector in SINGLE_SELECTORS) values += selector
+
+        for (selector in selectors) {
+            if (maxResults > 1 || selector in SINGLE_SELECTORS) {
+                values += selector
+            }
         }
 
         return builder.suggestMatching(values)
@@ -101,12 +115,13 @@ internal class EntitySelectorParser(
 }
 
 /**
- * Mutable state of a selector while it is parsed; [toSelector] converts it into an [EntitySelector].
+ * Mutable state of a selector while it is parsed; [toSelector] converts it into an
+ * [EntitySelector].
  */
 private class MutableSelector {
     var limit: Int = 1
     var includesEntities: Boolean = false
-    var self: Boolean = false
+    var isSelf: Boolean = false
     var playerName: String? = null
     var uuid: UUID? = null
     var sorter: ((Pos) -> Comparator<Entity>)? = null
@@ -129,21 +144,24 @@ private class MutableSelector {
     /**
      * Returns the usage state of the invertable option [key], created on first use.
      */
-    fun invertableStateFor(key: String): InvertableState =
-        invertableStates.getOrPut(key) { InvertableState() }
+    fun invertableStateFor(key: String): InvertableState {
+        return invertableStates.getOrPut(key) { InvertableState() }
+    }
 
-    fun toSelector(maxResults: Int): EntitySelector = EntitySelector(
-        maxResults = maxResults,
-        includesEntities = includesEntities,
-        predicates = predicates.toList(),
-        sorter = sorter,
-        limit = limit,
-        position = originOf(coordinates),
-        self = self,
-        playerName = playerName,
-        uuid = uuid,
-        worldLimited = worldLimited,
-    )
+    fun toSelector(maxResults: Int): EntitySelector {
+        return EntitySelector(
+            maxResults = maxResults,
+            includesEntities = includesEntities,
+            predicates = predicates.toList(),
+            sorter = sorter,
+            limit = limit,
+            position = originOf(coordinates),
+            isSelf = isSelf,
+            playerName = playerName,
+            uuid = uuid,
+            worldLimited = worldLimited,
+        )
+    }
 }
 
 /**
@@ -158,8 +176,9 @@ private class InvertableState {
     private var limitation = Limitation.NONE
     private val tags: MutableSet<Key> = mutableSetOf()
 
-    fun canParseElement(inverted: Boolean): Boolean =
-        if (inverted) limitation != Limitation.SINGLE else limitation == Limitation.NONE
+    fun canParseElement(inverted: Boolean): Boolean {
+        return if (inverted) limitation != Limitation.SINGLE else limitation == Limitation.NONE
+    }
 
     fun markParsedElement(inverted: Boolean) {
         limitation = if (inverted) Limitation.MULTIPLE else Limitation.SINGLE
@@ -172,7 +191,11 @@ private class InvertableState {
         tags += tag
     }
 
-    private enum class Limitation { NONE, SINGLE, MULTIPLE }
+    private enum class Limitation {
+        NONE,
+        SINGLE,
+        MULTIPLE
+    }
 }
 
 private fun parseNameOrUuid(reader: StringReader, state: MutableSelector) {
@@ -188,14 +211,17 @@ private fun parseNameOrUuid(reader: StringReader, state: MutableSelector) {
             reader.cursor = start
             throw ERROR_INVALID_NAME_OR_UUID.createWithContext(reader)
         }
+
         state.playerName = name
         state.includesEntities = false
     }
+
     state.limit = 1
 }
 
 private fun parseSelectorType(reader: StringReader, state: MutableSelector) {
     if (!reader.canRead()) throw ERROR_MISSING_SELECTOR_TYPE.createWithContext(reader)
+
     val typeStart = reader.cursor
     val type = reader.read()
 
@@ -233,7 +259,7 @@ private fun parseSelectorType(reader: StringReader, state: MutableSelector) {
         's' -> {
             state.limit = 1
             state.includesEntities = true
-            state.self = true
+            state.isSelf = true
         }
 
         else -> {
@@ -250,26 +276,31 @@ private fun parseSelectorType(reader: StringReader, state: MutableSelector) {
 
 private fun parseOptions(reader: StringReader, state: MutableSelector) {
     reader.skipWhitespace()
+
     while (reader.canRead() && reader.peek() != ']') {
         reader.skipWhitespace()
         val keyStart = reader.cursor
         val key = reader.readString()
         reader.skipWhitespace()
+
         if (!reader.canRead() || reader.peek() != '=') {
             reader.cursor = keyStart
             throw ERROR_EXPECTED_OPTION_VALUE.createWithContext(reader, key)
         }
+
         reader.skip()
         reader.skipWhitespace()
         applyOption(key, keyStart, reader, state)
         reader.skipWhitespace()
+
         if (reader.canRead()) {
             if (reader.peek() != ',') {
                 if (reader.peek() != ']') throw ERROR_EXPECTED_END_OF_OPTIONS.createWithContext(
-                    reader
+                    reader,
                 )
                 break
             }
+
             reader.skip()
             reader.skipWhitespace()
         }
@@ -284,6 +315,7 @@ private fun parseOptions(reader: StringReader, state: MutableSelector) {
 
 private fun applyOption(key: String, keyStart: Int, reader: StringReader, state: MutableSelector) {
     val valueStart = reader.cursor
+
     when (key) {
         "x", "y", "z", "dx", "dy", "dz" -> {
             requireSingleUse(key, keyStart, reader, state)
@@ -294,26 +326,30 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
         "distance" -> {
             requireSingleUse(key, keyStart, reader, state)
             val range = FloatRangeParser.parse(reader)
+
             if (range.hasNegativeBound()) {
                 reader.cursor = valueStart
                 throw ERROR_DISTANCE_NEGATIVE.createWithContext(reader)
             }
+
             state.worldLimited = true
             state.distance = range
         }
 
         "limit" -> {
-            requireSingleUse(key, keyStart, reader, state, applicable = !state.self)
+            requireSingleUse(key, keyStart, reader, state, applicable = !state.isSelf)
             val count = reader.readInt()
+
             if (count < 1) {
                 reader.cursor = keyStart
                 throw ERROR_LIMIT_TOO_SMALL.createWithContext(reader)
             }
+
             state.limit = count
         }
 
         "sort" -> {
-            requireSingleUse(key, keyStart, reader, state, applicable = !state.self)
+            requireSingleUse(key, keyStart, reader, state, applicable = !state.isSelf)
             val name = reader.readUnquotedString()
             state.sorter = when (name) {
                 "nearest" -> ::nearestComparator
@@ -336,10 +372,13 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
 
         "type" -> {
             val inverted = shouldInvertValue(reader)
+
             if (consumeTagMarker(reader)) {
                 applyTypeTag(inverted, valueStart, reader, state)
+
                 return
             }
+
             requireInvertableUse(key, inverted, valueStart, reader, state)
             val typeStart = reader.cursor
             val key0 = ResourceLocationParser.readKey(reader)
@@ -347,9 +386,11 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
                 reader.cursor = typeStart
                 throw ERROR_ENTITY_TYPE_INVALID.createWithContext(reader, key0.asString())
             }
+
             if (type == EntityType.PLAYER && !inverted) {
                 state.includesEntities = false
             }
+
             state.predicates += { _, entity -> (entity.entityType == type) != inverted }
         }
 
@@ -374,28 +415,36 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
             requireInvertableUse(key, inverted, valueStart, reader, state)
             val mode = GAME_MODE_PARSER.parse(reader)
             state.includesEntities = false
-            state.predicates += { _, entity -> (entity is Player && entity.gameMode == mode) != inverted }
+            state.predicates += { _, entity ->
+                (entity is Player && entity.gameMode == mode) != inverted
+            }
         }
 
         "level" -> {
             requireSingleUse(key, keyStart, reader, state)
             val range = IntegerRangeParser.parse(reader)
+
             if (range.hasNegativeBound()) {
                 reader.cursor = valueStart
                 throw ERROR_LEVEL_NEGATIVE.createWithContext(reader)
             }
+
             state.includesEntities = false
             state.predicates += { _, entity -> entity is Player && range.inRange(entity.level) }
         }
 
         "x_rotation" -> {
             requireSingleUse(key, keyStart, reader, state)
-            state.predicates += rotationPredicate(FloatRangeParser.parse(reader)) { entity -> entity.position.pitch() }
+            state.predicates += rotationPredicate(FloatRangeParser.parse(reader)) { entity ->
+                entity.position.pitch()
+            }
         }
 
         "y_rotation" -> {
             requireSingleUse(key, keyStart, reader, state)
-            state.predicates += rotationPredicate(FloatRangeParser.parse(reader)) { entity -> entity.position.yaw() }
+            state.predicates += rotationPredicate(FloatRangeParser.parse(reader)) { entity ->
+                entity.position.yaw()
+            }
         }
 
         "scores" -> {
@@ -431,11 +480,14 @@ private fun applyOption(key: String, keyStart: Int, reader: StringReader, state:
 
 private fun consumeTagMarker(reader: StringReader): Boolean {
     reader.skipWhitespace()
+
     if (reader.canRead() && reader.peek() == '#') {
         reader.skip()
         reader.skipWhitespace()
+
         return true
     }
+
     return false
 }
 
@@ -444,17 +496,26 @@ private fun consumeTagMarker(reader: StringReader): Boolean {
  *
  * A tag that does not exist in Minestom's entity type registry matches no entity, as in vanilla.
  */
-private fun applyTypeTag(inverted: Boolean, valueStart: Int, reader: StringReader, state: MutableSelector) {
+private fun applyTypeTag(
+    inverted: Boolean,
+    valueStart: Int,
+    reader: StringReader,
+    state: MutableSelector,
+) {
     val invertableState = state.invertableStateFor("type")
     val tagKey = ResourceLocationParser.readKey(reader)
+
     if (!invertableState.canParseTag(tagKey)) {
         reader.cursor = valueStart
         throw ERROR_INAPPLICABLE_OPTION.createWithContext(reader, "type")
     }
+
     invertableState.markParsedTag(tagKey)
 
     val tag = EntityType.staticRegistry().getTag(tagKey)
-    state.predicates += { _, entity -> (tag != null && tag.contains(entity.entityType)) != inverted }
+    state.predicates += { _, entity ->
+        (tag != null && tag.contains(entity.entityType)) != inverted
+    }
 }
 
 /**
@@ -489,10 +550,12 @@ private fun requireInvertableUse(
     state: MutableSelector,
 ) {
     val invertableState = state.invertableStateFor(key)
+
     if (!invertableState.canParseElement(inverted)) {
         reader.cursor = valueStart
         throw ERROR_INAPPLICABLE_OPTION.createWithContext(reader, key)
     }
+
     invertableState.markParsedElement(inverted)
 }
 
@@ -502,22 +565,28 @@ private fun requireInvertableUse(
  */
 private fun finalizePredicates(state: MutableSelector) {
     val coordinates = state.coordinates
+
     if ("dx" in coordinates || "dy" in coordinates || "dz" in coordinates) {
         val dx = coordinates["dx"] ?: 0.0
         val dy = coordinates["dy"] ?: 0.0
         val dz = coordinates["dz"] ?: 0.0
         state.predicates += { origin, entity -> matchesVolume(origin, dx, dy, dz, entity) }
     }
+
     state.distance?.let { range ->
-        state.predicates += { origin, entity -> range.inRange(entity.getDistance(origin).toFloat()) }
+        state.predicates += { origin, entity ->
+            range.inRange(entity.getDistance(origin).toFloat())
+        }
     }
 }
 
 private fun originOf(coordinates: Map<String, Double>): (Pos) -> Pos {
     if ("x" !in coordinates && "y" !in coordinates && "z" !in coordinates) return { base -> base }
+
     val x = coordinates["x"]
     val y = coordinates["y"]
     val z = coordinates["z"]
+
     return { base -> Pos(x ?: base.x(), y ?: base.y(), z ?: base.z()) }
 }
 
@@ -528,20 +597,27 @@ private fun originOf(coordinates: Map<String, Double>): (Pos) -> Pos {
  * vanilla's `EntitySelectorParser.createAabb`, so `dx=0,dy=0,dz=0` covers the block at the origin.
  * Boxes that only touch do not intersect.
  */
-private fun matchesVolume(origin: Pos, dx: Double, dy: Double, dz: Double, entity: Entity): Boolean {
+private fun matchesVolume(
+    origin: Pos,
+    dx: Double,
+    dy: Double,
+    dz: Double,
+    entity: Entity,
+): Boolean {
     val pos = entity.position
     val box = entity.boundingBox
 
     return pos.x() + box.minX() < origin.x() + maxOf(0.0, dx) + 1.0 &&
-            pos.x() + box.maxX() > origin.x() + minOf(0.0, dx) &&
-            pos.y() + box.minY() < origin.y() + maxOf(0.0, dy) + 1.0 &&
-            pos.y() + box.maxY() > origin.y() + minOf(0.0, dy) &&
-            pos.z() + box.minZ() < origin.z() + maxOf(0.0, dz) + 1.0 &&
-            pos.z() + box.maxZ() > origin.z() + minOf(0.0, dz)
+        pos.x() + box.maxX() > origin.x() + minOf(0.0, dx) &&
+        pos.y() + box.minY() < origin.y() + maxOf(0.0, dy) + 1.0 &&
+        pos.y() + box.maxY() > origin.y() + minOf(0.0, dy) &&
+        pos.z() + box.minZ() < origin.z() + maxOf(0.0, dz) + 1.0 &&
+        pos.z() + box.maxZ() > origin.z() + minOf(0.0, dz)
 }
 
-private fun isAlive(@Suppress("UNUSED_PARAMETER") origin: Pos, entity: Entity): Boolean =
-    !(entity is LivingEntity && entity.isDead)
+private fun isAlive(@Suppress("UNUSED_PARAMETER") origin: Pos, entity: Entity): Boolean {
+    return !(entity is LivingEntity && entity.isDead)
+}
 
 /**
  * Returns a predicate matching the wrapped rotation of an entity against [range], as vanilla does.
@@ -554,6 +630,7 @@ private fun rotationPredicate(
 ): (Pos, Entity) -> Boolean {
     val min = wrapDegrees(range.min()?.takeIf { it != -Float.MAX_VALUE } ?: 0f)
     val max = wrapDegrees(range.max()?.takeIf { it != Float.MAX_VALUE } ?: 359f)
+
     return { _, entity ->
         val degrees = wrapDegrees(rotation(entity))
         if (min > max) degrees >= min || degrees <= max else degrees >= min && degrees <= max
@@ -566,6 +643,7 @@ private fun rotationPredicate(
 private fun Range.Float.hasNegativeBound(): Boolean {
     val min = min()
     val max = max()
+
     return (min != null && min != -Float.MAX_VALUE && min < 0f) || (max != null && max < 0f)
 }
 
@@ -575,13 +653,19 @@ private fun Range.Float.hasNegativeBound(): Boolean {
 private fun Range.Int.hasNegativeBound(): Boolean {
     val min = min()
     val max = max()
+
     return (min != null && min != Int.MIN_VALUE && min < 0) || (max != null && max < 0)
 }
 
-private fun matchesName(entity: Entity, name: String): Boolean = when (entity) {
-    is Player -> entity.username == name
-    else -> entity.get(DataComponents.CUSTOM_NAME)
-        ?.let { component -> PlainTextComponentSerializer.plainText().serialize(component) } == name
+private fun matchesName(entity: Entity, name: String): Boolean {
+    return when (entity) {
+        is Player -> entity.username == name
+        else -> {
+            val customName = entity.get(DataComponents.CUSTOM_NAME)
+            customName != null &&
+                PlainTextComponentSerializer.plainText().serialize(customName) == name
+        }
+    }
 }
 
 private fun teamNameOf(entity: Entity): String {
@@ -593,11 +677,14 @@ private fun teamNameOf(entity: Entity): String {
 
 private fun shouldInvertValue(reader: StringReader): Boolean {
     reader.skipWhitespace()
+
     if (reader.canRead() && reader.peek() == '!') {
         reader.skip()
         reader.skipWhitespace()
+
         return true
     }
+
     return false
 }
 
@@ -607,6 +694,7 @@ private fun shouldInvertValue(reader: StringReader): Boolean {
 private fun consumeScores(reader: StringReader) {
     reader.expect('{')
     reader.skipWhitespace()
+
     while (reader.canRead() && reader.peek() != '}') {
         reader.skipWhitespace()
         reader.readUnquotedString()
@@ -615,27 +703,36 @@ private fun consumeScores(reader: StringReader) {
         reader.skipWhitespace()
         IntegerRangeParser.parse(reader)
         reader.skipWhitespace()
-        if (reader.canRead() && reader.peek() == ',') reader.skip()
+
+        if (reader.canRead() && reader.peek() == ',') {
+            reader.skip()
+        }
+
         reader.skipWhitespace()
     }
+
     reader.expect('}')
 }
 
 /**
- * Reads and discards an `advancements` value of the form `{id=bool}` or `{id={criterion=bool,...}}`.
+ * Reads and discards an `advancements` value of the form `{id=bool}` or
+ * `{id={criterion=bool,...}}`.
  */
 private fun consumeAdvancements(reader: StringReader) {
     reader.expect('{')
     reader.skipWhitespace()
+
     while (reader.canRead() && reader.peek() != '}') {
         reader.skipWhitespace()
         ResourceLocationParser.readKey(reader)
         reader.skipWhitespace()
         reader.expect('=')
         reader.skipWhitespace()
+
         if (reader.canRead() && reader.peek() == '{') {
             reader.skip()
             reader.skipWhitespace()
+
             while (reader.canRead() && reader.peek() != '}') {
                 reader.skipWhitespace()
                 reader.readUnquotedString()
@@ -644,25 +741,38 @@ private fun consumeAdvancements(reader: StringReader) {
                 reader.skipWhitespace()
                 reader.readBoolean()
                 reader.skipWhitespace()
-                if (reader.canRead() && reader.peek() == ',') reader.skip()
+
+                if (reader.canRead() && reader.peek() == ',') {
+                    reader.skip()
+                }
+
                 reader.skipWhitespace()
             }
+
             reader.expect('}')
         } else {
             reader.readBoolean()
         }
+
         reader.skipWhitespace()
-        if (reader.canRead() && reader.peek() == ',') reader.skip()
+
+        if (reader.canRead() && reader.peek() == ',') {
+            reader.skip()
+        }
+
         reader.skipWhitespace()
     }
+
     reader.expect('}')
 }
 
-private fun nearestComparator(anchor: Pos): Comparator<Entity> =
-    Comparator.comparingDouble { entity: Entity -> entity.getDistanceSquared(anchor) }
+private fun nearestComparator(anchor: Pos): Comparator<Entity> {
+    return Comparator.comparingDouble { entity: Entity -> entity.getDistanceSquared(anchor) }
+}
 
-private fun furthestComparator(anchor: Pos): Comparator<Entity> =
-    nearestComparator(anchor).reversed()
+private fun furthestComparator(anchor: Pos): Comparator<Entity> {
+    return nearestComparator(anchor).reversed()
+}
 
 /**
  * Returns a comparator that orders entities randomly. Each entity keeps one random weight for the
@@ -671,50 +781,69 @@ private fun furthestComparator(anchor: Pos): Comparator<Entity> =
 private fun randomComparator(@Suppress("UNUSED_PARAMETER") anchor: Pos): Comparator<Entity> {
     val weights = IdentityHashMap<Entity, Double>()
     val random = ThreadLocalRandom.current()
+
     return Comparator.comparingDouble { entity -> weights.getOrPut(entity) { random.nextDouble() } }
 }
 
-private val GAME_MODE_PARSER =
-    FixedSetParser(GameMode.entries.associateBy { mode -> mode.name.lowercase() })
+private val GAME_MODE_PARSER = FixedSetParser(
+    GameMode.entries.associateBy { mode -> mode.name.lowercase() },
+)
 
 /**
  * Entity tag holding the strings matched by the `tag` option. Nothing in this module writes it.
  */
 private val ENTITY_TAGS: Tag<List<String>> = Tag.String("tags").list().defaultValue(emptyList())
 
-private val ERROR_MISSING_SELECTOR_TYPE =
-    SimpleCommandExceptionType(LiteralMessage("Missing selector type"))
-private val ERROR_UNKNOWN_SELECTOR_TYPE =
-    DynamicCommandExceptionType { type -> LiteralMessage("Unknown selector type '$type'") }
-private val ERROR_INVALID_NAME_OR_UUID =
-    SimpleCommandExceptionType(LiteralMessage("Invalid player name or UUID"))
-private val ERROR_EXPECTED_OPTION_VALUE =
-    DynamicCommandExceptionType { key -> LiteralMessage("Expected value for option '$key'") }
-private val ERROR_EXPECTED_END_OF_OPTIONS =
-    SimpleCommandExceptionType(LiteralMessage("Expected ',' or ']'"))
-private val ERROR_UNKNOWN_OPTION =
-    DynamicCommandExceptionType { key -> LiteralMessage("Unknown option '$key'") }
-private val ERROR_INAPPLICABLE_OPTION =
-    DynamicCommandExceptionType { key -> LiteralMessage("Option '$key' cannot be used here") }
+private val ERROR_MISSING_SELECTOR_TYPE = SimpleCommandExceptionType(
+    LiteralMessage("Missing selector type"),
+)
+private val ERROR_UNKNOWN_SELECTOR_TYPE = DynamicCommandExceptionType { type ->
+    LiteralMessage("Unknown selector type '$type'")
+}
+private val ERROR_INVALID_NAME_OR_UUID = SimpleCommandExceptionType(
+    LiteralMessage("Invalid player name or UUID"),
+)
+private val ERROR_EXPECTED_OPTION_VALUE = DynamicCommandExceptionType { key ->
+    LiteralMessage("Expected value for option '$key'")
+}
+private val ERROR_EXPECTED_END_OF_OPTIONS = SimpleCommandExceptionType(
+    LiteralMessage("Expected ',' or ']'"),
+)
+private val ERROR_UNKNOWN_OPTION = DynamicCommandExceptionType { key ->
+    LiteralMessage("Unknown option '$key'")
+}
+private val ERROR_INAPPLICABLE_OPTION = DynamicCommandExceptionType { key ->
+    LiteralMessage("Option '$key' cannot be used here")
+}
 private val ERROR_UNSUPPORTED_OPTION = DynamicCommandExceptionType { key ->
-    LiteralMessage("Option '$key' is unsupported: this command implementation has no equivalent in Minestom's model")
+    LiteralMessage(
+        "Option '$key' is unsupported: this command implementation has no equivalent in Minestom's model",
+    )
 }
 private val ERROR_NBT_UNSUPPORTED = SimpleCommandExceptionType(
     LiteralMessage("Option 'nbt' is unsupported: this command implementation cannot parse SNBT"),
 )
-private val ERROR_DISTANCE_NEGATIVE =
-    SimpleCommandExceptionType(LiteralMessage("Distance cannot be negative"))
-private val ERROR_LEVEL_NEGATIVE =
-    SimpleCommandExceptionType(LiteralMessage("Level cannot be negative"))
-private val ERROR_LIMIT_TOO_SMALL =
-    SimpleCommandExceptionType(LiteralMessage("Limit must be at least 1"))
-private val ERROR_SORT_UNKNOWN =
-    DynamicCommandExceptionType { name -> LiteralMessage("Unknown sort '$name'") }
-private val ERROR_ENTITY_TYPE_INVALID =
-    DynamicCommandExceptionType { type -> LiteralMessage("Unknown entity type '$type'") }
-private val ERROR_NOT_SINGLE_ENTITY =
-    SimpleCommandExceptionType(LiteralMessage("Expected a single entity"))
-private val ERROR_NOT_SINGLE_PLAYER =
-    SimpleCommandExceptionType(LiteralMessage("Expected a single player"))
-private val ERROR_ONLY_PLAYERS_ALLOWED =
-    SimpleCommandExceptionType(LiteralMessage("Only players can be targeted"))
+private val ERROR_DISTANCE_NEGATIVE = SimpleCommandExceptionType(
+    LiteralMessage("Distance cannot be negative"),
+)
+private val ERROR_LEVEL_NEGATIVE = SimpleCommandExceptionType(
+    LiteralMessage("Level cannot be negative"),
+)
+private val ERROR_LIMIT_TOO_SMALL = SimpleCommandExceptionType(
+    LiteralMessage("Limit must be at least 1"),
+)
+private val ERROR_SORT_UNKNOWN = DynamicCommandExceptionType { name ->
+    LiteralMessage("Unknown sort '$name'")
+}
+private val ERROR_ENTITY_TYPE_INVALID = DynamicCommandExceptionType { type ->
+    LiteralMessage("Unknown entity type '$type'")
+}
+private val ERROR_NOT_SINGLE_ENTITY = SimpleCommandExceptionType(
+    LiteralMessage("Expected a single entity"),
+)
+private val ERROR_NOT_SINGLE_PLAYER = SimpleCommandExceptionType(
+    LiteralMessage("Expected a single player"),
+)
+private val ERROR_ONLY_PLAYERS_ALLOWED = SimpleCommandExceptionType(
+    LiteralMessage("Only players can be targeted"),
+)

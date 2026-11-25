@@ -23,20 +23,9 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
 import java.time.Duration
-import java.util.Collections
-import java.util.HexFormat
-import java.util.Properties
+import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.copyTo
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.fileSize
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.readBytes
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 /**
  * Boots a real Paper server with surf-api and two plugins of its own, and proves that a
@@ -68,9 +57,9 @@ import kotlin.io.path.writeText
  * - `redis` and `redisson` say that the consumer's injected `RedisApi` wrote a sync value and read
  *   it back from Redis, and that the injected `RedissonClient` proxy forwarded a command, both
  *   after surf-api connected the plugin
- * - the NATS command logs [EXPECTED_NATS_COMMAND_FIELDS]: a call through a service proxy reached the
- *   consumer's own `@NatsService` over the broker, and a published event reached its
- *   `@NatsListener`
+ * - the NATS command logs [EXPECTED_NATS_COMMAND_FIELDS]: a call through a service proxy reached
+ *   the consumer's own `@NatsService` over the broker, a published event reached its
+ *   `@NatsListener`, and an `ItemStack` survived the surf-nats serializer round trip on the server
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -135,8 +124,8 @@ class PaperSharedBeanBootTest {
         val line = try {
             server.start()
             server.awaitReportLine().also {
-                // The listener bean reacts to the end of startup; the command beans are run from the
-                // console. All prove that surf-api registered the beans in the enable phase.
+                // The listener bean reacts to the end of startup; the command beans are run from
+                // the console. All prove that surf-api registered the beans in the enable phase.
                 server.awaitLine(LISTENER_LINE)
                 server.sendConsoleCommand(SharedBeanReport.COMMAND)
                 server.awaitLine(COMMAND_LINE)
@@ -152,19 +141,22 @@ class PaperSharedBeanBootTest {
         if (SharedGreeting.GREETING !in line) {
             bail(
                 "The consumer logged its line, but not the greeting only the provider's " +
-                        "implementation can produce, so it did not call across the plugin " +
-                        "boundary:\n  | $line"
+                    "implementation can produce, so it did not call across the plugin " +
+                    "boundary:\n  | $line",
             )
         }
 
         val missing = EXPECTED_FIELDS.filterNot { it in line }
+
         if (missing.isNotEmpty()) {
             bail("The consumer's report line lacks $missing:\n  | $line")
         }
 
-        // The suspending command's own line: it is logged after the report, so it is not part of it.
+        // The suspending command's own line: it is logged after the report, so it is not part of
+        // it.
         val scopeLine = server.linesContaining(listOf(SCOPE_COMMAND_LINE)).last()
         val missingScopeFields = EXPECTED_SCOPE_COMMAND_FIELDS.filterNot { it in scopeLine }
+
         if (missingScopeFields.isNotEmpty()) {
             bail("The suspending command's line lacks $missingScopeFields:\n  | $scopeLine")
         }
@@ -173,35 +165,37 @@ class PaperSharedBeanBootTest {
         // their own as well.
         val natsLine = server.linesContaining(listOf(NATS_COMMAND_LINE)).last()
         val missingNatsFields = EXPECTED_NATS_COMMAND_FIELDS.filterNot { it in natsLine }
+
         if (missingNatsFields.isNotEmpty()) {
             bail("The NATS command's line lacks $missingNatsFields:\n  | $natsLine")
         }
 
         // Logged by the consumer's disable hook, so it can only appear once the server stopped.
         server.awaitLine(DISABLE_JOIN_MARKER)
+
         if (server.linesContaining(listOf(DISABLE_JOIN_LINE)).isEmpty()) {
             val seen = server.linesContaining(listOf(DISABLE_JOIN_MARKER))
             bail(
                 "The disable hook did not get its coroutine joined while the server thread was " +
-                        "blocked:\n" + seen.joinToString("\n") { "  | $it" }
+                    "blocked:\n" + seen.joinToString("\n") { "  | $it" },
             )
         }
 
         val failures = server.linesContaining(FAILURE_MARKERS)
+
         if (failures.isNotEmpty()) {
             bail("A surf plugin's context failed:\n" + failures.joinToString("\n") { "  | $it" })
         }
 
         val phases = server.phases()
+
         if (phases != EXPECTED_PHASES) {
             bail(
                 "The plugins ran their lifecycle phases out of order.\n" +
-                        "Expected: $EXPECTED_PHASES\nActual:   $phases"
+                    "Expected: $EXPECTED_PHASES\nActual:   $phases",
             )
         }
     }
-
-    // --- the server run -------------------------------------------------------------------------
 
     /**
      * One server process, its log, and the two things the test does with it: wait for a line, and
@@ -231,8 +225,11 @@ class PaperSharedBeanBootTest {
 
             logFile.deleteIfExists()
 
-            val command = listOf(javaLauncher.absolutePathString(), "-Xmx2G") +
-                    extraJvmArgs + listOf("-jar", paperJarName, "--nogui")
+            val command = buildList {
+                addAll(listOf(javaLauncher.absolutePathString(), "-Xmx2G"))
+                addAll(extraJvmArgs)
+                addAll(listOf("-jar", paperJarName, "--nogui"))
+            }
 
             process = ProcessBuilder(command)
                 .directory(directory.toFile())
@@ -282,9 +279,9 @@ class PaperSharedBeanBootTest {
                 if (startedAt != null && System.nanoTime() - startedAt > GRACE.toNanos()) {
                     bail(
                         "The server finished starting and the consuming plugin never logged its " +
-                                "line, so the shared bean never reached it. A plugin whose " +
-                                "plugin context cannot be built does not load at all, which the log " +
-                                "says.${tail()}"
+                            "line, so the shared bean never reached it. A plugin whose " +
+                            "plugin context cannot be built does not load at all, which the log " +
+                            "says.${tail()}",
                     )
                 }
 
@@ -299,7 +296,7 @@ class PaperSharedBeanBootTest {
 
                     bail(
                         "The server exited with code ${process.exitValue()} before the consuming " +
-                                "plugin logged its line.${tail()}"
+                            "plugin logged its line.${tail()}",
                     )
                 }
 
@@ -308,7 +305,7 @@ class PaperSharedBeanBootTest {
 
             bail(
                 "The server did not finish starting within ${BOOT_TIMEOUT.toSeconds()}s and the " +
-                        "consuming plugin never logged its line.${tail()}"
+                    "consuming plugin never logged its line.${tail()}",
             )
         }
 
@@ -321,14 +318,18 @@ class PaperSharedBeanBootTest {
         }
 
         /**
-         * Waits up to [GRACE] for a log line containing [marker], or fails with the tail of the log.
+         * Waits up to [GRACE] for a log line containing [marker], or fails with the tail of the
+         * log.
          */
         fun awaitLine(marker: String) {
             val deadline = System.nanoTime() + GRACE.toNanos()
+
             while (System.nanoTime() < deadline) {
                 if (snapshot().any { marker in it }) return
+
                 Thread.sleep(POLL.toMillis())
             }
+
             bail("The server never logged a line containing '$marker'.${tail()}")
         }
 
@@ -353,15 +354,18 @@ class PaperSharedBeanBootTest {
         /**
          * The log lines that contain any of [markers].
          */
-        fun linesContaining(markers: List<String>): List<String> =
-            snapshot().filter { line -> markers.any { it in line } }
+        fun linesContaining(markers: List<String>): List<String> {
+            return snapshot().filter { line -> markers.any { it in line } }
+        }
 
         /**
          * The phases both test plugins logged, as `provider:load` and the like, in log order.
          */
-        fun phases(): List<String> = snapshot()
-            .mapNotNull { PHASE_LINE.find(it) }
-            .map { "${it.groupValues[1]}:${it.groupValues[2]}" }
+        fun phases(): List<String> {
+            return snapshot()
+                .mapNotNull { PHASE_LINE.find(it) }
+                .map { "${it.groupValues[1]}:${it.groupValues[2]}" }
+        }
 
         private fun snapshot() = synchronized(lines) { lines.toList() }
 
@@ -394,14 +398,13 @@ class PaperSharedBeanBootTest {
         }
     }
 
-    // --- the brokers ----------------------------------------------------------------------------
-
     /**
      * The Redis and NATS the server connects to, each in a Docker container of its own.
      *
-     * [environment] carries their addresses under the variable names surf-api's configuration reads,
-     * so the server needs no configuration file. A machine without Docker aborts the test with the
-     * reason: it is not a defect in this repository, in the spirit of the failed downloads.
+     * [environment] carries their addresses under the variable names surf-api's configuration
+     * reads, so the server needs no configuration file. A machine without Docker aborts the test
+     * with the reason: it is not a defect in this repository, in the spirit of the failed
+     * downloads.
      */
     private class BrokerContainers private constructor(
         private val redis: GenericContainer<*>,
@@ -454,8 +457,6 @@ class PaperSharedBeanBootTest {
         }
     }
 
-    // --- assembling the server ------------------------------------------------------------------
-
     /**
      * Lays out a server directory around [paperJar] with [plugins] installed, and returns it.
      *
@@ -473,8 +474,13 @@ class PaperSharedBeanBootTest {
         serverDir.resolve("eula.txt").writeText("eula=true\n")
         serverDir.resolve("server.properties").writeText(serverProperties())
 
-        pluginsDir.listDirectoryEntries("*.jar").forEach { it.deleteIfExists() }
-        plugins.forEach { it.copyTo(pluginsDir.resolve(it.name), overwrite = true) }
+        for (jar in pluginsDir.listDirectoryEntries("*.jar")) {
+            jar.deleteIfExists()
+        }
+
+        for (plugin in plugins) {
+            plugin.copyTo(pluginsDir.resolve(plugin.name), overwrite = true)
+        }
 
         return serverDir
     }
@@ -502,8 +508,6 @@ class PaperSharedBeanBootTest {
             view-distance=2
         """.trimIndent() + "\n"
     }
-
-    // --- the test's inputs ----------------------------------------------------------------------
 
     /**
      * What the build handed over: where to work, which java to use, which extra JVM arguments the
@@ -537,7 +541,7 @@ class PaperSharedBeanBootTest {
             declared.filterNot { it.isRegularFile() }.takeIf { it.isNotEmpty() }?.let { missing ->
                 abort<Nothing>(
                     "These plugin jars the build named do not exist: " +
-                            missing.joinToString { it.absolutePathString() }
+                        missing.joinToString { it.absolutePathString() },
                 )
             }
 
@@ -581,7 +585,7 @@ class PaperSharedBeanBootTest {
             if (response.statusCode() != 200) {
                 abort<Nothing>(
                     "$url answered ${response.statusCode()} instead of 200, so $fileName could " +
-                            "not be obtained. A moved or withdrawn release is not a defect here."
+                        "not be obtained. A moved or withdrawn release is not a defect here.",
                 )
             }
 
@@ -590,8 +594,8 @@ class PaperSharedBeanBootTest {
             if (actual != expected) {
                 abort<Nothing>(
                     "$fileName from $url has sha256 $actual, not the pinned $expected " +
-                            "(${target.fileSize()} bytes). Either the host changed what it " +
-                            "serves, or the version was bumped without its checksum."
+                        "(${target.fileSize()} bytes). Either the host changed what it " +
+                        "serves, or the version was bumped without its checksum.",
                 )
             }
 
@@ -634,7 +638,7 @@ class PaperSharedBeanBootTest {
         ?.let(Path::of)
         ?: abort<Nothing>(
             "-D$key is not set, so this test was not started by its own Gradle task. Run " +
-                    "./gradlew :surf-api-paper-shared-bean-test:paperSharedBeanBootTest"
+                "./gradlew :surf-api-paper-shared-bean-test:paperSharedBeanBootTest",
         )
 
     private companion object {
@@ -692,10 +696,12 @@ class PaperSharedBeanBootTest {
         /**
          * The fields of the consumer's report line as they read when every expectation holds.
          *
-         * The provider's internals stay invisible, `Plugin` and the concrete plugin class both resolve
-         * to the consumer itself, the context class loader is the plugin's during bean creation,
-         * only the LuckPerms adapter exists because PlaceholderAPI is absent, configuration classes
-         * get their CGLIB subclass, and no context registered a JVM shutdown hook.
+         * The provider's internals stay invisible, `Plugin` and the concrete plugin class both
+         * resolve to the consumer itself, the context class loader is the plugin's during bean
+         * creation, only the LuckPerms adapter exists because PlaceholderAPI is absent,
+         * configuration classes get their CGLIB subclass, no context registered a JVM shutdown
+         * hook, the root's `Server` is the one the plugin runs on, and the plugin's logger bean is
+         * named like its own logger.
          */
         val EXPECTED_FIELDS = listOf(
             "sameLoader=true",
@@ -715,6 +721,8 @@ class PaperSharedBeanBootTest {
             "surfConfig=configured",
             "redis=ok",
             "redisson=ok",
+            "serverBean=true",
+            "pluginLogger=true",
         )
 
         /**
@@ -742,17 +750,20 @@ class PaperSharedBeanBootTest {
         val SCOPE_COMMAND_LINE = "${SharedBeanReport.SPIKE_MARKER} commandScope="
 
         /**
-         * What the consumer's NATS command bean logs when the console runs it, whatever the outcome.
+         * What the consumer's NATS command bean logs when the console runs it, whatever the
+         * outcome.
          */
         val NATS_COMMAND_LINE = "${SharedBeanReport.SPIKE_MARKER} nats="
 
         /**
-         * The fields of the NATS command's line: a service call through a service proxy and an event
-         * to the consumer's own listener both went through the broker and came back.
+         * The fields of the NATS command's line: a service call through a service proxy and an
+         * event to the consumer's own listener both went through the broker and came back, and an
+         * item stack survived the serializer round trip on the server.
          */
         val EXPECTED_NATS_COMMAND_FIELDS = listOf(
             "nats=ok",
             "natsEvent=ok",
+            "natsItemStack=ok",
         )
 
         /**
@@ -762,24 +773,28 @@ class PaperSharedBeanBootTest {
         val DISABLE_JOIN_MARKER = "${SharedBeanReport.SPIKE_MARKER} disableJoin="
 
         /**
-         * The disable hook's line when its coroutine, suspended on server thread work, was cancelled
-         * and joined while that thread was blocked in the hook.
+         * The disable hook's line when its coroutine, suspended on server thread work, was
+         * cancelled and joined while that thread was blocked in the hook.
          */
         val DISABLE_JOIN_LINE = "${DISABLE_JOIN_MARKER}returned"
 
         /**
-         * Log lines that mean a surf plugin's context failed somewhere, even if the report appeared.
+         * Log lines that mean a surf plugin's context failed somewhere, even if the report
+         * appeared.
          */
         val FAILURE_MARKERS = listOf("Failed to run bootstrapper", "PluginContextException")
 
         /**
          * A phase line of either test plugin; group 1 is the plugin role, group 2 the phase.
          */
-        val PHASE_LINE = Regex("""${SharedBeanReport.SPIKE_MARKER} (provider|consumer) phase=(\w+)""")
+        val PHASE_LINE = Regex(
+            """${SharedBeanReport.SPIKE_MARKER} (provider|consumer) phase=(\w+)""",
+        )
 
         /**
-         * The phases in the order the design promises: bootstrap, load and enable go provider first,
-         * disable goes consumer first, and the export is destroyed once, by its provider, last.
+         * The phases in the order the design promises: bootstrap, load and enable go provider
+         * first, disable goes consumer first, and the export is destroyed once, by its provider,
+         * last.
          */
         val EXPECTED_PHASES = listOf(
             "provider:bootstrap", "consumer:bootstrap",
@@ -794,8 +809,10 @@ class PaperSharedBeanBootTest {
          */
         val THIRD_PARTY_PLUGINS = listOf("commandapi", "luckperms", "packetevents")
 
-        fun sha256(file: Path): String = HexFormat.of()
-            .formatHex(MessageDigest.getInstance("SHA-256").digest(file.readBytes()))
+        fun sha256(file: Path): String {
+            return HexFormat.of()
+                .formatHex(MessageDigest.getInstance("SHA-256").digest(file.readBytes()))
+        }
 
         /**
          * Fails the test with [message], which is the only thing a reader of a red run gets.

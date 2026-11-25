@@ -20,6 +20,7 @@ import net.minestom.server.coordinate.Pos
 import net.minestom.server.entity.Player
 import net.minestom.server.instance.Instance
 import net.minestom.server.network.packet.server.play.SystemChatPacket
+import net.minestom.testing.Collector
 import net.minestom.testing.Env
 import net.minestom.testing.EnvTest
 import net.minestom.testing.TestConnection
@@ -38,36 +39,54 @@ class SuspendExecutorTest {
             val executable = RecordingExecutable()
             val calls = mutableListOf<String>()
 
-            assertSame(executable, executable.anyExecutor { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                calls += "any"
-            })
-            assertSame(executable, executable.executes { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                calls += "executes"
-            })
-            assertSame(executable, executable.playerExecutor { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                calls += "player"
-            })
-            assertSame(executable, executable.executesPlayer { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                calls += "executesPlayer"
-            })
-            assertSame(executable, executable.consoleExecutor { sender, args ->
-                assertSame(console, sender)
-                assertSame(arguments, args)
-                calls += "console"
-            })
-            assertSame(executable, executable.executesConsole { sender, args ->
-                assertSame(console, sender)
-                assertSame(arguments, args)
-                calls += "executesConsole"
-            })
+            assertSame(
+                executable,
+                executable.anyExecutor { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    calls += "any"
+                },
+            )
+            assertSame(
+                executable,
+                executable.executes { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    calls += "executes"
+                },
+            )
+            assertSame(
+                executable,
+                executable.playerExecutor { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    calls += "player"
+                },
+            )
+            assertSame(
+                executable,
+                executable.executesPlayer { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    calls += "executesPlayer"
+                },
+            )
+            assertSame(
+                executable,
+                executable.consoleExecutor { sender, args ->
+                    assertSame(console, sender)
+                    assertSame(arguments, args)
+                    calls += "console"
+                },
+            )
+            assertSame(
+                executable,
+                executable.executesConsole { sender, args ->
+                    assertSame(console, sender)
+                    assertSame(arguments, args)
+                    calls += "executesConsole"
+                },
+            )
 
             assertEquals(
                 listOf(
@@ -99,24 +118,48 @@ class SuspendExecutorTest {
             val executable = RecordingExecutable()
             val calls = mutableListOf<String>()
 
-            assertSame(executable, executable.anyExecutionInfo { info ->
-                assertInfo(info, player, arguments, "any-info")
-                calls += "any"
-            })
-            assertSame(executable, executable.playerExecutionInfo { info ->
-                assertInfo(info, player, arguments, "player-info")
-                calls += "player"
-            })
-            assertSame(executable, executable.consoleExecutionInfo { info ->
-                assertInfo(info, console, arguments, "console-info")
-                calls += "console"
-            })
+            assertSame(
+                executable,
+                executable.anyExecutionInfo { info ->
+                    assertInfo(info, player, arguments, "any-info")
+                    calls += "any"
+                },
+            )
+            assertSame(
+                executable,
+                executable.playerExecutionInfo { info ->
+                    assertInfo(info, player, arguments, "player-info")
+                    calls += "player"
+                },
+            )
+            assertSame(
+                executable,
+                executable.consoleExecutionInfo { info ->
+                    assertInfo(info, console, arguments, "console-info")
+                    calls += "console"
+                },
+            )
 
             normal(executable.definitions[0]).executor(ExecutionInfo(player, arguments, "any-info"))
-            normal(executable.definitions[1]).executor(ExecutionInfo(player, arguments, "player-info"))
-            normal(executable.definitions[2]).executor(ExecutionInfo(console, arguments, "console-info"))
+            normal(executable.definitions[1]).executor(
+                ExecutionInfo(
+                    player,
+                    arguments,
+                    "player-info",
+                ),
+            )
+            normal(executable.definitions[2]).executor(
+                ExecutionInfo(
+                    console,
+                    arguments,
+                    "console-info",
+                ),
+            )
 
-            assertEquals(listOf(ExecutorType.ANY, ExecutorType.PLAYER, ExecutorType.CONSOLE), executable.definitions.map { it.type })
+            assertEquals(
+                listOf(ExecutorType.ANY, ExecutorType.PLAYER, ExecutorType.CONSOLE),
+                executable.definitions.map { it.type },
+            )
             assertEquals(listOf("any", "player", "console"), calls)
         }
     }
@@ -128,40 +171,112 @@ class SuspendExecutorTest {
             val arguments = arguments()
             val executable = RecordingExecutable()
 
-            assertSame(executable, executable.anyResultingExecutor { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                11
-            })
-            assertSame(executable, executable.playerResultingExecutor { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                22
-            })
-            assertSame(executable, executable.consoleResultingExecutor { sender, args ->
-                assertSame(console, sender)
-                assertSame(arguments, args)
-                33
-            })
-            assertSame(executable, executable.anyResultingExecutionInfo { info ->
-                assertInfo(info, player, arguments, "any-result-info")
-                44
-            })
-            assertSame(executable, executable.playerResultingExecutionInfo { info ->
-                assertInfo(info, player, arguments, "player-result-info")
-                55
-            })
-            assertSame(executable, executable.consoleResultingExecutionInfo { info ->
-                assertInfo(info, console, arguments, "console-result-info")
-                66
-            })
+            assertSame(
+                executable,
+                executable.anyResultingExecutor { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    11
+                },
+            )
+            assertSame(
+                executable,
+                executable.playerResultingExecutor { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    22
+                },
+            )
+            assertSame(
+                executable,
+                executable.consoleResultingExecutor { sender, args ->
+                    assertSame(console, sender)
+                    assertSame(arguments, args)
+                    33
+                },
+            )
+            assertSame(
+                executable,
+                executable.anyResultingExecutionInfo { info ->
+                    assertInfo(info, player, arguments, "any-result-info")
+                    44
+                },
+            )
+            assertSame(
+                executable,
+                executable.playerResultingExecutionInfo { info ->
+                    assertInfo(info, player, arguments, "player-result-info")
+                    55
+                },
+            )
+            assertSame(
+                executable,
+                executable.consoleResultingExecutionInfo { info ->
+                    assertInfo(info, console, arguments, "console-result-info")
+                    66
+                },
+            )
 
-            assertEquals(11, resulting(executable.definitions[0]).executor(ExecutionInfo(player, arguments, "unused")))
-            assertEquals(22, resulting(executable.definitions[1]).executor(ExecutionInfo(player, arguments, "unused")))
-            assertEquals(33, resulting(executable.definitions[2]).executor(ExecutionInfo(console, arguments, "unused")))
-            assertEquals(44, resulting(executable.definitions[3]).executor(ExecutionInfo(player, arguments, "any-result-info")))
-            assertEquals(55, resulting(executable.definitions[4]).executor(ExecutionInfo(player, arguments, "player-result-info")))
-            assertEquals(66, resulting(executable.definitions[5]).executor(ExecutionInfo(console, arguments, "console-result-info")))
+            assertEquals(
+                11,
+                resulting(executable.definitions[0]).executor(
+                    ExecutionInfo(
+                        player,
+                        arguments,
+                        "unused",
+                    ),
+                ),
+            )
+            assertEquals(
+                22,
+                resulting(executable.definitions[1]).executor(
+                    ExecutionInfo(
+                        player,
+                        arguments,
+                        "unused",
+                    ),
+                ),
+            )
+            assertEquals(
+                33,
+                resulting(executable.definitions[2]).executor(
+                    ExecutionInfo(
+                        console,
+                        arguments,
+                        "unused",
+                    ),
+                ),
+            )
+            assertEquals(
+                44,
+                resulting(executable.definitions[3]).executor(
+                    ExecutionInfo(
+                        player,
+                        arguments,
+                        "any-result-info",
+                    ),
+                ),
+            )
+            assertEquals(
+                55,
+                resulting(executable.definitions[4]).executor(
+                    ExecutionInfo(
+                        player,
+                        arguments,
+                        "player-result-info",
+                    ),
+                ),
+            )
+            assertEquals(
+                66,
+                resulting(executable.definitions[5]).executor(
+                    ExecutionInfo(
+                        console,
+                        arguments,
+                        "console-result-info",
+                    ),
+                ),
+            )
             assertEquals(
                 listOf(
                     ExecutorType.ANY,
@@ -184,38 +299,59 @@ class SuspendExecutorTest {
             val executable = RecordingExecutable()
             val calls = mutableListOf<String>()
 
-            assertSame(executable, executable.anyExecutorSuspend(scope = { this }) { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                calls += "any"
-            })
-            assertSame(executable, executable.playerExecutorSuspend(scope = this) { sender, args ->
-                assertSame(player, sender)
-                assertSame(arguments, args)
-                calls += "player"
-            })
-            assertSame(executable, executable.consoleExecutorSuspend(scope = { this }) { sender, args ->
-                assertSame(console, sender)
-                assertSame(arguments, args)
-                calls += "console"
-            })
-            assertSame(executable, executable.anyExecutionInfoExecutorSuspend(scope = { this }) { info ->
-                assertInfo(info, player, arguments, "any-info-suspend")
-                calls += "any-info"
-            })
-            assertSame(executable, executable.playerExecutionInfoExecutorSuspend(scope = { this }) { info ->
-                assertInfo(info, player, arguments, "player-info-suspend")
-                calls += "player-info"
-            })
-            assertSame(executable, executable.consoleExecutionInfoExecutorSuspend(scope = { this }) { info ->
-                assertInfo(info, console, arguments, "console-info-suspend")
-                calls += "console-info"
-            })
+            assertSame(
+                executable,
+                executable.anyExecutorSuspend(scope = { this }) { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    calls += "any"
+                },
+            )
+            assertSame(
+                executable,
+                executable.playerExecutorSuspend(scope = this) { sender, args ->
+                    assertSame(player, sender)
+                    assertSame(arguments, args)
+                    calls += "player"
+                },
+            )
+            assertSame(
+                executable,
+                executable.consoleExecutorSuspend(scope = { this }) { sender, args ->
+                    assertSame(console, sender)
+                    assertSame(arguments, args)
+                    calls += "console"
+                },
+            )
+            assertSame(
+                executable,
+                executable.anyExecutionInfoExecutorSuspend(scope = { this }) { info ->
+                    assertInfo(info, player, arguments, "any-info-suspend")
+                    calls += "any-info"
+                },
+            )
+            assertSame(
+                executable,
+                executable.playerExecutionInfoExecutorSuspend(scope = { this }) { info ->
+                    assertInfo(info, player, arguments, "player-info-suspend")
+                    calls += "player-info"
+                },
+            )
+            assertSame(
+                executable,
+                executable.consoleExecutionInfoExecutorSuspend(scope = { this }) { info ->
+                    assertInfo(info, console, arguments, "console-info-suspend")
+                    calls += "console-info"
+                },
+            )
             executable.anyExecutorSuspend { _, _ -> }
 
             assertSame(this, suspending(executable.definitions[0]).scopeProvider())
             assertSame(this, suspending(executable.definitions[1]).scopeProvider())
-            assertSame(minestomAsyncScope, suspending(executable.definitions.last()).scopeProvider())
+            assertSame(
+                minestomAsyncScope,
+                suspending(executable.definitions.last()).scopeProvider(),
+            )
             assertEquals(
                 listOf(
                     ExecutorType.ANY,
@@ -229,13 +365,41 @@ class SuspendExecutorTest {
                 executable.definitions.map { it.type },
             )
 
-            suspending(executable.definitions[0]).executor(this, ExecutionInfo(player, arguments, "unused"))
-            suspending(executable.definitions[1]).executor(this, ExecutionInfo(player, arguments, "unused"))
-            suspending(executable.definitions[2]).executor(this, ExecutionInfo(console, arguments, "unused"))
-            suspending(executable.definitions[3]).executor(this, ExecutionInfo(player, arguments, "any-info-suspend"))
-            suspending(executable.definitions[4]).executor(this, ExecutionInfo(player, arguments, "player-info-suspend"))
-            suspending(executable.definitions[5]).executor(this, ExecutionInfo(console, arguments, "console-info-suspend"))
-            assertEquals(listOf("any", "player", "console", "any-info", "player-info", "console-info"), calls)
+            suspending(executable.definitions[0]).executor(
+                this,
+                ExecutionInfo(player, arguments, "unused"),
+            )
+            suspending(executable.definitions[1]).executor(
+                this,
+                ExecutionInfo(player, arguments, "unused"),
+            )
+            suspending(executable.definitions[2]).executor(
+                this,
+                ExecutionInfo(console, arguments, "unused"),
+            )
+            suspending(executable.definitions[3]).executor(
+                this,
+                ExecutionInfo(player, arguments, "any-info-suspend"),
+            )
+            suspending(executable.definitions[4]).executor(
+                this,
+                ExecutionInfo(player, arguments, "player-info-suspend"),
+            )
+            suspending(executable.definitions[5]).executor(
+                this,
+                ExecutionInfo(console, arguments, "console-info-suspend"),
+            )
+            assertEquals(
+                listOf(
+                    "any",
+                    "player",
+                    "console",
+                    "any-info",
+                    "player-info",
+                    "console-info",
+                ),
+                calls,
+            )
         }
     }
 
@@ -269,7 +433,12 @@ class SuspendExecutorTest {
                 executor = { throw CancellationException("stop") },
             )
 
-            val job = launchCommandExecutor(definition, player, CommandArguments.empty(), "cancel-test")
+            val job = launchCommandExecutor(
+                definition,
+                player,
+                CommandArguments.empty(),
+                "cancel-test",
+            )
             runCurrent()
 
             assertTrue(job.isCancelled)
@@ -286,7 +455,12 @@ class SuspendExecutorTest {
                 executor = { withTimeout(10) { delay(1_000) } },
             )
 
-            val job = launchCommandExecutor(definition, player, CommandArguments.empty(), "timeout-test")
+            val job = launchCommandExecutor(
+                definition,
+                player,
+                CommandArguments.empty(),
+                "timeout-test",
+            )
             advanceUntilIdle()
 
             assertTrue(job.isCompleted)
@@ -318,7 +492,9 @@ class SuspendExecutorTest {
         cancelling.addListener { throw CancellationException("stop") }
         cancelling.addListener { event -> seen += event }
 
-        assertTrue(runCatching { cancelling.call("second") }.exceptionOrNull() is CancellationException)
+        assertTrue(
+            runCatching { cancelling.call("second") }.exceptionOrNull() is CancellationException,
+        )
         assertEquals(listOf("first"), seen)
     }
 
@@ -363,7 +539,12 @@ class SuspendExecutorTest {
                 executor = { failure() },
             )
 
-            val job = launchCommandExecutor(definition, player, CommandArguments.empty(), "failure-test")
+            val job = launchCommandExecutor(
+                definition,
+                player,
+                CommandArguments.empty(),
+                "failure-test",
+            )
             runCurrent()
 
             assertTrue(job.isCompleted)
@@ -382,6 +563,7 @@ class SuspendExecutorTest {
     private inline fun withPlayer(env: Env, block: (Player) -> Unit) {
         val instance = env.createEmptyInstance()
         var player: Player? = null
+
         try {
             val connectedPlayer = connect(env.createConnection(), instance)
             player = connectedPlayer
@@ -398,6 +580,7 @@ class SuspendExecutorTest {
     ) {
         val instance = env.createEmptyInstance()
         var player: Player? = null
+
         try {
             val connectedPlayer = connect(env.createConnection(), instance)
             player = connectedPlayer
@@ -410,10 +593,11 @@ class SuspendExecutorTest {
 
     private suspend inline fun withPlayerConnectionSuspend(
         env: Env,
-        crossinline block: suspend (Player, net.minestom.testing.Collector<SystemChatPacket>) -> Unit,
+        crossinline block: suspend (Player, Collector<SystemChatPacket>) -> Unit,
     ) {
         val instance = env.createEmptyInstance()
         var player: Player? = null
+
         try {
             val connection = env.createConnection()
             val connectedPlayer = connect(connection, instance)
@@ -427,7 +611,7 @@ class SuspendExecutorTest {
     }
 
     private fun arguments() = CommandArguments.of(
-        listOf(ParsedArgument("marker", "value", "value", present = true)),
+        listOf(ParsedArgument("marker", "value", "value", isPresent = true)),
     )
 
     private fun connect(connection: TestConnection, instance: Instance): Player {
@@ -437,17 +621,24 @@ class SuspendExecutorTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 
-    private fun normal(definition: ExecutorDefinition) =
-        assertInstanceOf(ExecutorDefinition.Normal::class.java, definition)
+    private fun normal(definition: ExecutorDefinition) = assertInstanceOf(
+        ExecutorDefinition.Normal::class.java,
+        definition,
+    )
 
-    private fun resulting(definition: ExecutorDefinition) =
-        assertInstanceOf(ExecutorDefinition.Resulting::class.java, definition)
+    private fun resulting(definition: ExecutorDefinition) = assertInstanceOf(
+        ExecutorDefinition.Resulting::class.java,
+        definition,
+    )
 
-    private fun suspending(definition: ExecutorDefinition) =
-        assertInstanceOf(ExecutorDefinition.Suspending::class.java, definition)
+    private fun suspending(definition: ExecutorDefinition) = assertInstanceOf(
+        ExecutorDefinition.Suspending::class.java,
+        definition,
+    )
 
     private fun <S : CommandSender> assertInfo(
         info: ExecutionInfo<S>,
@@ -465,6 +656,7 @@ class SuspendExecutorTest {
 
         override fun addExecutor(definition: ExecutorDefinition): RecordingExecutable {
             definitions += definition
+
             return this
         }
     }

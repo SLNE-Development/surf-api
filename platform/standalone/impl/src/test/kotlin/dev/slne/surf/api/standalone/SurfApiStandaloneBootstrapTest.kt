@@ -1,15 +1,10 @@
 package dev.slne.surf.api.standalone
 
-import dev.slne.surf.api.config.SurfConfigApi
-import dev.slne.surf.api.reflection.SurfReflection
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.api.event.SurfEventBus
 import dev.slne.surf.api.spring.SurfContexts
 import kotlinx.coroutines.test.runTest
-import kotlin.test.AfterTest
-import kotlin.test.Test
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
+import kotlin.test.*
 
 /**
  * Checks that a standalone process starts surf-api's root context and resolves its beans.
@@ -18,7 +13,6 @@ import kotlin.test.assertSame
  * one would prove that Spring works, and say nothing about whether [SurfApiStandaloneBootstrap]
  * starts it.
  */
-@OptIn(InternalSurfApi::class)
 class SurfApiStandaloneBootstrapTest {
 
     @AfterTest
@@ -38,11 +32,11 @@ class SurfApiStandaloneBootstrapTest {
 
         // Two services from different modules, read the way an api module reads them: through the
         // accessor, not through the context.
-        assertNotNull(SurfReflection.instance, "a core-impl bean resolves")
-        assertNotNull(SurfConfigApi.instance, "a config bean resolves")
+        assertNotNull(SurfEventBus.instance, "a core-impl bean resolves")
+        assertNotNull(SpongeConfigSerializers.instance, "a config bean resolves")
         assertSame(
-            root.getBean(SurfReflection::class.java),
-            SurfReflection.instance,
+            root.getBean(SurfEventBus::class.java),
+            SurfEventBus.instance,
             "the accessor hands out the root's singleton rather than a second instance",
         )
     }

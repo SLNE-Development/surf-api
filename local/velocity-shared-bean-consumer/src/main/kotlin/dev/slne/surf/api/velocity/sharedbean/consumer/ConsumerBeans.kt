@@ -8,14 +8,15 @@ import dev.jorel.commandapi.executors.CommandExecutor
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.event.SurfSyncEvent
+import dev.slne.surf.api.luckperms.SurfLuckPerms
 import dev.slne.surf.api.spring.ConditionalOnPlugin
 import dev.slne.surf.api.spring.SurfLifecycle
 import dev.slne.surf.api.velocity.sharedbean.SharedBeanConsumerPlugin
 import dev.slne.surf.api.velocity.sharedbean.provider.ProviderInternals
 import dev.slne.surf.api.velocity.sharedbean.provider.SharedGreeting
 import kotlinx.coroutines.future.await
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import net.luckperms.api.LuckPerms
-import net.luckperms.api.LuckPermsProvider
 import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.ApplicationContext
@@ -40,42 +41,55 @@ class SharedGreetingConsumer(
     private val configuration: ConsumerConfiguration,
     private val velocityListener: SpikeVelocityListener,
     private val surfEventListener: SpikeSurfEventListener,
+    private val pluginLogger: ComponentLogger,
 ) : SurfLifecycle {
 
     private val log = logger()
-    private val contextClassLoaderIsPlugin = Thread.currentThread().contextClassLoader === javaClass.classLoader
+    private val contextClassLoaderIsPlugin = Thread.currentThread()
+        .contextClassLoader === javaClass.classLoader
+    private val pluginConstructed = (plugin.proxy as Any?) === server &&
+        (plugin.constructedMarker as String?) != null
+    private val subclassFieldInjected = plugin.injectedContainer != null
+    private val subclassMethodInjected = plugin.methodInjected
 
-    override suspend fun onLoad() = phase("load")
+    override suspend fun onLoad(): Unit = phase("load")
 
     override suspend fun onEnable() {
         phase("enable")
         SpikeSurfEvent().call()
         server.eventManager.fire(SpikeVelocityEvent()).await()
 
-        log.atInfo().log(
-            "%s greeting=%s sameLoader=%s privateVisible=%s pluginIsInstance=%s containerIsOwn=%s " +
+        log.atInfo()
+            .log(
+                "%s greeting=%s sameLoader=%s privateVisible=%s pluginIsInstance=%s containerIsOwn=%s " +
                     "tccl=%s probes=%s configProxy=%s surfEvent=%s velocityEvent=%s " +
-                    "shutdownHooks=%s logImpl=%s",
-            SharedBeanReport.MARKER,
-            greeting.greet(),
-            greeting.javaClass.classLoader === SharedGreeting::class.java.classLoader,
-            providerInternals.ifAvailable != null,
-            container.instance.orElse(null) === plugin,
-            container.description.id == SharedBeanReport.PLUGIN_ID,
-            contextClassLoaderIsPlugin,
-            probes.map { it.javaClass.simpleName }.sorted(),
-            configuration.javaClass.name.contains("CGLIB"),
-            surfEventListener.received,
-            velocityListener.received,
-            countShutdownHooks(context),
-            LogFactory.getLog(javaClass).javaClass.simpleName,
-        )
+                    "shutdownHooks=%s logImpl=%s pluginConstructed=%s pluginLogger=%s " +
+                    "subclassField=%s subclassMethod=%s",
+                SharedBeanReport.MARKER,
+                greeting.greet(),
+                greeting.javaClass.classLoader === SharedGreeting::class.java.classLoader,
+                providerInternals.ifAvailable != null,
+                container.instance.orElse(null) === plugin,
+                container.description.id == SharedBeanReport.PLUGIN_ID,
+                contextClassLoaderIsPlugin,
+                probes.map { it.javaClass.simpleName }.sorted(),
+                configuration.javaClass.name.contains("CGLIB"),
+                surfEventListener.received,
+                velocityListener.received,
+                countShutdownHooks(context),
+                LogFactory.getLog(javaClass).javaClass.simpleName,
+                pluginConstructed,
+                pluginLogger.name,
+                subclassFieldInjected,
+                subclassMethodInjected,
+            )
     }
 
-    override suspend fun onDisable() = phase("disable")
+    override suspend fun onDisable(): Unit = phase("disable")
 
     private fun phase(name: String) {
-        log.atInfo().log("%s consumer phase=%s", SharedBeanReport.SPIKE_MARKER, name)
+        log.atInfo()
+            .log("%s consumer phase=%s", SharedBeanReport.SPIKE_MARKER, name)
     }
 
     private fun countShutdownHooks(context: ApplicationContext): Int {
@@ -93,12 +107,12 @@ class SharedGreetingConsumer(
 interface HookProbe
 
 /**
- * Refers to LuckPerms, which the test proxy has.
+ * Refers to LuckPerms, which the test proxy has, and injects surf-api's [SurfLuckPerms] root bean.
  */
 @Service
 @ConditionalOnPlugin("luckperms")
-class LuckPermsProbe : HookProbe {
-    fun luckPerms(): LuckPerms = LuckPermsProvider.get()
+class LuckPermsProbe(private val surfLuckPerms: SurfLuckPerms) : HookProbe {
+    fun luckPerms(): LuckPerms = surfLuckPerms.luckPerms
 }
 
 /**
@@ -116,7 +130,7 @@ class AbsentProbe : HookProbe
 class ConsumerConfiguration {
 
     @Bean
-    fun consumerAnswer() = ConsumerAnswer(42)
+    fun consumerAnswer(): ConsumerAnswer = ConsumerAnswer(42)
 }
 
 /**
@@ -154,7 +168,15 @@ class SpikeCommand : CommandAPICommand(SharedBeanReport.COMMAND) {
     private val log = logger()
 
     init {
-        executes(CommandExecutor { _, _ -> log.atInfo().log("%s command=executed", SharedBeanReport.SPIKE_MARKER) })
+        executes(
+            CommandExecutor { _, _ ->
+                log.atInfo()
+                    .log(
+                        "%s command=executed",
+                        SharedBeanReport.SPIKE_MARKER,
+                    )
+            },
+        )
     }
 }
 

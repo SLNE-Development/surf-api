@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
     api(projects.surfApiAnnotations)
-    api(platform(libs.spring.framework.bom))
-    api(libs.spring.context)
-    api(libs.kotlin.stdlib)
+    compileOnlyApi(platform(libs.spring.framework.bom))
+    compileOnlyApi(libs.spring.context)
+    compileOnlyApi(libs.kotlin.stdlib)
 }
 
 description = "surf-api-spring-api"

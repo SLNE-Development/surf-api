@@ -82,7 +82,7 @@ including a root that hosts an application, such as a standalone service or a mi
 | Platform | Answered by |
 | --- | --- |
 | Paper | Bukkit's plugin manager once the server exists; in the bootstrap phase, the plugins Paper registered. Both include the names under `provides`. |
-| Velocity | `pluginManager.isLoaded`. The condition runs in the plugin's constructor, so only plugins Velocity constructed before count. |
+| Velocity | `pluginManager.isLoaded`. The condition runs in the plugin's load phase, so only plugins Velocity created before count. |
 | Minestom | the plugin manager's loaded plugins |
 
 A condition evaluated in a context without a `PluginPresence` fails with "@ConditionalOnPlugin was

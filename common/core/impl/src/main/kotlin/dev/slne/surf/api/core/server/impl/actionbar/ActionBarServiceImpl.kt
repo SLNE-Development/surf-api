@@ -1,7 +1,6 @@
 package dev.slne.surf.api.core.server.impl.actionbar
 
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.core.SurfApiCore
 import dev.slne.surf.api.core.server.impl.SurfApiCoreImpl
 import dev.slne.surf.api.messages.actionbar.ActionBarFinishReason
 import dev.slne.surf.api.messages.actionbar.ActionBarService
@@ -17,7 +16,9 @@ import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 @Service
-class ActionBarServiceImpl : ActionBarService {
+class ActionBarServiceImpl(
+    private val core: SurfApiCoreImpl,
+) : ActionBarService {
 
     companion object {
         private val log = logger()
@@ -32,7 +33,7 @@ class ActionBarServiceImpl : ActionBarService {
         autoCancelPlayer: Boolean,
         computation: () -> Component,
         afterTick: (() -> Unit)?,
-        onFinish: ((ActionBarFinishReason) -> Unit)?
+        onFinish: ((ActionBarFinishReason) -> Unit)?,
     ): Job {
         require(duration.isPositive()) { "duration must be positive" }
         require(interval.isPositive()) { "interval must be positive" }
@@ -45,7 +46,7 @@ class ActionBarServiceImpl : ActionBarService {
         val autoCancelUuid = if (
             autoCancelPlayer &&
             uuid != null &&
-            SurfApiCoreImpl.get().isPlayer(audience)
+            core.isPlayer(audience)
         ) {
             uuid
         } else {
@@ -53,7 +54,7 @@ class ActionBarServiceImpl : ActionBarService {
         }
 
         fun shouldAutoCancel(): Boolean {
-            return autoCancelUuid != null && SurfApiCore.instance.getPlayer(autoCancelUuid) == null
+            return autoCancelUuid != null && core.getPlayer(autoCancelUuid) == null
         }
 
         val finishReason = AtomicReference(ActionBarFinishReason.CANCELLED)
@@ -99,6 +100,7 @@ class ActionBarServiceImpl : ActionBarService {
                 }
 
                 val remainingDelay = interval - tickStart.elapsedNow()
+
                 if (remainingDelay.isPositive()) {
                     delay(remainingDelay)
                 }

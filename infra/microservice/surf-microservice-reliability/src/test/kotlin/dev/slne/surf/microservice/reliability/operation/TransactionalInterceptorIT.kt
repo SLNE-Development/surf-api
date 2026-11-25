@@ -1,7 +1,5 @@
 package dev.slne.surf.microservice.reliability.operation
 
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import dev.slne.surf.database.reliability.operation.AtomicOperationConflictException
 import dev.slne.surf.database.reliability.operation.AtomicOperationInProgressException
 import dev.slne.surf.database.reliability.operation.AtomicOperations
@@ -19,6 +17,8 @@ import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.*
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import org.testcontainers.junit.jupiter.Testcontainers
@@ -43,61 +43,96 @@ class TransactionalInterceptorIT {
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a redelivery receives the stored reply without running the handler`(vendor: TestVendor) =
-        withInterceptor(vendor) { database, api, interceptor ->
-            val first = interceptor.intercept(call("message-1") { insertAndReply(api, it, "first") })
-            val redelivery =
-                interceptor.intercept(call("message-1", deliveryCount = 2) { insertAndReply(api, it, "again") })
+    fun `a redelivery receives the stored reply without running the handler`(vendor: TestVendor) = withInterceptor(
+        vendor,
+    ) { database, api, interceptor ->
+        val first = interceptor.intercept(call("message-1") { insertAndReply(api, it, "first") })
+        val redelivery = interceptor.intercept(
+            call(
+                "message-1",
+                deliveryCount = 2,
+            ) { insertAndReply(api, it, "again") },
+        )
 
-            assertEquals("first", redelivery.bytes.decodeToString())
-            assertEquals(first.format, redelivery.format)
-            assertEquals(1, runs.get())
-            assertEquals(1, database.entryCount(api, "message-1"))
-        }
+        assertEquals("first", redelivery.bytes.decodeToString())
+        assertEquals(first.format, redelivery.format)
+        assertEquals(1, runs.get())
+        assertEquals(1, database.entryCount(api, "message-1"))
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a handler exception propagates unchanged and stores nothing`(vendor: TestVendor) =
-        withInterceptor(vendor) { database, api, interceptor ->
-            // Coroutine stack-trace recovery may copy the exception, so compare type and message, not identity.
-            val thrown = assertFailsWith<IllegalArgumentException> {
-                interceptor.intercept(call("message-2") {
+    fun `a handler exception propagates unchanged and stores nothing`(vendor: TestVendor) = withInterceptor(
+        vendor,
+    ) { database, api, interceptor ->
+        // Coroutine stack-trace recovery may copy the exception, so compare type and message, not
+        // identity.
+        val thrown = assertFailsWith<IllegalArgumentException> {
+            interceptor.intercept(
+                call("message-2") {
                     insertAndReply(api, it, "never stored")
                     throw IllegalArgumentException("rejected")
-                })
-            }
-            assertEquals("rejected", thrown.message)
-            assertEquals(0, database.entryCount(api, "message-2"))
-
-            val retry = interceptor.intercept(call("message-2", deliveryCount = 2) { insertAndReply(api, it, "second") })
-            assertEquals("second", retry.bytes.decodeToString())
-            assertEquals(2, runs.get())
-            assertEquals(1, database.entryCount(api, "message-2"))
+                },
+            )
         }
+        assertEquals("rejected", thrown.message)
+        assertEquals(0, database.entryCount(api, "message-2"))
+
+        val retry = interceptor.intercept(
+            call("message-2", deliveryCount = 2) {
+                insertAndReply(
+                    api,
+                    it,
+                    "second",
+                )
+            },
+        )
+        assertEquals("second", retry.bytes.decodeToString())
+        assertEquals(2, runs.get())
+        assertEquals(1, database.entryCount(api, "message-2"))
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a handler requesting a redelivery is not answered`(vendor: TestVendor) =
-        withInterceptor(vendor) { _, _, interceptor ->
-            val thrown = assertFailsWith<NatsRedeliveryException> {
-                interceptor.intercept(call("message-3") { throw NatsRedeliveryException("later") })
-            }
-
-            assertEquals("later", thrown.message)
+    fun `a handler requesting a redelivery is not answered`(vendor: TestVendor) = withInterceptor(
+        vendor,
+    ) { _, _, interceptor ->
+        val thrown = assertFailsWith<NatsRedeliveryException> {
+            interceptor.intercept(call("message-3") { throw NatsRedeliveryException("later") })
         }
+
+        assertEquals("later", thrown.message)
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a reused message id with another request is answered with a conflict error`(vendor: TestVendor) =
-        withInterceptor(vendor) { _, api, interceptor ->
-            interceptor.intercept(call("message-4", request = byteArrayOf(1)) { insertAndReply(api, it, "first") })
+    fun `a reused message id with another request is answered with a conflict error`(vendor: TestVendor) = withInterceptor(
+        vendor,
+    ) { _, api, interceptor ->
+        interceptor.intercept(
+            call("message-4", request = byteArrayOf(1)) {
+                insertAndReply(
+                    api,
+                    it,
+                    "first",
+                )
+            },
+        )
 
-            val reply = interceptor.intercept(call("message-4", request = byteArrayOf(2)) { valueReply("other") })
+        val reply = interceptor.intercept(
+            call(
+                "message-4",
+                request = byteArrayOf(2),
+            ) { valueReply("other") },
+        )
 
-            assertEquals(NatsPersistentReply.error(RuntimeException()).format, reply.format)
-            assertTrue(reply.bytes.decodeToString().startsWith(AtomicOperationConflictException::class.java.name))
-            assertEquals(1, runs.get())
-        }
+        assertEquals(NatsPersistentReply.error(RuntimeException()).format, reply.format)
+        assertTrue(
+            reply.bytes.decodeToString()
+                .startsWith(AtomicOperationConflictException::class.java.name),
+        )
+        assertEquals(1, runs.get())
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
@@ -105,21 +140,41 @@ class TransactionalInterceptorIT {
         val database = vendor.freshDatabase()
         database.openWithReliabilitySchema("instance-a").use { first ->
             database.openWithReliabilitySchema("instance-b").use { second ->
-                val instanceA = TransactionalInterceptor(OWNER, AtomicOperations(first.database), client)
-                val instanceB = TransactionalInterceptor(OWNER, AtomicOperations(second.database), client)
+                val instanceA = TransactionalInterceptor(
+                    OWNER,
+                    AtomicOperations(first.database),
+                    client,
+                )
+                val instanceB = TransactionalInterceptor(
+                    OWNER,
+                    AtomicOperations(second.database),
+                    client,
+                )
                 val handlerStarted = CompletableDeferred<Unit>()
                 val releaseHandler = CompletableDeferred<Unit>()
 
                 val replies = withContext(Dispatchers.Default) {
                     val a = async {
-                        instanceA.intercept(call("message-5") {
-                            handlerStarted.complete(Unit)
-                            releaseHandler.await()
-                            publishAndReply(first.database, it, "from a")
-                        })
+                        instanceA.intercept(
+                            call("message-5") {
+                                handlerStarted.complete(Unit)
+                                releaseHandler.await()
+                                publishAndReply(first.database, it, "from a")
+                            },
+                        )
                     }
                     handlerStarted.await()
-                    val b = async { instanceB.intercept(call("message-5") { publishAndReply(second.database, it, "from b") }) }
+                    val b = async {
+                        instanceB.intercept(
+                            call("message-5") {
+                                publishAndReply(
+                                    second.database,
+                                    it,
+                                    "from b",
+                                )
+                            },
+                        )
+                    }
                     delay(500.milliseconds) // instance B now waits for the claim of instance A
                     releaseHandler.complete(Unit)
                     listOf(a.await(), b.await())
@@ -139,10 +194,17 @@ class TransactionalInterceptorIT {
         val database = vendor.freshDatabase()
         database.openWithReliabilitySchema("holder").use { first ->
             database.openWithReliabilitySchema("waiter").use { second ->
-                val holder = TransactionalInterceptor(OWNER, AtomicOperations(first.database), client)
+                val holder = TransactionalInterceptor(
+                    OWNER,
+                    AtomicOperations(first.database),
+                    client,
+                )
                 val waiter = TransactionalInterceptor(
                     OWNER,
-                    AtomicOperations(second.database, AtomicOperationsConfig(lockTimeout = 1.seconds)),
+                    AtomicOperations(
+                        second.database,
+                        AtomicOperationsConfig(lockTimeout = 1.seconds),
+                    ),
                     client,
                 )
                 val handlerStarted = CompletableDeferred<Unit>()
@@ -150,16 +212,26 @@ class TransactionalInterceptorIT {
 
                 withContext(Dispatchers.Default) {
                     val held = async {
-                        holder.intercept(call("message-6") {
-                            handlerStarted.complete(Unit)
-                            releaseHandler.await()
-                            insertAndReply(first.database, it, "held")
-                        })
+                        holder.intercept(
+                            call("message-6") {
+                                handlerStarted.complete(Unit)
+                                releaseHandler.await()
+                                insertAndReply(first.database, it, "held")
+                            },
+                        )
                     }
                     handlerStarted.await()
 
                     val failure = assertFailsWith<NatsRedeliveryException> {
-                        waiter.intercept(call("message-6") { insertAndReply(second.database, it, "never") })
+                        waiter.intercept(
+                            call("message-6") {
+                                insertAndReply(
+                                    second.database,
+                                    it,
+                                    "never",
+                                )
+                            },
+                        )
                     }
                     assertIs<AtomicOperationInProgressException>(failure.cause)
 
@@ -187,57 +259,89 @@ class TransactionalInterceptorIT {
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `events are published in order once the handler's transaction has committed`(vendor: TestVendor) =
-        runBlocking {
-            val database = vendor.freshDatabase()
-            database.openWithReliabilitySchema("interceptor").use { opened ->
-                val api = opened.database
-                val committedAtPublish = ConcurrentLinkedQueue<Long>()
-                val observingClient: NatsClient = mockk {
-                    every { publish(any()) } answers {
-                        published += firstArg<NatsEvent>()
-                        committedAtPublish += runBlocking { database.entryCount(api, "message-8") }
-                    }
+    fun `events are published in order once the handler's transaction has committed`(vendor: TestVendor) = runBlocking {
+        val database = vendor.freshDatabase()
+        database.openWithReliabilitySchema("interceptor").use { opened ->
+            val api = opened.database
+            val committedAtPublish = ConcurrentLinkedQueue<Long>()
+            val observingClient: NatsClient = mockk {
+                every { publish(any()) } answers {
+                    published += firstArg<NatsEvent>()
+                    committedAtPublish += runBlocking { database.entryCount(api, "message-8") }
                 }
-                val interceptor = TransactionalInterceptor(OWNER, AtomicOperations(api), observingClient)
+            }
+            val interceptor = TransactionalInterceptor(
+                OWNER,
+                AtomicOperations(api),
+                observingClient,
+            )
 
-                interceptor.intercept(call("message-8") {
+            interceptor.intercept(
+                call("message-8") {
                     events.publish(chatEvent("first"))
                     events.publish(chatEvent("second"))
-                    assertEquals(emptyList(), publishedMessages(), "events must wait for the commit")
+                    assertEquals(
+                        emptyList(),
+                        publishedMessages(),
+                        "events must wait for the commit",
+                    )
                     insertAndReply(api, it, "committed")
-                })
+                },
+            )
 
-                assertEquals(listOf("first", "second"), publishedMessages())
-                assertEquals(listOf(1L, 1L), committedAtPublish.toList(), "the handler's row must be committed")
-            }
+            assertEquals(listOf("first", "second"), publishedMessages())
+            assertEquals(
+                listOf(1L, 1L),
+                committedAtPublish.toList(),
+                "the handler's row must be committed",
+            )
         }
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
     fun `a failing handler publishes nothing`(vendor: TestVendor) = withInterceptor(vendor) { _, api, interceptor ->
         assertFailsWith<IllegalStateException> {
-            interceptor.intercept(call("message-9") {
-                publishAndReply(api, it, "rolled-back")
-                error("handler failed after publishing")
-            })
+            interceptor.intercept(
+                call("message-9") {
+                    publishAndReply(api, it, "rolled-back")
+                    error("handler failed after publishing")
+                },
+            )
         }
         assertEquals(emptyList(), publishedMessages())
 
-        interceptor.intercept(call("message-9", deliveryCount = 2) { publishAndReply(api, it, "retried") })
+        interceptor.intercept(
+            call("message-9", deliveryCount = 2) {
+                publishAndReply(
+                    api,
+                    it,
+                    "retried",
+                )
+            },
+        )
         assertEquals(listOf("retried"), publishedMessages())
     }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a redelivery answered with the stored reply publishes nothing`(vendor: TestVendor) =
-        withInterceptor(vendor) { _, api, interceptor ->
-            interceptor.intercept(call("message-10") { publishAndReply(api, it, "first") })
-            interceptor.intercept(call("message-10", deliveryCount = 2) { publishAndReply(api, it, "again") })
+    fun `a redelivery answered with the stored reply publishes nothing`(vendor: TestVendor) = withInterceptor(
+        vendor,
+    ) { _, api, interceptor ->
+        interceptor.intercept(call("message-10") { publishAndReply(api, it, "first") })
+        interceptor.intercept(
+            call("message-10", deliveryCount = 2) {
+                publishAndReply(
+                    api,
+                    it,
+                    "again",
+                )
+            },
+        )
 
-            assertEquals(listOf("first"), publishedMessages())
-            assertEquals(1, runs.get())
-        }
+        assertEquals(listOf("first"), publishedMessages())
+        assertEquals(1, runs.get())
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
@@ -250,7 +354,15 @@ class TransactionalInterceptorIT {
             }
             val interceptor = TransactionalInterceptor(OWNER, AtomicOperations(api), failingClient)
 
-            val reply = interceptor.intercept(call("message-11") { publishAndReply(api, it, "kept") })
+            val reply = interceptor.intercept(
+                call("message-11") {
+                    publishAndReply(
+                        api,
+                        it,
+                        "kept",
+                    )
+                },
+            )
 
             assertEquals("kept", reply.bytes.decodeToString())
             assertEquals(1, database.entryCount(api, "message-11"))
@@ -277,15 +389,25 @@ class TransactionalInterceptorIT {
         handler(messageId)
     }
 
-    private suspend fun insertAndReply(api: R2dbcDatabase, messageId: String, reply: String): NatsPersistentReply {
+    private suspend fun insertAndReply(
+        api: R2dbcDatabase,
+        messageId: String,
+        reply: String,
+    ): NatsPersistentReply {
         suspendTransaction(db = api) {
             exec("INSERT INTO test_entries (entry) VALUES ('$messageId')")
         }
+
         return valueReply(reply)
     }
 
-    private suspend fun publishAndReply(api: R2dbcDatabase, messageId: String, message: String): NatsPersistentReply {
+    private suspend fun publishAndReply(
+        api: R2dbcDatabase,
+        messageId: String,
+        message: String,
+    ): NatsPersistentReply {
         events.publish(chatEvent(message), aggregateId = messageId)
+
         return insertAndReply(api, messageId, message)
     }
 

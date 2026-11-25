@@ -11,15 +11,15 @@ import java.nio.file.Path
 /**
  * Entry points for running NATS inside a host that owns the process, such as the surf-api plugin.
  *
- * The host does not use [dev.slne.surf.nats.NatsInstance]; it creates a client per plugin and connects through
- * [NatsClientControl.connect].
+ * The host sets the configuration directory with [useConfigDirectory], creates a client per plugin
+ * and connects through [NatsClientControl.connect].
  */
 @InternalNatsApi
 object EmbeddedNats {
 
     /**
-     * Whether [type] is a generated service interface: an interface that declares the static `NATS_DESCRIPTOR` field
-     * of a service descriptor itself.
+     * Whether [type] is a generated service interface: an interface that declares the static
+     * `NATS_DESCRIPTOR` field of a service descriptor itself.
      *
      * Reads the field declaration only, so the interface is not initialized.
      */
@@ -31,14 +31,18 @@ object EmbeddedNats {
      * Throws [IllegalArgumentException] for a client that was not created by `NatsClient.create`.
      */
     fun control(client: NatsClient): NatsClientControl {
-        return requireNotNull(client as? NatsClientControl) { "${client.javaClass.name} is not a surf-nats core client" }
+        return requireNotNull(client as? NatsClientControl) {
+            "${client.javaClass.name} is not a surf-nats core client"
+        }
     }
 
     /**
-     * Sets the directory that holds `config.yml`, which the shared connection reads when it first connects.
+     * Sets the directory that holds `config.yml`, which the shared connection reads when it first
+     * connects.
      *
-     * Must be called before the first connection. Calling it again with another directory fails with
-     * [IllegalStateException], because the configuration is read once per JVM.
+     * Must be called before the first connection, otherwise reading the configuration fails.
+     * Calling it again with another directory fails with [IllegalStateException], because the
+     * configuration is read once per JVM.
      */
     fun useConfigDirectory(directory: Path) {
         NatsConfigLocation.install(directory)
@@ -47,8 +51,7 @@ object EmbeddedNats {
     /**
      * Returns a snapshot of the shared connection's state, or `null` while there is no connection.
      *
-     * Reads the state only and never contacts the server. Unlike [dev.slne.surf.nats.NatsInstance.connectionHealth], it
-     * needs no platform instance.
+     * Reads the state only and never contacts the server.
      */
     fun connectionHealth(): NatsConnectionHealth? = NatsConnectionManager.health()
 }

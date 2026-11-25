@@ -4,9 +4,10 @@ import com.google.common.reflect.TypeToken
 import com.velocitypowered.api.event.EventManager
 import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.proxy.event.VelocityEventManager
-import dev.slne.surf.api.common.invoker.HiddenInvokerUtil
-import dev.slne.surf.api.shared.api.util.InternalInvokerApi
-import dev.slne.surf.api.velocity.server.reflection.VelocityEventManagerReflection
+import dev.slne.surf.api.common.invoker.InvokerMethods
+import dev.slne.surf.api.reflection.reflectionProxy
+import dev.slne.surf.api.velocity.server.reflection.CustomHandlerAdapterProxy
+import dev.slne.surf.api.velocity.server.reflection.VelocityEventManagerProxy
 import java.lang.invoke.MethodHandles
 import java.util.function.BiFunction
 import kotlin.coroutines.Continuation
@@ -14,23 +15,22 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 import com.velocitypowered.api.event.Continuation as EventContinuation
 
-
 class SuspendingEventHandler(private val eventManager: EventManager) {
 
     fun register() {
         registerValidationAdapter()
     }
 
-    @OptIn(InternalInvokerApi::class)
     private fun registerValidationAdapter() {
         require(eventManager is VelocityEventManager) { "Only VelocityEventManager is supported" }
 
-        val handler = VelocityEventManagerReflection.createCustomHandlerAdapter(
+        val handler = reflectionProxy<CustomHandlerAdapterProxy>().create(
             "surf_api_suspending_event_handler",
-            HiddenInvokerUtil::isSuspendFunction,
+            InvokerMethods::isSuspendFunction,
             { method, errors ->
                 if (method.parameterCount != 2) {
-                    errors += "Expected exactly one event parameter, got ${method.parameterCount - 1}."
+                    val eventParameters = method.parameterCount - 1
+                    errors += "Expected exactly one event parameter, got $eventParameters."
                 }
             },
             object : TypeToken<suspend (Any, Any) -> Unit>() {},
@@ -41,19 +41,27 @@ class SuspendingEventHandler(private val eventManager: EventManager) {
                     }
                 }
             },
-            lookup
+            lookup,
         )
 
-        VelocityEventManagerReflection.getHandlerAdapters(eventManager).add(handler)
+        reflectionProxy<VelocityEventManagerProxy>().handlerAdapters(eventManager).add(handler)
     }
 
-    private fun suspendingEventTask(handler: suspend () -> Unit) =
-        EventTask.withContinuation { handler.startCoroutine(it.asCoroutineContinuation()) }
+    private fun suspendingEventTask(handler: suspend () -> Unit): EventTask {
+        return EventTask.withContinuation {
+            handler.startCoroutine(
+                it.asCoroutineContinuation(),
+            )
+        }
+    }
 
-    private fun EventContinuation.asCoroutineContinuation(): Continuation<Unit> =
-        Continuation(EmptyCoroutineContext) { if (it.isFailure) resumeWithException(it.exceptionOrNull()) else resume() }
+    private fun EventContinuation.asCoroutineContinuation(): Continuation<Unit> {
+        return Continuation(EmptyCoroutineContext) {
+            if (it.isFailure) resumeWithException(it.exceptionOrNull()) else resume()
+        }
+    }
 
     companion object {
-        private val lookup = MethodHandles.lookup();
+        private val lookup = MethodHandles.lookup()
     }
 }

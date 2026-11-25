@@ -26,15 +26,15 @@ import kotlin.io.path.div
  * Loads, enables and disables the plugins of the server.
  *
  * Every plugin gets a Spring context below [root], built by a [SurfContextManager] in dependency
- * order. The load phase creates the plugin, builds its context and runs the load hooks of its beans.
- * The enable phase attaches the plugin's [EventNode] beans to its event node, registers its commands
- * and event bus listeners, and runs the enable hooks. The disable phase runs the disable hooks,
- * removes everything the enable phase registered and closes the context. A plugin's class loader is
- * closed once no plugin imports from its context anymore.
+ * order. The load phase creates the plugin, builds its context and runs the load hooks of its
+ * beans. The enable phase attaches the plugin's [EventNode] beans to its event node, registers its
+ * commands and event bus listeners, and runs the enable hooks. The disable phase runs the disable
+ * hooks, removes everything the enable phase registered and closes the context. A plugin's class
+ * loader is closed once no plugin imports from its context anymore.
  *
  * Phases run to completion on the calling thread. A plugin that fails to load is cleaned up and
- * removed, and plugins that require it are not loaded. A plugin that fails to enable is disabled and
- * removed, and plugins that require it are disabled without being enabled. [load] and [enable]
+ * removed, and plugins that require it are not loaded. A plugin that fails to enable is disabled
+ * and removed, and plugins that require it are disabled without being enabled. [load] and [enable]
  * return the plugins that failed, so that the caller can decide whether to continue. [plugins] and
  * [plugin] may be called from any thread.
  *
@@ -61,12 +61,13 @@ internal class PluginManagerImpl(
     override val plugins: Collection<SurfMinestomPlugin>
         get() = synchronized(loaded) { loaded.map { it.plugin } }
 
-    override fun plugin(id: String): SurfMinestomPlugin? =
-        synchronized(loaded) { loaded.firstOrNull { it.plugin.meta.id == id }?.plugin }
+    override fun plugin(id: String): SurfMinestomPlugin? {
+        return synchronized(loaded) { loaded.firstOrNull { it.plugin.meta.id == id }?.plugin }
+    }
 
     /**
-     * Creates every loadable plugin of [candidates] in dependency order, builds its context and runs
-     * the load hooks of its beans. Plugins that cannot be loaded are logged.
+     * Creates every loadable plugin of [candidates] in dependency order, builds its context and
+     * runs the load hooks of its beans. Plugins that cannot be loaded are logged.
      *
      * @return the reason for each plugin that could not be loaded, keyed by plugin ID, including
      * rejected candidates, in the order they failed; empty when every plugin loaded
@@ -74,7 +75,8 @@ internal class PluginManagerImpl(
     fun load(candidates: List<PluginCandidate>): Map<String, String> {
         val order = PluginLoadOrder.order(candidates)
         val failures = linkedMapOf<String, String>()
-        order.rejected.forEach { (id, reason) ->
+
+        for ((id, reason) in order.rejected) {
             LOGGER.error("Not loading the plugin {}, because {}", id, reason)
             failures[id] = reason
         }
@@ -84,6 +86,7 @@ internal class PluginManagerImpl(
 
         for (candidate in order.ordered) {
             val reason = loadOne(candidate, failed, loaders) ?: continue
+
             failed += candidate.meta.id
             failures[candidate.meta.id] = reason
         }
@@ -104,39 +107,71 @@ internal class PluginManagerImpl(
     ): String? {
         val meta = candidate.meta
         val failedDependency = meta.dependencies.firstOrNull { !it.optional && it.id in failed }
+
         if (failedDependency != null) {
-            LOGGER.error("Not loading the plugin {}, because its dependency {} failed", meta.id, failedDependency.id)
+            LOGGER.error(
+                "Not loading the plugin {}, because its dependency {} failed",
+                meta.id,
+                failedDependency.id,
+            )
+
             return "its dependency ${failedDependency.id} failed"
         }
 
         val loadedPlugin = try {
             create(candidate, loaders)
         } catch (failure: Throwable) {
-            LOGGER.error("Could not create the plugin {} from {}", meta.id, candidate.source, failure)
+            LOGGER.error(
+                "Could not create the plugin {} from {}",
+                meta.id,
+                candidate.source,
+                failure,
+            )
+
             return "it could not be created: ${describe(failure)}"
         }
 
         LOGGER.info("Loading {} {}", meta.name, meta.version)
-        val loadFailure = runLifecycle(loadedPlugin, "load") { startContext(candidate, loadedPlugin).load() }
+        val loadFailure = runLifecycle(loadedPlugin, "load") {
+            startContext(
+                candidate,
+                loadedPlugin,
+            ).load()
+        }
+
         if (loadFailure != null) {
             cleanUp(loadedPlugin)
             loaders -= meta.id
+
             return "onLoad failed: ${describe(loadFailure)}"
         }
 
         synchronized(loaded) { loaded += loadedPlugin }
+
         return null
     }
 
     /**
      * Builds the context of [loadedPlugin] and records it on the plugin before its load hooks run.
      */
-    private fun startContext(candidate: PluginCandidate, loadedPlugin: LoadedPlugin): PluginContext {
+    private fun startContext(
+        candidate: PluginCandidate,
+        loadedPlugin: LoadedPlugin,
+    ): PluginContext {
         val descriptor = descriptorOf(candidate, loadedPlugin)
         val pluginContext = contexts.start(descriptor, loadedPlugin.scope) { context ->
-            context.registerBeanDefinition(PLUGIN_INSTANCE_BEAN, instanceDefinition(loadedPlugin.plugin))
+            context.registerBeanDefinition(
+                PLUGIN_INSTANCE_BEAN,
+                instanceDefinition(loadedPlugin.plugin),
+            )
+            context.registerFallbackInstance(
+                PLUGIN_LOGGER_BEAN,
+                ComponentLogger::class.java,
+                loadedPlugin.plugin.logger,
+            )
         }
         loadedPlugin.context = pluginContext
+
         return pluginContext
     }
 
@@ -155,8 +190,13 @@ internal class PluginManagerImpl(
         for (loadedPlugin in synchronized(loaded) { loaded.toList() }) {
             val meta = loadedPlugin.plugin.meta
             val failedDependency = meta.dependencies.firstOrNull { !it.optional && it.id in failed }
+
             if (failedDependency != null) {
-                LOGGER.error("Not enabling the plugin {}, because its dependency {} failed", meta.id, failedDependency.id)
+                LOGGER.error(
+                    "Not enabling the plugin {}, because its dependency {} failed",
+                    meta.id,
+                    failedDependency.id,
+                )
                 failed += meta.id
                 failures[meta.id] = "its dependency ${failedDependency.id} failed"
                 disable(loadedPlugin)
@@ -166,11 +206,14 @@ internal class PluginManagerImpl(
             LOGGER.info("Enabling {} {}", meta.name, meta.version)
 
             val enableFailure = runLifecycle(loadedPlugin, "enable") {
-                val pluginContext = checkNotNull(loadedPlugin.context) { "${meta.id} has no context" }
+                val pluginContext = checkNotNull(loadedPlugin.context) {
+                    "${meta.id} has no context"
+                }
                 // Before the hooks, so that a hook can rely on the plugin's listeners and commands
                 loadedPlugin.registrations.register(pluginContext.beanContexts)
                 pluginContext.enable()
             }
+
             if (enableFailure != null) {
                 failed += meta.id
                 failures[meta.id] = "onEnable failed: ${describe(enableFailure)}"
@@ -188,6 +231,7 @@ internal class PluginManagerImpl(
         for (loadedPlugin in synchronized(loaded) { loaded.toList() }.asReversed()) {
             disable(loadedPlugin)
         }
+
         contexts.closeAll()
         closeReleasedClassLoaders()
     }
@@ -216,8 +260,8 @@ internal class PluginManagerImpl(
             // Created before the plugin, so that it exists while the plugin initializes
             val dataDirectory = (directory / meta.id).createDirectories()
 
-            // The context must exist during construction so property initializers can use it; for an
-            // `object` that is during class initialization.
+            // The context must exist during construction so property initializers can use it; for
+            // an `object` that is during class initialization.
             val plugin = constructPlugin(meta, classLoader) { plugin ->
                 val pluginScope = surfCoroutineScope(
                     owner = meta.id,
@@ -226,6 +270,7 @@ internal class PluginManagerImpl(
                     elements = SurfMinestomPlugin.contextElement(plugin),
                 )
                 check(scope == null) { "${meta.main} constructed more than one plugin" }
+
                 scope = pluginScope
 
                 SurfMinestomPlugin.Context(
@@ -237,7 +282,9 @@ internal class PluginManagerImpl(
                 )
             }
 
-            val pluginScope = checkNotNull(scope) { "${meta.main} was not constructed by the server" }
+            val pluginScope = checkNotNull(scope) {
+                "${meta.main} was not constructed by the server"
+            }
             parentNode.addChild(eventNode)
 
             return LoadedPlugin(plugin, classLoader, pluginScope, PluginRegistrations(eventNode))
@@ -259,6 +306,7 @@ internal class PluginManagerImpl(
         loaders: MutableMap<String, PluginClassLoader>,
     ): PluginClassLoader {
         val id = candidate.meta.id
+
         return PluginClassLoader(id, jar, serverClassLoader).also { loader ->
             loader.dependencies = transitiveDependencies(id, candidate, loaders)
             loaders[id] = loader
@@ -274,12 +322,14 @@ internal class PluginManagerImpl(
         meta: PluginMeta,
         classLoader: PluginClassLoader?,
         context: (SurfMinestomPlugin) -> SurfMinestomPlugin.Context,
-    ): SurfMinestomPlugin = SurfMinestomPlugin.constructing(context) {
-        val mainClass = Class.forName(meta.main, false, classLoader ?: serverClassLoader)
-        require(SurfMinestomPlugin::class.java.isAssignableFrom(mainClass)) {
-            "${meta.main} does not extend ${SurfMinestomPlugin::class.java.name}"
+    ): SurfMinestomPlugin {
+        return SurfMinestomPlugin.constructing(context) {
+            val mainClass = Class.forName(meta.main, false, classLoader ?: serverClassLoader)
+            require(SurfMinestomPlugin::class.java.isAssignableFrom(mainClass)) {
+                "${meta.main} does not extend ${SurfMinestomPlugin::class.java.name}"
+            }
+            instantiate(mainClass)
         }
-        instantiate(mainClass)
     }
 
     /**
@@ -289,44 +339,54 @@ internal class PluginManagerImpl(
     private fun instantiate(mainClass: Class<*>): SurfMinestomPlugin {
         val objectInstance = mainClass.declaredFields.firstOrNull { field ->
             field.name == "INSTANCE" &&
-                    Modifier.isStatic(field.modifiers) &&
-                    field.type == mainClass
+                Modifier.isStatic(field.modifiers) &&
+                field.type == mainClass
         }
 
         val instance = objectInstance?.get(null) ?: mainClass.getDeclaredConstructor().newInstance()
+
         return instance as SurfMinestomPlugin
     }
 
-    private fun descriptorOf(candidate: PluginCandidate, loadedPlugin: LoadedPlugin) = PluginDescriptor(
-        name = candidate.meta.id,
-        classLoader = loadedPlugin.classLoader ?: serverClassLoader,
-        source = candidate.jar ?: codeSourceOf(loadedPlugin.plugin.javaClass),
-        basePackages = listOf(loadedPlugin.plugin.javaClass.packageName),
-        dependencies = candidate.meta.dependencies.map { it.id },
-        dataDirectory = loadedPlugin.plugin.dataDirectory,
-    )
+    private fun descriptorOf(
+        candidate: PluginCandidate,
+        loadedPlugin: LoadedPlugin,
+    ): PluginDescriptor {
+        return PluginDescriptor(
+            name = candidate.meta.id,
+            classLoader = loadedPlugin.classLoader ?: serverClassLoader,
+            source = candidate.jar ?: codeSourceOf(loadedPlugin.plugin.javaClass),
+            basePackages = listOf(loadedPlugin.plugin.javaClass.packageName),
+            dependencies = candidate.meta.dependencies.map { it.id },
+            dataDirectory = loadedPlugin.plugin.dataDirectory,
+        )
+    }
 
     /**
      * The jar or classes directory [type] was loaded from, which is where a plugin without a jar of
      * its own, such as one placed on the class path by the server's bootstrap, keeps its classes;
      * `null` if the class loader does not say.
      */
-    private fun codeSourceOf(type: Class<*>): Path? = runCatching {
-        Path.of(type.protectionDomain.codeSource.location.toURI())
-    }.getOrNull()
+    private fun codeSourceOf(type: Class<*>): Path? {
+        return runCatching {
+            Path.of(type.protectionDomain.codeSource.location.toURI())
+        }.getOrNull()
+    }
 
     /**
      * A primary definition of [plugin] under its concrete type.
      *
      * The manager creates the instance, but the context manages it like any other singleton: it
      * injects `@Autowired` members and runs the `Aware` callbacks, `@PostConstruct` and every
-     * `BeanPostProcessor` on it, and calls `@PreDestroy` and `DisposableBean.destroy` when it closes.
-     * Only the inferred `close()` or `shutdown()` call is suppressed.
+     * `BeanPostProcessor` on it, and calls `@PreDestroy` and `DisposableBean.destroy` when it
+     * closes. Only the inferred `close()` or `shutdown()` call is suppressed.
      */
-    private fun instanceDefinition(plugin: SurfMinestomPlugin) = RootBeanDefinition(plugin.javaClass).apply {
-        setInstanceSupplier { plugin }
-        isPrimary = true
-        destroyMethodName = ""
+    private fun instanceDefinition(plugin: SurfMinestomPlugin): RootBeanDefinition {
+        return RootBeanDefinition(plugin.javaClass).apply {
+            setInstanceSupplier { plugin }
+            isPrimary = true
+            destroyMethodName = ""
+        }
     }
 
     private fun transitiveDependencies(
@@ -336,12 +396,15 @@ internal class PluginManagerImpl(
     ): List<PluginClassLoader> {
         val result = linkedSetOf<PluginClassLoader>()
         val pending = ArrayDeque(candidate.meta.dependencies.map { it.id })
+
         while (pending.isNotEmpty()) {
             val dependency = loaders[pending.removeFirst()] ?: continue
+
             if (dependency.pluginId != id && result.add(dependency)) {
                 pending += dependency.dependencies.map { it.pluginId }
             }
         }
+
         return result.toList()
     }
 
@@ -353,18 +416,22 @@ internal class PluginManagerImpl(
         loadedPlugin: LoadedPlugin,
         phase: String,
         block: suspend () -> Unit,
-    ): Throwable? = try {
-        val context = SurfMinestomPlugin.contextElement(loadedPlugin.plugin) +
+    ): Throwable? {
+        return try {
+            val context = SurfMinestomPlugin.contextElement(loadedPlugin.plugin) +
                 contextClassLoaderElement(loadedPlugin.classLoader)
-        runBlocking(context) { block() }
-        null
-    } catch (failure: Throwable) {
-        LOGGER.error("Could not {} the plugin {}", phase, loadedPlugin.plugin.meta.id, failure)
-        failure
+            runBlocking(context) { block() }
+            null
+        } catch (failure: Throwable) {
+            LOGGER.error("Could not {} the plugin {}", phase, loadedPlugin.plugin.meta.id, failure)
+            failure
+        }
     }
 
-    private fun describe(failure: Throwable): String =
-        failure.message?.let { "${failure.javaClass.simpleName}: $it" } ?: failure.javaClass.simpleName
+    private fun describe(failure: Throwable): String {
+        return failure.message?.let { "${failure.javaClass.simpleName}: $it" }
+            ?: failure.javaClass.simpleName
+    }
 
     private fun cleanUp(loadedPlugin: LoadedPlugin) {
         val plugin = loadedPlugin.plugin
@@ -375,16 +442,20 @@ internal class PluginManagerImpl(
         } catch (failure: Throwable) {
             LOGGER.error("Could not unregister the listeners of the plugin {}", id, failure)
         }
+
         PluginCommands.unregisterAll(plugin)
         parentNode.removeChild(plugin.eventNode)
         // The context owns the scope once it exists and cancels it after the disable hooks.
-        if (loadedPlugin.context == null) loadedPlugin.scope.cancel()
+        if (loadedPlugin.context == null) {
+            loadedPlugin.scope.cancel()
+        }
 
         try {
             contexts.close(id)
         } catch (failure: Throwable) {
             LOGGER.error("Could not close the context of the plugin {}", id, failure)
         }
+
         released += id to loadedPlugin.classLoader
         closeReleasedClassLoaders()
     }
@@ -396,7 +467,11 @@ internal class PluginManagerImpl(
     private fun closeReleasedClassLoaders() {
         released.removeAll { (id, classLoader) ->
             val closed = contexts.find(id) == null
-            if (closed) closeQuietly(classLoader, id)
+
+            if (closed) {
+                closeQuietly(classLoader, id)
+            }
+
             closed
         }
     }
@@ -413,8 +488,11 @@ internal class PluginManagerImpl(
      * Makes [classLoader] the thread context class loader of the thread a coroutine runs on and
      * restores the previous one afterwards. Empty for a plugin without a class loader of its own.
      */
-    private fun contextClassLoaderElement(classLoader: ClassLoader?): CoroutineContext =
-        if (classLoader == null) EmptyCoroutineContext else ContextClassLoaderElement(classLoader)
+    private fun contextClassLoaderElement(classLoader: ClassLoader?): CoroutineContext {
+        return if (classLoader == null) EmptyCoroutineContext else ContextClassLoaderElement(
+            classLoader,
+        )
+    }
 
     private class LoadedPlugin(
         val plugin: SurfMinestomPlugin,
@@ -436,5 +514,6 @@ internal class PluginManagerImpl(
         val LOGGER = ComponentLogger.logger("PluginManager")
 
         const val PLUGIN_INSTANCE_BEAN = "surfPluginInstance"
+        const val PLUGIN_LOGGER_BEAN = "surfPluginLogger"
     }
 }

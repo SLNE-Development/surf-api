@@ -5,6 +5,7 @@ import dev.slne.surf.api.paper.time.SkipOperations
 import dev.slne.surf.api.paper.time.TimeSkipResult
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.api.spring.SurfApiBean
+import dev.slne.surf.api.spring.surfBean
 import org.bukkit.World
 import org.bukkit.entity.Player
 import org.jetbrains.annotations.ApiStatus
@@ -53,14 +54,14 @@ interface SurfApiPaper : SurfApiCore {
      * Smoothly skips time in the specified Minecraft world based on the given skip operation.
      *
      * @param world         The Minecraft world in which to skip time.
-     * @param skipOperation The type of time skip operation to perform. Use one of the skip operation
-     * constants defined in the SkipOperations class.
+     * @param skipOperation The type of time skip operation to perform. Use one of the skip
+     * operation constants defined in the SkipOperations class.
      * @return A Result object that contains the result of the time skip operation.
      * @see SkipOperations
      */
     suspend fun skipTimeSmoothly(
         world: World,
-        skipOperation: SkipOperations.SkipOperation
+        skipOperation: SkipOperations.SkipOperation,
     ): TimeSkipResult
 
     /**
@@ -82,7 +83,7 @@ interface SurfApiPaper : SurfApiCore {
      */
     suspend fun skipTimeSmoothly(
         timeToAdd: Long,
-        duration: Long
+        duration: Long,
     ): Map<World, TimeSkipResult>
 
     /**
@@ -94,10 +95,12 @@ interface SurfApiPaper : SurfApiCore {
      * result is represented by the [<] class.
      * @see SkipOperations
      */
-    suspend fun skipTimeSmoothly(skipOperation: SkipOperations.SkipOperation): Map<World, TimeSkipResult>
+    suspend fun skipTimeSmoothly(
+        skipOperation: SkipOperations.SkipOperation,
+    ): Map<World, TimeSkipResult>
 
     companion object {
         @InternalSurfApi
-        val INSTANCE get() = SurfApiCore.instance as SurfApiPaper
+        val instance by surfBean<SurfApiPaper>()
     }
 }

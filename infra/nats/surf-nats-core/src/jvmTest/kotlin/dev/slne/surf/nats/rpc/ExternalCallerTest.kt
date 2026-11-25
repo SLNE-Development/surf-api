@@ -8,28 +8,16 @@ import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.jetstream.JetStreamProvisioner
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.protocol.ServiceNames
-import dev.slne.surf.nats.test.proto.v1.EchoRequest
-import dev.slne.surf.nats.test.proto.v1.LateService
+import dev.slne.surf.nats.test.proto.v1.*
 import dev.slne.surf.nats.test.proto.v1.Number
-import dev.slne.surf.nats.test.proto.v1.OwnerReply
-import dev.slne.surf.nats.test.proto.v1.OwnerRequest
-import dev.slne.surf.nats.test.proto.v1.PutRequest
-import dev.slne.surf.nats.test.proto.v1.RolesService
-import dev.slne.surf.nats.test.proto.v1.StoreRequest
-import dev.slne.surf.nats.test.proto.v1.WhitelistRequest
+import io.nats.client.api.MessageInfo
 import io.nats.client.api.StorageType
 import io.nats.client.api.StreamConfiguration
 import io.nats.client.impl.Headers
 import io.nats.client.support.NatsJetStreamConstants
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.SerializationException
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
@@ -66,6 +54,7 @@ class ExternalCallerTest {
 
         override suspend fun handle(request: StoreRequest): Number {
             handled += request.id
+
             return Number(request.id)
         }
     }
@@ -84,17 +73,15 @@ class ExternalCallerTest {
     private val defaultBackoff = RpcDefaults.NAK_BACKOFF
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @AfterEach
     fun resetDefaults() {
         RpcDefaults.NAK_BACKOFF = defaultBackoff
     }
-
-    // ---- persistent fire from external producers ----
 
     @Test
     fun `external protobuf fire is executed`() = test {
@@ -123,22 +110,34 @@ class ExternalCallerTest {
         publishExternal(WHITELIST, whitelist("ADD", 2), contentType = "text/plain")
         publishExternal(WHITELIST, byteArrayOf(0x7f, 0x01, 0x02))
 
-        eventually("all undecodable messages must be dead-lettered") { messageCount(streams.dlqStream) == 3L }
+        eventually("all undecodable messages must be dead-lettered") {
+            messageCount(streams.dlqStream) == 3L
+        }
         eventually("work queue must be empty after term") { messageCount(streams.stream) == 0L }
         assertEquals(3L, delivered(descriptor) - before, "a decode failure must not be redelivered")
-        assertNull(impl.whitelisted.tryReceive().getOrNull(), "the implementation must not be called")
+        assertNull(
+            impl.whitelisted.tryReceive().getOrNull(),
+            "the implementation must not be called",
+        )
 
         // The dead letters keep the original Content-Type next to the error
         val errors = deadLetters(streams).associate { dead ->
             val headers = assertNotNull(dead.headers)
             assertEquals(WHITELIST, headers.getFirst(ProtocolHeaders.DEAD_SUBJECT))
-            headers.getFirst(ProtocolHeaders.CONTENT_TYPE) to assertNotNull(headers.getFirst(ProtocolHeaders.ERROR))
+            headers.getFirst(ProtocolHeaders.CONTENT_TYPE) to assertNotNull(
+                headers.getFirst(
+                    ProtocolHeaders.ERROR,
+                ),
+            )
         }
         assertEquals(setOf(null, "text/plain", ProtocolHeaders.PROTOBUF_CONTENT_TYPE), errors.keys)
         assertEquals(IllegalArgumentException::class.java.name, errors[null])
         assertEquals(IllegalArgumentException::class.java.name, errors["text/plain"])
         val decodeError = Class.forName(errors.getValue(ProtocolHeaders.PROTOBUF_CONTENT_TYPE))
-        assertTrue(SerializationException::class.java.isAssignableFrom(decodeError), "was $decodeError")
+        assertTrue(
+            SerializationException::class.java.isAssignableFrom(decodeError),
+            "was $decodeError",
+        )
     }
 
     @Test
@@ -158,10 +157,18 @@ class ExternalCallerTest {
         assertEquals(
             RpcDefaults.MAX_DELIVER.toLong(),
             delivered(descriptor) - before,
-            "the message must be delivered MAX_DELIVER times before it is dead-lettered"
+            "the message must be delivered MAX_DELIVER times before it is dead-lettered",
         )
-        val deadHeaders = assertNotNull(jsm().getLastMessage(streams.dlqStream, streams.dlqSubject).headers)
-        assertEquals(IllegalStateException::class.java.name, deadHeaders.getFirst(ProtocolHeaders.ERROR))
+        val deadHeaders = assertNotNull(
+            jsm().getLastMessage(
+                streams.dlqStream,
+                streams.dlqSubject,
+            ).headers,
+        )
+        assertEquals(
+            IllegalStateException::class.java.name,
+            deadHeaders.getFirst(ProtocolHeaders.ERROR),
+        )
         eventually("work queue must be empty after term") { messageCount(streams.stream) == 0L }
     }
 
@@ -184,7 +191,11 @@ class ExternalCallerTest {
             messageCount(streams.stream) == 0L
         }
         assertEquals(1L, delivered(descriptor) - before, "the expired call must not be redelivered")
-        assertEquals(0L, messageCount(streams.dlqStream), "the expired call must not be dead-lettered")
+        assertEquals(
+            0L,
+            messageCount(streams.dlqStream),
+            "the expired call must not be dead-lettered",
+        )
     }
 
     @Test
@@ -203,14 +214,28 @@ class ExternalCallerTest {
             extraHeaders = mapOf(ProtocolHeaders.PAYLOAD_REF to UUID.randomUUID().toString()),
         )
 
-        eventually("a missing payload object must be dead-lettered without waiting for a redelivery") {
+        eventually(
+            "a missing payload object must be dead-lettered without waiting for a redelivery",
+        ) {
             messageCount(streams.dlqStream) == 1L
         }
         eventually("work queue must be empty after term") { messageCount(streams.stream) == 0L }
-        assertEquals(1L, delivered(descriptor) - before, "a permanent failure must not be redelivered")
-        assertNull(impl.whitelisted.tryReceive().getOrNull(), "the implementation must not be called")
+        assertEquals(
+            1L,
+            delivered(descriptor) - before,
+            "a permanent failure must not be redelivered",
+        )
+        assertNull(
+            impl.whitelisted.tryReceive().getOrNull(),
+            "the implementation must not be called",
+        )
 
-        val deadHeaders = assertNotNull(jsm().getLastMessage(streams.dlqStream, streams.dlqSubject).headers)
+        val deadHeaders = assertNotNull(
+            jsm().getLastMessage(
+                streams.dlqStream,
+                streams.dlqSubject,
+            ).headers,
+        )
         assertNotNull(deadHeaders.getFirst(ProtocolHeaders.ERROR))
         assertEquals(WHITELIST, deadHeaders.getFirst(ProtocolHeaders.DEAD_SUBJECT))
     }
@@ -219,7 +244,12 @@ class ExternalCallerTest {
     fun `external publish before the first registration fails and works afterwards`() = test {
         val streams = deleteLateStreams()
         val subject = "surf.persist.surf.nats.test.v1.LateService.Put"
-        assertFails { publishExternal(subject, NatsCodec.encode(PutRequest.serializer(), PutRequest(1))) }
+        assertFails {
+            publishExternal(
+                subject,
+                NatsCodec.encode(PutRequest.serializer(), PutRequest(1)),
+            )
+        }
 
         val client = client()
         val impl = LateImpl()
@@ -230,8 +260,6 @@ class ExternalCallerTest {
         publishExternal(subject, NatsCodec.encode(PutRequest.serializer(), PutRequest(2)))
         assertEquals(2L, withTimeout(10.seconds) { impl.stored.receive() })
     }
-
-    // ---- shared services ----
 
     @Test
     fun `differently named clients share one service and its durable`() = test {
@@ -246,28 +274,41 @@ class ExternalCallerTest {
         val ids = (1L..20L).toList()
 
         for (id in ids) roles.store(StoreRequest(id))
-        eventually("every persistent call must be processed") { first.stored.size + second.stored.size >= ids.size }
+        eventually("every persistent call must be processed") {
+            first.stored.size + second.stored.size >= ids.size
+        }
         eventually("work queue must be drained and acked") {
             messageCount(streams.stream) == 0L &&
-                    jsm().getConsumerInfo(streams.stream, streams.durable).numAckPending == 0L
+                jsm().getConsumerInfo(streams.stream, streams.durable).numAckPending == 0L
         }
 
         for (id in ids) assertEquals(Number(id), roles.handle(StoreRequest(id)))
 
-        assertEquals(ids, (first.stored + second.stored).sorted(), "each persistent call must run exactly once")
-        assertEquals(ids, (first.handled + second.handled).sorted(), "each core call must run exactly once")
+        assertEquals(
+            ids,
+            (first.stored + second.stored).sorted(),
+            "each persistent call must run exactly once",
+        )
+        assertEquals(
+            ids,
+            (first.handled + second.handled).sorted(),
+            "each core call must run exactly once",
+        )
         assertEquals(0L, messageCount(streams.dlqStream))
     }
 
     @Test
     fun `differently named clients register one service concurrently`() = test {
-        // Every registration flushes the shared connection; more than two concurrent flushes used to exceed
-        // the outgoing ping limit of jnats and drop the connection
+        // Every registration flushes the shared connection; more than two concurrent flushes used
+        // to exceed the outgoing ping limit of jnats and drop the connection
         repeat(5) { round ->
             val registrations = List(4) { client("roles-concurrent-$round-$it") }.map { client ->
                 async { client.registerService<RolesService>(RolesImpl()) }
             }.awaitAll()
-            registrations.forEach { it.close() }
+
+            for (registration in registrations) {
+                registration.close()
+            }
         }
 
         client("roles-concurrent-a").registerService<RolesService>(RolesImpl())
@@ -279,7 +320,8 @@ class ExternalCallerTest {
 
     @Test
     fun `concurrently closed registrations keep the shared connection`() = test {
-        // Every close drains its dispatcher, which flushes the shared connection like a registration does
+        // Every close drains its dispatcher, which flushes the shared connection like a
+        // registration does
         val connection = NatsConnectionManager.connection()
         val reconnects = connection.statistics.reconnects
         repeat(10) { round ->
@@ -294,7 +336,11 @@ class ExternalCallerTest {
             }.awaitAll()
         }
 
-        assertEquals(reconnects, connection.statistics.reconnects, "the shared connection must not reconnect")
+        assertEquals(
+            reconnects,
+            connection.statistics.reconnects,
+            "the shared connection must not reconnect",
+        )
         client("roles-closing-a").registerService<RolesService>(RolesImpl())
         val caller = client()
         val streams = track(caller.serviceDescriptor(RolesService::class.java))
@@ -302,17 +348,22 @@ class ExternalCallerTest {
         assertEquals(Number(1), caller.service<RolesService>().handle(StoreRequest(1)))
     }
 
-    // ---- core requests from external callers ----
-
     @Test
     fun `core request without content type is answered with an error`() = test {
         val client = client()
         client.registerService<RolesService>(RolesImpl())
         track(client.serviceDescriptor(RolesService::class.java))
 
-        val reply = requestReply(ECHO, null, NatsCodec.encode(EchoRequest.serializer(), EchoRequest(5)))
+        val reply = requestReply(
+            ECHO,
+            null,
+            NatsCodec.encode(EchoRequest.serializer(), EchoRequest(5)),
+        )
 
-        assertEquals(IllegalArgumentException::class.java.name, reply.headers.getFirst(ProtocolHeaders.ERROR))
+        assertEquals(
+            IllegalArgumentException::class.java.name,
+            reply.headers.getFirst(ProtocolHeaders.ERROR),
+        )
         assertContains(reply.data.decodeToString(), "Missing Content-Type")
     }
 
@@ -322,7 +373,11 @@ class ExternalCallerTest {
         client.registerService<RolesService>(RolesImpl())
         track(client.serviceDescriptor(RolesService::class.java))
 
-        val reply = requestReply(ECHO, protobufHeaders(), NatsCodec.encode(EchoRequest.serializer(), EchoRequest(5)))
+        val reply = requestReply(
+            ECHO,
+            protobufHeaders(),
+            NatsCodec.encode(EchoRequest.serializer(), EchoRequest(5)),
+        )
 
         assertNull(reply.headers.getFirst(ProtocolHeaders.ERROR), reply.data.decodeToString())
         val contentType = reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)
@@ -339,18 +394,30 @@ class ExternalCallerTest {
         val uuid = UUID.randomUUID()
 
         // OwnerRequest { player: Uuid { value: <msb><lsb> } }, field 1 of both messages
-        val bytes = ByteBuffer.allocate(16).putLong(uuid.mostSignificantBits).putLong(uuid.leastSignificantBits).array()
+        val bytes = ByteBuffer.allocate(16)
+            .putLong(uuid.mostSignificantBits)
+            .putLong(uuid.leastSignificantBits)
+            .array()
         val encoded = byteArrayOf(0x0a, 18, 0x0a, 16) + bytes
-        val reply = requestReply("surf.rpc.surf.nats.test.v1.RolesService.Owner", protobufHeaders(), encoded)
+        val reply = requestReply(
+            "surf.rpc.surf.nats.test.v1.RolesService.Owner",
+            protobufHeaders(),
+            encoded,
+        )
 
         assertNull(reply.headers.getFirst(ProtocolHeaders.ERROR), reply.data.decodeToString())
         assertContentEquals(encoded, reply.data, "OwnerReply has the same layout")
-        assertEquals(OwnerReply(uuid), NatsCodec.decode(OwnerReply.serializer(), reply.data, ProtocolHeaders.PROTOBUF_CONTENT_TYPE))
+        assertEquals(
+            OwnerReply(uuid),
+            NatsCodec.decode(
+                OwnerReply.serializer(),
+                reply.data,
+                ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+            ),
+        )
 
         assertEquals(OwnerReply(uuid), client.service<RolesService>().owner(OwnerRequest(uuid)))
     }
-
-    // ---- foreign streams ----
 
     @Test
     fun `stream created for other subjects is not rewritten`() = test {
@@ -363,7 +430,7 @@ class ExternalCallerTest {
                 .name(streams.stream)
                 .subjects(foreign)
                 .storageType(StorageType.File)
-                .build()
+                .build(),
         )
 
         try {
@@ -377,49 +444,73 @@ class ExternalCallerTest {
         }
     }
 
-    // ---- helpers ----
+    private fun client(
+        name: String = "ext-${clientCounter++}-${UUID.randomUUID().toString().take(6)}",
+    ): NatsClientImpl {
+        return (NatsClient.create(name) as NatsClientImpl).also { clients += it }
+    }
 
-    private fun client(name: String = "ext-${clientCounter++}-${UUID.randomUUID().toString().take(6)}") =
-        (NatsClient.create(name) as NatsClientImpl).also { clients += it }
-
-    private fun track(descriptor: ServiceDescriptor): ServiceNames =
-        descriptor.streams!!.also { streamsToPurge += it }
+    private fun track(descriptor: ServiceDescriptor): ServiceNames {
+        return descriptor.streams!!.also { streamsToPurge += it }
+    }
 
     private fun delivered(descriptor: ServiceDescriptor): Long {
         val streams = descriptor.streams!!
+
         return jsm().getConsumerInfo(streams.stream, streams.durable).delivered.consumerSequence
     }
 
-    // The streams of LateService are deleted, unlike the purged streams of the other services, so a test can rely on
-    // their absence; the provisioning cache forgets them
+    // The streams of LateService are deleted, unlike the purged streams of the other services, so a
+    // test can rely on their absence; the provisioning cache forgets them
     private fun deleteLateStreams(): ServiceNames {
         val streams = ServiceDescriptor.of(LateService::class.java).streams!!
-        for (stream in listOf(streams.stream, streams.dlqStream)) runCatching { jsm().deleteStream(stream) }
+
+        for (stream in listOf(streams.stream, streams.dlqStream)) runCatching {
+            jsm().deleteStream(
+                stream,
+            )
+        }
+
         JetStreamProvisioner.invalidate(streams)
+
         return streams
     }
 
-    private fun deadLetters(streams: ServiceNames) = jsm().getStreamInfo(streams.dlqStream).streamState
-        .let { state -> (state.firstSequence..state.lastSequence) }
-        .map { jsm().getMessage(streams.dlqStream, it) }
+    private fun deadLetters(streams: ServiceNames): List<MessageInfo> {
+        return jsm().getStreamInfo(streams.dlqStream)
+            .streamState
+            .let { state -> (state.firstSequence..state.lastSequence) }
+            .map { jsm().getMessage(streams.dlqStream, it) }
+    }
 
     private fun test(block: suspend CoroutineScope.() -> Unit) = runTest(timeout = 2.minutes) {
         try {
             withContext(Dispatchers.Default) { block() }
         } finally {
-            clients.forEach { it.close() }
+            for (client in clients) {
+                client.close()
+            }
+
             clients.clear()
-            // Purged instead of deleted: the streams of a service are shared by all tests, and the provisioning
-            // cache would not notice a deleted stream
-            streamsToPurge.forEach { purgeStreams(it.stream, it.dlqStream) }
+            // Purged instead of deleted: the streams of a service are shared by all tests, and the
+            // provisioning cache would not notice a deleted stream
+            for (streams in streamsToPurge) {
+                purgeStreams(streams.stream, streams.dlqStream)
+            }
+
             streamsToPurge.clear()
         }
     }
 
-    private fun whitelist(action: String, userId: Long) =
-        NatsCodec.encode(WhitelistRequest.serializer(), WhitelistRequest(action, userId))
+    private fun whitelist(
+        action: String,
+        userId: Long,
+    ) = NatsCodec.encode(WhitelistRequest.serializer(), WhitelistRequest(action, userId))
 
-    private fun protobufHeaders() = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+    private fun protobufHeaders() = Headers().add(
+        ProtocolHeaders.CONTENT_TYPE,
+        ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+    )
 
     // Raw jnats producer: a Nats-Msg-Id and an optional Content-Type, no Surf headers
     private fun publishExternal(
@@ -429,8 +520,15 @@ class ExternalCallerTest {
         extraHeaders: Map<String, String> = emptyMap(),
     ) {
         val headers = Headers().add(NatsJetStreamConstants.MSG_ID_HDR, UUID.randomUUID().toString())
-        if (contentType != null) headers.add(ProtocolHeaders.CONTENT_TYPE, contentType)
-        extraHeaders.forEach { (name, value) -> headers.add(name, value) }
+
+        if (contentType != null) {
+            headers.add(ProtocolHeaders.CONTENT_TYPE, contentType)
+        }
+
+        for ((name, value) in extraHeaders) {
+            headers.add(name, value)
+        }
+
         NatsConnectionManager.connection().jetStream().publish(subject, headers, body)
     }
 

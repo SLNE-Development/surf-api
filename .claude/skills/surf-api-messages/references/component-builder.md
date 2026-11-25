@@ -1,7 +1,7 @@
 # The component builder in full
 
-`messages/builder/SurfComponentBuilder.kt`, `messages/builder/colors/`, `messages/CommonComponents.kt`,
-`messages/adventure/`. "Component" here always means Adventure's text `Component`.
+`messages/builder/SurfComponentBuilder.kt`, `messages/CommonComponents.kt`, `messages/adventure/`.
+"Component" here always means Adventure's text `Component`.
 
 ## Entry points
 
@@ -13,29 +13,27 @@
 | `audience.sendText { }` | `Unit`, builds and sends |
 | `audience.sendActionBar { }` | `Unit`, one-shot action bar (no repetition) |
 
-`SurfComponentBuilder` is `@ApiStatus.NonExtendable` and implements `ComponentLike`, so it can be
-passed anywhere a component is expected without calling `build()`. The implementation
-(`SurfComponentBuilderImpl`) is `internal` and delegates every call to a wrapped
-`TextComponent.Builder`; `build()` is `delegate.asComponent() as TextComponent`.
+`SurfComponentBuilder` is an abstract class with an `internal` constructor, marked
+`@ApiStatus.NonExtendable`, and implements `ComponentLike`, so it can be passed anywhere a component
+is expected without calling `build()`. The implementation (`SurfComponentBuilderImpl`) is `internal`
+and delegates every abstract call to a wrapped `TextComponent.Builder`; `build()` is
+`delegate.asComponent() as TextComponent`.
+
+Every member that takes a block is `inline` and final. It builds its blocks into components and
+passes them to a non-inline overload: `append(block)` is `append(SurfComponentBuilder(block))`. A
+block can therefore call suspending functions whenever the caller can.
 
 ## Appending
 
 ```kotlin
 append(component: Component)                 // and ComponentLike, Iterable<ComponentLike>,
 append(builder: ComponentBuilder<*, *>)      // vararg Component, vararg ComponentLike
-append(block: SurfComponentBuilder.() -> Unit)          // nested builder
-suspend appendAsync(block: suspend SurfComponentBuilder.() -> Unit)
+append(block: SurfComponentBuilder.() -> Unit)          // nested builder, inline
 appendNewline()
 appendNewline(amount: Int)
-appendNewline(block: SurfComponentBuilder.() -> Unit)   // newline, then the block
-suspend appendNewlineAsync(block: suspend SurfComponentBuilder.() -> Unit)
+appendNewline(block: SurfComponentBuilder.() -> Unit)   // newline, then the block, inline
 appendSpace()
 ```
-
-`appendAsync` / `appendNewlineAsync` exist so a suspending renderer can nest a builder block that
-itself suspends. In a plain `buildText { }` the lambda is `inline` and not `crossinline`, so suspend
-calls inside it already compile from a suspending caller - the `Async` variants matter when the block
-is stored or passed on.
 
 ## Text and colour
 
@@ -54,27 +52,23 @@ translatable(key: String, color: TextColor? = Colors.WHITE, vararg decoration: T
 `text(number)` dispatches on the runtime type: `Double`, `Float`, `Int` and `Long` go to the matching
 Adventure overload, anything else through `toString()`.
 
-The colour vocabulary comes from `ComponentBuilderColors`, which `SurfComponentBuilder` extends. Each
-name has the same four overloads (`String`, `Boolean`, `Char`, `Number`) plus
-`vararg decoration: TextDecoration`:
+The colour vocabulary is a set of plain members. Each name has the same four overloads (`String`,
+`Boolean`, `Char`, `Number`) plus `vararg decoration: TextDecoration`, and delegates to
+`colored(value, color, vararg decoration)`, which takes any `TextColor`:
 
-- Surf: `primary`, `secondary`, `info`, `note`, `success`, `warning`, `error`, `variableKey`,
-  `variableValue`, `spacer`, `darkSpacer`
-- Minecraft (`MinecraftComponentBuilderColors`): `black`, `darkBlue`, `darkGreen`, `darkAqua`,
-  `darkRed`, `darkPurple`, `gold`, `gray`, `darkGray`, `blue`, `green`, `aqua`, `red`,
-  `lightPurple`, `yellow`, `white`
+- Surf: `primary`, `secondary`, `info`, `success`, `warning`, `error`, `variableKey`,
+  `variableValue`, `spacer`, `darkSpacer` (`note` takes `Any`, see above)
+- Minecraft: `black`, `darkBlue`, `darkGreen`, `darkAqua`, `darkRed`, `darkPurple`, `gold`, `gray`,
+  `darkGray`, `blue`, `green`, `aqua`, `red`, `lightPurple`, `yellow`, `white`
 
-They are member extension functions on `SurfComponentBuilder`, declared inside the colour
-interfaces, so they resolve only where the builder is the implicit receiver. `error` therefore
-shadows `kotlin.error` inside a builder block.
+Inside a builder block, `error` shadows `kotlin.error`.
 
 Prefix helpers, one family per status colour (`info`, `success`, `warning`, `error`):
 
 ```kotlin
 appendInfoPrefix()
 appendNewInfoPrefixedLine(amount: Int = 1)
-appendNewInfoPrefixedLine(block: SurfComponentBuilder.() -> Unit)
-suspend appendNewInfoPrefixedLineAsync(block: suspend SurfComponentBuilder.() -> Unit)
+appendNewInfoPrefixedLine(block: SurfComponentBuilder.() -> Unit)   // inline
 ```
 
 ## Style
@@ -132,9 +126,11 @@ Constants: `ELLIPSIS` (`...`), `MAP_SEPARATOR` (` -> `, SPACER), `TIME_SEPARATOR
 `EM_DASH` (`—`, SPACER), `DISCORD_LINK` (clickable `discord.gg/castcrafter`), `DISCONNECT_HEADER`,
 `RETRY_LATER_FOOTER`, `ISSUE_FOOTER`. All German, all `@JvmField`.
 
-Disconnect and kick screens - `renderKickDisconnectMessage` and `renderDisconnectMessage` have
-overloads for a plain `TextComponent.Builder`, for a `SurfComponentBuilder`, and with an
-`issue: Boolean` that picks the footer. From inside a builder:
+Disconnect and kick screens - `renderKickDisconnectMessage` and `renderDisconnectMessage` take the
+message as a `Component` or as an inline `SurfComponentBuilder` block, and the footer as a
+component, a block or an `issue: Boolean` that picks `ISSUE_FOOTER` or `RETRY_LATER_FOOTER`. The
+builder's `appendKickDisconnectMessage` and `appendDisconnectMessage` render the same layout into
+the builder itself:
 
 ```kotlin
 buildText {
@@ -161,6 +157,12 @@ iterable.joinToComponent { text(it) }                        // ", " separated, 
 iterable.joinToComponentNewLine(linePrefix) { text(it) }     // one per line, "— " bullet
 map.joinToComponent(keyFormatter, valueFormatter)            // one per line, key -> value
 ```
+
+Every collection and map formatter has a non-inline overload that takes components that are
+already formatted: `formatCollection(List<Component>)`,
+`formatCollectionNewLine(List<Component>, linePrefix)` and
+`formatMap(List<Pair<Component, Component>>, linePrefix, keyValueSeparator)`. The lambda forms map
+their input and call these.
 
 Both newline forms emit the separator *before the first element as well*, so the output opens with a
 newline, the prefix and `— `. `joinToComponent` on a map applies `colorIfAbsent(VARIABLE_KEY)` to

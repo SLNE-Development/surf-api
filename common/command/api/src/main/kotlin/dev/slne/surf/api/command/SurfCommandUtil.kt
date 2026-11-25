@@ -5,8 +5,7 @@ import dev.slne.surf.api.command.exception.WrapperCommandExceptionComponent
 import net.kyori.adventure.text.ComponentLike
 
 /**
- * Utility object for command-related operations and error handling in the Surf API.
- * Provides methods to create and throw custom command exceptions with user-friendly error messages.
+ * Creates and throws command exceptions that carry a user-facing message.
  */
 object SurfCommandUtil {
 
@@ -16,29 +15,29 @@ object SurfCommandUtil {
      * @param message The message to include in the exception, as a [ComponentLike].
      * @return An instance of [WrapperCommandExceptionComponent].
      */
-    @JvmStatic
-    fun createException(message: ComponentLike) =
-        WrapperCommandExceptionComponent(message.asComponent())
-
-    /**
-     * Throws a custom command exception with the given message.
-     *
-     * @param message The message to include in the exception, as a [ComponentLike].
-     * @throws WrapperCommandExceptionComponent Always throws the created exception.
-     */
-    @JvmStatic
-    fun failWithMessage(message: ComponentLike) {
-        throw createException(message)
+    fun createException(message: ComponentLike): WrapperCommandExceptionComponent {
+        return WrapperCommandExceptionComponent(message.asComponent())
     }
 
     /**
-     * Throws a custom command exception using a provided [CommandExceptionBuilder].
+     * Aborts the running command with an exception that carries [message].
      *
-     * @param builder The builder used to construct the exception message.
-     * @throws WrapperCommandExceptionComponent Always throws the created exception.
+     * Never returns, so the call ends a branch in Kotlin.
+     *
+     * @param message The message to show to the command sender.
+     * @throws WrapperCommandExceptionComponent Always.
      */
-    @JvmStatic
-    fun failWithBuilder(builder: CommandExceptionBuilder) {
+    fun failWithMessage(message: ComponentLike): Nothing = throw createException(message)
+
+    /**
+     * Aborts the running command with the exception that [builder] builds.
+     *
+     * Never returns, so the call ends a branch in Kotlin.
+     *
+     * @param builder The builder of the exception message.
+     * @throws WrapperCommandExceptionComponent Always.
+     */
+    fun failWithBuilder(builder: CommandExceptionBuilder): Nothing {
         throw createException(builder.build())
     }
 }

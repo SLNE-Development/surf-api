@@ -1,6 +1,7 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.packet.lore
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListener
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ServerboundListener
@@ -23,21 +24,22 @@ import java.util.*
 import net.minecraft.network.chat.Component as MinecraftComponent
 
 /**
- * PacketLoreListener is a class that implements PacketListenerAbstract and is responsible for
- * handling the modification of lore on item stacks in packet events.
+ * Adds the lore of the registered packet lore handlers to the item stacks a client receives and
+ * restores the original item stacks the client sends back.
  */
 @OptIn(NmsUseWithCaution::class)
-object V1_21_11PacketLoreListener : PacketListener {
+@NmsComponent
+class V1_21_11PacketLoreListener : PacketListener {
     private data class PriorityHandler(
         val handler: SurfPaperPacketLoreHandler,
         val priority: Short,
     )
 
-    private val priorityComparator =
-        Comparator<PriorityHandler> { a, b -> a.priority.compareTo(b.priority) }
+    private val priorityComparator = Comparator<PriorityHandler> { a, b ->
+        a.priority.compareTo(b.priority)
+    }
 
-    private val globalHandlersByPlugin =
-        mutableMapOf<Plugin, MutableSet<PriorityHandler>>()
+    private val globalHandlersByPlugin = mutableMapOf<Plugin, MutableSet<PriorityHandler>>()
 
     private val keyedHandlersByPlugin =
         mutableMapOf<Plugin, MutableMap<NamespacedKey, PriorityHandler>>()
@@ -48,11 +50,9 @@ object V1_21_11PacketLoreListener : PacketListener {
     @Volatile
     private var globalHandlersSnapshot: Array<PriorityHandler> = emptyArray()
 
-    private val ORIGINAL_LORE_KEY = namespacedKey("original_lore")
-    private val ORIGINAL_LORE_KEY_STRING = ORIGINAL_LORE_KEY.asString()
-
-    private fun hasAnyHandlers(): Boolean =
-        keyedHandlersSnapshot.isNotEmpty() || globalHandlersSnapshot.isNotEmpty()
+    private fun hasAnyHandlers(): Boolean {
+        return keyedHandlersSnapshot.isNotEmpty() || globalHandlersSnapshot.isNotEmpty()
+    }
 
     @ServerboundListener
     fun onPacketReceive(event: ServerboundSetCreativeModeSlotPacket) {
@@ -60,7 +60,9 @@ object V1_21_11PacketLoreListener : PacketListener {
     }
 
     @ClientboundListener
-    fun onWindowItem(event: ClientboundContainerSetContentPacket): ClientboundContainerSetContentPacket {
+    fun onWindowItem(
+        event: ClientboundContainerSetContentPacket,
+    ): ClientboundContainerSetContentPacket {
         if (!hasAnyHandlers()) return event
 
         val sourceItems = event.items
@@ -94,12 +96,14 @@ object V1_21_11PacketLoreListener : PacketListener {
             event.containerId(),
             event.stateId(),
             updatedItems,
-            updatedCarried
+            updatedCarried,
         )
     }
 
     @ClientboundListener
-    fun onSetSlotPacket(event: ClientboundContainerSetSlotPacket): ClientboundContainerSetSlotPacket {
+    fun onSetSlotPacket(
+        event: ClientboundContainerSetSlotPacket,
+    ): ClientboundContainerSetSlotPacket {
         val original = event.item
         val updated = makeUpdatedItemStack(original)
 
@@ -111,12 +115,14 @@ object V1_21_11PacketLoreListener : PacketListener {
             event.containerId,
             event.stateId,
             event.slot,
-            updated
+            updated,
         )
     }
 
     @ClientboundListener
-    fun onSetPlayerInventoryPacket(event: ClientboundSetPlayerInventoryPacket): ClientboundSetPlayerInventoryPacket {
+    fun onSetPlayerInventoryPacket(
+        event: ClientboundSetPlayerInventoryPacket,
+    ): ClientboundSetPlayerInventoryPacket {
         val original = event.contents
         val updated = makeUpdatedItemStack(original)
 
@@ -126,14 +132,14 @@ object V1_21_11PacketLoreListener : PacketListener {
 
         return ClientboundSetPlayerInventoryPacket(
             event.slot(),
-            updated
+            updated,
         )
     }
 
     @ServerboundListener
     fun onContainerClickPacket(
         event: ServerboundContainerClickPacket,
-        player: ServerPlayer
+        player: ServerPlayer,
     ): ServerboundContainerClickPacket {
         if (!hasAnyHandlers()) return event
 
@@ -155,12 +161,14 @@ object V1_21_11PacketLoreListener : PacketListener {
             event.buttonNum(),
             event.clickType(),
             event.changedSlots(),
-            event.carriedItem()
+            event.carriedItem(),
         )
     }
 
     @ClientboundListener
-    fun onSetCursorItemPacket(event: ClientboundSetCursorItemPacket): ClientboundSetCursorItemPacket {
+    fun onSetCursorItemPacket(
+        event: ClientboundSetCursorItemPacket,
+    ): ClientboundSetCursorItemPacket {
         val original = event.contents
         val updated = makeUpdatedItemStack(original)
 
@@ -184,9 +192,12 @@ object V1_21_11PacketLoreListener : PacketListener {
     }
 
     @ClientboundListener
-    fun onClientboundPlayerChatPacket(event: ClientboundPlayerChatPacket): ClientboundPlayerChatPacket {
+    fun onClientboundPlayerChatPacket(
+        event: ClientboundPlayerChatPacket,
+    ): ClientboundPlayerChatPacket {
         if (!hasAnyHandlers()) return event
         val unsignedContent = event.unsignedContent() ?: return event
+
         val transformed = transformChatComponent(unsignedContent)
 
         if (transformed === unsignedContent) return event
@@ -199,13 +210,16 @@ object V1_21_11PacketLoreListener : PacketListener {
             event.body(),
             transformed,
             event.filterMask(),
-            event.chatType()
+            event.chatType(),
         )
     }
 
     @ClientboundListener
-    fun onClientboundDisguisedChatPacket(event: ClientboundDisguisedChatPacket): ClientboundDisguisedChatPacket {
+    fun onClientboundDisguisedChatPacket(
+        event: ClientboundDisguisedChatPacket,
+    ): ClientboundDisguisedChatPacket {
         if (!hasAnyHandlers()) return event
+
         val message = event.message()
         val transformed = transformChatComponent(message)
 
@@ -233,6 +247,7 @@ object V1_21_11PacketLoreListener : PacketListener {
 
             if (transformedSibling !== sibling && newSiblings == null) {
                 newSiblings = ArrayList(siblings.size)
+
                 for (j in 0 until i) {
                     newSiblings.add(siblings[j])
                 }
@@ -246,6 +261,7 @@ object V1_21_11PacketLoreListener : PacketListener {
         }
 
         val copy = component.copy()
+
         if (newStyle !== style) {
             copy.style = newStyle
         }
@@ -307,7 +323,7 @@ object V1_21_11PacketLoreListener : PacketListener {
             val originalPdc = originalBukkitStack.persistentDataContainer
             resolveMatchingKeyedHandlers(
                 originalPdc.keys,
-                keyedSnapshot
+                keyedSnapshot,
             )
         } else {
             emptyList()
@@ -329,7 +345,7 @@ object V1_21_11PacketLoreListener : PacketListener {
         val originalLines = originalLore.lines
 
         val mutableLore = originalLines.mapTo(
-            ArrayList(originalLines.size)
+            ArrayList(originalLines.size),
         ) { it.toBukkit() }
 
         /*
@@ -339,9 +355,11 @@ object V1_21_11PacketLoreListener : PacketListener {
          */
         val combined = ArrayList<PriorityHandler>(matchingKeyedHandlers.size + globalSnapshot.size)
         combined.addAll(matchingKeyedHandlers)
+
         for (i in globalSnapshot.indices) {
             combined.add(globalSnapshot[i])
         }
+
         if (combined.size > 1) {
             combined.sortWith(priorityComparator)
         }
@@ -351,9 +369,12 @@ object V1_21_11PacketLoreListener : PacketListener {
         }
 
         val updatedLines = ArrayList<MinecraftComponent>(mutableLore.size)
+
         for (i in mutableLore.indices) {
-            val line =
-                mutableLore[i].decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)
+            val line = mutableLore[i].decorationIfAbsent(
+                TextDecoration.ITALIC,
+                TextDecoration.State.FALSE,
+            )
             updatedLines.add(line.toNms())
         }
 
@@ -381,6 +402,7 @@ object V1_21_11PacketLoreListener : PacketListener {
         }
 
         val customData = stack.get(DataComponents.CUSTOM_DATA) ?: return stack
+
         if (!customData.contains(ORIGINAL_LORE_KEY_STRING)) {
             return stack
         }
@@ -405,6 +427,7 @@ object V1_21_11PacketLoreListener : PacketListener {
         }
 
         var result: MutableList<PriorityHandler>? = null
+
         for (key in itemKeys) {
             val handler = keyedSnapshot[key] ?: continue
 
@@ -418,14 +441,18 @@ object V1_21_11PacketLoreListener : PacketListener {
         return result ?: emptyList()
     }
 
-    fun register(plugin: Plugin, identifier: NamespacedKey, listener: SurfPaperPacketLoreHandler, priority: Short) {
+    fun register(
+        plugin: Plugin,
+        identifier: NamespacedKey,
+        listener: SurfPaperPacketLoreHandler,
+        priority: Short,
+    ) {
         synchronized(this) {
             check(!keyedHandlersSnapshot.containsKey(identifier)) {
                 "A PacketLore handler for $identifier is already registered!"
             }
 
-            val handlers =
-                keyedHandlersByPlugin.computeIfAbsent(plugin) { mutableMapOf() }
+            val handlers = keyedHandlersByPlugin.computeIfAbsent(plugin) { mutableMapOf() }
 
             val priorityHandler = PriorityHandler(listener, priority)
             val previous = handlers.putIfAbsent(identifier, priorityHandler)
@@ -441,13 +468,14 @@ object V1_21_11PacketLoreListener : PacketListener {
 
     fun register(plugin: Plugin, listener: SurfPaperPacketLoreHandler, priority: Short) {
         synchronized(this) {
-            val handlers =
-                globalHandlersByPlugin.computeIfAbsent(plugin) { mutableSetOf() }
+            val handlers = globalHandlersByPlugin.computeIfAbsent(plugin) { mutableSetOf() }
 
             // duplicate-detection by handler identity, regardless of priority
             for (existing in handlers) {
                 if (existing.handler === listener) {
-                    error("A PacketLore handler identical to the provided one (${listener.javaClass.name}) is already registered for plugin ${plugin.name}!")
+                    error(
+                        "A PacketLore handler identical to the provided one (${listener.javaClass.name}) is already registered for plugin ${plugin.name}!",
+                    )
                 }
             }
 
@@ -469,6 +497,7 @@ object V1_21_11PacketLoreListener : PacketListener {
                     if (handlers.isEmpty()) {
                         emptyPlugin = plugin
                     }
+
                     break
                 }
             }
@@ -486,16 +515,20 @@ object V1_21_11PacketLoreListener : PacketListener {
     fun unregister(plugin: Plugin) {
         synchronized(this) {
             val removedGlobal = globalHandlersByPlugin.remove(plugin) != null
+
             if (removedGlobal) {
                 rebuildGlobalHandlersSnapshot()
             }
 
             val removedKeyed = keyedHandlersByPlugin.remove(plugin)
+
             if (removedKeyed != null) {
                 val newSnapshot = keyedHandlersSnapshot.toMutableMap()
+
                 for (identifier in removedKeyed.keys) {
                     newSnapshot.remove(identifier)
                 }
+
                 keyedHandlersSnapshot = newSnapshot
             }
         }
@@ -511,9 +544,16 @@ object V1_21_11PacketLoreListener : PacketListener {
         }
 
         val array = snapshot.toTypedArray()
+
         if (array.size > 1) {
             Arrays.sort(array, priorityComparator)
         }
+
         globalHandlersSnapshot = array
+    }
+
+    private companion object {
+        private val ORIGINAL_LORE_KEY = namespacedKey("original_lore")
+        private val ORIGINAL_LORE_KEY_STRING = ORIGINAL_LORE_KEY.asString()
     }
 }

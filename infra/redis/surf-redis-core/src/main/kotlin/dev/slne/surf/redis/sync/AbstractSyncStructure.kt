@@ -12,11 +12,10 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.time.Duration
 
-
 abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnapshot>(
     protected val api: RedisApi,
     id: String,
-    override val ttl: Duration
+    override val ttl: Duration,
 ) : DisposableAware(), SyncStructure<L> {
     companion object {
         const val NAMESPACE = "surf-redis:sync:"
@@ -41,24 +40,28 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
             }
     }
 
-    private fun registerListeners(): Mono<Void> = Flux.merge(registerListeners0())
-        .doOnError { e ->
-            log.atSevere()
-                .withCause(e)
-                .log("Failed to register listeners for $id")
-        }
-        .doOnNext { listenerIds.add(it) }
-        .then()
+    private fun registerListeners(): Mono<Void> {
+        return Flux.merge(registerListeners0())
+            .doOnError { e ->
+                log.atSevere()
+                    .withCause(e)
+                    .log("Failed to register listeners for $id")
+            }
+            .doOnNext { listenerIds.add(it) }
+            .then()
+    }
 
-    private fun unregisterListeners(): Mono<Void> = Flux.fromIterable(listenerIds)
-        .concatMap { unregisterListener(it).thenReturn(it) }
-        .doOnError { e ->
-            log.atSevere()
-                .withCause(e)
-                .log("Failed to unregister listeners for $id")
-        }
-        .doOnNext { listenerIds.remove(it) }
-        .then()
+    private fun unregisterListeners(): Mono<Void> {
+        return Flux.fromIterable(listenerIds)
+            .concatMap { unregisterListener(it).thenReturn(it) }
+            .doOnError { e ->
+                log.atSevere()
+                    .withCause(e)
+                    .log("Failed to unregister listeners for $id")
+            }
+            .doOnNext { listenerIds.remove(it) }
+            .then()
+    }
 
     protected abstract fun registerListeners0(): List<Mono<Int>>
     protected abstract fun unregisterListener(id: Int): Mono<*>
@@ -88,23 +91,28 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
         }
     }
 
-    protected fun loadFromRemote(): Mono<Void> = loadRemoteSnapshot()
-        .doOnNext(::overrideFromRemote)
-        .then()
+    protected fun loadFromRemote(): Mono<Void> {
+        return loadRemoteSnapshot()
+            .doOnNext(::overrideFromRemote)
+            .then()
+    }
 
     /**
      * Reads the current remote snapshot without applying it locally.
      */
-    protected fun loadRemoteSnapshot(): Mono<R> = loadFromRemote0()
-        .switchIfEmpty(
-            Mono.error(
-                IllegalStateException("Remote snapshot for synchronized structure '$id' returned no result")
+    protected fun loadRemoteSnapshot(): Mono<R> {
+        return loadFromRemote0()
+            .switchIfEmpty(
+                Mono.error(
+                    IllegalStateException(
+                        "Remote snapshot for synchronized structure '$id' returned no result",
+                    ),
+                ),
             )
-        )
+    }
 
     protected abstract fun loadFromRemote0(): Mono<R>
     protected abstract fun overrideFromRemote(raw: R)
-
 
     interface VersionedSnapshot {
         val version: Long
@@ -112,11 +120,14 @@ abstract class AbstractSyncStructure<L, R : AbstractSyncStructure.VersionedSnaps
 
     data class SimpleVersionedSnapshot<V>(
         val value: V,
-        override val version: Long
+        override val version: Long,
     ) : VersionedSnapshot {
         companion object {
-            fun <V : Any> fromTuple(tuple: Tuple2<V, Long>) =
-                SimpleVersionedSnapshot(tuple.t1, tuple.t2)
+            fun <V : Any> fromTuple(
+                tuple: Tuple2<V, Long>,
+            ): SimpleVersionedSnapshot<V> {
+                return SimpleVersionedSnapshot(tuple.t1, tuple.t2)
+            }
         }
     }
 }

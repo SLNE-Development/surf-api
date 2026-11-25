@@ -1,11 +1,6 @@
 package dev.slne.surf.api.shared.internal.nms
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 /**
  * Pins that a dotted Minecraft version is compared as a version and not as text.
@@ -61,12 +56,45 @@ class NmsVersionTest {
     }
 
     @Test
+    fun `selection prefers the entry matching the server`() {
+        assertSame(NmsVersion.V26_3, NmsVersion.select("26.3"))
+        assertSame(NmsVersion.V26_3, NmsVersion.select("26.3.1"))
+        assertSame(NmsVersion.V26_1, NmsVersion.select("26.1.2"))
+    }
+
+    @Test
+    fun `selection falls back to the newest entry older than the server`() {
+        assertSame(NmsVersion.V26_3, NmsVersion.select("26.4"))
+        assertSame(NmsVersion.V26_3, NmsVersion.select("26.10"), "26.10 is newer than 26.3")
+        assertSame(NmsVersion.V26_3, NmsVersion.select("27.1"))
+        assertSame(NmsVersion.V1_21_11, NmsVersion.select("1.21.12"))
+    }
+
+    @Test
+    fun `selection finds nothing for a server older than every entry`() {
+        assertNull(NmsVersion.select("1.21.10"))
+        assertNull(NmsVersion.select("1.20.6"))
+    }
+
+    @Test
+    fun `selection reads the leading number of a pre-release version`() {
+        assertSame(NmsVersion.V26_3, NmsVersion.select("26.3-pre2"))
+        assertSame(NmsVersion.V26_3, NmsVersion.select("26.4-rc-1"))
+        assertNull(NmsVersion.select("1.20.6-rc1"))
+    }
+
+    @Test
+    fun `selection falls back to the newest entry for a version without a number`() {
+        assertSame(NmsVersion.V26_3, NmsVersion.select("not-a-version"))
+        assertSame(NmsVersion.V26_3, NmsVersion.select(""))
+    }
+
+    @Test
     fun `newest first orders by number, not by text`() {
         assertEquals(
             listOf(NmsVersion.V26_3, NmsVersion.V26_2, NmsVersion.V26_1, NmsVersion.V1_21_11),
             NmsVersion.NEWEST_FIRST,
         )
-        assertSame(NmsVersion.V26_3, NmsVersion.NEWEST)
 
         // The property that matters and that a string sort does not have: every entry is above the
         // one after it when compared component by component.
@@ -110,7 +138,7 @@ class NmsVersionTest {
     fun `every entry parses and keeps its own prefix`() {
         // A new entry is added by hand next to the generated modules, so a typo like "26..4" or
         // "26.4-rc" would otherwise surface as a failure to initialise the enum at runtime.
-        NmsVersion.entries.forEach { version ->
+        for (version in NmsVersion.entries) {
             assertTrue(version.components.isNotEmpty(), version.name)
             assertEquals(
                 version.versionPrefix,

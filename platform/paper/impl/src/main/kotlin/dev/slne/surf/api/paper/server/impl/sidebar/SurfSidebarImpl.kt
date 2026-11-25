@@ -2,9 +2,8 @@ package dev.slne.surf.api.paper.server.impl.sidebar
 
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.common.util.runAtFixedRate
-import dev.slne.surf.api.paper.nms.NmsUseWithCaution
-import dev.slne.surf.api.paper.nms.common.NmsProvider
 import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboard
+import dev.slne.surf.api.paper.nms.common.scoreboard.PlayerNmsScoreboardFactory
 import dev.slne.surf.api.paper.sidebar.*
 import dev.slne.surf.api.paper.util.forEachPlayer
 import kotlinx.coroutines.*
@@ -29,13 +28,13 @@ abstract class SurfSidebarImpl(
 
     protected val scope = CoroutineScope(
         SupervisorJob() +
-                Dispatchers.Default +
-                CoroutineName("surf-sidebar-${plugin.name}") +
-                CoroutineExceptionHandler { _, e ->
-                    log.atWarning()
-                        .withCause(e)
-                        .log("Uncaught exception in sidebar of %s", plugin.name)
-                }
+            Dispatchers.Default +
+            CoroutineName("surf-sidebar-${plugin.name}") +
+            CoroutineExceptionHandler { _, e ->
+                log.atWarning()
+                    .withCause(e)
+                    .log("Uncaught exception in sidebar of %s", plugin.name)
+            },
     )
 
     private val sharedTitle = definition.title as? SidebarTitle.Shared
@@ -47,6 +46,7 @@ abstract class SurfSidebarImpl(
 
     init {
         check(plugin.isEnabled) { "Plugin ${plugin.name} is not enabled" }
+
         SidebarRegistry.add(this)
 
         if (!hasSharedContent) {
@@ -56,7 +56,10 @@ abstract class SurfSidebarImpl(
                 for (request in sharedRefreshRequests) {
                     refreshSharedContent()
                     sharedReady.complete(Unit)
-                    sessions.values.forEach { it.requestRender() }
+
+                    for (session in sessions.values) {
+                        session.requestRender()
+                    }
                 }
             }
             sharedRefreshRequests.trySend(Unit)
@@ -72,9 +75,14 @@ abstract class SurfSidebarImpl(
     override fun update() {
         if (closed) return
 
-        definition.animations.forEach { it.nextFrame() }
+        for (animation in definition.animations) {
+            animation.nextFrame()
+        }
+
         if (!hasSharedContent) {
-            sessions.values.forEach { it.requestRender() }
+            for (session in sessions.values) {
+                session.requestRender()
+            }
         } else {
             sharedRefreshRequests.trySend(Unit)
         }
@@ -83,6 +91,7 @@ abstract class SurfSidebarImpl(
     private suspend fun refreshSharedContent() {
         if (sharedTitle != null) {
             val rendered = renderShared("title") { sharedTitle.render() }
+
             if (rendered != null && rendered != sharedTitle.current) {
                 sharedTitle.current = rendered
             }
@@ -90,6 +99,7 @@ abstract class SurfSidebarImpl(
 
         for (entry in sharedEntries) {
             val rendered = renderShared("line") { entry.render() } ?: continue
+
             val previous = entry.current
             entry.current = List(rendered.size) { index ->
                 val line = rendered[index]
@@ -116,12 +126,17 @@ abstract class SurfSidebarImpl(
     override fun close() {
         synchronized(lifecycleLock) {
             if (closed) return
+
             closed = true
         }
 
         SidebarRegistry.remove(this)
         scope.cancel()
-        sessions.values.forEach { it.close() }
+
+        for (session in sessions.values) {
+            session.close()
+        }
+
         sessions.clear()
     }
 
@@ -130,6 +145,7 @@ abstract class SurfSidebarImpl(
 
     fun onPlayerQuit(player: Player) {
         val session = sessions[player.uniqueId] ?: return
+
         if (session.player === player && sessions.remove(player.uniqueId, session)) {
             session.close()
         }
@@ -140,8 +156,10 @@ abstract class SurfSidebarImpl(
             check(!closed) { "Sidebar is closed" }
 
             val existing = sessions[player.uniqueId]
+
             if (existing != null) {
                 if (existing.player === player) return
+
                 existing.close()
             }
 
@@ -154,16 +172,21 @@ abstract class SurfSidebarImpl(
     }
 
     protected fun launchUpdater(interval: Duration) {
-        scope.runAtFixedRate(interval, initialDelay = interval, taskName = "surf-sidebar-${plugin.name}") {
+        scope.runAtFixedRate(
+            interval,
+            initialDelay = interval,
+            taskName = "surf-sidebar-${plugin.name}",
+        ) {
             update()
         }
     }
 
-    @OptIn(NmsUseWithCaution::class)
     private inner class ViewerSession(val player: Player) {
         private val renderRequests = Channel<Unit>(Channel.CONFLATED)
 
-        private val scoreboard: PlayerNmsScoreboard = NmsProvider.current.createPlayerScoreboard(player)
+        private val scoreboard: PlayerNmsScoreboard = PlayerNmsScoreboardFactory.instance.create(
+            player,
+        )
         private var closed = false
 
         private val renderJob = scope.launch {
@@ -182,7 +205,10 @@ abstract class SurfSidebarImpl(
 
         private suspend fun render() {
             if (!player.isConnected) {
-                if (sessions.remove(player.uniqueId, this)) close()
+                if (sessions.remove(player.uniqueId, this)) {
+                    close()
+                }
+
                 return
             }
 
@@ -190,6 +216,7 @@ abstract class SurfSidebarImpl(
 
             val title: Component
             val lines: List<SidebarLine>
+
             try {
                 title = renderTitle()
                 lines = renderLines()
@@ -200,23 +227,29 @@ abstract class SurfSidebarImpl(
                     .atMostEvery(10, TimeUnit.SECONDS)
                     .withCause(e)
                     .log("Failed to render sidebar of %s for %s", plugin.name, player.name)
+
                 return
             }
 
             synchronized(this) {
-                if (!closed) scoreboard.update(title, lines)
+                if (!closed) {
+                    scoreboard.update(title, lines)
+                }
             }
         }
 
-        private suspend fun renderTitle(): Component = when (val title = definition.title) {
-            is SidebarTitle.Static -> title.title
-            is SidebarTitle.Rendered -> title.render(player)
-            is SidebarTitle.Shared -> title.current
+        private suspend fun renderTitle(): Component {
+            return when (val title = definition.title) {
+                is SidebarTitle.Static -> title.title
+                is SidebarTitle.Rendered -> title.render(player)
+                is SidebarTitle.Shared -> title.current
+            }
         }
 
         private suspend fun renderLines(): List<SidebarLine> {
             val maxLines = definition.maxLines
             val lines = ArrayList<SidebarLine>(maxLines)
+
             for (entry in definition.entries) {
                 if (lines.size == maxLines) break
 
@@ -226,15 +259,18 @@ abstract class SurfSidebarImpl(
                     is SidebarEntry.Animated -> lines.add(entry.animation.currentFrame)
                     is SidebarEntry.Lines -> for (line in entry.render(player)) {
                         if (lines.size == maxLines) break
+
                         lines.add(line)
                     }
 
                     is SidebarEntry.Shared -> for (line in entry.current) {
                         if (lines.size == maxLines) break
+
                         lines.add(line)
                     }
                 }
             }
+
             return lines
         }
 

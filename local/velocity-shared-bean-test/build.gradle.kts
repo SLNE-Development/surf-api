@@ -27,7 +27,7 @@ data class PinnedDownload(
 /**
  * The release part of a Modrinth version name such as `v5.5.71-bukkit`.
  */
-fun modrinthRelease(version: String) = version.removePrefix("v").substringBefore('-')
+fun modrinthRelease(version: String): String = version.removePrefix("v").substringBefore('-')
 
 /**
  * Pins every artifact the test downloads, with the checksum of that exact version.
@@ -41,34 +41,32 @@ fun modrinthRelease(version: String) = version.removePrefix("v").substringBefore
  * unknown.
  */
 val pinnedDownloads = listOf(
-    // Velocity 4.3.1 build 45, the release `velocity-api` in the version catalog names. The download
-    // path is keyed by the jar's own sha256; the build index is
+    // Velocity 4.3.1 build 45, the release `velocity-api` in the version catalog names. The
+    // download path is keyed by the jar's own sha256; the build index is
     // https://fill.papermc.io/v3/projects/velocity/versions/4.3.1/builds.
     PinnedDownload(
         id = "velocity",
         fileName = "velocity-4.3.1-45.jar",
         url = "https://fill-data.papermc.io/v1/objects/" +
-                "0844bcabdcdb4f5b875906fd4c3365bc1bb76918e42bc595ed88ad195258dd75/" +
-                "velocity-4.3.1-45.jar",
+            "0844bcabdcdb4f5b875906fd4c3365bc1bb76918e42bc595ed88ad195258dd75/" +
+            "velocity-4.3.1-45.jar",
         sha256 = "0844bcabdcdb4f5b875906fd4c3365bc1bb76918e42bc595ed88ad195258dd75",
     ),
-    // CommandAPI's Velocity plugin jar, from its GitHub release.
     libs.versions.commandapiplugin.get().let { version ->
         PinnedDownload(
             id = "commandapi",
             fileName = "CommandAPI-$version-Velocity.jar",
             url = "https://github.com/CommandAPI/CommandAPI/releases/download/" +
-                    "$version/CommandAPI-$version-Velocity.jar",
+                "$version/CommandAPI-$version-Velocity.jar",
             sha256 = "bdf9372c6651eb9ca0e3b5dcd4f4a10c90ce1914e3ed3ebdf7d4a2b420c8ad3b",
         )
     },
-    // packetevents' shaded Velocity plugin jar, from its GitHub release.
     libs.versions.packetevents.plugin.get().let { version ->
         PinnedDownload(
             id = "packetevents",
             fileName = "packetevents-velocity-$version.jar",
             url = "https://github.com/retrooper/packetevents/releases/download/" +
-                    "v$version/packetevents-velocity-$version.jar",
+                "v$version/packetevents-velocity-$version.jar",
             sha256 = "0772f64b51aaf79132c76bb1503707ea0d35433713d5312e67401eaa599d271b",
         )
     },
@@ -80,7 +78,7 @@ val pinnedDownloads = listOf(
             id = "luckperms",
             fileName = "LuckPerms-Velocity-$release.jar",
             url = "https://cdn.modrinth.com/data/Vebnzrzj/versions/tamnmXad/" +
-                    "LuckPerms-Velocity-$release.jar",
+                "LuckPerms-Velocity-$release.jar",
             sha256 = "a3ac92ef4e29fd87a4d706dc92445fd946f1caf1d33526ca18422a62554fa18a",
         )
     },
@@ -93,7 +91,7 @@ val pinnedDownloads = listOf(
  * by `check`, by `test`, or by anything CI runs. A source set of its own keeps that true by
  * construction rather than by remembering to exclude it.
  */
-val velocityTest: SourceSet by sourceSets.creating
+val velocityTest = sourceSets.create("velocityTest")
 
 /**
  * The plugin jars the assembled proxy runs.
@@ -102,13 +100,12 @@ val velocityTest: SourceSet by sourceSets.creating
  * dependency closures: surf-api's plugin jar already carries everything it needs, and the two test
  * plugins are compiled against surf-api rather than bundling it.
  */
-val proxyPlugins by configurations.creating {
+val proxyPlugins = configurations.create("proxyPlugins") {
     isCanBeConsumed = false
     isTransitive = false
 }
 
 dependencies {
-    // Declared because `kotlin.stdlib.default.dependency=false` holds for the whole build.
     velocityTest.implementationConfigurationName(libs.kotlin.stdlib)
 
     // The JUnit api directly, rather than `kotlin("test")`: the Kotlin plugin picks that
@@ -124,10 +121,16 @@ dependencies {
     // The shadow jar is surf-api's actual Velocity plugin; the other two have nothing to shade.
     proxyPlugins(project(path = ":surf-api-velocity-impl", configuration = "shadowRuntimeElements"))
     proxyPlugins(
-        project(path = ":surf-api-velocity-shared-bean-provider", configuration = "runtimeElements")
+        project(
+            path = ":surf-api-velocity-shared-bean-provider",
+            configuration = "runtimeElements",
+        ),
     )
     proxyPlugins(
-        project(path = ":surf-api-velocity-shared-bean-consumer", configuration = "runtimeElements")
+        project(
+            path = ":surf-api-velocity-shared-bean-consumer",
+            configuration = "runtimeElements",
+        ),
     )
 }
 
@@ -147,7 +150,7 @@ val proxyWorkDir = layout.buildDirectory.dir("velocity-shared-bean-test")
  */
 val writeBootTestInputs = tasks.register("writeVelocitySharedBeanBootTestInputs") {
     group = "verification"
-    description = "Writes the pinned downloads and plugin jars the Velocity shared-bean boot test needs."
+    description = "Writes the pinned downloads and plugin jars of the Velocity boot test."
 
     val inputsFile = proxyWorkDir.map { it.file("inputs.properties") }
     val pluginJars = proxyPlugins.incoming.files

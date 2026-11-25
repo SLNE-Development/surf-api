@@ -26,7 +26,7 @@ minestomPluginFile {
 
 `surfMinestomApi { }` is a `MinestomSurfExtension`, which adds nothing of its own to
 `CoreSurfExtension` - the shared settings (`withCoreMinestom()`, `withSurfRedis()`,
-`withApiValidation()`, `testing { }`, `addSurfApiToClasspath(...)`, `surfApiScope(...)`,
+`withApiValidation(...)`, `allowInternalApi(...)`, `testing { }`, `addSurfApiToClasspath(...)`, `surfApiScope(...)`,
 `basePackage`, `generatePluginClass`, `verifyPluginClasses`, `allowBundledSpring`) are documented in
 the `surf-api-paper` skill's `references/project-setup.md`, which describes the same
 `CommonSurfPlugin` base and the same plugin-class tasks.
@@ -36,7 +36,9 @@ Minestom specifics on top of the common setup:
 - the repository `https://central.sonatype.com/repository/maven-snapshots/` is added, restricted to
   snapshots of group `net.minestom`
 - `dev.slne.surf.api:surf-api-minestom:+` is added at `compileOnly`
-- with testing on (the default), `net.minestom:testing:<version>` goes on `testImplementation`
+- with testing on (the default), the libraries the surf-api Minestom runtime ships
+  (`Constants.COMMON_RUNTIME_TEST_LIBRARIES` and `MINESTOM_RUNTIME_TEST_LIBRARIES`) go on
+  `testRuntimeOnly`, and `net.minestom:testing:<version>` goes on `testImplementation`
 - the relocations every surf Minestom jar applies are `net.kyori.adventure.nbt` (except
   `...nbt.api.**`), `me.devnatan.inventoryframework` and `org.spongepowered.configurate`, all below
   `dev.slne.surf.api.libs`. These are deliberately identical to the server jar's, so a plugin's
@@ -66,7 +68,7 @@ conventions, so in practice nothing has to be set:
 | `name` | `project.name` |
 | `version` | `project.version` |
 | `description` | `project.description` or empty |
-| `url` | the `url` Gradle property |
+| `url` | the `url` Gradle property, else the `origin` Git remote as an `https` URL |
 | `authors` | `surfMinestomApi { authors }` |
 | `pluginDependencies` | `surf-core-minestom`, enabled only when a core module was set |
 

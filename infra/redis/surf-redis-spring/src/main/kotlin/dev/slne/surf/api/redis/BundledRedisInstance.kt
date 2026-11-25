@@ -1,6 +1,5 @@
 package dev.slne.surf.api.redis
 
-import com.google.auto.service.AutoService
 import dev.slne.surf.redis.RedisInstance
 import java.nio.file.Path
 
@@ -11,7 +10,6 @@ import java.nio.file.Path
  * folder of surf-api's data folder; the first access copies an existing configuration of the old
  * platform plugins there, see [RedisConfigLocation].
  */
-@AutoService(RedisInstance::class)
 internal class BundledRedisInstance : RedisInstance() {
 
     override val dataPath: Path by lazy { RedisConfigLocation.resolve(RedisPlatform.dataDirectory) }

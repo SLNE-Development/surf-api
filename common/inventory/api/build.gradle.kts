@@ -7,9 +7,9 @@ dependencies {
     api(projects.surfApiMessagesApi)
     api(projects.surfApiAnnotations)
 
-    api(libs.inventory.framework.api)
+    compileOnlyApi(libs.inventory.framework.api)
     compileOnlyApi(libs.adventure.api)
-    api(libs.glm)
+    compileOnlyApi(libs.glm)
 }
 
 description = "surf-api-inventory-api"

@@ -4,6 +4,7 @@ package dev.slne.surf.api.paper.server.impl.visualizer.visualizer
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsCommonBridge
+import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.BlockDisplaySettings
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.SurfPaperNmsSpawnPackets
 import dev.slne.surf.api.paper.server.impl.visualizer.SurfBukkitVisualizerApiImpl
@@ -21,9 +22,9 @@ import org.bukkit.entity.Player
 import java.util.*
 
 class SurfVisualizerSingleLocationImpl(
-    location: Location
+    location: Location,
 ) : AbstractSurfVisualizerImpl(), SurfVisualizerSingleLocation {
-    private val entityId = SurfPaperNmsCommonBridge.INSTANCE.nextEntityId()
+    private val entityId = SurfPaperNmsCommonBridge.instance.nextEntityId()
 
     override var location: Location = location
         set(value) {
@@ -51,12 +52,15 @@ class SurfVisualizerSingleLocationImpl(
         private val viewerUuids: MutableSet<UUID>,
     ) : CleanupState() {
         override fun cleanup() {
-            val despawn = SurfPaperNmsSpawnPackets.INSTANCE.despawn(entityId)
+            val despawn = SurfPaperNmsSpawnPackets.instance.despawn(entityId)
+
             for (uuid in viewerUuids) {
-                SurfBukkitVisualizerApiImpl.INSTANCE.onViewerRemoved(uid, uuid)
+                SurfBukkitVisualizerApiImpl.instance.onViewerRemoved(uid, uuid)
                 val player = Bukkit.getPlayer(uuid) ?: continue
+
                 despawn.execute(player)
             }
+
             viewerUuids.clear()
         }
     }
@@ -71,20 +75,29 @@ class SurfVisualizerSingleLocationImpl(
     override fun stopVisualizingInternal() {
         for (uuid in viewerUuids) {
             val player = Bukkit.getPlayer(uuid) ?: continue
+
             despawnPacket().execute(player)
         }
     }
 
     override fun onPlayerReceiveChunk(player: Player, chunk: Chunk) {
         ensureNotClosed()
-        if (chunk.world == location.world && location.chunkX == chunk.x && location.chunkZ == chunk.z) {
+
+        if (chunk.world == location.world &&
+            location.chunkX == chunk.x &&
+            location.chunkZ == chunk.z
+        ) {
             spawnPacket().execute(player)
         }
     }
 
     override fun onPlayerUnloadChunk(player: Player, chunk: Chunk) {
         ensureNotClosed()
-        if (chunk.world == location.world && location.chunkX == chunk.x && location.chunkZ == chunk.z) {
+
+        if (chunk.world == location.world &&
+            location.chunkX == chunk.x &&
+            location.chunkZ == chunk.z
+        ) {
             despawnPacket().execute(player)
         }
     }
@@ -95,7 +108,6 @@ class SurfVisualizerSingleLocationImpl(
     }
 
     override fun clearStaleData(uuid: UUID) {
-
     }
 
     override fun update(strategy: UpdateStrategy) {
@@ -109,9 +121,11 @@ class SurfVisualizerSingleLocationImpl(
 
                 for (viewer in viewerUuids) {
                     val player = Bukkit.getPlayer(viewer) ?: continue
+
                     player.enterContextIfNeeded {
                         despawn.execute(player)
                         if (!visualizing.get()) return@enterContextIfNeeded
+
                         val seesLocation = player.isChunkVisible(location)
 
                         if (seesLocation) {
@@ -123,11 +137,14 @@ class SurfVisualizerSingleLocationImpl(
 
             UpdateStrategy.POSITION -> {
                 val updatePosition = updatePositionPacket()
+
                 for (viewer in viewerUuids) {
                     val player = Bukkit.getPlayer(viewer) ?: continue
+
                     player.enterContextIfNeeded {
                         if (player.isChunkVisible(location)) {
                             if (!visualizing.get()) return@enterContextIfNeeded
+
                             updatePosition.execute(player)
                         } else {
                             despawnPacket().execute(player)
@@ -144,12 +161,19 @@ class SurfVisualizerSingleLocationImpl(
         update()
     }
 
-    private fun spawnPacket() =
-        SurfPaperNmsSpawnPackets.INSTANCE.spawnBlockDisplay(entityId, location, settings)
+    private fun spawnPacket(): PacketOperation {
+        return SurfPaperNmsSpawnPackets.instance.spawnBlockDisplay(entityId, location, settings)
+    }
 
-    private fun despawnPacket() = SurfPaperNmsSpawnPackets.INSTANCE.despawn(entityId)
-    private fun updatePositionPacket() =
-        SurfPaperNmsSpawnPackets.INSTANCE.teleport(entityId, location, location.yaw, location.pitch)
+    private fun despawnPacket() = SurfPaperNmsSpawnPackets.instance.despawn(entityId)
+    private fun updatePositionPacket(): PacketOperation {
+        return SurfPaperNmsSpawnPackets.instance.teleport(
+            entityId,
+            location,
+            location.yaw,
+            location.pitch,
+        )
+    }
 
     override fun toString(): String {
         return "SurfVisualizerSingleLocationImpl(entityId=$entityId, location=$location, settings=$settings)"

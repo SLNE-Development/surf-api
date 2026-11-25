@@ -15,8 +15,8 @@ per platform:
 | Velocity | `VelocitySpongeConfigSerializers` |
 | Standalone | `StandaloneSpongeConfigSerializers` |
 
-`SpongeConfigManager.buildConfigManager` calls `buildSerializersModule()` once, inside
-`defaultOptions { it.serializers { … } }`, when the manager is built. The order it registers in
+`SpongeConfigManager.open` calls `buildSerializersModule()` once, when a file is opened, and hands
+the result to `defaultOptions { options.serializers(…) }`. The order it registers in
 matters: **Configurate picks the first registered serializer that matches a type.**
 
 1. everything added through `registerClassSerializer`
@@ -101,8 +101,9 @@ class MySerializers : ConfigSerializerRegistrar {
 
 surf-api calls every `ConfigSerializerRegistrar` bean of the plugin's context once while the
 context starts, at the latest before the plugin's first `ConfigHandle` opens its file. The
-registrars also run when the plugin declares no `@SurfConfig` class. A companion config read before
-the plugin's context has started does not see the plugin's serializers yet. The registry is shared
+registrars also run when the plugin declares no `@SurfConfig` class. A file opened with
+`ConfigHandles.open` before the plugin's context has started does not see the plugin's serializers
+yet. The registry is shared
 by every plugin on the server: a registration also applies to the configs of other plugins loaded
 afterwards.
 
@@ -156,5 +157,7 @@ data class Config(
 `common/serialization/api/src/main/kotlin/dev/slne/surf/api/serialization/` is a **different** thing: those
 are `kotlinx.serialization` `KSerializer`s collected in `SurfSerializerModule` (`adventure`,
 `spongePoweredMath`, … modules), used for network payloads and persistence, not for config files.
-Typealiases such as `SerializableUUID` belong to that set. Registering one there does not make a
-type config-serializable, and vice versa.
+Typealiases such as `SerializableUUID` belong to that set, and the Paper serializers sit in
+`SurfPaperSerializerModule`. A serializer there writes a nested UUID, `Component` or `Key` through a
+`ContextualSerializer`, so a contextual entry in the format's module overrides its fallback.
+Registering one there does not make a type config-serializable, and vice versa.

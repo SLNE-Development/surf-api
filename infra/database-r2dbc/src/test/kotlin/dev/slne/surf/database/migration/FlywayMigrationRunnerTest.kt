@@ -5,6 +5,8 @@ import dev.slne.surf.database.config.ConnectionDetails
 import dev.slne.surf.database.config.DatabaseType
 import dev.slne.surf.database.migration.fixtures.mixedscan.V2_Default
 import dev.slne.surf.database.migration.fixtures.scan.V2_Object
+import dev.slne.surf.database.migration.fixtures.scan.V3_Class
+import dev.slne.surf.database.migration.fixtures.scan.nested.V5_Nested
 import dev.slne.surf.database.migration.internal.FlywayMigrationRunner
 import dev.slne.surf.database.migration.internal.JdbcDataSources
 import dev.slne.surf.database.migration.internal.MigrationClassLoader
@@ -30,26 +32,46 @@ class FlywayMigrationRunnerTest {
     }
 
     private val mariadb: DataSource = JdbcDataSources.create(
-        ConnectionDetails(databaseType = DatabaseType.MARIADB, host = "localhost", port = IntOr.Default(1))
+        ConnectionDetails(
+            databaseType = DatabaseType.MARIADB,
+            host = "localhost",
+            port = IntOr.Default(1),
+        ),
     )
 
-    private fun postgres(schema: String): DataSource = JdbcDataSources.create(
-        ConnectionDetails(databaseType = DatabaseType.POSTGRESQL, schema = schema, host = "localhost", port = IntOr.Default(1))
-    )
+    private fun postgres(schema: String): DataSource {
+        return JdbcDataSources.create(
+            ConnectionDetails(
+                databaseType = DatabaseType.POSTGRESQL,
+                schema = schema,
+                host = "localhost",
+                port = IntOr.Default(1),
+            ),
+        )
+    }
 
     private fun configure(
         dataSource: DataSource = mariadb,
         name: String = "plugin_a",
         dialect: DatabaseDialect = MariaDBDialect(),
-        block: MigrationSpec.() -> Unit
+        block: MigrationSpec.() -> Unit,
     ): FluentConfiguration {
         val plan = MigrationSpec(javaClass.classLoader).apply(block).build(name)
-        return withOfflineDatabase(dialect) { database -> FlywayMigrationRunner(database, dataSource).configure(plan) }
+
+        return withOfflineDatabase(dialect) { database ->
+            FlywayMigrationRunner(
+                database,
+                dataSource,
+            ).configure(plan)
+        }
     }
 
     @Test
     fun usesThePluginHistoryTable() {
-        assertEquals("flyway_schema_history_myplugin", configure(name = "MyPlugin") { sql("db") }.table)
+        assertEquals(
+            "flyway_schema_history_myplugin",
+            configure(name = "MyPlugin") { sql("db") }.table,
+        )
     }
 
     @Test
@@ -88,7 +110,10 @@ class FlywayMigrationRunnerTest {
     fun usesOnlyTheConfiguredSqlLocations() {
         val configuration = configure { sql("db/one", "classpath:db/two") }
 
-        assertEquals(listOf("classpath:db/one", "classpath:db/two"), configuration.locations.map { it.descriptor })
+        assertEquals(
+            listOf("classpath:db/one", "classpath:db/two"),
+            configuration.locations.map { it.descriptor },
+        )
     }
 
     @Test
@@ -97,15 +122,21 @@ class FlywayMigrationRunnerTest {
 
         assertEquals(
             listOf("classpath:db/mariadb", "classpath:db/mariadb_extra"),
-            configuration.locations.map { it.descriptor }
+            configuration.locations.map { it.descriptor },
         )
     }
 
     @Test
     fun replacesTheVendorPlaceholderForPostgres() {
-        val configuration = configure(postgres("public"), dialect = PostgreSQLDialect()) { sql("db/{vendor}") }
+        val configuration = configure(
+            postgres("public"),
+            dialect = PostgreSQLDialect(),
+        ) { sql("db/{vendor}") }
 
-        assertEquals(listOf("classpath:db/postgresql"), configuration.locations.map { it.descriptor })
+        assertEquals(
+            listOf("classpath:db/postgresql"),
+            configuration.locations.map { it.descriptor },
+        )
     }
 
     @Test
@@ -155,38 +186,48 @@ class FlywayMigrationRunnerTest {
         }
 
         assertIs<MigrationClassLoader>(configuration.classLoader)
-        assertSame(V2_Object::class.java, configuration.classLoader.loadClass(V2_Object::class.java.name))
-    }
-
-    @Test
-    fun registersCodeMigrationsAndScannedClasses() {
-        val configuration = configure {
-            classes(V2_Object)
-            classPackage("dev.slne.surf.database.migration.fixtures.scan")
-        }
-
-        assertEquals(
-            listOf("2", "3", "5"),
-            configuration.javaMigrations.map { it.version.version }.sorted()
+        assertSame(
+            V2_Object::class.java,
+            configuration.classLoader.loadClass(V2_Object::class.java.name),
         )
     }
 
     @Test
-    fun registersOnlyTheNamedClassesOfAPackage() {
+    fun registersListedAndNamedClasses() {
+        val configuration = configure {
+            classes(V2_Object)
+            classNames(V3_Class::class.java.name, V5_Nested::class.java.name)
+        }
+
+        assertEquals(
+            listOf("2", "3", "5"),
+            configuration.javaMigrations.map { it.version.version }.sorted(),
+        )
+    }
+
+    @Test
+    fun registersOnlyTheNamedClasses() {
         val configuration = configure { classNames(V2_Object::class.java.name) }
 
         assertEquals(listOf("2"), configuration.javaMigrations.map { it.version.version })
     }
 
     @Test
-    fun namedClassIsRegisteredOnceAlongsideListedAndScannedOnes() {
+    fun namedClassIsRegisteredOnceAlongsideListedOnes() {
         val configuration = configure {
             classes(V2_Object)
-            classNames(V2_Object::class.java.name, "dev.slne.surf.database.migration.fixtures.scan.V3_Class")
-            classPackage("dev.slne.surf.database.migration.fixtures.scan")
+            classNames(
+                V2_Object::class.java.name,
+                V3_Class::class.java.name,
+                V3_Class::class.java.name,
+            )
+            classNames(V5_Nested::class.java.name)
         }
 
-        assertEquals(listOf("2", "3", "5"), configuration.javaMigrations.map { it.version.version }.sorted())
+        assertEquals(
+            listOf("2", "3", "5"),
+            configuration.javaMigrations.map { it.version.version }.sorted(),
+        )
     }
 
     @Test
@@ -199,16 +240,6 @@ class FlywayMigrationRunnerTest {
     }
 
     @Test
-    fun classFoundByNestedPackagesIsRegisteredOnce() {
-        val configuration = configure {
-            classPackage("dev.slne.surf.database.migration.fixtures.scan")
-            classPackage("dev.slne.surf.database.migration.fixtures.scan.nested")
-        }
-
-        assertEquals(listOf("2", "3", "5"), configuration.javaMigrations.map { it.version.version }.sorted())
-    }
-
-    @Test
     fun keepsEveryVersionOfTheSameClass() {
         val configuration = configure { classes(Versioned("2"), Versioned("3")) }
 
@@ -216,32 +247,26 @@ class FlywayMigrationRunnerTest {
     }
 
     @Test
-    fun listedInstanceWithAnotherVersionKeepsTheScannedOne() {
+    fun listedInstanceWithAnotherVersionKeepsTheNamedOne() {
         val configuration = configure {
             classes(V2_Default("3"))
-            classPackage("dev.slne.surf.database.migration.fixtures.mixedscan")
+            classNames(V2_Default::class.java.name)
         }
 
-        assertEquals(listOf("2", "3"), configuration.javaMigrations.map { it.version.version }.sorted())
+        assertEquals(
+            listOf("2", "3"),
+            configuration.javaMigrations.map { it.version.version }.sorted(),
+        )
     }
 
     @Test
-    fun listedInstanceWithTheScannedVersionReplacesTheScannedOne() {
+    fun listedInstanceWithTheNamedVersionReplacesTheNamedOne() {
         val configuration = configure {
             classes(V2_Default())
-            classPackage("dev.slne.surf.database.migration.fixtures.mixedscan")
+            classNames(V2_Default::class.java.name)
         }
 
         assertEquals(listOf("2"), configuration.javaMigrations.map { it.version.version })
-    }
-
-    @Test
-    fun failsWhenAScannedPackageHasNoMigrations() {
-        val error = assertFailsWith<IllegalStateException> {
-            configure { classPackage("dev.slne.surf.database.migration.fixtures.doesnotexist") }
-        }
-
-        assertContains(assertNotNull(error.message), "fixtures.doesnotexist")
     }
 
     @Test
@@ -260,7 +285,10 @@ class FlywayMigrationRunnerTest {
 
     @Test
     fun postgresHistoryTableUsesTheDataSourceSchema() {
-        assertEquals("plugin_schema", configure(postgres("plugin_schema")) { sql("db") }.defaultSchema)
+        assertEquals(
+            "plugin_schema",
+            configure(postgres("plugin_schema")) { sql("db") }.defaultSchema,
+        )
     }
 
     @Test
@@ -274,9 +302,11 @@ class FlywayMigrationRunnerTest {
     }
 
     @Test
-    fun failsWhenAScannedPackageCannotBeInstantiated() {
+    fun failsWhenANamedClassCannotBeInstantiated() {
         assertFailsWith<IllegalStateException> {
-            configure { classPackage("dev.slne.surf.database.migration.fixtures.badscan") }
+            configure {
+                classNames("dev.slne.surf.database.migration.fixtures.badscan.V4_NeedsArgs")
+            }
         }
     }
 

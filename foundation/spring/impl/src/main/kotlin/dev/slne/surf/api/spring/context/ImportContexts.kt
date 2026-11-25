@@ -15,9 +15,9 @@ import org.springframework.context.support.GenericApplicationContext
  * The import context is refreshed while still empty, so none of its refresh callbacks ever sees an
  * export, and its lifecycle processor does nothing, so closing it never stops anything. Each export
  * is registered as a lazy, synthetic definition that carries the type, primary flag and qualifier
- * for autowiring. [ImportBeanFactory] delivers its instance from the provider's context on the first
- * real lookup, so the import context never initializes, post-processes or destroys an exported
- * instance; the providing plugin's context does all of that.
+ * for autowiring. [ImportBeanFactory] delivers its instance from the provider's context on the
+ * first real lookup, so the import context never initializes, post-processes or destroys an
+ * exported instance; the providing plugin's context does all of that.
  *
  * @throws IllegalStateException if two different exports share an import name
  */
@@ -41,6 +41,7 @@ internal fun createImportContext(
     val context = GenericApplicationContext(beanFactory)
     context.parent = parent
     context.displayName = "surf import context of '$consumer'"
+    context.applicationStartup = ContextStartup.current()
 
     context.refresh()
 
@@ -74,15 +75,16 @@ private class ImportBeanFactory(
      *
      * A failure caches nothing, so the next lookup asks the provider again.
      *
-     * @throws IllegalStateException if the provider is closed, or the instance implements `Lifecycle`,
-     * `ApplicationListener` or [FactoryBean]
+     * @throws IllegalStateException if the provider is closed, or the instance implements
+     * `Lifecycle`, `ApplicationListener` or [FactoryBean]
      */
     override fun createBean(
         beanName: String,
         mbd: RootBeanDefinition,
-        args: Array<out Any?>?
+        args: Array<out Any?>?,
     ): Any {
         val export = exports[beanName] ?: return super.createBean(beanName, mbd, args)
+
         val instance = export.instance()
 
         if (!export.ownReference) {
@@ -102,7 +104,7 @@ private class ImportBeanFactory(
 
     override fun determinePrimaryCandidate(
         candidates: MutableMap<String, Any>,
-        requiredType: Class<*>
+        requiredType: Class<*>,
     ): String? {
         return if (PluginExport.hasMultipleProviders(candidates.keys)) {
             null
@@ -117,7 +119,7 @@ private class ImportBeanFactory(
      */
     override fun determineHighestPriorityCandidate(
         candidates: MutableMap<String, Any>,
-        requiredType: Class<*>
+        requiredType: Class<*>,
     ): String? {
         return if (PluginExport.hasMultipleProviders(candidates.keys)) {
             null
@@ -134,9 +136,9 @@ private class ImportBeanFactory(
  * satisfy, even when one of them is `@Primary` or carries a higher `@Priority`: load order or a
  * provider's own preference must never decide which plugin a consumer talks to. Spring then fails
  * the dependency with a `NoUniqueBeanDefinitionException`, also when it is optional (`T?`,
- * `Optional<T>`, `ObjectProvider.getIfAvailable`); only `ObjectProvider.getIfUnique` returns `null`.
- * A consumer that wants one of them names it with `@Qualifier`, which Spring applies before this
- * check. Within one provider, and among the plugin's own beans, Spring's usual rules apply.
+ * `Optional<T>`, `ObjectProvider.getIfAvailable`); only `ObjectProvider.getIfUnique` returns
+ * `null`. A consumer that wants one of them names it with `@Qualifier`, which Spring applies before
+ * this check. Within one provider, and among the plugin's own beans, Spring's usual rules apply.
  *
  * Programmatic lookups by type reach the import context's factory, which applies the same rule.
  */
@@ -162,5 +164,5 @@ private object InertLifecycleProcessor : LifecycleProcessor {
     override fun onClose() {}
     override fun start() {}
     override fun stop() {}
-    override fun isRunning() = false
+    override fun isRunning(): Boolean = false
 }

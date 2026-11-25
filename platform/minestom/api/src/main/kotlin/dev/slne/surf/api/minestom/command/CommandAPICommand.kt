@@ -34,7 +34,8 @@ data class CommandPath(
  * Builder for a command made of a linear argument chain and optional subcommands.
  *
  * Executors added through [CommandExecutable] run after the last argument of the chain, or on the
- * command itself when no arguments are declared. Use [CommandTree] for branching argument structures.
+ * command itself when no arguments are declared. Use [CommandTree] for branching argument
+ * structures.
  *
  * Invalid configuration, such as a malformed name, a required argument after an optional one or a
  * non-terminal greedy argument, surfaces as [CommandValidationException] from [register].
@@ -54,8 +55,10 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
     private val usage = mutableListOf<String>()
     private var help: String? = null
 
-    fun withAliases(vararg aliases: String): CommandAPICommand = apply {
-        this.aliases += aliases
+    fun withAliases(vararg aliases: String): CommandAPICommand {
+        return apply {
+            this.aliases += aliases
+        }
     }
 
     /**
@@ -66,32 +69,45 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
      *
      * @throws CommandValidationException when [permission] is blank
      */
-    fun withPermission(permission: String): CommandAPICommand = apply {
-        val normalized = permission.trim()
-        if (normalized.isBlank()) {
-            throw CommandValidationException("Command permission must not be blank")
+    fun withPermission(permission: String): CommandAPICommand {
+        return apply {
+            val normalized = permission.trim()
+
+            if (normalized.isBlank()) {
+                throw CommandValidationException("Command permission must not be blank")
+            }
+
+            permissions += normalized
         }
-        permissions += normalized
     }
 
     /**
-     * Requires [requirement] to return `true` for the sender to use the command and its subcommands.
-     * Multiple requirements accumulate and all must pass.
+     * Requires [requirement] to return `true` for the sender to use the command and its
+     * subcommands. Multiple requirements accumulate and all must pass.
      */
-    fun withRequirement(requirement: (CommandSender) -> Boolean): CommandAPICommand = apply {
-        requirements += requirement
+    fun withRequirement(requirement: (CommandSender) -> Boolean): CommandAPICommand {
+        return apply {
+            requirements += requirement
+        }
     }
 
-    fun withArguments(vararg arguments: Argument<*>): CommandAPICommand = apply {
-        this.arguments += arguments
+    fun withArguments(vararg arguments: Argument<*>): CommandAPICommand {
+        return apply {
+            this.arguments += arguments
+        }
     }
 
     /**
      * Appends [arguments] to the chain and marks each of them optional.
      */
-    fun withOptionalArguments(vararg arguments: Argument<*>): CommandAPICommand = apply {
-        arguments.forEach { argument -> argument.setOptional(true) }
-        this.arguments += arguments
+    fun withOptionalArguments(vararg arguments: Argument<*>): CommandAPICommand {
+        return apply {
+            for (argument in arguments) {
+                argument.setOptional(true)
+            }
+
+            this.arguments += arguments
+        }
     }
 
     /**
@@ -100,37 +116,52 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
      * @throws CommandValidationException when [subcommand] is this command; longer cycles are
      * rejected by [register]
      */
-    fun withSubcommand(subcommand: CommandAPICommand): CommandAPICommand = apply {
-        if (subcommand === this) {
-            throw CommandValidationException("A command cannot be its own subcommand")
+    fun withSubcommand(subcommand: CommandAPICommand): CommandAPICommand {
+        return apply {
+            if (subcommand === this) {
+                throw CommandValidationException("A command cannot be its own subcommand")
+            }
+
+            subcommands += subcommand
         }
-        subcommands += subcommand
     }
 
-    fun withSubcommands(vararg subcommands: CommandAPICommand): CommandAPICommand = apply {
-        subcommands.forEach(::withSubcommand)
+    fun withSubcommands(vararg subcommands: CommandAPICommand): CommandAPICommand {
+        return apply {
+            subcommands.forEach(::withSubcommand)
+        }
     }
 
-    fun withShortDescription(description: String): CommandAPICommand = apply {
-        shortDescription = description
+    fun withShortDescription(description: String): CommandAPICommand {
+        return apply {
+            shortDescription = description
+        }
     }
 
-    fun withFullDescription(vararg description: String): CommandAPICommand = apply {
-        fullDescription.clear()
-        fullDescription += description
+    fun withFullDescription(vararg description: String): CommandAPICommand {
+        return apply {
+            fullDescription.clear()
+            fullDescription += description
+        }
     }
 
-    fun withUsage(vararg usage: String): CommandAPICommand = apply {
-        this.usage.clear()
-        this.usage += usage
+    fun withUsage(vararg usage: String): CommandAPICommand {
+        return apply {
+            this.usage.clear()
+            this.usage += usage
+        }
     }
 
-    fun withHelp(help: String): CommandAPICommand = apply {
-        this.help = help
+    fun withHelp(help: String): CommandAPICommand {
+        return apply {
+            this.help = help
+        }
     }
 
-    override fun addExecutor(definition: ExecutorDefinition): CommandAPICommand = apply {
-        executors += definition
+    override fun addExecutor(definition: ExecutorDefinition): CommandAPICommand {
+        return apply {
+            executors += definition
+        }
     }
 
     @InternalSurfApi
@@ -148,7 +179,8 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         }
 
         val subcommandNodes = mutableListOf<ArgumentTreeNode>()
-        subcommands.forEach { subcommand ->
+
+        for (subcommand in subcommands) {
             subcommandNodes.addAll(subcommand.toSubcommandNodes(stack))
         }
 
@@ -156,23 +188,26 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
             subcommandNodes
         } else {
             val argumentNodes = mutableListOf<ArgumentTreeNode>()
-            arguments.forEach { argument ->
+
+            for (argument in arguments) {
                 argumentNodes += argument.toTreeNode()
             }
 
             linearNodes(argumentNodes, executors, subcommandNodes)
         }
-        rootNodes.forEach { node ->
+
+        for (node in rootNodes) {
             flatten(
                 emptyList(),
                 rootPermissions,
                 rootRequirements,
                 node,
-                output
+                output,
             )
         }
 
         val paths = validateAndFreezePaths(output, name)
+
         return CommandDefinition(
             name = name,
             aliases = immutableSet(aliases),
@@ -184,13 +219,15 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
     /**
      * Validates the command and registers it with the server.
      *
-     * With a [namespace], the name and every alias are additionally registered as `namespace:label`.
+     * With a [namespace], the name and every alias are additionally registered as
+     * `namespace:label`.
      *
      * @throws CommandValidationException when the command or [namespace] is invalid
      * @throws IllegalStateException when a label is already taken or the platform is not installed
      */
-    fun register(namespace: String? = null): RegisteredCommand =
-        CommandAPI.register(toDefinition(), namespace)
+    fun register(namespace: String? = null): RegisteredCommand {
+        return CommandAPI.register(toDefinition(), namespace)
+    }
 
     private fun toSubcommandNodes(
         stack: MutableSet<CommandAPICommand>,
@@ -203,7 +240,8 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
             validateCommandLabels(name, aliases)
 
             val nestedSubcommands = mutableListOf<ArgumentTreeNode>()
-            subcommands.forEach { subcommand ->
+
+            for (subcommand in subcommands) {
                 nestedSubcommands.addAll(subcommand.toSubcommandNodes(stack))
             }
 
@@ -211,7 +249,8 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
                 emptyList()
             } else {
                 val argumentNodes = mutableListOf<ArgumentTreeNode>()
-                arguments.forEach { argument ->
+
+                for (argument in arguments) {
                     argumentNodes += argument.toTreeNode()
                 }
 
@@ -225,7 +264,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
                 body = body,
             )
 
-            aliases.forEach { alias ->
+            for (alias in aliases) {
                 result += createSubcommandNode(
                     label = alias,
                     nestedSubcommands = nestedSubcommands,
@@ -243,13 +282,15 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         label: String,
         nestedSubcommands: List<ArgumentTreeNode>,
         body: List<ArgumentTreeNode>,
-    ): ArgumentTreeNode = ArgumentTreeNode(
-        argument = subcommandLiteral(label),
-        executors = if (arguments.isEmpty()) immutableList(executors) else emptyList(),
-        children = if (arguments.isEmpty()) nestedSubcommands else body,
-        permissions = immutableSet(permissions),
-        requirements = immutableList(requirements),
-    )
+    ): ArgumentTreeNode {
+        return ArgumentTreeNode(
+            argument = subcommandLiteral(label),
+            executors = if (arguments.isEmpty()) immutableList(executors) else emptyList(),
+            children = if (arguments.isEmpty()) nestedSubcommands else body,
+            permissions = immutableSet(permissions),
+            requirements = immutableList(requirements),
+        )
+    }
 
     /**
      * The literal that selects this subcommand, carrying the subcommand's own permissions and
@@ -259,6 +300,7 @@ class CommandAPICommand(val name: String) : CommandExecutable<CommandAPICommand>
         val literal = LiteralArgument(label)
         permissions.forEach(literal::withPermission)
         requirements.forEach(literal::withRequirement)
+
         return literal.toDefinition()
     }
 }
@@ -269,7 +311,7 @@ internal fun validateCommandLabels(name: String, aliases: Collection<String>) {
     val normalized = mutableSetOf<String>()
     normalized += name.lowercase(Locale.ROOT)
 
-    aliases.forEach { alias ->
+    for (alias in aliases) {
         validateCommandLabel(alias, "alias")
 
         if (!normalized.add(alias.lowercase(Locale.ROOT))) {
@@ -292,6 +334,7 @@ internal fun linearNodes(
     terminalChildren: List<ArgumentTreeNode>,
 ): List<ArgumentTreeNode> {
     var suffix = terminalChildren
+
     for (index in arguments.indices.reversed()) {
         val node = arguments[index]
         val executors = if (index == arguments.lastIndex) {
@@ -317,6 +360,7 @@ internal fun linearNodes(
             ),
         )
     }
+
     return suffix
 }
 
@@ -348,31 +392,33 @@ internal fun flatten(
             immutablePath,
             node.executors,
             immutablePermissions,
-            immutableRequirements
+            immutableRequirements,
         )
     }
-    node.children.forEach { child ->
+
+    for (child in node.children) {
         flatten(
             immutablePath,
             immutablePermissions,
             immutableRequirements,
             child,
-            output
+            output,
         )
     }
 }
 
 internal fun validateAndFreezePaths(
     paths: List<CommandPath>,
-    commandName: String
+    commandName: String,
 ): List<CommandPath> {
     if (paths.isEmpty()) {
         throw CommandValidationException("Command '$commandName' has no executable paths")
     }
 
-    paths.forEach { path ->
+    for (path in paths) {
         val names = mutableSetOf<String>()
-        path.arguments.forEach { argument ->
+
+        for (argument in path.arguments) {
             if (argument.kind !is ArgumentKind.Literal && !names.add(argument.nodeName)) {
                 throw CommandValidationException(
                     "Executable path contains duplicate argument node names",
@@ -389,13 +435,15 @@ internal fun validateAndFreezePaths(
         ) {
             throw CommandValidationException("Required arguments cannot follow optional arguments")
         }
-        val greedyIndex = path.arguments.indexOfFirst { argument -> argument.greedy }
+        val greedyIndex = path.arguments.indexOfFirst { argument -> argument.isGreedy }
+
         if (greedyIndex >= 0 && greedyIndex != path.arguments.lastIndex) {
             throw CommandValidationException("Greedy arguments must be terminal")
         }
 
         val executorTypes = mutableSetOf<ExecutorType>()
-        path.executors.forEach { executor ->
+
+        for (executor in path.executors) {
             if (!executorTypes.add(executor.type)) {
                 throw CommandValidationException(
                     "Executable path contains equal-specificity executor conflicts",
@@ -419,7 +467,7 @@ internal fun validateAndFreezePaths(
 private fun validateNoMergeConflicts(paths: List<CommandPath>, commandName: String) {
     val root = PathNode(null)
 
-    paths.forEach { path ->
+    for (path in paths) {
         val firstOptional = path.arguments.indexOfFirst { argument -> argument.optional }
         val executableDepths = if (firstOptional == -1) {
             path.arguments.size..path.arguments.size
@@ -428,7 +476,10 @@ private fun validateNoMergeConflicts(paths: List<CommandPath>, commandName: Stri
         }
 
         var node = root
-        if (0 in executableDepths) node.claimExecutor(commandName)
+
+        if (0 in executableDepths) {
+            node.claimExecutor(commandName)
+        }
 
         path.arguments.forEachIndexed { index, argument ->
             val name = argument.treeName()
@@ -439,24 +490,29 @@ private fun validateNoMergeConflicts(paths: List<CommandPath>, commandName: Stri
                 if (existing.argument?.kind != argument.kind) {
                     throw CommandValidationException(
                         "Command '$commandName' declares conflicting arguments named '$name' " +
-                                "at '${existing.describe()}'",
+                            "at '${existing.describe()}'",
                     )
                 }
+
                 existing
             }
 
             node = child
-            if (index + 1 in executableDepths) node.claimExecutor(commandName)
+
+            if (index + 1 in executableDepths) {
+                node.claimExecutor(commandName)
+            }
         }
     }
 }
 
 /**
- * Name under which the command tree registers this argument: the keyword of a literal, otherwise the
- * argument name.
+ * Name under which the command tree registers this argument: the keyword of a literal, otherwise
+ * the argument name.
  */
-private fun ArgumentDefinition<*>.treeName(): String =
-    (kind as? ArgumentKind.Literal)?.literal ?: nodeName
+private fun ArgumentDefinition<*>.treeName(): String {
+    return (kind as? ArgumentKind.Literal)?.literal ?: nodeName
+}
 
 private class PathNode(
     val argument: ArgumentDefinition<*>?,
@@ -470,20 +526,24 @@ private class PathNode(
         if (executes) {
             throw CommandValidationException(
                 "Command '$commandName' declares more than one executable path ending at " +
-                        "'${describe()}'",
+                    "'${describe()}'",
             )
         }
+
         executes = true
     }
 
     fun describe(): String {
         val names = mutableListOf<String>()
         var node: PathNode? = this
+
         while (node?.name != null) {
             names += node.name
             node = node.parent
         }
+
         names.reverse()
+
         return if (names.isEmpty()) "<command>" else names.joinToString(" ")
     }
 }
@@ -493,12 +553,14 @@ private fun commandPath(
     executors: Collection<ExecutorDefinition>,
     permissions: Collection<String>,
     requirements: Collection<(CommandSender) -> Boolean>,
-): CommandPath = CommandPath(
-    arguments = immutableList(arguments),
-    executors = immutableList(executors),
-    permissions = immutableSet(permissions),
-    requirements = immutableList(requirements),
-)
+): CommandPath {
+    return CommandPath(
+        arguments = immutableList(arguments),
+        executors = immutableList(executors),
+        permissions = immutableSet(permissions),
+        requirements = immutableList(requirements),
+    )
+}
 
 internal fun <T> immutableList(
     values: Collection<T>,

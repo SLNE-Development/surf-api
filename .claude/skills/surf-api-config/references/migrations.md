@@ -6,18 +6,20 @@ Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/migration/` 
 ## The pieces
 
 - `ConfigMigration` - a `fun interface` with `fun migrate(node: ConfigurationNode)`. The node is the
-  **root** of the file; do whatever you like to the tree.
-- `ConfigMigrationBuilder` - collects migrations in a `TreeMap<Int, MutableList<ConfigMigration>>`
-  and turns them into a Configurate `ConfigurationTransformation.Versioned`.
-- `MigrationResult(fromVersion, toVersion, migrated)` - what `migrate(node)` returns.
+  **root** of the file; do whatever you like to the tree. A lambda works too:
+  `ConfigMigration { node -> … }`.
+- `ConfigMigrations<C>` - the immutable set of migrations for config class `C`, one per explicit
+  version, plus an optional version key. Built with `configMigrations<C> { }` or
+  `ConfigMigrations.builder<C>()`; `ConfigMigrations.none()` is the empty set. It turns the
+  migrations into a Configurate `ConfigurationTransformation.Versioned` internally.
 
 The version a migration is registered under is the version it upgrades **to**, and it runs when the
-file's current version is **less than** that number. Several migrations may share a version; they
-run in registration order. A negative version is rejected with `IllegalArgumentException`.
+file's stored version is **less than** that number. Versions may leave gaps. A negative version or
+a version registered twice is rejected with `IllegalArgumentException`.
 
 ## Registering
 
-### On a `@SurfConfig` class
+### In `@SurfConfig`
 
 List the migrations in the annotation. Their versions are their positions, starting at 1:
 
@@ -37,87 +39,63 @@ data class MyPluginConfig(
 Each entry must be a Kotlin `object` or a class with a constructor without parameters; anything else
 fails the plugin's start with "Migration … of … must be an object or have a constructor without
 parameters". Append new migrations at the end: removing or reordering one changes the version of
-every migration after it, and deployed files already store those numbers. An inline lambda
-migration and a custom `versionKey` are not available here; the version key is `_config_version`.
+every migration after it, and deployed files already store those numbers.
 
-### In a companion class
+### As a `ConfigMigrations<C>` bean
 
-Register them in the companion's `init` block, because `SpongeConfigClass` hands its
-`migrationBuilder` to the manager when the manager is created:
+For explicit versions and lambdas, declare the migrations as a bean of the plugin. surf-api picks
+the bean whose type argument is the config class:
 
 ```kotlin
-@ConfigSerializable
-data class MyPluginConfig(
-    var release: String = "1.0.0",
-    var maxPlayers: Int = 100,
-) {
-    companion object : SpongeYmlConfigClass<MyPluginConfig>(
-        MyPluginConfig::class.java,
-        Path("config", "my-library"),
-        "migration-example-config.yml"
-    ) {
-        init {
-            migration(1, RenameServerVersionMigration)
-            migration(2, RemoveDeprecatedFieldMigration)
-            migration(3) { node ->
-                val mp = node.node("max-players")
-                if (!mp.virtual() && mp.getInt(0) == 0) {
-                    mp.set(100)
+@Configuration
+class MyPluginConfigBeans {
+
+    @Bean
+    fun myPluginConfigMigrations(): ConfigMigrations<MyPluginConfig> {
+        return configMigrations {
+            version(1, RenameServerVersionMigration)
+            version(2, RemoveDeprecatedFieldMigration)
+            version(5) { node ->
+                val maxPlayers = node.node("max-players")
+                if (!maxPlayers.virtual() && maxPlayers.getInt(0) == 0) {
+                    maxPlayers.set(100)
                 }
             }
         }
     }
 }
-
-object RenameServerVersionMigration : ConfigMigration {
-    override fun migrate(node: ConfigurationNode) {
-        val old = node.node("server", "version")
-        if (!old.virtual()) {
-            node.node("server", "release").set(old.raw())
-            old.raw(null)
-        }
-    }
-}
-
-object RemoveDeprecatedFieldMigration : ConfigMigration {
-    override fun migrate(node: ConfigurationNode) {
-        node.node("deprecated-field").raw(null)
-    }
-}
 ```
 
-Two other entry points:
+- Declaring migrations in the annotation **and** in a bean fails the start ("declares migrations in
+  @SurfConfig and in a ConfigMigrations bean"); two beans for one class fail as well.
+- Do not give the `@Configuration` class the same bean name as the `@Bean` method
+  (`class MyPluginConfigMigrations` with `fun myPluginConfigMigrations()`): Spring rejects that
+  with "factory-bean reference points back to the same bean definition".
 
-- Build a `ConfigMigrationBuilder` yourself and pass it to an injected `SurfConfigApi`:
-  `configApi.createSpongeYmlConfigManager<C>(folder, fileName, migrations)` (the `migrations`
-  parameter defaults to an empty `ConfigMigrationBuilder()`).
-- `manager.addMigration(version, migration)` / `manager.addMigration(version) { node -> … }` after
-  the fact. Both return the manager for chaining, and both take effect **only on the next
-  `reloadFromFile()`** - the initial load has already happened. `manager.migrations()` returns the
-  builder for inspection.
+### With `ConfigHandles.open`
+
+Pass the same object: `ConfigHandles.open(path, migrations = configMigrations<C> { … })`.
 
 ## When they run
 
-- On the initial load, inside `SpongeConfigManager.buildConfigManager`, **before** the node is
-  deserialized into the config class. If anything changed, the node is saved straight away so the
-  version field is persisted even if deserialization later fails.
-- On every `reloadFromFile()` and `ConfigHandle.reload()`, again before deserialization, via the
-  private `applyMigrations`.
+- When the file is opened, **before** the node is deserialized into the config class. The file is
+  then written back with the reached version and the class's defaults.
+- On every `ConfigHandle.reload()`, on the candidate in memory. The file is written only when a
+  migration ran and `validate` accepted the candidate; otherwise it stays byte for byte as it was.
 
 Nothing applies migrations on `save()`.
 
 ## The version field
 
-Stored at `ConfigMigrationBuilder.DEFAULT_VERSION_KEY` = **`_config_version`**, a single key at the
-root. Change it with `versionKey(vararg path: Any)` - from the companion's `init`, before
-registering migrations:
+Stored at `ConfigMigrations.DEFAULT_VERSION_KEY` = **`_config_version`**, a single key at the root,
+unless one of these names another:
 
-```kotlin
-init {
-    versionKey("meta", "version")
-    migration(1, …)
-}
-```
+- `@SurfConfig(versionKey = "schema")` - a root-level key; applies to the annotation's migrations
+  and to a bean that sets no key of its own.
+- `versionKey("meta", "version")` in the builder - any path.
+
+Declaring the key both in `@SurfConfig` and in the bean's builder fails the plugin's start with
+"declares a version key in @SurfConfig and in a ConfigMigrations bean".
 
 A file with no version field is version `-1` (Configurate's `VERSION_UNKNOWN`), so **every**
 registered migration runs the first time an existing, pre-versioning file is loaded. Write
@@ -126,11 +104,9 @@ migrations that tolerate the data already being in its new shape - the examples 
 
 ## Failure behaviour
 
-`migrate` declares `@Throws(ConfigurateException::class)`. On the initial load a thrown
-`ConfigurateException` is caught by `buildConfigManager` and rethrown as `LoadConfigException`; on a
-reload `applyMigrations` logs it and rethrows, so `reloadFromFile` turns it into
-`UncheckedIOException`. Either way the config does not come up - a broken migration is a hard
-startup failure, not a warning.
+When the file is opened, a `ConfigurateException` from a migration becomes `LoadConfigException`;
+on a reload it becomes `UncheckedIOException` and the current value stays. Either way a broken
+migration is a hard failure, not a warning; for a `@SurfConfig` class it fails the plugin's start.
 
 A successful run logs `Migrated config from version %d to %d`.
 
@@ -140,6 +116,6 @@ A successful run logs `Migrated config from version %d to %d`.
    unless the field carries `@Setting`.
 2. Guard with `!node.node(...).virtual()` so a rerun on already-migrated data is a no-op.
 3. Remove a key with `.raw(null)`, do not set it to an empty string.
-4. Register under the next unused integer, and never renumber an existing migration - deployed files
+4. Register under a new, higher version, and never renumber an existing migration - deployed files
    already store that number.
-5. Keep the migration stateless; it may be invoked on load and on every reload.
+5. Keep the migration stateless; it may be invoked on open and on every reload.

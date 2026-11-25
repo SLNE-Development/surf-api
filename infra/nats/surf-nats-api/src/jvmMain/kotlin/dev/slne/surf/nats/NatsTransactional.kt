@@ -4,13 +4,12 @@ import org.springframework.core.annotation.MergedAnnotations
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy
 
 /**
- * Marks a [NatsService] bean whose persistent methods run at most once per message, each in one database transaction.
+ * Marks a [NatsService] bean whose persistent methods run at most once per message, each in one
+ * database transaction.
  *
- * The handler's statements, the deduplication claim and the stored reply commit together; a redelivered message
- * receives the stored reply without running the handler again. The semantics come from a
- * [NatsServiceInterceptorProvider] bean that declares [NatsServiceInterceptorProvider.handlesTransactional], such as
- * the one of surf-microservice's reliability module. A context fails to start when no such provider answers for the
- * bean, or when any other provider answers for it as well.
+ * The handler's statements, the deduplication claim and the stored reply commit together; a
+ * redelivered message receives the stored reply without running the handler again. The semantics
+ * come from surf-microservice's reliability module; a context fails to start without it.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
@@ -18,10 +17,11 @@ import org.springframework.core.annotation.MergedAnnotations.SearchStrategy
 public annotation class NatsTransactional
 
 /**
- * Whether this class, a superclass or an interface carries [NatsTransactional], also as a meta-annotation.
+ * Whether this class, a superclass or an interface carries [NatsTransactional], also as a
+ * meta-annotation.
  *
- * A [NatsServiceInterceptorProvider] that answers for every bean returns `null` for a class where this is `true`. It
- * needs `spring-core` on the class path.
+ * A [NatsServiceInterceptorProvider] that answers for every bean returns `null` for a class where
+ * this is `true`. It needs `spring-core` on the class path.
  */
 @InternalNatsApi
 public fun Class<*>.isNatsTransactional(): Boolean {

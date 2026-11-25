@@ -2,20 +2,16 @@ package dev.slne.surf.microservice.database
 
 import dev.slne.surf.database.config.DatabaseConfig
 import dev.slne.surf.database.config.DatabaseType
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import dev.slne.surf.database.migration.MigrationSet
 import dev.slne.surf.database.migration.MigrationSpec
 import dev.slne.surf.microservice.api.MicroserviceInfo
 import dev.slne.surf.microservice.database.migration.ConventionalMigrations
 import dev.slne.surf.microservice.database.migration.ServiceMigrationSet
 import dev.slne.surf.microservice.database.migration.TestClassPath
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.io.TempDir
-import org.springframework.beans.factory.BeanCreationException
-import org.springframework.beans.factory.SmartInitializingSingleton
-import org.springframework.beans.factory.getBean
-import org.springframework.beans.factory.getBeanProvider
-import org.springframework.beans.factory.getBeansOfType
+import org.springframework.beans.factory.*
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages
 import org.springframework.boot.health.contributor.HealthIndicator
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
@@ -24,12 +20,7 @@ import org.springframework.core.Ordered
 import org.springframework.core.env.MapPropertySource
 import org.springframework.objenesis.ObjenesisStd
 import java.nio.file.Path
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertIs
-import kotlin.test.assertContains
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class MicroserviceDatabaseAutoConfigurationTest {
 
@@ -54,10 +45,15 @@ class MicroserviceDatabaseAutoConfigurationTest {
     fun `registers the migration set of the service when the application has SQL migrations`() {
         val context = context(classPath = TestClassPath(root).withSqlMigrationDirectory())
 
-        val set = assertIs<ServiceMigrationSet>(context.getBean<MigrationSet>("microserviceMigrationSet"))
+        val set = assertIs<ServiceMigrationSet>(
+            context.getBean<MigrationSet>("microserviceMigrationSet"),
+        )
 
         assertEquals("punish_web_api", set.name)
-        assertEquals(ConventionalMigrations(ConventionalMigrations.SQL_LOCATION, emptyList()), set.migrations)
+        assertEquals(
+            ConventionalMigrations(ConventionalMigrations.SQL_LOCATION, emptyList()),
+            set.migrations,
+        )
         assertEquals(MicroserviceDatabaseAutoConfiguration.MIGRATION_SET_ORDER, set.getOrder())
     }
 
@@ -65,7 +61,11 @@ class MicroserviceDatabaseAutoConfigurationTest {
     fun `uses the vendor folders of the configured database`() {
         val classPath = TestClassPath(root).withVendorSqlMigrationDirectory(DatabaseType.MARIADB)
 
-        val set = assertIs<ServiceMigrationSet>(context(classPath = classPath).getBean<MigrationSet>("microserviceMigrationSet"))
+        val set = assertIs<ServiceMigrationSet>(
+            context(classPath = classPath).getBean<MigrationSet>(
+                "microserviceMigrationSet",
+            ),
+        )
 
         assertEquals(ConventionalMigrations.VENDOR_SQL_LOCATION, set.migrations.sqlLocation)
     }
@@ -83,10 +83,20 @@ class MicroserviceDatabaseAutoConfigurationTest {
     fun `finds the migration classes of the application packages`() {
         val context = context(applicationPackages = listOf(MIGRATION_TEST_PACKAGE))
 
-        val set = assertIs<ServiceMigrationSet>(context.getBean<MigrationSet>("microserviceMigrationSet"))
+        val set = assertIs<ServiceMigrationSet>(
+            context.getBean<MigrationSet>("microserviceMigrationSet"),
+        )
 
         assertEquals(
-            ConventionalMigrations(sqlLocation = null, classNames = listOf(CLASS_MIGRATION, OBJECT_MIGRATION, OPEN_DEFAULT_MIGRATION, COMPANION_MIGRATION)),
+            ConventionalMigrations(
+                sqlLocation = null,
+                classNames = listOf(
+                    CLASS_MIGRATION,
+                    OBJECT_MIGRATION,
+                    OPEN_DEFAULT_MIGRATION,
+                    COMPANION_MIGRATION,
+                ),
+            ),
             set.migrations,
         )
     }
@@ -115,7 +125,10 @@ class MicroserviceDatabaseAutoConfigurationTest {
             registerBean<MigrationSet>("librarySet") { LibrarySet }
         }
 
-        val names = context.getBeanProvider<MigrationSet>().orderedStream().map(MigrationSet::name).toList()
+        val names = context.getBeanProvider<MigrationSet>()
+            .orderedStream()
+            .map(MigrationSet::name)
+            .toList()
 
         assertEquals(listOf("punish_web_api", "library"), names)
     }
@@ -145,15 +158,28 @@ class MicroserviceDatabaseAutoConfigurationTest {
         contexts += context
         context.classLoader = classPath.classLoader()
         context.environment.propertySources.addFirst(MapPropertySource("test", properties))
+
         if (applicationPackages.isNotEmpty()) {
             AutoConfigurationPackages.register(context, *applicationPackages.toTypedArray())
         }
-        if (withInfo) context.registerBean<MicroserviceInfo> { MicroserviceInfo("punish-web-api", root) }
+
+        if (withInfo) {
+            context.registerBean<MicroserviceInfo> {
+                MicroserviceInfo(
+                    "punish-web-api",
+                    root,
+                )
+            }
+        }
+
         context.registerBean<DatabaseConfig> { DatabaseConfig() }
-        context.registerBean<R2dbcDatabase> { ObjenesisStd().newInstance(R2dbcDatabase::class.java) }
+        context.registerBean<R2dbcDatabase> {
+            ObjenesisStd().newInstance(R2dbcDatabase::class.java)
+        }
         context.register(MicroserviceDatabaseAutoConfiguration::class.java)
         context.customize()
         context.refresh()
+
         return context
     }
 
@@ -167,7 +193,9 @@ class MicroserviceDatabaseAutoConfigurationTest {
         const val MIGRATION_TEST_PACKAGE = "dev.slne.surf.microservice.database.migration"
         const val CLASS_MIGRATION = "$MIGRATION_TEST_PACKAGE.TestMigrations\$ClassMigration"
         const val OBJECT_MIGRATION = "$MIGRATION_TEST_PACKAGE.TestMigrations\$ObjectMigration"
-        const val OPEN_DEFAULT_MIGRATION = "$MIGRATION_TEST_PACKAGE.TestMigrations\$OpenWithDefaultConstructor"
-        const val COMPANION_MIGRATION = "$MIGRATION_TEST_PACKAGE.TestMigrations\$WithCompanion\$Companion"
+        const val OPEN_DEFAULT_MIGRATION =
+            "$MIGRATION_TEST_PACKAGE.TestMigrations\$OpenWithDefaultConstructor"
+        const val COMPANION_MIGRATION =
+            "$MIGRATION_TEST_PACKAGE.TestMigrations\$WithCompanion\$Companion"
     }
 }

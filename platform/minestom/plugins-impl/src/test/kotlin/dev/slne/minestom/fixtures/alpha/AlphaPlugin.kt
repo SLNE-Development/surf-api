@@ -4,6 +4,7 @@ import dev.slne.minestom.fixtures.FixtureLog
 import dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin
 import dev.slne.surf.api.spring.PluginApi
 import dev.slne.surf.api.spring.SurfLifecycle
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
@@ -11,7 +12,21 @@ import org.springframework.stereotype.Service
 /**
  * The provider of the two-plugin fixture; `beta` depends on it.
  */
-class AlphaPlugin : SurfMinestomPlugin()
+class AlphaPlugin : SurfMinestomPlugin() {
+    companion object {
+        var injectedLogger: ComponentLogger? = null
+    }
+}
+
+/**
+ * Records the [ComponentLogger] that `alpha`'s context injects by type.
+ */
+@Component
+class AlphaLoggerProbe(logger: ComponentLogger) {
+    init {
+        AlphaPlugin.injectedLogger = logger
+    }
+}
 
 /**
  * What `alpha` exports to the plugins that depend on it.

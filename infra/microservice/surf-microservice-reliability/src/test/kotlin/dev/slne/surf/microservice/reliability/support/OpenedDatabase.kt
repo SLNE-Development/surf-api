@@ -1,7 +1,7 @@
 package dev.slne.surf.microservice.reliability.support
 
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import dev.slne.surf.database.migration.SurfMigrationRunner
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.springframework.beans.factory.getBean
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 

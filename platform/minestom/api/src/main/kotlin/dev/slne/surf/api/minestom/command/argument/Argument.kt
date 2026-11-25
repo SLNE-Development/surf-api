@@ -176,7 +176,7 @@ data class ArgumentDefinition<T>(
     val permissions: Set<String>,
     val requirements: KList<(CommandSender) -> KBoolean>,
     val suggestions: SuggestionMode<T>,
-    val greedy: KBoolean,
+    val isGreedy: KBoolean,
     val rawType: ArgumentType<T>,
     val stringify: (T) -> String,
     val listDelimiter: Char? = null,
@@ -190,9 +190,11 @@ data class ArgumentDefinition<T>(
  */
 @InternalSurfApi
 class UnsupportedArgumentType<T>(private val nodeName: String) : ArgumentType<T> {
-    override fun parse(reader: StringReader): T = throw SimpleCommandExceptionType(
-        LiteralMessage("Argument '$nodeName' has no parser"),
-    ).createWithContext(reader)
+    override fun parse(reader: StringReader): T {
+        throw SimpleCommandExceptionType(
+            LiteralMessage("Argument '$nodeName' has no parser"),
+        ).createWithContext(reader)
+    }
 }
 
 /**
@@ -222,7 +224,7 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      * A greedy argument must be the last argument of its path; registration throws
      * [CommandValidationException] otherwise.
      */
-    protected open val greedy: KBoolean = false
+    protected open val isGreedy: KBoolean = false
 
     protected open val listDelimiter: Char? = null
 
@@ -249,10 +251,13 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      * For a [BooleanArgument], use the named form `setOptional(optional = true)` to distinguish
      * this overload from a constant default.
      */
-    fun setOptional(optional: KBoolean): Argument<T> = apply {
-        this.optional = optional
-        if (!optional) {
-            defaultValue = null
+    fun setOptional(optional: KBoolean): Argument<T> {
+        return apply {
+            this.optional = optional
+
+            if (!optional) {
+                defaultValue = null
+            }
         }
     }
 
@@ -262,17 +267,21 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      * For a [BooleanArgument], use the named form `setOptional(default = true)` to distinguish
      * the value from the optionality flag overload.
      */
-    fun setOptional(default: T): Argument<T> = apply {
-        optional = true
-        defaultValue = { default }
+    fun setOptional(default: T): Argument<T> {
+        return apply {
+            optional = true
+            defaultValue = { default }
+        }
     }
 
     /**
      * Makes this argument optional and computes its value from the sender when it is omitted.
      */
-    fun setOptional(default: (CommandSender) -> T): Argument<T> = apply {
-        optional = true
-        defaultValue = default
+    fun setOptional(default: (CommandSender) -> T): Argument<T> {
+        return apply {
+            optional = true
+            defaultValue = default
+        }
     }
 
     /**
@@ -282,18 +291,23 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      *
      * @throws IllegalArgumentException when [permission] is blank
      */
-    fun withPermission(permission: String): Argument<T> = apply {
-        val normalized = permission.trim()
-        require(normalized.isNotBlank()) { "Argument permission must not be blank" }
-        permissions += normalized
+    fun withPermission(permission: String): Argument<T> {
+        return apply {
+            val normalized = permission.trim()
+            require(normalized.isNotBlank()) { "Argument permission must not be blank" }
+
+            permissions += normalized
+        }
     }
 
     /**
      * Requires [requirement] to return `true` for the sender to use this argument and the arguments
      * nested below it. Multiple requirements accumulate and all must pass.
      */
-    fun withRequirement(requirement: (CommandSender) -> KBoolean): Argument<T> = apply {
-        requirements += requirement
+    fun withRequirement(requirement: (CommandSender) -> KBoolean): Argument<T> {
+        return apply {
+            requirements += requirement
+        }
     }
 
     /**
@@ -304,8 +318,10 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      * arguments do not support suggestion providers; registration throws
      * [CommandValidationException] for them.
      */
-    fun replaceSuggestions(suggestions: ArgumentSuggestions): Argument<T> = apply {
-        this.suggestions = SuggestionMode.Replace(suggestions)
+    fun replaceSuggestions(suggestions: ArgumentSuggestions): Argument<T> {
+        return apply {
+            this.suggestions = SuggestionMode.Replace(suggestions)
+        }
     }
 
     /**
@@ -315,8 +331,10 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      * [CommandValidationException] for [EntityTypeArgument] and for the kinds listed at
      * [replaceSuggestions].
      */
-    fun includeSuggestions(suggestions: ArgumentSuggestions): Argument<T> = apply {
-        this.suggestions = SuggestionMode.Include(suggestions)
+    fun includeSuggestions(suggestions: ArgumentSuggestions): Argument<T> {
+        return apply {
+            this.suggestions = SuggestionMode.Include(suggestions)
+        }
     }
 
     /**
@@ -325,8 +343,10 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      *
      * Replaces any suggestion provider configured before.
      */
-    fun replaceSafeSuggestions(suggestions: SafeSuggestions<T>): Argument<T> = apply {
-        this.suggestions = SuggestionMode.ReplaceSafe(suggestions)
+    fun replaceSafeSuggestions(suggestions: SafeSuggestions<T>): Argument<T> {
+        return apply {
+            this.suggestions = SuggestionMode.ReplaceSafe(suggestions)
+        }
     }
 
     /**
@@ -335,15 +355,19 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      *
      * Replaces any suggestion provider configured before.
      */
-    fun includeSafeSuggestions(suggestions: SafeSuggestions<T>): Argument<T> = apply {
-        this.suggestions = SuggestionMode.IncludeSafe(suggestions)
+    fun includeSafeSuggestions(suggestions: SafeSuggestions<T>): Argument<T> {
+        return apply {
+            this.suggestions = SuggestionMode.IncludeSafe(suggestions)
+        }
     }
 
     /**
      * Adds an executor that runs when the command ends at this argument.
      */
-    override fun addExecutor(definition: ExecutorDefinition): Argument<T> = apply {
-        executors += definition
+    override fun addExecutor(definition: ExecutorDefinition): Argument<T> {
+        return apply {
+            executors += definition
+        }
     }
 
     /**
@@ -352,19 +376,24 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
      * @throws IllegalArgumentException when [child] is this argument; longer cycles are rejected
      * at registration
      */
-    fun then(child: Argument<*>): Argument<T> = apply {
-        require(child !== this) { "An argument cannot be its own child" }
-        children += child
+    fun then(child: Argument<*>): Argument<T> {
+        return apply {
+            require(child !== this) { "An argument cannot be its own child" }
+
+            children += child
+        }
     }
 
     @InternalSurfApi
-    internal fun toTreeNode(): ArgumentTreeNode =
-        toTreeNode(Collections.newSetFromMap<Argument<*>>(IdentityHashMap()))
+    internal fun toTreeNode(): ArgumentTreeNode {
+        return toTreeNode(Collections.newSetFromMap<Argument<*>>(IdentityHashMap()))
+    }
 
     private fun toTreeNode(stack: MutableSet<Argument<*>>): ArgumentTreeNode {
         if (!stack.add(this)) {
             throw CommandValidationException("Argument '$nodeName' contains a child cycle")
         }
+
         try {
             return ArgumentTreeNode(
                 argument = toDefinition(),
@@ -377,19 +406,21 @@ abstract class Argument<T>(val nodeName: String) : CommandExecutable<Argument<T>
     }
 
     @InternalSurfApi
-    fun toDefinition(): ArgumentDefinition<T> = ArgumentDefinition(
-        nodeName = nodeName,
-        kind = kind,
-        optional = optional,
-        defaultValue = defaultValue,
-        permissions = permissions.toSet(),
-        requirements = requirements.toList(),
-        suggestions = suggestions,
-        greedy = greedy,
-        rawType = rawType,
-        stringify = ::stringify,
-        listDelimiter = listDelimiter,
-    )
+    fun toDefinition(): ArgumentDefinition<T> {
+        return ArgumentDefinition(
+            nodeName = nodeName,
+            kind = kind,
+            optional = optional,
+            defaultValue = defaultValue,
+            permissions = permissions.toSet(),
+            requirements = requirements.toList(),
+            suggestions = suggestions,
+            isGreedy = isGreedy,
+            rawType = rawType,
+            stringify = ::stringify,
+            listDelimiter = listDelimiter,
+        )
+    }
 }
 
 @InternalSurfApi

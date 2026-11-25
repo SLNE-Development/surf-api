@@ -6,20 +6,21 @@ import com.mojang.brigadier.tree.ArgumentCommandNode
 import com.mojang.brigadier.tree.CommandNode
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.CommandSendPacketBlockerListener
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.network.protocol.game.ClientboundCommandsPacket
 import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
-import java.util.*
 
 @OptIn(NmsUseWithCaution::class)
 @Suppress("ClassName")
-class V1_21_11CommandSendPacketBlockerListenerImpl(blockedPlayers: Set<UUID>) :
-    CommandSendPacketBlockerListener(blockedPlayers) {
+@NmsComponent
+class V1_21_11CommandSendPacketBlockerListenerImpl : CommandSendPacketBlockerListener() {
 
     private val loadingCommandsDispatcher = CommandDispatcher<CommandSourceStack>()
-    private val commandNodeInspector = object : ClientboundCommandsPacket.NodeInspector<CommandSourceStack> {
+    private val commandNodeInspector = object :
+        ClientboundCommandsPacket.NodeInspector<CommandSourceStack> {
         override fun suggestionId(p0: ArgumentCommandNode<CommandSourceStack, *>): Identifier? {
             return null
         }
@@ -40,7 +41,7 @@ class V1_21_11CommandSendPacketBlockerListenerImpl(blockedPlayers: Set<UUID>) :
     @ClientboundListener
     fun onClientboundCommandsPacket(
         packet: ClientboundCommandsPacket,
-        player: ServerPlayer
+        player: ServerPlayer,
     ): ClientboundCommandsPacket? {
         if (blockedPlayers.contains(player.uuid)) {
             return if (receivedFirstCommandPacket.add(player.uuid)) {

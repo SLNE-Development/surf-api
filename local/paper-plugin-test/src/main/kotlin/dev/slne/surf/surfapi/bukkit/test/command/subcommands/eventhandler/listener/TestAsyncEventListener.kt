@@ -1,11 +1,7 @@
-// The test commands register and unregister these listeners at runtime, which needs the bus itself.
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.listener
 
 import dev.slne.surf.api.event.SurfEventBus
 import dev.slne.surf.api.event.SurfEventHandler
-import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import dev.slne.surf.surfapi.bukkit.test.command.subcommands.eventhandler.event.TestAsyncEvent
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
@@ -15,11 +11,11 @@ object TestAsyncEventListener {
     private var lastHandledTime: Long = 0L
 
     fun register() {
-        SurfEventBus.INSTANCE.registerListeners(this)
+        SurfEventBus.instance.registerListeners(this)
     }
 
     fun unregister() {
-        SurfEventBus.INSTANCE.unregisterListeners(this)
+        SurfEventBus.instance.unregisterListeners(this)
     }
 
     fun getLastEvent(): TestAsyncEvent? = lastEvent

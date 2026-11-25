@@ -16,8 +16,7 @@ Events and request/response messaging moved to [surf-nats](../nats/README.md#mig
 
 ## Configuration
 
-Connection settings come from `redis/config.yml` in the data folder of surf-api, or in a standalone
-application from `config.yml` in the directory passed to `StandaloneRedisInstance`. Environment variables
+Connection settings come from `redis/config.yml` in the data folder of surf-api. Environment variables
 override them. `config.yml` accepts the four keys listed in the table below, spelled in kebab-case
 (`client-name`, not `clientName`); a key in any other spelling is ignored.
 
@@ -76,8 +75,7 @@ It manages the lifecycle of all Redis-backed components and holds a share of the
 client.
 
 In a surf-api plugin, the plugin context provides the `RedisApi` and manages its lifecycle (see
-[Usage in a surf-api plugin](#usage-in-a-surf-api-plugin-recommended)). A standalone application creates
-**exactly one** `RedisApi` instance and shares it across the system.
+[Usage in a surf-api plugin](#usage-in-a-surf-api-plugin-recommended)).
 
 ### Connection sharing
 
@@ -97,29 +95,11 @@ scopes. Connecting or disconnecting one instance does not affect another:
 * clients that are still held when surf-api shuts down are shut down and their
   owners logged as a warning
 
-A standalone application depends on `dev.slne.surf.api:surf-api-redis-standalone` and drives the
-lifecycle itself:
-
-1. Start surf-redis with `StandaloneRedisInstance`, which names the application and the directory of
-   `config.yml`
-2. Create the API
-3. Create sync structures and caches
-4. Freeze the API
-5. Connect to Redis
-6. Disconnect on shutdown, then shut surf-redis down
-
-```kotlin
-val redis = StandaloneRedisInstance("my-app", Path.of("redis"))
-redis.create()
-
-val redisApi = RedisApi.create("my-app")
-val counter = redisApi.createSyncValue<Int>("example-namespace:counter", defaultValue = 0)
-redisApi.freezeAndConnect()
-
-// On shutdown:
-redisApi.disconnect()
-redis.shutdown()
-```
+Redis runs only inside a surf-api runtime, which owns the process-wide networking through the
+internal `RedisInstance`. surf-api provides Redis on Paper, Velocity and Minestom. Outside these
+platforms, the runtime for Redis is surf-api standalone, which does not bundle the Redis
+integration yet; there is no `surf-redis-standalone` module. `RedisApi.create` reads surf-api's
+root context, so it works only once that context exists: not in a Paper plugin's bootstrapper.
 
 ---
 
@@ -156,8 +136,6 @@ disconnects it when the context closes. A plugin never calls `freeze()`, `connec
 `RedissonClient` and `RedissonReactiveClient` are injectable too; their calls fail with
 `IllegalStateException` while Redis is not connected. A plugin that injects none of them never starts
 the Redis networking.
-
-Outside surf-api's Spring contexts, follow the standalone lifecycle in [RedisApi](#redisapi).
 
 ---
 
@@ -409,9 +387,8 @@ Create structures in a constructor, a property initializer or a `@Bean` method o
 which all run during the refresh. A bean created later, for example a lazy bean or one obtained
 through an `ObjectProvider` after the start, cannot create structures.
 
-In a standalone application, you freeze the API yourself. Structures are often created in services
-that depend on Redis rather than in the code that owns the `RedisApi`, so initialize every such
-service before you call `freezeAndConnect()`:
+When you call `freezeAndConnect()` yourself, note that structures are often created in services that depend on
+Redis rather than in the code that owns the `RedisApi`, so initialize every such service first:
 
 ```kotlin
 class RedisSetup {

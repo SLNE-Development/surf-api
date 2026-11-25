@@ -1,12 +1,10 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription.DependencyDefinition
 import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder
 
-
 plugins {
     id("surf.module-impl")
 
     alias(libs.plugins.plugin.yml.paper)
-//    id("io.papermc.paperweight.userdev") apply true
 }
 
 kotlin {
@@ -19,9 +17,7 @@ dependencies {
     api(projects.surfApiPaperApi)
     api(projects.surfApiCoreImpl)
     api(projects.surfApiPaperNmsApi)
-    // The Redis integration, shipped inside this plugin already relocated.
     implementation(shadowed(projects.surfApiRedis.surfApiRedisSpring))
-    // The NATS integration, shipped inside this plugin; io.nats is relocated by this jar.
     implementation(projects.surfApiNats.surfApiNatsCore)
     implementation(projects.surfApiNats.surfApiNatsSpring)
     implementation(projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesPaper)
@@ -43,17 +39,14 @@ dependencies {
     compileOnly(libs.guava)
     implementation(libs.caffeine)
     compileOnly(libs.gson)
-    implementation(libs.commons.lang3)
-    implementation(libs.commons.text)
-    implementation(libs.dazzleconf)
-    implementation(libs.spongepowered.math)
-    implementation(libs.reflection.remapper)
+    implementation(libs.bundles.surf.runtime.utils)
     implementation(libs.more.persistent.data.types)
-    implementation(libs.flogger)
     implementation(libs.flogger.slf4j.backend)
-    implementation(libs.commons.math4.core)
-    implementation(libs.commons.math3)
     implementation(libs.aide.reflection)
+    implementation(libs.inventory.framework.api)
+    implementation(libs.bundles.inventory.framework)
+    implementation(libs.commandapi.bukkit.kotlin)
+    implementation(libs.wyck)
 }
 
 paper {
@@ -65,14 +58,11 @@ paper {
     authors = listOf("twisti", "SLNE Development Team")
     main = "dev.slne.surf.api.paper.server.PaperMain"
 
-    // Bootstrap
     bootstrapper = "dev.slne.surf.api.paper.server.PaperBoostrapper"
     hasOpenClassloader = false
 
-    // Other
     foliaSupported = true
 
-    // Plugin Dependencies
     serverDependencies {
         registerSoft("ProtocolLib")
         registerSoft("ProtocolSupport")
@@ -117,14 +107,16 @@ tasks {
     }
 }
 
-// The merged service file must keep every bundled ContextContributor; a lost one only shows as missing beans at startup.
-val checkContextContributors by tasks.registering(CheckShadowServiceFile::class) {
+// The merged service file must keep every bundled ContextContributor; a lost one only shows as
+// missing beans at startup.
+val checkContextContributors = tasks.register<CheckShadowServiceFile>("checkContextContributors") {
     group = "verification"
-    description = "Checks that the shadow jar lists the config, NATS and Redis ContextContributors."
+    description = "Checks that the shadow jar lists all bundled ContextContributors."
     jar.set(tasks.shadowJar.flatMap { it.archiveFile })
     service.set("dev.slne.surf.api.spring.context.ContextContributor")
     expectedProviders.addAll(
         "dev.slne.surf.api.config.impl.handle.SurfConfigContributor",
+        "dev.slne.surf.api.core.server.impl.reflection.ReflectionProxyContributor",
         "dev.slne.surf.api.nats.NatsContextContributor",
         "dev.slne.surf.api.redis.RedisContextContributor",
     )
@@ -153,8 +145,10 @@ fun NamedDomainObjectContainerScope<DependencyDefinition>.registerSoft(
     required: Boolean = false,
     joinClassPath: Boolean = true,
     loadOrder: RelativeLoadOrder = RelativeLoadOrder.BEFORE,
-) = register(name) {
-    this.required = required
-    this.joinClasspath = joinClassPath
-    this.load = loadOrder
+): NamedDomainObjectProvider<DependencyDefinition> {
+    return register(name) {
+        this.required = required
+        this.joinClasspath = joinClassPath
+        this.load = loadOrder
+    }
 }

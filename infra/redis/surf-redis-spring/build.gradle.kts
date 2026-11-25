@@ -2,10 +2,14 @@ import dev.slne.surf.api.gradle.util.slneReleases
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
+    `api-validation`
 }
 
 surfCoreApi {
-    withApiValidation()
+    allowInternalApi(
+        "dev.slne.surf.api.shared.api.util.InternalSurfApi",
+        "dev.slne.surf.redis.util.InternalRedisAPI",
+    )
 }
 
 dependencies {

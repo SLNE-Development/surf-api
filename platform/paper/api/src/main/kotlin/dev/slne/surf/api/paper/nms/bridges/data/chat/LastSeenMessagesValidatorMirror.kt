@@ -15,21 +15,22 @@ data class LastSeenMessagesValidatorMirror(
     @NmsUseWithCaution
     data class LastSeenTrackedEntry(
         val signature: ByteArray,
-        val pending: Boolean
+        val isPending: Boolean,
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is LastSeenTrackedEntry) return false
 
-            if (pending != other.pending) return false
+            if (isPending != other.isPending) return false
             if (!signature.contentEquals(other.signature)) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            var result = pending.hashCode()
+            var result = isPending.hashCode()
             result = 31 * result + signature.contentHashCode()
+
             return result
         }
     }
@@ -49,6 +50,7 @@ data class LastSeenMessagesValidatorMirror(
         var result = lastSeenCount
         result = 31 * result + trackedMessages.hashCode()
         result = 31 * result + (lastPendingMessage?.contentHashCode() ?: 0)
+
         return result
     }
 }

@@ -3,18 +3,12 @@ package dev.slne.surf.api.paper.coroutine
 import dev.slne.surf.api.paper.util.chunkX
 import dev.slne.surf.api.paper.util.chunkZ
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.plugin.Plugin
 import java.lang.Runnable
-import java.lang.Thread
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.contracts.ExperimentalContracts
@@ -24,24 +18,28 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
 /**
- * The [PaperDispatchers] of one plugin, and the protocol that keeps them safe across the plugin's
- * lifecycle.
+ * The [PaperDispatchers] of one plugin, safe to use in every phase of the plugin's lifecycle.
  *
- * Paper refuses or silently drops tasks of a plugin that is not enabled, so the dispatchers admit
- * work according to their own [State] instead of Paper's: before [enable] work is parked, while
- * enabled it is handed to Paper, from [beginDisable] on it is rejected, and [close] rejects whatever
- * is left. A rejected block is never dropped: its coroutine is cancelled and the block runs on
- * [Dispatchers.IO], where the continuation completes with the cancellation. Each block runs or is
- * rejected exactly once, whichever of Paper's callbacks, a state change or a retired entity gets to
- * it first.
+ * Lifecycle hooks run in a `runBlocking` on the server thread. A hook that waits for work
+ * dispatched to that thread would deadlock: the thread is blocked by the hook and never reaches the
+ * task. While a phase runs inside [lifecycle], the dispatchers of every plugin therefore send such
+ * work to the phase's event loop, which the blocked thread runs itself. The event loop is shared
+ * because all plugins share the server thread, so a hook may also wait for work that another plugin
+ * or surf-api dispatched. Work that was parked or handed to Paper before the phase started moves
+ * into the loop as well. When a nested phase ends, the outer phase's loop takes over again.
  *
- * While any plugin's lifecycle phase blocks the server thread in [lifecycle], the main work of every
- * plugin's dispatchers runs inside that phase's event loop instead, so a hook can wait for it, even
- * for work another plugin or surf-api itself dispatched. On a server without regionized ticking that
- * includes region and entity work, which runs on the server thread too. On a regionized server, such
- * as Folia, the thread of a lifecycle phase counts as the main thread, because the global region does
- * not tick yet while plugins load and enable; region and entity work still goes to Paper there, so a
- * hook must not wait for it.
+ * On a server without regionized ticking, region and entity work belongs to the server thread and
+ * takes the same route. On a regionized server such as Folia, region and entity work stays with the
+ * region threads, so a hook must not wait for it; the phase's thread counts as the main thread
+ * there, because no global region ticks while plugins load and enable.
+ *
+ * Work that no phase takes is admitted by the plugin's own [State], because Paper refuses or
+ * silently drops the tasks of a plugin that is not enabled: before [enable] work is parked, while
+ * enabled it is handed to Paper, from [beginDisable] on it is rejected, and [close] rejects
+ * whatever is left. A rejected block is never dropped: its coroutine is cancelled and the block
+ * runs on [Dispatchers.IO], where the continuation completes with the cancellation. Each block runs
+ * or is rejected exactly once, whichever of Paper's callbacks, a phase, a state change or a retired
+ * entity reaches it first.
  *
  * Thread-safe. The owning runtime calls [enable], [beginDisable] and [close] in that order.
  */
@@ -109,18 +107,27 @@ class PluginDispatchers internal constructor(
     }
 
     /**
-     * Runs [phase], a plugin's or surf-api's lifecycle hooks, without deadlocking on the server thread.
+     * Runs [phase], a plugin's or surf-api's lifecycle hooks, without deadlocking on the server
+     * thread.
      *
-     * Lifecycle hooks run in a `runBlocking` on the server thread, so work dispatched to that thread
-     * while a hook waits for it could never run. While [phase] runs, the dispatchers of every plugin
-     * therefore hand such work to the event loop of this `runBlocking`, which the waiting thread runs
-     * itself; work handed to Paper or parked before moves there as well. Afterwards work takes the
-     * regular way through Paper again. Nested phases restore the outer one when they end.
+     * The caller blocks the server thread in a `runBlocking`, so a hook that waits for work
+     * dispatched to that thread would wait forever. While [phase] runs, the dispatchers of every
+     * open plugin send that work to the event loop of the calling `runBlocking` instead, which the
+     * blocked thread runs itself. Work parked or handed to Paper before the phase moves into the
+     * loop when it starts. When [phase] ends, work the loop received but did not run is admitted
+     * again: into the loop of the outer phase when phases nest, otherwise by the plugin's state,
+     * which parks it, hands it to Paper or rejects it.
      *
-     * On Paper this covers main, region and entity work, which all belong to the server thread. On a
-     * regionized server such as Folia, region and entity work still goes to its region's thread, so a
-     * hook must not wait for it; the phase's thread counts as the main thread there, because no global
-     * region ticks while plugins load.
+     * On a server without regionized ticking, region and entity work belongs to the server thread
+     * and takes the same route. On a regionized server such as Folia, region and entity work stays
+     * with the region threads, so a hook must not wait for it; the phase's thread counts as the
+     * main thread there, because no global region ticks while plugins load and enable.
+     *
+     * Without a [CoroutineDispatcher] in the calling context, [phase] runs directly and no work is
+     * rerouted.
+     *
+     * @param phase the hooks to run.
+     * @return the result of [phase].
      */
     suspend fun <T> lifecycle(phase: suspend () -> T): T {
         val interceptor = currentCoroutineContext()[ContinuationInterceptor] as? CoroutineDispatcher
@@ -138,20 +145,29 @@ class PluginDispatchers internal constructor(
         val outer = activeLoop
         activeLoop = loop
 
-        // Work already parked or handed to Paper would otherwise wait for the thread this phase blocks.
-        open.forEach { it.readmit(all = true) }
+        // Work already parked or handed to Paper would otherwise wait for the thread this phase
+        // blocks.
+        for (dispatchers in open) {
+            dispatchers.readmit(all = true)
+        }
 
         try {
             return phase()
         } finally {
             activeLoop = outer
-            // Work the loop received but never ran goes the regular way now.
-            open.forEach { it.readmit(all = false) }
+
+            for (dispatchers in open) {
+                dispatchers.readmit(all = false)
+            }
         }
     }
 
     private fun readmit(all: Boolean) {
-        tickets.forEach { if (all || it.route == Route.LOOP) admit(it) }
+        for (ticket in tickets) {
+            if (all || ticket.route == Route.LOOP) {
+                admit(ticket)
+            }
+        }
     }
 
     /**
@@ -183,10 +199,13 @@ class PluginDispatchers internal constructor(
 
     private fun submit(ticket: Ticket) {
         tickets += ticket
+
         if (ticket.isDone) {
             tickets -= ticket
+
             return
         }
+
         admit(ticket)
     }
 
@@ -197,6 +216,7 @@ class PluginDispatchers internal constructor(
         if (ticket.isDone) return
 
         val loop = loopFor(ticket.target)
+
         when {
             loop != null -> ticket.runIn(loop)
             state == State.PARKING -> Unit
@@ -211,7 +231,9 @@ class PluginDispatchers internal constructor(
         return when (target) {
             Target.Main -> loop.takeIf { it.runsMain }
             is Target.Region -> loop.takeIf { it.runsRegionsAndEntities }
-            is Target.Entity -> loop.takeIf { it.runsRegionsAndEntities && scheduler.isAlive(target.entity) }
+            is Target.Entity -> loop.takeIf {
+                it.runsRegionsAndEntities && scheduler.isAlive(target.entity)
+            }
         }
     }
 
@@ -220,6 +242,7 @@ class PluginDispatchers internal constructor(
      */
     private fun isLoopThreadForMain(): Boolean {
         val loop = activeLoop ?: return false
+
         return loop.runsMain && loop.thread === Thread.currentThread()
     }
 
@@ -233,25 +256,34 @@ class PluginDispatchers internal constructor(
                     target.world,
                     target.chunkX,
                     target.chunkZ,
-                    ticket::run
+                    ticket::run,
                 )
 
                 is Target.Entity -> {
                     val scheduled = scheduler.runEntity(target.entity, ticket::run, ticket::retire)
-                    if (!scheduled) ticket.retire()
+
+                    if (!scheduled) {
+                        ticket.retire()
+                    }
                 }
             }
         } catch (exception: RuntimeException) {
-            ticket.reject(CancellationException("Plugin '$owner' could not schedule a task").apply {
-                initCause(exception)
-            })
+            ticket.reject(
+                CancellationException("Plugin '$owner' could not schedule a task").apply {
+                    initCause(exception)
+                },
+            )
         }
     }
 
-    private fun Target.isDispatchNeeded(): Boolean = when (this) {
-        Target.Main -> !(scheduler.isGlobalTickThread() || isLoopThreadForMain())
-        is Target.Region -> !scheduler.isOwnedByCurrentRegion(world, chunkX, chunkZ)
-        is Target.Entity -> !(scheduler.isOwnedByCurrentRegion(entity) && scheduler.isAlive(entity))
+    private fun Target.isDispatchNeeded(): Boolean {
+        return when (this) {
+            Target.Main -> !(scheduler.isGlobalTickThread() || isLoopThreadForMain())
+            is Target.Region -> !scheduler.isOwnedByCurrentRegion(world, chunkX, chunkZ)
+            is Target.Entity -> !(scheduler.isOwnedByCurrentRegion(entity) && scheduler.isAlive(
+                entity,
+            ))
+        }
     }
 
     /**
@@ -272,7 +304,7 @@ class PluginDispatchers internal constructor(
                         context.cancel(cause)
                         block.run()
                     },
-                )
+                ),
             )
         }
 
@@ -307,6 +339,7 @@ class PluginDispatchers internal constructor(
 
         fun markHandedToPaper(): Boolean {
             route = Route.PAPER
+
             return handedToPaper.compareAndSet(false, true)
         }
 
@@ -319,6 +352,7 @@ class PluginDispatchers internal constructor(
             route = Route.LOOP
             loop.dispatcher.dispatch(loop.dispatcher) {
                 val entity = (target as? Target.Entity)?.entity
+
                 when {
                     Thread.currentThread() !== loop.thread -> admit(this)
                     entity != null && !scheduler.isAlive(entity) -> retire()
@@ -329,13 +363,17 @@ class PluginDispatchers internal constructor(
 
         fun run() {
             val action = claim()?.first ?: return
+
             action.run()
         }
 
-        fun retire() = reject(CancellationException("The entity of plugin '$owner' was removed"))
+        fun retire() {
+            reject(CancellationException("The entity of plugin '$owner' was removed"))
+        }
 
         fun reject(cause: CancellationException) {
             val action = claim()?.second ?: return
+
             Dispatchers.IO.dispatch(Dispatchers.IO) { action(cause) }
         }
 
@@ -348,11 +386,13 @@ class PluginDispatchers internal constructor(
 
         private fun claim(): Pair<Runnable, (CancellationException) -> Unit>? {
             if (!done.compareAndSet(false, true)) return null
+
             tickets -= this
 
             val claimed = checkNotNull(runAction) to checkNotNull(rejectAction)
             runAction = null
             rejectAction = null
+
             return claimed
         }
     }

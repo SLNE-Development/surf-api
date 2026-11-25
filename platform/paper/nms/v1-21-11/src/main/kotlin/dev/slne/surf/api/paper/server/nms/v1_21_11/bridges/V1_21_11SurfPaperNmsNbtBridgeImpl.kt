@@ -1,23 +1,20 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
-import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsNbtBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toBukkit
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import net.minecraft.core.component.DataComponentPatch
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.item.component.TypedEntityData
 import org.bukkit.entity.EntityType
 import org.bukkit.inventory.ItemStack
-import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
-    private val log = logger()
-
     override fun makeItemStackEntityInvisible(
         itemStack: ItemStack,
         invisibleEntityType: EntityType,
@@ -37,26 +34,5 @@ class V1_21_11SurfPaperNmsNbtBridgeImpl : SurfPaperNmsNbtBridge {
         nmsStack.applyComponents(patch)
 
         return nmsStack.toBukkit()
-    }
-
-    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
-    override fun getNbtString(
-        itemStack: ItemStack,
-        key: String,
-    ): String {
-        log.atWarning()
-            .atMostEvery(30, java.util.concurrent.TimeUnit.SECONDS)
-            .log(
-                ("Using deprecated method getNbtString(ItemStack, String) in SurfBukkitNmsNbtBridgeImpl."
-                        + " ItemStacks now use DataComponents and nbt keys are not used. Please update your"
-                        + " code to use DataComponents instead.")
-            )
-
-        return itemStack.toNms().components
-            .getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
-            .unsafe
-            .getString(key)
-            .getOrNull()
-            ?: "{}"
     }
 }

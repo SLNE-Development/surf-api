@@ -10,6 +10,10 @@ plugins {
 kotlin {
     explicitApi()
 
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvm()
 
     js {

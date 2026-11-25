@@ -1,6 +1,6 @@
 plugins {
     id("surf.module-impl")
-    id("surf.ksp-processor")
+    id("surf.nms-shared-26")
     id("io.papermc.paperweight.userdev") apply true
 }
 
@@ -19,9 +19,6 @@ dependencies {
     compileOnly(libs.fastutil)
 
     compileOnly(libs.placeholder.api)
-    compileOnly(libs.reflection.remapper)
-
-    implementation(libs.bytebuddy)
 }
 
 configurations.all {

@@ -6,9 +6,8 @@ import org.jetbrains.annotations.Blocking
 /**
  * Reference-counts the users of the connection of [NatsConnectionManager].
  *
- * The first [acquire] connects, the [release] of the last share disconnects. Every share is released exactly once by
- * its holder. Mixing shares with `NatsInstance.load` and `NatsInstance.disable` is not supported: they connect and
- * disconnect regardless of the count.
+ * The first [acquire] connects, the [release] of the last share disconnects. Every share is
+ * released exactly once by its holder.
  */
 @InternalNatsApi
 internal object SharedNatsConnection {
@@ -22,7 +21,10 @@ internal object SharedNatsConnection {
     @Blocking
     fun acquire() {
         synchronized(lock) {
-            if (shares == 0) NatsConnectionManager.connect()
+            if (shares == 0) {
+                NatsConnectionManager.connect()
+            }
+
             shares++
         }
     }
@@ -34,6 +36,7 @@ internal object SharedNatsConnection {
     fun release() {
         synchronized(lock) {
             check(shares > 0) { "No NATS connection share to release" }
+
             shares--
             if (shares == 0) NatsConnectionManager.disconnect()
         }

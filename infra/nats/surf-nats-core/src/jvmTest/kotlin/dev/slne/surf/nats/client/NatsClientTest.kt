@@ -31,7 +31,7 @@ class NatsClientTest {
             "shop-",
             "a--b",
             "a*",
-            "a>"
+            "a>",
         )) {
             assertFailsWith<IllegalArgumentException>("name '$name'") { NatsClient.create(name) }
         }
@@ -40,7 +40,12 @@ class NatsClientTest {
     @Test
     fun `client name pattern matches the shared kebab-case rule`() {
         val pattern = NATS_CLIENT_NAME_PATTERN.toRegex()
-        val candidates = ProtocolVectors.kebabNames + ProtocolVectors.invalidKebabNames + listOf("a\n", "a-b\n", "\na")
+        val candidates = ProtocolVectors.kebabNames + ProtocolVectors.invalidKebabNames + listOf(
+            "a\n",
+            "a-b\n",
+            "\na",
+        )
+
         for (name in candidates) {
             assertEquals(pattern.matches(name), ProtocolNaming.isKebabName(name), "name '$name'")
         }
@@ -74,18 +79,6 @@ class NatsClientTest {
 
         assertFailsWith<IllegalStateException> { client.publish(Created(1)) }
         assertFailsWith<IllegalStateException> { client.registerListener(Any()) }
-    }
-
-    @Test
-    fun `clients created after stopAcceptingAll reject registrations`() = runTest {
-        val factory = NatsClientFactoryImpl()
-        factory.stopAcceptingAll()
-
-        factory.create("created-after-stop").use { client ->
-            val rejected = assertFailsWith<IllegalStateException> { client.registerListener(Any()) }
-            assertContains(rejected.message.orEmpty(), "is closing")
-            assertFalse(client.isClosed)
-        }
     }
 
     @Test

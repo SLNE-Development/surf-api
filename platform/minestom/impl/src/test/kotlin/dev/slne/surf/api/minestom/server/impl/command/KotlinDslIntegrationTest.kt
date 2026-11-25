@@ -39,6 +39,7 @@ class KotlinDslIntegrationTest {
         env.process().connection().setPlayerProvider { connection, profile ->
             TestPermissionPlayer(connection, profile, setOf("lobby.command.message"))
         }
+
         try {
             withPlatform(env) { manager ->
                 val directory = PlayerDirectory(listOf("Ranger", "Zeta"))
@@ -61,6 +62,7 @@ class KotlinDslIntegrationTest {
                 val instance = env.createEmptyInstance()
                 var sender: Player? = null
                 var target: Player? = null
+
                 try {
                     sender = connect(env.createConnection(profile("Sender")), instance)
                     target = connect(env.createConnection(profile("Ranger")), instance)
@@ -135,6 +137,7 @@ class KotlinDslIntegrationTest {
 
         val mode = argument.toDefinition().suggestions
         check(mode is SuggestionMode.Replace)
+
         val info = suggestionInfo(env, currentArg = "Ra")
 
         assertEquals(listOf("Ranger"), mode.provider.suggest(info).map(StringTooltip::suggestion))
@@ -157,7 +160,10 @@ class KotlinDslIntegrationTest {
             .anyExecutor { _, _ -> }
             .toDefinition()
 
-        val kinds = definition.paths.single().arguments.associate { it.nodeName to it.kind }
+        val kinds = definition.paths
+            .single()
+            .arguments
+            .associate { it.nodeName to it.kind }
         assertEquals(ArgumentKind.Long(1, 10), kinds.getValue("along"))
         assertEquals(ArgumentKind.Float(1f, 10f), kinds.getValue("afloat"))
         assertEquals(ArgumentKind.Double(1.0, 10.0), kinds.getValue("adouble"))
@@ -263,7 +269,10 @@ class KotlinDslIntegrationTest {
         val includeProvider = StringArgument("a").includeSuggestions(stringProvider)
         val includeAsync = StringArgument("a").includeSuggestionsAsync { _ -> listOf("async") }
 
-        assertEquals(listOf("apple", "avocado"), suggestedStrings(replaceVararg, info, replace = true))
+        assertEquals(
+            listOf("apple", "avocado"),
+            suggestedStrings(replaceVararg, info, replace = true),
+        )
         assertEquals(listOf("provided"), suggestedStrings(replaceProvider, info, replace = true))
         assertEquals(listOf("async"), suggestedStrings(replaceAsync, info, replace = true))
         assertEquals(listOf("apple"), suggestedStrings(includeVararg, info, replace = false))
@@ -289,12 +298,30 @@ class KotlinDslIntegrationTest {
         val includeAsync = StringArgument("a")
             .includeSuggestionsWithTooltipsAsync { _ -> listOf(StringTooltip("async", tooltip)) }
 
-        assertEquals(listOf(StringTooltip("apple", tooltip)), replaceMode(replaceVararg).provider.suggest(info))
-        assertEquals(listOf(StringTooltip("provided", tooltip)), replaceMode(replaceProvider).provider.suggest(info))
-        assertEquals(listOf(StringTooltip("async", tooltip)), replaceMode(replaceAsync).provider.suggest(info))
-        assertEquals(listOf(StringTooltip("apple", tooltip)), includeMode(includeVararg).provider.suggest(info))
-        assertEquals(listOf(StringTooltip("provided", tooltip)), includeMode(includeProvider).provider.suggest(info))
-        assertEquals(listOf(StringTooltip("async", tooltip)), includeMode(includeAsync).provider.suggest(info))
+        assertEquals(
+            listOf(StringTooltip("apple", tooltip)),
+            replaceMode(replaceVararg).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(StringTooltip("provided", tooltip)),
+            replaceMode(replaceProvider).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(StringTooltip("async", tooltip)),
+            replaceMode(replaceAsync).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(StringTooltip("apple", tooltip)),
+            includeMode(includeVararg).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(StringTooltip("provided", tooltip)),
+            includeMode(includeProvider).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(StringTooltip("async", tooltip)),
+            includeMode(includeAsync).provider.suggest(info),
+        )
     }
 
     @Test
@@ -321,12 +348,30 @@ class KotlinDslIntegrationTest {
         val includeAsync = IntegerArgument("n")
             .includeSafeSuggestionsAsync { _ -> listOf(7) }
 
-        assertEquals(listOf(1, 2), replaceSafeMode(replaceVararg).provider.suggest(info).map { it.suggestion })
-        assertEquals(listOf(3), replaceSafeMode(replaceProvider).provider.suggest(info).map { it.suggestion })
-        assertEquals(listOf(4), replaceSafeMode(replaceAsync).provider.suggest(info).map { it.suggestion })
-        assertEquals(listOf(5), includeSafeMode(includeVararg).provider.suggest(info).map { it.suggestion })
-        assertEquals(listOf(6), includeSafeMode(includeProvider).provider.suggest(info).map { it.suggestion })
-        assertEquals(listOf(7), includeSafeMode(includeAsync).provider.suggest(info).map { it.suggestion })
+        assertEquals(
+            listOf(1, 2),
+            replaceSafeMode(replaceVararg).provider.suggest(info).map { it.suggestion },
+        )
+        assertEquals(
+            listOf(3),
+            replaceSafeMode(replaceProvider).provider.suggest(info).map { it.suggestion },
+        )
+        assertEquals(
+            listOf(4),
+            replaceSafeMode(replaceAsync).provider.suggest(info).map { it.suggestion },
+        )
+        assertEquals(
+            listOf(5),
+            includeSafeMode(includeVararg).provider.suggest(info).map { it.suggestion },
+        )
+        assertEquals(
+            listOf(6),
+            includeSafeMode(includeProvider).provider.suggest(info).map { it.suggestion },
+        )
+        assertEquals(
+            listOf(7),
+            includeSafeMode(includeAsync).provider.suggest(info).map { it.suggestion },
+        )
     }
 
     @Test
@@ -347,12 +392,30 @@ class KotlinDslIntegrationTest {
         val includeAsync = IntegerArgument("n")
             .includeSafeSuggestionsWithTooltipsAsync { _ -> listOf(Tooltip(6, tooltip)) }
 
-        assertEquals(listOf(Tooltip(1, tooltip)), replaceSafeMode(replaceVararg).provider.suggest(info))
-        assertEquals(listOf(Tooltip(2, tooltip)), replaceSafeMode(replaceProvider).provider.suggest(info))
-        assertEquals(listOf(Tooltip(3, tooltip)), replaceSafeMode(replaceAsync).provider.suggest(info))
-        assertEquals(listOf(Tooltip(4, tooltip)), includeSafeMode(includeVararg).provider.suggest(info))
-        assertEquals(listOf(Tooltip(5, tooltip)), includeSafeMode(includeProvider).provider.suggest(info))
-        assertEquals(listOf(Tooltip(6, tooltip)), includeSafeMode(includeAsync).provider.suggest(info))
+        assertEquals(
+            listOf(Tooltip(1, tooltip)),
+            replaceSafeMode(replaceVararg).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(Tooltip(2, tooltip)),
+            replaceSafeMode(replaceProvider).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(Tooltip(3, tooltip)),
+            replaceSafeMode(replaceAsync).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(Tooltip(4, tooltip)),
+            includeSafeMode(includeVararg).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(Tooltip(5, tooltip)),
+            includeSafeMode(includeProvider).provider.suggest(info),
+        )
+        assertEquals(
+            listOf(Tooltip(6, tooltip)),
+            includeSafeMode(includeAsync).provider.suggest(info),
+        )
     }
 
     @Test
@@ -366,8 +429,14 @@ class KotlinDslIntegrationTest {
         val included = StringArgument("mode").includeSuggestions(branch)
         val info = SuggestionInfo(sender, CommandArguments.empty(), "", "")
 
-        assertEquals(listOf("staff", "public"), replaceMode(replaced).provider.suggest(info).map(StringTooltip::suggestion))
-        assertEquals(listOf("staff", "public"), includeMode(included).provider.suggest(info).map(StringTooltip::suggestion))
+        assertEquals(
+            listOf("staff", "public"),
+            replaceMode(replaced).provider.suggest(info).map(StringTooltip::suggestion),
+        )
+        assertEquals(
+            listOf("staff", "public"),
+            includeMode(included).provider.suggest(info).map(StringTooltip::suggestion),
+        )
     }
 
     @Test
@@ -383,7 +452,9 @@ class KotlinDslIntegrationTest {
         fun info(vararg previous: String) = SuggestionInfo(
             sender = sender,
             previousArgs = CommandArguments.of(
-                previous.mapIndexed { index, raw -> ParsedArgument(index.toString(), raw, raw, present = true) },
+                previous.mapIndexed { index, raw ->
+                    ParsedArgument(index.toString(), raw, raw, isPresent = true)
+                },
             ),
             currentInput = previous.joinToString(" ", postfix = " "),
             currentArg = "",
@@ -394,12 +465,17 @@ class KotlinDslIntegrationTest {
     }
 
     @Test
-    fun `sibling branches resolving to a mix of null and non null providers use the non null ones`(env: Env) = runTest {
+    fun `sibling branches resolving to a mix of null and non null providers use the non null ones`(
+        env: Env,
+    ) = runTest {
         val sender = env.process().command().consoleSender
         val branch = SuggestionsBranch.suggest(ArgumentSuggestions.strings("go"))
             .branch(
                 SuggestionsBranch.suggest(ArgumentSuggestions.strings("x")),
-                SuggestionsBranch.suggest(ArgumentSuggestions.strings("x"), ArgumentSuggestions.strings("y")),
+                SuggestionsBranch.suggest(
+                    ArgumentSuggestions.strings("x"),
+                    ArgumentSuggestions.strings("y"),
+                ),
             )
 
         val provider = branch.getNextSuggestion(sender, "go", "x")
@@ -407,25 +483,39 @@ class KotlinDslIntegrationTest {
         assertNotNull(provider)
         assertEquals(
             listOf("y"),
-            provider!!.suggest(SuggestionInfo(sender, CommandArguments.empty(), "go x ", "")).map(StringTooltip::suggestion),
+            provider!!.suggest(SuggestionInfo(sender, CommandArguments.empty(), "go x ", "")).map(
+                StringTooltip::suggestion,
+            ),
         )
     }
 
     @Test
     fun `merged providers isolate failures and still propagate cancellation`(env: Env) = runTest {
-        val info = SuggestionInfo(env.process().command().consoleSender, CommandArguments.empty(), "", "")
+        val info = SuggestionInfo(
+            env.process().command().consoleSender,
+            CommandArguments.empty(),
+            "",
+            "",
+        )
         val failing = ArgumentSuggestions { throw IllegalStateException("broken provider") }
         val cancelling = ArgumentSuggestions { throw CancellationException("stop") }
 
         val merged = ArgumentSuggestions.merge(failing, ArgumentSuggestions.strings("ok"))
-        val cancelled = runCatching { ArgumentSuggestions.merge(cancelling, ArgumentSuggestions.strings("ok")).suggest(info) }
+        val cancelled = runCatching {
+            ArgumentSuggestions.merge(
+                cancelling,
+                ArgumentSuggestions.strings("ok"),
+            ).suggest(info)
+        }
 
         assertEquals(listOf("ok"), merged.suggest(info).map(StringTooltip::suggestion))
         assertTrue(cancelled.exceptionOrNull() is CancellationException)
     }
 
     @Test
-    fun `subcommand requirements and permissions hide the subcommand instead of reporting success`(env: Env) {
+    fun `subcommand requirements and permissions hide the subcommand instead of reporting success`(
+        env: Env,
+    ) {
         withPlatform(env) { manager ->
             val executed = mutableListOf<String>()
             CommandAPICommand("gated")
@@ -440,7 +530,9 @@ class KotlinDslIntegrationTest {
                         .withPermission("lobby.admin")
                         .anyExecutor { _, _ -> executed += "admin" },
                 )
-                .withSubcommand(CommandAPICommand("open").anyExecutor { _, _ -> executed += "open" })
+                .withSubcommand(
+                    CommandAPICommand("open").anyExecutor { _, _ -> executed += "open" },
+                )
                 .register()
             val console = manager.consoleSender
             val plain = PlainSender()
@@ -471,48 +563,63 @@ class KotlinDslIntegrationTest {
         }
     }
 
-    private suspend fun suggestedStrings(argument: Argument<String>, info: SuggestionInfo, replace: Boolean): List<String> =
-        if (replace) {
+    private suspend fun suggestedStrings(
+        argument: Argument<String>,
+        info: SuggestionInfo,
+        replace: Boolean,
+    ): List<String> {
+        return if (replace) {
             replaceMode(argument).provider.suggest(info).map(StringTooltip::suggestion)
         } else {
             includeMode(argument).provider.suggest(info).map(StringTooltip::suggestion)
         }
+    }
 
     private fun <T> replaceMode(argument: Argument<T>): SuggestionMode.Replace<T> {
         val mode = argument.toDefinition().suggestions
         check(mode is SuggestionMode.Replace<T>)
+
         return mode
     }
 
     private fun <T> includeMode(argument: Argument<T>): SuggestionMode.Include<T> {
         val mode = argument.toDefinition().suggestions
         check(mode is SuggestionMode.Include<T>)
+
         return mode
     }
 
     private fun <T> replaceSafeMode(argument: Argument<T>): SuggestionMode.ReplaceSafe<T> {
         val mode = argument.toDefinition().suggestions
         check(mode is SuggestionMode.ReplaceSafe<T>)
+
         return mode
     }
 
     private fun <T> includeSafeMode(argument: Argument<T>): SuggestionMode.IncludeSafe<T> {
         val mode = argument.toDefinition().suggestions
         check(mode is SuggestionMode.IncludeSafe<T>)
+
         return mode
     }
 
-    private fun suggestionInfo(env: Env, currentArg: String): SuggestionInfo = SuggestionInfo(
-        sender = env.process().command().consoleSender,
-        previousArgs = CommandArguments.empty(),
-        currentInput = currentArg,
-        currentArg = currentArg,
-    )
+    private fun suggestionInfo(env: Env, currentArg: String): SuggestionInfo {
+        return SuggestionInfo(
+            sender = env.process().command().consoleSender,
+            previousArgs = CommandArguments.empty(),
+            currentInput = currentArg,
+            currentArg = currentArg,
+        )
+    }
 
-    private inline fun withPlatform(env: Env, block: (net.minestom.server.command.CommandManager) -> Unit) {
+    private inline fun withPlatform(
+        env: Env,
+        block: (net.minestom.server.command.CommandManager) -> Unit,
+    ) {
         val manager = env.process().command()
         val platform = MinestomCommandAPIPlatform(manager, MinestomCommandOwnership())
         CommandAPI.installPlatform(platform)
+
         try {
             block(manager)
         } finally {
@@ -531,6 +638,7 @@ class KotlinDslIntegrationTest {
                 .onSuccess(player::complete)
                 .onFailure(player::completeExceptionally)
         }
+
         return player.join()
     }
 
@@ -543,7 +651,9 @@ class KotlinDslIntegrationTest {
     }
 
     private class PlayerDirectory(private val names: List<String>) {
-        fun search(prefix: String): List<String> = names.filter { name -> name.startsWith(prefix, ignoreCase = true) }
+        fun search(prefix: String): List<String> {
+            return names.filter { name -> name.startsWith(prefix, ignoreCase = true) }
+        }
     }
 
     private enum class CatalogMode {

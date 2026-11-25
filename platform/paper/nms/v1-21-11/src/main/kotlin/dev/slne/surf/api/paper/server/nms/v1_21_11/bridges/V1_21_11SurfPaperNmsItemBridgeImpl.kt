@@ -1,7 +1,9 @@
 package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
+import dev.slne.surf.api.common.util.unsafe
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsItemBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.V1_21_11SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.exactIndex
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.V1_21_11SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.indexOf
 import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.V1_21_11SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.itemTypeIndex
@@ -10,7 +12,7 @@ import dev.slne.surf.api.paper.server.nms.v1_21_11.bridges.V1_21_11SurfPaperNmsI
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.nms
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toIdentifier
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.unwrap
-import dev.slne.surf.api.paper.server.nms.v1_21_11.reflection.V1_21_11Reflection
+import dev.slne.surf.api.spring.SurfLifecycle
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap
 import net.minecraft.core.component.DataComponentMap
@@ -26,9 +28,15 @@ import org.bukkit.Material
 import org.bukkit.Registry
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemType
+import net.minecraft.world.item.ItemStack as NmsItemStack
 
 @NmsUseWithCaution
-class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
+@NmsComponent
+class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge, SurfLifecycle {
+    override suspend fun onEnable() {
+        CreativeOrderComparator.init()
+    }
+
     override fun setDefaultMaxStackSize(item: ItemType, maxStackSize: Int) {
         require(maxStackSize in 1..100) { "Max stack size must be between 1 and 100" }
 
@@ -38,12 +46,22 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
             .set(DataComponents.MAX_STACK_SIZE, maxStackSize)
             .build()
 
-
-        V1_21_11Reflection.ITEM_PROXY.setComponents(nmsItem, updatedComponents)
+        @Suppress("removal", "DEPRECATION")
+        unsafe.putObject(nmsItem, ITEM_COMPONENTS_OFFSET, updatedComponents)
     }
 
     override fun getCreativeSearchItemOrderComparator(): Comparator<ItemStack?> {
         return CreativeOrderComparator
+    }
+
+    private companion object {
+        /**
+         * The field offset of the final `Item.components`, which reflection proxies cannot write.
+         */
+        @Suppress("removal", "DEPRECATION")
+        val ITEM_COMPONENTS_OFFSET = unsafe.objectFieldOffset(
+            Item::class.java.getDeclaredField("components"),
+        )
     }
 
     /**
@@ -66,7 +84,7 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          *
          * Populated lazily on first access from [CreativeModeTabs.searchTab].
          */
-        private lateinit var exactIndex: Object2IntOpenCustomHashMap<net.minecraft.world.item.ItemStack>
+        private lateinit var exactIndex: Object2IntOpenCustomHashMap<NmsItemStack>
 
         /**
          * A map from NMS [Item] to the position of its **first** occurrence in the creative search
@@ -92,26 +110,31 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          */
         private lateinit var materialIndex: MutableMap<Material, Int>
 
-
         fun init() {
             val params = CreativeModeTab.ItemDisplayParameters(
                 FeatureFlags.DEFAULT_FLAGS,
                 true,
-                MinecraftServer.getServer().registryAccess()
+                MinecraftServer.getServer().registryAccess(),
             )
 
             for (tab in BuiltInRegistries.CREATIVE_MODE_TAB) {
                 if (tab.type != CreativeModeTab.Type.CATEGORY) continue
+
                 tab.buildContents(params)
             }
+
             for (tab in BuiltInRegistries.CREATIVE_MODE_TAB) {
                 if (tab.type == CreativeModeTab.Type.CATEGORY) continue
+
                 tab.buildContents(params)
             }
 
             val orderedItems = CreativeModeTabs.searchTab().displayItems
 
-            this.exactIndex = Object2IntOpenCustomHashMap(orderedItems.size, ItemStackLinkedSet.TYPE_AND_TAG).apply {
+            this.exactIndex = Object2IntOpenCustomHashMap(
+                orderedItems.size,
+                ItemStackLinkedSet.TYPE_AND_TAG,
+            ).apply {
                 defaultReturnValue(Int.MAX_VALUE)
                 var i = 0
                 for (item in orderedItems) put(item, i++)
@@ -197,21 +220,24 @@ class V1_21_11SurfPaperNmsItemBridgeImpl : SurfPaperNmsItemBridge {
          * @param material the material to check.
          * @return `true` if the material may have component variants, `false` otherwise.
          */
-        private fun mayHaveComponentVariant(material: Material) = when (material) {
-            Material.POTION,
-            Material.SPLASH_POTION,
-            Material.LINGERING_POTION,
-            Material.TIPPED_ARROW,
-            Material.ENCHANTED_BOOK,
-            Material.FIREWORK_ROCKET,
-            Material.PAINTING,
-            Material.SUSPICIOUS_STEW,
-            Material.OMINOUS_BOTTLE,
-            Material.LIGHT,
-            Material.TEST_BLOCK,
-            Material.GOAT_HORN -> true
+        private fun mayHaveComponentVariant(material: Material): Boolean {
+            return when (material) {
+                Material.POTION,
+                Material.SPLASH_POTION,
+                Material.LINGERING_POTION,
+                Material.TIPPED_ARROW,
+                Material.ENCHANTED_BOOK,
+                Material.FIREWORK_ROCKET,
+                Material.PAINTING,
+                Material.SUSPICIOUS_STEW,
+                Material.OMINOUS_BOTTLE,
+                Material.LIGHT,
+                Material.TEST_BLOCK,
+                Material.GOAT_HORN
+                    -> true
 
-            else -> false
+                else -> false
+            }
         }
     }
 }

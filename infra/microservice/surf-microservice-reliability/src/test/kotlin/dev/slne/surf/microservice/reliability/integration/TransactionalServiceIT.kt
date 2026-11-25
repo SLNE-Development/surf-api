@@ -1,19 +1,17 @@
+@file:OptIn(InternalNatsApi::class)
+
 package dev.slne.surf.microservice.reliability.integration
 
-import dev.slne.surf.database.libs.org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import dev.slne.surf.microservice.api.MicroserviceInfo
 import dev.slne.surf.microservice.reliability.MicroserviceReliabilityAutoConfiguration
 import dev.slne.surf.microservice.reliability.TransactionalEvents
 import dev.slne.surf.microservice.reliability.support.*
 import dev.slne.surf.microservice.reliability.support.TestNats.streamMessageCount
-import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsServiceInterceptorProvider
-import dev.slne.surf.nats.registerService
+import dev.slne.surf.nats.*
 import dev.slne.surf.nats.rpc.NatsPersistentCall
 import dev.slne.surf.nats.rpc.NatsPersistentInterceptor
 import dev.slne.surf.nats.rpc.NatsPersistentReply
 import dev.slne.surf.nats.rpc.NatsRedeliveryException
-import dev.slne.surf.nats.service
 import dev.slne.surf.nats.test.common.proto.v1.MicroserviceTestService
 import dev.slne.surf.nats.test.common.proto.v1.StoreRequest
 import dev.slne.surf.nats.test.common.proto.v1.StoredCountRequest
@@ -22,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -38,8 +37,8 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Transactional services over a real NATS server and database: replies stored per message, redeliveries,
- * dead-letter replays, several instances and events published after the commit.
+ * Transactional services over a real NATS server and database: replies stored per message,
+ * redeliveries, dead-letter replays, several instances and events published after the commit.
  */
 @Testcontainers(disabledWithoutDocker = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -53,69 +52,88 @@ class TransactionalServiceIT {
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a persistent rpc whose reply was lost after the commit is answered with the stored reply`(vendor: TestVendor) =
-        runBlocking {
-            val deliveries = ConcurrentLinkedQueue<NatsPersistentCall>()
-            val replyLost = AtomicBoolean(true)
-            val loseFirstReply: (NatsPersistentInterceptor) -> NatsPersistentInterceptor = { transactional ->
-                NatsPersistentInterceptor { call ->
-                    deliveries += call
-                    val reply = transactional.intercept(call)
-                    if (replyLost.compareAndSet(true, false)) throw NatsRedeliveryException("reply lost after commit")
-                    reply
-                }
-            }
-
-            withInstance(vendor, loseFirstReply) { instance, caller ->
-                val response = caller.service<MicroserviceTestService>().storedCount(StoredCountRequest())
-
-                assertEquals(1, response.count)
-                assertEquals(1, instance.service.storedCountRuns.get())
-                assertEquals(1, instance.database.entryCount(instance.r2dbc, RecordingTestService.RPC_ENTRY))
-                assertEquals(listOf(1L, 2L), deliveries.map { it.deliveryCount })
-                assertEquals(1, deliveries.map { it.messageId }.distinct().size)
+    fun `a persistent rpc whose reply was lost after the commit is answered with the stored reply`(
+        vendor: TestVendor,
+    ) = runBlocking {
+        val deliveries = ConcurrentLinkedQueue<NatsPersistentCall>()
+        val replyLost = AtomicBoolean(true)
+        val loseFirstReply = { transactional: NatsPersistentInterceptor ->
+            NatsPersistentInterceptor { call ->
+                deliveries += call
+                val reply = transactional.intercept(call)
+                if (replyLost.compareAndSet(
+                        true,
+                        false,
+                    )
+                ) throw NatsRedeliveryException("reply lost after commit")
+                reply
             }
         }
+
+        withInstance(vendor, loseFirstReply) { instance, caller ->
+            val response = caller.service<MicroserviceTestService>()
+                .storedCount(StoredCountRequest())
+
+            assertEquals(1, response.count)
+            assertEquals(1, instance.service.storedCountRuns.get())
+            assertEquals(
+                1,
+                instance.database.entryCount(instance.r2dbc, RecordingTestService.RPC_ENTRY),
+            )
+            assertEquals(listOf(1L, 2L), deliveries.map { it.deliveryCount })
+            assertEquals(1, deliveries.map { it.messageId }.distinct().size)
+        }
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `a dead-letter replay of a committed fire call does not run the handler again`(vendor: TestVendor) =
-        runBlocking {
-            val deliveries = ConcurrentLinkedQueue<NatsPersistentCall>()
-            val deadLetterFirst = AtomicBoolean(true)
-            val deadLetterAfterCommit: (NatsPersistentInterceptor) -> NatsPersistentInterceptor = { transactional ->
-                NatsPersistentInterceptor { call ->
-                    deliveries += call
-                    val reply = transactional.intercept(call)
-                    if (deadLetterFirst.compareAndSet(true, false)) {
-                        NatsPersistentReply.error(IllegalStateException("acknowledgement lost after commit"))
-                    } else {
-                        reply
-                    }
-                }
-            }
-            val entry = "dlq-${vendor.name.lowercase()}"
+    fun `a dead-letter replay of a committed fire call does not run the handler again`(vendor: TestVendor) = runBlocking {
+        val deliveries = ConcurrentLinkedQueue<NatsPersistentCall>()
+        val deadLetterFirst = AtomicBoolean(true)
+        val deadLetterAfterCommit = { transactional: NatsPersistentInterceptor ->
+            NatsPersistentInterceptor { call ->
+                deliveries += call
+                val reply = transactional.intercept(call)
 
-            TestNats.rawConnection().use { raw ->
-                withInstance(vendor, deadLetterAfterCommit) { instance, caller ->
-                    val deadBefore = raw.streamMessageCount(DLQ_STREAM)
-                    caller.service<MicroserviceTestService>().store(StoreRequest(entry))
-                    eventually("the message must be dead-lettered") {
-                        raw.streamMessageCount(DLQ_STREAM) == deadBefore + 1
-                    }
-
-                    val dead = raw.jetStreamManagement().getLastMessage(DLQ_STREAM, DLQ_SUBJECT)
-                    val deadHeaders = checkNotNull(dead.headers)
-                    raw.jetStream().publish(deadHeaders.getFirst(DEAD_SUBJECT_HEADER), Headers(deadHeaders), dead.data)
-
-                    eventually("the replay must be delivered") { deliveries.size == 2 }
-                    eventually("the replay must be acknowledged") { raw.streamMessageCount(WORK_QUEUE_STREAM) == 0L }
-                    assertEquals(1, deliveries.map { it.messageId }.distinct().size)
-                    assertEquals(1, instance.service.storeRunsOf(entry))
-                    assertEquals(1, instance.database.entryCount(instance.r2dbc, entry))
+                if (deadLetterFirst.compareAndSet(true, false)) {
+                    NatsPersistentReply.error(
+                        IllegalStateException("acknowledgement lost after commit"),
+                    )
+                } else {
+                    reply
                 }
             }
         }
+        val entry = "dlq-${vendor.name.lowercase()}"
+
+        TestNats.rawConnection().use { raw ->
+            withInstance(vendor, deadLetterAfterCommit) { instance, caller ->
+                val deadBefore = raw.streamMessageCount(DLQ_STREAM)
+                caller.service<MicroserviceTestService>().store(StoreRequest(entry))
+                eventually("the message must be dead-lettered") {
+                    raw.streamMessageCount(DLQ_STREAM) == deadBefore + 1
+                }
+
+                val dead = raw.jetStreamManagement().getLastMessage(DLQ_STREAM, DLQ_SUBJECT)
+                val deadHeaders = checkNotNull(dead.headers)
+                raw.jetStream().publish(
+                    deadHeaders.getFirst(DEAD_SUBJECT_HEADER),
+                    Headers(deadHeaders),
+                    dead.data,
+                )
+
+                eventually("the replay must be delivered") { deliveries.size == 2 }
+                eventually("the replay must be acknowledged") {
+                    raw.streamMessageCount(
+                        WORK_QUEUE_STREAM,
+                    ) == 0L
+                }
+                assertEquals(1, deliveries.map { it.messageId }.distinct().size)
+                assertEquals(1, instance.service.storeRunsOf(entry))
+                assertEquals(1, instance.database.entryCount(instance.r2dbc, entry))
+            }
+        }
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
@@ -126,7 +144,9 @@ class TransactionalServiceIT {
             val entries = (1..20).map { "event-$it" }
 
             val service = caller.service<MicroserviceTestService>()
-            entries.forEach { service.store(StoreRequest(it)) }
+            for (entry in entries) {
+                service.store(StoreRequest(entry))
+            }
 
             eventually("all events must arrive") { received.eventIds.size >= entries.size }
             delay(1.seconds) // a duplicate would arrive within this window
@@ -137,39 +157,52 @@ class TransactionalServiceIT {
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
-    fun `events of a handler carry the origin of the client the service is registered on`(vendor: TestVendor) =
-        runBlocking {
-            withInstance(vendor) { instance, caller ->
-                val own = OriginListener()
-                val foreign = OriginListener()
-                instance.serviceClient.registerListener(own)
-                caller.registerListener(foreign)
-                val entry = "origin-${vendor.name.lowercase()}"
+    fun `events of a handler carry the origin of the client the service is registered on`(vendor: TestVendor) = runBlocking {
+        withInstance(vendor) { instance, caller ->
+            val own = OriginListener()
+            val foreign = OriginListener()
+            instance.serviceClient.registerListener(own)
+            caller.registerListener(foreign)
+            val entry = "origin-${vendor.name.lowercase()}"
 
-                caller.service<MicroserviceTestService>().store(StoreRequest(entry))
+            caller.service<MicroserviceTestService>().store(StoreRequest(entry))
 
-                eventually("the event must reach both clients") { own.all.isNotEmpty() && foreign.all.isNotEmpty() }
-                delay(1.seconds) // an event the own client does not ignore would arrive within this window
-                val serviceOrigin = own.all.single().origin.orEmpty()
-                assertTrue(serviceOrigin.startsWith("${instance.serviceClient.name}@"), serviceOrigin)
-                assertEquals(listOf(ReceivedOrigin(entry, serviceOrigin, isFromThisClient = true)), own.all.toList())
-                assertEquals(emptyList(), own.ignoringOwn.toList(), "ignoreFromThisClient must skip the event")
-                val foreignView = ReceivedOrigin(entry, serviceOrigin, isFromThisClient = false)
-                assertEquals(listOf(foreignView), foreign.all.toList())
-                assertEquals(listOf(foreignView), foreign.ignoringOwn.toList())
+            eventually("the event must reach both clients") {
+                own.all.isNotEmpty() && foreign.all.isNotEmpty()
             }
+            // an event the own client does not ignore would arrive within this window
+            delay(1.seconds)
+            val serviceOrigin = own.all.single().origin.orEmpty()
+            assertTrue(serviceOrigin.startsWith("${instance.serviceClient.name}@"), serviceOrigin)
+            assertEquals(
+                listOf(ReceivedOrigin(entry, serviceOrigin, isFromThisClient = true)),
+                own.all.toList(),
+            )
+            assertEquals(
+                emptyList(),
+                own.ignoringOwn.toList(),
+                "ignoreFromThisClient must skip the event",
+            )
+            val foreignView = ReceivedOrigin(entry, serviceOrigin, isFromThisClient = false)
+            assertEquals(listOf(foreignView), foreign.all.toList())
+            assertEquals(listOf(foreignView), foreign.ignoringOwn.toList())
         }
+    }
 
     @ParameterizedTest
     @EnumSource(TestVendor::class)
     fun `the event of a handler cancelled after its commit is published once`(vendor: TestVendor) = runBlocking {
         val deliveries = ConcurrentLinkedQueue<NatsPersistentCall>()
         val cancelFirst = AtomicBoolean(true)
-        val cancelAfterCommit: (NatsPersistentInterceptor) -> NatsPersistentInterceptor = { transactional ->
+        val cancelAfterCommit = { transactional: NatsPersistentInterceptor ->
             NatsPersistentInterceptor { call ->
                 deliveries += call
                 val reply = transactional.intercept(call)
-                if (cancelFirst.compareAndSet(true, false)) throw CancellationException("timed out after the commit")
+                if (cancelFirst.compareAndSet(
+                        true,
+                        false,
+                    )
+                ) throw CancellationException("timed out after the commit")
                 reply
             }
         }
@@ -184,7 +217,11 @@ class TransactionalServiceIT {
 
                 eventually("the committed event must arrive") { entry in received.messages }
                 eventually("the cancelled message must be redelivered") { deliveries.size == 2 }
-                eventually("the redelivery must be acknowledged") { raw.streamMessageCount(WORK_QUEUE_STREAM) == 0L }
+                eventually("the redelivery must be acknowledged") {
+                    raw.streamMessageCount(
+                        WORK_QUEUE_STREAM,
+                    ) == 0L
+                }
                 delay(1.seconds) // a duplicate from the redelivery would arrive within this window
                 assertEquals(listOf(entry), received.messages)
                 assertEquals(1, instance.service.storeRunsOf(entry))
@@ -204,14 +241,22 @@ class TransactionalServiceIT {
                 val entries = (1..30).map { "shared-$it" }
 
                 val service = caller.service<MicroserviceTestService>()
-                entries.forEach { service.store(StoreRequest(it)) }
+                for (entry in entries) {
+                    service.store(StoreRequest(entry))
+                }
 
                 eventually("every entry must be stored") {
-                    entries.all { first.service.storeRunsOf(it) + second.service.storeRunsOf(it) == 1 }
+                    entries.all {
+                        first.service.storeRunsOf(it) + second.service.storeRunsOf(it) == 1
+                    }
                 }
                 eventually("every event must arrive") { received.eventIds.size >= entries.size }
                 delay(1.seconds)
-                entries.forEach { assertEquals(1, database.entryCount(first.r2dbc, it), it) }
+
+                for (entry in entries) {
+                    assertEquals(1, database.entryCount(first.r2dbc, entry), entry)
+                }
+
                 assertEquals(entries.size, received.eventIds.distinct().size)
                 assertEquals(entries.size, received.eventIds.size)
             }
@@ -232,28 +277,49 @@ class TransactionalServiceIT {
     ) = withInstance(vendor.freshDatabase(), wrap, block)
 
     /**
-     * Runs [block] against one instance of the service: a context with the reliability auto-configuration whose
-     * interceptor provider supplies the interceptor of the registered service.
+     * Runs [block] against one instance of the service: a context with the reliability
+     * auto-configuration whose interceptor provider supplies the interceptor of the registered
+     * service.
      */
     private suspend fun withInstance(
         database: TestDatabase,
         wrap: (NatsPersistentInterceptor) -> NatsPersistentInterceptor = { it },
         block: suspend (Instance, NatsClient) -> Unit,
     ) = database.open("instance") {
-        beanFactory.registerSingleton("microserviceInfo", MicroserviceInfo(OWNER, Path.of("unused")))
+        beanFactory.registerSingleton(
+            "microserviceInfo",
+            MicroserviceInfo(OWNER, Path.of("unused")),
+        )
         register(MicroserviceReliabilityAutoConfiguration::class.java)
     }.use { opened ->
         val context = opened.context
         val service = RecordingTestService(opened.database, context.getBean<TransactionalEvents>())
         val serviceClient = TestClients.create("service")
         val caller = TestClients.create("caller")
+
         try {
             val provider = context.getBean<NatsServiceInterceptorProvider>()
-            val interceptor = checkNotNull(provider.interceptorFor(service, service.javaClass, serviceClient)) {
+            val interceptor = checkNotNull(
+                provider.interceptorFor(
+                    service,
+                    service.javaClass,
+                    serviceClient,
+                ),
+            ) {
                 "The provider must handle a @NatsTransactional service"
             }
             serviceClient.registerService<MicroserviceTestService>(service, wrap(interceptor))
-            withContext(Dispatchers.Default) { block(Instance(database, opened.database, service, serviceClient), caller) }
+            withContext(Dispatchers.Default) {
+                block(
+                    Instance(
+                        database,
+                        opened.database,
+                        service,
+                        serviceClient,
+                    ),
+                    caller,
+                )
+            }
         } finally {
             withContext(Dispatchers.IO) {
                 caller.close()

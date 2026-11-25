@@ -4,8 +4,10 @@ import com.google.common.flogger.StackSize
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.api.nms.listener.NmsClientboundPacketListener
 import dev.slne.surf.api.paper.api.nms.listener.NmsServerboundPacketListener
+import dev.slne.surf.api.paper.api.nms.listener.resolvePacketClass
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.common.InternalNmsBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.nms.listener.packets.clientbound.NmsClientboundPacket
 import dev.slne.surf.api.paper.nms.listener.packets.serverbound.NmsServerboundPacket
 import dev.slne.surf.api.paper.packet.listener.listener.PacketListenerResult
@@ -14,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
     private typealias PacketListenerMap<T> = ConcurrentHashMap<Class<*>, CopyOnWriteArraySet<T>>
 
@@ -23,10 +26,11 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
     private val clientboundPacketListeners = PacketListenerMap<NmsClientboundPacketListener<*>>()
 
     override fun registerServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val packetClass = listener.packetClass
-        val added =
-            serverboundPacketListeners.computeIfAbsent(packetClass) { CopyOnWriteArraySet() }
-                .add(listener)
+        val packetClass = listener.resolvePacketClass()
+        val added = serverboundPacketListeners.computeIfAbsent(packetClass) {
+            CopyOnWriteArraySet()
+        }
+            .add(listener)
 
         if (!added) {
             log.atWarning()
@@ -36,7 +40,8 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
     }
 
     override fun unregisterServerboundPacketListener(listener: NmsServerboundPacketListener<*>) {
-        val removed = serverboundPacketListeners[listener.packetClass]?.remove(listener) == true
+        val packetClass = listener.resolvePacketClass()
+        val removed = serverboundPacketListeners[packetClass]?.remove(listener) == true
 
         if (!removed) {
             log.atWarning()
@@ -46,10 +51,11 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
     }
 
     override fun registerClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
-        val packetClass = listener.packetClass
-        val added =
-            clientboundPacketListeners.computeIfAbsent(packetClass) { CopyOnWriteArraySet() }
-                .add(listener)
+        val packetClass = listener.resolvePacketClass()
+        val added = clientboundPacketListeners.computeIfAbsent(packetClass) {
+            CopyOnWriteArraySet()
+        }
+            .add(listener)
 
         if (!added) {
             log.atWarning()
@@ -59,7 +65,8 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
     }
 
     override fun unregisterClientboundPacketListener(listener: NmsClientboundPacketListener<*>) {
-        val removed = clientboundPacketListeners[listener.packetClass]?.remove(listener) == true
+        val packetClass = listener.resolvePacketClass()
+        val removed = clientboundPacketListeners[packetClass]?.remove(listener) == true
 
         if (!removed) {
             log.atWarning()
@@ -77,6 +84,7 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
         val listener = serverboundPacketListeners[clazz] ?: return packet
 
         var cancel = false
+
         for (listener in listener) {
             listener as NmsServerboundPacketListener<Packet>
             val result = try {
@@ -106,6 +114,7 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
         if (listeners.isEmpty()) return packet
 
         var cancel = false
+
         for (listener in listeners) {
             listener as NmsClientboundPacketListener<Packet>
             val result = try {
@@ -113,7 +122,9 @@ class V1_21_11SurfPaperNmsBridgeImpl : InternalNmsBridge {
             } catch (e: Throwable) {
                 log.atSevere()
                     .withCause(e)
-                    .log("Failed to handle clientbound packet ${packet.packetClass} for listener $listener")
+                    .log(
+                        "Failed to handle clientbound packet ${packet.packetClass} for listener $listener",
+                    )
                 PacketListenerResult.CONTINUE
             }
 

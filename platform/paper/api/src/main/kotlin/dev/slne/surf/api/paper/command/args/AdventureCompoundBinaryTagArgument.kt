@@ -16,8 +16,8 @@ import net.kyori.adventure.nbt.TagStringIO
 class AdventureCompoundBinaryTagArgument(nodeName: String) :
     SafeOverrideableArgument<CompoundBinaryTag, CompoundBinaryTag>(
         nodeName,
-        SurfPaperNmsCommandArgumentTypesBridge.INSTANCE::compoundTag,
-        { TagStringIO.tagStringIO().asString(it) }
+        SurfPaperNmsCommandArgumentTypesBridge.instance::compoundTag,
+        { TagStringIO.tagStringIO().asString(it) },
     ) {
     override fun getPrimitiveType(): Class<CompoundBinaryTag> {
         return CompoundBinaryTag::class.java
@@ -30,30 +30,36 @@ class AdventureCompoundBinaryTagArgument(nodeName: String) :
     override fun <Source> parseArgument(
         ctx: CommandContext<Source>,
         key: String,
-        previousArgs: CommandArguments
+        previousArgs: CommandArguments,
     ): CompoundBinaryTag {
-        return SurfPaperNmsCommandArgumentTypesBridge.INSTANCE.getCompoundTag(ctx, key)
+        return SurfPaperNmsCommandArgumentTypesBridge.instance.getCompoundTag(ctx, key)
     }
 }
 
 inline fun CommandTree.adventureCompoundBinaryTagArgument(
     nodeName: String,
     optional: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
-): CommandTree =
-    then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+    block: Argument<*>.() -> Unit = {},
+): CommandTree {
+    return then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun Argument<*>.adventureCompoundBinaryTagArgument(
     nodeName: String,
     optional: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
-): Argument<*> =
-    then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
-
+    block: Argument<*>.() -> Unit = {},
+): Argument<*> {
+    return then(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+}
 
 inline fun CommandAPICommand.adventureCompoundBinaryTagArgument(
     nodeName: String,
     optional: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
-): CommandAPICommand =
-    withArguments(AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(block))
+    block: Argument<*>.() -> Unit = {},
+): CommandAPICommand {
+    return withArguments(
+        AdventureCompoundBinaryTagArgument(nodeName).setOptional(optional).apply(
+            block,
+        ),
+    )
+}

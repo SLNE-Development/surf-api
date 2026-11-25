@@ -1,6 +1,5 @@
 package dev.slne.surf.api.common.random
 
-import dev.slne.surf.api.common.random.RandomSelector.Companion.fromWeightedIterable
 import kotlinx.coroutines.flow.Flow
 import java.util.random.RandomGenerator
 
@@ -8,9 +7,10 @@ import java.util.random.RandomGenerator
  * A generic interface for selecting random elements from a collection with support for both uniform
  * and weighted probability distributions.
  *
- * [RandomSelector] provides an efficient and statistically correct implementation for random selection
- * using Apache Commons Math3's [EnumeratedDistribution]. It supports various collection types including
- * [Iterable] and [Flow], with optional custom [RandomGenerator] instances for reproducibility.
+ * [RandomSelector] provides an efficient and statistically correct implementation for random
+ * selection using Apache Commons Math3's [EnumeratedDistribution]. It supports various collection
+ * types including [Iterable] and [Flow], with optional custom [RandomGenerator] instances for
+ * reproducibility.
  *
  * ## Key Features
  * - **Uniform Selection**: Equal probability for all elements
@@ -103,24 +103,6 @@ interface RandomSelector<E> {
     /**
      * Selects and returns a single random element based on the configured probability distribution.
      *
-     * This method is deprecated in favor of specifying the [RandomGenerator] at selector creation time.
-     * The generator parameter here is only used for backward compatibility and creates a temporary
-     * distribution instance.
-     *
-     * @param randomGenerator The random number generator to use for this selection.
-     * @return A randomly selected element according to the probability distribution.
-     * @see pick()
-     */
-    @Deprecated(
-        message = "Use pick() without parameters. RandomGenerator can be specified at creation time.",
-        replaceWith = ReplaceWith("pick()"),
-        level = DeprecationLevel.WARNING
-    )
-    fun pick(randomGenerator: RandomGenerator): E
-
-    /**
-     * Selects and returns a single random element based on the configured probability distribution.
-     *
      * For uniform selectors, each element has equal probability. For weighted selectors, elements
      * are selected with probability proportional to their weights.
      *
@@ -186,22 +168,6 @@ interface RandomSelector<E> {
      * @throws IllegalStateException if the selector is based on an infinite flow.
      */
     fun pickOrNull(successRate: Double): E?
-
-    /**
-     * Creates an infinite [Flow] that continuously emits random elements.
-     *
-     * This method is deprecated in favor of specifying the [RandomGenerator] at selector creation time.
-     *
-     * @param randomGenerator The random number generator to use for selections.
-     * @return An infinite [Flow] of randomly selected elements.
-     * @see flow()
-     */
-    @Deprecated(
-        message = "Use flow() without parameters. RandomGenerator can be specified at creation time.",
-        replaceWith = ReplaceWith("flow()"),
-        level = DeprecationLevel.WARNING
-    )
-    fun flow(randomGenerator: RandomGenerator): Flow<E>
 
     /**
      * Creates an infinite [Flow] that continuously emits random elements.
@@ -328,17 +294,17 @@ interface RandomSelector<E> {
          * @return A [RandomSelector] with uniform selection probability.
          * @throws IllegalArgumentException if the iterable is empty.
          */
-        @JvmOverloads
         fun <E> fromIterable(
             iterable: Iterable<E>,
-            randomGenerator: RandomGenerator? = null
+            randomGenerator: RandomGenerator? = null,
         ): RandomSelector<E> = RandomSelectorImpl.fromIterable(iterable, randomGenerator.toApache())
 
         /**
          * Creates a [RandomSelector] with uniform probability distribution from an [Iterable].
          *
-         * This overload accepts an Apache Commons Math [org.apache.commons.math3.random.RandomGenerator]
-         * directly for advanced use cases or interoperability with existing Apache Commons code.
+         * This overload accepts an Apache Commons Math
+         * [org.apache.commons.math3.random.RandomGenerator] directly for advanced use cases or
+         * interoperability with existing Apache Commons code.
          *
          * @param E The type of elements in the collection.
          * @param iterable The source collection of elements. Must not be empty.
@@ -348,14 +314,15 @@ interface RandomSelector<E> {
          */
         fun <E> fromIterable(
             iterable: Iterable<E>,
-            randomGenerator: org.apache.commons.math3.random.RandomGenerator
+            randomGenerator: org.apache.commons.math3.random.RandomGenerator,
         ): RandomSelector<E> = RandomSelectorImpl.fromIterable(iterable, randomGenerator)
 
         /**
-         * Creates a [RandomSelector] with custom weighted probability distribution from an [Iterable].
+         * Creates a [RandomSelector] with custom weighted probability distribution from an
+         * [Iterable].
          *
-         * Elements are selected with probability proportional to their weights. For example, an element
-         * with weight 2.0 is twice as likely to be selected as an element with weight 1.0.
+         * Elements are selected with probability proportional to their weights. For example, an
+         * element with weight 2.0 is twice as likely to be selected as an element with weight 1.0.
          *
          * **Weight Requirements:**
          * - All weights must be positive (> 0)
@@ -383,19 +350,24 @@ interface RandomSelector<E> {
          * @return A [RandomSelector] with weighted selection probability.
          * @throws IllegalArgumentException if the iterable is empty or any weight is invalid.
          */
-        @JvmOverloads
         fun <E> fromWeightedIterable(
             iterable: Iterable<E>,
             randomGenerator: RandomGenerator? = null,
             weighter: Weighter<E>,
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator.toApache())
+        ): RandomSelector<E> {
+            return RandomSelectorImpl.fromWeightedIterable(
+                iterable,
+                weighter,
+                randomGenerator.toApache(),
+            )
+        }
 
         /**
-         * Creates a [RandomSelector] with custom weighted probability distribution from an [Iterable].
+         * Creates a [RandomSelector] with custom weighted probability distribution from an
+         * [Iterable].
          *
-         * This overload accepts an Apache Commons Math [org.apache.commons.math3.random.RandomGenerator]
-         * directly for advanced use cases.
+         * This overload accepts an Apache Commons Math
+         * [org.apache.commons.math3.random.RandomGenerator] directly for advanced use cases.
          *
          * @param E The type of elements in the collection.
          * @param iterable The source collection of elements. Must not be empty.
@@ -408,14 +380,16 @@ interface RandomSelector<E> {
             iterable: Iterable<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator,
             weighter: Weighter<E>,
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator)
+        ): RandomSelector<E> {
+            return RandomSelectorImpl.fromWeightedIterable(iterable, weighter, randomGenerator)
+        }
 
         /**
          * Creates a [RandomSelector] from an [Iterable] of elements implementing [Weighted].
          *
-         * This is a convenience method for types that already have a weight property. The [Weighted.weight]
-         * property is used automatically without needing to specify a weighter function.
+         * This is a convenience method for types that already have a weight property. The
+         * [Weighted.weight] property is used automatically without needing to specify a weighter
+         * function.
          *
          * **Example:**
          * ```kotlin
@@ -435,22 +409,22 @@ interface RandomSelector<E> {
          * @return A [RandomSelector] with weighted selection probability.
          * @throws IllegalArgumentException if the iterable is empty or any weight is invalid.
          */
-        @JvmOverloads
         fun <E : Weighted> fromWeightedIterable(
             iterable: Iterable<E>,
-            randomGenerator: RandomGenerator? = null
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromWeightedIterable(
+            randomGenerator: RandomGenerator? = null,
+        ): RandomSelector<E> {
+            return RandomSelectorImpl.fromWeightedIterable(
                 iterable,
                 { it.weight },
-                randomGenerator.toApache()
+                randomGenerator.toApache(),
             )
+        }
 
         /**
          * Creates a [RandomSelector] from an [Iterable] of elements implementing [Weighted].
          *
-         * This overload accepts an Apache Commons Math [org.apache.commons.math3.random.RandomGenerator]
-         * directly.
+         * This overload accepts an Apache Commons Math
+         * [org.apache.commons.math3.random.RandomGenerator] directly.
          *
          * @param E The type of elements, which must implement [Weighted].
          * @param iterable The source collection of weighted elements. Must not be empty.
@@ -460,9 +434,10 @@ interface RandomSelector<E> {
          */
         fun <E : Weighted> fromWeightedIterable(
             iterable: Iterable<E>,
-            randomGenerator: org.apache.commons.math3.random.RandomGenerator
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromWeightedIterable(iterable, { it.weight }, randomGenerator)
+            randomGenerator: org.apache.commons.math3.random.RandomGenerator,
+        ): RandomSelector<E> {
+            return RandomSelectorImpl.fromWeightedIterable(iterable, { it.weight }, randomGenerator)
+        }
 
         /**
          * Creates a [RandomSelector] from a **finite** weighted [Flow].
@@ -496,19 +471,19 @@ interface RandomSelector<E> {
          * @return A [RandomSelector] with weighted selection probability.
          * @throws IllegalArgumentException if the flow is empty or any weight is invalid.
          */
-        @JvmOverloads
         suspend fun <E> fromFlow(
             flow: Flow<E>,
             randomGenerator: RandomGenerator? = null,
-            weighter: Weighter<E>
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromFlow(flow, weighter, randomGenerator.toApache())
+            weighter: Weighter<E>,
+        ): RandomSelector<E> {
+            return RandomSelectorImpl.fromFlow(flow, weighter, randomGenerator.toApache())
+        }
 
         /**
          * Creates a [RandomSelector] from a **finite** weighted [Flow].
          *
-         * This overload accepts an Apache Commons Math [org.apache.commons.math3.random.RandomGenerator]
-         * directly.
+         * This overload accepts an Apache Commons Math
+         * [org.apache.commons.math3.random.RandomGenerator] directly.
          *
          * @param E The type of elements in the flow.
          * @param flow The finite source flow of elements. Must emit at least one element.
@@ -520,8 +495,7 @@ interface RandomSelector<E> {
         suspend fun <E> fromFlow(
             flow: Flow<E>,
             randomGenerator: org.apache.commons.math3.random.RandomGenerator,
-            weighter: Weighter<E>
-        ): RandomSelector<E> =
-            RandomSelectorImpl.fromFlow(flow, weighter, randomGenerator)
+            weighter: Weighter<E>,
+        ): RandomSelector<E> = RandomSelectorImpl.fromFlow(flow, weighter, randomGenerator)
     }
 }

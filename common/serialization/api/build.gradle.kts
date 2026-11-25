@@ -4,8 +4,8 @@ plugins {
 }
 
 dependencies {
-    api(libs.kotlin.stdlib)
-    api(libs.bundles.kotlin.serialization)
+    compileOnlyApi(libs.kotlin.stdlib)
+    compileOnlyApi(libs.bundles.kotlin.serialization)
 
     compileOnlyApi(libs.adventure.api)
     compileOnlyApi(libs.adventure.serializer.gson)

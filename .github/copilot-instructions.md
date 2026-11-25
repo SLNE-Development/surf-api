@@ -41,9 +41,11 @@ Exceptions:
 - `infra/` modules keep their nested paths and rename every `surf-` segment to `surf-api-`:
   `infra/redis/surf-redis-api` -> `:surf-api-redis:surf-api-redis-api`, published as
   `surf-api-redis-api`.
-- `tooling/gradle-plugin` is an included build (`surf-api-gradle-plugin`), not a module; its
-  `processor` directory is the module `:surf-api-processor`.
-- `surf-api-generator` sits at the repository root under its own name.
+- `tooling/gradle-plugin` is an included build (`surf-api-gradle-plugin`), not a module.
+- `tooling/registry-key-generator` (`surf-api-registry-key-generator`, local only) regenerates the
+  keys in `foundation/registry-keys`.
+- `tooling/nms-module-generator` is an included build that scaffolds a new Paper NMS version
+  module.
 
 Every platform follows an **API/implementation split**, carried by the module suffix:
 
@@ -86,8 +88,9 @@ Every platform follows an **API/implementation split**, carried by the module su
   `velocity-shared-bean-*` boot tests, `surf-api-minestom-example`,
   `surf-api-minestom-example-plugin`
 
-`local/` and `surf-api-generator` are skipped when `CI=true`. `surf-api-minestom-luckperms-impl` is
-only included once `vendor/LuckPerms` has been generated; CI fails without it.
+`local/` and `surf-api-registry-key-generator` are skipped when `CI=true`.
+`surf-api-minestom-luckperms-impl` is only included once `vendor/LuckPerms` has been generated; CI
+fails without it.
 
 ### Spring contexts
 
@@ -134,17 +137,18 @@ final; plugin code goes into beans. The plugin main instance is a Spring-managed
 `@Autowired` members, `@PostConstruct`, every `BeanPostProcessor`, and `@PreDestroy` /
 `DisposableBean.destroy()` when its context closes.
 
-Plugins inject surf-api's services (`SurfConfigApi`, `SurfEventBus`, `CoroutineScope`,
-`PaperDispatchers`, `ViewFrame` or `ViewFrameAccessor`). The companion accessors (`INSTANCE`,
-`instance`) and `surfBean<T>()` are `@InternalSurfApi`: they exist for surf-api's own static entry
-points, which have no constructor to inject into. `surfBean<T>()` resolves a root-context bean on
-first access, which keeps class load order out of the behavior.
+Plugins inject surf-api's services (`ConfigHandle`, `SurfEventBus`, `CoroutineScope`,
+`PaperDispatchers`, `ViewFrame` or `ViewFrameAccessor`). The companion accessors (`instance`)
+and `surfBean<T>()` are `@InternalSurfApi`: they exist for surf-api's own static entry points,
+which have no constructor to inject into. `surfBean<T>()` resolves a root-context bean on first
+access, which keeps class load order out of the behavior, and resolves it again when the platform
+installs another root context. A class that is itself a bean injects the dependency instead.
 
 ### NMS Bridge Pattern
 
 NMS code is abstracted behind bridge interfaces in `surf-api-paper-api`
-(`dev.slne.surf.api.paper.nms.bridges`). A `@Service` proxy in `surf-api-paper-impl` delegates to
-the `NmsProvider` of the running server version:
+(`dev.slne.surf.api.paper.nms.bridges`). Each version module (`surf-api-paper-nms-v*`) implements
+them as beans that exist only when the server runs that version:
 
 ```kotlin
 // In surf-api-paper-api: the contract, plus the accessor surf-api's static entry points read through
@@ -154,27 +158,28 @@ interface SurfPaperNmsCommonBridge {
 
     companion object {
         @InternalSurfApi
-        val INSTANCE get() = bridge
+        val instance by surfBean<SurfPaperNmsCommonBridge>()
     }
 }
 
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsCommonBridge>()
+// In a version module: found by the module's configuration, not by the root scan
+@NmsComponent
+class V26_3SurfPaperNmsCommonBridgeImpl : SurfPaperNmsCommonBridge { /* ... */ }
 
-// In surf-api-paper-impl: an ordinary bean
-@NmsUseWithCaution
-@Service
-class SurfPaperNmsCommonBridgeProxy :
-    SurfPaperNmsCommonBridge by NmsProvider.current.createCommonBridge()
+// One per version module; registered only for the selected NmsVersion
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnMinecraftVersion(NmsVersion.V26_3)
+@ComponentScan(
+    useDefaultFilters = false,
+    includeFilters = [ComponentScan.Filter(NmsComponent::class)],
+)
+class V26_3NmsConfiguration
 ```
 
-Plugins inject `SurfPaperNmsCommonBridge`. Each version module (`surf-api-paper-nms-v*`) holds an
-`@NmsProviderMarker` provider and applies the `surf.ksp-processor` convention next to
-`surf.module-impl`. The KSP processor writes the provider index under
-`META-INF/surf-api/nms-providers/` and the `@GenerateReflection` accessors. A module without the
-convention compiles, but `NmsProvider` fails at runtime with "No NmsProvider implementations found".
-`core-convention` applies no KSP; projects that apply a surf Gradle plugin, the `infra/` modules
-included, get the processor from that plugin.
+Plugins inject `SurfPaperNmsCommonBridge`. The Paper runtime selects the version from
+`NmsVersion`: the server's own, else the newest older one. The 26.x modules apply
+`surf.nms-shared-26`, which compiles the shared sources of `platform/paper/nms/shared-26` into each
+of them; a module keeps only the files that differ.
 
 ## Key Conventions
 
@@ -217,7 +222,7 @@ dev.slne.surf.api.core.server.*          # core implementations (surf-api-core-i
 dev.slne.surf.api.core.generated.*       # registry keys (surf-api-registry-keys)
 dev.slne.surf.api.paper.*                # Paper API (extensions, DSLs, sidebars)
 dev.slne.surf.api.paper.nms.bridges.*    # Paper NMS bridge interfaces
-dev.slne.surf.api.paper.nms.common.*     # NmsProvider and the version-module contracts
+dev.slne.surf.api.paper.nms.common.*     # The contracts the NMS version modules implement
 dev.slne.surf.api.paper.server.*         # Paper implementations
 dev.slne.surf.api.minestom.* / .server.* # Minestom
 dev.slne.surf.api.velocity.* / .server.* # Velocity
@@ -272,9 +277,9 @@ appended when `snapshot=true`). `mcVersion` names the Minecraft version the API 
   implement `SurfLifecycle` only when the bean has work in a platform phase, and put code that uses
   an optional plugin into a `@ConditionalOnPlugin` adapter.
 - **New bridges**: define the interface in `surf-api-paper-api` with an `@InternalSurfApi` companion
-  `INSTANCE` that reads a private `by surfBean<T>()`, and annotate the `surf-api-paper-impl` proxy
-  with `@Service`.
-- **New NMS version modules**: apply `surf.ksp-processor` next to `surf.module-impl`.
+  `val instance by surfBean<T>()`, and implement it as an `@NmsComponent` class in every version
+  module (once in `shared-26` for the 26.x modules).
+- **New 26.x NMS version modules**: apply `surf.nms-shared-26` next to `surf.module-impl`.
 - **New extension functions**: place in a file named `{topic}-extensions.kt` in the appropriate
   `-api` module.
 - **KDoc**: required for all public API members.

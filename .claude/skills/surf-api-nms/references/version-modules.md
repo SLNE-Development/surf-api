@@ -1,8 +1,14 @@
 # Inside a version module
 
-Four exist: `platform/paper/nms/v1-21-11`, `v26-1`, `v26-2`, `v26-3`. Each carries ~50 Kotlin
-files under `src/main/kotlin/dev/slne/surf/api/paper/server/nms/<versionId>/`, where `versionId` is
-`v1_21_11`, `v26_1`, `v26_2`, `v26_3`. Every class name is prefixed with the matching `classPrefix`
+Four exist: `platform/paper/nms/v1-21-11`, `v26-1`, `v26-2`, `v26-3`. Each compiles ~50 Kotlin
+files in the package `dev.slne.surf.api.paper.server.nms.<versionId>`, where `versionId` is
+`v1_21_11`, `v26_1`, `v26_2`, `v26_3`. `v1-21-11` holds all of them itself. The 26.x modules compile
+the shared sources of `platform/paper/nms/shared-26` through the `surf.nms-shared-26`
+convention. The shared sources are written as `v26-3` (package segment `v26_3`, class prefix
+`V26_3`, set in `shared-26/template.properties`), which compiles them as they are; `v26-1` and
+`v26-2` compile copies with their own names. Each module keeps only the files that differ: about
+ten each in `v26-2` and `v26-3`, about twenty in `v26-1`. In `v26-1` and `v26-2`, a module file
+with the same path as a shared file replaces it; `v26-3` cannot override a shared file. Every class name is prefixed with the matching `classPrefix`
 (`V1_21_11`, `V26_1`, …) and carries `@Suppress("ClassName")`, because the prefix breaks Kotlin's
 naming convention.
 
@@ -14,10 +20,10 @@ are looking at a version module.
 
 | Path | Contents |
 | --- | --- |
-| `V26_3NmsProvider.kt` | the `@NmsProviderMarker(NmsVersion.V26_3)` class; one line per factory |
-| `V26_3NmsPacketBridgeHandler.kt` | `object` implementing `NmsPacketBridgeHandler`; casts `Any` to `net.minecraft.network.protocol.Packet<*>` and delegates to the packet registry |
+| `V26_3NmsConfiguration.kt` | the `@ConditionalOnMinecraftVersion(NmsVersion.V26_3)` configuration: scans the `@NmsComponent` classes and publishes `NmsPacketListeners` and the scoreboard factory through `@Bean` methods |
+| `V26_3NmsPacketBridgeHandler.kt` | `@NmsComponent` implementing `NmsPacketBridgeHandler`; casts `Any` to `net.minecraft.network.protocol.Packet<*>` and delegates to the packet registry |
 | `bridges/V26_3SurfPaperNms*BridgeImpl.kt` | one per contract: `Bridge`, `CommonBridge`, `EntityBridge`, `PortalBridge`, `PlayerBridge`, `ItemBridge`, `NbtBridge`, `GlowingBridge`, `StatsBridge`, `LootTableBridge`, `CommandArgumentTypesBridge` |
-| `bridges/V26_3LibLoaderBridgeImpl.kt`, `V26_3PacketListenerApiImpl.kt` | the two non-`Bridge`-suffixed ones |
+| `bridges/V26_3PacketListenerApiImpl.kt` | the packet listener API, the one non-`Bridge`-suffixed implementation |
 | `bridges/packets/` | `V26_3PacketOperationImpl`, `V26_3SurfPaperNmsPacketBridgesImpl`, then `block/`, `entity/`, `player/` (`PlayerPackets`, `PlayerChatPackets`, `PlayerToastPackets`) |
 | `extensions/nms-extensions.kt` | the `toNms()` / `toBukkit()` conversion layer — `CraftPlayer`, `CraftWorld`, `CraftItemStack`, `CraftBlockData`, `CraftMagicNumbers`, `PaperAdventure` |
 | `extensions/AdventureNBT.kt` | Adventure ↔ NMS NBT conversion |
@@ -25,70 +31,64 @@ are looking at a version module.
 | `listener/packets/` | `V26_3NmsPacketImpl`, `V26_3PacketRegistry`, then `clientbound/` and `serverbound/` wrapper impls |
 | `packet/listener/` | `V26_3ChannelInjector`, `V26_3CommandSendPacketBlockerListenerImpl`, `V26_3GlowingPacketListener` |
 | `packet/lore/` | `V26_3PacketLoreListener`, `V26_3PacketLoreRegistry` |
-| `reflection/` | `V26_3NmsReflections` (the `@GenerateReflection` interface), `V26_3Reflection` (the `initialize()` hook) |
+| `reflection/` | `V26_3NmsReflections`: one `@ReflectionProxy` interface per target class and the facade `object` that delegates to them |
 | `region/V26_3TickThreadGuard.kt` | Folia tick-thread checks |
 | `scoreboard/V26_3PlayerNmsScoreboardImpl.kt` | the per-player packet scoreboard behind the `sidebar/` api |
 
-No version module has a `src/main/resources` directory. Providers are discovered through the
-KSP-written `META-INF/surf-api/nms-providers/*.json`, not through `META-INF/services` — see the traps
-in `SKILL.md`.
+No version module has a `src/main/resources` directory. surf-api's root scan finds the
+configuration; see the runtime selection in `SKILL.md`.
 
-`v1-21-11` has one extra file, `reflection/V1_21_11ItemProxy.kt`, the last live
-`reflection-remapper` proxy in the tree.
+`v1-21-11`'s item bridge writes the final `Item.components` field through `unsafe`, because
+reflection proxies do not write final fields.
 
-## The provider class
+## The configuration class
 
-`V26_3NmsProvider.kt` is the only file you must get exactly right; everything else it merely points
-at.
+`V26_3NmsConfiguration.kt` (from `shared-26`) decides which beans the module contributes:
 
 ```kotlin
 @Suppress("ClassName")
 @OptIn(NmsUseWithCaution::class)
-@NmsProviderMarker(NmsVersion.V26_3)
-class V26_3NmsProvider(override val plugin: JavaPlugin) : NmsProvider {
-    override val version: NmsVersion = NmsVersion.V26_3
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnMinecraftVersion(NmsVersion.V26_3)
+@ComponentScan(
+    useDefaultFilters = false,
+    includeFilters = [ComponentScan.Filter(NmsComponent::class)],
+)
+class V26_3NmsConfiguration {
 
-    override fun createCommonBridge(): SurfPaperNmsCommonBridge = V26_3SurfPaperNmsCommonBridgeImpl()
-    override fun createGlowingBridge(): SurfPaperNmsGlowingBridge = V26_3SurfPaperNmsGlowingBridgeImpl
-    override fun getLibLoaderBridge(): LibLoaderBridge = V26_3LibLoaderBridgeImpl
-    override fun getPacketBridgeHandler(): NmsPacketBridgeHandler = V26_3NmsPacketBridgeHandler
-    // …
-
-    override fun createPacketListeners(): List<PacketListener> = listOf(
-        V26_3PacketLoreListener,
-        V26_3GlowingPacketListener,
-    )
-
-    override fun initialize() {
-        V26_3Reflection.initialize()
-        V26_3SurfPaperNmsItemBridgeImpl.CreativeOrderComparator.init()
+    @Bean
+    fun nmsPacketListeners(
+        loreListener: V26_3PacketLoreListener,
+        glowingListener: V26_3GlowingPacketListener,
+    ): NmsPacketListeners {
+        return NmsPacketListeners(listOf(loreListener, glowingListener))
     }
 
-    override fun shutdown() { /* No cleanup needed */ }
+    @Bean
+    fun nmsPlayerScoreboardFactory(): PlayerNmsScoreboardFactory {
+        return PlayerNmsScoreboardFactory(::V26_3PlayerNmsScoreboardImpl)
+    }
 }
 ```
 
-Four invariants:
+Three invariants:
 
-- The `(JavaPlugin)` constructor is mandatory — `NmsProvider.current` looks it up by exactly that
-  signature and its failure message says so.
-- `@NmsProviderMarker(NmsVersion.V26_3)` and `override val version` must agree. The marker drives
-  discovery; `version` is what gets logged and compared.
-- Some factories return a singleton `object` (no parentheses), others a fresh instance. Follow the
-  reference module rather than guessing; `createGlowingBridge`, `getLibLoaderBridge`,
-  `getPacketBridgeHandler`, `createGlowingApi` and `createChannelInjector` return objects in `v26-3`.
-- `initialize()` runs from `PacketApiLoader.onEnable()`, after `packetEvents.init()` and before any
-  packet listener is registered. Anything that resolves reflection handles or builds static caches
-  belongs here, not in a field initialiser.
+- A bean is an `@NmsComponent` class whose constructor Spring can call, with its collaborators as
+  constructor parameters; no bean is a Kotlin `object` or reached through one.
+- `@ConditionalOnMinecraftVersion` names the module's own entry; in `shared-26` that is
+  `NmsVersion.V26_3`, which the copy task rewrites for the older modules.
+- Startup work that needs the server's registries goes into a `SurfLifecycle.onEnable` of a bean,
+  as the item bridge does for `CreativeOrderComparator.init()`, not into a field initialiser.
 
 ## The build file
 
-Identical across all four modules except the bundle string:
+Identical across the 26.x modules except the bundle string; `v1-21-11` leaves out
+`surf.nms-shared-26`:
 
 ```kotlin
 plugins {
     id("surf.module-impl")
-    id("surf.ksp-processor")
+    id("surf.nms-shared-26")
     id("io.papermc.paperweight.userdev") apply true
 }
 
@@ -111,9 +111,6 @@ dependencies {
     compileOnly(libs.fastutil)
 
     compileOnly(libs.placeholder.api)
-    compileOnly(libs.reflection.remapper)
-
-    implementation(libs.bytebuddy)
 }
 
 configurations.all {
@@ -124,19 +121,17 @@ configurations.all {
 - `surf.module-impl` → `core-convention`, plus an assertion that the project name marks it as an
   implementation. `surfModuleRole` matches `-nms-v<digit>`, which is why `surf-api-paper-nms-v26-3`
   passes.
-- `surf.ksp-processor` runs `surf-api-processor`, which writes the provider JSON for
-  `@NmsProviderMarker` and the implementation of `V<prefix>NmsReflections`. Without it the module
-  compiles and then fails at runtime with `No NmsProvider implementations found`.
+- `surf.nms-shared-26` copies the shared 26.x sources into `build/generated/nms-template/kotlin`
+  with the module's package segment and class prefix, minus the files the module overrides, and
+  compiles them with the module.
 - `io.papermc.paperweight.userdev` is declared once in the root `build.gradle.kts` as
   `version "2.0.0-beta.24" apply false` and applied here.
 - `paperweight.paperDevBundle(…)` is the only per-version line. The live shapes are
   `"1.21.11-R0.1-SNAPSHOT"` (full Maven version), `"26.1+"` (open range) and `"26.2.build.+"` /
-  `"26.3.build.+"` (build-qualified range). `NmsVersion.paperDevBundle` in the generator records the
-  string a newly generated module gets and matches each existing module's value.
+  `"26.3.build.+"` (build-qualified range). `NmsVersion.paperDevBundle` records the string a newly
+  generated module gets and matches each existing module's value.
 - The generator's build-file template carries `compileOnly(libs.fastutil)` with its comment, so a
   generated `build.gradle.kts` matches the one above apart from the dev bundle string.
-- `libs.reflection.remapper` stays `compileOnly` even though only `v1-21-11` still uses it at
-  runtime; `platform/paper/impl` carries the `implementation` dependency.
 - The `spigot-api` exclusion is repeated in `platform/paper/impl/build.gradle.kts` too.
 
 ## Version drift to expect
@@ -146,15 +141,13 @@ Real examples from the tree, useful as `transformations` fodder when generating 
 - **Renamed NMS classes.** `v1-21-11` imports `net.minecraft.resources.ResourceLocation`; `v26-1`,
   `v26-2` and `v26-3` import `net.minecraft.resources.Identifier`. A `renameClass(oldFqn, newFqn)`
   transformation rewrites both the import and every in-code simple-name reference.
-- **Renamed files.** `v26-1` has `glow/entity/EntityGlowingData.kt`; `v26-2` and `v26-3` have
-  `V26_2EntityGlowingData.kt` / `V26_3EntityGlowingData.kt`. The generator rewrites `classPrefix`
-  inside paths, so a prefixed file name follows along automatically — an unprefixed one does not, and
-  needs a manual rename (or a `transformFile`).
-- **Dropped reflection.** `v1-21-11`'s `V1_21_11Reflection.initialize()` builds a
-  `ReflectionRemapper.forReobfMappingsInPaperJar()` and a `ReflectionProxyFactory`; the three 26.x
-  modules declare only an empty `initialize() = Unit`. The replacement is
-  `@GenerateReflection`, which is version-neutral source but resolves against each module's own
-  Mojang-mapped classpath.
+- **Renamed files.** The generator and the shared-source copy rewrite `classPrefix` inside paths,
+  so a prefixed file name follows along automatically — an unprefixed one does not. `v26-1`'s
+  override of `glow/entity/V26_1EntityGlowingData.kt` only replaces the shared file because both
+  carry the prefix.
+- **Reflected members.** `v26-1` has no `ServerLevel.ENTITY_COUNTER` proxy, and `v1-21-11` reflects
+  only part of the chat state. The `@ReflectionProxy` interfaces are version-neutral source, but
+  each module resolves them against its own Mojang-mapped classpath when the facade object loads.
 - **Component and data-component churn.** `V26_3SurfPaperNmsCommonBridgeImpl` reaches into
   `net.minecraft.core.component.DataComponents`,
   `net.minecraft.world.item.component.Compostable` and

@@ -8,13 +8,15 @@ import kotlin.time.TimeSource
  * Remembers the IDs of delivered events so that a listener acts on each logical event once.
  *
  * Core NATS never redelivers an event, and the JVM client publishes every event once under a new
- * [NatsEventContext.eventId]. An ID arrives twice only when a publisher sends it twice on purpose, such as a TypeScript
- * client that retries a publish with the same `eventId` or an external publisher that reuses a `Surf-Event-Id`.
+ * [NatsEventContext.eventId]. An ID arrives twice only when a publisher sends it twice on purpose,
+ * such as a TypeScript client that retries a publish with the same `eventId` or an external
+ * publisher that reuses a `Surf-Event-Id`.
  *
- * An ID is remembered for [retention] after its first delivery, and a repeat does not extend it. At most [maxEntries]
- * IDs are remembered, and the oldest is forgotten first. A repeat that arrives after its ID was forgotten counts as a
- * first delivery again, so both limits must cover the time in which a publisher repeats an event. The IDs live in
- * memory only and are lost when the process restarts.
+ * An ID is remembered for [retention] after its first delivery, and a repeat does not extend it.
+ * At most [maxEntries] IDs are remembered, and the oldest is forgotten first. A repeat that arrives
+ * after its ID was forgotten counts as a first delivery again, so both limits must cover the time
+ * in which a publisher repeats an event. The IDs live in memory only and are lost when the process
+ * restarts.
  *
  * Thread-safe. Share one instance between the listeners that must not act twice on the same event.
  *
@@ -22,7 +24,7 @@ import kotlin.time.TimeSource
  * class StatusListener(private val deduplicator: NatsEventDeduplicator = NatsEventDeduplicator()) {
  *     @NatsListener
  *     suspend fun onStatus(event: StatusChanged) {
- *         if (!deduplicator.firstDelivery()) return
+ *         if (!deduplicator.isFirstDelivery()) return
  *         println(event.status)
  *     }
  * }
@@ -49,36 +51,44 @@ public class NatsEventDeduplicator(
     private val firstDeliveries = LinkedHashMap<String, Long>()
 
     /**
-     * Records [eventId] and returns `true` if it was not delivered within [retention] before.
+     * Records [eventId] as delivered unless it was delivered within [retention] before.
      *
-     * @return `true` for a first delivery, on which the caller acts, `false` for a repeat, which the caller skips.
+     * @return `true` for a first delivery, on which the caller acts, `false` for a repeat, which
+     * the caller skips
      */
-    public fun firstDelivery(eventId: String): Boolean {
+    public fun isFirstDelivery(eventId: String): Boolean {
         synchronized(firstDeliveries) {
-            // Read under the lock, so that the insertion order is the time order forgetExpired relies on
+            // Read under the lock: forgetExpired relies on insertion order being time order.
             val now = origin.elapsedNow().inWholeNanoseconds
             forgetExpired(now)
             if (firstDeliveries.containsKey(eventId)) return false
 
             firstDeliveries[eventId] = now
-            if (firstDeliveries.size > maxEntries) firstDeliveries.pollFirstEntry()
+
+            if (firstDeliveries.size > maxEntries) {
+                firstDeliveries.pollFirstEntry()
+            }
+
             return true
         }
     }
 
     /**
-     * Records the event of the calling listener like [firstDelivery] and returns `true` if it was not delivered
-     * before. An event without an ID cannot be recognized and always counts as a first delivery.
+     * Records the event of the calling listener like [isFirstDelivery]. An event without an ID
+     * cannot be recognized and always counts as a first delivery.
      *
+     * @return `true` for a first delivery, `false` for a repeat
      * @throws IllegalStateException if called outside a listener's coroutine context.
      */
-    public suspend fun firstDelivery(): Boolean {
+    public suspend fun isFirstDelivery(): Boolean {
         val eventId = natsEventContext().eventId ?: return true
-        return firstDelivery(eventId)
+
+        return isFirstDelivery(eventId)
     }
 
     private fun forgetExpired(now: Long) {
         val oldestKept = now - retention.inWholeNanoseconds
+
         while (firstDeliveries.isNotEmpty() && firstDeliveries.firstEntry().value <= oldestKept) {
             firstDeliveries.pollFirstEntry()
         }

@@ -29,22 +29,26 @@ import net.kyori.adventure.text.format.TextColor
  * @property navigateBackOnOutsideClick whether an outside click navigates to the parent view
  * @property rows the number of rows displayed in the inventory
  * @see SurfViewSettings
- * @see SimpleViewSettingsBuilder
+ * @see dev.slne.surf.api.minestom.inventory.framework.view.settings.builder.SimpleViewSettingsBuilder
  */
-@OptIn(ExperimentalVersionOverloading::class)
 data class SimpleViewSettings(
     override val font: Key = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT,
-    override val headerTextAlignment: TextAlignment = SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,
-    @IntroducedAt("3.43.0") override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
-    @IntroducedAt("3.43.0") override val headerFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
-    @IntroducedAt("3.43.0") override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
-    @IntroducedAt("3.43.0") override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
-    @IntroducedAt("3.43.0") override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
-    @IntroducedAt("3.43.0") override val rowFonts: Map<Int, Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
+    override val headerTextAlignment: TextAlignment =
+        SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,
+    override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
+    override val headerFontMetrics: ViewFontMetrics =
+        SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
+    override val rowFontMetrics: ViewFontMetrics =
+        SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
+    override val headerGeometry: ViewHeaderGeometry =
+        SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
+    override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
+    override val rowFonts: Map<Int, Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
     override val cancelOnClick: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_CLICK,
     override val cancelOnDrag: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DRAG,
     override val cancelOnDrop: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DROP,
     override val cancelOnPickup: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_PICKUP,
-    override val navigateBackOnOutsideClick: Boolean = SurfViewSettingsDefaults.DEFAULT_NAVIGATE_BACK_ON_CLOSE,
+    override val navigateBackOnOutsideClick: Boolean =
+        SurfViewSettingsDefaults.DEFAULT_NAVIGATE_BACK_ON_CLOSE,
     override val rows: ViewRows = SurfViewSettingsDefaults.DEFAULT_VIEW_ROWS,
 ) : SurfViewSettings

@@ -34,8 +34,7 @@ the typesafe accessor reads `projects.surfApiCoreApi` rather than `projects.comm
 `includePair(group, domain)` calls `includeModule("$group/$domain/api")` and
 `includeModule("$group/$domain/impl")`.
 
-The `name` argument is passed twice: `tooling/gradle-plugin/processor` becomes
-`surf-api-processor`, and `infra/database-r2dbc` becomes `surf-api-database-r2dbc`.
+The `name` argument is passed once: `infra/database-r2dbc` becomes `surf-api-database-r2dbc`.
 
 ## Every module included with includeModule
 
@@ -87,7 +86,6 @@ The `name` argument is passed twice: `tooling/gradle-plugin/processor` becomes
 | `aggregate/velocity` | `surf-api-velocity` |
 | `aggregate/standalone` | `surf-api-standalone` |
 | `tooling/bom` | `surf-api-bom` |
-| `tooling/gradle-plugin/processor` | `surf-api-processor` (explicit `name`) |
 | `infra/database-r2dbc` | `surf-api-database-r2dbc` (explicit `name`) |
 | `local/paper-plugin-test` | `surf-api-paper-plugin-test` (non-CI only) |
 | `local/paper-shared-bean-provider` | `surf-api-paper-shared-bean-provider` (non-CI only) |
@@ -98,12 +96,12 @@ The `name` argument is passed twice: `tooling/gradle-plugin/processor` becomes
 | `local/velocity-shared-bean-test` | `surf-api-velocity-shared-bean-test` (non-CI only) |
 | `local/minestom-example` | `surf-api-minestom-example` (non-CI only) |
 | `local/minestom-example-plugin` | `surf-api-minestom-example-plugin` (non-CI only) |
-| `surf-api-generator` | `surf-api-generator` (non-CI only) |
+| `tooling/registry-key-generator` | `surf-api-registry-key-generator` (non-CI only) |
 
-The common api-only domains carry a comment in `settings.gradle.kts` saying why no impl half
-exists. The NMS versions are listed literally (`"v1-21-11", "v26-1", "v26-2", "v26-3"`), because
-`NmsVersion` lives in the included build `surf-api-generator/nms-module-generator` and is not on the
-settings classpath.
+The README of each common api-only domain says where its implementation lives. The NMS versions
+are listed literally (`"v1-21-11", "v26-1", "v26-2", "v26-3"`), because `NmsVersion` is compiled
+by `surf-api-internal` and the included build `tooling/nms-module-generator`, neither of
+which is on the settings classpath.
 
 The `local/*-shared-bean-*` modules are two test plugins and a harness per platform that boot a
 real Paper server or Velocity proxy; they stay local because the harness downloads the server.
@@ -121,8 +119,8 @@ so the parents only group:
 
 | Repository | Modules (Gradle path below `:surf-api-<repository>`) |
 | --- | --- |
-| `nats` | `surf-api-nats-api`, `surf-api-nats-core`, `surf-api-nats-types:surf-api-nats-types-common`, `surf-api-nats-types:surf-api-nats-types-paper`, `surf-api-nats-platform:surf-api-nats-standalone`, `surf-api-nats-spring`, and five `surf-api-nats-test:*` modules |
-| `redis` | `surf-api-redis-api`, `surf-api-redis-core`, `surf-api-redis-spring`, `surf-api-redis-standalone` |
+| `nats` | `surf-api-nats-api`, `surf-api-nats-core`, `surf-api-nats-types:surf-api-nats-types-common`, `surf-api-nats-types:surf-api-nats-types-paper`, `surf-api-nats-spring`, and five `surf-api-nats-test:*` modules |
+| `redis` | `surf-api-redis-api`, `surf-api-redis-core`, `surf-api-redis-spring` |
 | `microservice` | `surf-api-microservice-api`, `surf-api-microservice-runtime`, `surf-api-microservice-database`, `surf-api-microservice-reliability` |
 
 The accessor follows the nesting: `projects.surfApiNats.surfApiNatsTypes.surfApiNatsTypesPaper`.
@@ -134,14 +132,12 @@ dependencies in every shadow jar and excludes Redisson's `META-INF/spring.handle
 `spring.schemas` and `spring.tooling`, which name an unrelocated handler class absent from the jar.
 Most modules apply the surf Gradle plugin rather than the buildSrc roles; `surf-nats-api` and
 `surf-nats-core` are Kotlin Multiplatform modules configured by `infra/nats/build.gradle.kts`. The
-root build gives
-every project under `infra/` the surf-api group and version, and adds `@AutoService` with its KSP
-processor wherever KSP is applied.
+root build gives every project under `infra/` the surf-api group and version.
 
 ## Conditional and excluded modules
 
 - `val ci = System.getenv("CI")?.toBoolean() ?: false`. When `ci` is false, the `local/` modules
-  and `surf-api-generator` are included; in CI they are not.
+  and `tooling/registry-key-generator` are included; in CI they are not.
 - `platform/minestom/luckperms-impl` is included only when `vendor/LuckPerms/settings.gradle`
   exists. That directory is generated from the `LuckPerms-Upstream` submodule plus the patches next
   to it: `git submodule update --init --recursive`, then `./gradlew applyPatches` from `vendor/`.
@@ -149,7 +145,7 @@ processor wherever KSP is applied.
 
 ## Included builds
 
-- `pluginManagement { includeBuild("surf-api-generator/nms-module-generator") }` supplies the
+- `pluginManagement { includeBuild("tooling/nms-module-generator") }` supplies the
   `dev.slne.surf.api.generator.nms-module-generator` plugin applied in the root `build.gradle.kts`.
 - `pluginManagement { includeBuild("tooling/gradle-plugin") }` supplies the surf Gradle plugins,
   so the infra modules apply them the way a downstream project does. The root build registers
@@ -181,9 +177,8 @@ this build its coordinate resolves to that jar.
 | `surf-api-velocity` | `projects.surfApiVelocityApi` |
 | `surf-api-standalone` | `projects.surfApiStandaloneImpl` - the whole standalone surface; `SurfApiStandaloneBootstrap` creates the root context and cannot be split off |
 
-Each sets `description` to its own published name. `surf.aggregate` registers the `surfRuntime`
-configuration for embedding implementations; every aggregate reaches its dependencies through
-plain `api(...)`.
+Each sets `description` to its own published name and reaches its dependencies through plain
+`api(...)`.
 
 ## The BOM
 
@@ -193,8 +188,7 @@ plain `api(...)`.
 ```kotlin
 val notPublished = setOf(
     "surf-api-bom",
-    "surf-api-processor",
-    "surf-api-generator",
+    "surf-api-registry-key-generator",
     "surf-api-paper-plugin-test",
     "surf-api-minestom-example",
     "surf-api-minestom-example-plugin",

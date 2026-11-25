@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.server.nms.v1_21_11.bridges
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
 import dev.slne.surf.api.paper.nms.bridges.SurfPaperNmsLootTableBridge
+import dev.slne.surf.api.paper.nms.common.NmsComponent
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toBukkit
 import dev.slne.surf.api.paper.server.nms.v1_21_11.extensions.toNms
 import net.minecraft.server.MinecraftServer
@@ -16,6 +17,7 @@ import org.bukkit.inventory.ItemStack
 import kotlin.jvm.optionals.getOrNull
 
 @NmsUseWithCaution
+@NmsComponent
 class V1_21_11SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
     override fun getDifferentLootTable(
         entity: LivingEntity,
@@ -23,10 +25,11 @@ class V1_21_11SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
         replacement: EntityType,
         causedByPlayer: Boolean,
     ): Collection<ItemStack> {
-        val lootTableKey =
-            replacement.toNms().defaultLootTable.getOrNull() ?: return emptyList()
-        val lootTable =
-            MinecraftServer.getServer().reloadableRegistries().getLootTable(lootTableKey)
+        val lootTableKey = replacement.toNms().defaultLootTable.getOrNull() ?: return emptyList()
+
+        val lootTable = MinecraftServer.getServer()
+            .reloadableRegistries()
+            .getLootTable(lootTableKey)
         val nmsEntity = entity.toNms()
         val nmsDamageSource = damageSource.toNms()
 
@@ -37,10 +40,11 @@ class V1_21_11SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
             .withOptionalParameter(LootContextParams.ATTACKING_ENTITY, nmsDamageSource.entity)
             .withOptionalParameter(
                 LootContextParams.DIRECT_ATTACKING_ENTITY,
-                nmsDamageSource.directEntity
+                nmsDamageSource.directEntity,
             )
 
         val lastHurtByPlayer = nmsEntity.getLastHurtByPlayer()
+
         if (causedByPlayer && lastHurtByPlayer != null) {
             lootParamsBuilder.withParameter(LootContextParams.LAST_DAMAGE_PLAYER, lastHurtByPlayer)
                 .withLuck(lastHurtByPlayer.luck)
@@ -54,11 +58,14 @@ class V1_21_11SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
     override fun rollLootTable(
         entity: LivingEntity,
         damageSource: DamageSource,
-        causedByPlayer: Boolean
+        causedByPlayer: Boolean,
     ): Collection<ItemStack> {
         val nmsEntity = entity.toNms()
         val lootTableKey = nmsEntity.lootTable.getOrNull() ?: return emptyList()
-        val lootTable = MinecraftServer.getServer().reloadableRegistries().getLootTable(lootTableKey)
+
+        val lootTable = MinecraftServer.getServer()
+            .reloadableRegistries()
+            .getLootTable(lootTableKey)
         val nmsDamageSource = damageSource.toNms()
 
         val paramBuilder = LootParams.Builder(nmsEntity.level() as ServerLevel)
@@ -68,10 +75,11 @@ class V1_21_11SurfPaperNmsLootTableBridgeImpl : SurfPaperNmsLootTableBridge {
             .withOptionalParameter(LootContextParams.ATTACKING_ENTITY, nmsDamageSource.entity)
             .withOptionalParameter(
                 LootContextParams.DIRECT_ATTACKING_ENTITY,
-                nmsDamageSource.directEntity
+                nmsDamageSource.directEntity,
             )
 
         val lastHurtByPlayer = nmsEntity.getLastHurtByPlayer()
+
         if (causedByPlayer && lastHurtByPlayer != null) {
             paramBuilder.withParameter(LootContextParams.LAST_DAMAGE_PLAYER, lastHurtByPlayer)
                 .withLuck(lastHurtByPlayer.luck)

@@ -1,16 +1,7 @@
 package dev.slne.surf.nats.event
 
-import dev.slne.surf.nats.InternalNatsApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlinx.coroutines.*
+import kotlin.test.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -24,64 +15,76 @@ class NatsEventDeduplicatorTest {
     fun `a repeated event id is not a first delivery`() {
         val deduplicator = NatsEventDeduplicator(timeSource = time)
 
-        assertTrue(deduplicator.firstDelivery("event-1"))
-        assertFalse(deduplicator.firstDelivery("event-1"))
-        assertTrue(deduplicator.firstDelivery("event-2"))
+        assertTrue(deduplicator.isFirstDelivery("event-1"))
+        assertFalse(deduplicator.isFirstDelivery("event-1"))
+        assertTrue(deduplicator.isFirstDelivery("event-2"))
     }
 
     @Test
     fun `an event id is forgotten after the retention since its first delivery`() {
         val deduplicator = NatsEventDeduplicator(retention = 1.minutes, timeSource = time)
-        assertTrue(deduplicator.firstDelivery("event-1"))
+        assertTrue(deduplicator.isFirstDelivery("event-1"))
 
         time += 59.seconds
-        assertFalse(deduplicator.firstDelivery("event-1"), "a repeat does not extend the retention")
+        assertFalse(
+            deduplicator.isFirstDelivery("event-1"),
+            "a repeat does not extend the retention",
+        )
         time += 1.seconds
-        assertTrue(deduplicator.firstDelivery("event-1"))
+        assertTrue(deduplicator.isFirstDelivery("event-1"))
     }
 
     @Test
     fun `the oldest event id is forgotten when the deduplicator is full`() {
         val deduplicator = NatsEventDeduplicator(maxEntries = 2, timeSource = time)
-        deduplicator.firstDelivery("event-1")
-        deduplicator.firstDelivery("event-2")
-        deduplicator.firstDelivery("event-3")
+        deduplicator.isFirstDelivery("event-1")
+        deduplicator.isFirstDelivery("event-2")
+        deduplicator.isFirstDelivery("event-3")
 
-        assertFalse(deduplicator.firstDelivery("event-3"))
-        assertFalse(deduplicator.firstDelivery("event-2"))
-        assertTrue(deduplicator.firstDelivery("event-1"))
+        assertFalse(deduplicator.isFirstDelivery("event-3"))
+        assertFalse(deduplicator.isFirstDelivery("event-2"))
+        assertTrue(deduplicator.isFirstDelivery("event-1"))
     }
 
     @Test
     fun `concurrent deliveries of one event id have exactly one first delivery`() = runBlocking {
         val deduplicator = NatsEventDeduplicator()
 
-        val firsts = (1..64).map {
-            async(Dispatchers.Default) { (1..100).count { id -> deduplicator.firstDelivery("event-$id") } }
-        }.awaitAll()
+        val firsts = (1..64)
+            .map {
+                async(Dispatchers.Default) {
+                    (1..100).count { id -> deduplicator.isFirstDelivery("event-$id") }
+                }
+            }
+            .awaitAll()
 
         assertEquals(100, firsts.sum())
     }
 
-    @OptIn(InternalNatsApi::class)
     @Test
     fun `the listener variant reads the event id of the listener context`() = runBlocking<Unit> {
         val deduplicator = NatsEventDeduplicator(timeSource = time)
 
-        withContext(NatsEventContext(origin = null, isFromThisClient = false, eventId = "event-1")) {
-            assertTrue(deduplicator.firstDelivery())
-            assertFalse(deduplicator.firstDelivery())
+        withContext(listenerContext(eventId = "event-1")) {
+            assertTrue(deduplicator.isFirstDelivery())
+            assertFalse(deduplicator.isFirstDelivery())
         }
-        withContext(NatsEventContext(origin = null, isFromThisClient = false, eventId = null)) {
-            assertTrue(deduplicator.firstDelivery(), "an event without id cannot be recognized")
-            assertTrue(deduplicator.firstDelivery())
+        withContext(listenerContext(eventId = null)) {
+            assertTrue(deduplicator.isFirstDelivery(), "an event without id cannot be recognized")
+            assertTrue(deduplicator.isFirstDelivery())
         }
-        assertFailsWith<IllegalStateException> { deduplicator.firstDelivery() }
+        assertFailsWith<IllegalStateException> { deduplicator.isFirstDelivery() }
     }
 
     @Test
     fun `limits must be positive`() {
         assertFailsWith<IllegalArgumentException> { NatsEventDeduplicator(maxEntries = 0) }
-        assertFailsWith<IllegalArgumentException> { NatsEventDeduplicator(retention = Duration.ZERO) }
+        assertFailsWith<IllegalArgumentException> {
+            NatsEventDeduplicator(retention = Duration.ZERO)
+        }
+    }
+
+    private fun listenerContext(eventId: String?): NatsEventContext {
+        return NatsEventContext(origin = null, isFromThisClient = false, eventId = eventId)
     }
 }

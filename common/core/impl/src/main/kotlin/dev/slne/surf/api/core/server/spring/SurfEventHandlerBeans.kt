@@ -24,7 +24,8 @@ object SurfEventHandlerBeans {
         val listeners = beansDeclaringMethodsAnnotated(contexts, SurfEventHandler::class.java)
         if (listeners.isEmpty()) return
 
-        val eventBus = SurfEventBus.INSTANCE
+        val eventBus = SurfEventBus.instance
+
         for (listener in listeners) {
             eventBus.registerListeners(listener)
             registered += listener
@@ -40,8 +41,9 @@ object SurfEventHandlerBeans {
     fun unregister(listeners: List<Any>) {
         if (listeners.isEmpty()) return
 
-        val eventBus = SurfEventBus.INSTANCE
+        val eventBus = SurfEventBus.instance
         val failures = FailureCollector()
+
         for (listener in listeners) {
             try {
                 eventBus.unregisterListeners(listener)
@@ -49,6 +51,7 @@ object SurfEventHandlerBeans {
                 failures.add(exception)
             }
         }
+
         failures.throwIfAny()
     }
 }

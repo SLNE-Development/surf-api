@@ -55,12 +55,16 @@ you need to hand it around; `SurfComponentBuilder { }` is the same thing as `bui
 `build()` is just `asComponent()` on the wrapped Adventure builder, so the builder stays mutable and
 can be built more than once.
 
-The colour helpers are **member extension functions** on `SurfComponentBuilder`
-(`primary`, `secondary`, `info`, `note`, `success`, `warning`, `error`, `variableKey`,
-`variableValue`, `spacer`, `darkSpacer`, plus the sixteen `MinecraftComponentBuilderColors`). Each
-comes in `String`, `Boolean`, `Char` and `Number` overloads with a trailing
-`vararg decoration: TextDecoration`. They only exist inside a builder receiver - outside one, use
-`Colors.PRIMARY` and `Component.text(...)`.
+The colour helpers are plain members of `SurfComponentBuilder` (`primary`, `secondary`, `info`,
+`success`, `warning`, `error`, `variableKey`, `variableValue`, `spacer`, `darkSpacer`, plus the
+sixteen Minecraft colours `black` … `white`). Each comes in `String`, `Boolean`, `Char` and
+`Number` overloads with a trailing `vararg decoration: TextDecoration`; `colored(text, color)`
+covers any other colour, and `note(any)` takes any value. Outside a builder, use `Colors.PRIMARY`
+and `Component.text(...)`.
+
+`SurfComponentBuilder` is an abstract class that only surf-api implements. Its block members
+(`append { }`, `appendNewline { }`, `appendNewInfoPrefixedLine { }`, `appendKickDisconnectMessage`,
+…) are `inline`, so a block may call suspending functions whenever the caller can.
 
 ### When to use raw Adventure instead
 

@@ -1,16 +1,22 @@
 package dev.slne.surf.api.config
 
 /**
- * Gives access to one configuration file of a plugin, declared by a [SurfConfig] class.
+ * Gives access to one configuration file.
  *
- * Beans inject `ConfigHandle<C>` rather than `C`, so they see the current value after a [reload]
- * or an edit instead of the one loaded at start.
+ * A plugin gets a handle per [SurfConfig] class injected, or reads it statically through
+ * [configHandle] and [surfConfig]; any other file is opened with [ConfigHandles.open]. Code keeps
+ * the handle rather than the value, so it sees the value a [reload] or [update] installs.
  *
- * Thread-safe: [reload], [edit], [update] and [save] run one at a time. [value] returns the instance
- * the last load, [reload] or [update] installed; [edit] changes that instance in place, so a reader
- * may observe the change while it happens.
+ * Thread-safe: [reload], [edit], [update], [save] and [close] run one at a time. [value] returns
+ * the instance the last load, [reload] or [update] installed; [edit] changes that instance in
+ * place, so a reader may observe the change while it happens.
+ *
+ * A closed handle keeps returning its last [value] and rejects every other operation. The handles
+ * of [SurfConfig] classes close with their plugin's context.
+ *
+ * @param C the configuration class
  */
-interface ConfigHandle<C : Any> {
+interface ConfigHandle<C : Any> : AutoCloseable {
 
     /**
      * The current configuration.
@@ -18,16 +24,27 @@ interface ConfigHandle<C : Any> {
     val value: C
 
     /**
-     * Reads the file again, applies pending migrations and returns the new value.
+     * Reads the file into a candidate, applies pending migrations to it and installs it once
+     * [validate] accepts it.
      *
-     * Keeps the current value if the file has no configuration in it.
+     * The file is written only when a migration changed it. A file that holds no configuration,
+     * such as an emptied one, keeps the current value, logs a warning and is left as it is.
      *
-     * @throws java.io.UncheckedIOException if the file cannot be read or does not match [C]
+     * @param validate checks the candidate; when it throws, the current value and the file stay
+     * unchanged and the exception propagates
+     * @return the installed value
+     * @throws java.io.UncheckedIOException if the file cannot be read, migrated or written, or does
+     * not match [C]
+     * @throws IllegalStateException if the handle is closed
      */
-    fun reload(): C
+    fun reload(validate: (C) -> Unit = {}): C
 
     /**
      * Changes the current value in place and saves it; for classes with mutable properties.
+     *
+     * @param block changes the value it receives
+     * @throws java.io.UncheckedIOException if the file cannot be written
+     * @throws IllegalStateException if the handle is closed
      */
     fun edit(block: C.() -> Unit)
 
@@ -35,7 +52,10 @@ interface ConfigHandle<C : Any> {
      * Replaces the current value with the result of [transform] and saves it; for immutable
      * classes, such as a data class edited with `copy`.
      *
+     * @param transform returns the new value for the current one
      * @return the new value
+     * @throws java.io.UncheckedIOException if the file cannot be written
+     * @throws IllegalStateException if the handle is closed
      */
     fun update(transform: (C) -> C): C
 
@@ -43,6 +63,12 @@ interface ConfigHandle<C : Any> {
      * Writes the current value to the file.
      *
      * @throws java.io.UncheckedIOException if the file cannot be written
+     * @throws IllegalStateException if the handle is closed
      */
     fun save()
+
+    /**
+     * Closes the handle; closing it again does nothing.
+     */
+    override fun close()
 }

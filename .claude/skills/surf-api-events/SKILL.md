@@ -75,7 +75,7 @@ Firing an async event needs a coroutine. Nothing in the event API creates one fo
 ## Registering a listener
 
 `SurfEventBus` is a bean of surf-api's root context, so every plugin bean can inject it. Plugin code
-reaches the bus only that way; the companion accessor `SurfEventBus.INSTANCE` is
+reaches the bus only that way; the companion accessor `SurfEventBus.instance` is
 `@InternalSurfApi`.
 
 ### Annotated methods on a bean
@@ -202,6 +202,10 @@ Paper declares. On Minestom, `EventRegistrar` contributes listeners to the serve
   it again after a new root is installed, as after a standalone `shutdown()` and second `bootstrap`.
   Without a running platform runtime - a missing `-impl` module, or a call before surf-api has
   started - it fails with "surf-api's root context has not been started yet …".
+- **IntelliJ reports handlers as unused.** surf-api calls `@SurfEventHandler` methods through
+  generated invokers, so add `dev.slne.surf.api.event.SurfEventHandler` under **Settings > Editor >
+  Inspections > Unused declaration > Entry points > Annotations**. An entry for the pre-4.0
+  package `dev.slne.surf.api.core.event` matches nothing; see the `surf-api-components` skill.
 
 Dispatch internals, the hidden-class invokers and the exact exception and cancellation semantics:
 `references/dispatch-and-invokers.md`. Declaring beans, `SurfLifecycle` and the plugin context:

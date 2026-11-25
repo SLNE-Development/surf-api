@@ -62,22 +62,24 @@ import kotlin.io.path.*
  * println(message)
  * ```
  *
- * @property bundleClazz The class used to locate the resource bundles. Typically, this is the class where the
- * resource files are packaged or loaded.
- * @property pathToBundle The relative path to the base name of the resource bundle files, excluding the file extension.
- * For example, if the bundle is located at `messages/example.properties`, the path would be `messages.example`.
- * @property dataFolder The directory where the plugin stores its data, including resource bundles. This is used to
- * store and manage localized message files.
- * @property classLoader The class loader used to load resource bundles from the classpath. Defaults to the class loader
- * of [bundleClazz].
+ * @property bundleClazz The class used to locate the resource bundles. Typically, this is the class
+ * where the resource files are packaged or loaded.
+ * @property pathToBundle The relative path to the base name of the resource bundle files, excluding
+ * the file extension. For example, if the bundle is located at `messages/example.properties`, the
+ * path would be `messages.example`.
+ * @property dataFolder The directory where the plugin stores its data, including resource bundles.
+ * This is used to store and manage localized message files.
+ * @property classLoader The class loader used to load resource bundles from the classpath. Defaults
+ * to the class loader of [bundleClazz].
  * @constructor Creates a new instance of [SurfMessageBundle].
  *
  * @param bundleClazz The class used for locating the resource bundles.
  * @param pathToBundle The relative path to the bundle files, excluding the file extension.
  * @param dataFolder The directory used for storing and managing resource bundles.
- * @param classLoader The class loader used to load bundled resources. Defaults to the class loader of [bundleClazz].
+ * @param classLoader The class loader used to load bundled resources. Defaults to the class loader
+ * of [bundleClazz].
  */
-class SurfMessageBundle @JvmOverloads constructor(
+class SurfMessageBundle(
     val bundleClazz: Class<*>,
     val pathToBundle: @BundlePath @NonNls String,
     val dataFolder: Path,
@@ -92,21 +94,14 @@ class SurfMessageBundle @JvmOverloads constructor(
      * and all bundles are registered with the global translator.
      */
     fun load() {
-        // get all resource bundles that are bundled with the plugin
-        val bundledResourceBundles =
-            getBundledBundles(bundlesResourceDirectory, classLoader)
+        val bundledResourceBundles = getBundledBundles(bundlesResourceDirectory, classLoader)
 
-        // get all resource bundles that are in the plugin's data folder
         val dataFolderResourceBundles = getBundles(bundlesResourceDirectory, Locale.getDefault())
 
-        // update the resource bundles
-        // Step 1: Copy all bundled resource bundles that aren't in the data folder
         copyMissingBundles(bundledResourceBundles, dataFolderResourceBundles)
 
-        // Step 2: Add all missing keys to the data folder resource and update them
         updateResourceBundles(bundledResourceBundles, dataFolderResourceBundles)
 
-        // Step 3: Add all resource bundles to the translator
         addBundlesToTranslator(pathToBundle, dataFolderResourceBundles)
     }
 
@@ -117,7 +112,9 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param params Optional parameters to format the message.
      * @return The message as a translatable [TranslatableComponent].
      */
-    fun getMessage(key: String, vararg params: Component) = Component.translatable(key, *params)
+    fun getMessage(key: String, vararg params: Component): TranslatableComponent {
+        return Component.translatable(key, *params)
+    }
 
     /**
      * Retrieves a lazily-evaluated message supplier as a [TranslatableComponent].
@@ -126,7 +123,9 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param params Optional parameters to format the message.
      * @return A [Supplier] that provides the message as a translatable [TranslatableComponent].
      */
-    fun lazyMessage(key: String, vararg params: Component) = Supplier { getMessage(key, *params) }
+    fun lazyMessage(key: String, vararg params: Component): Supplier<TranslatableComponent> {
+        return Supplier { getMessage(key, *params) }
+    }
 
     /**
      * Operator function for retrieving a translatable message as a [TranslatableComponent].
@@ -135,7 +134,9 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param params Optional parameters to format the message.
      * @return The message as a translatable [TranslatableComponent].
      */
-    operator fun get(key: String, vararg params: Component) = getMessage(key, *params)
+    operator fun get(key: String, vararg params: Component): TranslatableComponent {
+        return getMessage(key, *params)
+    }
 
     /**
      * Adds the provided resource bundles to the global translator for use in message translation.
@@ -150,11 +151,12 @@ class SurfMessageBundle @JvmOverloads constructor(
         val store = TranslationStore.messageFormat(
             Key.key(
                 "surf",
-                "bundle-${baseName.substringAfterLast('.').lowercase()}"
-            )
+                "bundle-${baseName.substringAfterLast('.').lowercase()}",
+            ),
         )
 
         store.defaultLocale(Locale.getDefault())
+
         for (bundle in bundles) {
             store.registerAll(bundle.locale, bundle, true)
         }
@@ -163,7 +165,8 @@ class SurfMessageBundle @JvmOverloads constructor(
     }
 
     /**
-     * Updates resource bundles in the data folder by copying missing keys from the bundled resources.
+     * Updates resource bundles in the data folder by copying missing keys from the bundled
+     * resources.
      *
      * @param bundledResourceBundles The list of bundled resource bundles.
      * @param dataFolderResourceBundles The list of resource bundles in the data folder.
@@ -177,10 +180,10 @@ class SurfMessageBundle @JvmOverloads constructor(
         for (bundle in dataFolderResourceBundles) {
             val key = bundle.getBundleName()
             val bundledBundle = bundledResourceBundlesMap[key] ?: continue
+
             updateBundleKeys(bundledBundle, bundle)
         }
     }
-
 
     private fun updateBundleKeys(
         from: ResourceBundle,
@@ -193,6 +196,7 @@ class SurfMessageBundle @JvmOverloads constructor(
         if (missingKeys.isEmpty()) return
 
         val properties = Properties()
+
         for (key in toKeys) {
             properties[key] = to.getString(key)
         }
@@ -210,7 +214,8 @@ class SurfMessageBundle @JvmOverloads constructor(
      * Copies missing resource bundles from the bundled resources to the data folder.
      *
      * @param bundledResourceBundles The list of bundled resource bundles.
-     * @param dataFolderResourceBundles The mutable list of resource bundles in the data folder to be updated.
+     * @param dataFolderResourceBundles The mutable list of resource bundles in the data folder to
+     * be updated.
      */
     private fun copyMissingBundles(
         bundledResourceBundles: List<ResourceBundle>,
@@ -220,6 +225,7 @@ class SurfMessageBundle @JvmOverloads constructor(
 
         for (bundle in bundledResourceBundles) {
             if (bundle.getBundleName() in dataFolderBundleNames) continue
+
             copyBundleToDataFolder(bundle)
             dataFolderResourceBundles.add(bundle)
         }
@@ -236,6 +242,7 @@ class SurfMessageBundle @JvmOverloads constructor(
         val target = dataFolder / fileName
 
         val properties = Properties()
+
         for (key in bundle.keys.asSequence()) {
             properties[key] = bundle.getString(key)
         }
@@ -250,8 +257,8 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param defaultLocale The default locale to be used if none is specified in the file names.
      * @return A list of resource bundles found in the data folder.
      */
-    private fun getBundles(prefix: String, defaultLocale: Locale) =
-        URLClassLoader(arrayOf(dataFolder.toUri().toURL())).use { classLoader ->
+    private fun getBundles(prefix: String, defaultLocale: Locale): MutableList<ResourceBundle> {
+        return URLClassLoader(arrayOf(dataFolder.toUri().toURL())).use { classLoader ->
             dataFolder.walk(PathWalkOption.FOLLOW_LINKS)
                 .filter { it.name.startsWith(prefix) }
                 .mapNotNullTo(mutableListOf()) {
@@ -261,12 +268,12 @@ class SurfMessageBundle @JvmOverloads constructor(
                         ResourceBundle.getBundle(
                             fileName.substringBeforeLast('.'),
                             local,
-                            classLoader
+                            classLoader,
                         )
                     }.getOrNull()
                 }
         }
-
+    }
 
     /**
      * Retrieves resource bundles that are bundled with the plugin, filtering by available locales.
@@ -275,8 +282,11 @@ class SurfMessageBundle @JvmOverloads constructor(
      * @param classLoader The class loader to use for resource loading.
      * @return A list of bundled resource bundles.
      */
-    private fun getBundledBundles(baseName: String, classLoader: ClassLoader) =
-        Locale.getAvailableLocales().asSequence()
+    private fun getBundledBundles(
+        baseName: String,
+        classLoader: ClassLoader,
+    ): MutableList<ResourceBundle> {
+        return Locale.getAvailableLocales().asSequence()
             .filter { isResourceBundleAvailable(baseName, it, classLoader) }
             .mapNotNull {
                 runCatching {
@@ -287,6 +297,7 @@ class SurfMessageBundle @JvmOverloads constructor(
                     )
                 }.getOrNull()
             }.toCollection(mutableListOf())
+    }
 
     /**
      * Checks if a resource bundle is available for the given base name and locale.

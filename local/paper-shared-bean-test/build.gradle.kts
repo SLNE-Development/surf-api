@@ -27,7 +27,7 @@ data class PinnedDownload(
 /**
  * The release part of a Modrinth version name such as `v5.5.71-bukkit`.
  */
-fun modrinthRelease(version: String) = version.removePrefix("v").substringBefore('-')
+fun modrinthRelease(version: String): String = version.removePrefix("v").substringBefore('-')
 
 /**
  * Pins every artifact the test downloads, with the checksum of that exact version.
@@ -48,27 +48,25 @@ val pinnedDownloads = listOf(
         id = "paper",
         fileName = "paper-26.3-245.jar",
         url = "https://fill-data.papermc.io/v1/objects/" +
-                "192d277ea1ce29b2df3933dd488521d4555cc82be864ea8df811fe536e8aed43/" +
-                "paper-26.3-245.jar",
+            "192d277ea1ce29b2df3933dd488521d4555cc82be864ea8df811fe536e8aed43/" +
+            "paper-26.3-245.jar",
         sha256 = "192d277ea1ce29b2df3933dd488521d4555cc82be864ea8df811fe536e8aed43",
     ),
-    // CommandAPI's Paper plugin jar, from its GitHub release.
     libs.versions.commandapiplugin.get().let { version ->
         PinnedDownload(
             id = "commandapi",
             fileName = "CommandAPI-$version-Paper.jar",
             url = "https://github.com/CommandAPI/CommandAPI/releases/download/" +
-                    "$version/CommandAPI-$version-Paper.jar",
+                "$version/CommandAPI-$version-Paper.jar",
             sha256 = "ab48e55fd06264dd239cf015b501936cb50eb6c38d967fbffca6c91a48064049",
         )
     },
-    // packetevents' shaded Spigot plugin jar, from its GitHub release.
     libs.versions.packetevents.plugin.get().let { version ->
         PinnedDownload(
             id = "packetevents",
             fileName = "packetevents-spigot-$version.jar",
             url = "https://github.com/retrooper/packetevents/releases/download/" +
-                    "v$version/packetevents-spigot-$version.jar",
+                "v$version/packetevents-spigot-$version.jar",
             sha256 = "060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7",
         )
     },
@@ -80,7 +78,7 @@ val pinnedDownloads = listOf(
             id = "luckperms",
             fileName = "LuckPerms-Bukkit-$release.jar",
             url = "https://cdn.modrinth.com/data/Vebnzrzj/versions/b0mk8uS6/" +
-                    "LuckPerms-Bukkit-$release.jar",
+                "LuckPerms-Bukkit-$release.jar",
             sha256 = "49cecb66fa1fd22a133039a490e9c1e5095a238e7cd66eb9d2a16fe6c897550d",
         )
     },
@@ -93,7 +91,7 @@ val pinnedDownloads = listOf(
  * be reached by `check`, by `test`, or by anything CI runs. A source set of its own keeps that true
  * by construction rather than by remembering to exclude it.
  */
-val paperTest: SourceSet by sourceSets.creating
+val paperTest = sourceSets.create("paperTest")
 
 /**
  * The plugin jars the assembled server runs.
@@ -102,20 +100,18 @@ val paperTest: SourceSet by sourceSets.creating
  * dependency closures: surf-api's plugin jar already carries everything it needs, and the two test
  * plugins are compiled against surf-api rather than bundling it.
  */
-val serverPlugins by configurations.creating {
+val serverPlugins = configurations.create("serverPlugins") {
     isCanBeConsumed = false
     isTransitive = false
 }
 
 dependencies {
-    // Declared because `kotlin.stdlib.default.dependency=false` holds for the whole build.
     paperTest.implementationConfigurationName(libs.kotlin.stdlib)
 
     // The JUnit api directly, rather than `kotlin("test")`: the Kotlin plugin picks that
     // artifact's framework variant from the `test` task, and this test has a task of its own.
     paperTest.implementationConfigurationName(libs.junit.jupiter)
 
-    // Redis and NATS for the server to connect to, in Docker containers the test starts.
     paperTest.implementationConfigurationName(libs.testcontainers.junit)
     paperTest.runtimeOnlyConfigurationName(libs.junit.platform.launcher)
 
@@ -124,13 +120,17 @@ dependencies {
     paperTest.compileOnlyConfigurationName(projects.surfApiPaperSharedBeanConsumer)
     paperTest.compileOnlyConfigurationName(projects.surfApiPaperSharedBeanProvider)
 
-    // The shadow jar is surf-api's actual Paper plugin; the other two have nothing to shade.
+    // The shadow jar is surf-api's actual Paper plugin. The consumer's shadow jar relocates
+    // Configurate like surf-api's; the provider has nothing to shade.
     serverPlugins(project(path = ":surf-api-paper-impl", configuration = "shadowRuntimeElements"))
     serverPlugins(
-        project(path = ":surf-api-paper-shared-bean-provider", configuration = "runtimeElements")
+        project(path = ":surf-api-paper-shared-bean-provider", configuration = "runtimeElements"),
     )
     serverPlugins(
-        project(path = ":surf-api-paper-shared-bean-consumer", configuration = "runtimeElements")
+        project(
+            path = ":surf-api-paper-shared-bean-consumer",
+            configuration = "shadowRuntimeElements",
+        ),
     )
 }
 

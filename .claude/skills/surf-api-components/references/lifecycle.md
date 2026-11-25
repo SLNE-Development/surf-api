@@ -28,18 +28,30 @@ interface of its own because implementing it decides which context the bean live
 | Platform | Context refresh | `onLoad` | `onEnable` | `onDisable`, then close |
 | --- | --- | --- | --- | --- |
 | Paper | plugin bootstrapper, followed by `onBootstrap` | plugin `onLoad` | plugin `onEnable` | plugin `onDisable` |
-| Velocity | plugin constructor | plugin constructor | `ProxyInitializeEvent` | `ProxyShutdownEvent` |
+| Velocity | Guice member injection | Guice member injection | `ProxyInitializeEvent` | `ProxyShutdownEvent` |
 | Minestom | plugin manager load | plugin manager load | plugin manager enable | teardown |
 | Standalone | `bootstrap` (root only) | `bootstrap` | `enable` | `shutdown` |
+
+On Velocity, `SurfVelocityPlugin` loads the plugin from a private Guice `@Inject` method, which
+Guice calls after the subclass constructor and its property initializers and before Velocity
+creates the next plugin. `@Inject` fields and methods of the subclass are injected only after the
+load phase.
 
 On Paper the full plugin context refreshes in the load phase, below its import context, which also
 references the plugin's bootstrap beans; see [Paper's bootstrap context](#papers-bootstrap-context).
 
+Each context build and each phase is a Spring startup step (`surf.context.build`,
+`surf.plugin.bootstrap`, `surf.plugin.load`, `surf.plugin.enable`, `surf.plugin.disable`), recorded
+to Java Flight Recorder with `-Dsurf.startup.jfr=true`; an info line of
+`dev.slne.surf.api.spring.context.PluginContext` reports each plugin's phase durations after its
+enable phase. See the "Startup steps" section of `docs/spring-migration.md`.
+
 Before the `onEnable` hooks run, surf-api registers the plugin's listener and command beans:
 Bukkit `Listener` beans on Paper, `@Subscribe` beans on Velocity, `EventNode` beans on Minestom,
-`@SurfEventHandler` beans everywhere, and `CommandAPICommand`, `CommandTree` and `CommandRegistrar`
-beans. A hook can therefore rely on them. On Velocity, listener beans are registered while
-`ProxyInitializeEvent` fires, so their own handlers for that event never run; use `onEnable`.
+`@SurfEventHandler` beans everywhere, `CommandAPICommand`, `CommandTree` and `CommandRegistrar`
+beans, and `@PapiExpansion` beans on Paper. A hook can therefore rely on them. On Velocity,
+listener beans are registered while `ProxyInitializeEvent` fires, so their own handlers for that
+event never run; use `onEnable`.
 
 ## Order within a context
 

@@ -7,22 +7,7 @@ import dev.slne.surf.nats.codec.NatsHeaders
 import dev.slne.surf.nats.connection.NatsConnectionManager
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.test.fixtures.Tag
-import dev.slne.surf.nats.test.proto.v1.CalcService
-import dev.slne.surf.nats.test.proto.v1.Color
-import dev.slne.surf.nats.test.proto.v1.Count
-import dev.slne.surf.nats.test.proto.v1.Created
-import dev.slne.surf.nats.test.proto.v1.Everything
-import dev.slne.surf.nats.test.proto.v1.FailRequest
-import dev.slne.surf.nats.test.proto.v1.FinderService
-import dev.slne.surf.nats.test.proto.v1.FireRequest
-import dev.slne.surf.nats.test.proto.v1.Health
-import dev.slne.surf.nats.test.proto.v1.HealthReply
-import dev.slne.surf.nats.test.proto.v1.InlineRequest
-import dev.slne.surf.nats.test.proto.v1.MixedRequest
-import dev.slne.surf.nats.test.proto.v1.Text
-import dev.slne.surf.nats.test.proto.v1.TypesService
-import dev.slne.surf.nats.test.proto.v1.UnsignedReply
-import dev.slne.surf.nats.test.proto.v1.UnsignedRequest
+import dev.slne.surf.nats.test.proto.v1.*
 import io.nats.client.impl.Headers
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -32,7 +17,6 @@ import kotlinx.serialization.SerializationException
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.*
@@ -76,7 +60,9 @@ class ServiceResponderTest {
             fired.send(Unit)
         }
 
-        override suspend fun fail(request: FailRequest): Text = throw IllegalStateException(request.message)
+        override suspend fun fail(request: FailRequest): Text {
+            return throw IllegalStateException(request.message)
+        }
 
         override suspend fun innerTimeout(): Text = withTimeout(10.milliseconds) {
             delay(5.seconds)
@@ -93,6 +79,7 @@ class ServiceResponderTest {
         override suspend fun gated(): Text {
             gatedStarted.complete(Unit)
             gate.await()
+
             return afterGate?.invoke() ?: Text("released")
         }
 
@@ -106,6 +93,7 @@ class ServiceResponderTest {
 
         override suspend fun slow(): Text {
             slowStarted.complete(Unit)
+
             try {
                 awaitCancellation()
             } catch (e: CancellationException) {
@@ -131,19 +119,25 @@ class ServiceResponderTest {
     private var clientCounter = 0
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @Test
     fun `request with primitive and string fields roundtrips`() = withService {
-        assertEquals(Text("1|2|3.5|true|label"), calc.mixed(MixedRequest(1, 2L, 3.5, true, "label")))
+        assertEquals(
+            Text("1|2|3.5|true|label"),
+            calc.mixed(MixedRequest(1, 2L, 3.5, true, "label")),
+        )
     }
 
     @Test
     fun `unsigned values roundtrip as two's complement`() = withService {
-        assertEquals(UnsignedReply(-1L, -1, Long.MIN_VALUE), calc.unsigned(UnsignedRequest(-1L, -1, Long.MIN_VALUE)))
+        assertEquals(
+            UnsignedReply(-1L, -1, Long.MIN_VALUE),
+            calc.unsigned(UnsignedRequest(-1L, -1, Long.MIN_VALUE)),
+        )
         assertEquals(UnsignedReply(7, 0, null), calc.unsigned(UnsignedRequest(7, 0, null)))
     }
 
@@ -152,9 +146,18 @@ class ServiceResponderTest {
         assertTrue(Duration::class.java.isAnnotationPresent(JvmInline::class.java))
         assertTrue(Tag::class.java.isAnnotationPresent(JvmInline::class.java))
 
-        assertEquals(Text("1.5s|null|a|b"), calc.inline(InlineRequest(1.5.seconds, null, Tag("a"), Tag("b"))))
-        assertEquals(Text("2s|3s|a|null"), calc.inline(InlineRequest(2.seconds, 3.seconds, Tag("a"), null)))
-        assertEquals(Text("-1ms|0s||"), calc.inline(InlineRequest((-1).milliseconds, Duration.ZERO, Tag(""), Tag(""))))
+        assertEquals(
+            Text("1.5s|null|a|b"),
+            calc.inline(InlineRequest(1.5.seconds, null, Tag("a"), Tag("b"))),
+        )
+        assertEquals(
+            Text("2s|3s|a|null"),
+            calc.inline(InlineRequest(2.seconds, 3.seconds, Tag("a"), null)),
+        )
+        assertEquals(
+            Text("-1ms|0s||"),
+            calc.inline(InlineRequest((-1).milliseconds, Duration.ZERO, Tag(""), Tag(""))),
+        )
     }
 
     @Test
@@ -195,11 +198,10 @@ class ServiceResponderTest {
     }
 
     @Test
-    fun `timeout inside the implementation is a remote error, not a caller timeout`() =
-        withService {
-            val exception = assertFailsWith<NatsRemoteException> { calc.innerTimeout() }
-            assertEquals(TimeoutCancellationException::class.java.name, exception.remoteType)
-        }
+    fun `timeout inside the implementation is a remote error, not a caller timeout`() = withService {
+        val exception = assertFailsWith<NatsRemoteException> { calc.innerTimeout() }
+        assertEquals(TimeoutCancellationException::class.java.name, exception.remoteType)
+    }
 
     @Test
     fun `closed registration has no responders`() = withService {
@@ -218,7 +220,10 @@ class ServiceResponderTest {
 
             val closing = async(Dispatchers.IO) { registration.close() }
             delay(300.milliseconds)
-            assertFalse(closing.isCompleted, "close returned while a request was still being handled")
+            assertFalse(
+                closing.isCompleted,
+                "close returned while a request was still being handled",
+            )
 
             impl.gate.complete(Unit)
             assertEquals(Text("released"), call.await())
@@ -230,9 +235,11 @@ class ServiceResponderTest {
     @Test
     fun `handlers running while the client closes can still publish and call through it`() = withService {
         NatsClient.create("rpc-responder-${clientCounter++}").use { other ->
-            other.registerService<PingService>(object : PingService {
-                override suspend fun ping() = Text("nested")
-            })
+            other.registerService<PingService>(
+                object : PingService {
+                    override suspend fun ping() = Text("nested")
+                },
+            )
             assertEquals(Text("nested"), client.service<PingService>().ping())
 
             val connection = NatsConnectionManager.connection()
@@ -250,17 +257,27 @@ class ServiceResponderTest {
 
                 val closing = async(Dispatchers.IO) { client.close() }
                 delay(300.milliseconds)
-                assertFalse(closing.isCompleted, "close returned while a request was still being handled")
+                assertFalse(
+                    closing.isCompleted,
+                    "close returned while a request was still being handled",
+                )
 
                 impl.gate.complete(Unit)
                 assertEquals(Text("nested"), call.await())
                 withTimeout(5.seconds) { closing.await() }
             }
 
-            val event = assertNotNull(events.nextMessage(java.time.Duration.ofSeconds(5)), "event published during close")
+            val event = assertNotNull(
+                events.nextMessage(java.time.Duration.ofSeconds(5)),
+                "event published during close",
+            )
             assertEquals(
                 Created(7),
-                NatsCodec.decode(Created.serializer(), event.data, event.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)),
+                NatsCodec.decode(
+                    Created.serializer(),
+                    event.data,
+                    event.headers.getFirst(ProtocolHeaders.CONTENT_TYPE),
+                ),
             )
             events.unsubscribe()
 
@@ -272,9 +289,11 @@ class ServiceResponderTest {
     @Test
     fun `stopAccepting waits for a running request and keeps outgoing calls working`() = withService {
         NatsClient.create("rpc-responder-${clientCounter++}").use { other ->
-            other.registerService<PingService>(object : PingService {
-                override suspend fun ping() = Text("outgoing")
-            })
+            other.registerService<PingService>(
+                object : PingService {
+                    override suspend fun ping() = Text("outgoing")
+                },
+            )
 
             coroutineScope {
                 val call = async { calc.gated() }
@@ -282,7 +301,10 @@ class ServiceResponderTest {
 
                 val stopping = async(Dispatchers.IO) { client.stopAccepting() }
                 delay(300.milliseconds)
-                assertFalse(stopping.isCompleted, "stopAccepting returned while a request was still being handled")
+                assertFalse(
+                    stopping.isCompleted,
+                    "stopAccepting returned while a request was still being handled",
+                )
 
                 impl.gate.complete(Unit)
                 assertEquals(Text("released"), call.await())
@@ -292,7 +314,11 @@ class ServiceResponderTest {
             assertFalse(client.isClosed)
             assertFailsWith<NatsNoRespondersException> { calc.count() }
             assertFailsWith<IllegalStateException> { client.registerListener(Any()) }
-            assertEquals(Text("outgoing"), client.service<PingService>().ping(), "new proxies call other clients")
+            assertEquals(
+                Text("outgoing"),
+                client.service<PingService>().ping(),
+                "new proxies call other clients",
+            )
 
             client.close()
             assertTrue(client.isClosed)
@@ -303,7 +329,10 @@ class ServiceResponderTest {
     @Test
     fun `closing client rejects new registrations and proxies but keeps existing proxies`() = withService {
         val versioned = object : VersionedServiceV1 {
-            override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(request.message, version = 1)
+            override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(
+                request.message,
+                version = 1,
+            )
         }
 
         coroutineScope {
@@ -312,14 +341,21 @@ class ServiceResponderTest {
 
             val closing = async(Dispatchers.IO) { client.close() }
             delay(300.milliseconds)
-            assertFalse(closing.isCompleted, "close returned while a request was still being handled")
+            assertFalse(
+                closing.isCompleted,
+                "close returned while a request was still being handled",
+            )
 
             assertFalse(client.isClosed, "client counts as closed while it drains")
             assertSame(calc, client.service<CalcService>(), "existing proxies stay available")
             val proxy = assertFailsWith<IllegalStateException> { client.service<FinderService>() }
             assertContains(proxy.message.orEmpty(), "is closing")
             assertFailsWith<IllegalStateException> { client.registerListener(Any()) }
-            assertFailsWith<IllegalStateException> { client.registerService<VersionedServiceV1>(versioned) }
+            assertFailsWith<IllegalStateException> {
+                client.registerService<VersionedServiceV1>(
+                    versioned,
+                )
+            }
 
             impl.gate.complete(Unit)
             assertEquals(Text("released"), call.await())
@@ -370,12 +406,18 @@ class ServiceResponderTest {
 
         val connection = NatsConnectionManager.connection()
         val dispatcher = connection.createDispatcher()
-        dispatcher.subscribe(method.subject, client.serviceDescriptor(CalcService::class.java).names.queueGroup) { request ->
-            val data = NatsCodec.encode(checkNotNull(method.response), Count(otherCalls.incrementAndGet()))
+        dispatcher.subscribe(
+            method.subject,
+            client.serviceDescriptor(CalcService::class.java).names.queueGroup,
+        ) { request ->
+            val data = NatsCodec.encode(
+                checkNotNull(method.response),
+                Count(otherCalls.incrementAndGet()),
+            )
             connection.publish(
                 request.replyTo,
                 NatsHeaders.base(client.name),
-                data
+                data,
             )
         }
         connection.flush(java.time.Duration.ofSeconds(5))
@@ -406,7 +448,7 @@ class ServiceResponderTest {
 
         assertNull(
             replies.nextMessage(java.time.Duration.ofMillis(500)),
-            "expired request must not be answered"
+            "expired request must not be answered",
         )
         assertEquals(0, impl.calls.get())
         replies.unsubscribe()
@@ -419,39 +461,59 @@ class ServiceResponderTest {
 
         val reply = requestReply(method.subject, NatsHeaders.base("external"), body)
 
-        assertTrue(ProtocolHeaders.isProtobufContentType(reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE)))
+        assertTrue(
+            ProtocolHeaders.isProtobufContentType(
+                reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE),
+            ),
+        )
         assertEquals(
             Text("1|2|3.5|true|panel"),
-            NatsCodec.decode(checkNotNull(method.response), reply.data, reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE))
+            NatsCodec.decode(
+                checkNotNull(method.response),
+                reply.data,
+                reply.headers.getFirst(ProtocolHeaders.CONTENT_TYPE),
+            ),
         )
     }
 
     @Test
     fun `undecodable request is answered with an error`() = withService {
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
 
         val reply = requestReply(method("mixed").subject, headers, byteArrayOf(0x7f, 0x01, 0x02))
 
         val remoteType = assertNotNull(reply.headers.getFirst(ProtocolHeaders.ERROR))
         assertTrue(
             SerializationException::class.java.isAssignableFrom(Class.forName(remoteType)),
-            "expected a SerializationException, was $remoteType"
+            "expected a SerializationException, was $remoteType",
         )
     }
 
     @Test
     fun `request missing a non-null field is answered with an error`() = withService {
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
 
         val reply = requestReply(method("mixed").subject, headers, NatsHeaders.EMPTY_BODY)
 
-        assertEquals(MissingFieldException::class.java.name, reply.headers.getFirst(ProtocolHeaders.ERROR))
+        assertEquals(
+            MissingFieldException::class.java.name,
+            reply.headers.getFirst(ProtocolHeaders.ERROR),
+        )
         assertContains(reply.data.decodeToString(), "label")
     }
 
     @Test
     fun `truncated request is answered with a serialization error`() = withService {
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
 
         // FailRequest.message is field 1: length-delimited, announces 5 bytes that do not follow
         val reply = requestReply(method("fail").subject, headers, byteArrayOf(0x0a, 0x05))
@@ -459,7 +521,7 @@ class ServiceResponderTest {
         val remoteType = assertNotNull(reply.headers.getFirst(ProtocolHeaders.ERROR))
         assertTrue(
             SerializationException::class.java.isAssignableFrom(Class.forName(remoteType)),
-            "expected a SerializationException, was $remoteType"
+            "expected a SerializationException, was $remoteType",
         )
     }
 
@@ -467,7 +529,11 @@ class ServiceResponderTest {
     fun `request without reply subject still runs the implementation`() = withService {
         val method = method("fire")
         NatsConnectionManager.connection()
-            .publish(method.subject, NatsHeaders.base("external"), method.encodeRequest(FireRequest()))
+            .publish(
+                method.subject,
+                NatsHeaders.base("external"),
+                method.encodeRequest(FireRequest()),
+            )
 
         withTimeout(5.seconds) { impl.fired.receive() }
     }
@@ -477,7 +543,11 @@ class ServiceResponderTest {
         val method = method("slowFire")
         val headers = NatsHeaders.base("external")
             .add(ProtocolHeaders.DEADLINE, (System.currentTimeMillis() + 1_000).toString())
-        NatsConnectionManager.connection().publish(method.subject, headers, method.encodeRequest(Unit))
+        NatsConnectionManager.connection().publish(
+            method.subject,
+            headers,
+            method.encodeRequest(Unit),
+        )
 
         withTimeout(5.seconds) { impl.slowFireDone.await() }
     }
@@ -487,7 +557,11 @@ class ServiceResponderTest {
         val method = method("count")
         val headers = NatsHeaders.base("external")
             .add(ProtocolHeaders.DEADLINE, (System.currentTimeMillis() - 1_000).toString())
-        NatsConnectionManager.connection().publish(method.subject, headers, method.encodeRequest(Unit))
+        NatsConnectionManager.connection().publish(
+            method.subject,
+            headers,
+            method.encodeRequest(Unit),
+        )
 
         delay(500.milliseconds)
         assertEquals(0, impl.calls.get())
@@ -501,39 +575,67 @@ class ServiceResponderTest {
 
     @Test
     fun `different interfaces with the same service name cannot share a client`() = withService {
-        val first = client.registerService<ClashServiceA>(object : ClashServiceA {
-            override suspend fun ping() = Text("first")
-        })
+        val first = client.registerService<ClashServiceA>(
+            object : ClashServiceA {
+                override suspend fun ping() = Text("first")
+            },
+        )
 
         val message = assertFailsWith<IllegalStateException> {
-            client.registerService<ClashServiceB>(object : ClashServiceB {
-                override suspend fun ping() = Text("second")
-            })
+            client.registerService<ClashServiceB>(
+                object : ClashServiceB {
+                    override suspend fun ping() = Text("second")
+                },
+            )
         }.message.orEmpty()
 
-        assertContains(message, "Service surf.nats.test.v1.NameClashService of ${ClashServiceB::class.java.name}")
+        assertContains(
+            message,
+            "Service surf.nats.test.v1.NameClashService of ${ClashServiceB::class.java.name}",
+        )
         assertContains(message, "is already registered on NatsClient[")
         assertContains(message, ClashServiceA::class.java.name)
         assertFalse(first.isClosed)
-        assertEquals(Text("first"), client.service<ClashServiceA>().ping(), "first registration must stay active")
+        assertEquals(
+            Text("first"),
+            client.service<ClashServiceA>().ping(),
+            "first registration must stay active",
+        )
     }
 
     @Test
     fun `v1 and v2 of one service are served side by side in one client`() = withService {
         val attempts = Channel<Int>(Channel.UNLIMITED)
-        client.registerService<VersionedServiceV1>(object : VersionedServiceV1 {
-            override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(request.message, version = 1)
-        })
-        client.registerService<VersionedServiceV2>(object : VersionedServiceV2 {
-            override suspend fun ping(request: VersionedPingRequestV2): VersionedPingReplyV2 {
-                attempts.send(request.attempt)
-                return VersionedPingReplyV2(request.message, version = 2, region = "eu")
-            }
-        })
+        client.registerService<VersionedServiceV1>(
+            object : VersionedServiceV1 {
+                override suspend fun ping(request: VersionedPingRequestV1) = VersionedPingReplyV1(
+                    request.message,
+                    version = 1,
+                )
+            },
+        )
+        client.registerService<VersionedServiceV2>(
+            object : VersionedServiceV2 {
+                override suspend fun ping(request: VersionedPingRequestV2): VersionedPingReplyV2 {
+                    attempts.send(request.attempt)
 
-        assertEquals(VersionedPingReplyV1("a", 1), client.service<VersionedServiceV1>().ping(VersionedPingRequestV1("a")))
-        assertEquals(VersionedPingReplyV2("b", 2, "eu"), client.service<VersionedServiceV2>().ping(VersionedPingRequestV2("b")))
-        assertEquals(VersionedPingReplyV2("c", 2, "eu"), client.service<VersionedServiceV2>().ping(VersionedPingRequestV2("c", attempt = 3)))
+                    return VersionedPingReplyV2(request.message, version = 2, region = "eu")
+                }
+            },
+        )
+
+        assertEquals(
+            VersionedPingReplyV1("a", 1),
+            client.service<VersionedServiceV1>().ping(VersionedPingRequestV1("a")),
+        )
+        assertEquals(
+            VersionedPingReplyV2("b", 2, "eu"),
+            client.service<VersionedServiceV2>().ping(VersionedPingRequestV2("b")),
+        )
+        assertEquals(
+            VersionedPingReplyV2("c", 2, "eu"),
+            client.service<VersionedServiceV2>().ping(VersionedPingRequestV2("c", attempt = 3)),
+        )
         assertEquals(listOf(1, 3), listOf(attempts.receive(), attempts.receive()))
 
         val v1 = client.serviceDescriptor(VersionedServiceV1::class.java).methods.single()
@@ -572,6 +674,9 @@ class ServiceResponderTest {
         impl.calls.set(0)
     }
 
-    private fun Fixture.method(name: String) =
-        client.serviceDescriptor(CalcService::class.java).methods.single { it.kotlinName == name }
+    private fun Fixture.method(name: String): MethodDescriptor {
+        return client.serviceDescriptor(CalcService::class.java).methods.single {
+            it.kotlinName == name
+        }
+    }
 }

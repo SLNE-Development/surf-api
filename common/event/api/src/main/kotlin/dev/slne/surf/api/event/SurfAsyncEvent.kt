@@ -15,7 +15,8 @@ abstract class SurfAsyncEvent : SurfEvent {
      *         is not cancellable; false if the event is cancellable and has been canceled.
      */
     suspend fun call(): Boolean {
-        SurfEventBus.INSTANCE.callAsync(this)
+        SurfEventBus.instance.callAsync(this)
+
         return this !is SurfCancellableEvent || !isCancelled
     }
 }

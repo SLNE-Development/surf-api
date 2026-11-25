@@ -12,6 +12,8 @@ import dev.slne.surf.api.minestom.plugin.SurfMinestomPlugin
 import dev.slne.surf.api.spring.SurfLifecycle
 import net.minestom.server.event.Event
 import net.minestom.server.event.EventNode
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
@@ -27,6 +29,22 @@ class BetaPlugin : SurfMinestomPlugin() {
         var greetingFromAlpha: String? = null
         var alphaInternalsVisible: Boolean? = null
         var surfEventsHandled = 0
+        var injectedLogger: Logger? = null
+    }
+}
+
+/**
+ * The logger `beta` declares itself; it wins over the plugin logger surf-api contributes.
+ */
+val BETA_OWN_LOGGER: Logger = LoggerFactory.getLogger("beta-own-logger")
+
+/**
+ * Records the slf4j [Logger] that `beta`'s context injects by type.
+ */
+@Component
+class BetaLoggerProbe(logger: Logger) {
+    init {
+        BetaPlugin.injectedLogger = logger
     }
 }
 
@@ -75,4 +93,7 @@ const val BETA_COMMAND = "beta-fixture-command"
 class BetaBeans {
     @Bean
     fun betaNode(): EventNode<Event> = EventNode.all("beta-listeners")
+
+    @Bean
+    fun betaOwnLogger(): Logger = BETA_OWN_LOGGER
 }

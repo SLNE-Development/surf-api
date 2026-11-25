@@ -6,11 +6,12 @@ import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
+    `api-validation`
     id("org.jetbrains.dokka-javadoc") version "2.2.0"
 }
 
 surfCoreApi {
-    withApiValidation()
+    allowInternalApi("dev.slne.surf.api.shared.api.util.InternalSurfApi")
 }
 
 kotlin {
@@ -28,8 +29,9 @@ val shadedPackages = parent!!.extra["shadedPackages"] as Map<String, String>
 
 val redissonPackagePath = "org/redisson"
 val redissonRelocationPath = shadedPackages.getValue("org.redisson").replace('.', '/')
-val relocationExtraDepth =
-    redissonRelocationPath.count { it == '/' } - redissonPackagePath.count { it == '/' }
+val relocationExtraDepth = redissonRelocationPath.count { it == '/' } - redissonPackagePath.count {
+    it == '/'
+}
 
 val shadedPackageRewrites = shadedPackages
     .flatMap { (from, to) ->
@@ -39,9 +41,13 @@ val shadedPackageRewrites = shadedPackages
 
 fun String.applyShadedPackages(): String {
     var rewritten = this
+
     for ((from, to) in shadedPackageRewrites) {
-        if (rewritten.contains(from)) rewritten = rewritten.replace(from, to)
+        if (rewritten.contains(from)) {
+            rewritten = rewritten.replace(from, to)
+        }
     }
+
     return rewritten
 }
 
@@ -65,39 +71,41 @@ fun registerRedissonRelocation(
     outputDirectory: String,
     textFileSuffix: String,
     rewriteLinkDepth: Boolean,
-) = tasks.register<Sync>(taskName) {
-    description = "Rewrites Redisson's $textFileSuffix files onto the shaded package names."
-    group = JavaBasePlugin.DOCUMENTATION_GROUP
+): TaskProvider<Sync> {
+    return tasks.register<Sync>(taskName) {
+        description = "Rewrites Redisson's $textFileSuffix files onto the shaded package names."
+        group = JavaBasePlugin.DOCUMENTATION_GROUP
 
-    into(layout.buildDirectory.dir(outputDirectory))
-    includeEmptyDirs = false
-    filteringCharset = Charsets.UTF_8.name()
+        into(layout.buildDirectory.dir(outputDirectory))
+        includeEmptyDirs = false
+        filteringCharset = Charsets.UTF_8.name()
 
-    inputs.property("shadedPackageRewrites", shadedPackageRewrites.toString())
-    inputs.property("rewriteLinkDepth", rewriteLinkDepth)
+        inputs.property("shadedPackageRewrites", shadedPackageRewrites.toString())
+        inputs.property("rewriteLinkDepth", rewriteLinkDepth)
 
-    from(source.elements.map { jars -> jars.map(::zipTree) }) {
-        include("$redissonPackagePath/**")
+        from(source.elements.map { jars -> jars.map(::zipTree) }) {
+            include("$redissonPackagePath/**")
 
-        eachFile {
-            val depth = relativePath.segments.size - 1
+            eachFile {
+                val depth = relativePath.segments.size - 1
 
-            if (name.endsWith(textFileSuffix)) {
-                filter { line ->
-                    val relinked = if (rewriteLinkDepth) {
-                        line.replace(
-                            "../".repeat(depth),
-                            "../".repeat(depth + relocationExtraDepth),
-                        )
-                    } else {
-                        line
+                if (name.endsWith(textFileSuffix)) {
+                    filter { line ->
+                        val relinked = if (rewriteLinkDepth) {
+                            line.replace(
+                                "../".repeat(depth),
+                                "../".repeat(depth + relocationExtraDepth),
+                            )
+                        } else {
+                            line
+                        }
+
+                        relinked.applyShadedPackages()
                     }
-
-                    relinked.applyShadedPackages()
                 }
-            }
 
-            path = redissonRelocationPath + path.removePrefix(redissonPackagePath)
+                path = redissonRelocationPath + path.removePrefix(redissonPackagePath)
+            }
         }
     }
 }
@@ -108,6 +116,10 @@ dependencies {
         exclude("org.reactivestreams")
         exclude("io.projectreactor", "reactor-core")
     }
+    // Reactor types are part of this api. The host runtime ships them, so the plain jar only
+    // compiles against them, while the shaded jar declares them for its consumers.
+    compileOnlyApi(libs.bundles.kotlin.coroutines.reactor)
+    shadow(libs.bundles.kotlin.coroutines.reactor)
 
     testImplementation(kotlin("test-junit5"))
 }
@@ -136,7 +148,10 @@ tasks.javadoc {
 tasks.named<Jar>("javadocJar") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    from(tasks.named<DokkaGenerateTask>("dokkaGeneratePublicationJavadoc").flatMap { it.outputDirectory })
+    from(
+        tasks.named<DokkaGenerateTask>("dokkaGeneratePublicationJavadoc")
+            .flatMap { it.outputDirectory },
+    )
     from(relocateRedissonJavadoc)
 }
 

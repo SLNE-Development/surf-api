@@ -1,4 +1,4 @@
-import dev.slne.surf.api.generator.nms.NmsVersion
+import dev.slne.surf.api.shared.internal.nms.NmsVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmExtension
 
 plugins {
@@ -39,8 +39,10 @@ allprojects {
 
 val surfGroup = findProperty("group") as String
 val surfVersion = findProperty("version") as String +
-        if ((findProperty("snapshot") as String).toBooleanStrict()) "-SNAPSHOT" else ""
-val modulePaths = subprojects.filter { it.subprojects.isEmpty() }.associate { it.name to it.path }
+    if ((findProperty("snapshot") as String).toBooleanStrict()) "-SNAPSHOT" else ""
+val modulePaths = subprojects
+    .filter { it.subprojects.isEmpty() }
+    .associate { it.name to it.path }
 
 /**
  * Whether the project at [path] publishes its shaded jar as its `shadow` publication.
@@ -50,6 +52,7 @@ val modulePaths = subprojects.filter { it.subprojects.isEmpty() }.associate { it
  */
 fun publishesShadedJar(path: String): Boolean {
     val publications = project(path).extensions.findByType<PublishingExtension>()?.publications
+
     return publications?.findByName("shadow") != null
 }
 
@@ -66,12 +69,18 @@ allprojects {
                 val path = modulePaths[requested.module] ?: return@all
 
                 val target = substitutions.project(path)
+
                 if (publishesShadedJar(path)) {
-                    useTarget(substitutions.variant(target) {
-                        attributes {
-                            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling.SHADOWED))
-                        }
-                    })
+                    useTarget(
+                        substitutions.variant(target) {
+                            attributes {
+                                attribute(
+                                    Bundling.BUNDLING_ATTRIBUTE,
+                                    objects.named(Bundling.SHADOWED),
+                                )
+                            }
+                        },
+                    )
                 } else {
                     useTarget(target)
                 }
@@ -88,6 +97,7 @@ for (publishTask in listOf("publish", "publishToMavenLocal")) {
         dependsOn(gradle.includedBuild("gradle-plugin").task(":$publishTask"))
     }
 }
+
 tasks.named(LifecycleBasePlugin.CHECK_TASK_NAME) {
     dependsOn(gradle.includedBuild("gradle-plugin").task(":check"))
 }
@@ -98,31 +108,28 @@ val infraDir = file("infra")
 subprojects.filter { it.projectDir.startsWith(infraDir) }.forEach { infraProject ->
     infraProject.group = surfGroup
     infraProject.version = surfVersion
-
-    // The infra modules register their ServiceLoader implementations with @AutoService, whose
-    // processor the surf Gradle plugin stopped adding in 4.0.0.
-    infraProject.pluginManager.withPlugin("com.google.devtools.ksp") {
-        infraProject.dependencies {
-            "compileOnly"(libs.auto.service.annotations)
-            "ksp"(libs.auto.service.ksp)
-        }
-    }
 }
 
 subprojects {
     // Every module with an ABI dump, whichever way it enables validation, checks its dump for
     // nested classes of excluded internal classes.
     val dumps = layout.projectDirectory.dir("api")
+
     if (dumps.asFile.isDirectory) {
         val checkAbiDumpNesting = tasks.register<CheckAbiDumpNesting>("checkAbiDumpNesting") {
             group = LifecycleBasePlugin.VERIFICATION_GROUP
-            description = "Fails when an ABI dump lists a nested class of an excluded internal class."
-            this.dumps.from(fileTree(dumps) {
-                include("*.api")
-                exclude("*.klib.api")
-            })
+            description =
+                "Fails when an ABI dump lists a nested class of an excluded internal class."
+            this.dumps.from(
+                fileTree(dumps) {
+                    include("*.api")
+                    exclude("*.klib.api")
+                },
+            )
         }
-        plugins.withType<LifecycleBasePlugin> { tasks.named("check") { dependsOn(checkAbiDumpNesting) } }
+        plugins.withType<LifecycleBasePlugin> {
+            tasks.named("check") { dependsOn(checkAbiDumpNesting) }
+        }
     }
 
     afterEvaluate {

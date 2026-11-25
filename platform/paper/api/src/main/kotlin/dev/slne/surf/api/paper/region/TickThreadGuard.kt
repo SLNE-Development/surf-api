@@ -1,14 +1,12 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.region
 
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.SurfApiBean
 import dev.slne.surf.api.spring.surfBean
 import io.papermc.paper.math.Position
 import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.bukkit.util.BoundingBox
-import dev.slne.surf.api.spring.SurfApiBean
 
 @Suppress("UnstableApiUsage")
 @SurfApiBean
@@ -26,8 +24,6 @@ interface TickThreadGuard {
 
     companion object {
         @InternalSurfApi
-        val INSTANCE get() = tickThreadGuard
+        val instance by surfBean<TickThreadGuard>()
     }
 }
-
-private val tickThreadGuard by surfBean<TickThreadGuard>()

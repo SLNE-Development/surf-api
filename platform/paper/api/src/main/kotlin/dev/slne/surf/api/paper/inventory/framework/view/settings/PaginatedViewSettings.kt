@@ -1,12 +1,7 @@
 package dev.slne.surf.api.paper.inventory.framework.view.settings
 
 import dev.slne.surf.api.inventory.framework.view.pagination.PaginationPageIndicator
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationButtonPosition
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationEmptyRows
-import dev.slne.surf.api.inventory.framework.view.settings.PaginationViewRows
-import dev.slne.surf.api.inventory.framework.view.settings.ViewFontMetrics
-import dev.slne.surf.api.inventory.framework.view.settings.ViewHeaderGeometry
-import dev.slne.surf.api.inventory.framework.view.settings.ViewRows
+import dev.slne.surf.api.inventory.framework.view.settings.*
 import dev.slne.surf.api.inventory.framework.view.settings.align.TextAlignment
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
@@ -18,7 +13,8 @@ import net.kyori.adventure.text.format.TextColor
  * Extends [SurfViewSettings] with pagination-specific configuration:
  * - The number of visible content rows and the total inventory rows via [paginationViewRows]
  * - The number of rows left empty next to the content via [paginationEmptyRows]
- * - The position (top or bottom) of the previous/next navigation buttons via [paginationButtonPosition]
+ * - The position (top or bottom) of the previous/next navigation buttons via
+ *   [paginationButtonPosition]
  *
  * Create instances via the DSL builder [paginatedViewSettings] or through the
  * [PaginatedViewSettingsBuilder] within a `settings { }` DSL block.
@@ -31,7 +27,8 @@ import net.kyori.adventure.text.format.TextColor
  * @property headerGeometry the pixel geometry of the inventory and its slot grid
  * @property backgroundGlyph whether the per-row background glyph of a custom inventory texture is
  *   rendered
- * @property rowFonts the fonts that render header text on a slot row, keyed by one-based row in the header
+ * @property rowFonts the fonts that render header text on a slot row, keyed by one-based row in the
+ * header
  * @property cancelOnClick whether inventory click events should be cancelled by default
  * @property cancelOnDrag whether inventory drag events should be cancelled by default
  * @property cancelOnDrop whether item-drop events should be cancelled by default
@@ -50,34 +47,38 @@ import net.kyori.adventure.text.format.TextColor
  * @see PaginationEmptyRows
  * @see PaginationButtonPosition
  */
-@OptIn(ExperimentalVersionOverloading::class)
 data class PaginatedViewSettings(
     override val font: Key = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT,
-    override val headerTextAlignment: TextAlignment = SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,
-    @IntroducedAt("3.43.0") override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
-    @IntroducedAt("3.43.0") override val headerFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
-    @IntroducedAt("3.43.0") override val rowFontMetrics: ViewFontMetrics = SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
-    @IntroducedAt("3.43.0") override val headerGeometry: ViewHeaderGeometry = SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
-    @IntroducedAt("3.43.0") override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
-    @IntroducedAt("3.43.0") override val rowFonts: Map<Int, Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
+    override val headerTextAlignment: TextAlignment =
+        SurfViewSettingsDefaults.DEFAULT_HEADER_ALIGNMENT,
+    override val headerTextColor: TextColor = SurfViewSettingsDefaults.DEFAULT_HEADER_TEXT_COLOR,
+    override val headerFontMetrics: ViewFontMetrics =
+        SurfViewSettingsDefaults.DEFAULT_HEADER_FONT_METRICS,
+    override val rowFontMetrics: ViewFontMetrics =
+        SurfViewSettingsDefaults.DEFAULT_ROW_FONT_METRICS,
+    override val headerGeometry: ViewHeaderGeometry =
+        SurfViewSettingsDefaults.DEFAULT_HEADER_GEOMETRY,
+    override val backgroundGlyph: Boolean = SurfViewSettingsDefaults.DEFAULT_BACKGROUND_GLYPH,
+    override val rowFonts: Map<Int, Key> = SurfViewSettingsDefaults.DEFAULT_ROW_FONTS,
     override val cancelOnClick: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_CLICK,
     override val cancelOnDrag: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DRAG,
     override val cancelOnDrop: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_DROP,
     override val cancelOnPickup: Boolean = SurfViewSettingsDefaults.DEFAULT_CANCEL_ON_PICKUP,
-    override val navigateBackOnOutsideClick: Boolean = SurfViewSettingsDefaults.DEFAULT_NAVIGATE_BACK_ON_CLOSE,
-    val paginationViewRows: PaginationViewRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_VIEW_ROWS,
-    @IntroducedAt("3.43.0") val paginationEmptyRows: PaginationEmptyRows = SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS,
-    val paginationButtonPosition: PaginationButtonPosition = SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION,
-    @IntroducedAt("3.43.0") val paginationPageIndicator: PaginationPageIndicator? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR,
-    @IntroducedAt("3.43.0") val paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND,
+    override val navigateBackOnOutsideClick: Boolean =
+        SurfViewSettingsDefaults.DEFAULT_NAVIGATE_BACK_ON_CLOSE,
+    val paginationViewRows: PaginationViewRows =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_VIEW_ROWS,
+    val paginationEmptyRows: PaginationEmptyRows =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_EMPTY_ROWS,
+    val paginationButtonPosition: PaginationButtonPosition =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_BUTTON_POSITION,
+    val paginationPageIndicator: PaginationPageIndicator? =
+        SurfViewSettingsDefaults.DEFAULT_PAGINATION_PAGE_INDICATOR,
+    val paginationSwitchSound: Sound? = SurfViewSettingsDefaults.DEFAULT_PAGINATION_SWITCH_SOUND,
 ) : SurfViewSettings {
     override val rows: ViewRows = paginationViewRows.actualRows
     internal val paginationButtonRow =
-        if (paginationButtonPosition == PaginationButtonPosition.BOTTOM) {
-            rows.rows
-        } else {
-            1
-        }
+        if (paginationButtonPosition == PaginationButtonPosition.BOTTOM) rows.rows else 1
 
     /**
      * The one-based rows the pagination engine fills: every row except [paginationButtonRow] and
@@ -98,8 +99,8 @@ data class PaginatedViewSettings(
     init {
         require(paginationContentRowCount >= 1) {
             "$paginationViewRows leaves ${paginationViewRows.contentRows} content row(s) in a " +
-                    "${rows.rows}-row inventory, which cannot hold $paginationEmptyRows empty " +
-                    "row(s) as well - use fewer empty rows or more pagination rows"
+                "${rows.rows}-row inventory, which cannot hold $paginationEmptyRows empty " +
+                "row(s) as well - use fewer empty rows or more pagination rows"
         }
     }
 }

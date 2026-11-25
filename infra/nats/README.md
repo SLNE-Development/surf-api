@@ -88,16 +88,18 @@ plugins {
 ```
 
 The surf-nats plugin applies the surf-microservice plugin and adds `surf-api-nats-spring` at the plugin's version. Do
-not add either yourself. A microservice uses NATS through its Spring context. Do not call `SurfNatsStandalone`
-yourself, and do not create a `NatsClient` unless you want a name other than the default (see
-[Microservice client name](#microservice-client-name)). The context contributes:
+not add either yourself. A microservice uses NATS through its Spring context. Do not create a `NatsClient` unless
+you want a name other than the default (see [Microservice client name](#microservice-client-name)). The context contributes:
 
 - A `NatsClient` named after the microservice, which closes with the context.
 - Service proxies for the generated service interfaces that your beans inject.
 - The `@NatsService` and `@NatsListener` beans of the application, registered when the surf-api hooks enable the
   application and drained before they disable it.
 - A health indicator, the bean `natsHealthIndicator`. Spring Boot drops the `HealthIndicator` suffix, so its health
-  component is `nats`, which `microservicectl health` includes.
+  component is `nats`, which `microservicectl health` includes. It is `UNKNOWN` while the context has no
+  `NatsClient`, `DOWN` while a client exists and the connection is not `CONNECTED`, and `UP` otherwise.
+  `microservicectl health` reports only `DOWN` and `OUT_OF_SERVICE` as unhealthy, so a microservice without a
+  `NatsClient` stays healthy.
 
 A `@NatsService` bean that also carries `@NatsTransactional` runs its persistent methods at most once per message when
 the reliability module of surf-microservice is on the class path. The start fails without it.
@@ -332,6 +334,13 @@ surfNats {
 }
 ```
 
+For a message with a single field 1, extend `ProtoWrapperSerializer` from `surf-api-nats-types-common`. It writes the
+value through an existing serializer, such as one from `surf-api-serialization-api`, as that field:
+
+```kotlin
+object TagSerializer : ProtoWrapperSerializer<Tag>("surf.profiles.v1.Tag", TagStringSerializer, fieldName = "name")
+```
+
 Events cannot be mapped. `google.protobuf.Any` and other types without a mapping are not supported. Use a `oneof`
 instead.
 
@@ -452,19 +461,9 @@ compatibility check.
 
 ## Clients
 
-A `NatsClient` is your application's handle to NATS. A standalone JVM application without a Spring context depends on
-`surf-api-nats-standalone`, opens the connection with `SurfNatsStandalone`, and creates and closes its client itself:
-
-```kotlin
-SurfNatsStandalone.start(Path.of("nats"))
-val client = NatsClient.create("profiles")
-
-// On shutdown:
-client.close()
-SurfNatsStandalone.shutdown()
-```
-
-`start` suspends until it is connected and reads `config.yml` from the given directory.
+A `NatsClient` is your application's handle to NATS. A Spring context provides it: the plugin context of a surf-api
+plugin, or a Spring Boot context that `SurfApiStandaloneBootstrap.adopt` makes surf-api's root context with
+`surf-api-nats-spring` on the class path, such as the context of a microservice.
 
 A plugin on Paper, Velocity, or Minestom does not create its client. It injects the `NatsClient` bean of its plugin
 context, which closes with the context, and its client name is the normalised plugin name (see
@@ -480,6 +479,21 @@ connection, and to group `ANY_INSTANCE` listeners per application.
 
 `close()` closes every listener and service registration of the client. A closed client cannot be reused. After
 surf-nats restarts, create a new client.
+
+### IntelliJ IDEA
+
+IntelliJ cannot see two things surf-nats does at runtime:
+
+- **Unused methods.** surf-nats calls `@NatsListener` methods and the methods of `@NatsService` beans reflectively,
+  so the *Unused declaration* inspection flags them. To mark them as entry points, open **Settings > Editor >
+  Inspections > Unused declaration > Entry points > Annotations** and add `dev.slne.surf.nats.event.NatsListener` and
+  `dev.slne.surf.nats.NatsService`. IntelliJ stores the list in `.idea/misc.xml`.
+- **"Could not autowire. No beans of 'NatsClient' type found."** `NatsContextContributor` registers the `NatsClient`
+  bean and the service proxies at runtime with `registerBeanDefinition`, on each plugin and microservice context.
+  On the platforms the contributor is a bean of surf-api's root context; a microservice finds it through
+  `ServiceLoader`. It is not a component, a `@Bean` method, or a Spring Boot auto-configuration, so IntelliJ's
+  Spring model does not see these beans, also in a Spring Boot microservice. The injection works at runtime;
+  ignore the warning or suppress it at the injection point.
 
 ## Events
 
@@ -597,7 +611,7 @@ object NameListener {
 
     @NatsListener
     suspend fun onNameChanged(event: NameChanged) {
-        if (!deduplicator.firstDelivery()) return
+        if (!deduplicator.isFirstDelivery()) return
         println("${event.playerId} is now ${event.name}")
     }
 }
@@ -606,7 +620,7 @@ object NameListener {
 It remembers up to 10,000 ids for 7 days by default. Both limits are constructor parameters. A repeat that arrives
 after its id was forgotten counts as new, so the limits must cover the time in which publishers repeat events. An
 event without an id always counts as a first delivery. Outside a listener method, pass the id yourself with
-`firstDelivery(eventId)`.
+`isFirstDelivery(eventId)`.
 
 ### Subjects
 
@@ -1191,7 +1205,6 @@ example `:surf-api-nats:surf-api-nats-core`.
 | `surf-nats-types/surf-nats-types-common`    | `surf/nats/v1/options.proto`, the `surf.types.v1` messages, and their Kotlin serializers, also published to weaver as protos |
 | `surf-nats-types/surf-nats-types-paper`     | The `surf.types.paper.v1` messages and their Paper serializers, also published to weaver as protos |
 | `surf-nats-spring`                          | The Spring integration, bundled into the surf-api plugin of each platform and used by microservices: plugin clients, service proxies, `@NatsService` and `@NatsListener` beans |
-| `surf-nats-platform/surf-nats-standalone`   | `SurfNatsStandalone` for plain JVM applications that do not run a Spring context, published as a shaded jar with jnats and the BouncyCastle it depends on relocated below `dev.slne.surf.nats.libs`; BouncyCastle's native libraries are left out, so it runs its Java implementation |
 | `surf-nats-test/surf-nats-test-common`      | Test contracts shared by the test plugin and the test microservice, published to weaver and Maven |
 | `surf-nats-test/surf-nats-test-fixtures`    | Contracts and a mapped type for the tests of `surf-nats-core`, `surf-nats-spring` and the local test plugins, not published |
 | `surf-nats-test/surf-nats-test-fixtures-internal` | Contracts generated with `generatedVisibility = INTERNAL`, not published                 |

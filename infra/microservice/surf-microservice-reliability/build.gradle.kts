@@ -6,7 +6,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("dev.slne.surf.api.gradle.core")
+    `api-validation`
     `java-test-fixtures`
+}
+
+surfCoreApi {
+    allowInternalApi("dev.slne.surf.nats.InternalNatsApi")
 }
 
 kotlin {
@@ -35,7 +40,7 @@ dependencies {
     testImplementation(shadowed(projects.surfApiDatabaseR2dbc))
     testImplementation(libs.spring.context)
     testImplementation(libs.spring.boot.autoconfigure)
-    testImplementation(shadowed(projects.surfApiNats.surfApiNatsPlatform.surfApiNatsStandalone))
+    testImplementation(projects.surfApiNats.surfApiNatsCore)
     testImplementation(projects.surfApiNats.surfApiNatsTest.surfApiNatsTestCommon)
     testImplementation(libs.jnats)
     testImplementation(libs.testcontainers.junit)
@@ -49,38 +54,47 @@ dependencies {
 }
 
 /*
- * surf-database and surf-nats are shaded jars that reference configurate as `dev.slne.surf.api.libs.configurate`, the
- * package a microservice's shadow jar relocates it to, while the published surf API artifacts use the original
- * package. The tests therefore run with the surf API and configurate bundled into one jar; the surf gradle plugin
+ * surf-database is a shaded jar that references configurate as
+ * `dev.slne.surf.api.libs.configurate`, the package a microservice's shadow jar relocates it to,
+ * while the published surf API artifacts use the original package. The tests therefore run with the
+ * surf API, the surf-nats modules and configurate bundled into one jar; the surf gradle plugin
  * applies the configurate relocation to every ShadowJar task.
  */
 val surfRuntimeGroups = setOf("dev.slne.surf.api", "dev.slne.forks.configurate")
 
 /**
- * Libraries the surf runtime relocates into its own packages. surf-api's classes in the bundle refer
- * to the relocated names, so the libraries have to be bundled and relocated with them.
+ * Libraries the surf runtime relocates into its own packages. surf-api's classes in the bundle
+ * refer to the relocated names, so the libraries have to be bundled and relocated with them.
  */
 val relocatedSurfLibraries = setOf("net.kyori:adventure-nbt")
 
-fun Project.isInfra() = projectDir.startsWith(rootProject.file("infra"))
+fun Project.isInfra(): Boolean = projectDir.startsWith(rootProject.file("infra"))
 
-fun testRuntimeArtifacts(surfRuntime: Boolean) = configurations.testRuntimeClasspath.map { configuration ->
-    configuration.incoming.artifactView {
-        componentFilter { id ->
-            val isSurfRuntime = when (id) {
-                is ModuleComponentIdentifier ->
-                    id.group in surfRuntimeGroups || "${id.group}:${id.module}" in relocatedSurfLibraries
-                // surf-api's own modules, which this build resolves to its projects
-                is ProjectComponentIdentifier -> id.build.buildPath == ":" && !project(id.projectPath).isInfra()
-                else -> false
+fun Project.isNats(): Boolean = projectDir.startsWith(rootProject.file("infra/nats"))
+
+fun testRuntimeArtifacts(surfRuntime: Boolean): Provider<FileCollection> {
+    return configurations.testRuntimeClasspath.map { configuration ->
+        configuration.incoming.artifactView {
+            componentFilter { id ->
+                val isSurfRuntime = when (id) {
+                    is ModuleComponentIdentifier ->
+                        id.group in surfRuntimeGroups ||
+                            "${id.group}:${id.module}" in relocatedSurfLibraries
+                    // surf-api's own modules, which this build resolves to its projects
+                    is ProjectComponentIdentifier -> id.build.buildPath == ":" &&
+                        project(id.projectPath).let { !it.isInfra() || it.isNats() }
+
+                    else -> false
+                }
+                isSurfRuntime == surfRuntime
             }
-            isSurfRuntime == surfRuntime
-        }
-    }.files
+        }.files
+    }
 }
 
 val testSurfRuntime = tasks.register<ShadowJar>("testSurfRuntime") {
-    description = "Bundles the surf runtime for the tests with configurate relocated like in a microservice."
+    description =
+        "Bundles the surf runtime for the tests with configurate relocated like in a microservice."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
 
     archiveFileName = "test-surf-runtime.jar"

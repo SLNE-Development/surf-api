@@ -22,7 +22,7 @@ import java.util.function.Predicate
  *
  * val retries = config.maxRetries or 3
  *
- * if (config.queueLimit.enabled()) {
+ * if (config.queueLimit.isEnabled()) {
  *     val limit = config.queueLimit.intValue()
  * }
  * ```
@@ -69,7 +69,7 @@ interface IntOr {
         /**
          * Returns the configured integer value, or [fallback] if this value is `default`.
          */
-        override fun or(fallback: Int) = value ?: fallback
+        override fun or(fallback: Int): Int = value ?: fallback
 
         companion object {
             private const val DEFAULT_VALUE = "default"
@@ -98,7 +98,7 @@ interface IntOr {
             override fun serialize(
                 type: AnnotatedType,
                 item: Default,
-                typeSupported: Predicate<Class<*>>
+                typeSupported: Predicate<Class<*>>,
             ): Any {
                 return item.value ?: DEFAULT_VALUE
             }
@@ -115,23 +115,23 @@ interface IntOr {
      *     val limit: IntOr.Disabled = IntOr.Disabled.DISABLED
      * )
      *
-     * if (config.limit.enabled()) {
+     * if (config.limit.isEnabled()) {
      *     val limit = config.limit.intValue()
      * }
      * ```
      */
     data class Disabled(
-        override val value: Int?
+        override val value: Int?,
     ) : IntOr {
         /**
          * Returns the configured integer value, or [fallback] if this value is `disabled`.
          */
-        override fun or(fallback: Int) = value ?: fallback
+        override fun or(fallback: Int): Int = value ?: fallback
 
         /**
          * Returns `true` if this value contains an explicit integer.
          */
-        fun enabled(): Boolean = value != null
+        fun isEnabled(): Boolean = value != null
 
         /**
          * Returns `true` if this value is enabled and its integer value matches [predicate].
@@ -167,7 +167,7 @@ interface IntOr {
             override fun serialize(
                 type: AnnotatedType,
                 item: Disabled,
-                typeSupported: Predicate<Class<*>>
+                typeSupported: Predicate<Class<*>>,
             ): Any {
                 return item.value ?: DISABLED_VALUE
             }
@@ -184,7 +184,7 @@ private fun parseInt(type: AnnotatedType, obj: Any, emptyValue: String): Int? {
                 obj.toIntOrNull()
                     ?: throw SerializationException(
                         Int::class.java,
-                        "$obj($type) is not an int or '$emptyValue'"
+                        "$obj($type) is not an int or '$emptyValue'",
                     )
             }
         }
@@ -193,7 +193,7 @@ private fun parseInt(type: AnnotatedType, obj: Any, emptyValue: String): Int? {
 
         else -> throw SerializationException(
             Int::class.java,
-            "$obj($type) is not an int or '$emptyValue'"
+            "$obj($type) is not an int or '$emptyValue'",
         )
     }
 }

@@ -1,43 +1,17 @@
 package dev.slne.surf.nats.client
 
-import dev.slne.surf.nats.CreatedImpostor
-import dev.slne.surf.nats.NatsClient
-import dev.slne.surf.nats.NatsInstance
-import dev.slne.surf.nats.TEST_UUID
+import dev.slne.surf.nats.*
 import dev.slne.surf.nats.codec.NatsCodec
 import dev.slne.surf.nats.connection.NatsConnectionManager
-import dev.slne.surf.nats.event.NatsEventContext
-import dev.slne.surf.nats.event.NatsEventDeduplicator
-import dev.slne.surf.nats.event.NatsListener
-import dev.slne.surf.nats.event.natsEventContext
-import dev.slne.surf.nats.event.natsEventContextOrNull
-import dev.slne.surf.nats.eventually
-import dev.slne.surf.nats.everything
+import dev.slne.surf.nats.event.*
 import dev.slne.surf.nats.protocol.ProtocolHeaders
 import dev.slne.surf.nats.rpc.Recipients
-import dev.slne.surf.nats.test.proto.v1.Balanced
-import dev.slne.surf.nats.test.proto.v1.Color
-import dev.slne.surf.nats.test.proto.v1.Created
-import dev.slne.surf.nats.test.proto.v1.Everything
-import dev.slne.surf.nats.test.proto.v1.Heartbeat
-import dev.slne.surf.nats.test.proto.v1.NotAnEvent
-import dev.slne.surf.nats.test.proto.v1.OriginEvent
-import dev.slne.surf.nats.test.proto.v1.PlayerEvent
-import dev.slne.surf.nats.test.proto.v1.ProfileUpdated
+import dev.slne.surf.nats.test.proto.v1.*
 import io.nats.client.JetStreamStatusException
 import io.nats.client.impl.Headers
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.yield
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
@@ -159,7 +133,9 @@ class NatsClientListenerTest {
         val recorder = Recorder<Created>()
 
         @NatsListener
-        fun fails(event: Created): Unit = throw IllegalStateException("listener failure ${event.id}")
+        fun fails(event: Created) {
+            throw IllegalStateException("listener failure ${event.id}")
+        }
 
         @NatsListener
         fun works(event: Created) {
@@ -217,8 +193,8 @@ class NatsClientListenerTest {
     }
 
     /**
-     * Stands in for the CGLIB subclass a Spring proxy makes of [BaseListener]: it overrides the annotated method
-     * without repeating the annotation.
+     * Stands in for the CGLIB subclass a Spring proxy makes of [BaseListener]: it overrides the
+     * annotated method without repeating the annotation.
      */
     class ProxyOfBaseListener : BaseListener() {
         var intercepted = 0
@@ -273,7 +249,9 @@ class NatsClientListenerTest {
 
         @NatsListener
         suspend fun on(event: OriginEvent) {
-            if (deduplicator.firstDelivery()) recorder.received.send(event)
+            if (deduplicator.isFirstDelivery()) {
+                recorder.received.send(event)
+            }
         }
     }
 
@@ -308,10 +286,10 @@ class NatsClientListenerTest {
     }
 
     @BeforeAll
-    fun connect() = runBlocking { NatsInstance.instance.load() }
+    fun connect() = runBlocking { TestNats.load() }
 
     @AfterAll
-    fun disconnect() = runBlocking { NatsInstance.instance.disable() }
+    fun disconnect() = runBlocking { TestNats.disable() }
 
     @Test
     fun `normal and suspend listener in one object both receive the event`() = withClient("listen-both") { client ->
@@ -339,8 +317,15 @@ class NatsClientListenerTest {
         val listener = CreatedListener()
         client.registerListener(listener)
 
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, "Application/Protobuf; charset=binary")
-        NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.Created", headers, byteArrayOf(0x08, 0x07))
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            "Application/Protobuf; charset=binary",
+        )
+        NatsConnectionManager.connection().publish(
+            "surf.evt.surf.nats.test.v1.Created",
+            headers,
+            byteArrayOf(0x08, 0x07),
+        )
 
         assertEquals(Created(7), listener.recorder.receiveWithin())
     }
@@ -362,7 +347,11 @@ class NatsClientListenerTest {
         client.registerListener(listener)
 
         val withoutOptionals = ProfileUpdated(TEST_UUID)
-        val withOptionals = ProfileUpdated(TEST_UUID, nickname = "", previousOwner = UUID.randomUUID())
+        val withOptionals = ProfileUpdated(
+            TEST_UUID,
+            nickname = "",
+            previousOwner = UUID.randomUUID(),
+        )
         client.publish(withoutOptionals)
         assertEquals(withoutOptionals, listener.recorder.receiveWithin())
         client.publish(withOptionals)
@@ -384,12 +373,26 @@ class NatsClientListenerTest {
         val listener = EverythingListener()
         client.registerListener(listener)
 
-        // A newer sender's color 99: field 18 as varint (tag 0x90 0x01) after the regular fields, so it wins
-        val bytes = NatsCodec.encode(Everything.serializer(), everything()) + byteArrayOf(0x90.toByte(), 0x01, 99)
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
-        NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.Everything", headers, bytes)
+        // A newer sender's color 99: field 18 as varint (tag 0x90 0x01) after the regular fields,
+        // so it wins
+        val bytes = NatsCodec.encode(
+            Everything.serializer(),
+            everything(),
+        ) + byteArrayOf(0x90.toByte(), 0x01, 99)
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
+        NatsConnectionManager.connection().publish(
+            "surf.evt.surf.nats.test.v1.Everything",
+            headers,
+            bytes,
+        )
 
-        assertEquals(everything().copy(color = Color.UNSPECIFIED), listener.recorder.receiveWithin())
+        assertEquals(
+            everything().copy(color = Color.UNSPECIFIED),
+            listener.recorder.receiveWithin(),
+        )
     }
 
     @Test
@@ -407,49 +410,61 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `load balanced listener shares events with other members of the queue group`() =
-        withClient("listen-balanced") { client ->
-            val listener = BalancedListener()
-            client.registerListener(listener)
+    fun `load balanced listener shares events with other members of the queue group`() = withClient(
+        "listen-balanced",
+    ) { client ->
+        val listener = BalancedListener()
+        client.registerListener(listener)
 
-            val connection = NatsConnectionManager.connection()
-            val otherMember = connection.subscribe("surf.evt.surf.nats.test.v1.Balanced", client.name)
-            connection.flush(Duration.ofSeconds(5))
+        val connection = NatsConnectionManager.connection()
+        val otherMember = connection.subscribe("surf.evt.surf.nats.test.v1.Balanced", client.name)
+        connection.flush(Duration.ofSeconds(5))
 
-            val count = 50
-            repeat(count) { client.publish(Balanced(it)) }
-            connection.flush(Duration.ofSeconds(5))
+        val count = 50
+        repeat(count) { client.publish(Balanced(it)) }
+        connection.flush(Duration.ofSeconds(5))
 
-            val delivered = mutableListOf<Int>()
-            withContext(Dispatchers.Default) {
-                withTimeout(10.seconds) {
-                    while (delivered.size < count) {
-                        listener.recorder.received.tryReceive().getOrNull()?.let { delivered += it.id }
-                        otherMember.nextMessage(Duration.ofMillis(10))?.let { message ->
-                            val contentType = message.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE)
-                            delivered += NatsCodec.decode(Balanced.serializer(), message.data, contentType).id
-                        }
+        val delivered = mutableListOf<Int>()
+        withContext(Dispatchers.Default) {
+            withTimeout(10.seconds) {
+                while (delivered.size < count) {
+                    listener.recorder.received.tryReceive().getOrNull()?.let { delivered += it.id }
+                    otherMember.nextMessage(Duration.ofMillis(10))?.let { message ->
+                        val contentType = message.headers?.getFirst(ProtocolHeaders.CONTENT_TYPE)
+                        delivered += NatsCodec.decode(
+                            Balanced.serializer(),
+                            message.data,
+                            contentType,
+                        ).id
                     }
                 }
             }
-            otherMember.unsubscribe()
-
-            assertEquals((0 until count).toList(), delivered.sorted(), "every event exactly once")
-            listener.recorder.assertNothingWithin()
         }
+        otherMember.unsubscribe()
+
+        assertEquals((0 until count).toList(), delivered.sorted(), "every event exactly once")
+        listener.recorder.assertNothingWithin()
+    }
 
     @Test
     fun `load balanced listeners of differently named clients each receive every event`() = withClients(
         "listen-balanced-a", "listen-balanced-b", "listen-balanced-publisher",
     ) { (first, second, publisher) ->
-        val listeners = listOf(first, second).map { client -> BalancedListener().also { client.registerListener(it) } }
+        val listeners = listOf(
+            first,
+            second,
+        ).map { client -> BalancedListener().also { client.registerListener(it) } }
 
         val count = 20
         repeat(count) { publisher.publish(Balanced(it)) }
 
         for (listener in listeners) {
             val delivered = List(count) { listener.recorder.receiveWithin().id }
-            assertEquals((0 until count).toList(), delivered.sorted(), "every event exactly once per client")
+            assertEquals(
+                (0 until count).toList(),
+                delivered.sorted(),
+                "every event exactly once per client",
+            )
             listener.recorder.assertNothingWithin()
         }
     }
@@ -459,8 +474,8 @@ class NatsClientListenerTest {
         "listen-concurrent-a", "listen-concurrent-b", "listen-concurrent-c", "listen-concurrent-d",
         "listen-concurrent-publisher",
     ) { clients ->
-        // Every registration flushes the shared connection; more than two concurrent flushes used to exceed
-        // the outgoing ping limit of jnats and drop the connection
+        // Every registration flushes the shared connection; more than two concurrent flushes used
+        // to exceed the outgoing ping limit of jnats and drop the connection
         val listeners = List(clients.size - 1) { BalancedListener() }
         listeners.mapIndexed { index, listener ->
             async(Dispatchers.Default) { clients[index].registerListener(listener) }
@@ -473,40 +488,47 @@ class NatsClientListenerTest {
 
     @Test
     fun `invalid listener methods are reported together`() = withClient("listen-invalid") { client ->
-        val exception = assertFailsWith<IllegalArgumentException> { client.registerListener(InvalidListener()) }
+        val exception = assertFailsWith<IllegalArgumentException> {
+            client.registerListener(
+                InvalidListener(),
+            )
+        }
         val message = exception.message.orEmpty()
 
         assertContains(message, "twoParameters")
         assertContains(message, "returnsValue")
-        assertContains(message, "notAnEvent: parameter ${NotAnEvent::class.java.name} is not a generated surf-nats event")
+        assertContains(
+            message,
+            "notAnEvent: parameter ${NotAnEvent::class.java.name} is not a generated surf-nats event",
+        )
     }
 
     @Test
-    fun `suspend listener with a return value other than Unit is rejected`() =
-        withClient("listen-suspend-value") { client ->
-            val exception = assertFailsWith<IllegalArgumentException> {
-                client.registerListener(ReturnsValueSuspendListener())
-            }
-            val message = exception.message.orEmpty()
-
-            assertContains(message, "returnsValueSuspend")
-            assertContains(message, "must return Unit")
+    fun `suspend listener with a return value other than Unit is rejected`() = withClient("listen-suspend-value") { client ->
+        val exception = assertFailsWith<IllegalArgumentException> {
+            client.registerListener(ReturnsValueSuspendListener())
         }
+        val message = exception.message.orEmpty()
+
+        assertContains(message, "returnsValueSuspend")
+        assertContains(message, "must return Unit")
+    }
 
     @Test
-    fun `same subject in a different queue group is rejected and keeps the first listener`() =
-        withClient("listen-queue-conflict") { client ->
-            val first = CreatedListener()
-            client.registerListener(first)
+    fun `same subject in a different queue group is rejected and keeps the first listener`() = withClient(
+        "listen-queue-conflict",
+    ) { client ->
+        val first = CreatedListener()
+        client.registerListener(first)
 
-            val exception = assertFailsWith<IllegalStateException> {
-                client.registerListener(ImpostorBalancedListener())
-            }
-            assertContains(exception.message.orEmpty(), "is already used by")
-
-            client.publish(Created(11))
-            assertEquals(Created(11), first.recorder.receiveWithin())
+        val exception = assertFailsWith<IllegalStateException> {
+            client.registerListener(ImpostorBalancedListener())
         }
+        assertContains(exception.message.orEmpty(), "is already used by")
+
+        client.publish(Created(11))
+        assertEquals(Created(11), first.recorder.receiveWithin())
+    }
 
     @Test
     fun `object without listener methods is rejected`() = withClient("listen-none") { client ->
@@ -516,7 +538,11 @@ class NatsClientListenerTest {
     @Test
     fun `override without @NatsListener is rejected`() = withClient("listen-override-unannotated") { client ->
         for (listener in listOf(UnannotatedOverrideListener(), UnannotatedDeepOverrideListener())) {
-            val exception = assertFailsWith<IllegalArgumentException> { client.registerListener(listener) }
+            val exception = assertFailsWith<IllegalArgumentException> {
+                client.registerListener(
+                    listener,
+                )
+            }
             val message = exception.message.orEmpty()
 
             assertContains(message, "on: overrides the @NatsListener method of")
@@ -536,16 +562,17 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `listener of a proxy subclass is registered through the scan type and invoked through the proxy`() =
-        withClient("listen-proxy-scan-type") { client ->
-            val proxy = ProxyOfBaseListener()
-            client.registerListener(proxy, BaseListener::class.java)
+    fun `listener of a proxy subclass is registered through the scan type and invoked through the proxy`() = withClient(
+        "listen-proxy-scan-type",
+    ) { client ->
+        val proxy = ProxyOfBaseListener()
+        client.registerListener(proxy, BaseListener::class.java)
 
-            client.publish(Created(3))
+        client.publish(Created(3))
 
-            assertEquals(Created(3), proxy.recorder.receiveWithin())
-            assertEquals(1, proxy.intercepted)
-        }
+        assertEquals(Created(3), proxy.recorder.receiveWithin())
+        assertEquals(1, proxy.intercepted)
+    }
 
     @Test
     fun `final listener method of a proxied bean is rejected`() = withClient("listen-proxy-final") { client ->
@@ -591,23 +618,25 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `client that stopped accepting receives nothing but still publishes`() =
-        withClients("listen-stopped", "listen-stopped-probe") { (stopped, probe) ->
-            val stoppedListener = CreatedListener()
-            val probeListener = CreatedListener()
-            stopped.registerListener(stoppedListener)
-            probe.registerListener(probeListener)
+    fun `client that stopped accepting receives nothing but still publishes`() = withClients(
+        "listen-stopped",
+        "listen-stopped-probe",
+    ) { (stopped, probe) ->
+        val stoppedListener = CreatedListener()
+        val probeListener = CreatedListener()
+        stopped.registerListener(stoppedListener)
+        probe.registerListener(probeListener)
 
-            stopped.stopAccepting()
-            stopped.publish(Created(1))
+        stopped.stopAccepting()
+        stopped.publish(Created(1))
 
-            assertEquals(Created(1), probeListener.recorder.receiveWithin())
-            stoppedListener.recorder.assertNothingWithin()
-            assertFailsWith<IllegalStateException> { stopped.registerListener(CreatedListener()) }
+        assertEquals(Created(1), probeListener.recorder.receiveWithin())
+        stoppedListener.recorder.assertNothingWithin()
+        assertFailsWith<IllegalStateException> { stopped.registerListener(CreatedListener()) }
 
-            stopped.close()
-            assertTrue(stopped.isClosed)
-        }
+        stopped.close()
+        assertTrue(stopped.isClosed)
+    }
 
     @Test
     fun `stopAccepting waits for a running listener handler`() = withClients("listen-drain") { (client) ->
@@ -618,7 +647,10 @@ class NatsClientListenerTest {
 
         val stopping = async(Dispatchers.IO) { client.stopAccepting() }
         realTime { delay(300.milliseconds) }
-        assertFalse(stopping.isCompleted, "stopAccepting returned while a listener handler was still running")
+        assertFalse(
+            stopping.isCompleted,
+            "stopAccepting returned while a listener handler was still running",
+        )
 
         listener.gate.complete(Unit)
         realTime { stopping.await() }
@@ -651,29 +683,33 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `listener handler that closes its client during a drain is released at the drain timeout`() =
-        withClients("listen-drain-self-close") { (client) ->
-            val started = CompletableDeferred<Unit>()
-            val closeNow = CompletableDeferred<Unit>()
-            client.registerListener(object {
+    fun `listener handler that closes its client during a drain is released at the drain timeout`() = withClients(
+        "listen-drain-self-close",
+    ) { (client) ->
+        val started = CompletableDeferred<Unit>()
+        val closeNow = CompletableDeferred<Unit>()
+        client.registerListener(
+            object {
                 @NatsListener
                 suspend fun on(event: Created) {
                     started.complete(Unit)
                     closeNow.await()
                     client.close()
                 }
-            })
-            client.publish(Created(1))
-            realTime { started.await() }
+            },
+        )
+        client.publish(Created(1))
+        realTime { started.await() }
 
-            val stopping = async(Dispatchers.IO) { client.stopAccepting() }
-            awaitStoppedAccepting(client)
-            closeNow.complete(Unit)
+        val stopping = async(Dispatchers.IO) { client.stopAccepting() }
+        awaitStoppedAccepting(client)
+        closeNow.complete(Unit)
 
-            // The drain waits for the handler until the default drain timeout of 10 s, the handler waits for the drain
-            withContext(Dispatchers.Default) { withTimeout(20.seconds) { stopping.await() } }
-            eventually("client closed by its handler", timeout = 5.seconds) { client.isClosed }
-        }
+        // The drain waits for the handler until the default drain timeout of 10 s, the handler
+        // waits for the drain
+        withContext(Dispatchers.Default) { withTimeout(20.seconds) { stopping.await() } }
+        eventually("client closed by its handler", timeout = 5.seconds) { client.isClosed }
+    }
 
     @Test
     fun `closed client no longer receives events`() = runTest {
@@ -693,8 +729,15 @@ class NatsClientListenerTest {
         val listener = CreatedListener()
         client.registerListener(listener)
 
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
-        NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.Created", headers, byteArrayOf(0x7f, 0x01, 0x02))
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
+        NatsConnectionManager.connection().publish(
+            "surf.evt.surf.nats.test.v1.Created",
+            headers,
+            byteArrayOf(0x7f, 0x01, 0x02),
+        )
         client.publish(Created(9))
 
         assertEquals(Created(9), listener.recorder.receiveWithin())
@@ -702,18 +745,24 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `event without a non-null field is dropped and later events still arrive`() =
-        withClient("listen-missing-field") { client ->
-            val listener = CreatedListener()
-            client.registerListener(listener)
+    fun `event without a non-null field is dropped and later events still arrive`() = withClient("listen-missing-field") { client ->
+        val listener = CreatedListener()
+        client.registerListener(listener)
 
-            val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
-            NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.Created", headers, ByteArray(0))
-            client.publish(Created(10))
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
+        NatsConnectionManager.connection().publish(
+            "surf.evt.surf.nats.test.v1.Created",
+            headers,
+            ByteArray(0),
+        )
+        client.publish(Created(10))
 
-            assertEquals(Created(10), listener.recorder.receiveWithin())
-            listener.recorder.assertNothingWithin()
-        }
+        assertEquals(Created(10), listener.recorder.receiveWithin())
+        listener.recorder.assertNothingWithin()
+    }
 
     @Test
     fun `event without the protobuf content type is dropped`() = withClient("listen-content-type") { client ->
@@ -726,7 +775,7 @@ class NatsClientListenerTest {
         connection.publish(
             "surf.evt.surf.nats.test.v1.Created",
             Headers().add(ProtocolHeaders.CONTENT_TYPE, "application/cbor"),
-            body
+            body,
         )
         client.publish(Created(2))
 
@@ -748,19 +797,20 @@ class NatsClientListenerTest {
     }
 
     @Test
-    fun `ignoreFromThisClient skips events of the same client and keeps events of other clients`() =
-        withClient("listen-own-a") { client ->
-            val listener = IgnoreOwnListener()
-            client.registerListener(listener)
+    fun `ignoreFromThisClient skips events of the same client and keeps events of other clients`() = withClient(
+        "listen-own-a",
+    ) { client ->
+        val listener = IgnoreOwnListener()
+        client.registerListener(listener)
 
-            NatsClient.create("listen-own-b").use { other ->
-                client.publish(OriginEvent(1))
-                other.publish(OriginEvent(2))
+        NatsClient.create("listen-own-b").use { other ->
+            client.publish(OriginEvent(1))
+            other.publish(OriginEvent(2))
 
-                assertEquals(OriginEvent(2), listener.recorder.receiveWithin())
-                listener.recorder.assertNothingWithin()
-            }
+            assertEquals(OriginEvent(2), listener.recorder.receiveWithin())
+            listener.recorder.assertNothingWithin()
         }
+    }
 
     @Test
     fun `listener without ignoreFromThisClient receives own events`() = withClient("listen-own-default") { client ->
@@ -826,13 +876,22 @@ class NatsClientListenerTest {
         val headers = Headers()
             .add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
             .add(ProtocolHeaders.EVENT_ID, "repeated-1")
-        repeat(2) { NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.OriginEvent", headers, bytes) }
+        repeat(2) {
+            NatsConnectionManager.connection().publish(
+                "surf.evt.surf.nats.test.v1.OriginEvent",
+                headers,
+                bytes,
+            )
+        }
         client.publish(OriginEvent(2))
 
         val received = setOf(listener.recorder.receiveWithin(), listener.recorder.receiveWithin())
         assertEquals(setOf(OriginEvent(1), OriginEvent(2)), received)
         withContext(Dispatchers.Default) { delay(300.milliseconds) }
-        assertNull(listener.recorder.received.tryReceive().getOrNull(), "the repeat must be skipped")
+        assertNull(
+            listener.recorder.received.tryReceive().getOrNull(),
+            "the repeat must be skipped",
+        )
     }
 
     @Test
@@ -843,8 +902,15 @@ class NatsClientListenerTest {
         client.registerListener(ignoring)
 
         val bytes = NatsCodec.encode(OriginEvent.serializer(), OriginEvent(8))
-        val headers = Headers().add(ProtocolHeaders.CONTENT_TYPE, ProtocolHeaders.PROTOBUF_CONTENT_TYPE)
-        NatsConnectionManager.connection().publish("surf.evt.surf.nats.test.v1.OriginEvent", headers, bytes)
+        val headers = Headers().add(
+            ProtocolHeaders.CONTENT_TYPE,
+            ProtocolHeaders.PROTOBUF_CONTENT_TYPE,
+        )
+        NatsConnectionManager.connection().publish(
+            "surf.evt.surf.nats.test.v1.OriginEvent",
+            headers,
+            bytes,
+        )
 
         val (event, eventContext) = context.recorder.receiveWithin()
         assertEquals(OriginEvent(8), event)
@@ -873,26 +939,35 @@ class NatsClientListenerTest {
         (NatsClient.create(name) as NatsClientImpl).use { block(it) }
     }
 
-    private fun withClients(vararg names: String, block: suspend CoroutineScope.(List<NatsClientImpl>) -> Unit) =
-        runTest {
-            val clients = names.map { NatsClient.create(it) as NatsClientImpl }
-            try {
-                block(clients)
-            } finally {
-                clients.forEach { it.close() }
+    private fun withClients(
+        vararg names: String,
+        block: suspend CoroutineScope.(List<NatsClientImpl>) -> Unit,
+    ) = runTest {
+        val clients = names.map { NatsClient.create(it) as NatsClientImpl }
+
+        try {
+            block(clients)
+        } finally {
+            for (client in clients) {
+                client.close()
             }
         }
+    }
 
-    private suspend fun <T> Recorder<T>.receiveWithin(timeout: kotlin.time.Duration = 5.seconds): T {
+    private suspend fun <T> Recorder<T>.receiveWithin(
+        timeout: kotlin.time.Duration = 5.seconds,
+    ): T {
         return withContext(Dispatchers.Default) { withTimeout(timeout) { received.receive() } }
     }
 
-    private suspend fun <T> realTime(block: suspend CoroutineScope.() -> T): T =
-        withContext(Dispatchers.Default) { withTimeout(5.seconds, block) }
+    private suspend fun <T> realTime(block: suspend CoroutineScope.() -> T): T {
+        return withContext(Dispatchers.Default) { withTimeout(5.seconds, block) }
+    }
 
     private suspend fun awaitStoppedAccepting(client: NatsClientImpl) = realTime {
         eventually("stopAccepting started") {
-            // Without listener methods nothing is registered: an accepting client fails with IllegalArgumentException
+            // Without listener methods nothing is registered: an accepting client fails with
+            // IllegalArgumentException
             val rejected = runCatching { client.registerListener(Any()) }.exceptionOrNull()
             rejected?.message.orEmpty().endsWith("is closing")
         }
@@ -901,12 +976,21 @@ class NatsClientListenerTest {
     private suspend fun assertNoSubscriber(subject: String) = withContext(Dispatchers.IO) {
         val connection = NatsConnectionManager.connection()
         connection.flush(Duration.ofSeconds(5))
-        val reply = connection.requestWithTimeout(subject, Headers(), ByteArray(0), Duration.ofSeconds(2))
-        val failure = assertFailsWith<ExecutionException>("$subject still has a subscriber") { reply.get() }
+        val reply = connection.requestWithTimeout(
+            subject,
+            Headers(),
+            ByteArray(0),
+            Duration.ofSeconds(2),
+        )
+        val failure = assertFailsWith<ExecutionException>("$subject still has a subscriber") {
+            reply.get()
+        }
         assertIs<JetStreamStatusException>(failure.cause)
     }
 
-    private suspend fun Recorder<*>.assertNothingWithin(window: kotlin.time.Duration = 300.milliseconds) {
+    private suspend fun Recorder<*>.assertNothingWithin(
+        window: kotlin.time.Duration = 300.milliseconds,
+    ) {
         withContext(Dispatchers.Default) { delay(window) }
         val unexpected = received.tryReceive().getOrNull()
         assertNull(unexpected, "unexpected event $unexpected")

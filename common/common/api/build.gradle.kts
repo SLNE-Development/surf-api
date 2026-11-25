@@ -6,9 +6,9 @@ plugins {
 dependencies {
     api(projects.surfApiAnnotations)
 
-    api(libs.kotlin.stdlib)
-    api(libs.bundles.kotlin.coroutines)
-    api(libs.bundles.kotlin.serialization)
+    compileOnlyApi(libs.kotlin.stdlib)
+    compileOnlyApi(libs.bundles.kotlin.coroutines)
+    compileOnlyApi(libs.bundles.kotlin.serialization)
 
     compileOnlyApi(libs.flogger)
     compileOnlyApi(libs.adventure.api)

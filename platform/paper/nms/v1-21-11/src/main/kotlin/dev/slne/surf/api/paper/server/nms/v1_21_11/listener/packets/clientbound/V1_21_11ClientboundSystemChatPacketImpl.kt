@@ -9,7 +9,9 @@ import net.minecraft.network.protocol.game.ClientboundSystemChatPacket
 
 @NmsUseWithCaution
 class V1_21_11ClientboundSystemChatPacketImpl(nmsPacket: ClientboundSystemChatPacket) :
-    V1_21_11NmsClientboundPacketImpl<ClientboundSystemChatPacket, ClientGamePacketListener>(nmsPacket),
+    V1_21_11NmsClientboundPacketImpl<ClientboundSystemChatPacket, ClientGamePacketListener>(
+        nmsPacket,
+    ),
     SystemChatPacket {
     override var content: Component
         get() = nmsPacket.content().toBukkit()
@@ -17,7 +19,7 @@ class V1_21_11ClientboundSystemChatPacketImpl(nmsPacket: ClientboundSystemChatPa
             nmsPacket = ClientboundSystemChatPacket(value, nmsPacket.overlay)
         }
 
-    override var overlay: Boolean
+    override var isOverlay: Boolean
         get() = nmsPacket.overlay()
         set(value) {
             nmsPacket = ClientboundSystemChatPacket(nmsPacket.content(), value)

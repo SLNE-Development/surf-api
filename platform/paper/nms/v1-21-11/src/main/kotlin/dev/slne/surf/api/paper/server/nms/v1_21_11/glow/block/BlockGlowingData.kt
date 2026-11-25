@@ -21,9 +21,11 @@ class BlockGlowingData(
     val playerData: BlockPlayerData,
     val location: Location,
     var color: NamedTextColor,
+    private val glowingApi: V1_21_11SurfGlowingApiImpl,
+    private val glowingBridge: V1_21_11SurfPaperNmsGlowingBridgeImpl,
 ) {
 
-    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.INSTANCE.nextEntityId() }
+    private val entityId: Int by lazy { SurfPaperNmsCommonBridge.instance.nextEntityId() }
     private val uuid: UUID by lazy { UUID.randomUUID() }
     private var initialized = false
 
@@ -42,33 +44,34 @@ class BlockGlowingData(
                 EntityType.SHULKER,
                 0,
                 Vec3.ZERO,
-                0.0
+                0.0,
             )
         }
-        val invisibleOperation = V1_21_11SurfPaperNmsGlowingBridgeImpl.setEntityFlags(entityId, invisibleFlag)
+        val invisibleOperation = glowingBridge.setEntityFlags(entityId, invisibleFlag)
 
         return spawnOperation + invisibleOperation
     }
 
-
     fun updateColor() {
         val player = playerData.player ?: return
-        V1_21_11SurfGlowingApiImpl.makeGlowing(
+
+        glowingApi.makeGlowing(
             entityId,
             uuid.toString(),
             player,
             color,
-            invisibleFlag
+            invisibleFlag,
         )
     }
 
     fun remove() {
-        playerData.player?.let { SurfPaperNmsSpawnPackets.INSTANCE.despawn(entityId).execute(it) }
-        V1_21_11SurfGlowingApiImpl.removeGlowing(entityId, playerData.uuid)
+        playerData.player?.let { SurfPaperNmsSpawnPackets.instance.despawn(entityId).execute(it) }
+        glowingApi.removeGlowing(entityId, playerData.uuid)
     }
 
     private fun initialize() {
         if (initialized) return
+
         initialized = true
         updateColor()
     }

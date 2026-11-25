@@ -22,7 +22,7 @@ Every JVM holds these contexts:
 
 | Context | Parent | Holds |
 | --- | --- | --- |
-| root | none | surf-api's own beans, such as `SurfEventBus`, `SurfConfigApi` and `ViewFrame`. Scans `dev.slne.surf.api`. |
+| root | none | surf-api's own beans, such as `SurfEventBus`, `SpongeConfigSerializers` and `ViewFrame`. Scans `dev.slne.surf.api`. |
 | import context, one per plugin | root | only the beans the plugin's **direct** dependencies export |
 | plugin context, one per plugin | its import context | every bean of the plugin |
 
@@ -62,7 +62,7 @@ The plugin's main class (`SurfPaperPlugin`, `SurfVelocityPlugin`, `SurfMinestomP
 no logic: surf-api drives the context through it. Put the logic into beans.
 
 surf-api's own services are beans of the root context. Inject them by constructor like any other
-bean. Their companion accessors, such as `SurfEventBus.INSTANCE` and `SurfApiCore.instance`, are
+bean. Their companion accessors, such as `SurfEventBus.instance` and `SurfApiCore.instance`, are
 `@InternalSurfApi` and serve surf-api's static entry points.
 
 ## Constructor injection
@@ -129,6 +129,11 @@ Put it on interfaces only: the Kotlin Spring compiler plugin opens every class t
 `@Component`, meta-annotations included, and its members with it, which breaks an abstract class
 with explicit backing fields or `inline` members (`SpongeConfigSerializers` stays unannotated).
 
+A third-party object that becomes usable only after the root refresh is a lazy root bean, such as
+`LuckPerms` on Paper and Velocity; on Minestom `withLuckPerms()` registers it as a singleton after
+the refresh. Inject such a bean as `ObjectProvider<T>` or `@Lazy`, or through a surf-api bean that
+resolves it per call, such as `SurfLuckPerms`.
+
 ## Exporting a bean to other plugins
 
 Every other bean stays private to its plugin. A plugin exports a bean by implementing an interface
@@ -182,13 +187,18 @@ surf-api registers these beans in each plugin context before it refreshes:
 | --- | --- | --- |
 | `CoroutineScope` | `surfCoroutineScope`, primary | every full plugin context; the plugin's own scope, cancelled after its disable hooks. The root holds surf-api's scope under the same name. |
 | the plugin's main class, under every supertype | `surfPluginInstance`, primary | Paper, Velocity, Minestom |
+| `ComponentLogger` (also an slf4j `Logger`) named after the plugin | `surfPluginLogger`, `@Fallback` | full plugin contexts on Paper, Velocity, Minestom; a `Logger` bean the plugin declares wins |
 | `PaperDispatchers` (`main`, `async`, `region(...)`, `entity(...)`) | `surfPaperDispatchers`, primary | Paper |
 | `org.bukkit.plugin.Plugin` proxy, `BootstrapContext` | `surfPlugin`, `surfBootstrapContext` | Paper bootstrap context |
 | `ProxyServer`, `PluginContainer` | `surfProxyServer`, `surfPluginContainer` | Velocity |
 | `PluginPresence` (`@InternalSurfApi`; read by `@ConditionalOnPlugin`, not meant for plugin code) | `surfPluginPresence` | every plugin context, bootstrap and full |
 | `ConfigHandle<C>` per `@SurfConfig` class in the plugin's jar | `<class name>#configHandle` | every full plugin context; a plugin with `@SurfConfig` classes but no data folder fails to start |
+| The proxy of every `@ReflectionProxy` interface in the plugin's packages; lazy | `<interface name>#reflectionProxy` | every full plugin context; the instance `reflectionProxy<T>()` returns, failing on first injection when the target class is missing |
 | `RedisApi`, `RedissonClient`, `RedissonReactiveClient`; lazy, `@Fallback` | contributed by surf-redis-spring | full plugin contexts on Paper, Velocity, Minestom |
 | `NatsClient` and a service proxy per generated service interface a bean asks for; lazy, `@Fallback` | contributed by surf-nats-spring | full plugin contexts on Paper, Velocity, Minestom |
+
+The root context holds the server: `org.bukkit.Server` on Paper, `SurfMinestomServer` on Minestom.
+surf-api registers no `Path` bean; a plugin reads its data folder from its platform.
 
 Paper's bootstrap contexts receive no contributed beans, so a bootstrap component cannot inject
 `ConfigHandle`, `RedisApi` or `NatsClient`.
@@ -196,6 +206,34 @@ Paper's bootstrap contexts receive no contributed beans, so a bootstrap componen
 The plugin instance is a managed singleton: the context injects its `@Autowired` members, runs the
 `Aware` callbacks, `@PostConstruct` and every `BeanPostProcessor` on it, and calls `@PreDestroy`
 and `DisposableBean.destroy` when it closes.
+
+The `Plugin` of Paper's bootstrap context is a JDK proxy (`PluginInstanceHolder` in
+`platform/paper/impl`), because Paper creates the instance only after the bootstrap context exists.
+It forwards every call reflectively to the instance and throws an `IllegalStateException` before
+the load phase. It compares equal to the instance, so listeners and tasks registered through it are
+cleaned up with the plugin. Use it for registration and setup; code that runs per tick belongs in
+the full plugin context, which injects the instance itself.
+
+## IntelliJ IDEA
+
+IntelliJ cannot see how surf-api wires beans and reports false positives.
+
+- **Unused declarations.** `@SurfEventHandler`, `@NatsListener` and `@NatsService` members are
+  called through reflection or generated invokers, so the inspection reports them as unused.
+  Register the annotations as entry points: **Settings > Editor > Inspections > Unused declaration >
+  Entry points > Annotations**, then add `dev.slne.surf.api.event.SurfEventHandler`,
+  `dev.slne.surf.nats.event.NatsListener` and `dev.slne.surf.nats.NatsService`. Paper plugins add
+  `dev.slne.surf.api.paper.packet.listener.listener.annotation.ClientboundListener` and
+  `...ServerboundListener` as well. The list is stored in `.idea/misc.xml` (`EntryPointsManager`);
+  an entry for a package that no longer exists, such as the pre-4.0
+  `dev.slne.surf.api.core.event.SurfEventHandler`, matches nothing.
+- **"Could not autowire. No beans of 'NatsClient' type found."** `NatsClient`, the NATS service
+  proxies, `RedisApi` and `ConfigHandle` are registered at runtime by `ContextContributor`s, which
+  call `registerBeanDefinition` on every plugin context. On the platforms the contributors are
+  beans of the root context; in a microservice or another hosted application surf-api finds them
+  through `ServiceLoader`. A contributor is not a component, a `@Bean` method or a Spring Boot
+  auto-configuration, so IntelliJ's Spring model does not know these beans. The injection works at
+  runtime; suppress the warning at the injection point or ignore it.
 
 ## Choosing between candidates
 

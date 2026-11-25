@@ -1,5 +1,3 @@
-@file:OptIn(InternalSurfApi::class)
-
 package dev.slne.surf.api.paper.packet.listener
 
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
@@ -14,9 +12,6 @@ interface SurfPaperPacketListenerApi {
 
     companion object {
         @InternalSurfApi
-        val INSTANCE get() = api
+        val instance by surfBean<SurfPaperPacketListenerApi>()
     }
 }
-
-@NmsUseWithCaution
-private val api by surfBean<SurfPaperPacketListenerApi>()

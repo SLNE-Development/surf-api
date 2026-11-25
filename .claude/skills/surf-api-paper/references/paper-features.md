@@ -110,13 +110,13 @@ Two independent things in one package.
 **Raw packet listeners** (`packet/listener/`) are `@NmsUseWithCaution`: the handler signatures name
 NMS packet and `ServerPlayer` types directly. A `PacketListener` is a marker interface; the methods
 are found by the `@ClientboundListener` / `@ServerboundListener` annotations and return a
-`PacketListenerResult`. From `local/paper-plugin-test/.../listener/ChatListener.java`:
+`PacketListenerResult`. From `local/paper-plugin-test/.../listener/ChatListener.kt`:
 
-```java
-public class ChatListener implements PacketListener {
+```kotlin
+class ChatListener : PacketListener {
     @ServerboundListener
-    public PacketListenerResult onChat(ServerboundChatPacket packet, ServerPlayer player) {
-        return PacketListenerResult.CANCEL;
+    fun onChat(packet: ServerboundChatPacket, player: ServerPlayer): PacketListenerResult {
+        return PacketListenerResult.CANCEL
     }
 }
 ```
@@ -209,29 +209,68 @@ Overloads cover a position, a position with a block radius, a chunk by coordinat
 
 ## `hook/` - PlaceholderAPI
 
-PlaceholderAPI is a soft dependency of the api plugin. Build an expansion out of placeholders and
-register it:
+PlaceholderAPI is a soft dependency of the api plugin. Declare an expansion by annotating a class
+with `@PapiExpansion` and its placeholder methods with `@Placeholder`:
+
+```kotlin
+@PapiExpansion("example", placeholders = [RankPlaceholders::class])
+class CoinsExpansion(private val coins: CoinService) : PapiExpansionFallback {
+
+    @Placeholder("coins")
+    fun coins(player: OfflinePlayer?): String? = player?.let { coins.balance(it).toString() }
+
+    @Placeholder("top")
+    fun top(player: Player, args: String): Component = coins.topLine(player, args)
+
+    override fun onRequest(player: OfflinePlayer?, params: String): String? = null
+}
+```
+
+- `@PapiExpansion` is meta-annotated with `@Component` and `@ConditionalOnPlugin("PlaceholderAPI")`:
+  the class is scanned like any bean and does not exist without PlaceholderAPI.
+- `PaperSpringRuntime` registers the expansion beans of the plugin's full context in the enable
+  phase, before the `onEnable` hooks, and unregisters them on disable
+  (`server/hook/papi/PapiExpansionBeans.kt`).
+- `%example_<name>_<args>%` calls the method named `<name>`. The first parameter is `OfflinePlayer?`
+  (every request, `null` without a player), a non-null Kotlin `OfflinePlayer` (requests with a
+  player only) or `Player` (online players only). A skipped request resolves to `null` without a
+  call. The optional second `String` parameter gets everything after
+  `<name>_`, unsplit. The return type is `String?` or `Component?`; a component is serialized to
+  legacy section-sign text.
+- `%example_%` or an unknown name goes to `PapiExpansionFallback.onRequest` when the annotated
+  class implements it, and resolves to `null` otherwise.
+- `placeholders` lists further classes with `@Placeholder` methods. A Kotlin `object` contributes
+  its instance, and a class with a bean in the plugin's context (ancestors included) contributes
+  that bean; several matching beans fail the enable with `NoUniqueBeanDefinitionException`. Any
+  other class is created through the context with its constructor injected, and destroyed on
+  disable (`PapiExpansionRegistration.createdInstances`).
+- A blank `author` or `version` uses the plugin's `pluginMeta`. Identifiers and placeholder names,
+  annotated or hand-built, must not be empty and reject `%`, `{`, `}` and `_`
+  (`requirePlaceholderName`); duplicate names, invalid signatures and `suspend` methods fail the
+  plugin's enable.
+- Methods are called through hidden-class invokers (`PlaceholderInvokers`), on whatever thread
+  PlaceholderAPI resolves the placeholder, so they must be thread-safe.
+
+Expansions built by hand still go through `SurfPaperPAPIHook`:
 
 ```kotlin
 class CoinsPlaceholder : PapiPlaceholder("coins") {
     override fun parse(player: OfflinePlayer, args: List<String>) = coins(player).toString()
 }
 
-@Service
-class CoinsExpansion(private val papiHook: SurfPaperPAPIHook) : SurfLifecycle {
-
-    private val expansion = PapiExpansion("example", listOf(CoinsPlaceholder()))
-
-    override suspend fun onEnable() = papiHook.register(expansion)
-
-    override suspend fun onDisable() = papiHook.unregister(expansion)
-}
+papiHook.register(PapiExpansion("example", listOf(CoinsPlaceholder())))
 ```
 
-`PapiExpansion(identifier, placeholder, author, version, name)` defaults `author` and `version`
-from the calling plugin's `pluginMeta` and `name` to `identifier`. Both the expansion identifier and
-every placeholder reject `%`, `{` and `_` in their constructor. `parseWithNoParams(player)` handles
-the bare `%example%` form.
+`expansion.PapiExpansion(identifier, placeholder, author, version, name)` defaults `author` and
+`version` from the calling plugin's `pluginMeta`. Its placeholders get the request's arguments split
+at `_`, `parseWithNoParams(player)` handles `%example_%`, and requests without a player resolve to
+`null`. PlaceholderAPI never resolves `%example%` without an underscore.
+
+`SurfPaperPAPIHookImpl` is a root `SurfLifecycle` bean: it attaches registrations to PlaceholderAPI
+in surf-api's `onEnable` (or right away once enabled) and detaches all of them in `onDisable`. One
+lock guards the registry; identifiers are unique, ignoring case, across annotated and hand-built
+expansions. PlaceholderAPI fires a synchronous Bukkit event on registration, so registration
+runs on the main thread.
 
 ## `permission/` - permission nodes
 

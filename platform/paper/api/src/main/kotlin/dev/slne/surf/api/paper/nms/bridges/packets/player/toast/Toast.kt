@@ -3,6 +3,7 @@ package dev.slne.surf.api.paper.nms.bridges.packets.player.toast
 import dev.slne.surf.api.messages.builder.SurfComponentBuilder
 import dev.slne.surf.api.paper.builder.buildItem
 import dev.slne.surf.api.paper.nms.NmsUseWithCaution
+import dev.slne.surf.api.paper.nms.bridges.packets.PacketOperation
 import dev.slne.surf.api.paper.nms.bridges.packets.player.SurfPaperNmsPlayerToastPackets
 import io.papermc.paper.advancement.AdvancementDisplay
 import net.kyori.adventure.text.Component
@@ -16,7 +17,7 @@ data class Toast(
 ) {
 
     @NmsUseWithCaution
-    fun createOperation() = SurfPaperNmsPlayerToastPackets.INSTANCE.showToast(this)
+    fun createOperation(): PacketOperation = SurfPaperNmsPlayerToastPackets.instance.showToast(this)
 
     companion object {
         inline operator fun invoke(block: Builder.() -> Unit): Toast {
@@ -52,11 +53,13 @@ data class Toast(
                 this.frame = frame
             }
 
-            fun build() = Toast(
-                icon = icon ?: error("Icon must be set!"),
-                title = title ?: error("Title must be set!"),
-                frame = frame
-            )
+            fun build(): Toast {
+                return Toast(
+                    icon = icon ?: error("Icon must be set!"),
+                    title = title ?: error("Title must be set!"),
+                    frame = frame,
+                )
+            }
         }
     }
 }

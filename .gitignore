@@ -122,6 +122,9 @@ modules.xml
 
 **/.kotlin/*
 
+# Server jar, bundler libraries and vanilla data downloaded by the registry key generator
+/tooling/registry-key-generator/build/minecraft/
+
 **/run/*
 logs/
 # Local Claude Code state stays out of the repository. The skills under .claude/skills are

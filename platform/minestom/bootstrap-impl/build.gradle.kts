@@ -7,5 +7,3 @@ dependencies {
 }
 
 description = "surf-api-minestom-bootstrap-impl"
-
-publishRelocationFrom("surf-api-minestom-server-bootstrap")

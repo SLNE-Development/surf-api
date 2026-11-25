@@ -3,9 +3,6 @@
 
 package dev.slne.surf.api.paper.util
 
-import dev.slne.surf.api.luckperms.LuckPermsAccess
-import dev.slne.surf.api.luckperms.prefix
-import dev.slne.surf.api.messages.minimessage.miniMessage
 import dev.slne.surf.api.common.util.getCallerClass
 import dev.slne.surf.api.paper.SurfApiPaper
 import dev.slne.surf.api.paper.coroutine.PaperDispatchers
@@ -48,6 +45,7 @@ fun namespacedKey(name: String): NamespacedKey {
  */
 fun getCallingPlugin(depth: Int = 1): JavaPlugin {
     val caller = getCallerClass(depth) ?: error("Cannot determine caller class")
+
     return JavaPlugin.getProvidingPlugin(caller)
 }
 
@@ -60,19 +58,6 @@ fun forEachPlayer(action: (player: Player) -> Unit) {
     Bukkit.getOnlinePlayers().forEach(action)
 }
 
-@Deprecated(
-    message = "Use the overload with an explicit plugin parameter; this version relies on inefficient stacktrace inspection.",
-    replaceWith = ReplaceWith("forEachPlayerInRegion(plugin, action, concurrent)")
-)
-suspend fun forEachPlayerInRegion(
-    action: suspend (player: Player) -> Unit,
-    concurrent: Boolean = false,
-) = forEachPlayerInRegion(
-    plugin = getCallingPlugin(1),
-    action = action,
-    concurrent = concurrent,
-)
-
 /**
  * Executes a suspendable action on each online player on the thread that owns the player,
  * optionally concurrently.
@@ -82,7 +67,8 @@ suspend fun forEachPlayerInRegion(
  *
  * @param plugin The plugin whose dispatchers run the action.
  * @param action The suspendable action to perform on each player.
- * @param concurrent If `true`, actions will run concurrently; otherwise, sequentially. Default is `false`.
+ * @param concurrent If `true`, actions will run concurrently; otherwise, sequentially. Default is
+ * `false`.
  */
 suspend fun forEachPlayerInRegion(
     plugin: Plugin,
@@ -168,7 +154,7 @@ fun Location.toVector3d(): Vector3d {
     return Vector3d(
         this.x,
         this.y,
-        this.z
+        this.z,
     )
 }
 
@@ -178,7 +164,7 @@ fun Location.toVector3d(): Vector3d {
  * @receiver The collection of UUIDs.
  * @return A list of [Player] instances corresponding to the UUIDs, excluding offline players.
  */
-fun Iterable<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
+fun Iterable<UUID>.toPlayers(): List<Player> = mapNotNull { Bukkit.getPlayer(it) }
 
 /**
  * Converts an iterable of UUIDs to a list of [OfflinePlayer] instances.
@@ -186,7 +172,9 @@ fun Iterable<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
  * @receiver The collection of UUIDs.
  * @return A list of matching [OfflinePlayer] instances.
  */
-fun Iterable<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it) }
+fun Iterable<UUID>.toOfflinePlayers(): List<OfflinePlayer> {
+    return mapNotNull { Bukkit.getOfflinePlayer(it) }
+}
 
 /**
  * Converts a sequence of UUIDs to a sequence of online [Player] instances.
@@ -194,7 +182,7 @@ fun Iterable<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it)
  * @receiver The sequence of UUIDs.
  * @return A list of [Player] instances corresponding to the UUIDs, excluding offline players.
  */
-fun Sequence<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
+fun Sequence<UUID>.toPlayers(): Sequence<Player> = mapNotNull { Bukkit.getPlayer(it) }
 
 /**
  * Converts a sequence of UUIDs to a sequence of [OfflinePlayer] instances.
@@ -202,7 +190,9 @@ fun Sequence<UUID>.toPlayers() = mapNotNull { Bukkit.getPlayer(it) }
  * @receiver The sequence of UUIDs.
  * @return A sequence of matching [OfflinePlayer] instances.
  */
-fun Sequence<UUID>.toOfflinePlayers() = mapNotNull { Bukkit.getOfflinePlayer(it) }
+fun Sequence<UUID>.toOfflinePlayers(): Sequence<OfflinePlayer> {
+    return mapNotNull { Bukkit.getOfflinePlayer(it) }
+}
 
 /**
  * Checks if the player can see the specified location.
@@ -226,6 +216,7 @@ fun Player.isChunkVisible(location: Location): Boolean {
  */
 fun Player.isChunkVisible(world: World, chunkX: Int, chunkZ: Int): Boolean {
     if (this.world != world) return false
+
     return this.isChunkSent(Chunk.getChunkKey(chunkX, chunkZ))
 }
 
@@ -274,6 +265,7 @@ fun ChunkSnapshot.getHighestBlockYAtBlockCoordinates(
  */
 suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector3i> {
     val chunkKeys = HashSet<Long>(size / 4 + 1)
+
     for (point in this) {
         val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
         chunkKeys.add(key)
@@ -284,8 +276,9 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector
 
     val snapshots = ConcurrentHashMap<Long, ChunkSnapshot>(chunkKeys.size)
     coroutineScope {
-        val semaphore =
-            Semaphore(16) // Limit concurrent chunk loads to prevent overwhelming the server
+        // Limit concurrent chunk loads to prevent overwhelming the server
+        val semaphore = Semaphore(16)
+
         for (key in chunkKeys) {
             launch {
                 semaphore.withPermit {
@@ -303,6 +296,7 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector
     }
 
     val result = ArrayList<Vector3i>(size)
+
     for (point in this) {
         val key = Chunk.getChunkKey(point.x() shr 4, point.z() shr 4)
         val snapshot = snapshots[key] ?: error("ChunkSnapshot for key $key not found")
@@ -314,7 +308,8 @@ suspend fun Collection<Vector3i>.computeHighestYBlock(world: World): List<Vector
 }
 
 /**
- * Asynchronously resolves a block at the given [BlockPosition], ensuring the target chunk is loaded.
+ * Asynchronously resolves a block at the given [BlockPosition], ensuring the target chunk is
+ * loaded.
  *
  * @receiver The world to resolve the block in.
  * @param pos The absolute block position.
@@ -331,7 +326,7 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
         chunk.getBlock(
             pos.blockX() and 15,
             pos.blockY(),
-            pos.blockZ() and 15
+            pos.blockZ() and 15,
         )
     }
 }
@@ -347,7 +342,7 @@ suspend fun World.getBlockAtAsync(pos: BlockPosition): Block {
  */
 suspend fun <R> World.doInChunkAsync(
     location: Location,
-    action: (Chunk) -> R
+    action: (Chunk) -> R,
 ): R = doInChunkAsync(location.chunkX, location.chunkZ, action)
 
 /**
@@ -363,79 +358,49 @@ suspend fun <R> World.doInChunkAsync(
 suspend fun <R> World.doInChunkAsync(
     chunkX: Int,
     chunkZ: Int,
-    action: (Chunk) -> R
+    action: (Chunk) -> R,
 ): R {
     val deferred = CompletableDeferred<R>()
-    getChunkAtAsync(chunkX, chunkZ, Consumer { chunk ->
-        try {
-            deferred.complete(action(chunk))
-        } catch (e: Exception) {
-            deferred.completeExceptionally(e)
-        }
-    })
+    getChunkAtAsync(
+        chunkX, chunkZ,
+        Consumer { chunk ->
+            try {
+                deferred.complete(action(chunk))
+            } catch (e: Exception) {
+                deferred.completeExceptionally(e)
+            }
+        },
+    )
+
     return deferred.await()
 }
 
 /**
- * Resolves the LuckPerms user for this online player.
+ * Constructs a human-readable string representing the location, including coordinates and
+ * optionally rotation data.
  *
- * @receiver The online player.
- * @return The corresponding LuckPerms user.
- * @throws IllegalStateException If no user is currently available.
+ * @param showRotation Determines whether to include rotation values (yaw and pitch) in the output
+ * string.
  */
-fun Player.getLuckPermsUser() = LuckPermsAccess.getUser(this.uniqueId)
-    ?: error("LuckPerms user not found for online player ${this.name}")
-
-/**
- * Resolves the LuckPerms user for this online player if available.
- *
- * @receiver The online player.
- * @return The corresponding LuckPerms user or `null`.
- */
-fun Player.getLuckPermsUserOrNull() = LuckPermsAccess.getUser(this.uniqueId)
-
-/**
- * Resolves or loads the LuckPerms user for this offline player.
- *
- * @receiver The offline player.
- * @return The loaded LuckPerms user.
- */
-suspend fun OfflinePlayer.getLuckPermsUser() = withContext(Dispatchers.IO) {
-    LuckPermsAccess.getUser(this@getLuckPermsUser.uniqueId)
-        ?: LuckPermsAccess.loadUser(this@getLuckPermsUser.uniqueId)
-}
-
-/**
- * Builds a MiniMessage component containing the player's prefix and name.
- *
- * @receiver The online player.
- * @return The rendered name component.
- */
-fun Player.getPrefixedName() =
-    miniMessage.deserialize("${this.getLuckPermsUserOrNull()?.prefix ?: ""}${this.name}")
-
-/**
- * Constructs a human-readable string representing the location, including coordinates and optionally
- * rotation data.
- *
- * @param showRotation Determines whether to include rotation values (yaw and pitch) in the output string.
- */
-fun Location.readableString(showRotation: Boolean) = buildString {
-    append(world?.name ?: "null")
-    append(":(")
-    append("%.2f".format(x))
-    append(", ")
-    append("%.2f".format(y))
-    append(", ")
-    append("%.2f".format(z))
-    if (showRotation) {
-        append(") [")
-        append("%.2f".format(yaw))
+fun Location.readableString(showRotation: Boolean): String {
+    return buildString {
+        append(world?.name ?: "null")
+        append(":(")
+        append("%.2f".format(x))
         append(", ")
-        append("%.2f".format(pitch))
-        append("]")
-    } else {
-        append(")")
+        append("%.2f".format(y))
+        append(", ")
+        append("%.2f".format(z))
+
+        if (showRotation) {
+            append(") [")
+            append("%.2f".format(yaw))
+            append(", ")
+            append("%.2f".format(pitch))
+            append("]")
+        } else {
+            append(")")
+        }
     }
 }
 

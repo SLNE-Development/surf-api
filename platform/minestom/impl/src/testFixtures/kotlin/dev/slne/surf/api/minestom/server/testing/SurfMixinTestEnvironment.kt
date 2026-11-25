@@ -40,16 +40,17 @@ class SurfMixinTestEnvironment : LauncherSessionListener {
                 .split(',')
                 .map(String::trim)
                 .filter(String::isNotEmpty)
-            SURF_CONFIGS.filter { loader.getResource(it) != null } + SurfMixinAgent.compatibilityConfigs() + extra
+            val available = SURF_CONFIGS.filter { loader.getResource(it) != null }
+            available + SurfMixinAgent.compatibilityConfigs() + extra
         }
 
         /**
          * Installs Mixin unless it is already installed.
          */
-        @JvmStatic
         @Synchronized
         fun install() {
             if (SurfMixinAgent.isInstalled()) return
+
             SurfMixinAgent.install(ByteBuddyAgent.install(), configurations)
         }
     }

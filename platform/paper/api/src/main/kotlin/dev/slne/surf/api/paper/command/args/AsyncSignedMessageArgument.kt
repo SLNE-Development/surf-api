@@ -33,7 +33,7 @@ import net.kyori.adventure.chat.SignedMessage
 @OptIn(NmsUseWithCaution::class)
 class AsyncSignedMessageArgument(nodeName: String) : Argument<Deferred<SignedMessage>>(
     nodeName,
-    SurfPaperNmsCommandArgumentTypesBridge.INSTANCE::signedMessage,
+    SurfPaperNmsCommandArgumentTypesBridge.instance::signedMessage,
 ) {
     override fun getPrimitiveType(): Class<Deferred<SignedMessage>> {
         return Deferred::class.java as Class<Deferred<SignedMessage>>
@@ -46,12 +46,11 @@ class AsyncSignedMessageArgument(nodeName: String) : Argument<Deferred<SignedMes
     override fun <Source> parseArgument(
         p0: CommandContext<Source>,
         p1: String,
-        p2: CommandArguments
+        p2: CommandArguments,
     ): Deferred<SignedMessage> {
-        return SurfPaperNmsCommandArgumentTypesBridge.INSTANCE.getSignedMessage(p0, p1)
+        return SurfPaperNmsCommandArgumentTypesBridge.instance.getSignedMessage(p0, p1)
     }
 }
-
 
 /**
  * Appends an [AsyncSignedMessageArgument] as a child of this [CommandTree].
@@ -64,9 +63,8 @@ class AsyncSignedMessageArgument(nodeName: String) : Argument<Deferred<SignedMes
 inline fun CommandTree.asyncSignedMessageArgument(
     nodeName: String,
     optional: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
-): CommandTree =
-    then(AsyncSignedMessageArgument(nodeName).setOptional(optional).apply(block))
+    block: Argument<*>.() -> Unit = {},
+): CommandTree = then(AsyncSignedMessageArgument(nodeName).setOptional(optional).apply(block))
 
 /**
  * Appends an [AsyncSignedMessageArgument] as a child of this [Argument].
@@ -79,10 +77,8 @@ inline fun CommandTree.asyncSignedMessageArgument(
 inline fun Argument<*>.asyncSignedMessageArgument(
     nodeName: String,
     optional: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
-): Argument<*> =
-    then(AsyncSignedMessageArgument(nodeName).setOptional(optional).apply(block))
-
+    block: Argument<*>.() -> Unit = {},
+): Argument<*> = then(AsyncSignedMessageArgument(nodeName).setOptional(optional).apply(block))
 
 /**
  * Registers an [AsyncSignedMessageArgument] on this [CommandAPICommand].
@@ -95,6 +91,7 @@ inline fun Argument<*>.asyncSignedMessageArgument(
 inline fun CommandAPICommand.asyncSignedMessageArgument(
     nodeName: String,
     optional: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
-): CommandAPICommand =
-    withArguments(AsyncSignedMessageArgument(nodeName).setOptional(optional).apply(block))
+    block: Argument<*>.() -> Unit = {},
+): CommandAPICommand {
+    return withArguments(AsyncSignedMessageArgument(nodeName).setOptional(optional).apply(block))
+}

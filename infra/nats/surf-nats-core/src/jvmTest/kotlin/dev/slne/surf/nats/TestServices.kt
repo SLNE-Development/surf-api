@@ -8,28 +8,32 @@ import dev.slne.surf.nats.test.proto.v1.Text
 import dev.slne.surf.nats.types.EmptySerializer
 import kotlinx.serialization.KSerializer
 
-// Service interfaces with hand-written descriptors. They stand in for contracts of other modules, which one generator
-// run never sees together, and for descriptors that do not match their interface.
+// Service interfaces with hand-written descriptors. They stand in for contracts of other modules,
+// which one generator run never sees together, and for descriptors that do not match their
+// interface.
 
-// Service surf.nats.test.v1.<service> with one `rpc <Name>(google.protobuf.Empty) returns (Text)` per entry of rpcs
+// Service surf.nats.test.v1.<service> with one `rpc <Name>(google.protobuf.Empty) returns (Text)`
+// per entry of rpcs
 fun <S : Any> textService(
     service: String,
     rpcs: List<String> = listOf("ping"),
-): NatsServiceDescriptor<S> = NatsServiceDescriptor(
-    protoName = "surf.nats.test.v1.$service",
-    methods = rpcs.map { rpc ->
-        NatsMethodDescriptor<Unit, Text>(
-            protoName = rpc.replaceFirstChar(Char::uppercaseChar),
-            kotlinName = rpc,
-            persistent = false,
-            callTimeoutSeconds = null,
-            recipients = Recipients.ANY_INSTANCE,
-            resultKind = NatsResultKind.VALUE,
-            requestSerializer = EmptySerializer,
-            responseSerializer = Text.serializer(),
-        )
-    },
-)
+): NatsServiceDescriptor<S> {
+    return NatsServiceDescriptor(
+        protoName = "surf.nats.test.v1.$service",
+        methods = rpcs.map { rpc ->
+            NatsMethodDescriptor<Unit, Text>(
+                protoName = rpc.replaceFirstChar(Char::uppercaseChar),
+                kotlinName = rpc,
+                persistent = false,
+                callTimeoutSeconds = null,
+                recipients = Recipients.ANY_INSTANCE,
+                resultKind = NatsResultKind.VALUE,
+                requestSerializer = EmptySerializer,
+                responseSerializer = Text.serializer(),
+            )
+        },
+    )
+}
 
 interface ClashServiceA {
     suspend fun ping(): Text
@@ -64,8 +68,10 @@ interface MissingMethodService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<MissingMethodService> =
-            textService("MissingMethodService", rpcs = listOf("ping", "pong"))
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<MissingMethodService> = textService(
+            "MissingMethodService",
+            rpcs = listOf("ping", "pong"),
+        )
     }
 }
 
@@ -77,7 +83,9 @@ interface UndescribedMethodService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<UndescribedMethodService> = textService("UndescribedMethodService")
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<UndescribedMethodService> = textService(
+            "UndescribedMethodService",
+        )
     }
 }
 
@@ -87,8 +95,10 @@ interface DuplicateRpcService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<DuplicateRpcService> =
-            textService("DuplicateRpcService", rpcs = listOf("ping", "ping"))
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<DuplicateRpcService> = textService(
+            "DuplicateRpcService",
+            rpcs = listOf("ping", "ping"),
+        )
     }
 }
 
@@ -126,18 +136,19 @@ interface InvalidRpcNameService {
         @JvmField
         val NATS_DESCRIPTOR: NatsServiceDescriptor<InvalidRpcNameService> = NatsServiceDescriptor(
             protoName = "surf.nats.test.v1.InvalidRpcNameService",
-            methods = textService<InvalidRpcNameService>("InvalidRpcNameService").methods.map { method ->
-                NatsMethodDescriptor<Unit, Text>(
-                    protoName = "Pi ng",
-                    kotlinName = method.kotlinName,
-                    persistent = false,
-                    callTimeoutSeconds = null,
-                    recipients = Recipients.ANY_INSTANCE,
-                    resultKind = NatsResultKind.VALUE,
-                    requestSerializer = EmptySerializer,
-                    responseSerializer = Text.serializer(),
-                )
-            },
+            methods = textService<InvalidRpcNameService>("InvalidRpcNameService")
+                .methods.map { method ->
+                    NatsMethodDescriptor<Unit, Text>(
+                        protoName = "Pi ng",
+                        kotlinName = method.kotlinName,
+                        persistent = false,
+                        callTimeoutSeconds = null,
+                        recipients = Recipients.ANY_INSTANCE,
+                        resultKind = NatsResultKind.VALUE,
+                        requestSerializer = EmptySerializer,
+                        responseSerializer = Text.serializer(),
+                    )
+                },
         )
     }
 }
@@ -146,12 +157,15 @@ interface InvalidRpcNameService {
 interface EmptyService {
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<EmptyService> = textService("EmptyService", rpcs = emptyList())
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<EmptyService> = textService(
+            "EmptyService",
+            rpcs = emptyList(),
+        )
     }
 }
 
-// Each method differs from the request shape its rpc describes: pause takes a request for an Empty rpc, resume takes
-// none for a Text rpc and count takes a primitive
+// Each method differs from the request shape its rpc describes: pause takes a request for an Empty
+// rpc, resume takes none for a Text rpc and count takes a primitive
 interface MismatchedRequestService {
     suspend fun pause(request: Text): Text
 
@@ -161,7 +175,7 @@ interface MismatchedRequestService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<MismatchedRequestService> = NatsServiceDescriptor(
+        val NATS_DESCRIPTOR = NatsServiceDescriptor<MismatchedRequestService>(
             protoName = "surf.nats.test.v1.MismatchedRequestService",
             methods = listOf(
                 textMethod("Pause", "pause", EmptySerializer),
@@ -172,7 +186,7 @@ interface MismatchedRequestService {
     }
 }
 
-// The test config.yml (TestNatsInstance) limits it to one concurrent handler
+// The test config.yml (TestNats) limits it to one concurrent handler
 interface LimitedService {
     suspend fun hold(): Text
 
@@ -182,13 +196,15 @@ interface LimitedService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<LimitedService> =
-            textService("LimitedService", listOf("hold", "early", "late"))
+        val NATS_DESCRIPTOR: NatsServiceDescriptor<LimitedService> = textService(
+            "LimitedService",
+            listOf("hold", "early", "late"),
+        )
     }
 }
 
-// The test config.yml (TestNatsInstance) limits it to one concurrent handler. block is a core method that holds the
-// slot, quick a persistent rpc with a 2 s timeout and record a persistent fire.
+// The test config.yml (TestNats) limits it to one concurrent handler. block is a core method that
+// holds the slot, quick a persistent rpc with a 2 s timeout and record a persistent fire.
 interface LimitedPersistentService {
     suspend fun block(): Text
 
@@ -198,7 +214,7 @@ interface LimitedPersistentService {
 
     companion object {
         @JvmField
-        val NATS_DESCRIPTOR: NatsServiceDescriptor<LimitedPersistentService> = NatsServiceDescriptor(
+        val NATS_DESCRIPTOR = NatsServiceDescriptor<LimitedPersistentService>(
             protoName = "surf.nats.test.v1.LimitedPersistentService",
             methods = listOf(
                 NatsMethodDescriptor<Unit, Text>(
@@ -236,9 +252,9 @@ interface LimitedPersistentService {
     }
 }
 
-// The test config.yml (TestNatsInstance) allows two concurrent handlers, one of them long. hold is a fire whose
-// declared 2 s timeout would make any other call short, short a core method with the core default timeout and slow a
-// core method with a 30 s timeout.
+// The test config.yml (TestNats) allows two concurrent handlers, one of them long. hold is a fire
+// whose declared 2 s timeout would make any other call short, short a core method with the core
+// default timeout and slow a core method with a 30 s timeout.
 interface LaneService {
     suspend fun hold()
 
@@ -277,14 +293,17 @@ interface LaneService {
     }
 }
 
-private fun <Req : Any> textMethod(protoName: String, kotlinName: String, request: KSerializer<Req>) =
-    NatsMethodDescriptor<Req, Text>(
-        protoName = protoName,
-        kotlinName = kotlinName,
-        persistent = false,
-        callTimeoutSeconds = null,
-        recipients = Recipients.ANY_INSTANCE,
-        resultKind = NatsResultKind.VALUE,
-        requestSerializer = request,
-        responseSerializer = Text.serializer(),
-    )
+private fun <Req : Any> textMethod(
+    protoName: String,
+    kotlinName: String,
+    request: KSerializer<Req>,
+) = NatsMethodDescriptor<Req, Text>(
+    protoName = protoName,
+    kotlinName = kotlinName,
+    persistent = false,
+    callTimeoutSeconds = null,
+    recipients = Recipients.ANY_INSTANCE,
+    resultKind = NatsResultKind.VALUE,
+    requestSerializer = request,
+    responseSerializer = Text.serializer(),
+)

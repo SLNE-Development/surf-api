@@ -79,8 +79,7 @@ suspend fun main() {
 `bootstrap` throws `IllegalStateException("surf-api is already bootstrapped")` while a root context
 exists; after `shutdown()` the process can bootstrap again. The event bus then is the new root's,
 but the static entry points that read through `surfBean` keep the beans of the root they first
-read. `enable` throws when nothing was bootstrapped. `registerShutdownHook` carries `@IntroducedAt("3.52.0")`, and `application`
-`@IntroducedAt("4.0.0")`, so callers compiled against older versions still link. Pass
+read. `enable` throws when nothing was bootstrapped. Pass
 `registerShutdownHook = false` when the process already owns its shutdown sequence - a test harness
 or an application framework - and call `shutdown()` from there.
 
@@ -144,7 +143,7 @@ property is on the implementation class only, not on `SurfApiCore`, so a bean th
 - messages, component building, MiniMessage, `Colors`, pagination → **`surf-api-messages`**
 - Spring beans, `SurfLifecycle` and injection → **`surf-api-components`**
 - the surf event bus → **`surf-api-events`**
-- `SurfReflection`, the algorithms, collections, math and random helpers
+- reflection proxies (`reflectionProxy<T>()`), the algorithms, collections, math and random helpers
 - the Adventure stack (api, MiniMessage, the gson/legacy/plain/ansi serializers, the slf4j
   component logger), Guava, dazzleconf, spongepowered-math, commons-lang3/text, flogger and
   commons-math - all re-exported at `api` scope, so they are on your compile classpath
@@ -206,8 +205,8 @@ surfStandaloneApi {
 
 `StandaloneSurfPlugin` is `AbstractCoreSurfPlugin<StandaloneSurfExtension>("standalone",
 SurfApiPlatform.STANDALONE)` and `StandaloneSurfExtension` adds nothing to `CoreSurfExtension`, so
-the whole configuration is the shared one: the plugins, repositories, Kotlin and Java setup, the
-KSP processor, relocations and the `testing { }` block described in
+the whole configuration is the shared one: the plugins, repositories, Kotlin and Java setup,
+relocations and the `testing { }` block described in
 `surf-api-paper/references/project-setup.md`. It generates no plugin class and runs neither
 `checkSurfPluginClasses` nor `checkNoBundledSpring`: a standalone process carries Spring itself.
 

@@ -26,8 +26,7 @@ surf-api is the shared foundation for SLNE's server plugin ecosystem. It provide
 - **Infra libraries** for NATS, Redis, R2DBC databases and Spring Boot microservices, released with
   surf-api under one version
 - **Gradle plugin** (`surf-api-gradle-plugin`) that configures downstream projects, generates the
-  plugin main class, relocates shared dependencies and runs the KSP processor for
-  `@GenerateReflection` and `@NmsProviderMarker`
+  plugin main class and relocates shared dependencies
 
 For the changes a downstream project makes to move to 4.0, see [MIGRATION-4.0.md](MIGRATION-4.0.md).
 For the design of the Spring integration, see [docs/spring-migration.md](docs/spring-migration.md).
@@ -41,19 +40,22 @@ the first segment, joining the rest with `-` and prefixing `surf-api-`. So `comm
 publishes as `surf-api-core-api` and `aggregate/paper` publishes as `surf-api-paper`. Gradle project
 paths stay flat (`:surf-api-core-api`), so the typesafe accessor reads `projects.surfApiCoreApi`.
 
+Every module directory has a `README.md` that states what the module does and what it contains.
+
 `settings.gradle.kts` makes these exceptions:
 
 - `infra/` modules keep their nested layout, with every `surf-` segment renamed to `surf-api-`:
   `infra/redis/surf-redis-api` is `:surf-api-redis:surf-api-redis-api`
   (`projects.surfApiRedis.surfApiRedisApi`) and publishes as `surf-api-redis-api`.
 - `tooling/gradle-plugin` is an included build, not a module, and publishes as
-  `surf-api-gradle-plugin`. Its `processor` subdirectory is the module `surf-api-processor`.
-- `surf-api-generator` sits at the repository root under its own name.
+  `surf-api-gradle-plugin`.
+- `tooling/nms-module-generator` is an included build that scaffolds a new Paper NMS version
+  module.
 
 ```
 surf-api
 ├── foundation/                       # Bottom layer: depends on no other surf-api module
-│   ├── annotations                   # surf-api-annotations: @InternalSurfApi, @GenerateReflection & co.
+│   ├── annotations                   # surf-api-annotations: @InternalSurfApi, @PublishedSurfApi & co.
 │   ├── internal                      # surf-api-internal: internal utilities, not meant for plugin code
 │   ├── registry-keys                 # surf-api-registry-keys: generated vanilla registry key constants
 │   └── spring
@@ -75,11 +77,11 @@ surf-api
 │   ├── nbt
 │   │   └── api                       # surf-api-nbt-api: Adventure binary tags
 │   ├── reflection
-│   │   └── api                       # surf-api-reflection-api: SurfReflection and the @SurfProxy annotations
+│   │   └── api                       # surf-api-reflection-api: @ReflectionProxy interfaces and reflectionProxy<T>()
 │   ├── command
 │   │   └── api                       # surf-api-command-api: what the three platforms' command layers share
 │   ├── luckperms
-│   │   └── api                       # surf-api-luckperms-api: the LuckPerms lookup helpers
+│   │   └── api                       # surf-api-luckperms-api: SurfLuckPerms and the LuckPerms extensions
 │   ├── inventory
 │   │   └── api                       # surf-api-inventory-api: the platform-neutral half of the inventory framework
 │   └── core
@@ -93,11 +95,12 @@ surf-api
 │   │   ├── api                       # surf-api-paper-api: Paper/Bukkit contracts (extensions, NMS bridges, DSLs)
 │   │   ├── impl                      # surf-api-paper-impl: Paper implementations and the surf-api plugin
 │   │   └── nms
-│   │       ├── api                   # surf-api-paper-nms-api: NmsProvider and the contracts the version modules implement
-│   │       ├── v1-21-11              # surf-api-paper-nms-v1-21-11: NMS provider for 1.21.11
-│   │       ├── v26-1                 # surf-api-paper-nms-v26-1: NMS provider for 26.1
-│   │       ├── v26-2                 # surf-api-paper-nms-v26-2: NMS provider for 26.2
-│   │       └── v26-3                 # surf-api-paper-nms-v26-3: NMS provider for 26.3
+│   │       ├── api                   # surf-api-paper-nms-api: the contracts the version modules implement
+│   │       ├── shared-26             # sources every 26.x module compiles (no module of its own)
+│   │       ├── v1-21-11              # surf-api-paper-nms-v1-21-11: NMS beans for 1.21.11
+│   │       ├── v26-1                 # surf-api-paper-nms-v26-1: NMS beans for 26.1
+│   │       ├── v26-2                 # surf-api-paper-nms-v26-2: NMS beans for 26.2
+│   │       └── v26-3                 # surf-api-paper-nms-v26-3: NMS beans for 26.3
 │   ├── minestom
 │   │   ├── api                       # surf-api-minestom-api: Minestom contracts
 │   │   ├── impl                      # surf-api-minestom-impl: Minestom implementations
@@ -132,10 +135,9 @@ surf-api
 │
 ├── tooling/
 │   ├── bom                           # surf-api-bom: one version for every module
-│   └── gradle-plugin                 # surf-api-gradle-plugin (included build): configures downstream projects
-│       └── processor                 # surf-api-processor: KSP processor for @GenerateReflection and the NMS provider index
-│
-├── surf-api-generator/               # Registry key generator and nms-module-generator (local only)
+│   ├── registry-key-generator        # Regenerates foundation/registry-keys from vanilla data (local only)
+│   ├── gradle-plugin                 # surf-api-gradle-plugin (included build): configures downstream projects
+│   └── nms-module-generator          # Included build: scaffolds a new Paper NMS version module
 │
 ├── vendor/                           # spark-minestom and the patched LuckPerms build
 │
@@ -210,6 +212,12 @@ class ShopService(private val handlers: List<PriceHandler>) : SurfLifecycle {
 reverse. Constructors and `@PostConstruct` only wire objects; work that needs the server belongs in a
 hook.
 
+To see where startup time goes, start the server with `-Dsurf.startup.jfr=true` and a Java Flight
+Recorder recording: each context build and each plugin phase appears as a `surf.*` startup step
+next to Spring's own. Debug logging of `dev.slne.surf.api.spring.context.PluginContext` prints the
+phase durations of every plugin without a recording. See
+[Startup steps](docs/spring-migration.md#startup-steps).
+
 ### Plugin classes
 
 The Gradle plugin generates the platform main class into the plugin's base package:
@@ -259,15 +267,16 @@ injects the adapter's interface as a nullable type.
 
 ### Reaching surf-api's services
 
-Plugins inject surf-api's services, such as `SurfConfigApi`, `SurfEventBus`, the plugin's
+Plugins inject surf-api's services, such as `SurfEventBus`, a `ConfigHandle`, the plugin's
 `CoroutineScope` and, on Paper, `PaperDispatchers`, or call the extension and top-level functions
 that wrap them. On Paper and Minestom, inject the inventory framework's `ViewFrame` or
 `ViewFrameAccessor`.
 
-The companion accessors (`SurfEventBus.INSTANCE`, `SurfConfigApi.instance`, the NMS bridges'
-`INSTANCE`) and `surfBean<T>()` in `dev.slne.surf.api.spring` are `@InternalSurfApi`. They serve
-surf-api's own static entry points, which have no constructor to inject into. `surfBean<T>()`
-resolves a root-context bean on first access:
+The companion accessors (`SurfEventBus.instance`, `SpongeConfigSerializers.instance`, the NMS
+bridges' `instance`) and `surfBean<T>()` in `dev.slne.surf.api.spring` are `@InternalSurfApi`. They
+serve surf-api's own static entry points, which have no constructor to inject into. `surfBean<T>()`
+resolves a root-context bean on first access and again after the platform installs another root
+context:
 
 ```kotlin
 @NmsUseWithCaution
@@ -276,13 +285,12 @@ interface SurfPaperNmsCommonBridge {
 
     companion object {
         @InternalSurfApi
-        val INSTANCE get() = bridge
+        val instance by surfBean<SurfPaperNmsCommonBridge>()
     }
 }
-
-@OptIn(NmsUseWithCaution::class)
-private val bridge by surfBean<SurfPaperNmsCommonBridge>()
 ```
+
+A class that is itself a bean injects the dependency instead of reading the accessor.
 
 ---
 
@@ -389,16 +397,16 @@ dev.slne.surf.api.config               # Config classes, constraints, migrations
 dev.slne.surf.api.config.impl          # The config service
 dev.slne.surf.api.event                # SurfEventBus and the event contracts
 dev.slne.surf.api.nbt                  # Adventure binary tags
-dev.slne.surf.api.reflection           # SurfReflection and the @SurfProxy annotations
+dev.slne.surf.api.reflection           # @ReflectionProxy interfaces and reflectionProxy<T>()
 dev.slne.surf.api.command              # What the three platforms' command layers share
-dev.slne.surf.api.luckperms            # The LuckPerms lookup helpers
+dev.slne.surf.api.luckperms            # SurfLuckPerms and the LuckPerms extensions
 dev.slne.surf.api.inventory            # The platform-neutral half of the inventory framework
 dev.slne.surf.api.core                 # SurfApiCore and PlayerLookupService
 dev.slne.surf.api.core.generated       # Generated registry keys
 dev.slne.surf.api.core.server          # Core implementations
 dev.slne.surf.api.paper                # Paper API (extensions, DSLs, sidebars)
 dev.slne.surf.api.paper.nms.bridges    # Paper NMS bridge interfaces
-dev.slne.surf.api.paper.nms.common     # NmsProvider and the version-module contracts
+dev.slne.surf.api.paper.nms.common     # The contracts the NMS version modules implement
 dev.slne.surf.api.paper.server         # Paper implementations
 dev.slne.surf.api.minestom             # Minestom API
 dev.slne.surf.api.minestom.server      # Minestom implementations
@@ -445,6 +453,10 @@ declared with an infix DSL in `CommonSurfPlugin` and its platform subclasses, fo
 The task `checkNoBundledSpring` fails a Paper, Velocity or Minestom plugin whose jar would contain
 Spring. `allowBundledSpring = true` turns it off.
 
+The api modules declare their third-party libraries `compileOnlyApi`, a scope that only Gradle
+module metadata carries; the Maven POMs leave these libraries out. surf-api therefore supports
+Gradle consumers only.
+
 ---
 
 ## Notable dependencies
@@ -466,7 +478,6 @@ Spring. `allowBundledSpring = true` turns it off.
 | [Redisson](https://redisson.org/) | Redis client behind surf-redis |
 | [Exposed](https://github.com/JetBrains/Exposed) and [R2DBC](https://r2dbc.io/) | Reactive database access in surf-database-r2dbc |
 | [Flyway](https://github.com/flyway/flyway) | Database migrations in surf-database-r2dbc |
-| [KSP](https://github.com/google/ksp) | Generates `@GenerateReflection` accessors and the NMS provider index |
 
 ---
 
@@ -481,12 +492,12 @@ When making changes:
   constructor parameters, and implement `SurfLifecycle` only if the bean has work to do in a
   platform phase.
 - **New NMS bridges**: declare the interface in `surf-api-paper-api`
-  (`dev.slne.surf.api.paper.nms.bridges`) with an `@InternalSurfApi` companion `INSTANCE` that reads
-  a private `by surfBean<T>()`. Implement it in `surf-api-paper-impl` as a `@Service` proxy that
-  delegates to `NmsProvider.current`. Plugins inject the bridge interface.
-- **NMS version modules** apply the `surf.ksp-processor` convention next to `surf.module-impl`. It
-  runs the processor that indexes `@NmsProviderMarker` classes and generates `@GenerateReflection`
-  accessors; without it the module compiles, but `NmsProvider` finds no provider at runtime.
+  (`dev.slne.surf.api.paper.nms.bridges`) with an `@InternalSurfApi` companion
+  `val instance by surfBean<T>()`. Implement it in every NMS version module as an `@NmsComponent`
+  class; the module's `@ConditionalOnMinecraftVersion` configuration scans for it. Plugins inject
+  the bridge interface.
+- **NMS version modules** for 26.x apply `surf.nms-shared-26` next to `surf.module-impl`, compile
+  the shared sources of `platform/paper/nms/shared-26` and keep only the files that differ.
 - Publishing is automated: push to a `version/*` branch to trigger a release.
 
 ---

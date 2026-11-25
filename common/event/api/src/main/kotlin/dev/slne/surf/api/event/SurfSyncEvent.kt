@@ -1,6 +1,5 @@
 package dev.slne.surf.api.event
 
-
 /**
  *  Base class for synchronous surf events dispatched on the calling thread.
  */
@@ -16,7 +15,8 @@ abstract class SurfSyncEvent : SurfEvent {
      *         is not cancellable; false if the event is cancellable and has been canceled.
      */
     fun call(): Boolean {
-        SurfEventBus.INSTANCE.callSync(this)
+        SurfEventBus.instance.callSync(this)
+
         return this !is SurfCancellableEvent || !isCancelled
     }
 }

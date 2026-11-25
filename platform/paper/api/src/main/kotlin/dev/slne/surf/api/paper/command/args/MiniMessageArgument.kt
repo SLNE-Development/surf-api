@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalVersionOverloading::class)
-
 package dev.slne.surf.api.paper.command.args
 
 import dev.jorel.commandapi.CommandAPICommand
@@ -15,7 +13,7 @@ import net.kyori.adventure.text.minimessage.ParsingException
 
 open class MiniMessageArgument(
     nodeName: String,
-    @IntroducedAt("3.32.0") greedy: Boolean = false,
+    greedy: Boolean = false,
 ) : CustomArgument<Component, String>(
     if (greedy) GreedyStringArgument(nodeName) else TextArgument(nodeName),
     { info ->
@@ -28,23 +26,25 @@ open class MiniMessageArgument(
                 CommandExceptionBuilder(
                     e.detailMessage(),
                     e.originalText(),
-                    e.endIndex()
-                ).build()
+                    e.endIndex(),
+                ).build(),
             )
         }
-    }
+    },
 )
 
 inline fun CommandAPICommand.miniMessageArgument(
     nodeName: String,
     optional: Boolean = false,
-    @IntroducedAt("3.32.0") greedy: Boolean = false,
+    greedy: Boolean = false,
     block: Argument<*>.() -> Unit = {},
-): CommandAPICommand = withArguments(MiniMessageArgument(nodeName, greedy).setOptional(optional).apply(block))
+): CommandAPICommand {
+    return withArguments(MiniMessageArgument(nodeName, greedy).setOptional(optional).apply(block))
+}
 
 inline fun CommandTree.miniMessageArgument(
     nodeName: String,
     optional: Boolean = false,
-    @IntroducedAt("3.32.0") greedy: Boolean = false,
-    block: Argument<*>.() -> Unit = {}
+    greedy: Boolean = false,
+    block: Argument<*>.() -> Unit = {},
 ): CommandTree = then(MiniMessageArgument(nodeName, greedy).setOptional(optional).apply(block))
