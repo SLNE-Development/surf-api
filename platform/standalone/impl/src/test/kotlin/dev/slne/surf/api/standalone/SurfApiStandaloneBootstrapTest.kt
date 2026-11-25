@@ -1,10 +1,17 @@
 package dev.slne.surf.api.standalone
 
-import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
+import dev.slne.surf.api.config.ConfigHandles
+import dev.slne.surf.api.config.serializer.ConfigSerializerCollections
+import dev.slne.surf.api.config.type.ConfigDuration
 import dev.slne.surf.api.event.SurfEventBus
 import dev.slne.surf.api.spring.SurfContexts
 import kotlinx.coroutines.test.runTest
+import org.spongepowered.configurate.objectmapping.ConfigSerializable
+import java.util.*
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.readText
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Checks that a standalone process starts surf-api's root context and resolves its beans.
@@ -33,7 +40,7 @@ class SurfApiStandaloneBootstrapTest {
         // Two services from different modules, read the way an api module reads them: through the
         // accessor, not through the context.
         assertNotNull(SurfEventBus.instance, "a core-impl bean resolves")
-        assertNotNull(SpongeConfigSerializers.instance, "a config bean resolves")
+        assertNotNull(ConfigSerializerCollections.instance, "a config bean resolves")
         assertSame(
             root.getBean(SurfEventBus::class.java),
             SurfEventBus.instance,
@@ -48,4 +55,22 @@ class SurfApiStandaloneBootstrapTest {
 
         assertNull(SurfContexts.rootOrNull, "shutdown has to uninstall the root context")
     }
+
+    @Test
+    fun `a config file opened in the runtime uses the root default serializers`() = runTest {
+        SurfApiStandaloneBootstrap.bootstrap()
+        val file = createTempDirectory("surf-config").resolve("ids.yml")
+
+        val ids = ConfigHandles.open<Ids>(file).use { handle -> handle.reload() }
+
+        assertEquals(Ids(), ids)
+        assertContains(file.readText(), "id: ${Ids().id}")
+        assertContains(file.readText(), "timeout: 30s")
+    }
+
+    @ConfigSerializable
+    data class Ids(
+        val id: UUID = UUID.fromString("0f8fad5b-d9cb-469f-a165-70867728950e"),
+        val timeout: ConfigDuration = ConfigDuration(30.seconds),
+    )
 }

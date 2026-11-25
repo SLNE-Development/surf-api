@@ -6,7 +6,7 @@ import dev.slne.surf.api.spring.SurfBootstrapLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.apache.commons.logging.LogFactory
-import org.springframework.beans.factory.getBeansOfType
+import org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
@@ -279,12 +279,7 @@ class SurfContextManager(
                 displayName,
                 selection,
             ) { context ->
-                registerCoroutineScope(context, coroutineScope, primary = true)
-
-                for (contributor in root.getBeansOfType<ContextContributor>().values) {
-                    contributor.contribute(context, descriptor)
-                }
-
+                preparePluginContext(context, root, descriptor, coroutineScope)
                 configure(context)
             }
         } catch (exception: Throwable) {
@@ -432,6 +427,9 @@ private data class ClosableContexts(
  * [prepare] registers the context's beans. The context is closed again if anything fails. The
  * context uses [ContextStartup.current] as its application startup; [prepare] and the refresh run
  * as one [StartupPhase.BUILD] step tagged with [displayName].
+ *
+ * @throws ContextFailureAnalyzedException if the context fails and a Spring Boot failure analyzer
+ * recognizes the failure; any other failure is rethrown as is
  */
 internal fun buildManagedContext(
     owner: String,
@@ -451,6 +449,7 @@ internal fun buildManagedContext(
     context.applicationStartup = ContextStartup.current()
 
     hooks.install(context.beanFactory)
+    val conditionReport = ConditionEvaluationReport.get(context.beanFactory)
 
     try {
         context.applicationStartup.measure(
@@ -463,8 +462,14 @@ internal fun buildManagedContext(
             context.refresh()
         }
     } catch (exception: Throwable) {
+        val failure = ContextFailureAnalysis.explain(
+            context,
+            displayName,
+            exception,
+            conditionReport,
+        )
         context.close()
-        throw exception
+        throw failure
     }
 
     return ManagedContext(context, hooks, timings)

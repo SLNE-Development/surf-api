@@ -43,3 +43,9 @@ public final class dev/slne/surf/api/spring/SurfProperties {
 	public static final field INSTANCE Ldev/slne/surf/api/spring/SurfProperties;
 }
 
+public final class dev/slne/surf/api/spring/SurfSchedulers {
+	public static final field DEFAULT Ljava/lang/String;
+	public static final field INSTANCE Ldev/slne/surf/api/spring/SurfSchedulers;
+	public static final field IO Ljava/lang/String;
+}
+

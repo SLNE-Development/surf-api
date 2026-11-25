@@ -221,6 +221,15 @@ Exactly these files are included regardless of the task's duplicates strategy, s
 reaches the transformer. Used by the `shadowJar` of `platform/paper/impl`, `platform/velocity/impl`
 and `platform/minestom/impl`. Covered by `buildSrc/src/test/kotlin/SpringRegistriesTest.kt`.
 
+```kotlin
+fun ShadowJar.excludeSpringBootLogging()
+```
+
+Excludes spring-boot's logging integration: `META-INF/services/org.apache.logging.log4j.util.PropertySource`
+(turns off log4j's shutdown hook), `META-INF/services/ch.qos.logback.classic.spi.Configurator`
+(sets logback's root level) and the log4j plugin cache `Log4j2Plugins.dat`, which no other bundled
+jar ships. The same three modules call it next to `mergeSpringRegistries()`.
+
 ### CheckShadowServiceFile.kt
 
 ```kotlin

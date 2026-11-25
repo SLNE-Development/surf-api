@@ -3,16 +3,17 @@ package dev.slne.surf.api.config.manager
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.config.ConfigFormat
 import dev.slne.surf.api.config.migration.ConfigMigrations
-import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
 import org.spongepowered.configurate.ConfigurateException
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.loader.ConfigurationLoader
 import org.spongepowered.configurate.serialize.SerializationException
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import java.io.IOException
 import java.io.Serial
 import java.io.UncheckedIOException
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 import kotlin.io.path.notExists
 import kotlin.io.path.readText
 
@@ -123,12 +124,11 @@ class SpongeConfigManager<C : Any> private constructor(
          * Reads the file at [path], applying [migrations] and writing it back with the defaults
          * of [configClass].
          *
-         * The serializers of surf-api's [SpongeConfigSerializers] bean are read once, here.
-         *
          * @param configClass the configuration class
-         * @param path the file; it is created if missing, its folder is not
+         * @param path the file; it and its folder are created if missing
          * @param format the format of the file
          * @param migrations the migrations to apply
+         * @param serializers the serializers of the file, for its whole lifetime
          * @return the manager holding the loaded configuration
          * @throws SerializationConfigException if the file does not match [configClass]
          * @throws LoadConfigException if the file cannot be read, migrated or written
@@ -138,8 +138,9 @@ class SpongeConfigManager<C : Any> private constructor(
             path: Path,
             format: ConfigFormat,
             migrations: ConfigMigrations<C>,
+            serializers: TypeSerializerCollection,
         ): SpongeConfigManager<C> {
-            val serializers = SpongeConfigSerializers.instance.buildSerializersModule()
+            path.toAbsolutePath().parent?.createDirectories()
             val loader = format.loaderBuilder()
                 .path(path)
                 .defaultOptions { options ->

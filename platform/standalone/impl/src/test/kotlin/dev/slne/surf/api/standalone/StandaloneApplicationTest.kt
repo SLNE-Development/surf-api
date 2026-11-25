@@ -4,6 +4,9 @@ import dev.slne.standalone.fixture.ApplicationEvents
 import dev.slne.standalone.fixture.ApplicationService
 import dev.slne.standalone.fixture.FixtureEvent
 import dev.slne.standalone.fixture.FixtureEventPublisher
+import dev.slne.standalone.samename.SAME_NAME_ID
+import dev.slne.standalone.samename.SameNameConfig
+import dev.slne.surf.api.config.ConfigHandle
 import dev.slne.surf.api.event.SurfEventBus
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.PluginDescriptor
@@ -13,15 +16,8 @@ import org.springframework.context.ApplicationContextException
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.exists
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.io.path.readText
+import kotlin.test.*
 
 /**
  * Checks that an application passed to [SurfApiStandaloneBootstrap.bootstrap] lives in surf-api's
@@ -116,6 +112,20 @@ class StandaloneApplicationTest {
         assertEquals(
             listOf(FixtureEventPublisher.ON_ENABLE_SOURCE, "refreshed"),
             ApplicationEvents.handled,
+        )
+    }
+
+    @Test
+    fun `an application serializer may share its simple name with a root default`() = runTest {
+        SurfApiStandaloneBootstrap.bootstrap(application(listOf(SAME_NAME_PACKAGE)))
+        SurfApiStandaloneBootstrap.enable(registerShutdownHook = false)
+
+        val handle = SurfContexts.root.getBean<ConfigHandle<SameNameConfig>>()
+
+        assertEquals(SAME_NAME_ID, handle.value.id)
+        assertContains(
+            dataDirectory.resolve("same-name.yml").readText(),
+            SAME_NAME_ID.toString().uppercase(),
         )
     }
 
@@ -231,5 +241,6 @@ class StandaloneApplicationTest {
         const val FIXTURE_PACKAGE = "dev.slne.standalone.fixture"
         const val FAILING_PACKAGE = "dev.slne.standalone.failing"
         const val BROKEN_PACKAGE = "dev.slne.standalone.broken"
+        const val SAME_NAME_PACKAGE = "dev.slne.standalone.samename"
     }
 }

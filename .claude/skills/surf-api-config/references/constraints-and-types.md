@@ -7,7 +7,7 @@ Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/constraints/
 
 All of them target a **field**, so in Kotlin they need the `@field:` use-site target on a
 constructor property. Every one is wired into the object mapper in
-`SpongeConfigSerializers.buildSerializersModule()`, and a violation throws
+`ConfigObjectMappers.createFactory()`, and a violation throws
 `SerializationException` while the config is being deserialized - which the manager reports as
 `SerializationConfigException`. A `null` value is ignored by every constraint.
 

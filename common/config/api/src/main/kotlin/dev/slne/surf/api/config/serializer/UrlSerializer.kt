@@ -7,8 +7,9 @@ import java.net.MalformedURLException
 import java.net.URL
 import java.util.function.Predicate
 
+@SurfConfigSerializer
 @Suppress("DEPRECATION")
-internal object UrlSerializer : ScalarSerializer.Annotated<URL>(URL::class.java) {
+internal class UrlSerializer : ScalarSerializer.Annotated<URL>(URL::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): URL {
         return try {
             URL(obj.toString())

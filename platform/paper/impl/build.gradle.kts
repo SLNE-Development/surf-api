@@ -35,8 +35,8 @@ dependencies {
 
     compileOnly(libs.placeholder.api)
 
-    // Paper provides Guava, Gson and SLF4J, and its plugin class loader asks the server first.
     compileOnly(libs.guava)
+    compileOnly(libs.fastutil)
     implementation(libs.caffeine)
     compileOnly(libs.gson)
     implementation(libs.bundles.surf.runtime.utils)
@@ -101,6 +101,7 @@ tasks {
         }
         // Spring's own registries, which every Spring jar carries a part of.
         mergeSpringRegistries()
+        excludeSpringBootLogging()
         val relocationPrefix = project.findProperty("relocationPrefix") as String
         relocate("me.devnatan.inventoryframework", "$relocationPrefix.devnatan.inventoryframework")
         relocate("dev.wyck", "$relocationPrefix.dev.wyck")

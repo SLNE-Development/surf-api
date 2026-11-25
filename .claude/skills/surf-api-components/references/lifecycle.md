@@ -4,7 +4,8 @@ Sources: `foundation/spring/api/.../spring/SurfLifecycle.kt` (`SurfLifecycle`,
 `SurfBootstrapLifecycle`), `BootstrapComponent.kt`, and in `foundation/spring/impl/.../spring/context/`
 `LifecycleHookRunner.kt`, `PluginContext.kt`, `ContextPhaseListener.kt`, `ContextCoroutines.kt`,
 `SurfContextManager.kt`. The platform runtimes are `PaperSpringRuntime`, `VelocitySpringRuntime`,
-Minestom's `PluginManagerImpl` and `SurfApiStandaloneBootstrap`.
+Minestom's `PluginManagerImpl` and `SurfApiStandaloneBootstrap`. Scheduling lives in
+`foundation/spring/impl/.../spring/scheduling/`.
 
 ## The hooks
 
@@ -160,6 +161,45 @@ The plugin's scope is primary, so a plugin bean that injects `CoroutineScope` ge
 not the root's. The plugin context owns it: it cancels the scope after the disable hooks ran, when
 the contexts close without them, or when the context cannot be built. Paper's bootstrap contexts
 have no scope.
+
+## Scheduled tasks
+
+Every full plugin context runs Spring's `@Scheduled` methods without `@EnableScheduling`
+(`foundation/spring/impl/.../spring/scheduling/`). An `@EnableScheduling` in a plugin is
+tolerated: surf-api replaces the processor it declares with its own,
+`SurfScheduledAnnotationProcessor`, under Spring's processor bean name.
+
+- **Start.** No task starts while the context refreshes or the load and enable hooks run. Every
+  task starts in `afterEnable`, so a scheduled method sees what `onEnable` set up. A bean created
+  after that starts its tasks at once.
+- **Stop.** `beforeDisable` cancels every task and waits up to five seconds for running ones; a
+  run that takes longer is logged and may still overlap the `onDisable` hooks. Every task is a
+  coroutine of the plugin's scope; cancelling the scope or closing the context ends whatever is
+  left.
+- **Schedulers.** A method without `scheduler` runs on the dispatcher of the plugin's scope
+  (`Dispatchers.Default`), through the `TaskScheduler` bean `surfTaskScheduler`. `scheduler`
+  picks another bean: `SurfSchedulers.DEFAULT` (`Dispatchers.Default`), `SurfSchedulers.IO`
+  (`Dispatchers.IO`), and on Paper `PaperSchedulers.GLOBAL_REGION` (`PaperDispatchers.main`). They
+  are `@Fallback` beans; an unqualified `TaskScheduler` injection gets `surfTaskScheduler`. A
+  plugin that declares its own `TaskScheduler` marks it `@Primary` for unqualified injection;
+  `@Scheduled` uses it only when `scheduler` names it.
+- **Suspending methods.** surf-api runs them itself, without Reactor: each is a loop in the
+  plugin's scope on the chosen scheduler's dispatcher. `fixedDelay` waits for a run to complete,
+  then for the delay. `fixedRate` keeps fixed start times, skips a start that passes while a run is
+  busy and never overlaps runs. `cron` waits for the expression's next time. `initialDelay`,
+  `timeUnit`, `zone`, the `String` attributes and placeholders work as in Spring. A suspending
+  method takes no parameters, and its `scheduler` must name one of surf-api's coroutine
+  schedulers.
+- **Failures.** A failing run is logged and the task keeps its schedule, sync or suspending. Runs
+  of one task never overlap; a sync `fixedRate` skips missed starts too instead of catching up.
+  An invalid trigger, a non-positive interval or a `scheduler` that names no bean fails the
+  context's refresh, sync or suspending, before any `onEnable` hook runs.
+
+Sync methods hold their dispatcher's thread for the whole run; put blocking work on
+`SurfSchedulers.IO`. Paper's bootstrap contexts have no scope and run no scheduled methods. A
+standalone root that hosts an application schedules like a plugin context; a context handed to
+`SurfApiStandaloneBootstrap.adopt` keeps Spring Boot's own scheduling. `surfContextRunner`
+contexts start their tasks when the refresh completes, because they have no enable phase.
 
 ## Shutdown
 

@@ -1,5 +1,10 @@
 package dev.slne.surf.api.spring.context
 
+import dev.slne.surf.api.shared.api.util.InternalSurfApi
+import dev.slne.surf.api.spring.scheduling.registerScheduling
+import kotlinx.coroutines.CoroutineScope
+import org.springframework.beans.factory.getBeansOfType
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 /**
@@ -23,4 +28,27 @@ fun interface ContextContributor {
      * Registers bean definitions for [plugin] in [context].
      */
     fun contribute(context: AnnotationConfigApplicationContext, plugin: PluginDescriptor)
+}
+
+/**
+ * Registers what surf-api adds to every full plugin context before its refresh: [coroutineScope]
+ * as the primary `CoroutineScope` bean, `@Scheduled` support with tasks inside that scope, and
+ * the contributions of every [ContextContributor] bean of [root].
+ *
+ * [SurfContextManager] calls it for each plugin; test harnesses call it to build a context that
+ * resembles a plugin's.
+ */
+@InternalSurfApi
+fun preparePluginContext(
+    context: AnnotationConfigApplicationContext,
+    root: ApplicationContext,
+    plugin: PluginDescriptor,
+    coroutineScope: CoroutineScope,
+) {
+    registerCoroutineScope(context, coroutineScope, primary = true)
+    registerScheduling(context, plugin.name, coroutineScope)
+
+    for (contributor in root.getBeansOfType<ContextContributor>().values) {
+        contributor.contribute(context, plugin)
+    }
 }

@@ -1,5 +1,6 @@
 package dev.slne.surf.api.config.serializer.collection.map
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import io.leangen.geantyref.TypeToken
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.spongepowered.configurate.BasicConfigurationNode
@@ -17,21 +18,14 @@ import java.lang.reflect.AnnotatedType
  * Invalid individual entries are logged and skipped instead of failing the entire map.
  * If [ThrowExceptions] is present on the map type, this serializer delegates to Configurate's
  * default map serializer and preserves the default exception behavior.
- *
- * When [clearInvalids] is enabled, keys that are present in the existing node but not written
- * by the current serialized map are removed during serialization.
- *
- * @param clearInvalids Whether stale keys should be removed from the configuration node
- * during serialization.
  */
-internal class MapSerializer(
-    private val clearInvalids: Boolean,
-) : TypeSerializer.Annotated<Map<*, *>> {
+@SurfConfigSerializer
+internal class MapSerializer : TypeSerializer.Annotated<Map<*, *>> {
     companion object {
         private val logger = ComponentLogger.logger()
 
         /**
-         * Type token used to register this serializer for all map types.
+         * The type of every map, used to look up Configurate's own map serializer.
          */
         val TYPE = object : TypeToken<Map<*, *>>() {}
     }
@@ -139,9 +133,6 @@ internal class MapSerializer(
 
     /**
      * Serializes a map into [node].
-     *
-     * If [clearInvalids] is enabled, existing child nodes that were not visited while writing
-     * the current map are removed.
      */
     override fun serialize(type: AnnotatedType, obj: Map<*, *>?, node: ConfigurationNode) {
         if (type.isAnnotationPresent(ThrowExceptions::class.java)) {
@@ -183,11 +174,8 @@ internal class MapSerializer(
             return
         }
 
-        val unvisitedKeys = if (node.empty()) {
+        if (node.empty()) {
             node.raw(emptyMap<Any, Any>())
-            mutableSetOf()
-        } else {
-            node.childrenMap().keys.toMutableSet()
         }
 
         val keyNode = BasicConfigurationNode.root(node.options())
@@ -201,14 +189,6 @@ internal class MapSerializer(
             val child = node.node(keyObj)
 
             serializePart(valueType, valueSerializer, value, "value", child, child.path())
-
-            unvisitedKeys -= keyObj
-        }
-
-        if (clearInvalids) {
-            for (unusedChild in unvisitedKeys) {
-                node.removeChild(unusedChild)
-            }
         }
     }
 

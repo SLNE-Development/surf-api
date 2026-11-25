@@ -140,6 +140,9 @@ Rules that follow from it:
 - **Every plugin context holds a `CoroutineScope`** (a `SupervisorJob` on `Dispatchers.Default`,
   cancelled after the disable hooks) and a `PaperDispatchers` bean with `main`, `region(...)`,
   `entity(entity)` and `async`. Inject them; they are the plugin's own.
+- **`@Scheduled` works without `@EnableScheduling`.** Tasks start after the enable hooks and stop
+  before the disable hooks. `scheduler = PaperSchedulers.GLOBAL_REGION` runs a method on
+  `PaperDispatchers.main`; see Folia in `references/project-setup.md` and `surf-api-components`.
 
 `@PluginApi` exports, `@ConditionalOnPlugin` adapters, qualifiers and the rest of the bean model are
 in **`surf-api-components`**. Another surf plugin's exported beans are only visible when the build

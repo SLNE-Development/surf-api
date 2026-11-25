@@ -1,38 +1,25 @@
 package dev.slne.surf.api.paper.coroutine
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.bukkit.World
 import org.bukkit.entity.Entity
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import java.lang.Runnable
+import java.lang.System
+import java.lang.Thread
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNotSame
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class PluginDispatchersTest {
 
-    private val scheduler = FakeScheduler()
+    private val scheduler = FakePaperTaskScheduler()
     private val dispatchers = PluginDispatchers("test", scheduler)
     private val failures = ConcurrentLinkedQueue<Throwable>()
     private val scope = CoroutineScope(
@@ -351,7 +338,7 @@ class PluginDispatchersTest {
      * Holds scheduled tasks until a test drains or retires them, like a server that ticks on
      * demand.
      */
-    private class FakeScheduler : TaskScheduler {
+    private class FakePaperTaskScheduler : PaperTaskScheduler {
         private val tasks = ConcurrentLinkedQueue<Scheduled>()
 
         val retiredBeforehand: MutableSet<Entity> = ConcurrentHashMap.newKeySet()

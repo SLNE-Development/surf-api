@@ -20,6 +20,9 @@ internal interface ExpansionHolder {
 
 /**
  * Creates the [ExpansionHolder] of a definition.
+ *
+ * The root context holds exactly one: [PapiExpansionHolderFactory] while PlaceholderAPI is
+ * installed, [NoopExpansionHolderFactory] otherwise.
  */
 internal fun interface ExpansionHolderFactory {
 
@@ -30,27 +33,4 @@ internal fun interface ExpansionHolderFactory {
      * @return the holder, not attached yet
      */
     fun create(definition: ExpansionDefinition): ExpansionHolder
-}
-
-/**
- * Creates holders that register with PlaceholderAPI when it is installed, and holders that do
- * nothing otherwise.
- *
- * No PlaceholderAPI type is loaded unless PlaceholderAPI is installed.
- */
-internal object PlaceholderApiHolders : ExpansionHolderFactory {
-
-    private val isPlaceholderApiInstalled by lazy {
-        runCatching { Class.forName("me.clip.placeholderapi.PlaceholderAPI") }.isSuccess
-    }
-
-    override fun create(definition: ExpansionDefinition): ExpansionHolder {
-        return if (isPlaceholderApiInstalled) PlaceholderApiExpansion(definition) else NoopHolder
-    }
-
-    private object NoopHolder : ExpansionHolder {
-        override fun attach() {}
-
-        override fun detach() {}
-    }
 }

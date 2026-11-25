@@ -1,12 +1,14 @@
 package dev.slne.surf.api.paper.server.config.serializers
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.bukkit.NamespacedKey
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
 
-internal object NamespacedKeySerializer :
+@SurfConfigSerializer
+internal class NamespacedKeySerializer :
     ScalarSerializer.Annotated<NamespacedKey>(NamespacedKey::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): NamespacedKey {
         return NamespacedKey.fromString(obj.toString())

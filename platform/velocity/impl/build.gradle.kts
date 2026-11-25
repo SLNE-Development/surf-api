@@ -23,6 +23,7 @@ dependencies {
 tasks {
     shadowJar {
         mergeSpringRegistries()
+        excludeSpringBootLogging()
         relocateNats()
     }
 }

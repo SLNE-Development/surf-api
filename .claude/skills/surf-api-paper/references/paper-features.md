@@ -272,6 +272,12 @@ lock guards the registry; identifiers are unique, ignoring case, across annotate
 expansions. PlaceholderAPI fires a synchronous Bukkit event on registration, so registration
 runs on the main thread.
 
+The hook injects an `ExpansionHolderFactory`, which connects each registration to PlaceholderAPI.
+Two root beans provide it (`server/hook/papi/ExpansionHolderFactories.kt`):
+`PapiExpansionHolderFactory` carries `@ConditionalOnPlugin("PlaceholderAPI")` and creates
+`PlaceholderExpansion`s; `NoopExpansionHolderFactory` is the `@Fallback` whose holders do nothing.
+No PlaceholderAPI type loads without PlaceholderAPI.
+
 ## `permission/` - permission nodes
 
 `PermissionRegistry` is an abstract class; subclass it as an `object` so nodes are declared and

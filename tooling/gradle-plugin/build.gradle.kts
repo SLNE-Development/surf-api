@@ -220,6 +220,8 @@ val surfRuntimeTestLibraries = mapOf(
         libs.bundles.kotlin.coroutines.asProvider(),
         libs.bundles.kotlin.serialization,
         libs.spring.context,
+        libs.spring.boot.asProvider(),
+        libs.spring.boot.autoconfigure,
         libs.bundles.configurate,
         libs.adventure.nbt,
         libs.caffeine.asProvider(),

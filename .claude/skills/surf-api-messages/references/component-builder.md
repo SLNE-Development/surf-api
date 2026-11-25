@@ -246,5 +246,5 @@ out. Do not build on that call until it is fixed.
 `ResourcePackInfo`. `AdventureComponentSerializer` encodes
 `GsonComponentSerializer.gson().serialize(value.compact())` - version-independent JSON, the right
 choice for a database or a config. The config layer's own `Component` serializer
-(`SpongeConfigSerializers`) stores MiniMessage strings through the Surf instance instead, so a
+(`ComponentSerializer` in surf-api-config-api) stores MiniMessage strings through the Surf instance instead, so a
 component written by the config layer must be readable as MiniMessage.

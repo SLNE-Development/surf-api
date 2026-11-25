@@ -40,6 +40,7 @@ dependencies {
 
 tasks.shadowJar {
     mergeSpringRegistries()
+    excludeSpringBootLogging()
 }
 
 val checkContextContributors = tasks.register<CheckShadowServiceFile>("checkContextContributors") {

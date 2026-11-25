@@ -20,6 +20,7 @@ public abstract interface class dev/slne/surf/api/config/ConfigHandle : java/lan
 	public abstract fun close ()V
 	public abstract fun edit (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun getValue ()Ljava/lang/Object;
+	public abstract fun load ()Ljava/lang/Object;
 	public abstract fun reload (Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 	public static synthetic fun reload$default (Ldev/slne/surf/api/config/ConfigHandle;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/Object;
 	public abstract fun save ()V
@@ -32,13 +33,15 @@ public final class dev/slne/surf/api/config/ConfigHandle$DefaultImpls {
 
 public final class dev/slne/surf/api/config/ConfigHandles {
 	public static final field INSTANCE Ldev/slne/surf/api/config/ConfigHandles;
-	public final fun open (Ljava/lang/Class;Ljava/nio/file/Path;Ldev/slne/surf/api/config/ConfigFormat;Ldev/slne/surf/api/config/migration/ConfigMigrations;)Ldev/slne/surf/api/config/ConfigHandle;
-	public static synthetic fun open$default (Ldev/slne/surf/api/config/ConfigHandles;Ljava/lang/Class;Ljava/nio/file/Path;Ldev/slne/surf/api/config/ConfigFormat;Ldev/slne/surf/api/config/migration/ConfigMigrations;ILjava/lang/Object;)Ldev/slne/surf/api/config/ConfigHandle;
+	public final fun open (Ljava/lang/Class;Ljava/nio/file/Path;Ldev/slne/surf/api/config/ConfigFormat;Ldev/slne/surf/api/config/migration/ConfigMigrations;Ljava/util/List;)Ldev/slne/surf/api/config/ConfigHandle;
+	public static synthetic fun open$default (Ldev/slne/surf/api/config/ConfigHandles;Ljava/lang/Class;Ljava/nio/file/Path;Ldev/slne/surf/api/config/ConfigFormat;Ldev/slne/surf/api/config/migration/ConfigMigrations;Ljava/util/List;ILjava/lang/Object;)Ldev/slne/surf/api/config/ConfigHandle;
 }
 
 public abstract interface annotation class dev/slne/surf/api/config/SurfConfig : java/lang/annotation/Annotation {
+	public abstract fun lazy ()Z
 	public abstract fun migrations ()[Ljava/lang/Class;
 	public abstract fun path ()Ljava/lang/String;
+	public abstract fun serializers ()[Ljava/lang/Class;
 	public abstract fun versionKey ()Ljava/lang/String;
 }
 
@@ -421,20 +424,9 @@ public final class dev/slne/surf/api/config/migration/ConfigMigrationsKt {
 	public static final fun configMigrations (Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/config/migration/ConfigMigrations;
 }
 
-public abstract interface class dev/slne/surf/api/config/serializer/ConfigSerializerRegistrar {
-	public abstract fun register (Ldev/slne/surf/api/config/serializer/SpongeConfigSerializers;)V
-}
-
-public abstract class dev/slne/surf/api/config/serializer/SpongeConfigSerializers {
-	public fun <init> ()V
-	public final fun buildSerializersModule ()Ljava/util/function/Consumer;
-	public final fun getClassSerializers ()Ljava/util/Map;
-	public final fun getTypeTokenSerializers ()Ljava/util/Map;
-	public final fun registerClassSerializer (Ljava/lang/Class;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
-	protected fun registerDefaults (Lorg/spongepowered/configurate/serialize/TypeSerializerCollection$Builder;)V
-	public final fun registerTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;Lorg/spongepowered/configurate/serialize/TypeSerializer;)V
-	public final fun unregisterSerializer (Ljava/lang/Class;)V
-	public final fun unregisterTypeTokenSerializer (Lio/leangen/geantyref/TypeToken;)V
+public abstract interface annotation class dev/slne/surf/api/config/serializer/SurfConfigSerializer : java/lang/annotation/Annotation {
+	public abstract fun applyToAll ()Z
+	public abstract fun type ()Ljava/lang/Class;
 }
 
 public abstract interface annotation class dev/slne/surf/api/config/serializer/collection/map/ThrowExceptions : java/lang/annotation/Annotation {
@@ -560,13 +552,6 @@ public final class dev/slne/surf/api/config/type/number/DoubleOr$Disabled : dev/
 }
 
 public final class dev/slne/surf/api/config/type/number/DoubleOr$Disabled$Companion {
-}
-
-public final class dev/slne/surf/api/config/type/number/DoubleOr$Disabled$Serializer : org/spongepowered/configurate/serialize/ScalarSerializer$Annotated {
-	public static final field INSTANCE Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled$Serializer;
-	public fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ldev/slne/surf/api/config/type/number/DoubleOr$Disabled;
-	public synthetic fun deserialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;)Ljava/lang/Object;
-	public synthetic fun serialize (Ljava/lang/reflect/AnnotatedType;Ljava/lang/Object;Ljava/util/function/Predicate;)Ljava/lang/Object;
 }
 
 public abstract interface class dev/slne/surf/api/config/type/number/IntOr {

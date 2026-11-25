@@ -221,6 +221,27 @@ class Healer(private val scope: CoroutineScope, private val dispatchers: PaperDi
 
 Code that is not a bean has no plugin context to inject from; launch the work from a bean instead.
 
+Recurring work is a `@Scheduled` method of a bean. `PaperSchedulers.GLOBAL_REGION`
+(`dev.slne.surf.api.paper.coroutine`) runs it on `PaperDispatchers.main`: the server thread, or on
+Folia the global region, where it must not touch regions or entities. There are no region or
+entity schedulers; switch inside the method with `withContext(dispatchers.region(...))` or
+`entity.withEntity { }`. Without `scheduler` the method runs on `Dispatchers.Default`.
+
+```kotlin
+@Service
+class Announcer(private val server: Server) {
+
+    @Scheduled(
+        fixedRate = 5,
+        timeUnit = TimeUnit.MINUTES,
+        scheduler = PaperSchedulers.GLOBAL_REGION,
+    )
+    fun announce() {
+        server.broadcast(Component.text("Vote for the server!"))
+    }
+}
+```
+
 `useCanvasMc()` swaps the `paper-api` compile dependency for `Constants.CANVAS_API`, adds the Canvas
 repository, forces `foliaSupported = true`, and resolves the `org.bukkit:bukkit` capability conflict
 in favour of the Canvas api. `SurfApiPaper.isCanvasMc` is the runtime probe.

@@ -95,6 +95,9 @@ NATS and Redis integrations. Their `shadowJar` blocks call buildSrc helpers:
 - `mergeSpringRegistries()` merges `META-INF/spring/*.imports` line by line,
   `spring.factories` and `spring/aot.factories` per key, and keeps the first value of a key in
   `spring.handlers` and `spring.schemas`.
+- `excludeSpringBootLogging()` leaves out spring-boot's log4j `PropertySource` and logback
+  `Configurator` service files and its log4j plugin cache, which would otherwise reach the
+  server's logging. surf-api ships spring-boot for its conditions and failure analyzers only.
 - `relocateNats()` relocates `io.nats` and BouncyCastle below `dev.slne.surf.nats.libs` and drops
   BouncyCastle's native libraries. Paper, Velocity and every shadow jar under `infra/nats` call
   it; Minestom does not.
@@ -170,10 +173,11 @@ against them:
   coroutines, serialization, Adventure, Configurate, Spring and the utility libraries - as
   `compileOnlyApi`. A consumer still compiles against it; nothing reaches a runtime classpath.
 - The runtime dependency sits on the implementation module that ships it: `surf-api-spring-impl`
-  (Spring, stdlib), `surf-api-config-impl` (Configurate), `surf-api-core-impl` (Kotlin libraries,
-  reactor, Adventure NBT, glm, aedile), and the platform impls for what only their platform
-  needs. `surf-api-standalone` and `surf-api-minestom-server` reach these through the impl module
-  they export, so they carry real runtime dependencies; the plugin coordinates do not.
+  (Spring Framework, spring-boot, spring-boot-autoconfigure, stdlib), `surf-api-config-impl`
+  (Configurate), `surf-api-core-impl` (Kotlin libraries, reactor, Adventure NBT, glm, aedile),
+  and the platform impls for what only their platform needs. `surf-api-standalone` and
+  `surf-api-minestom-server` reach these through the impl module they export, so they carry real
+  runtime dependencies; the plugin coordinates do not.
 - fastutil is not part of this scheme: no api module depends on it. The Paper NMS version
   modules declare it `compileOnly` against the copy the server ships.
 - A new `compileOnlyApi` library needs such a runtime home, or the shadow jars lose it. Compare

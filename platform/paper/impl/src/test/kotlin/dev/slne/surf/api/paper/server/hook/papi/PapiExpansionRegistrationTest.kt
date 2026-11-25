@@ -30,13 +30,6 @@ class PapiExpansionRegistrationTest {
     }
 
     @Test
-    fun `spring creates the hook through its no-argument constructor`() {
-        AnnotationConfigApplicationContext(SurfPaperPAPIHookImpl::class.java).use { context ->
-            context.getBean<SurfPaperPAPIHookImpl>()
-        }
-    }
-
-    @Test
     fun `expansion beans of a context are registered with their placeholder classes`() = runTest {
         pluginContext(RegisteredExpansion::class.java.packageName).use { context ->
             val registration = PapiExpansionRegistration()

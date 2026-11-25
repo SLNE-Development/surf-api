@@ -50,8 +50,10 @@ annotation class ConditionalOnPlugins(vararg val value: ConditionalOnPlugin)
  * Answers whether a plugin with a given name is installed on the running platform.
  *
  * The contract between [OnPluginCondition] and the platforms: each platform registers one instance
- * in every plugin context it builds, under [BEAN_NAME], before the context refreshes. Plugins use
- * [ConditionalOnPlugin] instead.
+ * in every plugin context it builds, under [BEAN_NAME], before the context refreshes. Paper also
+ * registers one in its root bootstrap context after that context's component scan, so surf-api's
+ * Paper root context inherits it while surf-api's own bootstrap components cannot use the
+ * condition. Plugins use [ConditionalOnPlugin] instead.
  */
 @InternalSurfApi
 fun interface PluginPresence {

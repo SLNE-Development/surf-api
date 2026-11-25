@@ -46,13 +46,13 @@ import kotlin.coroutines.CoroutineContext
 @InternalSurfApi
 class PluginDispatchers internal constructor(
     private val owner: String,
-    private val scheduler: TaskScheduler,
+    private val scheduler: PaperTaskScheduler,
 ) : PaperDispatchers {
 
     /**
      * Creates the dispatchers of [plugin], scheduling through Paper.
      */
-    constructor(plugin: Plugin) : this(plugin.name, BukkitTaskScheduler(plugin))
+    constructor(plugin: Plugin) : this(plugin.name, BukkitPaperTaskScheduler(plugin))
 
     @Volatile
     private var state = State.PARKING

@@ -7,7 +7,8 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.util.function.Predicate
 
-internal object UriSerializer : ScalarSerializer.Annotated<URI>(URI::class.java) {
+@SurfConfigSerializer
+internal class UriSerializer : ScalarSerializer.Annotated<URI>(URI::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): URI {
         return try {
             URI(obj.toString())

@@ -1,9 +1,90 @@
+public abstract interface class dev/slne/surf/api/reflection/BooleanFieldHandle {
+	public abstract fun compareAndSet (Ljava/lang/Object;ZZ)Z
+	public abstract fun get (Ljava/lang/Object;)Z
+	public abstract fun getAcquire (Ljava/lang/Object;)Z
+	public abstract fun getAndBitwiseAnd (Ljava/lang/Object;Z)Z
+	public abstract fun getAndBitwiseOr (Ljava/lang/Object;Z)Z
+	public abstract fun getAndBitwiseXor (Ljava/lang/Object;Z)Z
+	public abstract fun getAndSet (Ljava/lang/Object;Z)Z
+	public abstract fun getVolatile (Ljava/lang/Object;)Z
+	public abstract fun set (Ljava/lang/Object;Z)V
+	public abstract fun setRelease (Ljava/lang/Object;Z)V
+	public abstract fun setVolatile (Ljava/lang/Object;Z)V
+}
+
 public final class dev/slne/surf/api/reflection/FieldAccess : java/lang/Enum {
 	public static final field GET Ldev/slne/surf/api/reflection/FieldAccess;
 	public static final field SET Ldev/slne/surf/api/reflection/FieldAccess;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/reflection/FieldAccess;
 	public static fun values ()[Ldev/slne/surf/api/reflection/FieldAccess;
+}
+
+public abstract interface class dev/slne/surf/api/reflection/IntFieldHandle {
+	public fun addAndGet (Ljava/lang/Object;I)I
+	public abstract fun compareAndSet (Ljava/lang/Object;II)Z
+	public fun decrementAndGet (Ljava/lang/Object;)I
+	public abstract fun get (Ljava/lang/Object;)I
+	public abstract fun getAcquire (Ljava/lang/Object;)I
+	public abstract fun getAndAdd (Ljava/lang/Object;I)I
+	public abstract fun getAndBitwiseAnd (Ljava/lang/Object;I)I
+	public abstract fun getAndBitwiseOr (Ljava/lang/Object;I)I
+	public abstract fun getAndBitwiseXor (Ljava/lang/Object;I)I
+	public fun getAndDecrement (Ljava/lang/Object;)I
+	public fun getAndIncrement (Ljava/lang/Object;)I
+	public abstract fun getAndSet (Ljava/lang/Object;I)I
+	public abstract fun getVolatile (Ljava/lang/Object;)I
+	public fun incrementAndGet (Ljava/lang/Object;)I
+	public abstract fun set (Ljava/lang/Object;I)V
+	public abstract fun setRelease (Ljava/lang/Object;I)V
+	public abstract fun setVolatile (Ljava/lang/Object;I)V
+}
+
+public final class dev/slne/surf/api/reflection/IntFieldHandle$DefaultImpls {
+	public static fun addAndGet (Ldev/slne/surf/api/reflection/IntFieldHandle;Ljava/lang/Object;I)I
+	public static fun decrementAndGet (Ldev/slne/surf/api/reflection/IntFieldHandle;Ljava/lang/Object;)I
+	public static fun getAndDecrement (Ldev/slne/surf/api/reflection/IntFieldHandle;Ljava/lang/Object;)I
+	public static fun getAndIncrement (Ldev/slne/surf/api/reflection/IntFieldHandle;Ljava/lang/Object;)I
+	public static fun incrementAndGet (Ldev/slne/surf/api/reflection/IntFieldHandle;Ljava/lang/Object;)I
+}
+
+public abstract interface class dev/slne/surf/api/reflection/LongFieldHandle {
+	public fun addAndGet (Ljava/lang/Object;J)J
+	public abstract fun compareAndSet (Ljava/lang/Object;JJ)Z
+	public fun decrementAndGet (Ljava/lang/Object;)J
+	public abstract fun get (Ljava/lang/Object;)J
+	public abstract fun getAcquire (Ljava/lang/Object;)J
+	public abstract fun getAndAdd (Ljava/lang/Object;J)J
+	public abstract fun getAndBitwiseAnd (Ljava/lang/Object;J)J
+	public abstract fun getAndBitwiseOr (Ljava/lang/Object;J)J
+	public abstract fun getAndBitwiseXor (Ljava/lang/Object;J)J
+	public fun getAndDecrement (Ljava/lang/Object;)J
+	public fun getAndIncrement (Ljava/lang/Object;)J
+	public abstract fun getAndSet (Ljava/lang/Object;J)J
+	public abstract fun getVolatile (Ljava/lang/Object;)J
+	public fun incrementAndGet (Ljava/lang/Object;)J
+	public abstract fun set (Ljava/lang/Object;J)V
+	public abstract fun setRelease (Ljava/lang/Object;J)V
+	public abstract fun setVolatile (Ljava/lang/Object;J)V
+}
+
+public final class dev/slne/surf/api/reflection/LongFieldHandle$DefaultImpls {
+	public static fun addAndGet (Ldev/slne/surf/api/reflection/LongFieldHandle;Ljava/lang/Object;J)J
+	public static fun decrementAndGet (Ldev/slne/surf/api/reflection/LongFieldHandle;Ljava/lang/Object;)J
+	public static fun getAndDecrement (Ldev/slne/surf/api/reflection/LongFieldHandle;Ljava/lang/Object;)J
+	public static fun getAndIncrement (Ldev/slne/surf/api/reflection/LongFieldHandle;Ljava/lang/Object;)J
+	public static fun incrementAndGet (Ldev/slne/surf/api/reflection/LongFieldHandle;Ljava/lang/Object;)J
+}
+
+public abstract interface class dev/slne/surf/api/reflection/ObjectFieldHandle {
+	public abstract fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z
+	public abstract fun get (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getAcquire (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getAndSet (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getVolatile (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun set (Ljava/lang/Object;Ljava/lang/Object;)V
+	public abstract fun setRelease (Ljava/lang/Object;Ljava/lang/Object;)V
+	public abstract fun setVolatile (Ljava/lang/Object;Ljava/lang/Object;)V
 }
 
 public abstract interface annotation class dev/slne/surf/api/reflection/ReflectedConstructor : java/lang/annotation/Annotation {
@@ -32,7 +113,92 @@ public abstract interface annotation class dev/slne/surf/api/reflection/Reflecti
 }
 
 public final class dev/slne/surf/api/reflection/ReflectionProxyException : java/lang/RuntimeException {
+	public static final field Companion Ldev/slne/surf/api/reflection/ReflectionProxyException$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class dev/slne/surf/api/reflection/ReflectionProxyException$Companion {
+}
+
+public abstract interface class dev/slne/surf/api/reflection/StaticBooleanFieldHandle {
+	public abstract fun compareAndSet (ZZ)Z
+	public abstract fun get ()Z
+	public abstract fun getAcquire ()Z
+	public abstract fun getAndBitwiseAnd (Z)Z
+	public abstract fun getAndBitwiseOr (Z)Z
+	public abstract fun getAndBitwiseXor (Z)Z
+	public abstract fun getAndSet (Z)Z
+	public abstract fun getVolatile ()Z
+	public abstract fun set (Z)V
+	public abstract fun setRelease (Z)V
+	public abstract fun setVolatile (Z)V
+}
+
+public abstract interface class dev/slne/surf/api/reflection/StaticIntFieldHandle {
+	public fun addAndGet (I)I
+	public abstract fun compareAndSet (II)Z
+	public fun decrementAndGet ()I
+	public abstract fun get ()I
+	public abstract fun getAcquire ()I
+	public abstract fun getAndAdd (I)I
+	public abstract fun getAndBitwiseAnd (I)I
+	public abstract fun getAndBitwiseOr (I)I
+	public abstract fun getAndBitwiseXor (I)I
+	public fun getAndDecrement ()I
+	public fun getAndIncrement ()I
+	public abstract fun getAndSet (I)I
+	public abstract fun getVolatile ()I
+	public fun incrementAndGet ()I
+	public abstract fun set (I)V
+	public abstract fun setRelease (I)V
+	public abstract fun setVolatile (I)V
+}
+
+public final class dev/slne/surf/api/reflection/StaticIntFieldHandle$DefaultImpls {
+	public static fun addAndGet (Ldev/slne/surf/api/reflection/StaticIntFieldHandle;I)I
+	public static fun decrementAndGet (Ldev/slne/surf/api/reflection/StaticIntFieldHandle;)I
+	public static fun getAndDecrement (Ldev/slne/surf/api/reflection/StaticIntFieldHandle;)I
+	public static fun getAndIncrement (Ldev/slne/surf/api/reflection/StaticIntFieldHandle;)I
+	public static fun incrementAndGet (Ldev/slne/surf/api/reflection/StaticIntFieldHandle;)I
+}
+
+public abstract interface class dev/slne/surf/api/reflection/StaticLongFieldHandle {
+	public fun addAndGet (J)J
+	public abstract fun compareAndSet (JJ)Z
+	public fun decrementAndGet ()J
+	public abstract fun get ()J
+	public abstract fun getAcquire ()J
+	public abstract fun getAndAdd (J)J
+	public abstract fun getAndBitwiseAnd (J)J
+	public abstract fun getAndBitwiseOr (J)J
+	public abstract fun getAndBitwiseXor (J)J
+	public fun getAndDecrement ()J
+	public fun getAndIncrement ()J
+	public abstract fun getAndSet (J)J
+	public abstract fun getVolatile ()J
+	public fun incrementAndGet ()J
+	public abstract fun set (J)V
+	public abstract fun setRelease (J)V
+	public abstract fun setVolatile (J)V
+}
+
+public final class dev/slne/surf/api/reflection/StaticLongFieldHandle$DefaultImpls {
+	public static fun addAndGet (Ldev/slne/surf/api/reflection/StaticLongFieldHandle;J)J
+	public static fun decrementAndGet (Ldev/slne/surf/api/reflection/StaticLongFieldHandle;)J
+	public static fun getAndDecrement (Ldev/slne/surf/api/reflection/StaticLongFieldHandle;)J
+	public static fun getAndIncrement (Ldev/slne/surf/api/reflection/StaticLongFieldHandle;)J
+	public static fun incrementAndGet (Ldev/slne/surf/api/reflection/StaticLongFieldHandle;)J
+}
+
+public abstract interface class dev/slne/surf/api/reflection/StaticObjectFieldHandle {
+	public abstract fun compareAndSet (Ljava/lang/Object;Ljava/lang/Object;)Z
+	public abstract fun get ()Ljava/lang/Object;
+	public abstract fun getAcquire ()Ljava/lang/Object;
+	public abstract fun getAndSet (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun getVolatile ()Ljava/lang/Object;
+	public abstract fun set (Ljava/lang/Object;)V
+	public abstract fun setRelease (Ljava/lang/Object;)V
+	public abstract fun setVolatile (Ljava/lang/Object;)V
 }
 

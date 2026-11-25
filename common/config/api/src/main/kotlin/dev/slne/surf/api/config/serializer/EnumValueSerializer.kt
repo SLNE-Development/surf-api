@@ -14,7 +14,8 @@ import java.util.function.Predicate
  * Enum constants are read using Configurate's enum lookup logic. If no direct match is found,
  * underscores are converted to dashes and lookup is attempted again.
  */
-internal object EnumValueSerializer :
+@SurfConfigSerializer
+internal class EnumValueSerializer :
     ScalarSerializer.Annotated<Enum<*>>(object : TypeToken<Enum<*>>() {}) {
 
     /**
@@ -34,7 +35,8 @@ internal object EnumValueSerializer :
             val joinedEnumOptions = typeClass.enumConstants.joinToString(limit = 10)
             throw SerializationException(
                 type.type,
-                "Invalid enum constant '$constant' for ${typeClass.simpleName}, expected one of: [$joinedEnumOptions]",
+                "Invalid enum constant '$constant' for ${typeClass.simpleName}, " +
+                    "expected one of: [$joinedEnumOptions]",
             )
         }
 

@@ -12,7 +12,8 @@ import java.util.function.Predicate
  *
  * Values are read from and written to their canonical string representation.
  */
-internal object KeySerializer : Annotated<Key>(Key::class.java) {
+@SurfConfigSerializer
+internal class KeySerializer : Annotated<Key>(Key::class.java) {
 
     /**
      * Parses a string value into an Adventure [Key].

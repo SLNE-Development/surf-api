@@ -4,7 +4,6 @@ import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.hook.papi.SurfPaperPAPIHook
 import dev.slne.surf.api.paper.hook.papi.expansion.PapiExpansion
 import dev.slne.surf.api.spring.SurfLifecycle
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -20,9 +19,6 @@ import java.util.*
 class SurfPaperPAPIHookImpl internal constructor(
     private val holders: ExpansionHolderFactory,
 ) : SurfPaperPAPIHook, SurfLifecycle {
-
-    @Autowired
-    constructor() : this(PlaceholderApiHolders)
 
     private val lock = Any()
     private val registrations = HashMap<String, Registration>()

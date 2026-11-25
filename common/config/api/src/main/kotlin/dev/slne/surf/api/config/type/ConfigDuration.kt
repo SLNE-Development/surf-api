@@ -1,5 +1,6 @@
 package dev.slne.surf.api.config.type
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
@@ -79,7 +80,8 @@ data class ConfigDuration(
         }
     }
 
-    internal object Serializer :
+    @SurfConfigSerializer
+    internal class Serializer :
         ScalarSerializer.Annotated<ConfigDuration>(ConfigDuration::class.java) {
         override fun deserialize(type: AnnotatedType, obj: Any): ConfigDuration {
             return parse(obj.toString())

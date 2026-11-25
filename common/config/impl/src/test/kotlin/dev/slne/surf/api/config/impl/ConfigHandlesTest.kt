@@ -5,14 +5,12 @@ import dev.slne.surf.api.config.ConfigHandles
 import dev.slne.surf.api.config.migration.ConfigMigration
 import dev.slne.surf.api.config.migration.ConfigMigrations
 import dev.slne.surf.api.config.migration.configMigrations
-import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
 import dev.slne.surf.api.spring.SurfContexts
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
-import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.readBytes
@@ -25,11 +23,7 @@ class ConfigHandlesTest {
     @TempDir
     lateinit var folder: Path
 
-    private val root = AnnotationConfigApplicationContext().apply {
-        beanFactory.registerSingleton("configSerializers", object : SpongeConfigSerializers() {})
-        refresh()
-        SurfContexts.install(this)
-    }
+    private val root = startConfigRoot()
 
     @AfterEach
     fun close() {

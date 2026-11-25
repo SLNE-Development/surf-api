@@ -13,6 +13,7 @@ import dev.slne.surf.api.paper.util.getZFromChunkKey
 import dev.slne.surf.api.paper.util.isChunkVisible
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizer
 import dev.slne.surf.api.paper.visualizer.visualizer.SurfVisualizerArea
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -207,7 +208,7 @@ class SurfVisualizerAreaImpl(
     private suspend fun resolveVisibleChunks(settingsSnapshot: BlockDisplaySettings) {
         val world = delegate.world
 
-        val visibleKeys = mutableSetOf<Long>()
+        val visibleKeys = LongOpenHashSet()
 
         for (viewerUuid in delegate.viewerUuids) {
             val player = Bukkit.getPlayer(viewerUuid) ?: continue
@@ -222,7 +223,7 @@ class SurfVisualizerAreaImpl(
             }
         }
 
-        for (chunkKey in visibleKeys) {
+        for (chunkKey in visibleKeys.toLongArray()) {
             currentCoroutineContext().ensureActive()
             resolveChunk(chunkKey, settingsSnapshot)
         }

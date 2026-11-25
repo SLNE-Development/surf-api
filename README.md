@@ -272,7 +272,7 @@ Plugins inject surf-api's services, such as `SurfEventBus`, a `ConfigHandle`, th
 that wrap them. On Paper and Minestom, inject the inventory framework's `ViewFrame` or
 `ViewFrameAccessor`.
 
-The companion accessors (`SurfEventBus.instance`, `SpongeConfigSerializers.instance`, the NMS
+The companion accessors (`SurfEventBus.instance`, `ConfigSerializerCollections.instance`, the NMS
 bridges' `instance`) and `surfBean<T>()` in `dev.slne.surf.api.spring` are `@InternalSurfApi`. They
 serve surf-api's own static entry points, which have no constructor to inject into. `surfBean<T>()`
 resolves a root-context bean on first access and again after the platform installs another root

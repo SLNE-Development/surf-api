@@ -52,6 +52,29 @@ fun ShadowJar.mergeSpringRegistries() {
     }
 }
 
+/**
+ * The files with which spring-boot hooks into the JVM's logging framework.
+ *
+ * `SpringBootPropertySource` turns off log4j's shutdown hook, `RootLogLevelConfigurator` sets
+ * logback's root level, and the log4j plugin cache registers Spring Boot's lookups and converters.
+ * No other bundled jar ships a log4j plugin cache.
+ */
+private val springBootLoggingFiles = listOf(
+    "META-INF/services/org.apache.logging.log4j.util.PropertySource",
+    "META-INF/services/ch.qos.logback.classic.spi.Configurator",
+    "META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat",
+)
+
+/**
+ * Leaves spring-boot's logging integration out of the jar.
+ *
+ * surf-api uses spring-boot for its conditions and failure analyzers only and never starts Spring
+ * Boot's logging system, so the jar must not touch the server's logging either.
+ */
+fun ShadowJar.excludeSpringBootLogging() {
+    exclude(springBootLoggingFiles)
+}
+
 private fun ShadowJar.mergePropertiesRegistries(registries: List<String>, strategy: MergeStrategy) {
     transform<PropertiesFileTransformer> {
         paths.set(registries.map { "^${Regex.escape(it)}$" })

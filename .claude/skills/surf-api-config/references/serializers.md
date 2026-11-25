@@ -1,39 +1,59 @@
-# The config serializer registry
+# Config serializers
 
 Source: `common/config/api/src/main/kotlin/dev/slne/surf/api/config/serializer/`,
-`platform/*/impl/` (one subclass per platform, see the table).
+`common/config/impl/src/main/kotlin/dev/slne/surf/api/config/impl/serializer/` and
+`platform/paper/impl/.../server/config/serializers/`.
 
-## How the registry is assembled
+## How a file's serializers are assembled
 
-`SpongeConfigSerializers` is a bean of surf-api's root context - exactly one `@Service` subclass
-per platform:
+Every serializer is a bean whose class carries `@SurfConfigSerializer`, which is meta-annotated
+with `@Component`. There is no registry to write into. Each config file gets its own
+`TypeSerializerCollection`, built when its handle is created (`RootConfigSerializers.collection`
+in config-impl). **Configurate picks the first registered serializer that matches a type**, and
+the collection registers, in this order:
 
-| Platform | Class |
-| --- | --- |
-| Paper | `PaperSpongeConfigSerializers` |
-| Minestom | `MinestomSpongeConfigSerializer` |
-| Velocity | `VelocitySpongeConfigSerializers` |
-| Standalone | `StandaloneSpongeConfigSerializers` |
+1. the file's own serializers: `@SurfConfig(serializers = [...])`, or the `serializers` list
+   passed to `ConfigHandles.open`
+2. the plugin's `applyToAll` serializers - only beans the plugin context declares itself, never
+   those of its import context or of other plugins (`PluginConfigSerializers`)
+3. the root defaults - the `applyToAll` serializer beans of surf-api's root context and the
+   serializers of every `DefaultConfigSerializerSource` bean there (Paper's registry serializers)
+4. `registerAnnotatedObjects(ConfigObjectMappers.createFactory())` - the object mapper with the
+   Kotlin data-class field discoverer and every constraint from `config/constraints/`
+5. Configurate's own defaults, as the parent collection
 
-`SpongeConfigManager.open` calls `buildSerializersModule()` once, when a file is opened, and hands
-the result to `defaultOptions { options.serializers(…) }`. The order it registers in
-matters: **Configurate picks the first registered serializer that matches a type.**
+`ConfigHandles.open` skips level 2: plugin serializers never apply to files opened that way.
 
-1. everything added through `registerClassSerializer`
-2. everything added through `registerTypeTokenSerializer` (seeded with `LinkedList<Any>`)
-3. surf's own built-ins (table below)
-4. the generic `Map<*, *>` serializer (`MapSerializer(clearInvalids = false)`)
-5. `registerAnnotatedObjects(...)` - the `ObjectMapper` factory carrying the Kotlin data-class
-   field discoverer and every constraint from `config/constraints/`
-6. `registerDefaults(builder)` - the platform subclass's override
+Within one level a serializer for a subtype is registered before one for its supertype, so the most
+specific serializer wins regardless of scan order: `NamespacedKeySerializer` beats `KeySerializer`,
+`ItemStackSerializer` beats the `ConfigurationSerializable` catch-all. Across levels the higher
+level wins, so a plugin serializer for a supertype also shadows root serializers for its subtypes.
 
-So your own registrations beat surf's, and surf's beat the platform's.
+Two serializers of one level for the same type fail: in a plugin, the plugin's start (checked once
+per context, also without `@SurfConfig` classes); in the root, the root's start; in the list
+passed to `ConfigHandles.open`, that call with `IllegalArgumentException`. The message names both
+classes.
+
+### Which type a serializer serializes
+
+`ConfigSerializerRegistration.of` resolves it in this order:
+
+1. `@SurfConfigSerializer(type = X::class)`, when not the default `Nothing::class`
+2. `type()` of a `ScalarSerializer`
+3. the type argument of the class's `TypeSerializer<T>` supertype, resolved with geantyref, so
+   `TypeSerializer<List<Price>>` serializes `List<Price>`
+
+A type argument that is or contains a type variable fails with "Cannot resolve the type that config
+serializer … serializes". Like every Configurate registration, the serializer also matches
+subtypes of its type.
 
 ## Built-in serializers
 
+All of them are `internal` classes with `@SurfConfigSerializer`, scanned into the root context.
+
 | Type | Serializer | Format |
 | --- | --- | --- |
-| `net.kyori.adventure.text.Component` | `SpongeConfigSerializers.ComponentSerializer` | MiniMessage string, through `SurfMiniMessageHolder.miniMessage()` |
+| `net.kyori.adventure.text.Component` | `ComponentSerializer` | MiniMessage string, through `SurfMiniMessageHolder.miniMessage()` |
 | any `Enum<*>` | `EnumValueSerializer` | constant name; falls back to the name with `_` replaced by `-`. Error message lists up to 10 valid constants |
 | `net.kyori.adventure.key.Key` | `KeySerializer` | canonical `namespace:value` |
 | `net.kyori.adventure.text.format.TextColor` | `TextColorSerializer` | hex or named colour |
@@ -41,8 +61,8 @@ So your own registrations beat surf's, and surf's beat the platform's.
 | `DurationOrDisabled` | `DurationOrDisabled.Serializer` | a duration or `disabled` |
 | `BooleanOrDefault` | `BooleanOrDefault.Serializer` | `true`, `false`, `default` |
 | `StringOrDefault` | `StringOrDefault.Serializer` | a string or `default` |
-| `IntOr.Default`, `IntOr.Disabled` | nested `Serializer` objects | a number or `default` / `disabled` |
-| `DoubleOr.Default`, `DoubleOr.Disabled` | nested `Serializer` objects | a number or `default` / `disabled` |
+| `IntOr.Default`, `IntOr.Disabled` | nested `Serializer` classes | a number or `default` / `disabled` |
+| `DoubleOr.Default`, `DoubleOr.Disabled` | nested `Serializer` classes | a number or `default` / `disabled` |
 | `java.util.UUID` | `UuidSerializer` | `UUID.toString()` |
 | `kotlin.text.Regex` | `RegexSerializer` | pattern string |
 | `java.util.regex.Pattern` | `PatternSerializer` | pattern string |
@@ -50,8 +70,8 @@ So your own registrations beat surf's, and surf's beat the platform's.
 | `java.net.URL` | `UrlSerializer` | URL string |
 | `java.nio.file.Path` | `PathSerializer` | path string |
 | `java.io.File` | `FileSerializer` | path string |
-| `java.util.LinkedList<T>` | `SpongeConfigSerializers.LinkedListSerializer` | list node |
-| `Map<K, V>` | `MapSerializer` | map node, invalid entries skipped |
+| `java.util.LinkedList<Any>` | `LinkedListSerializer` | list node |
+| `Map<*, *>` | `MapSerializer` | map node, invalid entries skipped |
 
 Everything Configurate itself handles - primitives, strings, `List`, `Set`, arrays, nested
 `@ConfigSerializable` classes - still works and needs no entry here.
@@ -61,79 +81,73 @@ Each of these throws `SerializationException` on a value it cannot read, which t
 
 ### Paper additions
 
-`PaperSpongeConfigSerializers.registerDefaults` adds `NamespacedKey`, `Material`, and - unless the
-server is still bootstrapping (`PaperInstance.isBootstrapping()`) - `ItemStack` plus a
-`RegistryValueSerializer` for every Bukkit/Paper registry it can resolve: block, item, biome,
-structure, enchantment, attribute, sound, damage type, mob effect, menu, dialog, villager
-profession and type, trim material and pattern, every mob variant registry, game rule and more. The
-namespace `minecraft:` is omitted when writing. Last of all it registers a catch-all for anything
-implementing Bukkit's `ConfigurationSerializable`, deliberately late so the specific serializers
-above win.
+Paper's root adds `NamespacedKeySerializer`, `MaterialSerializer`, `ItemStackSerializer` and
+`BukkitConfigurationSerializableSerializer`, a catch-all for anything implementing Bukkit's
+`ConfigurationSerializable`, such as `Location`. The specificity order keeps the catch-all behind
+`ItemStack`.
 
-A registry serializer that cannot be built (a registry missing on the running server version) is
-swallowed by `registerSafeRegistry`'s `catch (_: Throwable)`, so the type simply has no serializer
-instead of breaking startup.
+`RegistryConfigSerializers` (`DefaultConfigSerializerSource`) supplies a `RegistryValueSerializer`
+for every Bukkit/Paper registry it can resolve: block, item, biome, structure, enchantment,
+attribute, sound, damage type, mob effect, menu, dialog, villager profession and type, trim
+material and pattern, every mob variant registry, game rule and more. The namespace `minecraft:` is
+omitted when writing. It supplies nothing while `PaperInstance.isBootstrapping()`, and skips a
+registry that cannot be built on the running server version (`catch (_: Throwable)`), so the type
+simply has no serializer instead of breaking startup. It is asked again for every file.
 
 ## Adding a serializer for a new type
 
-### From a plugin, for one type
+### From a plugin
 
 ```kotlin
-internal object MyTypeSerializer : ScalarSerializer.Annotated<MyType>(MyType::class.java) {
-    override fun deserialize(type: AnnotatedType, obj: Any): MyType =
-        MyType.parse(obj.toString())
+@SurfConfigSerializer
+class MyTypeSerializer : ScalarSerializer.Annotated<MyType>(MyType::class.java) {
+    override fun deserialize(type: AnnotatedType, obj: Any): MyType {
+        return MyType.parse(obj.toString())
             ?: throw SerializationException(MyType::class.java, "$obj is not a MyType")
+    }
 
     override fun serialize(
         type: AnnotatedType,
         item: MyType,
-        typeSupported: Predicate<Class<*>>
+        typeSupported: Predicate<Class<*>>,
     ): Any = item.toString()
-}
-
-@Component
-class MySerializers : ConfigSerializerRegistrar {
-    override fun register(serializers: SpongeConfigSerializers) {
-        serializers.registerClassSerializer(MyTypeSerializer)
-    }
 }
 ```
 
-surf-api calls every `ConfigSerializerRegistrar` bean of the plugin's context once while the
-context starts, at the latest before the plugin's first `ConfigHandle` opens its file. The
-registrars also run when the plugin declares no `@SurfConfig` class. A file opened with
-`ConfigHandles.open` before the plugin's context has started does not see the plugin's serializers
-yet. The registry is shared
-by every plugin on the server: a registration also applies to the configs of other plugins loaded
-afterwards.
-
-`registerClassSerializer` has a reified form (`registerClassSerializer<MyType>(serializer)`) and an
-explicit one (`registerClassSerializer(MyType::class.java, serializer)`). Remove one again with
-`unregisterSerializer(MyType::class.java)`.
-
-Use `ScalarSerializer.Annotated<T>` for a single scalar node, `TypeSerializer.Annotated<T>` when the
-value is a map or list node.
+- The class is a bean of the plugin, so its constructor may inject other beans. surf-api never
+  creates it. Declare a class, not an `object`: Spring creates the instance.
+- It applies to every `@SurfConfig` file of the plugin, and overrides a root default for the same
+  type within the plugin.
+- `@SurfConfigSerializer(applyToAll = false)` limits it to the files that name it:
+  `@SurfConfig("shop.yml", serializers = [MyTypeSerializer::class])`. A named class must be a
+  `@SurfConfigSerializer` bean of the plugin context or of the root context; anything else fails
+  the start with "… is no @SurfConfigSerializer bean of plugin '…' or of surf-api's root context",
+  also for a lazy config.
+- Use `ScalarSerializer.Annotated<T>` for a single scalar node, `TypeSerializer.Annotated<T>` when
+  the value is a map or list node.
 
 ### For a generic type
 
-A `Class` is not enough for `Foo<Bar>`; use a `TypeToken`:
+Declare the full type in the supertype: `class MyBoxSerializer : TypeSerializer<MyBox<String>>`.
+When the class itself is generic, the type cannot be resolved; give it explicitly with
+`@SurfConfigSerializer(type = MyBox::class)`, which registers for the raw class.
 
-```kotlin
-override fun register(serializers: SpongeConfigSerializers) {
-    serializers.registerTypeTokenSerializer(object : TypeToken<MyBox<String>>() {}, MyBoxSerializer)
-}
-```
+### For `ConfigHandles.open`
 
-Counterpart: `unregisterTypeTokenSerializer(typeToken)`. Both registries are readable as read-only
-`Map`s through `classSerializers` and `typeTokenSerializers`.
+Pass instances: `ConfigHandles.open<C>(path, serializers = listOf(MyTypeSerializer()))`. They are
+resolved like beans, come before the root defaults, and need no annotation.
 
-### Inside surf-api, platform-wide
+### Inside surf-api
 
-Subclass `SpongeConfigSerializers`, override `registerDefaults` (it is
-`@MustBeInvokedByOverriders` - call `super.registerDefaults(builder)` first) and annotate the
-subclass `@Service`. This is for the platform module, not for a feature: the root context needs
-exactly one `SpongeConfigSerializers`, and a second one makes every lookup by type fail with
-Spring's `NoUniqueBeanDefinitionException`.
+A root default is an `internal` class with `@SurfConfigSerializer` in a package the root context
+scans (`dev.slne.surf.api...`). A family of serializers built from runtime data, such as one per
+registry, goes into an `@InternalSurfApi` `DefaultConfigSerializerSource` component instead. A
+duplicate type among the annotated root defaults fails the root context's start. A source's output
+is validated each time a file's serializers are built, so a duplicate involving it fails only then;
+Paper's registry source supplies nothing during the bootstrap phase.
+
+surf-api scans its own package with fully qualified bean names, so an application hosted in the
+root context may declare a serializer class with the same simple name, such as `UuidSerializer`.
 
 ## Map type annotations
 
@@ -152,7 +166,7 @@ data class Config(
 - `@WriteKeyBack` - after deserializing, write the key back in the serializer's canonical form;
   `minecraft:STONE` in the file becomes `minecraft:stone`. The old key is removed.
 
-## Not this registry
+## Not these serializers
 
 `common/serialization/api/src/main/kotlin/dev/slne/surf/api/serialization/` is a **different** thing: those
 are `kotlinx.serialization` `KSerializer`s collected in `SurfSerializerModule` (`adventure`,

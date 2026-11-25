@@ -7,6 +7,8 @@ dependencies {
 
     implementation(platform(libs.spring.framework.bom))
     implementation(libs.spring.context)
+    implementation(libs.spring.boot)
+    implementation(libs.spring.boot.autoconfigure)
     implementation(libs.kotlin.stdlib)
 
     api(libs.kotlin.reflect)

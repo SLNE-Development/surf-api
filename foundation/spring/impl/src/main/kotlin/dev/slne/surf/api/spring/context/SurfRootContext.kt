@@ -1,10 +1,12 @@
 package dev.slne.surf.api.spring.context
 
+import dev.slne.surf.api.spring.scheduling.registerScheduling
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
+import org.springframework.context.annotation.FullyQualifiedAnnotationBeanNameGenerator
 import org.springframework.core.metrics.ApplicationStartup
 import java.util.*
 
@@ -21,7 +23,9 @@ import java.util.*
  * A root context can also host an application in the same context, such as a standalone service:
  * its components are scanned next to surf-api's, every [ContextContributor] found through
  * [ServiceLoader] contributes to it as it would to a plugin context, and its [ContextPhaseListener]
- * beans run around the enable and disable hooks.
+ * beans run around the enable and disable hooks. A root that [create] builds for an application
+ * also runs `@Scheduled` methods inside its coroutine scope, like a plugin context; a context
+ * handed to [prepare] leaves scheduling to its creator.
  *
  * Like a plugin context, each phase function runs as the startup step of its [StartupPhase],
  * tagged with the owner's name, and the enable phase ends with one info line of the phase
@@ -132,6 +136,8 @@ class SurfRootContext private constructor(
          * packages must not overlap [SURF_API_PACKAGE] when it shares [classLoader]
          * @param configure registers further beans before the refresh
          * @throws IllegalArgumentException if [application]'s packages overlap surf-api's
+         * @throws ContextFailureAnalyzedException if the context fails to start and a Spring Boot
+         * failure analyzer recognizes the failure
          */
         fun create(
             classLoader: ClassLoader,
@@ -163,7 +169,7 @@ class SurfRootContext private constructor(
                         prepareRoot(context, classLoader, coroutineScope, selection)
 
                         if (application != null) {
-                            hostApplication(context, application)
+                            hostApplication(context, application, coroutineScope)
                         }
 
                         configure(context)
@@ -241,6 +247,9 @@ class SurfRootContext private constructor(
 
         /**
          * Registers [coroutineScope], if any, and scans surf-api's own components into [context].
+         *
+         * surf-api's components are named by their fully qualified class name, so the components
+         * of an application that the root context hosts cannot collide with them.
          */
         private fun prepareRoot(
             context: AnnotationConfigApplicationContext,
@@ -252,16 +261,23 @@ class SurfRootContext private constructor(
                 registerCoroutineScope(context, coroutineScope, primary = false)
             }
 
-            scanComponents(context, classLoader, listOf(SURF_API_PACKAGE), selection)
+            scanComponents(
+                context,
+                classLoader,
+                listOf(SURF_API_PACKAGE),
+                selection,
+                beanNameGenerator = FullyQualifiedAnnotationBeanNameGenerator.INSTANCE,
+            )
         }
 
         /**
-         * Scans [application]'s components into [context] and lets the contributors contribute to
-         * it.
+         * Scans [application]'s components into [context], enables `@Scheduled` inside
+         * [coroutineScope] if there is one, and lets the contributors contribute to it.
          */
         private fun hostApplication(
             context: AnnotationConfigApplicationContext,
             application: PluginDescriptor,
+            coroutineScope: CoroutineScope?,
         ) {
             scanComponents(
                 context,
@@ -270,6 +286,11 @@ class SurfRootContext private constructor(
                 ScanSelection.ALL,
                 application.source,
             )
+
+            if (coroutineScope != null) {
+                registerScheduling(context, application.name, coroutineScope)
+            }
+
             contribute(context, application)
         }
 

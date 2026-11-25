@@ -8,7 +8,8 @@ import kotlin.reflect.KClass
  * Every abstract method of the interface carries exactly one of [ReflectedMethod], [ReflectedField]
  * or [ReflectedConstructor] and is bound to the matching member of the target class when the proxy
  * is created. Default methods stay as written. Instance members take the receiver as their first
- * parameter; members marked [ReflectedStatic] take none.
+ * parameter; members marked [ReflectedStatic] take none. A [ReflectedField] property returns a
+ * field handle instead, such as [IntFieldHandle], whose operations take the receiver.
  *
  * Parameter and return types of a proxy method may be supertypes of the member's types, such as
  * `Any` for a class that is not visible at compile time; the proxy casts them. Calls run through a
@@ -58,22 +59,35 @@ annotation class ReflectionProxy(
 annotation class ReflectedMethod(val name: String = "")
 
 /**
- * Binds a proxy method to a field of the target class or its superclasses.
+ * Binds a proxy method or property to a field of the target class or its superclasses.
+ *
+ * A function reads or writes the field once:
  *
  * | [access] | instance signature | [ReflectedStatic] signature |
  * | --- | --- | --- |
  * | [FieldAccess.GET] | `(receiver): T` | `(): T` |
  * | [FieldAccess.SET] | `(receiver, value)` | `(value)` |
  *
- * Writing a `final` field is not supported: a [FieldAccess.SET] binding to one fails when the
- * proxy is created.
+ * A property returns a field handle with every `VarHandle` access mode, including the atomic
+ * ones. The handle type must fit the field: [IntFieldHandle], [LongFieldHandle],
+ * [BooleanFieldHandle] or [ObjectFieldHandle] for an instance field, and their `Static` variants,
+ * such as [StaticIntFieldHandle], for a [ReflectedStatic] one. [access] stays at its default.
  *
- * @property name the field's name; empty for the proxy method's own name, which on a property
- * accessor is the JVM accessor name, such as `getFoo`, so set it explicitly there
- * @property access whether the proxy method reads or writes the field
+ * ```kotlin
+ * @ReflectedField("nextChatIndex")
+ * val nextChatIndex: IntFieldHandle<ServerGamePacketListenerImpl>
+ * ```
+ *
+ * Writing a `final` field is not supported: a [FieldAccess.SET] function or any field handle
+ * bound to one fails when the proxy is created.
+ *
+ * @property name the field's name; empty for the proxy method's own name or, for a field handle
+ * property, the property's name as Kotlin derives the getter from it
+ * @property access whether the proxy function reads or writes the field
  */
 @Target(
     AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY,
     AnnotationTarget.PROPERTY_GETTER,
     AnnotationTarget.PROPERTY_SETTER,
 )
@@ -113,9 +127,13 @@ annotation class ReflectedConstructor
 /**
  * Marks a [ReflectedMethod] or [ReflectedField] proxy method as bound to a static member, so it
  * takes no receiver parameter.
+ *
+ * On a [ReflectedField] property it requires a static field handle, such as
+ * [StaticIntFieldHandle].
  */
 @Target(
     AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY,
     AnnotationTarget.PROPERTY_GETTER,
     AnnotationTarget.PROPERTY_SETTER,
 )

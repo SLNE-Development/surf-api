@@ -1,6 +1,6 @@
 ---
 name: surf-api-standalone
-description: Use when surf-api has to run outside a Minecraft server - a plain JVM service, a daemon, a worker, a CLI or a test runtime - booting it with SurfApiStandaloneBootstrap and its bootstrap/enable/shutdown lifecycle, hosting an application's beans in surf-api's root Spring context or handing a Spring Boot context over with adopt, wiring surf-api-standalone into a Gradle project with dev.slne.surf.api.gradle.standalone, starting the runtime for tests with surf-api-standalone-testing, or deciding whether a part of the api works at all without a server and what happens when it does not.
+description: Use when surf-api has to run outside a Minecraft server - a plain JVM service, a daemon, a worker, a CLI or a test runtime - booting it with SurfApiStandaloneBootstrap and its bootstrap/enable/shutdown lifecycle, hosting an application's beans in surf-api's root Spring context or handing a Spring Boot context over with adopt, wiring surf-api-standalone into a Gradle project with dev.slne.surf.api.gradle.standalone, starting the runtime for tests with surf-api-standalone-testing or checking conditions with surfContextRunner, or deciding whether a part of the api works at all without a server and what happens when it does not.
 ---
 
 # surf-api standalone
@@ -72,7 +72,7 @@ suspend fun main() {
 | Function | What it does |
 | --- | --- |
 | `bootstrap(application: PluginDescriptor? = null)` | re-arms the shutdown latch, installs a `NoopPacketEvents` as the PacketEvents api and `load()`s and `init()`s it, builds the root context with `SurfRootContext.create`, installs it for the static entry points (`SurfContexts.install`) before the refresh, runs the root's `onLoad` hooks, then `SurfStandaloneInstance.bootstrap()` |
-| `enable(registerShutdownHook: Boolean = true)` | registers the root context's beans with `@SurfEventHandler` methods on the event bus (`SurfEventHandlerBeans`), runs the root's `onEnable` hooks and the `afterEnable` phase listeners, then `SurfStandaloneInstance.onLoad()` and `onEnable()`, and - unless told otherwise - registers a JVM shutdown hook that calls `shutdown()` in `runBlocking` |
+| `enable(registerShutdownHook: Boolean = true)` | registers the root context's beans with `@SurfEventHandler` methods on the event bus (`SurfEventHandlerBeans`), runs the root's `onEnable` hooks and the `afterEnable` phase listeners, then `SurfStandaloneInstance.onLoad()` and `onEnable()`, and - unless told otherwise - registers a JVM shutdown hook that calls `shutdown()` in `runBlocking` and then shuts log4j down, if present |
 | `adopt(context, application)` | makes a caller-owned `AnnotationConfigApplicationContext` the root; see below |
 | `shutdown()` | runs `SurfStandaloneInstance.onDisable()`, then the `beforeDisable` phase listeners and the `onDisable` hooks, unregisters the event bus listeners that `enable` registered, closes the root context and uninstalls it, then terminates PacketEvents. Runs once per `bootstrap`/`adopt`, whichever way it is reached |
 
@@ -87,10 +87,11 @@ or an application framework - and call `shutdown()` from there.
 there are no plugin contexts. The root context always scans `dev.slne.surf.api`. With an
 `application` descriptor it also scans the descriptor's `basePackages`, lets every
 `ContextContributor` found through `ServiceLoader` contribute (config handles for `@SurfConfig`
-classes, NATS), and runs the application's `SurfLifecycle` hooks and `ContextPhaseListener` beans
-with surf-api's. The packages must lie outside `dev.slne.surf.api`; `bootstrap` rejects an overlap
-with `IllegalArgumentException`. Without a descriptor, beans outside `dev.slne.surf.api` are not
-scanned. `PluginDescriptor` lives in `dev.slne.surf.api.spring.context`; `source = null` scans every
+classes, NATS), runs the application's `SurfLifecycle` hooks and `ContextPhaseListener` beans
+with surf-api's, and runs its `@Scheduled` methods inside surf-api's coroutine scope from `enable`
+to `shutdown`, as a plugin context would. The packages must lie outside `dev.slne.surf.api`;
+`bootstrap` rejects an overlap with `IllegalArgumentException`. Without a descriptor, beans outside
+`dev.slne.surf.api` are not scanned. `PluginDescriptor` lives in `dev.slne.surf.api.spring.context`; `source = null` scans every
 class the class loader sees under the packages, and `dataDirectory` is where config handles read and
 write their files.
 
@@ -114,6 +115,7 @@ scan, so `application.basePackages` only feeds the overlap check. The context ge
 and enable hooks when the context starts and `shutdown()` when it stops; beans that need surf-api
 enabled start in a later phase. A failing start shuts surf-api down before the failure propagates,
 and a refresh that fails earlier undoes the adoption. The lifecycle bean cannot be restarted.
+surf-api adds no scheduling to an adopted context; `@Scheduled` there is Spring Boot's own.
 
 A Spring Boot program other than a microservice supplies what the microservice runtime otherwise
 does: the property `surf.config-directory` (`SurfProperties.CONFIG_DIRECTORY`), a `shutdown()` on
@@ -138,8 +140,8 @@ property is on the implementation class only, not on `SurfApiCore`, so a bean th
 **Available**, because it is all platform-independent and the implementations ship in
 `surf-api-core-impl`, which `surf-api-standalone-impl` depends on at `api` scope:
 
-- configuration - Configurate with the standalone `SpongeConfigSerializers`
-  (`StandaloneSpongeConfigSerializers`, itself a `@Service` bean) → **`surf-api-config`**
+- configuration - Configurate with surf-api's default `@SurfConfigSerializer` beans
+  → **`surf-api-config`**
 - messages, component building, MiniMessage, `Colors`, pagination → **`surf-api-messages`**
 - Spring beans, `SurfLifecycle` and injection → **`surf-api-components`**
 - the surf event bus → **`surf-api-events`**
@@ -162,8 +164,14 @@ property is on the implementation class only, not on `SurfApiCore`, so a bean th
 - `sendPlayerToServer`, `getPlayer`, `isPlayer` as listed above
 - `@ConditionalOnPlugin`: the condition reads a `PluginPresence` bean that the platforms register
   for plugin contexts, and a root context built by `bootstrap` has none, so a bean carrying it makes
-  `bootstrap()` fail with an `IllegalStateException`. Use Spring's own conditions (`@Profile`, a
-  `@Conditional` with your own `Condition`) for a switch a standalone process can flip.
+  `bootstrap()` fail with an `IllegalStateException`. Use Spring Boot's conditions, such as
+  `@ConditionalOnProperty` or `@ConditionalOnClass`, or Spring's `@Profile` and `@Conditional`
+  for a switch a standalone process can flip; see **`surf-api-components`**.
+
+`surf-api-standalone` puts the plain `spring-boot` jar on the class path for those conditions. Its
+`SpringBootPropertySource` turns off log4j's own shutdown hook JVM-wide, so the shutdown hook that
+`enable()` registers shuts log4j down after `shutdown()`. A process that passes
+`registerShutdownHook = false` and uses log4j shuts log4j down itself.
 
 A bean written against the core api works unchanged in standalone; one that touches a platform
 type does not. That is the line to check when deciding whether code belongs in
@@ -190,6 +198,43 @@ test JVM's launcher session opens and `shutdown()` when it closes, so every test
 beans and the API that reads them, such as config classes. Inside this repository the infra modules
 use it as `projects.surfApiStandaloneTesting`. A test that calls `bootstrap()` itself must not run
 with the session listener, because a second `bootstrap()` fails.
+
+### Testing a plugin's conditions
+
+`surfContextRunner()` (`SurfContextRunner.kt`, declare the module with `testImplementation`)
+returns a Spring Boot `ApplicationContextRunner` whose contexts resemble a plugin context: their
+parent is the running standalone root, and before the refresh each one gets its own primary
+`CoroutineScope`, cancelled on close, a `PluginPresence` and the contributions of the root's
+`ContextContributor` beans, such as a `ConfigHandle` per `@SurfConfig` class. They process
+`@Scheduled` like a plugin context, but start the tasks when the refresh completes, because they
+have no enable phase. Components are not scanned; register them with `withUserConfiguration` or
+`withBean`. The module brings `spring-boot-test` and AssertJ.
+
+```kotlin
+@Test
+fun `the cache backs off without caffeine`(@TempDir dataDirectory: Path) {
+    val runner = surfContextRunner(
+        basePackages = listOf("dev.slne.example.shop"),
+        dataDirectory = dataDirectory,
+        installedPlugins = setOf("LuckPerms"),
+    ).withUserConfiguration(CacheConfiguration::class.java)
+
+    runner.run { context -> assertThat(context).hasSingleBean(PriceCache::class.java) }
+    runner.withClassLoader(FilteredClassLoader(Caffeine::class.java)).run { context ->
+        assertThat(context).doesNotHaveBean(PriceCache::class.java)
+    }
+}
+```
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `name` | `"test"` | the plugin name the contributors see |
+| `basePackages` | a package without classes | where the contributors look, for example for `@SurfConfig` classes |
+| `dataDirectory` | `null` | where config handles read and write; a `@SurfConfig` class without one fails the context |
+| `installedPlugins` | none | the names `@ConditionalOnPlugin` treats as installed |
+
+The fixtures must lie outside `dev.slne.surf.api` when they carry stereotypes, or the root scan of
+the test session registers them as well.
 
 ## Setting a project up
 

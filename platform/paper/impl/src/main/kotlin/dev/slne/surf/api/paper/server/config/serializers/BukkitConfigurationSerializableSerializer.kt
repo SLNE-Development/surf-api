@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.config.serializers
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import io.leangen.geantyref.GenericTypeReflector
 import org.bukkit.configuration.serialization.ConfigurationSerializable
 import org.bukkit.configuration.serialization.ConfigurationSerialization
@@ -8,7 +9,9 @@ import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.serialize.TypeSerializer
 import java.lang.reflect.Type
 
-object BukkitConfigurationSerializableSerializer : TypeSerializer<ConfigurationSerializable> {
+@SurfConfigSerializer
+internal class BukkitConfigurationSerializableSerializer :
+    TypeSerializer<ConfigurationSerializable> {
     @Suppress("UNCHECKED_CAST")
     override fun deserialize(type: Type, node: ConfigurationNode): ConfigurationSerializable {
         val clazz = GenericTypeReflector.erase(type) as Class<ConfigurationSerializable>

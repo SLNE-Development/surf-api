@@ -185,8 +185,9 @@ module is selected.
   beans are missing and the root context's refresh fails with `NoSuchBeanDefinitionException`.
   Usual causes: the version module is missing from `runtimeOnly` (step 5 above), or its
   configuration names another `NmsVersion`.
-- **Final fields cannot be written through a proxy.** A `@ReflectedField(access = SET)` on a
-  `final` field fails when the proxy is created, and with it the whole facade object. The one
+- **Final fields cannot be written through a proxy.** A `@ReflectedField(access = SET)` or any
+  field handle property on a `final` field fails when the proxy is created, and with it the whole
+  facade object; read a `final` field with a `GET` function. The one
   final write in the tree, `Item.components` in `v1-21-11`'s item bridge, goes through
   `unsafe.putObject` with a cached field offset.
 - **Mixins are not part of this layer.** `sponge-mixin` and `mixinextras` appear only in the
@@ -215,9 +216,22 @@ interface V26_3ServerLevelReflection {
 
 Callers write `V26_3NmsReflections.getEntityCounter()`. An instance member takes the receiver as
 its first parameter; `@ReflectedStatic` marks a static one. `@ReflectedMethod`,
-`@ReflectedField(access = GET|SET)` and `@ReflectedConstructor` cover every member; there are no
-atomic access modes, so `getAndIncreaseNextChatIndex` is a get and a set in the facade object, as
-non-atomic as the server's own `nextChatIndex++`. A method of another target class goes into that
+`@ReflectedField(access = GET|SET)` and `@ReflectedConstructor` cover every member. For atomic or
+ordered access, declare the field as a property returning a field handle:
+
+```kotlin
+@ReflectedField("nextChatIndex")
+val nextChatIndex: IntFieldHandle<ServerGamePacketListenerImpl>
+```
+
+`IntFieldHandle`, `LongFieldHandle`, `BooleanFieldHandle` and `ObjectFieldHandle` (with
+`@ReflectedStatic` their `Static…` variants) expose the `VarHandle` access modes: `get`/`set`,
+`getVolatile`/`setVolatile`, `getAcquire`/`setRelease`, `compareAndSet`, `getAndSet`, plus
+`getAndAdd`, `getAndIncrement` and the other numeric operations on `Int`/`Long` and
+`getAndBitwiseOr/And/Xor` on `Int`/`Long`/`Boolean`. `getAndIncreaseNextChatIndex` is
+`nextChatIndex.getAndIncrement(...)`: atomic against other handle accesses, but the server's own
+`nextChatIndex++` stays a plain increment. Never write a read-modify-write as a `GET` and a `SET`
+function. A method of another target class goes into that
 class's interface, never into one with a different target. Add new reflective access to that
 file, never a hand-rolled `Field.setAccessible`. `references/reflection-proxies.md` has the member
 matching rules and the failure behaviour.

@@ -7,6 +7,8 @@ dependencies {
     api(projects.surfApiAnnotations)
     compileOnlyApi(platform(libs.spring.framework.bom))
     compileOnlyApi(libs.spring.context)
+    compileOnlyApi(libs.spring.boot)
+    compileOnlyApi(libs.spring.boot.autoconfigure)
     compileOnlyApi(libs.kotlin.stdlib)
 }
 

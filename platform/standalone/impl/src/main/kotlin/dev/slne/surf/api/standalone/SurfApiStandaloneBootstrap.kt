@@ -146,13 +146,15 @@ object SurfApiStandaloneBootstrap {
 
     private const val LIFECYCLE_BEAN = "surfStandaloneLifecycle"
     private const val ADOPTION_GUARD_BEAN = "surfStandaloneAdoptionGuard"
+    private const val LOG4J_LOG_MANAGER = "org.apache.logging.log4j.LogManager"
 
     /**
      * Registers the root context's `@SurfEventHandler` beans with the event bus, runs the root
      * context's enable hooks, then surf-api's own load and enable phases.
      *
-     * With [registerShutdownHook], a JVM shutdown hook calls [shutdown]. An adopted context calls
-     * this from its lifecycle bean without the hook.
+     * With [registerShutdownHook], a JVM shutdown hook calls [shutdown] and then shuts log4j down,
+     * if the process uses it: `spring-boot`, which surf-api ships, turns off log4j's own shutdown
+     * hook. An adopted context calls this from its lifecycle bean without the hook.
      *
      * @throws IllegalStateException if surf-api has not been bootstrapped or adopted
      */
@@ -166,9 +168,29 @@ object SurfApiStandaloneBootstrap {
         SurfStandaloneInstance.onEnable()
 
         if (registerShutdownHook) {
-            Runtime.getRuntime()
-                .addShutdownHook(thread(start = false) { runBlocking { shutdown() } })
+            val hook = thread(start = false) {
+                try {
+                    runBlocking { shutdown() }
+                } finally {
+                    shutdownLog4j()
+                }
+            }
+            Runtime.getRuntime().addShutdownHook(hook)
         }
+    }
+
+    /**
+     * Shuts log4j down, which flushes its asynchronous appenders. Does nothing without log4j on the
+     * class path; log4j is reached reflectively, so surf-api needs no dependency on it.
+     */
+    private fun shutdownLog4j() {
+        val logManager = try {
+            Class.forName(LOG4J_LOG_MANAGER, false, javaClass.classLoader)
+        } catch (_: ClassNotFoundException) {
+            return
+        }
+
+        logManager.getMethod("shutdown").invoke(null)
     }
 
     /**

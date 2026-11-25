@@ -3,7 +3,8 @@
 Source: `common/reflection/api/src/main/kotlin/dev/slne/surf/api/reflection/` -
 `reflection-annotations.kt` (the annotations), `ReflectionProxies.kt` (`ReflectionProxies.get`,
 `reflectionProxy<T>()`, `ReflectionProxyException`), `ReflectionProxyFactory.kt`,
-`ProxyMemberBinder.kt` and `ProxyLookups.kt`. The plugin-context registration is
+`ProxyMemberBinder.kt` and `ProxyLookups.kt`; the field handles in `field-handles.kt`,
+`FieldHandleKind.kt` and `FieldHandleClasses.kt`. The plugin-context registration is
 `ReflectionProxyContributor` in `common/core/impl/.../reflection/`.
 
 ## Declaring a proxy
@@ -12,11 +13,14 @@ Source: `common/reflection/api/src/main/kotlin/dev/slne/surf/api/reflection/` -
 @ReflectionProxy(ServerGamePacketListenerImpl::class)   // or targetName = "binary.Name"
 interface V26_3PacketListenerReflection {
 
-    @ReflectedField("nextChatIndex")                     // GET is the default access
-    fun getNextChatIndex(instance: ServerGamePacketListenerImpl): Int
+    @ReflectedField("chatSession")                       // GET is the default access
+    fun getRemoteChatSession(instance: ServerGamePacketListenerImpl): RemoteChatSession?
 
-    @ReflectedField("nextChatIndex", FieldAccess.SET)
-    fun setNextChatIndex(instance: ServerGamePacketListenerImpl, index: Int)
+    @ReflectedField("chatSession", FieldAccess.SET)
+    fun setRemoteChatSession(instance: ServerGamePacketListenerImpl, session: RemoteChatSession?)
+
+    @ReflectedField("nextChatIndex")                     // field handle: every VarHandle mode
+    val nextChatIndex: IntFieldHandle<ServerGamePacketListenerImpl>
 
     @ReflectedMethod("resetPlayerChatState")
     fun resetPlayerChatState(instance: ServerGamePacketListenerImpl, session: RemoteChatSession)
@@ -37,7 +41,46 @@ interface V26_3FilterMaskReflection {
   methods are left alone, `suspend` methods are rejected.
 - An instance binding takes the receiver as its first parameter. Its type must be compatible with
   the target class; `Any` works.
-- `name` defaults to the proxy method's JVM name, so a property getter needs an explicit name.
+- `name` defaults to the proxy method's JVM name, so a property getter needs an explicit name. A
+  field handle property defaults to the property's name, read back from the getter by Kotlin's
+  rule: `getXValue` looks for `xValue`, then `XValue`.
+
+## Field handles
+
+A `@ReflectedField` property whose type is a field handle interface (`field-handles.kt`) binds the
+whole field instead of one read or write:
+
+| Field | Instance | `@ReflectedStatic` |
+| --- | --- | --- |
+| `int` | `IntFieldHandle<R>` | `StaticIntFieldHandle` |
+| `long` | `LongFieldHandle<R>` | `StaticLongFieldHandle` |
+| `boolean` | `BooleanFieldHandle<R>` | `StaticBooleanFieldHandle` |
+| any reference | `ObjectFieldHandle<R, T>` | `StaticObjectFieldHandle<T>` |
+
+- Every abstract handle method is named after a `VarHandle.AccessMode` and calls it: `get`/`set`
+  (plain), `getVolatile`/`setVolatile`, `getAcquire`/`setRelease`, `compareAndSet`, `getAndSet`,
+  `getAndAdd` and `getAndBitwiseOr/And/Xor`. `addAndGet`, `getAndIncrement`, `incrementAndGet`,
+  `getAndDecrement` and `decrementAndGet` are interface default methods over `getAndAdd`. There
+  are no `float`, `double`, `short`, `byte` or `char` handles.
+- The atomic modes are atomic only against other `VarHandle` or atomic accesses; the server's own
+  plain `x++` still races with them.
+- Validated at creation: the handle type must fit the field type exactly (`Int` needs `int`,
+  `ObjectFieldHandle` any reference), `R` must be compatible with the target class, `T` must be
+  the field type or one of its supertypes, the `Static` variant must match `@ReflectedStatic`,
+  `access` must stay `GET`,
+  and the field must not be `final`, because every handle exposes writes.
+- `FieldHandleClasses` generates one hidden class per handle with the ClassFile API, next to the
+  proxy interface. Each method `ldc`s the `VarHandle` from the class data (`classDataAt`) and
+  calls the access mode with its exact descriptor; the handle in the class data has
+  `withInvokeExactBehavior()`, so a wrong descriptor fails instead of adapting. When the proxy's
+  package cannot name the receiver or field type, as for a package-private target, that type is
+  erased to `Object` and the `VarHandle` keeps its default behaviour, which casts the reference
+  without boxing.
+- The proxy's property getter returns the handle as a `MethodHandles.constant`, so
+  `proxy.nextChatIndex` folds to a constant in JIT-compiled code.
+- Kotlin stores an annotation on an interface property without use-site target on a synthetic
+  `get<Name>$annotations` method in `DefaultImpls`; the binder reads it there. `@get:` on the
+  getter works as well.
 
 ## Matching
 
@@ -52,7 +95,8 @@ interface V26_3FilterMaskReflection {
 - Members are reached through `MethodHandles.privateLookupIn(declaringClass, ...)`. For a package
   its module does not open, such as `java.lang`, surf-api's own lookup is used and only public
   members are reachable.
-- Writing a `final` field is unsupported and fails at creation. Use `unsafe` at the call site for
+- Writing a `final` field, by a `SET` function or a field handle, is unsupported and fails at
+  creation. Use `unsafe` at the call site for
   the rare case, as `v1-21-11`'s item bridge does for `Item.components`.
 
 ## Lifecycle and failure

@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.server.config.serializers
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.bukkit.inventory.ItemStack
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
@@ -7,7 +8,8 @@ import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
 import kotlin.io.encoding.Base64
 
-object ItemStackSerializer : ScalarSerializer.Annotated<ItemStack>(ItemStack::class.java) {
+@SurfConfigSerializer
+internal class ItemStackSerializer : ScalarSerializer.Annotated<ItemStack>(ItemStack::class.java) {
 
     override fun deserialize(type: AnnotatedType, obj: Any): ItemStack {
         val base64 = obj.toString()

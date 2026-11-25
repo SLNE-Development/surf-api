@@ -25,6 +25,8 @@ class ExtraHandleBeans {
     private object ForeignHandle : ConfigHandle<ExtraConfig> {
         override val value: ExtraConfig = ExtraConfig(label = "foreign")
 
+        override fun load(): ExtraConfig = value
+
         override fun reload(validate: (ExtraConfig) -> Unit): ExtraConfig = value
 
         override fun edit(block: ExtraConfig.() -> Unit) {

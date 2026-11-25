@@ -1,12 +1,14 @@
 package dev.slne.surf.api.paper.server.config.serializers
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.bukkit.Material
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
 
-internal object MaterialSerializer : ScalarSerializer.Annotated<Material>(Material::class.java) {
+@SurfConfigSerializer
+internal class MaterialSerializer : ScalarSerializer.Annotated<Material>(Material::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): Material {
         return Material.matchMaterial(obj.toString()) ?: throw SerializationException(
             Material::class.java,

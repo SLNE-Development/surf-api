@@ -7,7 +7,8 @@ import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
 
-internal object TextColorSerializer : ScalarSerializer.Annotated<TextColor>(TextColor::class.java) {
+@SurfConfigSerializer
+internal class TextColorSerializer : ScalarSerializer.Annotated<TextColor>(TextColor::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): TextColor {
         val input = obj.toString().trim()
 

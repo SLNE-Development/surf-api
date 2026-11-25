@@ -177,10 +177,9 @@ If you have measured a hot path that needs a primitive-specialised collection, d
 
 ### The one feature that is removed, not translated
 
-`SpongeConfigSerializers` registered Configurate `TypeSerializer`s for **39 fastutil map types**.
-Those registrations are gone. A `@ConfigSerializable` class with a field typed as a fastutil map
-is no longer serialisable and fails on load. Change such a field to the JDK map, `Map<K, V>`, which
-Configurate handles.
+surf-api's config serializers covered **39 fastutil map types**. Those serializers are gone. A
+`@ConfigSerializable` class with a field typed as a fastutil map is no longer serialisable and
+fails on load. Change such a field to the JDK map, `Map<K, V>`, which Configurate handles.
 
 ### Where fastutil stays
 
@@ -237,7 +236,7 @@ exception: it sees only surf-api's bootstrap components (section 15).
 | `SurfApiCore.instance`, `SurfApiCore.getPlayer(…)` and the other delegated calls | Inject `SurfApiCore`, or the platform type `SurfApiPaper` or `SurfApiVelocity`. |
 | `SurfApiPaper.INSTANCE`, `SurfApiVelocity.INSTANCE` | Inject `SurfApiPaper` or `SurfApiVelocity`. |
 | `SurfConfigApi.instance`, `surfConfigApi` | Removed with `SurfConfigApi`. Declare the file with `@SurfConfig` or open it with `ConfigHandles.open` (section 17). |
-| `surfSpongeConfigSerializers` | Removed. Register serializers from a `ConfigSerializerRegistrar` bean (section 17). |
+| `surfSpongeConfigSerializers` | Removed. Declare each serializer as a `@SurfConfigSerializer` class (section 17). |
 | `SurfEventBus.INSTANCE`, `SurfEventBus.registerListeners(…)` and the other delegated calls | Inject `SurfEventBus`, or annotate methods of a bean with `@SurfEventHandler` (section 17). `call()` on an event is unchanged. |
 | `SurfReflection.INSTANCE`, `surfReflection` | Removed with `SurfReflection`. Inject the `@ReflectionProxy` interface or call `reflectionProxy<T>()` (section 20). |
 | `ActionBarService.instance` | Removed. Call the `Audience.sendActionBar(…)` extension, or inject `ActionBarService`. |
@@ -793,11 +792,38 @@ surf-api registers three beans that 3.x did not have:
   configuration; they still apply the KSP Gradle plugin. Its only remaining job, the NMS provider
   index under `META-INF/surf-api/nms-providers`, is gone with the provider (section 20).
 
+### Spring Boot conditions
+
+Every runtime now ships `spring-boot` and `spring-boot-autoconfigure`, and the surf-api api
+modules export them for compilation like Spring itself. Plugins can use Boot's conditions, such as
+`@ConditionalOnClass`, `@ConditionalOnBean` and `@ConditionalOnProperty`, and import
+auto-configurations with `@ImportAutoConfiguration(classes = [...])`; no Spring Boot application
+runs. The rules, in the `surf-api-components` skill:
+
+- `@ConditionalOnProperty` reads system properties and environment variables only.
+- `@ConditionalOnMissingBean` on a component-scanned class fails the plugin's start, because the
+  condition would always remove the class. Annotate the class with `@Fallback` or declare it from
+  a `@Bean` method.
+- Classes annotated with `@AutoConfiguration` are never component-scanned; import them.
+- A failed start that Spring Boot's failure analyzers recognize carries their description and
+  action in a `ContextFailureAnalyzedException` inside the `PluginContextException`.
+- `surf-api-standalone-testing` adds `surfContextRunner()` and brings `spring-boot-test` and
+  AssertJ.
+
 ### Standalone programs
+
+`spring-boot` on a standalone program's class path turns off log4j's own shutdown hook. The
+shutdown hook of `SurfApiStandaloneBootstrap.enable()` shuts log4j down after surf-api; a program
+that passes `registerShutdownHook = false` and uses log4j calls `LogManager.shutdown()` itself.
 
 `SurfApiStandaloneBootstrap.bootstrap()` takes an optional `application` descriptor; with one, the
 root context also hosts the application's beans. `SurfApiStandaloneBootstrap.adopt(context,
 application)` makes a Spring Boot program's own context surf-api's root context.
+
+surf-api's own root components without an explicit bean name are named by their fully qualified
+class name. An application's components keep Spring's short names, so a class of the same simple
+name, such as `UuidSerializer`, no longer collides with surf-api's. Inject surf-api's beans by type
+rather than by a derived bean name.
 
 `SurfApiStandaloneBootstrap.enable()` registers the root context's beans with `@SurfEventHandler`
 methods on the event bus, and `shutdown()` unregisters them; a microservice gets the same through
@@ -859,6 +885,28 @@ keyed on that logger name have to match `surf-coroutines` or the plugin id in th
 Minestom plugin without a jar of its own runs its scope's coroutines with the server class loader
 as thread context class loader.
 
+### `@Scheduled` runs in the plugin's scope
+
+Every plugin context processes Spring's `@Scheduled` methods without `@EnableScheduling`, so
+repeating Bukkit or mccoroutine tasks become annotated bean methods. A plugin that already declares
+`@EnableScheduling` keeps working; surf-api replaces the processor it declares with its own. The
+behaviour differs from plain Spring:
+
+- Tasks start after the `onEnable` hooks, not when the context refreshes, and stop before the first
+  `onDisable` hook.
+- Every task runs inside the plugin's `CoroutineScope`. A method without `scheduler` runs on the
+  scope's dispatcher, `Dispatchers.Default`, not on a `taskScheduler` bean or Spring's
+  single-threaded fallback. `scheduler` selects `SurfSchedulers.DEFAULT` or `SurfSchedulers.IO`
+  (`dev.slne.surf.api.spring`), or on Paper `PaperSchedulers.GLOBAL_REGION`
+  (`dev.slne.surf.api.paper.coroutine`) for the server thread. A `TaskScheduler` bean the plugin
+  declares is used only when `scheduler` names it, and is marked `@Primary` if the plugin injects
+  `TaskScheduler` unqualified.
+- Methods may suspend and need no Reactor on the class path. Such a method takes no parameters. Its
+  `fixedDelay` waits for the run to complete, and its `fixedRate` skips the starts a long run missed
+  and never overlaps runs.
+- A `fixedRate` method that does not suspend also skips missed starts instead of catching up, and a
+  failing run is logged without ending the task.
+
 ## 17. Configuration, listeners and commands as beans
 
 ### Configuration
@@ -882,8 +930,10 @@ when the plugin's context starts, so a broken file fails the plugin's start. `Co
 `value`, `reload()`, `edit { }`, `update { }` and `save()`. `@SurfConfig` also works as a
 meta-annotation on an annotation of your own.
 
-A plugin registers serializers for its own types through a `ConfigSerializerRegistrar` bean, which
-runs before the plugin's first handle opens its file; `surfSpongeConfigSerializers` is removed.
+A plugin declares a serializer for its own types as a `@SurfConfigSerializer` class, which becomes
+a bean of the plugin (recipe 6); `surfSpongeConfigSerializers`, `SpongeConfigSerializers` and
+`ConfigSerializerRegistrar` are removed. `@SurfConfig(lazy = true)` defers reading the file to the
+first access of its handle.
 
 #### Removed configuration API
 
@@ -894,6 +944,9 @@ runs before the plugin's first handle opens its file; `surfSpongeConfigSerialize
 | `ConfigMigrationBuilder`, `MigrationResult` | `ConfigMigrations` and `configMigrations<T> { }` |
 | `SpongeConfigManager` | Internal (`@InternalSurfApi`); use `ConfigHandle` |
 | `SpongeConfigSerializers.ComponentSerializer`, `SpongeConfigSerializers.LinkedListSerializer` | Internal; every handle still registers both, so `Component` and `LinkedList` fields keep working |
+| `SpongeConfigSerializers` with `registerClassSerializer`, `registerTypeTokenSerializer`, `unregisterSerializer`, `unregisterTypeTokenSerializer`, `buildSerializersModule`, `classSerializers` and `typeTokenSerializers`; its platform subclasses `PaperSpongeConfigSerializers`, `VelocitySpongeConfigSerializers`, `MinestomSpongeConfigSerializer` and `StandaloneSpongeConfigSerializers` | A `@SurfConfigSerializer` class per serializer (recipe 6). Nothing is registered at runtime any more, and nothing can be unregistered. |
+| `ConfigSerializerRegistrar`, which earlier 4.0 snapshots offered | A `@SurfConfigSerializer` class per serializer (recipe 6) |
+| `DoubleOr.Disabled.Serializer` | Internal, like the serializers of the other helper types; they still apply to every config file |
 | `YamlConfigFileNamePattern`, `JsonConfigFileNamePattern` | Nothing; `ConfigHandles.open` takes any path |
 | The fallback that read config classes annotated with Configurate's original `org.spongepowered.configurate` packages | Nothing. surf-api still relocates Configurate to `dev.slne.surf.api.libs.configurate`, and the surf-api Gradle plugins relocate it in a plugin's jar as well. Opening a config class whose annotations were not relocated fails with a `LoadConfigException` that names them. |
 | `DatabaseConfig.load(configApi, directory, fileName)`, `SurfDatabaseAutoConfiguration.surfDatabaseConfig(configApi, environment)` | `DatabaseConfig.load(directory, fileName)`, `surfDatabaseConfig(environment)` |
@@ -908,6 +961,20 @@ Behaviour changes:
   call. The handles of `@SurfConfig` classes close with their plugin's context.
 - surf-redis, surf-nats and surf-database-r2dbc read their `config.yml` and `database.yml` once
   through `ConfigHandles.open`. The files and keys are unchanged.
+- A plugin's serializers apply only to its own config files. Through `surfSpongeConfigSerializers`,
+  every plugin registered into one shared registry, so a serializer of one plugin also applied to
+  the files of all others.
+- Among surf-api's own serializers, the one for the most specific type wins. A `NamespacedKey`
+  field is now read by the `NamespacedKey` serializer instead of the `Key` serializer, and a
+  `Material` field by the `Material` serializer, which writes the namespaced key such as
+  `minecraft:stone` and reads legacy names as well.
+- On Paper, a `@ConfigSerializable` class that also implements Bukkit's `ConfigurationSerializable`
+  is now written through Bukkit's serialization instead of Configurate's object mapper, because
+  every root default, the `ConfigurationSerializable` one included, is asked before the object
+  mapper. Its file format changes accordingly. To keep the object-mapper format, name a serializer
+  for the class in `@SurfConfig(serializers = [...])` or drop the `ConfigurationSerializable`
+  interface.
+- `ConfigHandle` gained `load()`. A class that implements `ConfigHandle` itself implements it too.
 
 #### Recipe 1: static access through a companion
 
@@ -1042,6 +1109,38 @@ config.reload { candidate -> check(candidate.port in 1..65535) { "Invalid port" 
 `reload` reads the file into a candidate, migrates it in memory and installs it only when
 `validate` returns. If `validate` throws, the old value and the file stay untouched and the
 exception propagates.
+
+#### Recipe 6: a serializer for your own type
+
+Before:
+
+```kotlin
+surfSpongeConfigSerializers.registerClassSerializer<Price>(PriceSerializer)
+```
+
+After: annotate the serializer itself. It becomes a bean of the plugin, so it may inject other
+beans, and applies to every config file of the plugin:
+
+```kotlin
+@SurfConfigSerializer
+class PriceSerializer : ScalarSerializer<Price>(Price::class.java) {
+    override fun deserialize(type: Type, obj: Any): Price = Price.parse(obj.toString())
+
+    override fun serialize(item: Price, typeSupported: Predicate<Class<*>>): Any = item.toString()
+}
+```
+
+- The type comes from the serializer's `TypeSerializer<T>` supertype, generics included, or from
+  `type()` of a `ScalarSerializer`. Where it cannot be resolved, name it:
+  `@SurfConfigSerializer(type = Price::class)`.
+- `@SurfConfigSerializer(applyToAll = false)` limits the serializer to the files that name it:
+  `@SurfConfig("shop.yml", serializers = [PriceSerializer::class])`.
+- A file asks its named serializers first, then the plugin's `applyToAll` serializers, then
+  surf-api's defaults. A plugin serializer for `UUID` therefore replaces surf-api's within the
+  plugin. Two `applyToAll` serializers of one plugin for the same type fail its start.
+- A Kotlin `object` serializer becomes a `class`: Spring creates the instance.
+- For `ConfigHandles.open`, pass the instances:
+  `ConfigHandles.open<ShopConfig>(path, serializers = listOf(PriceSerializer()))`.
 
 ### Listeners and commands
 
@@ -1380,12 +1479,24 @@ val proxy = reflectionProxy<RestartCommandProxy>() // or inject RestartCommandPr
 | A method without annotation, bound to the method of the same name | `@ReflectedMethod`. Every abstract method needs exactly one of `@ReflectedMethod`, `@ReflectedField` and `@ReflectedConstructor`. |
 | `@GenerateReflection`, `generatedReflectionAccessor<T>()`, `GeneratedReflectionAccessors` and the `surf-api-processor` code generation behind them | A `@ReflectionProxy` interface per target class; `companion object : X by reflectionProxy<X>()` keeps static call sites. |
 | `@ReflectedMethod`, `@ReflectedField`, `@ReflectedConstructor` in `dev.slne.surf.api.shared.api.reflection` with `target`, `targetName`, `isStatic`, `descriptor`, `type`, `invocation` | The annotations of the same name in `dev.slne.surf.api.reflection`. The target moves to `@ReflectionProxy`, `isStatic` becomes `@ReflectedStatic`, and members are matched by name and parameter types. |
-| `@ReflectedVarHandle`, `@ConstantIntArgument` and the other constant-argument annotations, `ReflectionInvocationMode`, `ReflectedFieldAccess`, `UnspecifiedReflectionTarget` | Nothing. Read and write the field with `@ReflectedField`. |
+| `@ReflectedVarHandle` | A `@ReflectedField` property that returns a field handle: `IntFieldHandle<R>`, `LongFieldHandle<R>`, `BooleanFieldHandle<R>`, `ObjectFieldHandle<R, T>`, or with `@ReflectedStatic` `StaticIntFieldHandle`, `StaticLongFieldHandle`, `StaticBooleanFieldHandle`, `StaticObjectFieldHandle<T>`. Each operation calls the `VarHandle` access mode of its name (`getVolatile`, `setRelease`, `compareAndSet`, `getAndAdd`, `getAndBitwiseOr`, …); `getAndIncrement`, `addAndGet` and the other numeric shortcuts build on `getAndAdd`. There are no `float`, `double`, `short`, `byte` or `char` handles. |
+| `@ConstantIntArgument` and the other constant-argument annotations, `ReflectionInvocationMode`, `ReflectedFieldAccess`, `UnspecifiedReflectionTarget` | Nothing. Read and write the field with `@ReflectedField`, or pass the constant at the call site. |
 | `xyz.jpenilla:reflection-remapper` on the Paper compile classpath and the `ReflectionProxyFactory.reflectionProxy<I>()` extension | Nothing; Paper is Mojang-mapped. Declare the dependency yourself if you still use it. |
 
+```kotlin
+@ReflectionProxy(ServerGamePacketListenerImpl::class)
+interface PacketListenerReflection {
+    @ReflectedField("nextChatIndex")
+    val nextChatIndex: IntFieldHandle<ServerGamePacketListenerImpl>
+}
+
+val index = reflectionProxy<PacketListenerReflection>().nextChatIndex.getAndIncrement(listener)
+```
+
 A proxy is created once per interface and validates every method at creation: a member that does
-not exist, an ambiguous overload, a `suspend` method or a `final` write throws one
-`ReflectionProxyException` listing every problem. Calls propagate the member's exceptions
+not exist, an ambiguous overload, a `suspend` method, a `final` write, a field handle on a `final`
+field or a field handle whose type does not fit the field throws one `ReflectionProxyException`
+listing every problem. Calls propagate the member's exceptions
 unchanged instead of wrapping them in `ProxyInvocationException`.
 
 The hidden-class invoker infrastructure in `dev.slne.surf.api.common.invoker` was rewritten on the
@@ -1453,8 +1564,8 @@ the registry-key fields and the `UtilBukkit` facade.
 11. Replace mccoroutine: inject `CoroutineScope` and `PaperDispatchers`, and dispatch to the server
     thread explicitly where code needs it (section 16).
 12. Replace every `SpongeYmlConfigClass` / `SpongeJsonConfigClass` companion and `SurfConfigApi` call
-    with `@SurfConfig` or `ConfigHandles.open`, following the recipes in section 17, and move
-    serializer registration to `ConfigSerializerRegistrar` beans.
+    with `@SurfConfig` or `ConfigHandles.open`, following the recipes in section 17, and turn
+    every registered serializer into a `@SurfConfigSerializer` class (recipe 6).
 13. Remove your own listener and command registration for beans that surf-api registers
     (section 17), and consider turning hand-built PlaceholderAPI expansions into `@PapiExpansion`
     classes.

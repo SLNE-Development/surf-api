@@ -1,6 +1,6 @@
 ---
 name: surf-api-components
-description: Use when writing or wiring a surf-api Spring bean - annotating a class with @Service, @Component or @Configuration, publishing a type with @Bean, shaping a constructor parameter as T, T?, List<T> or ObjectProvider<T>, implementing SurfLifecycle or SurfBootstrapLifecycle, exporting a bean to other plugins with @PluginApi, guarding an adapter with @ConditionalOnPlugin, choosing between candidates with @Qualifier, @Primary, @Fallback or @Order, putting a bean into Paper's bootstrap context with @BootstrapComponent, injecting what every plugin context provides (CoroutineScope, PaperDispatchers, the plugin instance, ConfigHandle), or diagnosing NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException, BeanCurrentlyInCreationException or PluginContextException.
+description: Use when writing or wiring a surf-api Spring bean - annotating a class with @Service, @Component or @Configuration, publishing a type with @Bean, shaping a constructor parameter as T, T?, List<T> or ObjectProvider<T>, implementing SurfLifecycle or SurfBootstrapLifecycle, exporting a bean to other plugins with @PluginApi, guarding an adapter with @ConditionalOnPlugin, using Spring Boot conditions (@ConditionalOnClass, @ConditionalOnBean, @ConditionalOnMissingBean, @ConditionalOnProperty) or @ImportAutoConfiguration, choosing between candidates with @Qualifier, @Primary, @Fallback or @Order, putting a bean into Paper's bootstrap context with @BootstrapComponent, injecting what every plugin context provides (CoroutineScope, PaperDispatchers, the plugin instance, ConfigHandle), or diagnosing NoSuchBeanDefinitionException, NoUniqueBeanDefinitionException, BeanCurrentlyInCreationException, ContextFailureAnalyzedException or PluginContextException.
 ---
 
 # surf-api beans on Spring
@@ -22,7 +22,7 @@ Every JVM holds these contexts:
 
 | Context | Parent | Holds |
 | --- | --- | --- |
-| root | none | surf-api's own beans, such as `SurfEventBus`, `SpongeConfigSerializers` and `ViewFrame`. Scans `dev.slne.surf.api`. |
+| root | none | surf-api's own beans, such as `SurfEventBus`, the default config serializers and `ViewFrame`. Scans `dev.slne.surf.api`. |
 | import context, one per plugin | root | only the beans the plugin's **direct** dependencies export |
 | plugin context, one per plugin | its import context | every bean of the plugin |
 
@@ -114,6 +114,34 @@ ones; `onDisable` runs in reverse. A throwing `onLoad` or `onEnable` fails the p
 Constructors and `@PostConstruct` only wire objects. Work that needs the server belongs in
 `onEnable`. Spring's own `@PostConstruct`, `@PreDestroy` and `DisposableBean` still apply.
 
+## Scheduled tasks
+
+Spring's `@Scheduled` works in every plugin context without `@EnableScheduling`; a plugin that
+declares it anyway keeps surf-api's processing. Tasks start after the `onEnable` hooks, stop
+before the first `onDisable` hook, and run inside the plugin's `CoroutineScope`, so none outlives
+its plugin. Methods may suspend:
+
+```kotlin
+import dev.slne.surf.api.spring.SurfSchedulers
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
+import java.util.concurrent.TimeUnit
+
+@Service
+class ShopMaintenance(private val prices: PriceRepository) {
+
+    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.MINUTES, scheduler = SurfSchedulers.IO)
+    suspend fun refreshPrices() {
+        prices.refresh()
+    }
+}
+```
+
+Without `scheduler` a method runs on the scope's dispatcher; `SurfSchedulers.DEFAULT`,
+`SurfSchedulers.IO` and Paper's `PaperSchedulers.GLOBAL_REGION` pick another. A suspending
+`fixedDelay` waits for the run to finish, `fixedRate` skips the starts a long run missed and never
+overlaps, and a failing run is logged without ending the task. Detail: `references/lifecycle.md`.
+
 On Paper, a bean that implements `SurfBootstrapLifecycle` or carries `@BootstrapComponent` lives in
 the plugin's bootstrap context, built before the server exists. Phases per platform, the bootstrap
 context, phase listeners and shutdown: `references/lifecycle.md`.
@@ -127,7 +155,7 @@ only the API jar is on the classpath. Inject such a type; never look it up. A ne
 implementation is a root `@Service` gets the annotation too; `@InternalSurfApi` types do not.
 Put it on interfaces only: the Kotlin Spring compiler plugin opens every class that carries
 `@Component`, meta-annotations included, and its members with it, which breaks an abstract class
-with explicit backing fields or `inline` members (`SpongeConfigSerializers` stays unannotated).
+with explicit backing fields or `inline` members.
 
 A third-party object that becomes usable only after the root refresh is a lazy root bean, such as
 `LuckPerms` on Paper and Velocity; on Minestom `withLuckPerms()` registers it as a singleton after
@@ -179,6 +207,18 @@ the condition from bytecode without loading the class, so a missing plugin never
 the adapter through an interface of its own as `T?` or `List<T>`. Detail:
 `references/conditions.md`.
 
+## Spring Boot conditions
+
+Every runtime ships `spring-boot` and `spring-boot-autoconfigure` without running Spring Boot, so
+`@ConditionalOnClass`, `@ConditionalOnBean`, `@ConditionalOnMissingBean`,
+`@ConditionalOnProperty` and Boot's other conditions work in every context. Classes resolve
+through the plugin's class loader; properties are system properties and environment variables
+only; bean conditions see the plugin's beans, its direct dependencies' exports and the root.
+Put `@ConditionalOnMissingBean` on `@Bean` methods: on a scanned class it fails the start, use
+`@Fallback` there. Auto-configurations enter only through
+`@ImportAutoConfiguration(classes = [...])`. Detail and the unsupported cases:
+`references/conditions.md`.
+
 ## What every plugin context provides
 
 surf-api registers these beans in each plugin context before it refreshes:
@@ -189,9 +229,12 @@ surf-api registers these beans in each plugin context before it refreshes:
 | the plugin's main class, under every supertype | `surfPluginInstance`, primary | Paper, Velocity, Minestom |
 | `ComponentLogger` (also an slf4j `Logger`) named after the plugin | `surfPluginLogger`, `@Fallback` | full plugin contexts on Paper, Velocity, Minestom; a `Logger` bean the plugin declares wins |
 | `PaperDispatchers` (`main`, `async`, `region(...)`, `entity(...)`) | `surfPaperDispatchers`, primary | Paper |
+| Spring `TaskScheduler` on the scope's dispatcher, used by `@Scheduled` without `scheduler` | `surfTaskScheduler` | every full plugin context |
+| Spring `TaskScheduler` on `Dispatchers.Default` and `Dispatchers.IO`; `@Fallback` | `SurfSchedulers.DEFAULT`, `SurfSchedulers.IO` | every full plugin context |
+| Spring `TaskScheduler` on `PaperDispatchers.main`; `@Fallback` | `PaperSchedulers.GLOBAL_REGION` | Paper |
 | `org.bukkit.plugin.Plugin` proxy, `BootstrapContext` | `surfPlugin`, `surfBootstrapContext` | Paper bootstrap context |
 | `ProxyServer`, `PluginContainer` | `surfProxyServer`, `surfPluginContainer` | Velocity |
-| `PluginPresence` (`@InternalSurfApi`; read by `@ConditionalOnPlugin`, not meant for plugin code) | `surfPluginPresence` | every plugin context, bootstrap and full |
+| `PluginPresence` (`@InternalSurfApi`; read by `@ConditionalOnPlugin`, not meant for plugin code) | `surfPluginPresence` | every plugin context, bootstrap and full; on Paper also the root bootstrap context |
 | `ConfigHandle<C>` per `@SurfConfig` class in the plugin's jar | `<class name>#configHandle` | every full plugin context; a plugin with `@SurfConfig` classes but no data folder fails to start |
 | The proxy of every `@ReflectionProxy` interface in the plugin's packages; lazy | `<interface name>#reflectionProxy` | every full plugin context; the instance `reflectionProxy<T>()` returns, failing on first injection when the target class is missing |
 | `RedisApi`, `RedissonClient`, `RedissonReactiveClient`; lazy, `@Fallback` | contributed by surf-redis-spring | full plugin contexts on Paper, Velocity, Minestom |
@@ -264,6 +307,8 @@ wraps a failed plugin start in `PluginContextException` ("Failed to build the co
 | `Plugin '<p>' is closed; its export '<b>' is no longer available` | a lookup reached an export after its provider closed | resolve the export while the provider runs |
 | `'<p>' shares surf-api's class loader, and its packages [...] overlap dev.slne.surf.api` | a plugin on surf-api's class loader would be scanned by the root | move the plugin to a package of its own |
 | `NoClassDefFoundError` for an optional plugin's class | a bean references a missing plugin's API | move the reference into a `@ConditionalOnPlugin` adapter |
+| `The scanned classes [...] carry @ConditionalOnMissingBean` | the condition would always remove a scanned class | annotate the class with `@Fallback`, or declare it from a `@Bean` method carrying the condition |
+| `ContextFailureAnalyzedException` ("The surf plugin context of '<p>' failed to start") | Spring Boot's failure analyzers recognized the cause | follow its `Description:` and `Action:`; the original exception is its cause |
 
 ## For surf-api modules
 
@@ -286,6 +331,6 @@ Read on demand:
 - `references/injection.md` - every parameter shape, `@Bean` methods, qualifiers and their
   precedence, export resolution, and programmatic lookups.
 - `references/lifecycle.md` - phases per platform, hook order, Paper's bootstrap context, phase
-  listeners, coroutine scopes, the plugin instance and shutdown.
+  listeners, coroutine scopes, scheduled tasks, the plugin instance and shutdown.
 - `references/conditions.md` - `@ConditionalOnPlugin`, `PluginPresence` and Spring's own
   `@Conditional`.

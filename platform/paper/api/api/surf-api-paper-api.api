@@ -245,6 +245,11 @@ public final class dev/slne/surf/api/paper/coroutine/PaperDispatchersKt {
 	public static final fun withEntity (Lorg/bukkit/entity/Entity;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class dev/slne/surf/api/paper/coroutine/PaperSchedulers {
+	public static final field GLOBAL_REGION Ljava/lang/String;
+	public static final field INSTANCE Ldev/slne/surf/api/paper/coroutine/PaperSchedulers;
+}
+
 public final class dev/slne/surf/api/paper/dialog/CommonDialogsKt {
 	public static final fun noticeDialog (Lkotlin/jvm/functions/Function1;)Lio/papermc/paper/dialog/Dialog;
 	public static final fun noticeDialog (Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;Ljava/lang/Integer;)Lio/papermc/paper/dialog/Dialog;

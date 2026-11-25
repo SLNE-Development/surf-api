@@ -1,5 +1,6 @@
 package dev.slne.surf.api.reflection
 
+import dev.slne.surf.api.reflection.fixture.FieldHandleTarget
 import kotlin.test.*
 
 /**
@@ -22,15 +23,32 @@ class ForeignModuleProxyTest {
         assertEquals("abc", create.invoke(proxy, "abc").toString())
     }
 
+    @Test
+    fun `an interface of another module gets working field handles`() {
+        val loader = IsolatingClassLoader(FieldHandleProxy::class.java)
+        val foreignType = loader.loadClass(FieldHandleProxy::class.java.name)
+        val target = FieldHandleTarget()
+
+        val proxy = ReflectionProxies.get(foreignType)
+
+        @Suppress("UNCHECKED_CAST")
+        val count = foreignType.getMethod("getCount").invoke(proxy)
+            as IntFieldHandle<FieldHandleTarget>
+        assertSame(loader, count.javaClass.classLoader)
+        assertEquals(0, count.getAndIncrement(target))
+        assertEquals(1, count.get(target))
+    }
+
     /**
-     * Defines [isolated] itself instead of delegating, so the copy lands in this loader's unnamed
-     * module.
+     * Defines [isolated] and its nested classes itself instead of delegating, so the copies land
+     * in this loader's unnamed module.
      */
     private class IsolatingClassLoader(private val isolated: Class<*>) :
         ClassLoader(isolated.classLoader) {
 
         override fun loadClass(name: String, resolve: Boolean): Class<*> {
-            if (name != isolated.name) return super.loadClass(name, resolve)
+            val isIsolated = name == isolated.name || name.startsWith(isolated.name + "$")
+            if (!isIsolated) return super.loadClass(name, resolve)
 
             synchronized(getClassLoadingLock(name)) {
                 findLoadedClass(name)?.let { return it }

@@ -242,7 +242,7 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         return synchronized(lastSeenMessages) {
             synchronized(messageSignatureCache) {
-                val nextChatIndex = V26_1NmsReflections.getNextChatIndex(connection)
+                val nextChatIndex = V26_1NmsReflections.nextChatIndex.get(connection)
                 val chatSession = V26_1NmsReflections.getRemoteChatSession(connection)
                     ?: return null
 
@@ -340,7 +340,7 @@ class V26_1SurfPaperNmsPlayerBridgeImpl : SurfPaperNmsPlayerBridge {
 
         synchronized(lastSeenMessages) {
             synchronized(messageSignatureCache) {
-                V26_1NmsReflections.setNextChatIndex(connection, snapshot.nextChatIndex)
+                V26_1NmsReflections.nextChatIndex.set(connection, snapshot.nextChatIndex)
 
                 val lastSeenCount = V26_1NmsReflections.getLastSeenCountFromMessageValidator(
                     lastSeenMessages,

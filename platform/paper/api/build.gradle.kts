@@ -18,6 +18,7 @@ dependencies {
 
     testImplementation(libs.paper.api)
     testImplementation(libs.bundles.kotlin.serialization)
+    testImplementation(projects.surfApiSpringImpl)
 }
 
 description = "surf-api-paper-api"

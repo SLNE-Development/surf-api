@@ -6,7 +6,8 @@ import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
 import java.util.regex.PatternSyntaxException
 
-internal object RegexSerializer : ScalarSerializer.Annotated<Regex>(Regex::class.java) {
+@SurfConfigSerializer
+internal class RegexSerializer : ScalarSerializer.Annotated<Regex>(Regex::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): Regex {
         return try {
             obj.toString().toRegex()

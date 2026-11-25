@@ -1,5 +1,6 @@
 package dev.slne.surf.api.config.type
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
@@ -56,7 +57,8 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
     /**
      * Configurate serializer for [DurationOrDisabled].
      */
-    internal object Serializer :
+    @SurfConfigSerializer
+    internal class Serializer :
         ScalarSerializer.Annotated<DurationOrDisabled>(DurationOrDisabled::class.java) {
 
         override fun deserialize(type: AnnotatedType, obj: Any): DurationOrDisabled {
@@ -67,7 +69,7 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
 
                 return try {
                     DurationOrDisabled(
-                        ConfigDuration.Serializer.deserialize(type, obj).asDuration(),
+                        ConfigDuration.parse(obj).asDuration(),
                     )
                 } catch (e: Exception) {
                     throw SerializationException(
@@ -89,13 +91,9 @@ data class DurationOrDisabled private constructor(val value: Duration?) {
             item: DurationOrDisabled,
             typeSupported: Predicate<Class<*>>,
         ): Any {
-            return item.value?.let {
-                ConfigDuration.Serializer.serialize(
-                    type,
-                    ConfigDuration(it),
-                    typeSupported,
-                )
-            } ?: DISABLED_VALUE
+            val duration = item.value ?: return DISABLED_VALUE
+
+            return ConfigDuration(duration).rawValue
         }
     }
 }

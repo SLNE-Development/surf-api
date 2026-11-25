@@ -66,6 +66,11 @@ class loader, such as one shaded into a Minestom server, must live outside `dev.
 its base package must not contain it either; otherwise the plugin's beans would land in the root
 context or surf-api's beans in the plugin context. `SurfContextManager` rejects such a plugin.
 
+That scan names surf-api's components by their fully qualified class name. A standalone
+application or microservice shares the root context, and its components keep Spring's short names,
+so a class of its own such as `UuidSerializer` does not collide with surf-api's class of the same
+simple name.
+
 Platform objects that surf-api's beans need are singletons of the root context: the Paper server
 is injectable as `org.bukkit.Server`, the Minestom server as `SurfMinestomServer`. The inventory
 framework's `ViewFrame` is a root bean on Paper and Minestom, next to a `ViewFrameAccessor` bean
@@ -126,6 +131,75 @@ repeatable; every repetition must hold.
 The plugin named in `@ConditionalOnPlugin` must be a declared dependency, optional for a soft one.
 On Velocity the condition is evaluated in the plugin's load phase, and Velocity only knows the
 plugins it created before.
+
+surf-api's own Paper root context evaluates the condition as well: Paper's root bootstrap context
+holds the `PluginPresence`, and the root context finds it there. The PlaceholderAPI hook picks its
+`ExpansionHolderFactory` that way, a PlaceholderAPI adapter with a no-op `@Fallback`. The bootstrap
+context receives the presence only after its own component scan, so surf-api's own
+`@BootstrapComponent`s cannot carry the condition.
+
+### Spring Boot conditions
+
+Every runtime ships `spring-boot` and `spring-boot-autoconfigure`: `surf-api-spring-impl` depends
+on them, the Paper, Velocity and Minestom jars shade them, and `surf-api-spring-api` declares them
+`compileOnlyApi`. surf-api uses them for their conditions and failure analyzers only. No
+`SpringApplication` runs; every context stays a plain `AnnotationConfigApplicationContext`, so
+Boot's logging system, environment post-processors, config data and auto-configuration discovery
+never run.
+
+- **Supported:** `@ConditionalOnClass`, `@ConditionalOnMissingClass`, `@ConditionalOnBean`,
+  `@ConditionalOnMissingBean`, `@ConditionalOnSingleCandidate`, `@ConditionalOnProperty`,
+  `@ConditionalOnResource`, `@ConditionalOnExpression`, `@ConditionalOnJava`,
+  `@ConditionalOnThreading`, `@ConditionalOnCloudPlatform`, and conditions built on
+  `SpringBootCondition`, `AnyNestedCondition`, `AllNestedConditions` and `NoneNestedConditions`.
+  `@ConditionalOnWarDeployment` is unsupported: it needs `spring-web`, which no runtime ships.
+- **Class loader.** Conditions run with the plugin's class loader, which each plugin context uses
+  as its class loader and resource loader. `@ConditionalOnClass` therefore sees what the plugin
+  sees. On Paper, `getResource` searches only the plugin's own jar, so `@ConditionalOnResource`
+  finds only the plugin's own resources there.
+- **Properties.** The environment of every context is Spring's `StandardEnvironment`: system
+  properties and environment variables. There is no per-plugin property source and no
+  `application.yml`; plugin settings belong in a `@SurfConfig` class.
+- **Bean conditions** keep Boot's default `SearchStrategy.ALL`: they see the plugin's own beans,
+  the exports of its direct dependencies in its import context, and the root context.
+  `SearchStrategy.CURRENT` sees only the plugin's own context. `SearchStrategy.ANCESTORS` fails in a
+  root context, which has no parent. A bean condition sees only the definitions registered before
+  it is evaluated, so it belongs on `@Bean` methods and auto-configurations.
+- **`@ConditionalOnMissingBean` on a scanned class is rejected.** Spring evaluates the condition
+  after the scan registered the class, so the class matches itself and always removes itself.
+  surf-api's component scan of every context, the root context included, fails with an
+  `IllegalStateException` naming the class when a scanned class carries the annotation directly or
+  as a meta-annotation. A default implementation carries `@Fallback`; a `@Bean` method may carry
+  `@ConditionalOnMissingBean`. A `@ComponentScan` that a plugin declares itself runs Spring's plain
+  scanner, which neither rejects such classes nor leaves `@AutoConfiguration` classes out.
+- **Auto-configurations** enter a context only through
+  `@ImportAutoConfiguration(classes = [...])`. Discovery from
+  `META-INF/spring/*.AutoConfiguration.imports` is unsupported: Paper's plugin class loader hands
+  out only the plugin's own jar from `getResources`, so the files of surf-api and of other plugins
+  stay invisible. Classes annotated with `@AutoConfiguration` are left out of the component scan,
+  as Spring Boot leaves them out; `@AutoConfigureBefore`, `@AutoConfigureAfter`,
+  `@AutoConfigureOrder` and the `before`/`after` attributes of `@AutoConfiguration` order the
+  imported classes.
+- **Failure analysis.** When a plugin context or a root context fails to start,
+  `ContextFailureAnalysis` runs the `FailureAnalyzer`s registered in the `spring.factories` that
+  surf-api's class loader sees, before the context closes. If one recognizes the failure, it is
+  rethrown as `ContextFailureAnalyzedException`, whose message carries Boot's description and
+  action. A plugin context wraps that exception in its `PluginContextException`;
+  `SurfRootContext.create` throws it directly. A failed refresh destroys every singleton, so
+  `buildManagedContext` obtains the context's `ConditionEvaluationReport` before the refresh,
+  registers it again for the analyzers and logs it at debug level under `ContextFailureAnalysis`'s
+  logger. A failure of the analysis itself is added to the original exception as suppressed.
+- **Logging.** spring-boot registers `SpringBootPropertySource`, which turns off log4j's shutdown
+  hook, a logback `Configurator`, which sets logback's root level, and a log4j plugin cache.
+  `excludeSpringBootLogging()` in `buildSrc` leaves all three out of the Paper, Velocity and
+  Minestom jars. The Minestom server and standalone programs put the plain `spring-boot` jar on the
+  class path, where log4j picks the property source up: the Minestom server's log4j configuration
+  turns its shutdown hook off anyway and flushes the logs itself, and the shutdown hook of
+  `SurfApiStandaloneBootstrap.enable` shuts log4j down after surf-api.
+- **Tests.** `surfContextRunner()` in `surf-api-standalone-testing` returns an
+  `ApplicationContextRunner` whose contexts sit below the standalone root and receive the
+  contributions of a plugin context, so a test checks conditions with and without classes
+  (`FilteredClassLoader`) and beans.
 
 ## Plugin integration
 
@@ -369,6 +443,59 @@ surf's own suspending executors.
 The executor DSL's default scope is looked up by a function that downstream code inlines, so a
 plugin compiled against surf-api 3.x has to be recompiled.
 
+### Scheduling
+
+Every full plugin context processes Spring's `@Scheduled` without `@EnableScheduling`, and every
+task runs inside the plugin's `CoroutineScope`, so no task outlives its plugin. The code lives in
+`foundation/spring/impl/.../spring/scheduling/`; `preparePluginContext` installs it, so the
+platforms and `surfContextRunner` get it alike.
+
+Processor
+: `SurfScheduledAnnotationProcessor` extends Spring's `ScheduledAnnotationBeanPostProcessor` and
+  sits under Spring's processor name,
+  `TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME`. A
+  `BeanDefinitionRegistryPostProcessor` registers it after `ConfigurationClassPostProcessor` has
+  read the configuration classes, replacing whatever an `@EnableScheduling` declared there. A
+  definition registered beforehand would lose to the `@Bean` method or fail the refresh when
+  bean definition overriding is off; registering afterwards wins in both modes.
+
+Schedulers
+: Each context holds coroutine-backed Spring `TaskScheduler` beans: `surfTaskScheduler` on the
+  dispatcher of the plugin's scope, `SurfSchedulers.DEFAULT` on `Dispatchers.Default`,
+  `SurfSchedulers.IO` on `Dispatchers.IO`, and on Paper `PaperSchedulers.GLOBAL_REGION` on
+  `PaperDispatchers.main`. The named ones are `@Fallback` beans, so an unqualified `TaskScheduler`
+  injection gets `surfTaskScheduler`. The processor routes a method without `scheduler` to
+  `surfTaskScheduler` rather than through Spring's search for a unique or `taskScheduler` bean,
+  which fails over to a private executor outside the plugin's scope. There are no location or
+  entity schedulers: a scheduled method switches with `PaperDispatchers.region` or
+  `entity.withEntity`. `SurfSchedulers` lives in `surf-api-spring-api`, the API module every plugin
+  already compiles against for its Spring annotations, and holds nothing but constants.
+
+Suspending methods
+: Spring runs a suspending `@Scheduled` method through Reactor on `Dispatchers.Unconfined`,
+  outside any plugin scope, blocks a scheduler thread for `fixedDelay`, and lets `fixedRate` runs
+  overlap. surf-api handles these methods itself: it reads the trigger with Spring's public parts
+  (`CronTrigger` over `CronExpression`, `DurationFormatterUtils`, the embedded value resolver) and
+  runs a loop on the selected scheduler's dispatcher. `fixedDelay` runs, then waits; `fixedRate`
+  keeps fixed start times, skips the starts a long run missed and never overlaps; `cron` waits for
+  the expression's next time. A suspending method takes no parameters. Methods that do not suspend
+  go through Spring and run as coroutines on the same schedulers, with the same rules: one task's
+  runs never overlap, a missed rate start is skipped rather than caught up, and a failing run is
+  logged and the task continues.
+
+Lifecycle
+: The processor holds back Spring's start on `ContextRefreshedEvent`. Tasks start in the
+  processor's `afterEnable`, after every `onEnable` hook: a scheduled method may rely on what
+  `onEnable` prepared, and Paper's main dispatcher would park the work until then anyway. A bean
+  created later starts its tasks at once. `beforeDisable` cancels every task and waits up to five
+  seconds for running ones, then logs a warning and lets the hooks run; the scope's cancellation
+  after the hooks and the context's close end whatever is left. An invalid trigger or an unknown
+  `scheduler` fails the refresh for both kinds of method, before any `onEnable` hook runs. Paper's
+  bootstrap contexts have no scope and no scheduling. A standalone root built for an application
+  schedules like a plugin context between `enable` and `shutdown`; a context handed to `adopt`
+  keeps Spring Boot's scheduling. `surfContextRunner` contexts start their tasks when the refresh
+  completes, because they have no enable phase.
+
 ### Minestom
 
 Minestom uses its own dispatchers. The plugin manager creates each plugin's scope while the plugin
@@ -386,7 +513,8 @@ receives, in this order:
 
 1. The `PluginPresence` that `@ConditionalOnPlugin` evaluates.
 2. The plugin's components, found by the component scan.
-3. The plugin's `CoroutineScope`, as primary bean.
+3. The plugin's `CoroutineScope`, as primary bean, and the scheduling beans that run `@Scheduled`
+   methods inside it (see [Scheduling](#scheduling)).
 4. The contributions of every `ContextContributor` bean in the root context.
 5. The platform's beans: the plugin instance, as primary bean, and the plugin's `ComponentLogger`
    (`surfPluginLogger`, named after the plugin, as fallback bean) on every platform; the plugin's
@@ -442,7 +570,10 @@ data class ShopConfig(val discount: Double = 0.0)
   component scan does, and registers one handle per class with the class as its exact type
   argument. The class itself is no bean.
 - The file is read, migrated and written back with its defaults when the plugin's context starts,
-  so a broken file fails the plugin's start instead of its first use.
+  so a broken file fails the plugin's start instead of its first use. `@SurfConfig(lazy = true)`
+  moves the read to the first access of the handle, or to `ConfigHandle.load()`; the declaration,
+  migrations and serializers are still validated at the start. A failed lazy load is not cached:
+  it propagates, and the next access reads the file again under the handle's lock.
 - Code that is not a bean reads a handle through `configHandle<ShopConfig>()` or
   `by surfConfig<ShopConfig>()`. The contributor registers the plugin's context in
   `SurfConfigContexts` before the refresh, keyed weakly by the plugin's class loader, and removes
@@ -454,8 +585,25 @@ data class ShopConfig(val discount: Double = 0.0)
 - Files outside a plugin's data folder, files whose path is known only at runtime and files read
   before a context exists go through `ConfigHandles.open(path, format, migrations)`. The caller
   owns and closes that handle.
-- A plugin registers serializers for its own types through `ConfigSerializerRegistrar` beans, which
-  run before its first handle opens; the static accessor to the serializer registry is internal.
+- Serializers are beans annotated with `@SurfConfigSerializer`, never a shared registry that
+  plugins write into. Each `@SurfConfig` file gets its own `TypeSerializerCollection` with three
+  levels, the first match winning: the serializers its `@SurfConfig(serializers)` names, the
+  plugin's `applyToAll` serializers, and the `applyToAll` serializers of the root context, which
+  hold surf-api's defaults for core and platform types. A plugin's level reads only beans its own
+  bean factory declares, never those of its import context, so no plugin's serializer reaches
+  another plugin. Within one level, a serializer for a subtype is registered before one for its
+  supertype; two serializers for the same type fail the start. Configurate's object mapper and its
+  own defaults come last.
+- The type of a serializer is the type argument of its `TypeSerializer` supertype, resolved with
+  geantyref so generic arguments survive, or `ScalarSerializer.type()`. Paper's registry
+  serializers are built per registry and supplied through the internal
+  `DefaultConfigSerializerSource`, because a registry missing on an older server must be skipped.
+  The annotated root defaults are validated once the root context has started; a source's output
+  is validated each time a collection is built, because Paper's registry source supplies nothing
+  during the bootstrap phase.
+- `ConfigHandles.open` takes serializers of its own, then the root level; plugin serializers never
+  apply. In an application hosted by the root context, its `applyToAll` serializers join the root
+  level, so overriding a default there goes through `@SurfConfig(serializers)`.
 
 Microservices use the same mechanism for their own configuration. surf-database-r2dbc, surf-nats
 and surf-redis read their files once through `ConfigHandles.open` and close the handle again.
@@ -696,9 +844,11 @@ The database library is built on Exposed with R2DBC and serves microservices onl
 
 ## Build and distribution
 
-- Spring, `kotlin-reflect` and `kotlinx-coroutines-reactor` ship inside the surf-api jar under
-  their original package names. Plugins see them through `joinClasspath` and compile against them
-  with `compileOnly`. A plugin that bundles Spring fails its build.
+- Spring Framework, `spring-boot`, `spring-boot-autoconfigure`, `kotlin-reflect` and
+  `kotlinx-coroutines-reactor` ship inside the surf-api jar under their original package names,
+  without spring-boot's logging integration (`excludeSpringBootLogging()`). Plugins see them
+  through `joinClasspath` and compile against them with `compileOnly`. A plugin that bundles Spring
+  fails its build.
 - The Gradle plugins apply `kotlin("plugin.spring")` and enable `javaParameters`.
 - Spring versions come from the Spring Framework BOM, which `surf-api-spring-api` exports as an
   `api` platform; `surf-api-bom` aligns the surf-api modules.
@@ -743,8 +893,9 @@ The database library is built on Exposed with R2DBC and serves microservices onl
 |---|---|
 | A Spring Boot root context on Minestom | The root is the parent of every plugin context, so its auto-configured beans, such as the task executor, SSL bundles and the availability state, and its properties and profiles would reach every plugin. Boot also reconfigures logging and wants its own shutdown hook. After excluding what plugins must not see, only property binding, lifecycle and placeholder support remain, which surf-api does not use. |
 | A Spring Boot root context in `SurfApiStandaloneBootstrap.bootstrap` | Boot's defaults (no circular references, no definition overriding, strict placeholders) would apply to the hosted application's own beans; `spring-boot` turns off log4j's shutdown hook JVM-wide; every standalone fat jar would need Spring registry merging; every test JVM would start a full Boot application. `adopt` already serves programs that want Boot. |
-| Spring Boot on Paper, Velocity and Minestom for `@ImportAutoConfiguration` in plugins | No plugin needs a Boot auto-configuration; shipping `spring-boot` and `spring-boot-autoconfigure` would add about 1.8 MB to every platform jar. It can be added later without breaking anything. |
-| Full Spring Boot in plugin contexts | Boot's logging switch (`LoggingSystem=none`) is JVM-wide, auto-configuration discovery can reach the jars of parent plugins, `@ConditionalOnMissingBean` searches ancestors, and the startup cost grows with the plugin count. |
+| Full Spring Boot in plugin contexts | Boot's logging switch (`LoggingSystem=none`) is JVM-wide, auto-configuration discovery can reach the jars of parent plugins, and the startup cost grows with the plugin count. Plugin contexts use Boot's conditions without it; see [Spring Boot conditions](#spring-boot-conditions). |
+| Auto-configuration discovery from `.imports` files in plugin contexts | Paper's plugin class loader returns only the plugin's own jar from `getResources`, so discovery would behave differently per platform. `@ImportAutoConfiguration(classes = [...])` names the classes explicitly. |
+| A property source per plugin, or `application.yml` | Plugin settings live in `@SurfConfig` classes; a second configuration mechanism would split them. `@ConditionalOnProperty` reads system properties and environment variables. |
 | A provider's full context as the consumer's parent | Works for one dependency only and exposes the provider's internals, such as its `DataSource`. |
 | A bean factory that delegates to several provider factories | Correct candidate resolution for generics, qualifiers and aliases amounts to a second DI implementation. |
 | `@Service` on the exported interface | Spring's component scan only picks up concrete classes, so the annotation has no effect. |

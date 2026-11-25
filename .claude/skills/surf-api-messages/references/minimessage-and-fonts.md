@@ -57,7 +57,7 @@ per-call resolver plumbing in this repository - a new tag is global to the insta
 `deserialize` on a player-authored string hands that player every tag, including
 `<click:run_command:/op them>` and `<hover:show_text:…>`. The clients of this instance:
 
-- `SpongeConfigSerializers`' `Component` serializer - operator-authored, trusted.
+- the `Component` config serializer - operator-authored, trusted.
 - `platform/paper/api/.../command/args/MiniMessageArgument.kt` and its Minestom and Velocity
   counterparts - parse
   the raw argument and turn a `ParsingException` into a command error with

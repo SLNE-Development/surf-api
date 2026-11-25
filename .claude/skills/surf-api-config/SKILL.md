@@ -1,6 +1,6 @@
 ---
 name: surf-api-config
-description: Use when touching surf-api configuration or environment variables - declaring a config file with @SurfConfig and injecting ConfigHandle, reading one statically with configHandle or by surfConfig, opening any file with ConfigHandles.open, loading/saving/reloading or validating a reload, editing or updating a config, choosing a config path or file name, adding a Configurate TypeSerializer through a ConfigSerializerRegistrar, using the constraint annotations (@Range, @NotBlank, @MinSize, @Namespace, ...) or the helper types (ConfigDuration, IntOr, BooleanOrDefault, StringOrDefault), writing a versioned ConfigMigration or a ConfigMigrations bean, reading an environment variable through env/EnvironmentVariables or a property delegate, or diagnosing LoadConfigException, SerializationConfigException, a "@SurfConfig path" failure, "No running context holds the config handle", MissingEnvironmentVariableException and InvalidEnvironmentVariableException.
+description: Use when touching surf-api configuration or environment variables - declaring a config file with @SurfConfig and injecting ConfigHandle, reading one statically with configHandle or by surfConfig, opening any file with ConfigHandles.open, loading/saving/reloading or validating a reload, editing or updating a config, choosing a config path or file name, adding a Configurate TypeSerializer as a @SurfConfigSerializer bean, choosing between applyToAll and @SurfConfig(serializers), making a config lazy or calling ConfigHandle.load, using the constraint annotations (@Range, @NotBlank, @MinSize, @Namespace, ...) or the helper types (ConfigDuration, IntOr, BooleanOrDefault, StringOrDefault), writing a versioned ConfigMigration or a ConfigMigrations bean, reading an environment variable through env/EnvironmentVariables or a property delegate, or diagnosing LoadConfigException, SerializationConfigException, a "@SurfConfig path" failure, "No running context holds the config handle", MissingEnvironmentVariableException and InvalidEnvironmentVariableException.
 ---
 
 # surf-api configuration and environment variables
@@ -28,7 +28,7 @@ Configs are Sponge **Configurate**, via the fork pinned in `gradle/libs.versions
 `@ConfigSerializable`, `@Comment`, `@Setting`, `@Required`, `@Matches`.
 
 surf-api adds four things on top: a loader preset (YAML block style with comments, or Jackson JSON),
-a serializer registry (`SpongeConfigSerializers`), versioned migrations, and the `@SurfConfig`
+serializer beans (`@SurfConfigSerializer`), versioned migrations, and the `@SurfConfig`
 integration that turns a config class into an injectable `ConfigHandle`.
 
 Every property of a config class needs a default - the defaults are what gets written to a fresh
@@ -52,7 +52,7 @@ class ShopPricing(private val config: ConfigHandle<ShopConfig>) {
 }
 ```
 
-What `@SurfConfig(path, migrations)` means:
+What `@SurfConfig(path, migrations, versionKey, lazy, serializers)` means:
 
 - `path` is relative to the plugin's data folder, may contain subfolders, and must stay inside it.
   Its extension picks the format, case-insensitively: `.yml` or `.yaml` for YAML, `.json` for JSON.
@@ -62,6 +62,13 @@ What `@SurfConfig(path, migrations)` means:
   both together fail the start. See `references/migrations.md`.
 - `versionKey` names the root-level key of the stored version. Empty, the default, leaves it to
   a `ConfigMigrations<C>` bean or to `_config_version`; a key in both places fails the start.
+- `lazy = true` reads the file on the first access to the handle (`value`, `load()`, `reload`,
+  `edit`, `update`, `save`) instead of while the context starts. A failing load throws the usual
+  `LoadConfigException` / `SerializationConfigException` to that caller and is retried on the next
+  access. The declaration itself (path, version key, migrations, serializers) is still validated
+  at the start.
+- `serializers` names `@SurfConfigSerializer` beans that apply to this file first. See
+  "Serializers" below.
 - `@SurfConfig` also works as a meta-annotation: a custom annotation that carries
   `@SurfConfig("path")` can go on the config class instead.
 
@@ -71,26 +78,30 @@ How it is wired (`impl/handle/SurfConfigContributor.kt`, `impl/handle/SurfConfig
 - surf-api finds `@SurfConfig` classes in the plugin's own jar, the same way the component scan
   does, and registers one singleton `ConfigHandle<C>` per class, with the class as its exact type
   argument. The config class itself is not a bean and must not be a Spring component.
-- `SurfConfigFile.kt` resolves the path, the format and the migrations; `ConfigHandles.open` opens
-  the file.
-- The file is read, migrated and written back with its defaults while the plugin's context starts.
-  A broken file, a bad path or an unconstructible migration fails the plugin's start, not its first
-  use.
+- `SurfConfigFile.kt` resolves the path, the format and the migrations,
+  `impl/serializer/PluginConfigSerializers.kt` the serializers; the handle reads the file through
+  `SpongeConfigManager.open`.
+- The file is read, migrated and written back with its defaults while the plugin's context starts,
+  unless the config is lazy. A broken file of an eager config, a bad path, an unconstructible
+  migration or a named serializer that is no bean fails the plugin's start, not its first use.
 - Every plugin context gets this integration, and so do the standalone runtime and microservices.
 
 `ConfigHandle<C>` (`config/ConfigHandle.kt`):
 
 | Member | Effect |
 | --- | --- |
-| `value` | the current configuration |
-| `reload(validate = {})` | read the file into a candidate, migrate it in memory, install it once `validate` returns; writes the file only when a migration ran; a throwing `validate` leaves value and file untouched |
+| `value` | the current configuration; loads the file first if it is not loaded yet |
+| `load()` | reads the file if it is not loaded yet, otherwise returns the value; idempotent |
+| `reload(validate = {})` | read the file into a candidate, migrate it in memory, install it once `validate` returns; writes the file only when a migration ran; a throwing `validate` leaves value and file untouched; on an unloaded handle it loads the file as `load()` does and stays unloaded when `validate` throws |
 | `edit { }` | change the current value in place as receiver, then save; for classes with `var` properties |
 | `update { it.copy(...) }` | replace the value with the result, save, return it; for immutable classes |
 | `save()` | write the current value to the file |
 | `close()` | reject every further call except `value`; `@SurfConfig` handles close with their context |
 
-`reload`, `edit`, `update`, `save` and `close` run one at a time. `value` is not locked: it returns whatever
-the last load, `reload` or `update` installed, and an `edit` in progress is visible to readers.
+`load`, `reload`, `edit`, `update`, `save` and `close` run one at a time, so concurrent first
+accesses read the file once. Once loaded, `value` is not locked: it returns whatever the last load,
+`reload` or `update` installed, and an `edit` in progress is visible to readers. A handle closed
+before it loaded rejects `value` as well.
 Read `config.value` where you use it instead of caching the data class; that is why beans inject the
 handle and not `C`.
 
@@ -145,35 +156,44 @@ ConfigHandles.open(
   `ConfigFormat` overrides the extension.
 - The folder is created; the file is read, migrated and written back with its defaults right away.
 - The caller owns the handle and closes it. Nothing tracks it by class; there is no global registry.
-- The serializers come from `SpongeConfigSerializers.instance`, so surf-api's root context must be
-  running; on Paper that rules out the bootstrap phase. A plugin's `ConfigSerializerRegistrar`s have run only once its context started.
+- The serializers are the `serializers` argument, then surf-api's root defaults, read from the root
+  context; surf-api's root context must be running, and on Paper that rules out the bootstrap
+  phase. A plugin's `@SurfConfigSerializer` beans never apply here.
 
 ## Serializers
 
-`SpongeConfigSerializers` is a bean of surf-api's root context, one platform subclass each. It is
-asked for its module once per config manager, at construction. Out of the box it covers Adventure
-`Component` (MiniMessage), `Key`, `TextColor`, enums, `UUID`, `Regex`, `Pattern`, `URI`, `URL`,
-`Path`, `File`, `LinkedList`, maps (fault-tolerant) and the surf helper types. Each platform adds
-its own on top - Paper contributes `NamespacedKey`, `Material`, `ItemStack`, every Bukkit registry
-type and a `ConfigurationSerializable` catch-all.
-
-A plugin registers serializers for its own types with a `ConfigSerializerRegistrar` bean:
+Serializers are beans: a class implementing Configurate's `TypeSerializer<T>` or
+`ScalarSerializer<T>` and annotated `@SurfConfigSerializer` (`config/serializer/`), which is
+meta-annotated with `@Component`. surf-api never creates them, so they may inject other beans.
 
 ```kotlin
-@Component
-class ShopSerializers : ConfigSerializerRegistrar {
-    override fun register(serializers: SpongeConfigSerializers) {
-        serializers.registerClassSerializer<Price>(PriceSerializer)
-    }
+@SurfConfigSerializer
+class PriceSerializer : ScalarSerializer<Price>(Price::class.java) {
+    override fun deserialize(type: Type, obj: Any): Price = Price.parse(obj.toString())
+
+    override fun serialize(item: Price, typeSupported: Predicate<Class<*>>): Any = item.toString()
 }
 ```
 
-surf-api calls every registrar of a plugin context once, before the first `ConfigHandle` of that
-plugin opens its file. The registry is shared by all plugins. First registration wins in
-Configurate, and registered serializers are flushed before surf's own, so this is also how you
-override a built-in serializer.
+- The serialized type is `type()` of a `ScalarSerializer`, else the type argument of the
+  `TypeSerializer` supertype, generics included (`TypeSerializer<List<Price>>` is for
+  `List<Price>`). `@SurfConfigSerializer(type = Price::class)` names it when it cannot be resolved.
+- `applyToAll = true` (default): applies to every config of the context it is a bean of - in a
+  plugin, to the plugin's configs; in surf-api's root context, to every config of every plugin and
+  to `ConfigHandles.open`. `applyToAll = false`: only to configs that list it in
+  `@SurfConfig(serializers = [...])`.
+- Priority per file, first match wins: `@SurfConfig(serializers)` > the plugin's `applyToAll`
+  serializers > the root defaults. A plugin serializer for `UUID` replaces surf-api's within that
+  plugin. A plugin's serializers never reach another plugin.
+- Two serializers for the same type on one level fail the start, naming both classes. Within a
+  level the serializer for a subtype is asked before one for its supertype.
 
-Full list, the `TypeToken` variant, the map annotations and how to add a platform-wide serializer:
+The root defaults cover Adventure `Component` (MiniMessage), `Key`, `TextColor`, enums, `UUID`,
+`Regex`, `Pattern`, `URI`, `URL`, `Path`, `File`, `LinkedList`, maps (fault-tolerant) and the surf
+helper types. Paper adds `NamespacedKey`, `Material`, `ItemStack`, every Bukkit registry type and a
+`ConfigurationSerializable` catch-all (`Location` and friends).
+
+Full list, type resolution, generic types and how surf-api adds a root default:
 `references/serializers.md`.
 
 ## Constraints and helper types
@@ -235,11 +255,12 @@ behaviour: `references/environment-variables.md`.
 
 ## Traps
 
-- **Registrars run with the context.** `ConfigSerializerRegistrar` beans run once while the plugin's
-  context starts, before its first handle opens. A file opened with `ConfigHandles.open` before
-  that point does not see their serializers.
-- **Register serializers first.** `buildSerializersModule()` is consumed when a file is opened. A
-  serializer registered afterwards is invisible to that handle.
+- **Plugin serializers stay in the plugin.** `ConfigHandles.open` and other plugins never see a
+  plugin's `@SurfConfigSerializer` beans; pass instances to `ConfigHandles.open(serializers = …)`.
+- **A supertype serializer shadows.** A plugin serializer for `Key` also catches `NamespacedKey`
+  fields, because the plugin level is asked before the root defaults. Serialize the exact type.
+- **Lazy failures surface late.** With `lazy = true` a broken file fails the first `value` read,
+  which may be deep inside a command or listener. Call `load()` where a failure should surface.
 - **Reload swaps the instance.** `ConfigHandle.reload()` and `update { }` install a new `C`;
   anything that cached the old one keeps stale data. Read `handle.value` or a `surfConfig`
   delegate at the point of use.
@@ -270,9 +291,9 @@ behaviour: `references/environment-variables.md`.
   the plugin with the Gradle plugin.
 - **JSON has no comments.** `@Comment` is silently lost in a JSON file.
 - **Save failures are unchecked.** `save()`, `reload()`, `edit` and `update` wrap
-  `ConfigurateException` in `UncheckedIOException`; opening throws `LoadConfigException` or
-  `SerializationConfigException`. None of them are declared in Kotlin signatures.
-- **No runtime, no config.** Opening a file reads `SpongeConfigSerializers` from surf-api's root
+  `ConfigurateException` in `UncheckedIOException`; opening and loading throw
+  `LoadConfigException` or `SerializationConfigException`. None of them are declared in Kotlin signatures.
+- **No runtime, no config.** Opening a file reads the default serializers from surf-api's root
   context. Without a running platform runtime that fails with "surf-api's root context has not been
   started yet …".
 

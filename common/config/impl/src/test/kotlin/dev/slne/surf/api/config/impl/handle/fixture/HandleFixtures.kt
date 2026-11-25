@@ -3,11 +3,8 @@ package dev.slne.surf.api.config.impl.handle.fixture
 import dev.slne.surf.api.config.ConfigHandle
 import dev.slne.surf.api.config.SurfConfig
 import dev.slne.surf.api.config.migration.ConfigMigration
-import dev.slne.surf.api.config.serializer.ConfigSerializerRegistrar
-import dev.slne.surf.api.config.serializer.SpongeConfigSerializers
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 
 /**
@@ -57,18 +54,3 @@ data class SettingsConfig(val enabled: Boolean = true)
 
 @Service
 class ShopService(val shop: ConfigHandle<ShopConfig>, val counter: ConfigHandle<CounterConfig>)
-
-/**
- * Records that surf-api called it while the plugin's context started.
- */
-@Component
-class RecordingRegistrar : ConfigSerializerRegistrar {
-    override fun register(serializers: SpongeConfigSerializers) {
-        called = true
-    }
-
-    companion object {
-        @Volatile
-        var called = false
-    }
-}

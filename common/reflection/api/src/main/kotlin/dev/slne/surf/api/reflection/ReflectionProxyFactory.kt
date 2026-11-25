@@ -5,6 +5,7 @@ import dev.slne.surf.api.common.invoker.InvokerMethod
 import java.lang.constant.ClassDesc
 import java.lang.constant.MethodTypeDesc
 import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -27,7 +28,8 @@ internal object ReflectionProxyFactory {
      */
     fun create(type: Class<*>): Any {
         val declaration = declarationOf(type)
-        val binder = ProxyMemberBinder(targetOf(type, declaration))
+        val definingLookup = lazy { ProxyLookups.definingLookup(type) }
+        val binder = ProxyMemberBinder(targetOf(type, declaration), type, definingLookup)
         val methods = proxyMethods(type)
 
         val failures = mutableListOf<String>()
@@ -46,7 +48,7 @@ internal object ReflectionProxyFactory {
             )
         }
 
-        return define(type, methods, handles)
+        return define(type, definingLookup, methods, handles)
     }
 
     private fun declarationOf(type: Class<*>): ReflectionProxy {
@@ -109,7 +111,12 @@ internal object ReflectionProxyFactory {
         }
     }
 
-    private fun define(type: Class<*>, methods: List<Method>, handles: List<MethodHandle>): Any {
+    private fun define(
+        type: Class<*>,
+        definingLookup: Lazy<MethodHandles.Lookup>,
+        methods: List<Method>,
+        handles: List<MethodHandle>,
+    ): Any {
         val classBytes = HandleInvokerClasses.generate(
             ClassDesc.of(type.name + PROXY_CLASS_SUFFIX),
             type.describeConstable().orElseThrow(),
@@ -117,7 +124,7 @@ internal object ReflectionProxyFactory {
         )
 
         return try {
-            val lookup = ProxyLookups.definingLookup(type)
+            val lookup = definingLookup.value
             HandleInvokerClasses.instantiate(lookup, classBytes, handles)
         } catch (failure: ReflectiveOperationException) {
             throw definitionFailure(type, failure)

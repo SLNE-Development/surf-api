@@ -6,7 +6,8 @@ import java.lang.reflect.AnnotatedType
 import java.util.*
 import java.util.function.Predicate
 
-internal object UuidSerializer : ScalarSerializer.Annotated<UUID>(UUID::class.java) {
+@SurfConfigSerializer
+internal class UuidSerializer : ScalarSerializer.Annotated<UUID>(UUID::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): UUID {
         return try {
             UUID.fromString(obj.toString())

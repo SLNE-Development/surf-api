@@ -3,8 +3,9 @@ package dev.slne.surf.api.config
 import dev.slne.surf.api.config.manager.SpongeConfigHandle
 import dev.slne.surf.api.config.manager.SpongeConfigManager
 import dev.slne.surf.api.config.migration.ConfigMigrations
+import dev.slne.surf.api.config.serializer.ConfigSerializerCollections
+import org.spongepowered.configurate.serialize.TypeSerializer
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 
 /**
  * Opens configuration files at any path, outside the [SurfConfig] integration.
@@ -19,7 +20,8 @@ import kotlin.io.path.createDirectories
  * ```
  *
  * The caller owns the returned handle and closes it once it no longer needs the file. Opening
- * reads the serializers of surf-api's root context, so surf-api's runtime must be running.
+ * reads the default serializers of surf-api's root context, so surf-api's runtime must be running.
+ * The `applyToAll` serializers of plugins never apply to these files.
  */
 object ConfigHandles {
 
@@ -34,12 +36,16 @@ object ConfigHandles {
      * @param format the format of the file; `null` takes it from the extension of [path], JSON for
      * `.json` and YAML for any other
      * @param migrations the migrations to apply on open and on every reload
+     * @param serializers serializers that apply before surf-api's root defaults, each to the type
+     * its `TypeSerializer` supertype or `ScalarSerializer.type()` declares
      * @return an open handle owned by the caller
      * @throws dev.slne.surf.api.config.manager.LoadConfigException if the file cannot be read,
      * migrated or written, or if [configClass] carries Configurate annotations that were not
      * relocated like surf-api's Configurate
      * @throws dev.slne.surf.api.config.manager.SerializationConfigException if the file does not
      * match [configClass]
+     * @throws IllegalArgumentException if the type of a serializer in [serializers] cannot be
+     * resolved, or two of them serialize the same type
      * @throws IllegalStateException if surf-api's root context has not been started
      */
     fun <C : Any> open(
@@ -47,16 +53,16 @@ object ConfigHandles {
         path: Path,
         format: ConfigFormat? = null,
         migrations: ConfigMigrations<C> = ConfigMigrations.none(),
+        serializers: List<TypeSerializer<*>> = emptyList(),
     ): ConfigHandle<C> {
-        path.toAbsolutePath().parent?.createDirectories()
-        val manager = SpongeConfigManager.open(
-            configClass,
-            path,
-            format ?: ConfigFormat.ofPath(path) ?: ConfigFormat.YAML,
-            migrations,
-        )
+        val collection = ConfigSerializerCollections.instance.withRootDefaults(serializers)
+        val resolvedFormat = format ?: ConfigFormat.ofPath(path) ?: ConfigFormat.YAML
+        val handle = SpongeConfigHandle(configClass) {
+            SpongeConfigManager.open(configClass, path, resolvedFormat, migrations, collection)
+        }
+        handle.load()
 
-        return SpongeConfigHandle(configClass, manager)
+        return handle
     }
 
     /**
@@ -67,6 +73,7 @@ object ConfigHandles {
      * @param format the format of the file; `null` takes it from the extension of [path], JSON for
      * `.json` and YAML for any other
      * @param migrations the migrations to apply on open and on every reload
+     * @param serializers serializers that apply before surf-api's root defaults
      * @return an open handle owned by the caller
      * @see open
      */
@@ -74,7 +81,8 @@ object ConfigHandles {
         path: Path,
         format: ConfigFormat? = null,
         migrations: ConfigMigrations<C> = ConfigMigrations.none(),
+        serializers: List<TypeSerializer<*>> = emptyList(),
     ): ConfigHandle<C> {
-        return open(C::class.java, path, format, migrations)
+        return open(C::class.java, path, format, migrations, serializers)
     }
 }

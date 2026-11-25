@@ -41,13 +41,11 @@ object V26_3NmsReflections :
      * Returns the next chat index of [instance] and increments it, as the server does when it sends
      * a chat message.
      *
-     * Not atomic, like the server's own increment.
+     * The increment is atomic against other [nextChatIndex] accesses, but the server's own
+     * `nextChatIndex++` is a plain one and can still interleave with it.
      */
     fun getAndIncreaseNextChatIndex(instance: ServerGamePacketListenerImpl): Int {
-        val index = getNextChatIndex(instance)
-        setNextChatIndex(instance, index + 1)
-
-        return index
+        return nextChatIndex.getAndIncrement(instance)
     }
 }
 
@@ -61,10 +59,7 @@ interface V26_3PacketListenerReflection {
     fun getChatMessageChain(instance: ServerGamePacketListenerImpl): FutureChain
 
     @ReflectedField("nextChatIndex")
-    fun getNextChatIndex(instance: ServerGamePacketListenerImpl): Int
-
-    @ReflectedField("nextChatIndex", FieldAccess.SET)
-    fun setNextChatIndex(instance: ServerGamePacketListenerImpl, index: Int)
+    val nextChatIndex: IntFieldHandle<ServerGamePacketListenerImpl>
 
     @ReflectedField("messageSignatureCache")
     fun getMessageSignatureCache(instance: ServerGamePacketListenerImpl): MessageSignatureCache

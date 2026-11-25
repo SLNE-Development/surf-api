@@ -7,7 +7,8 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.function.Predicate
 
-internal object PathSerializer : ScalarSerializer.Annotated<Path>(Path::class.java) {
+@SurfConfigSerializer
+internal class PathSerializer : ScalarSerializer.Annotated<Path>(Path::class.java) {
     override fun deserialize(type: AnnotatedType, obj: Any): Path {
         try {
             return Path.of(obj.toString())

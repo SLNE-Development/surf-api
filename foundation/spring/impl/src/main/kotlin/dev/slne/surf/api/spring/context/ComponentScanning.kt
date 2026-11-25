@@ -3,7 +3,12 @@ package dev.slne.surf.api.spring.context
 import dev.slne.surf.api.spring.BootstrapComponent
 import dev.slne.surf.api.spring.SurfBootstrapLifecycle
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
+import org.springframework.beans.factory.config.BeanDefinitionHolder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
+import org.springframework.beans.factory.support.BeanNameGenerator
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.context.annotation.AnnotationBeanNameGenerator
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
@@ -44,6 +49,13 @@ internal enum class ScanSelection {
  * With a [source], only classes from that jar or directory are registered; without one, every
  * class [classLoader] can see under the packages is. Supertypes are read through
  * [PluginResourceLoader], so they resolve even when they live in a jar the class loader joins.
+ *
+ * Classes annotated with Spring Boot's `@AutoConfiguration` are left out: they enter a context only
+ * through `@ImportAutoConfiguration`, which orders them by `@AutoConfigureBefore` and
+ * `@AutoConfigureAfter`.
+ *
+ * @param beanNameGenerator names the components that declare no explicit name
+ * @throws IllegalStateException if a scanned class carries `@ConditionalOnMissingBean`
  */
 internal fun scanComponents(
     context: AnnotationConfigApplicationContext,
@@ -51,16 +63,53 @@ internal fun scanComponents(
     basePackages: List<String>,
     selection: ScanSelection,
     source: Path? = null,
+    beanNameGenerator: BeanNameGenerator = AnnotationBeanNameGenerator.INSTANCE,
 ) {
-    ClassPathBeanDefinitionScanner(context, selection != ScanSelection.BOOTSTRAP).apply {
-        setResourceLoader(restrictedResolver(classLoader, source))
+    val scanner = SurfComponentScanner(context, selection != ScanSelection.BOOTSTRAP)
+    scanner.setResourceLoader(restrictedResolver(classLoader, source))
+    scanner.setBeanNameGenerator(beanNameGenerator)
+    scanner.addExcludeFilter(AnnotationTypeFilter(AutoConfiguration::class.java))
 
-        when (selection) {
-            ScanSelection.ALL -> {}
-            ScanSelection.BOOTSTRAP -> addIncludeFilter(BootstrapComponentsFilter)
-            ScanSelection.WITHOUT_BOOTSTRAP -> addExcludeFilter(BootstrapComponentsFilter)
+    when (selection) {
+        ScanSelection.ALL -> {}
+        ScanSelection.BOOTSTRAP -> scanner.addIncludeFilter(BootstrapComponentsFilter)
+        ScanSelection.WITHOUT_BOOTSTRAP -> scanner.addExcludeFilter(BootstrapComponentsFilter)
+    }
+
+    scanner.scan(*basePackages.toTypedArray())
+}
+
+/**
+ * A component scanner that rejects scanned classes carrying `@ConditionalOnMissingBean`.
+ *
+ * Spring evaluates that condition on a scanned class only after the class has registered itself as
+ * a bean, so the condition matches the class itself and always removes it. The check reads the
+ * candidates the scan registered, before any register-phase condition removes them.
+ */
+private class SurfComponentScanner(
+    registry: BeanDefinitionRegistry,
+    useDefaultFilters: Boolean,
+) : ClassPathBeanDefinitionScanner(registry, useDefaultFilters) {
+
+    override fun doScan(vararg basePackages: String): MutableSet<BeanDefinitionHolder> {
+        val scanned = super.doScan(*basePackages)
+        val offending = scanned
+            .map(BeanDefinitionHolder::getBeanDefinition)
+            .filterIsInstance<AnnotatedBeanDefinition>()
+            .filter { it.metadata.isAnnotated(MISSING_BEAN_CONDITION) }
+            .map { it.metadata.className }
+
+        check(offending.isEmpty()) {
+            "The scanned classes $offending carry @ConditionalOnMissingBean, which removes every " +
+                "scanned class it annotates; use @Fallback or a @Bean method instead"
         }
-    }.scan(*basePackages.toTypedArray())
+
+        return scanned
+    }
+
+    private companion object {
+        val MISSING_BEAN_CONDITION: String = ConditionalOnMissingBean::class.java.name
+    }
 }
 
 /**

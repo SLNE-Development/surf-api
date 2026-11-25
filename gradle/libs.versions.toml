@@ -81,6 +81,7 @@ gremlin = "0.0.9"
 junit = "6.1.3"
 junit-platform-launcher = "6.1.3"
 mockk = "1.14.11"
+assertj = "3.27.7" # the version spring-boot-test is built against
 lincheck = "3.7"
 minestom-testing = "26_3-SNAPSHOT"
 
@@ -153,6 +154,7 @@ spring-test = { module = "org.springframework:spring-test", version.ref = "sprin
 spring-boot = { module = "org.springframework.boot:spring-boot", version.ref = "spring-boot" }
 spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "spring-boot" }
 spring-boot-health = { module = "org.springframework.boot:spring-boot-health", version.ref = "spring-boot" }
+spring-boot-test = { module = "org.springframework.boot:spring-boot-test", version.ref = "spring-boot" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinVersion" }
 kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler", version.ref = "kotlinVersion" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -238,6 +240,7 @@ bytebuddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "by
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform-launcher" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 lincheck = { module = "org.jetbrains.lincheck:lincheck", version.ref = "lincheck" }
 minestom-testing = { module = "net.minestom:testing", version.ref = "minestom-testing" }
 kotlinxCoroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }

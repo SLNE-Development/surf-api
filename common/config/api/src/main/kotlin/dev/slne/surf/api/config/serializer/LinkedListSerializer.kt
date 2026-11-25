@@ -1,6 +1,5 @@
 package dev.slne.surf.api.config.serializer
 
-import io.leangen.geantyref.TypeToken
 import org.spongepowered.configurate.serialize.AbstractListChildSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.util.CheckedConsumer
@@ -11,9 +10,8 @@ import java.util.*
 /**
  * Serializer for [java.util.LinkedList] objects in Sponge configurations.
  */
-internal object LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
-    val TYPE: TypeToken<LinkedList<Any>> = object : TypeToken<LinkedList<Any>>() {}
-
+@SurfConfigSerializer
+internal class LinkedListSerializer : AbstractListChildSerializer<LinkedList<Any>>() {
     override fun elementType(containerType: AnnotatedType): AnnotatedType? {
         if (containerType !is AnnotatedParameterizedType) {
             throw SerializationException(
@@ -33,13 +31,14 @@ internal object LinkedListSerializer : AbstractListChildSerializer<LinkedList<An
         collection: LinkedList<Any>,
         action: CheckedConsumer<Any?, SerializationException?>,
     ) {
-        for (el in collection) {
-            action.accept(el)
+        for (element in collection) {
+            action.accept(element)
         }
     }
 
     override fun deserializeSingle(
-        index: Int, collection: LinkedList<Any>,
+        index: Int,
+        collection: LinkedList<Any>,
         deserialized: Any?,
     ) {
         if (deserialized == null) return

@@ -5,6 +5,7 @@ import dev.slne.surf.api.core.server.spring.CommandApiCommandBeans
 import dev.slne.surf.api.core.server.spring.SurfEventHandlerBeans
 import dev.slne.surf.api.paper.coroutine.PaperDispatchers
 import dev.slne.surf.api.paper.coroutine.PaperDispatchersElement
+import dev.slne.surf.api.paper.coroutine.PaperSchedulers
 import dev.slne.surf.api.paper.coroutine.PluginDispatchers
 import dev.slne.surf.api.paper.nms.common.NmsVersionResolver
 import dev.slne.surf.api.paper.plugin.SurfPaperBootstrapper
@@ -13,8 +14,10 @@ import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.server.hook.papi.PapiExpansionBeans
 import dev.slne.surf.api.paper.server.hook.papi.PapiExpansionRegistration
 import dev.slne.surf.api.paper.server.hook.papi.SurfPaperPAPIHookImpl
+import dev.slne.surf.api.spring.PluginPresence
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.*
+import dev.slne.surf.api.spring.scheduling.registerTaskScheduler
 import io.papermc.paper.ServerBuildInfo
 import io.papermc.paper.plugin.bootstrap.BootstrapContext
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap
  * plugin.
  *
  * The root bootstrap context is built with the runtime, in surf-api's bootstrap phase, and holds
- * surf-api's bootstrap components and the NMS version selected for the server; the plugins'
+ * surf-api's bootstrap components, the NMS version selected for the server and the
+ * [PaperPluginPresence] that `@ConditionalOnPlugin` reads in the root context; the plugins'
  * bootstrap contexts sit below it. The root context with the rest of surf-api's beans is built in
  * surf-api's load phase by [loadRoot]; the plugins' full contexts sit below it.
  *
@@ -66,6 +70,7 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
                 NmsVersionResolver.BEAN_NAME,
                 NmsVersionResolver.resolve(minecraftVersion),
             )
+            context.beanFactory.registerSingleton(PluginPresence.BEAN_NAME, PaperPluginPresence)
         },
     )
 
@@ -189,6 +194,11 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
                     plugin.componentLogger,
                 )
                 registerDispatchers(pluginContext, dispatchers, primary = true)
+                registerTaskScheduler(
+                    pluginContext,
+                    PaperSchedulers.GLOBAL_REGION,
+                    dispatchers.main,
+                )
             }
             runBlocking { dispatchers.lifecycle { pluginContext.load() } }
         } catch (exception: Throwable) {

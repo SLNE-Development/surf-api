@@ -1,5 +1,6 @@
 package dev.slne.surf.api.config.type
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.apache.commons.lang3.BooleanUtils
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
@@ -52,15 +53,16 @@ data class BooleanOrDefault private constructor(val value: Boolean?) {
          */
         @JvmField
         val FALSE = BooleanOrDefault(false)
+
+        private const val DEFAULT_VALUE = "default"
     }
 
     /**
      * Configurate serializer for [BooleanOrDefault].
      */
-    internal object Serializer :
+    @SurfConfigSerializer
+    internal class Serializer :
         ScalarSerializer.Annotated<BooleanOrDefault>(BooleanOrDefault::class.java) {
-        private const val DEFAULT_VALUE = "default"
-
         override fun deserialize(type: AnnotatedType, obj: Any): BooleanOrDefault {
             if (obj is String) {
                 if (obj.equals(DEFAULT_VALUE, ignoreCase = true)) {

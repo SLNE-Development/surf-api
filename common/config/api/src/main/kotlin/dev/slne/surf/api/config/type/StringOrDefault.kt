@@ -1,5 +1,6 @@
 package dev.slne.surf.api.config.type
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import java.lang.reflect.AnnotatedType
 import java.util.function.Predicate
@@ -41,7 +42,8 @@ data class StringOrDefault private constructor(val value: String?) {
         fun of(value: String): StringOrDefault = StringOrDefault(value)
     }
 
-    internal object Serializer :
+    @SurfConfigSerializer
+    internal class Serializer :
         ScalarSerializer.Annotated<StringOrDefault>(StringOrDefault::class.java) {
         override fun deserialize(
             type: AnnotatedType?,

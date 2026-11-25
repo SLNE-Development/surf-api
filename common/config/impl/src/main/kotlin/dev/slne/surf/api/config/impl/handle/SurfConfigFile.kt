@@ -2,10 +2,12 @@ package dev.slne.surf.api.config.impl.handle
 
 import dev.slne.surf.api.config.ConfigFormat
 import dev.slne.surf.api.config.ConfigHandle
-import dev.slne.surf.api.config.ConfigHandles
 import dev.slne.surf.api.config.SurfConfig
+import dev.slne.surf.api.config.manager.SpongeConfigHandle
+import dev.slne.surf.api.config.manager.SpongeConfigManager
 import dev.slne.surf.api.config.migration.ConfigMigration
 import dev.slne.surf.api.config.migration.ConfigMigrations
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import org.springframework.beans.factory.ListableBeanFactory
 import org.springframework.core.ResolvableType
 import java.nio.file.Path
@@ -21,24 +23,44 @@ internal class SurfConfigFile<C : Any>(
 ) {
 
     /**
-     * Opens the file below [dataDirectory] with the migrations of the declaration or of the
-     * `ConfigMigrations<C>` bean of [beans].
+     * Creates the handle of the file below [dataDirectory], with the migrations of the
+     * declaration or of the `ConfigMigrations<C>` bean of [beans].
+     *
+     * The declaration is validated at once. The file is read now, or on the first access to the
+     * handle if the declaration is lazy.
      *
      * @param dataDirectory the plugin's data folder
      * @param beans the plugin's own beans, without those of its parents
-     * @return the open handle
+     * @param serializers the serializers of the file
+     * @return the handle
      * @throws IllegalArgumentException if the path is absolute, leaves [dataDirectory] or has no
      * known extension, the version key is blank, a migration cannot be created, or the
      * migrations or the version key are declared both in the annotation and in a bean
+     * @throws dev.slne.surf.api.config.manager.LoadConfigException if an eager file cannot be
+     * loaded
+     * @throws dev.slne.surf.api.config.manager.SerializationConfigException if an eager file does
+     * not match the config class
      */
-    fun open(dataDirectory: Path, beans: ListableBeanFactory): ConfigHandle<C> {
+    fun createHandle(
+        dataDirectory: Path,
+        beans: ListableBeanFactory,
+        serializers: TypeSerializerCollection,
+    ): ConfigHandle<C> {
         val file = resolve(dataDirectory)
         val format = requireNotNull(ConfigFormat.ofPath(file)) {
             "@SurfConfig path '${declaration.path}' of ${configClass.name} must end in .yml, " +
                 ".yaml or .json"
         }
+        val migrations = migrations(beans)
+        val handle = SpongeConfigHandle(configClass) {
+            SpongeConfigManager.open(configClass, file, format, migrations, serializers)
+        }
 
-        return ConfigHandles.open(configClass, file, format, migrations(beans))
+        if (!declaration.lazy) {
+            handle.load()
+        }
+
+        return handle
     }
 
     private fun resolve(dataDirectory: Path): Path {

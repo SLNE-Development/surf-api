@@ -12,7 +12,8 @@ import java.util.function.Predicate
  * Components are serialized as MiniMessage strings and deserialized through the shared
  * Surf MiniMessage instance.
  */
-internal object ComponentSerializer : ScalarSerializer.Annotated<Component>(Component::class.java) {
+@SurfConfigSerializer
+internal class ComponentSerializer : ScalarSerializer.Annotated<Component>(Component::class.java) {
 
     /**
      * Deserializes a MiniMessage string into a [Component].

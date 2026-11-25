@@ -1,5 +1,6 @@
 package dev.slne.surf.api.config.type.number
 
+import dev.slne.surf.api.config.serializer.SurfConfigSerializer
 import org.spongepowered.configurate.serialize.ScalarSerializer
 import org.spongepowered.configurate.serialize.SerializationException
 import java.lang.reflect.AnnotatedType
@@ -84,7 +85,8 @@ interface IntOr {
         /**
          * Configurate serializer for [Default].
          */
-        internal object Serializer : ScalarSerializer.Annotated<Default>(Default::class.java) {
+        @SurfConfigSerializer
+        internal class Serializer : ScalarSerializer.Annotated<Default>(Default::class.java) {
             override fun deserialize(type: AnnotatedType, obj: Any): Default {
                 val value = parseInt(type, obj, DEFAULT_VALUE) ?: return USE_DEFAULT
 
@@ -153,7 +155,8 @@ interface IntOr {
         /**
          * Configurate serializer for [Disabled].
          */
-        internal object Serializer : ScalarSerializer.Annotated<Disabled>(Disabled::class.java) {
+        @SurfConfigSerializer
+        internal class Serializer : ScalarSerializer.Annotated<Disabled>(Disabled::class.java) {
             override fun deserialize(type: AnnotatedType, obj: Any): Disabled {
                 val value = parseInt(type, obj, DISABLED_VALUE) ?: return DISABLED
 
