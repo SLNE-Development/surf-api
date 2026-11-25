@@ -42,3 +42,19 @@ surf-api runtime and microservices are wired with Spring application contexts.
   `ContextContributor`, which must be found before any context exists.
 - **Golden files:** the JS tests compare the protoc plugin output with
   `infra/nats/surf-nats-core/src/jsTest/protoc/golden`. Keep those files exactly as generated.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in the GitHub Issues of SLNE-Development/surf-api, handled with `gh`. See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five triage roles map to the repository's `status: …` and `resolution: …` labels. See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repository root. See `docs/agents/domain.md`.
