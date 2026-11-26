@@ -217,14 +217,33 @@ val result = plan.commit()
 - `Inventory.planInsertion(item, amount)` works on any Bukkit inventory; `Player.planInsertion` is
   the shortcut for the player's inventory. The amount of `item` itself is ignored, and `amount`
   may exceed one stack.
+- Several items are planned as one set: `planInsertion(vararg items)` and
+  `planInsertion(items: Collection<ItemStack>)` count each stack's own amount,
+  `planInsertion(items: Map<ItemStack, Int>)` the amount each key maps to. The set fits only when
+  everything fits together. Similar items merge into one entry; `entries` and `leftoverOf(item)`
+  give the leftover per item, `leftover` the total.
+
+  ```kotlin
+  val plan = player.planInsertion(mapOf(sword to 1, arrows to 128))
+  val missingArrowSpace = plan.leftoverOf(arrows)
+  ```
+
 - On a player inventory, only the storage slots count: armor, offhand and crafting grid stay
-  untouched. Every other inventory uses all its slots.
+  untouched. `includeOffhand = true` on the `Player` overloads lets the offhand take what the
+  storage slots leave over. Every other inventory uses all its slots.
 - `fits` and `leftover` describe the inventory when the plan was made. The plan runs Bukkit's own
   `addItem` on a copy of the slots in scope, so similarity follows `ItemStack.isSimilar` and each
   item's own max stack size, including the `MAX_STACK_SIZE` data component.
-- `commit(policy)` plans again against the current inventory. Under the default insertion policy
-  `ItemInsertionPolicy.REJECT` it inserts nothing when the items no longer fit. The
-  `ItemInsertionResult` carries `inserted` and `leftover`.
+- `commit(policy)` inserts into the current inventory under an `ItemInsertionPolicy`:
+  - `REJECT` (default) plans again and inserts nothing when the items no longer fit together.
+  - `PARTIAL` inserts what fits.
+  - `DROP` inserts what fits and drops the rest so that it never despawns: at the player, owned by
+    the player, or at the center of the inventory's location without an owner. An inventory without
+    a location, such as one from `Bukkit.createInventory`, throws `IllegalStateException` before
+    anything changes, even when everything fits.
+
+  The `ItemInsertionResult` carries `inserted` and `leftover` in total, per item in `entries`, and
+  through `insertedOf(item)` and `leftoverOf(item)`. Under `DROP`, the leftover is what was dropped.
 - Planning and committing run on the thread that owns the inventory: the holding entity's thread,
   the region thread of the inventory's location, or the global tick thread for an inventory with
   neither. Anywhere else they throw `IllegalStateException` through `TickThreadGuard`; switch with

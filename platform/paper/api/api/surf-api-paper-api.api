@@ -1612,17 +1612,48 @@ public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan
 	public final fun commit (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
 	public static synthetic fun commit$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
 	public final fun getAmount ()I
+	public final fun getEntries ()Ljava/util/List;
 	public final fun getFits ()Z
 	public final fun getInventory ()Lorg/bukkit/inventory/Inventory;
 	public final fun getLeftover ()I
+	public final fun leftoverOf (Lorg/bukkit/inventory/ItemStack;)I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry {
+	public fun <init> (Lorg/bukkit/inventory/ItemStack;II)V
+	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (Lorg/bukkit/inventory/ItemStack;II)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry;Lorg/bukkit/inventory/ItemStack;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()I
+	public final fun getFits ()Z
+	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
+	public final fun getLeftover ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlanKt {
-	public static final fun planInsertion (Lorg/bukkit/entity/Player;Lorg/bukkit/inventory/ItemStack;I)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/entity/Player;Ljava/util/Collection;Z)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/entity/Player;Ljava/util/Map;Z)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/entity/Player;Lorg/bukkit/inventory/ItemStack;IZ)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/entity/Player;[Lorg/bukkit/inventory/ItemStack;Z)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/inventory/Inventory;Ljava/util/Collection;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/inventory/Inventory;Ljava/util/Map;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
 	public static final fun planInsertion (Lorg/bukkit/inventory/Inventory;Lorg/bukkit/inventory/ItemStack;I)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/inventory/Inventory;[Lorg/bukkit/inventory/ItemStack;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static synthetic fun planInsertion$default (Lorg/bukkit/entity/Player;Ljava/util/Collection;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static synthetic fun planInsertion$default (Lorg/bukkit/entity/Player;Ljava/util/Map;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static synthetic fun planInsertion$default (Lorg/bukkit/entity/Player;Lorg/bukkit/inventory/ItemStack;IZILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static synthetic fun planInsertion$default (Lorg/bukkit/entity/Player;[Lorg/bukkit/inventory/ItemStack;ZILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
 }
 
 public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy : java/lang/Enum {
+	public static final field DROP Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
+	public static final field PARTIAL Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
 	public static final field REJECT Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
@@ -1630,13 +1661,24 @@ public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPoli
 }
 
 public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult {
-	public fun <init> (II)V
-	public final fun component1 ()I
+	public final fun getEntries ()Ljava/util/List;
+	public final fun getInserted ()I
+	public final fun getLeftover ()I
+	public final fun insertedOf (Lorg/bukkit/inventory/ItemStack;)I
+	public final fun leftoverOf (Lorg/bukkit/inventory/ItemStack;)I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry {
+	public fun <init> (Lorg/bukkit/inventory/ItemStack;II)V
+	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
 	public final fun component2 ()I
-	public final fun copy (II)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
+	public final fun component3 ()I
+	public final fun copy (Lorg/bukkit/inventory/ItemStack;II)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry;Lorg/bukkit/inventory/ItemStack;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getInserted ()I
+	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
 	public final fun getLeftover ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

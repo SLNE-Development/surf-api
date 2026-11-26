@@ -64,8 +64,10 @@ import kotlin.io.path.*
  *   the consumer's own `@NatsService` over the broker, a published event reached its
  *   `@NatsListener`, and an `ItemStack` survived the surf-nats serializer round trip on the server
  * - the inventory command logs [EXPECTED_INVENTORY_COMMAND_FIELDS]: insertion plans on the server's
- *   own inventories predict what fits, commits insert what was planned or nothing, a player keeps
- *   armor, offhand and crafting grid, and planning or committing off the owning thread throws
+ *   own inventories predict what fits, alone and for several items together, commits follow each
+ *   insertion policy, drops land with the right owner and never despawn, a player keeps armor,
+ *   crafting grid and, unless included, the offhand, and planning or committing off the owning
+ *   thread throws
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -796,8 +798,9 @@ class PaperSharedBeanBootTest {
         /**
          * The fields of the inventory command's line, worked out by hand from each scenario.
          *
-         * A plan reads `fits/leftover`; a commit adds `inserted/leftover` and what the inventory
-         * holds afterwards. The off-thread fields name the exception that planning or committing
+         * A plan reads `fits/leftover`, or `fits/type:leftover,...` per item; a commit adds
+         * `inserted/leftover` and what the inventory holds afterwards, and a drop what lies on the
+         * ground. The off-thread fields name the exception that planning or committing
          * threw on `Dispatchers.Default`.
          */
         val EXPECTED_INVENTORY_COMMAND_FIELDS = listOf(
@@ -812,6 +815,15 @@ class PaperSharedBeanBootTest {
             "insertReject=true/0/0/128/dirt:0",
             "insertPlayer=false/8/32/0/dirt:64/armor:AIR,AIR,AIR,DIAMOND_HELMET/offhand:AIR/" +
                 "crafting:AIR,AIR,AIR,AIR,AIR",
+            "insertSeveral=alone:true,true/false/DIRT:0,COBBLESTONE:64",
+            "insertSeveralMap=false/DIRT:0,COBBLESTONE:64",
+            "insertSeveralCommit=DIRT:64/0,COBBLESTONE:0/64/64/64/dirt:64/cobblestone:0",
+            "insertSimilarMerged=1/30/0",
+            "insertPolicyPartial=true/0/64/64/dirt:64",
+            "insertPolicyDropPlayer=true/0/0/100/dropped:100/owner:ok/unlimited:true",
+            "insertPolicyDropBlock=true/0/0/30/dropped:30/owner:ok/unlimited:true",
+            "insertDropNoLocation=IllegalStateException/dirt:0",
+            "insertOffhand=false/40/true/0/40/0/offhand:DIRT:40",
             "insertOffThreadPlan=IllegalStateException",
             "insertOffThreadCommit=IllegalStateException",
             "insertOffThreadPlayer=IllegalStateException",
