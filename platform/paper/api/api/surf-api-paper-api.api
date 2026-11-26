@@ -2765,6 +2765,7 @@ public final class dev/slne/surf/api/paper/util/UtilLuckPerms {
 }
 
 public final class dev/slne/surf/api/paper/util/UtilPlayerProfile {
+	public static final fun idOrFail (Lcom/destroystokyo/paper/profile/PlayerProfile;)Ljava/util/UUID;
 	public static final fun idOrThrow (Lcom/destroystokyo/paper/profile/PlayerProfile;)Ljava/util/UUID;
 }
 

@@ -110,8 +110,11 @@ anything that must be enforced inside the executor as well.
 
 `awaitAsyncPlayerProfileOptional(nodeName)` / `awaitAsyncPlayerProfile(nodeName)` await a
 `CompletableFuture<List<PlayerProfile>>` argument and return its first profile, unwrapping a
-`RuntimeException` to its cause. `PlayerProfile.idOrThrow()` for the UUID lives in
-`dev.slne.surf.api.paper.util` (`player-profile-util.kt`), not in `command/util`.
+`RuntimeException` to its cause. `PlayerProfile.idOrFail()` and `PlayerProfile.idOrThrow()` for
+the UUID live in `dev.slne.surf.api.paper.util` (`player-profile-util.kt`), not in `command/util`.
+Inside a command, use `idOrFail()`: a profile without an id fails the command through
+`SurfCommandUtil.failWithMessage` with an error message naming the profile. `idOrThrow()` throws
+`IllegalStateException` and belongs in non-command code.
 
 ## Velocity additions
 
