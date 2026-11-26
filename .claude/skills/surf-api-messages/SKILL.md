@@ -22,6 +22,10 @@ unchanged.
   bean. Nothing to do with text. The `surf-api-components` skill covers beans; do not explain them
   from here.
 
+When a file needs both, import the typealiases `dev.slne.surf.api.messages.AdventureComponent` and
+`dev.slne.surf.api.spring.SpringComponent` instead of declaring an import alias.
+`AdventureComponent` is the same type as Adventure's `Component`.
+
 Text lives in `surf-api-messages-api`.
 
 ## Build text with `buildText`, send it with `sendText`

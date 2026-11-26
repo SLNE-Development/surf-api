@@ -2,6 +2,7 @@
 
 package dev.slne.surf.api.paper.server.nms.v26_2.extensions
 
+import dev.slne.surf.api.messages.AdventureComponent
 import dev.slne.surf.api.paper.extensions.server
 import dev.slne.surf.api.paper.nms.bridges.packets.entity.SignBlockUpdateSettings
 import io.papermc.paper.advancement.AdvancementDisplay
@@ -58,7 +59,6 @@ import org.bukkit.inventory.ItemType
 import org.spongepowered.math.imaginary.Quaternionf
 import org.spongepowered.math.vector.Vector3f
 import java.util.*
-import net.kyori.adventure.text.Component as AdventureComponent
 import net.minecraft.world.item.ItemStack as NmsItemStack
 import net.minecraft.world.level.block.state.BlockState as NmsBlockState
 import org.joml.Quaternionf as NmsQuaternionf

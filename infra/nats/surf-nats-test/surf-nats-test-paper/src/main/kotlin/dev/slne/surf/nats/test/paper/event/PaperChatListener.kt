@@ -1,11 +1,11 @@
 package dev.slne.surf.nats.test.paper.event
 
 import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.spring.SpringComponent
 import dev.slne.surf.nats.event.NatsListener
 import dev.slne.surf.nats.test.common.proto.v1.TestChatEvent
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
-import org.springframework.stereotype.Component as SpringComponent
 
 /**
  * Broadcasts every [TestChatEvent] published by a test command or by the test microservice.

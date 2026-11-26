@@ -4,8 +4,8 @@ import dev.slne.surf.api.command.CommandRegistrar
 import dev.slne.surf.api.minestom.command.dsl.commandAPICommand
 import dev.slne.surf.api.minestom.command.dsl.playerExecutor
 import dev.slne.surf.api.minestom.plugin.PluginManager
+import dev.slne.surf.api.spring.SpringComponent
 import net.kyori.adventure.text.Component
-import org.springframework.stereotype.Component as SpringComponent
 
 /**
  * Registers the plugin's commands when the plugin is enabled; the commands are unregistered when it

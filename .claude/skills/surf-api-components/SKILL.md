@@ -50,6 +50,11 @@ class ShopService(
 )
 ```
 
+When a file also uses Adventure's text `Component`, annotate the bean with `@SpringComponent` from
+`dev.slne.surf.api.spring`. It is a typealias of Spring's `@Component` and registers the bean the
+same way; the text side is `AdventureComponent` from `dev.slne.surf.api.messages`. Use these two
+names instead of an import alias.
+
 Component scanning starts at the plugin's base package and reads only the plugin's own jar. The
 surf Gradle plugin derives that package from the main sources (their longest common package),
 generates the plugin's main class into it and accepts `basePackage` as an override. It rejects

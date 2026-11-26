@@ -146,13 +146,13 @@ plugin shaded into the server, every class under that package. From
 | `Greeting.kt` | `@Service`, `SurfLifecycle` | reads `greeting.txt` from `plugin.dataDirectory` in `onLoad` |
 | `Heartbeat.kt` | `@Service`, `SurfLifecycle` | launches a loop in `plugin.scope` in `onEnable`, logs in `onDisable` |
 | `ExampleEvents.kt` | `@Configuration` with an `@Bean` `EventNode<Event>` | greets joining players; surf-api attaches the node on enable |
-| `ExampleCommands.kt` | `@Component`, `CommandRegistrar` | registers `/plugins` in `register()` |
+| `ExampleCommands.kt` | `@SpringComponent`, `CommandRegistrar` | registers `/plugins` in `register()` |
 
-Spring's `@Component` clashes with Adventure's `Component` in one file, so the example imports it
-under an alias:
+Spring's `@Component` clashes with Adventure's `Component` in one file, so the example annotates the
+bean with surf-api's typealias `SpringComponent`:
 
 ```kotlin
-import org.springframework.stereotype.Component as SpringComponent
+import dev.slne.surf.api.spring.SpringComponent
 
 @SpringComponent
 class ExampleCommands : CommandRegistrar {

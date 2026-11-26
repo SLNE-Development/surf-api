@@ -5,6 +5,7 @@ import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.*
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
+import dev.slne.surf.api.spring.SpringComponent
 import dev.slne.surf.nats.NatsClient
 import dev.slne.surf.nats.rpc.getOrNull
 import dev.slne.surf.nats.service
@@ -17,7 +18,6 @@ import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.command.CommandSender
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.measureTimedValue
-import org.springframework.stereotype.Component as SpringComponent
 
 /**
  * `/natstest`: publishes the test event, calls the services of the test microservice and of every
