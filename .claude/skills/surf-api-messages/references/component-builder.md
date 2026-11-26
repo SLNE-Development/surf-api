@@ -203,13 +203,6 @@ Other DSL builders in the same package, each with its own `@DslMarker`:
 `Title(block)`, `Book(block)`, `BossBar(block)` and `Sound(block)` are capitalised aliases for the
 lowercase functions.
 
-## `ComponentMessage`
-
-`ComponentMessage(componentLike)` adapts a component to Brigadier's `Message`. `getString()` returns
-a per-JVM random `[ComponentMessage <uuid>] ` prefix followed by Gson JSON; the platform command
-layer recognises the prefix and recovers the component. It is a transport hack, not a format - never
-log, store or parse it.
-
 ## Translations
 
 `SurfMessageBundle(bundleClazz, pathToBundle, dataFolder, classLoader = bundleClazz.classLoader)`

@@ -1,21 +1,45 @@
 package dev.slne.surf.api.paper.util
 
 import com.destroystokyo.paper.profile.PlayerProfile
+import com.mojang.brigadier.LiteralMessage
+import dev.slne.surf.api.command.exception.CommandMessageFactory
 import dev.slne.surf.api.command.exception.WrapperCommandExceptionComponent
 import dev.slne.surf.api.messages.Colors
+import dev.slne.surf.api.spring.SurfContexts
 import io.mockk.every
 import io.mockk.mockk
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.ComponentLike
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.context.support.GenericApplicationContext
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PlayerProfileIdTest {
+
+    private lateinit var root: GenericApplicationContext
+
+    @BeforeEach
+    fun installRoot() {
+        val factory = CommandMessageFactory { LiteralMessage("error") }
+
+        root = GenericApplicationContext()
+        root.beanFactory.registerSingleton("commandMessageFactory", factory)
+        root.refresh()
+
+        SurfContexts.install(root)
+    }
+
+    @AfterEach
+    fun uninstallRoot() {
+        SurfContexts.uninstall()
+        root.close()
+    }
 
     @Test
     fun `idOrFail returns the id of a profile that has one`() {
@@ -52,7 +76,7 @@ class PlayerProfileIdTest {
     }
 
     private fun failureMessage(failure: WrapperCommandExceptionComponent): Component {
-        return (failure.exception.rawMessage as ComponentLike).asComponent()
+        return failure.component
     }
 
     private fun plainText(component: Component): String {

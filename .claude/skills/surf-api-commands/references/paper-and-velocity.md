@@ -29,7 +29,8 @@ Minestom code.**
 | --- | --- |
 | `CommandRegistrar.kt` | `fun interface CommandRegistrar { fun register() }` - a bean that registers commands in the enable phase; names no CommandAPI type, so Minestom uses it too |
 | `SurfCommandUtil.kt` | `createException(message: ComponentLike)`, `failWithMessage(message)`, `failWithBuilder(builder)` — all `@JvmStatic` on an `object`; the two `fail*` functions return `Nothing` |
-| `exception/WrapperCommandExceptionComponent.kt` | a `WrapperCommandSyntaxException` whose Brigadier message is a `ComponentMessage`, so a `Component` survives to the client |
+| `exception/WrapperCommandExceptionComponent.kt` | a `WrapperCommandSyntaxException` that keeps its `Component` in `component`; its Brigadier message comes from the platform's `CommandMessageFactory`, so the client sees the component |
+| `exception/CommandMessageFactory.kt` | `@InternalSurfApi fun interface` turning a `Component` into the platform's Brigadier `Message`. A root bean on Paper (`BukkitTooltip.messageFromAdventureComponent`) and Velocity (`VelocityBrigadierMessage.tooltip`); Minestom and standalone have none, because they exclude `commandapi-core` |
 | `builder/CommandExceptionBuilder.kt` | formats a parse failure: optional detail message, then `At position <cursor>: ` plus the last `CONTEXT_AMOUNT = 10` characters underlined and a `command.context.here` marker. `build()` uses `Colors.ERROR_PREFIX`; `build(prefix)` takes another |
 | `args/SuspendArgumentHelper.kt` | `suspend CommandArguments.awaiting<T>(nodeName)` and `awaitingOrNull<T>(nodeName)` — `await()` a `Deferred<T>` stored as an argument value; `awaiting` errors with *"Argument … is missing"* |
 

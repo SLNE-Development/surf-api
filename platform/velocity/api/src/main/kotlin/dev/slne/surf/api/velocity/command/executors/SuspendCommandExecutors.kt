@@ -10,6 +10,7 @@ import dev.jorel.commandapi.executors.CommandArguments
 import dev.jorel.commandapi.kotlindsl.anyExecutor
 import dev.jorel.commandapi.kotlindsl.consoleExecutor
 import dev.jorel.commandapi.kotlindsl.playerExecutor
+import dev.slne.surf.api.command.exception.WrapperCommandExceptionComponent
 import dev.slne.surf.api.messages.Colors
 import dev.slne.surf.api.messages.adventure.text
 import dev.slne.surf.api.shared.api.util.InternalSurfApi
@@ -146,6 +147,7 @@ internal inline fun <S : CommandSource> CoroutineScope.launchCommandExecutor(
 @InternalSurfApi
 internal inline fun handleCommandFailure(sender: CommandSource, t: Throwable) {
     when (t) {
+        is WrapperCommandExceptionComponent -> sender.sendMessage(t.component)
         is WrapperCommandSyntaxException -> sender.sendSyntaxMessageOrRethrow(t.message, t)
         is CommandSyntaxException -> sender.sendSyntaxMessageOrRethrow(t.message, t)
         else -> {

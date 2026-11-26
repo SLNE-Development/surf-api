@@ -52,6 +52,9 @@ import kotlin.io.path.*
  *   reached the server thread, which the enable hook waited for
  * - `surfConfig` is read through the `ConfigHandle` surf-api registered for the consumer's
  *   `@SurfConfig` class, from a file in a subfolder of its data folder
+ * - `commandMessage` says that the message of an exception from `SurfCommandUtil` renders
+ *   through the Brigadier message conversion of the Paper api as the component it was created
+ *   from
  * - the suspending command logs [EXPECTED_SCOPE_COMMAND_FIELDS]: its default scope is the
  *   consumer's own, and it starts on the server thread
  * - `redis` and `redisson` say that the consumer's injected `RedisApi` wrote a sync value and read
@@ -723,6 +726,7 @@ class PaperSharedBeanBootTest {
             "redisson=ok",
             "serverBean=true",
             "pluginLogger=true",
+            "commandMessage=ok",
         )
 
         /**

@@ -244,10 +244,9 @@ carries no weight and does not implement `Weighted` - it is unused in the reposi
 | building text off the main thread | safe - Adventure components are immutable and the builder is local. **Reading game state** while building is not. `SuspendPagination` renders on `Dispatchers.Default`, sidebar renderers run on a background dispatcher: switch with `withContext(dispatchers.entity(viewer))`, using the plugin's injected `PaperDispatchers`, before touching the world |
 | `miniMessage.deserialize(playerInput)` | gives that player `<click:run_command>` and `<hover>`. Permission-gate it or pass the text as a `Placeholder.component` |
 | the wrong MiniMessage instance | `MiniMessage.miniMessage()` has no `<primary>`, `<prefix>` or `<small>`; `dev.slne.surf.api.messages.minimessage.miniMessage` has them |
-| platform-specific serialization | `GsonComponentSerializer.gson()` (used by `ComponentMessage` and the kotlinx `AdventureComponentSerializer`) is portable. `Component.toNms()` is `PaperAdventure.asVanilla` and only exists inside a Paper NMS version module - see `surf-api-nms`. `PlainTextComponentSerializer` via `Component.plain()` loses all styling, so never round-trip through it |
+| platform-specific serialization | `GsonComponentSerializer.gson()` (used by the kotlinx `AdventureComponentSerializer`) is portable. `Component.toNms()` is `PaperAdventure.asVanilla` and only exists inside a Paper NMS version module - see `surf-api-nms`. `PlainTextComponentSerializer` via `Component.plain()` loses all styling, so never round-trip through it |
 | `joinToComponentNewLine` / `Map.joinToComponent` | prepend a newline **and** the line prefix before the *first* entry too, so the result starts on its own line |
 | `appendTime` / `CommonComponents.formatTime` | German words, and omits any unit whose value is 0 - a 2-hour duration renders `2 Stunden`, not `0 Tage : 2 Stunden` |
-| `ComponentMessage.getString()` | a Brigadier `Message` carrier: a per-JVM random UUID prefix plus Gson. Never parse or store it |
 
 ## References
 

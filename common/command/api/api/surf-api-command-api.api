@@ -29,6 +29,7 @@ public final class dev/slne/surf/api/command/builder/CommandExceptionBuilder$Com
 public final class dev/slne/surf/api/command/exception/WrapperCommandExceptionComponent : dev/jorel/commandapi/exceptions/WrapperCommandSyntaxException {
 	public static final field Companion Ldev/slne/surf/api/command/exception/WrapperCommandExceptionComponent$Companion;
 	public fun <init> (Lnet/kyori/adventure/text/Component;)V
+	public final fun getComponent ()Lnet/kyori/adventure/text/Component;
 	public fun getMessage ()Ljava/lang/String;
 }
 

@@ -48,6 +48,7 @@ class SharedGreetingConsumer(
     private val eventListener: SpikeEventListener,
     private val coroutineProbe: ConsumerCoroutineProbe,
     private val configProbe: ConsumerConfigProbe,
+    private val commandMessageProbe: ConsumerCommandMessageProbe,
     private val redisProbe: ConsumerRedisProbe,
     private val server: Server,
     private val pluginLogger: ComponentLogger,
@@ -70,7 +71,7 @@ class SharedGreetingConsumer(
                 "%s greeting=%s sameLoader=%s privateVisible=%s pluginIsSelf=%s ownPluginIsSelf=%s " +
                     "pluginIdentity=%s proxyEquals=%s tccl=%s probes=%s configProxy=%s " +
                     "luckPermsBean=%s surfEvent=%s shutdownHooks=%s logImpl=%s scopeSurvivesLoad=%s surfConfig=%s " +
-                    "redis=%s redisson=%s serverBean=%s pluginLogger=%s",
+                    "redis=%s redisson=%s serverBean=%s pluginLogger=%s commandMessage=%s",
                 SharedBeanReport.MARKER,
                 greeting.greet(),
                 instanceLoader === interfaceLoader,
@@ -93,6 +94,7 @@ class SharedGreetingConsumer(
                 redisProbe.redisson,
                 server === ownPlugin.server,
                 pluginLogger.name == ownPlugin.componentLogger.name,
+                commandMessageProbe.commandMessage,
             )
     }
 

@@ -11,6 +11,9 @@ dependencies {
     compileOnlyApi(libs.adventure.api)
 
     compileOnlyApi(libs.bundles.kotlin.coroutines)
+
+    testImplementation(platform(libs.spring.framework.bom))
+    testImplementation(libs.spring.context)
 }
 
 description = "surf-api-command-api"

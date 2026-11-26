@@ -86,7 +86,7 @@ You do not normally name these at all: the `withXxx()` calls in the Gradle block
 | `surf-api-serialization-api` | The kotlinx-serialization serializers: `SurfSerializerModule`, the Adventure serializers, the JDK ones (UUID, dates, IP, numbers) and the SpongePowered math ones. |
 | `surf-api-config-api` | The configuration surface: `@SurfConfig`, `ConfigHandle`, `ConfigHandles`, `configHandle` / `surfConfig`, the 23 constraint annotations, the helper types and the migrations. |
 | `surf-api-config-impl` | The `ConfigHandle` registration for plugin contexts. |
-| `surf-api-messages-api` | The text surface: `Colors`, `CommonComponents`, `ComponentMessage`, the `buildText` / `sendText` builders, the colour palettes, the message bundles, pagination, the configured MiniMessage instance, the action bar and `Rarity`. |
+| `surf-api-messages-api` | The text surface: `Colors`, `CommonComponents`, the `buildText` / `sendText` builders, the colour palettes, the message bundles, pagination, the configured MiniMessage instance, the action bar and `Rarity`. |
 | `surf-api-event-api` | `SurfEventBus` and the event contracts: `SurfEvent`, `SurfSyncEvent`, `SurfAsyncEvent`, `SurfCancellableEvent`, `@SurfEventHandler`, `SurfEventPriority`. |
 | `surf-api-nbt-api` | The Adventure binary-tag surface: `CollectionBinaryTag` and `FastCompoundBinaryTag`. |
 | `surf-api-reflection-api` | `@ReflectionProxy` interfaces and `reflectionProxy<T>()` (section 20). Separate from nbt: they share no import, and a consumer of the NMS layer should not need a tag module to get a reflection proxy. |
@@ -1402,7 +1402,7 @@ no longer apply a `dev.slne.surf.redis` relocation for a project dependency.
 | `Rarity.displayName` and `Rarity.asComponent()` returned `TextComponent` | They return `Component`. |
 | `LazyIntList(defaultValueGenerator: () -> Int)` | `LazyIntList(IntSupplier)`. A lambda (`LazyIntList { 0 }`) still compiles; a stored `() -> Int` needs `LazyIntList(generator::invoke)`. A negative index throws `IllegalArgumentException`. |
 | `ComponentSqlLogger(level = ...)` with a logger named after the calling class | Pass the logger: `ComponentSqlLogger(ComponentLogger.logger("MyService"), level)`. |
-| `ComponentMessage.COMPONENT_MESSAGE_PREFIX` | Internal (`@InternalSurfApi`); no replacement. |
+| `dev.slne.surf.api.messages.ComponentMessage` (a Brigadier `Message` whose `getString()` returned a UUID prefix plus Gson JSON that only Velocity decoded; Paper showed the raw text) | Nothing. Fail a command with `SurfCommandUtil.failWithMessage(component)`; `WrapperCommandExceptionComponent.component` returns the original component. Minestom keeps `dev.slne.surf.api.minestom.command.exception.ComponentMessage` and `CommandAPI.failWithMessage`. |
 | `SurfStandaloneApiImpl.dataFolder` (`api-data`) | Nothing; choose the data directory of your program yourself. |
 
 ### Nested values in the kotlinx serializers resolve through the serializers module
