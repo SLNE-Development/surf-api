@@ -69,7 +69,8 @@ import kotlin.io.path.*
  *   crafting grid and, unless included, the offhand; removal plans report what is missing, alone and
  *   for several items together, ignore items that are not similar, commits follow each removal
  *   policy, a player keeps worn armor and the offhand unless included, and planning or committing
- *   off the owning thread throws
+ *   off the owning thread throws; the suspending variants plan and commit from an async thread on a
+ *   plain, a block and an entity inventory, and a cancelled commit leaves the inventory unchanged
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -804,7 +805,9 @@ class PaperSharedBeanBootTest {
          * adds `inserted/leftover` and what the inventory holds afterwards, and a drop what lies
          * on the ground. A removal plan reads `isAvailable/missing` in the same way, and its
          * commit adds `removed/missing`. The off-thread fields name the exception that planning
-         * or committing threw on `Dispatchers.Default`.
+         * or committing threw on `Dispatchers.Default`. The async fields read
+         * `fits/inserted/isAvailable/removed` for inserting 10 dirt and removing 4 from
+         * `Dispatchers.Default`, or `cancelled/dirt` for a commit cancelled before it ran.
          */
         val EXPECTED_INVENTORY_COMMAND_FIELDS = listOf(
             "insertEmpty=true/0",
@@ -847,6 +850,14 @@ class PaperSharedBeanBootTest {
             "removeOffThreadPlan=IllegalStateException",
             "removeOffThreadCommit=IllegalStateException",
             "removeOffThreadPlayer=IllegalStateException",
+            "asyncPlain=true/10/true/4/dirt:6",
+            "asyncBlock=true/10/true/4/dirt:6",
+            "asyncEntity=true/10/true/4/dirt:6",
+            "asyncBlockingStillThrows=IllegalStateException",
+            "asyncInsertCancelled=true/dirt:0",
+            "asyncRemoveCancelled=true/dirt:10",
+            "asyncCancelledOnOwner=true/dirt:0",
+            "asyncOutsidePlugin=IllegalStateException",
         )
 
         /**

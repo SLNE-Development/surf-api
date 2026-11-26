@@ -25,7 +25,18 @@ private const val OFF_THREAD_REASON = "Item insertion off the thread that owns t
  *
  * Planning and committing must run on the thread that owns the inventory: the thread of the
  * holding entity, the region thread of the inventory's location, or the global tick thread for an
- * inventory with neither. On any other thread they throw [IllegalStateException].
+ * inventory with neither. On any other thread they throw [IllegalStateException]. The suspending
+ * variants, `planInsertionAsync` and [commitAsync], switch to that thread themselves, so a
+ * coroutine can plan and commit from any thread:
+ *
+ * ```kotlin
+ * scope.launch {
+ *     val plan = player.planInsertionAsync(reward, 64)
+ *     if (!plan.fits) return@launch
+ *
+ *     plan.commitAsync(ItemInsertionPolicy.DROP)
+ * }
+ * ```
  *
  * @property entries one entry per set of similar items, in the order they were first given
  */
@@ -83,6 +94,23 @@ class ItemInsertionPlan internal constructor(
         dropTarget?.drop(leftovers.flatten())
 
         return ItemInsertionResult(requests.zip(leftovers, ::resultEntry))
+    }
+
+    /**
+     * Runs [commit] on the thread that owns the inventory, switching there first.
+     *
+     * Cancelling the coroutine before the commit starts leaves the inventory unchanged; a commit
+     * that has started completes.
+     *
+     * @throws IllegalStateException if the calling coroutine does not belong to a plugin that runs
+     * on surf-api, or under [ItemInsertionPolicy.DROP] when the inventory has no location
+     * @throws kotlinx.coroutines.CancellationException if the coroutine is cancelled, or the entity
+     * holding the inventory is removed, before the commit starts
+     */
+    suspend fun commitAsync(
+        policy: ItemInsertionPolicy = ItemInsertionPolicy.REJECT,
+    ): ItemInsertionResult {
+        return inventory.onOwningThread { commit(policy) }
     }
 
     private fun Inventory.fitsNow(requests: List<ItemAmount>): Boolean {
@@ -212,6 +240,108 @@ fun Player.planInsertion(
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
     return inventory.planItemInsertion(itemAmountsOf(items), includeOffhand)
+}
+
+/**
+ * Plans the insertion of [amount] items similar to [item] into this inventory, on the thread that
+ * owns it.
+ *
+ * @throws IllegalArgumentException if [item] is empty or [amount] is not positive
+ * @throws IllegalStateException if the calling coroutine does not belong to a plugin that runs on
+ * surf-api
+ * @throws kotlinx.coroutines.CancellationException if the entity holding the inventory is removed
+ * first
+ * @see Inventory.planInsertion
+ */
+suspend fun Inventory.planInsertionAsync(item: ItemStack, amount: Int): ItemInsertionPlan {
+    return onOwningThread { planInsertion(item, amount) }
+}
+
+/**
+ * Plans the insertion of [items], each in its own amount, into this inventory, on the thread that
+ * owns it.
+ *
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Inventory.planInsertionAsync(vararg items: ItemStack): ItemInsertionPlan {
+    return planInsertionAsync(items.asList())
+}
+
+/**
+ * Plans the insertion of [items], each in its own amount, into this inventory, on the thread that
+ * owns it.
+ *
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Inventory.planInsertionAsync(items: Collection<ItemStack>): ItemInsertionPlan {
+    return onOwningThread { planInsertion(items) }
+}
+
+/**
+ * Plans the insertion of [items], each key in the amount it maps to, into this inventory, on the
+ * thread that owns it.
+ *
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Inventory.planInsertionAsync(items: Map<ItemStack, Int>): ItemInsertionPlan {
+    return onOwningThread { planInsertion(items) }
+}
+
+/**
+ * Plans the insertion of [amount] items similar to [item] into the storage slots of this player,
+ * on the player's thread.
+ *
+ * @param includeOffhand whether the offhand takes what the storage slots leave over
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Player.planInsertionAsync(
+    item: ItemStack,
+    amount: Int,
+    includeOffhand: Boolean = false,
+): ItemInsertionPlan {
+    return inventory.onOwningThread { planInsertion(item, amount, includeOffhand) }
+}
+
+/**
+ * Plans the insertion of [items], each in its own amount, into the storage slots of this player,
+ * on the player's thread.
+ *
+ * @param includeOffhand whether the offhand takes what the storage slots leave over
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Player.planInsertionAsync(
+    vararg items: ItemStack,
+    includeOffhand: Boolean = false,
+): ItemInsertionPlan {
+    return planInsertionAsync(items.asList(), includeOffhand)
+}
+
+/**
+ * Plans the insertion of [items], each in its own amount, into the storage slots of this player,
+ * on the player's thread.
+ *
+ * @param includeOffhand whether the offhand takes what the storage slots leave over
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Player.planInsertionAsync(
+    items: Collection<ItemStack>,
+    includeOffhand: Boolean = false,
+): ItemInsertionPlan {
+    return inventory.onOwningThread { planInsertion(items, includeOffhand) }
+}
+
+/**
+ * Plans the insertion of [items], each key in the amount it maps to, into the storage slots of
+ * this player, on the player's thread.
+ *
+ * @param includeOffhand whether the offhand takes what the storage slots leave over
+ * @see Inventory.planInsertionAsync
+ */
+suspend fun Player.planInsertionAsync(
+    items: Map<ItemStack, Int>,
+    includeOffhand: Boolean = false,
+): ItemInsertionPlan {
+    return inventory.onOwningThread { planInsertion(items, includeOffhand) }
 }
 
 private fun Inventory.planItemInsertion(

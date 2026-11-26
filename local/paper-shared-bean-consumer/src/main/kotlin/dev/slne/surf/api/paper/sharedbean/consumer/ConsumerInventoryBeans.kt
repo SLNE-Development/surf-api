@@ -354,20 +354,21 @@ class ConsumerInventoryProbe {
 }
 
 /**
- * A command bean whose console run executes [ConsumerInventoryProbe] and [ConsumerRemovalProbe]
- * and logs their fields on one line.
+ * A command bean whose console run executes [ConsumerInventoryProbe], [ConsumerRemovalProbe] and
+ * [ConsumerAsyncInventoryProbe] and logs their fields on one line.
  */
 @Service
 class SpikeInventoryCommand(
     private val insertionProbe: ConsumerInventoryProbe,
     private val removalProbe: ConsumerRemovalProbe,
+    private val asyncProbe: ConsumerAsyncInventoryProbe,
 ) : CommandAPICommand(SharedBeanReport.INVENTORY_COMMAND) {
 
     private val log = logger()
 
     init {
         anyExecutorSuspend { _, _ ->
-            val fields = insertionProbe.run() + removalProbe.run()
+            val fields = insertionProbe.run() + removalProbe.run() + asyncProbe.run()
             log.atInfo()
                 .log("%s inventory %s", SharedBeanReport.SPIKE_MARKER, fields.joinToString(" "))
         }

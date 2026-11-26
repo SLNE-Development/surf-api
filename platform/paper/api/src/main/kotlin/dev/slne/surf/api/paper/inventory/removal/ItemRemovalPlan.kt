@@ -1,9 +1,6 @@
 package dev.slne.surf.api.paper.inventory.removal
 
-import dev.slne.surf.api.paper.inventory.insertion.ItemAmount
-import dev.slne.surf.api.paper.inventory.insertion.ensureOwningThread
-import dev.slne.surf.api.paper.inventory.insertion.itemAmountsOf
-import dev.slne.surf.api.paper.inventory.insertion.similarTo
+import dev.slne.surf.api.paper.inventory.insertion.*
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -29,7 +26,18 @@ private const val OFF_THREAD_REASON = "Item removal off the thread that owns the
  *
  * Planning and committing must run on the thread that owns the inventory: the thread of the
  * holding entity, the region thread of the inventory's location, or the global tick thread for an
- * inventory with neither. On any other thread they throw [IllegalStateException].
+ * inventory with neither. On any other thread they throw [IllegalStateException]. The suspending
+ * variants, `planRemovalAsync` and [commitAsync], switch to that thread themselves, so a coroutine
+ * can plan and commit from any thread:
+ *
+ * ```kotlin
+ * scope.launch {
+ *     val plan = player.planRemovalAsync(price, 16)
+ *     if (!plan.isAvailable) return@launch
+ *
+ *     plan.commitAsync()
+ * }
+ * ```
  *
  * @property entries one entry per set of similar items, in the order they were first given
  */
@@ -84,6 +92,23 @@ class ItemRemovalPlan internal constructor(
         val missingAmounts = inventory.removeInScope(requests, scope)
 
         return ItemRemovalResult(requests.zip(missingAmounts, ::resultEntry))
+    }
+
+    /**
+     * Runs [commit] on the thread that owns the inventory, switching there first.
+     *
+     * Cancelling the coroutine before the commit starts leaves the inventory unchanged; a commit
+     * that has started completes.
+     *
+     * @throws IllegalStateException if the calling coroutine does not belong to a plugin that runs
+     * on surf-api
+     * @throws kotlinx.coroutines.CancellationException if the coroutine is cancelled, or the entity
+     * holding the inventory is removed, before the commit starts
+     */
+    suspend fun commitAsync(
+        policy: ItemRemovalPolicy = ItemRemovalPolicy.REJECT,
+    ): ItemRemovalResult {
+        return inventory.onOwningThread { commit(policy) }
     }
 
     private fun Inventory.holdsNow(requests: List<ItemAmount>): Boolean {
@@ -231,6 +256,131 @@ fun Player.planRemoval(
         itemAmountsOf(items),
         RemovalScope(includeOffhand, includeArmor),
     )
+}
+
+/**
+ * Plans the removal of [amount] items similar to [item] from this inventory, on the thread that
+ * owns it.
+ *
+ * @throws IllegalArgumentException if [item] is empty or [amount] is not positive
+ * @throws IllegalStateException if the calling coroutine does not belong to a plugin that runs on
+ * surf-api
+ * @throws kotlinx.coroutines.CancellationException if the entity holding the inventory is removed
+ * first
+ * @see Inventory.planRemoval
+ */
+suspend fun Inventory.planRemovalAsync(item: ItemStack, amount: Int): ItemRemovalPlan {
+    return onOwningThread { planRemoval(item, amount) }
+}
+
+/**
+ * Plans the removal of [items], each in its own amount, from this inventory, on the thread that
+ * owns it.
+ *
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Inventory.planRemovalAsync(vararg items: ItemStack): ItemRemovalPlan {
+    return planRemovalAsync(items.asList())
+}
+
+/**
+ * Plans the removal of [items], each in its own amount, from this inventory, on the thread that
+ * owns it.
+ *
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Inventory.planRemovalAsync(items: Collection<ItemStack>): ItemRemovalPlan {
+    return onOwningThread { planRemoval(items) }
+}
+
+/**
+ * Plans the removal of [items], each key in the amount it maps to, from this inventory, on the
+ * thread that owns it.
+ *
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Inventory.planRemovalAsync(items: Map<ItemStack, Int>): ItemRemovalPlan {
+    return onOwningThread { planRemoval(items) }
+}
+
+/**
+ * Plans the removal of [amount] items similar to [item] from the storage slots of this player, on
+ * the player's thread.
+ *
+ * @param includeOffhand whether the offhand counts as well
+ * @param includeArmor whether the worn armor counts as well
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Player.planRemovalAsync(
+    item: ItemStack,
+    amount: Int,
+    includeOffhand: Boolean = false,
+    includeArmor: Boolean = false,
+): ItemRemovalPlan {
+    return inventory.onOwningThread {
+        planRemoval(
+            item,
+            amount,
+            includeOffhand = includeOffhand,
+            includeArmor = includeArmor,
+        )
+    }
+}
+
+/**
+ * Plans the removal of [items], each in its own amount, from the storage slots of this player, on
+ * the player's thread.
+ *
+ * @param includeOffhand whether the offhand counts as well
+ * @param includeArmor whether the worn armor counts as well
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Player.planRemovalAsync(
+    vararg items: ItemStack,
+    includeOffhand: Boolean = false,
+    includeArmor: Boolean = false,
+): ItemRemovalPlan {
+    return planRemovalAsync(
+        items.asList(),
+        includeOffhand = includeOffhand,
+        includeArmor = includeArmor,
+    )
+}
+
+/**
+ * Plans the removal of [items], each in its own amount, from the storage slots of this player, on
+ * the player's thread.
+ *
+ * @param includeOffhand whether the offhand counts as well
+ * @param includeArmor whether the worn armor counts as well
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Player.planRemovalAsync(
+    items: Collection<ItemStack>,
+    includeOffhand: Boolean = false,
+    includeArmor: Boolean = false,
+): ItemRemovalPlan {
+    return inventory.onOwningThread {
+        planRemoval(items, includeOffhand = includeOffhand, includeArmor = includeArmor)
+    }
+}
+
+/**
+ * Plans the removal of [items], each key in the amount it maps to, from the storage slots of this
+ * player, on the player's thread.
+ *
+ * @param includeOffhand whether the offhand counts as well
+ * @param includeArmor whether the worn armor counts as well
+ * @see Inventory.planRemovalAsync
+ */
+suspend fun Player.planRemovalAsync(
+    items: Map<ItemStack, Int>,
+    includeOffhand: Boolean = false,
+    includeArmor: Boolean = false,
+): ItemRemovalPlan {
+    return inventory.onOwningThread {
+        planRemoval(items, includeOffhand = includeOffhand, includeArmor = includeArmor)
+    }
 }
 
 private fun Inventory.planItemRemoval(

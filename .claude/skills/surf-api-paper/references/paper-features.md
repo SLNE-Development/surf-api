@@ -246,8 +246,26 @@ val result = plan.commit()
   through `insertedOf(item)` and `leftoverOf(item)`. Under `DROP`, the leftover is what was dropped.
 - Planning and committing run on the thread that owns the inventory: the holding entity's thread,
   the region thread of the inventory's location, or the global tick thread for an inventory with
-  neither. Anywhere else they throw `IllegalStateException` through `TickThreadGuard`; switch with
-  `PaperDispatchers` first.
+  neither. Anywhere else they throw `IllegalStateException` through `TickThreadGuard`.
+- The suspending variants switch to that thread themselves: `planInsertionAsync` with the same
+  eight overloads as `planInsertion`, and `commitAsync(policy)` on the plan. A whole flow then reads
+  as one coroutine of the plugin, started from any thread:
+
+  ```kotlin
+  scope.launch {
+      val plan = player.planInsertionAsync(reward, 64)
+      if (!plan.fits) return@launch
+
+      plan.commitAsync(ItemInsertionPolicy.DROP)
+  }
+  ```
+
+  They switch through the calling plugin's `PaperDispatchers`, so they need a coroutine of a surf
+  plugin, such as one of its injected `CoroutineScope` or a suspending command executor, and throw
+  `IllegalStateException` in any other coroutine. A coroutine cancelled before the commit starts
+  leaves the inventory unchanged; a commit that has started completes. When the entity that holds
+  the inventory is removed first, the call fails with a `CancellationException`, as `withEntity`
+  does.
 
 ## `inventory/removal/` - item removal
 
@@ -290,7 +308,17 @@ val result = plan.commit()
   The `ItemRemovalResult` carries `removed` and `missing` in total, per item in `entries`, and
   through `removedOf(item)` and `missingOf(item)`.
 - The thread rule of item insertion applies: plan and commit on the thread that owns the
-  inventory, or they throw `IllegalStateException`.
+  inventory, or they throw `IllegalStateException`. `planRemovalAsync` and `commitAsync(policy)`
+  switch to that thread themselves, with the same rules as for item insertion:
+
+  ```kotlin
+  scope.launch {
+      val plan = player.planRemovalAsync(price, 16)
+      if (!plan.isAvailable) return@launch
+
+      plan.commitAsync()
+  }
+  ```
 
 ## `region/` - tick-thread assertions
 
