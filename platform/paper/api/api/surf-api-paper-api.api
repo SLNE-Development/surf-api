@@ -1608,6 +1608,40 @@ public final class dev/slne/surf/api/paper/inventory/framework/view/state/StateR
 	public final fun setNextIndex (I)V
 }
 
+public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan {
+	public final fun commit (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
+	public static synthetic fun commit$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;ILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
+	public final fun getAmount ()I
+	public final fun getFits ()Z
+	public final fun getInventory ()Lorg/bukkit/inventory/Inventory;
+	public final fun getLeftover ()I
+}
+
+public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlanKt {
+	public static final fun planInsertion (Lorg/bukkit/entity/Player;Lorg/bukkit/inventory/ItemStack;I)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+	public static final fun planInsertion (Lorg/bukkit/inventory/Inventory;Lorg/bukkit/inventory/ItemStack;I)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan;
+}
+
+public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy : java/lang/Enum {
+	public static final field REJECT Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPolicy;
+}
+
+public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
+	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInserted ()I
+	public final fun getLeftover ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface annotation class dev/slne/surf/api/paper/nms/NmsUseWithCaution : java/lang/annotation/Annotation {
 }
 

@@ -18,6 +18,7 @@ class SurfApiTestCommand : CommandAPICommand("surfapitest") {
             GlowingTest("glowing"),
             PaginationTest("pagination"),
             InventoryTest("inventory"),
+            ItemInsertionTest("insertion"),
             ToastTest("toast"),
             SuspendCommandExecutionTest("suspendCommandExecution"),
             SummonCommandTest("summoncommand"),

@@ -63,6 +63,9 @@ import kotlin.io.path.*
  * - the NATS command logs [EXPECTED_NATS_COMMAND_FIELDS]: a call through a service proxy reached
  *   the consumer's own `@NatsService` over the broker, a published event reached its
  *   `@NatsListener`, and an `ItemStack` survived the surf-nats serializer round trip on the server
+ * - the inventory command logs [EXPECTED_INVENTORY_COMMAND_FIELDS]: insertion plans on the server's
+ *   own inventories predict what fits, commits insert what was planned or nothing, a player keeps
+ *   armor, offhand and crafting grid, and planning or committing off the owning thread throws
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -136,6 +139,8 @@ class PaperSharedBeanBootTest {
                 server.awaitLine(SCOPE_COMMAND_LINE)
                 server.sendConsoleCommand(SharedBeanReport.NATS_COMMAND)
                 server.awaitLine(NATS_COMMAND_LINE)
+                server.sendConsoleCommand(SharedBeanReport.INVENTORY_COMMAND)
+                server.awaitLine(INVENTORY_COMMAND_LINE)
             }
         } finally {
             server.stop()
@@ -171,6 +176,18 @@ class PaperSharedBeanBootTest {
 
         if (missingNatsFields.isNotEmpty()) {
             bail("The NATS command's line lacks $missingNatsFields:\n  | $natsLine")
+        }
+
+        val inventoryLine = server.linesContaining(listOf(INVENTORY_COMMAND_LINE)).last()
+        val inventoryFields = inventoryLine.substringAfter(INVENTORY_COMMAND_LINE).split(' ')
+        val missingInventoryFields = EXPECTED_INVENTORY_COMMAND_FIELDS.filterNot {
+            it in inventoryFields
+        }
+
+        if (missingInventoryFields.isNotEmpty()) {
+            bail(
+                "The inventory command's line lacks $missingInventoryFields:\n  | $inventoryLine",
+            )
         }
 
         // Logged by the consumer's disable hook, so it can only appear once the server stopped.
@@ -768,6 +785,36 @@ class PaperSharedBeanBootTest {
             "nats=ok",
             "natsEvent=ok",
             "natsItemStack=ok",
+        )
+
+        /**
+         * What the consumer's inventory command bean logs when the console runs it, whatever the
+         * outcome.
+         */
+        val INVENTORY_COMMAND_LINE = "${SharedBeanReport.SPIKE_MARKER} inventory "
+
+        /**
+         * The fields of the inventory command's line, worked out by hand from each scenario.
+         *
+         * A plan reads `fits/leftover`; a commit adds `inserted/leftover` and what the inventory
+         * holds afterwards. The off-thread fields name the exception that planning or committing
+         * threw on `Dispatchers.Default`.
+         */
+        val EXPECTED_INVENTORY_COMMAND_FIELDS = listOf(
+            "insertEmpty=true/0",
+            "insertPartial=false/42",
+            "insertNearlyFull=false/6",
+            "insertMultiStack=false/5",
+            "insertMaxStack16=false/6",
+            "insertMaxStack99=false/9",
+            "insertCommit99=891/0/slot:99",
+            "insertCommit=true/0/200/0/dirt:450",
+            "insertReject=true/0/0/128/dirt:0",
+            "insertPlayer=false/8/32/0/dirt:64/armor:AIR,AIR,AIR,DIAMOND_HELMET/offhand:AIR/" +
+                "crafting:AIR,AIR,AIR,AIR,AIR",
+            "insertOffThreadPlan=IllegalStateException",
+            "insertOffThreadCommit=IllegalStateException",
+            "insertOffThreadPlayer=IllegalStateException",
         )
 
         /**

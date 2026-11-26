@@ -193,6 +193,43 @@ Overloads take an `Entity` (colour optional), a raw entity id with a team id and
 flags, a `Block` or a `Location` (colour required for the last two). Nothing is persisted - whoever
 makes something glow is responsible for removing it.
 
+## `inventory/insertion/` - item insertion
+
+An insertion plan answers how much of an item fits into an inventory before anything changes, for
+example to tell a player whether a reward or a purchase fits:
+
+```kotlin
+val plan = player.planInsertion(ItemStack.of(Material.DIAMOND), 200)
+
+if (!plan.fits) {
+    player.sendText {
+        appendErrorPrefix()
+        error("Free up space for ")
+        variableValue(plan.leftover)
+        error(" more items.")
+    }
+    return
+}
+
+val result = plan.commit()
+```
+
+- `Inventory.planInsertion(item, amount)` works on any Bukkit inventory; `Player.planInsertion` is
+  the shortcut for the player's inventory. The amount of `item` itself is ignored, and `amount`
+  may exceed one stack.
+- On a player inventory, only the storage slots count: armor, offhand and crafting grid stay
+  untouched. Every other inventory uses all its slots.
+- `fits` and `leftover` describe the inventory when the plan was made. The plan runs Bukkit's own
+  `addItem` on a copy of the slots in scope, so similarity follows `ItemStack.isSimilar` and each
+  item's own max stack size, including the `MAX_STACK_SIZE` data component.
+- `commit(policy)` plans again against the current inventory. Under the default insertion policy
+  `ItemInsertionPolicy.REJECT` it inserts nothing when the items no longer fit. The
+  `ItemInsertionResult` carries `inserted` and `leftover`.
+- Planning and committing run on the thread that owns the inventory: the holding entity's thread,
+  the region thread of the inventory's location, or the global tick thread for an inventory with
+  neither. Anywhere else they throw `IllegalStateException` through `TickThreadGuard`; switch with
+  `PaperDispatchers` first.
+
 ## `region/` - tick-thread assertions
 
 `TickThreadGuard` fails fast when code runs on the wrong thread, which is what makes Folia bugs

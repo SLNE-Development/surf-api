@@ -34,4 +34,10 @@ object SharedBeanReport {
      * the server is up.
      */
     const val NATS_COMMAND = "surfspikenats"
+
+    /**
+     * The name of the consumer's inventory command bean, which the boot test runs from the console
+     * to exercise item insertion on the server's own inventories.
+     */
+    const val INVENTORY_COMMAND = "surfspikeinventory"
 }
