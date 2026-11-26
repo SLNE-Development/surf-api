@@ -7,8 +7,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import java.lang.Runnable
-import java.lang.System
-import java.lang.Thread
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -257,6 +255,7 @@ class PluginDispatchersTest {
         dispatchers.enable()
         val entity = fakeEntity()
         val completions = AtomicInteger()
+        val handlersRan = CountDownLatch(RACE_ROUNDS)
         val runs = AtomicInteger()
 
         val jobs = List(RACE_ROUNDS) {
@@ -264,7 +263,12 @@ class PluginDispatchersTest {
                 dispatchers.entity(entity),
                 CoroutineStart.DEFAULT,
             ) { runs.incrementAndGet() }
-                .also { job -> job.invokeOnCompletion { completions.incrementAndGet() } }
+                .also { job ->
+                    job.invokeOnCompletion {
+                        completions.incrementAndGet()
+                        handlersRan.countDown()
+                    }
+                }
         }
         awaitQueued(RACE_ROUNDS)
 
@@ -281,6 +285,9 @@ class PluginDispatchersTest {
                 job.join()
             }
         }
+        // join returns once a job is final; its completion handlers may still be running on the
+        // thread that completed it.
+        assertTrue(handlersRan.await(TIMEOUT, TimeUnit.MILLISECONDS))
         assertTrue(failures.isEmpty(), "a block ran or was rejected twice: ${failures.toList()}")
         assertEquals(RACE_ROUNDS, completions.get())
         assertEquals(RACE_ROUNDS, runs.get() + jobs.count { it.isCancelled })

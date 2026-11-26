@@ -1376,7 +1376,7 @@ no longer apply a `dev.slne.surf.redis` relocation for a project dependency.
 | `IntOr.Disabled.enabled()`, `DoubleOr.Disabled.enabled()` | `isEnabled()` |
 | `SurfVisualizer.visibleTo(player)` | `isVisibleTo(player)` |
 | `SystemChatPacket.overlay` (`getOverlay`) | `isOverlay` (`isOverlay()`); `setOverlay` is unchanged |
-| `LastSeenMessagesValidatorMirror.LastSeenTrackedEntry.pending` | `isPending`; the serialized field is still named `pending` |
+| `LastSeenMessagesValidatorMirror.LastSeenTrackedEntry.pending` | `isPending`; the serialized field is renamed to `isPending` too, so data written with `pending` no longer decodes |
 | Minestom `ParsedArgument.present`, `ArgumentDefinition.greedy` and the `Argument.greedy` override point | `isPresent`, `isGreedy` |
 | `NatsEventDeduplicator.firstDelivery(eventId)` and `firstDelivery()` | `isFirstDelivery(eventId)` and `isFirstDelivery()` |
 | `SurfComponentBuilder` as an interface | An abstract class that only surf-api implements. Builder blocks and calls are unchanged; a class of your own that implements it no longer compiles. |
