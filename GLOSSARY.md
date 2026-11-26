@@ -56,3 +56,15 @@ What committing a removal plan does when the inventory no longer holds enough: r
 
 **Storage slots**:
 The hotbar and main inventory of a player, without armor, offhand and crafting grid.
+
+**Temporary inventory**:
+What a player carries while a temporary inventory session is active, handed out by the plugin that started it.
+_Avoid_: swap inventory, kit
+
+**Original inventory**:
+The inventory a player had before a temporary inventory session began, kept until the session ends.
+_Avoid_: backup, snapshot
+
+**Temporary inventory session**:
+The period in which a player carries a temporary inventory instead of their original inventory. A player has at most one.
+_Avoid_: swap, mode
