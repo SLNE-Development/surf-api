@@ -27,7 +27,7 @@ import java.util.*
  * boot test compares them with values worked out by hand.
  */
 @Service
-class ConsumerInventoryProbe {
+class ConsumerInsertionProbe {
 
     /**
      * Runs every scenario and returns its fields in `name=observation` form.
@@ -40,10 +40,11 @@ class ConsumerInventoryProbe {
             observe("insertPartial") { partlyFilledInventory() },
             observe("insertNearlyFull") { nearlyFullInventory() },
             observe("insertMultiStack") { moreThanOneStack() },
-            observe("insertMaxStack16") { customMaxStackSize(16, 150) },
-            observe("insertMaxStack99") { customMaxStackSize(99, 900) },
+            observe("insertMaxStack16") { customMaxStackSize(maxStackSize = 16, amount = 150) },
+            observe("insertMaxStack99") { customMaxStackSize(maxStackSize = 99, amount = 900) },
             observe("insertCommit99") { commitCustomMaxStackSize() },
             observe("insertCommit") { commitOnUnchangedInventory() },
+            observe("insertCommitNotFitting") { commitNotFittingOnUnchangedInventory() },
             observe("insertReject") { rejectOnChangedInventory() },
             observe("insertPlayer") { playerStorageSlotsOnly() },
             observe("insertSeveral") { severalItemsTogether() },
@@ -55,9 +56,9 @@ class ConsumerInventoryProbe {
             observe("insertPolicyDropBlock") { dropAtBlock() },
             observe("insertDropNoLocation") { dropWithoutLocation() },
             observe("insertOffhand") { offhandOption() },
-            observeSuspend("insertOffThreadPlan") { planOffThread() },
-            observeSuspend("insertOffThreadCommit") { commitOffThread() },
-            observeSuspend("insertOffThreadPlayer") { planOffThreadOnPlayer() },
+            observe("insertOffThreadPlan") { planOffThread() },
+            observe("insertOffThreadCommit") { commitOffThread() },
+            observe("insertOffThreadPlayer") { planOffThreadOnPlayer() },
         )
     }
 
@@ -71,6 +72,7 @@ class ConsumerInventoryProbe {
         for (slot in 0..9) {
             inventory.setItem(slot, ItemStack.of(Material.STONE, 64))
         }
+
         inventory.setItem(10, ItemStack.of(Material.DIRT, 30))
 
         return describe(inventory.planInsertion(dirt(), 1100))
@@ -82,6 +84,7 @@ class ConsumerInventoryProbe {
         for (slot in 0..25) {
             inventory.setItem(slot, ItemStack.of(Material.STONE, 64))
         }
+
         inventory.setItem(26, ItemStack.of(Material.DIRT, 60))
 
         return describe(inventory.planInsertion(dirt(), 10))
@@ -92,14 +95,15 @@ class ConsumerInventoryProbe {
     }
 
     private fun customMaxStackSize(maxStackSize: Int, amount: Int): String {
-        val plan = Bukkit.createInventory(null, 9).planInsertion(dirt(maxStackSize), amount)
+        val item = dirt(maxStackSize = maxStackSize)
+        val plan = Bukkit.createInventory(null, 9).planInsertion(item, amount)
 
         return describe(plan)
     }
 
     private fun commitCustomMaxStackSize(): String {
         val inventory = Bukkit.createInventory(null, 9)
-        val result = inventory.planInsertion(dirt(99), 891).commit()
+        val result = inventory.planInsertion(dirt(maxStackSize = 99), 891).commit()
 
         return "${result.inserted}/${result.leftover}/slot:${inventory.getItem(8)?.amount}"
     }
@@ -116,6 +120,21 @@ class ConsumerInventoryProbe {
 
         return "${describe(plan)}/${result.inserted}/${result.leftover}/" +
             "dirt:${inventory.countOf(Material.DIRT)}"
+    }
+
+    /**
+     * Commits a plan for 640 dirt into nine empty slots, which hold 576, once under each policy
+     * that leaves the rest out.
+     */
+    private fun commitNotFittingOnUnchangedInventory(): String {
+        val policies = listOf(ItemInsertionPolicy.REJECT, ItemInsertionPolicy.PARTIAL)
+
+        return policies.joinToString(",") { policy ->
+            val inventory = Bukkit.createInventory(null, 9)
+            val result = inventory.planInsertion(dirt(), 640).commit(policy)
+
+            "$policy:${result.inserted}/${result.leftover}/dirt:${inventory.countOf(Material.DIRT)}"
+        }
     }
 
     private fun rejectOnChangedInventory(): String {
@@ -145,14 +164,15 @@ class ConsumerInventoryProbe {
         for (slot in 0 until inventory.storageContents.size) {
             inventory.setItem(slot, ItemStack.of(Material.STONE, 64))
         }
+
         inventory.setItem(0, ItemStack.of(Material.DIRT, 32))
         inventory.setItem(EquipmentSlot.HEAD, ItemStack.of(Material.DIAMOND_HELMET))
 
         val tooMuch = player.planInsertion(dirt(), 40)
         val result = player.planInsertion(dirt(), 32).commit()
         val armor = inventory.armorContents.joinToString(",") { it.typeName() }
-        val crafting = player.openInventory.topInventory.contents.joinToString(",") {
-            it.typeName()
+        val crafting = player.openInventory.topInventory.contents.joinToString(",") { slot ->
+            slot.typeName()
         }
 
         return "${describe(tooMuch)}/${result.inserted}/${result.leftover}/" +
@@ -354,12 +374,12 @@ class ConsumerInventoryProbe {
 }
 
 /**
- * A command bean whose console run executes [ConsumerInventoryProbe], [ConsumerRemovalProbe] and
+ * A command bean whose console run executes [ConsumerInsertionProbe], [ConsumerRemovalProbe] and
  * [ConsumerAsyncInventoryProbe] and logs their fields on one line.
  */
 @Service
 class SpikeInventoryCommand(
-    private val insertionProbe: ConsumerInventoryProbe,
+    private val insertionProbe: ConsumerInsertionProbe,
     private val removalProbe: ConsumerRemovalProbe,
     private val asyncProbe: ConsumerAsyncInventoryProbe,
 ) : CommandAPICommand(SharedBeanReport.INVENTORY_COMMAND) {

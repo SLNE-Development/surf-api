@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.inventory.insertion
 
+import dev.slne.surf.api.paper.inventory.internal.similarTo
 import org.bukkit.inventory.ItemStack
 
 /**
@@ -50,5 +51,10 @@ class ItemInsertionResult internal constructor(val entries: List<Entry>) {
      * @property inserted the number of these items the commit put into the inventory
      * @property leftover the number of these items the commit did not insert
      */
-    data class Entry(val item: ItemStack, val inserted: Int, val leftover: Int)
+    class Entry internal constructor(val item: ItemStack, val inserted: Int, val leftover: Int) {
+
+        override fun toString(): String {
+            return "Entry(item=$item, inserted=$inserted, leftover=$leftover)"
+        }
+    }
 }

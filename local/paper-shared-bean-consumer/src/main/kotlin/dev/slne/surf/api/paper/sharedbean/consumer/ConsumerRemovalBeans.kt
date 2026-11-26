@@ -44,9 +44,9 @@ class ConsumerRemovalProbe {
             observe("removeArmorUntouched") { armorUntouchedByDefault() },
             observe("removeOffhand") { offhandOption() },
             observe("removeOffhandUntouched") { offhandUntouchedByDefault() },
-            observeSuspend("removeOffThreadPlan") { planOffThread() },
-            observeSuspend("removeOffThreadCommit") { commitOffThread() },
-            observeSuspend("removeOffThreadPlayer") { planOffThreadOnPlayer() },
+            observe("removeOffThreadPlan") { planOffThread() },
+            observe("removeOffThreadCommit") { commitOffThread() },
+            observe("removeOffThreadPlayer") { planOffThreadOnPlayer() },
         )
     }
 

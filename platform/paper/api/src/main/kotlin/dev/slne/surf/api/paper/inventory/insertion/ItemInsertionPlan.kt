@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.inventory.insertion
 
+import dev.slne.surf.api.paper.inventory.internal.*
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -18,15 +19,18 @@ private const val OFF_THREAD_REASON = "Item insertion off the thread that owns t
  * the current contents and follows an [ItemInsertionPolicy], so it stays safe when the inventory
  * changed in between.
  *
- * Planning runs Bukkit's own `Inventory.addItem` on a copy of the slots in scope. On an unchanged
- * inventory, [commit] therefore inserts exactly what the plan predicts. On a player inventory, only
- * the storage slots are in scope, plus the offhand when the plan includes it: armor and crafting
- * grid stay untouched. The offhand only takes what the storage slots leave over.
+ * Planning runs Bukkit's own `Inventory.addItem` on a copy of the slots in scope, so on an
+ * unchanged inventory [commit] matches the plan. A plan that fits inserts every item. A plan that
+ * does not fit inserts `amount - leftover` items under [ItemInsertionPolicy.PARTIAL] and
+ * [ItemInsertionPolicy.DROP], and nothing under [ItemInsertionPolicy.REJECT]. On a player
+ * inventory, only the storage slots are in scope, plus the offhand when the plan includes it:
+ * armor and crafting grid stay untouched. The offhand only takes what the storage slots leave over.
  *
  * Planning and committing must run on the thread that owns the inventory: the thread of the
- * holding entity, the region thread of the inventory's location, or the global tick thread for an
- * inventory with neither. On any other thread they throw [IllegalStateException]. The suspending
- * variants, `planInsertionAsync` and [commitAsync], switch to that thread themselves, so a
+ * holding entity, or the region thread of the inventory's location. An inventory with neither,
+ * such as one from `Bukkit.createInventory`, belongs to no region, and every tick thread owns it.
+ * On any other thread, planning and committing throw [IllegalStateException]. The suspending
+ * variants, `planInsertionAsync` and [commitAsync], switch to an owning thread themselves, so a
  * coroutine can plan and commit from any thread:
  *
  * ```kotlin
@@ -89,7 +93,7 @@ class ItemInsertionPlan internal constructor(
             return ItemInsertionResult(entries.map(::rejectedEntry))
         }
 
-        val leftovers = inventory.insert(requests, includeOffhand)
+        val leftovers = inventory.insert(requests, includeOffhand = includeOffhand)
 
         dropTarget?.drop(leftovers.flatten())
 
@@ -114,7 +118,7 @@ class ItemInsertionPlan internal constructor(
     }
 
     private fun Inventory.fitsNow(requests: List<ItemAmount>): Boolean {
-        return planItemInsertion(requests, includeOffhand).fits
+        return planItemInsertion(requests, includeOffhand = includeOffhand).fits
     }
 
     override fun toString(): String {
@@ -128,13 +132,17 @@ class ItemInsertionPlan internal constructor(
      * @property amount the number of these items to insert
      * @property leftover the number of these items that would not fit
      */
-    data class Entry(val item: ItemStack, val amount: Int, val leftover: Int) {
+    class Entry internal constructor(val item: ItemStack, val amount: Int, val leftover: Int) {
 
         /**
          * Whether all [amount] items of this entry fit.
          */
         val fits: Boolean
             get() = leftover == 0
+
+        override fun toString(): String {
+            return "Entry(item=$item, amount=$amount, leftover=$leftover)"
+        }
     }
 }
 
@@ -199,7 +207,10 @@ fun Player.planInsertion(
     amount: Int,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return inventory.planItemInsertion(listOf(ItemAmount.of(item, amount)), includeOffhand)
+    return inventory.planItemInsertion(
+        listOf(ItemAmount.of(item, amount)),
+        includeOffhand = includeOffhand,
+    )
 }
 
 /**
@@ -212,7 +223,7 @@ fun Player.planInsertion(
     vararg items: ItemStack,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return planInsertion(items.asList(), includeOffhand)
+    return planInsertion(items.asList(), includeOffhand = includeOffhand)
 }
 
 /**
@@ -225,7 +236,7 @@ fun Player.planInsertion(
     items: Collection<ItemStack>,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return inventory.planItemInsertion(itemAmountsOf(items), includeOffhand)
+    return inventory.planItemInsertion(itemAmountsOf(items), includeOffhand = includeOffhand)
 }
 
 /**
@@ -239,7 +250,7 @@ fun Player.planInsertion(
     items: Map<ItemStack, Int>,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return inventory.planItemInsertion(itemAmountsOf(items), includeOffhand)
+    return inventory.planItemInsertion(itemAmountsOf(items), includeOffhand = includeOffhand)
 }
 
 /**
@@ -299,7 +310,9 @@ suspend fun Player.planInsertionAsync(
     amount: Int,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return inventory.onOwningThread { planInsertion(item, amount, includeOffhand) }
+    return inventory.onOwningThread {
+        planInsertion(item, amount, includeOffhand = includeOffhand)
+    }
 }
 
 /**
@@ -313,7 +326,7 @@ suspend fun Player.planInsertionAsync(
     vararg items: ItemStack,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return planInsertionAsync(items.asList(), includeOffhand)
+    return planInsertionAsync(items.asList(), includeOffhand = includeOffhand)
 }
 
 /**
@@ -327,7 +340,7 @@ suspend fun Player.planInsertionAsync(
     items: Collection<ItemStack>,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return inventory.onOwningThread { planInsertion(items, includeOffhand) }
+    return inventory.onOwningThread { planInsertion(items, includeOffhand = includeOffhand) }
 }
 
 /**
@@ -341,7 +354,7 @@ suspend fun Player.planInsertionAsync(
     items: Map<ItemStack, Int>,
     includeOffhand: Boolean = false,
 ): ItemInsertionPlan {
-    return inventory.onOwningThread { planInsertion(items, includeOffhand) }
+    return inventory.onOwningThread { planInsertion(items, includeOffhand = includeOffhand) }
 }
 
 private fun Inventory.planItemInsertion(
@@ -350,7 +363,11 @@ private fun Inventory.planItemInsertion(
 ): ItemInsertionPlan {
     ensureOwningThread(OFF_THREAD_REASON)
 
-    val leftovers = insertStacks(copyStorageSlots(), copyOffhand(includeOffhand), requests)
+    val leftovers = insertStacks(
+        copyStorageSlots(),
+        copyOffhand(includeOffhand = includeOffhand),
+        requests,
+    )
     val entries = requests.zip(leftovers) { request, stacks ->
         ItemInsertionPlan.Entry(
             item = request.item,
@@ -359,7 +376,7 @@ private fun Inventory.planItemInsertion(
         )
     }
 
-    return ItemInsertionPlan(this, entries, includeOffhand)
+    return ItemInsertionPlan(this, entries, includeOffhand = includeOffhand)
 }
 
 private fun resultEntry(request: ItemAmount, leftover: List<ItemStack>): ItemInsertionResult.Entry {

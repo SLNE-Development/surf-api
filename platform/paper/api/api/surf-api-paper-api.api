@@ -1623,18 +1623,10 @@ public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan
 }
 
 public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry {
-	public fun <init> (Lorg/bukkit/inventory/ItemStack;II)V
-	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
-	public final fun component2 ()I
-	public final fun component3 ()I
-	public final fun copy (Lorg/bukkit/inventory/ItemStack;II)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry;Lorg/bukkit/inventory/ItemStack;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionPlan$Entry;
-	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmount ()I
 	public final fun getFits ()Z
 	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
 	public final fun getLeftover ()I
-	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1684,17 +1676,9 @@ public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionResu
 }
 
 public final class dev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry {
-	public fun <init> (Lorg/bukkit/inventory/ItemStack;II)V
-	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
-	public final fun component2 ()I
-	public final fun component3 ()I
-	public final fun copy (Lorg/bukkit/inventory/ItemStack;II)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry;Lorg/bukkit/inventory/ItemStack;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/insertion/ItemInsertionResult$Entry;
-	public fun equals (Ljava/lang/Object;)Z
 	public final fun getInserted ()I
 	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
 	public final fun getLeftover ()I
-	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1713,17 +1697,9 @@ public final class dev/slne/surf/api/paper/inventory/removal/ItemRemovalPlan {
 }
 
 public final class dev/slne/surf/api/paper/inventory/removal/ItemRemovalPlan$Entry {
-	public fun <init> (Lorg/bukkit/inventory/ItemStack;II)V
-	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
-	public final fun component2 ()I
-	public final fun component3 ()I
-	public final fun copy (Lorg/bukkit/inventory/ItemStack;II)Ldev/slne/surf/api/paper/inventory/removal/ItemRemovalPlan$Entry;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/removal/ItemRemovalPlan$Entry;Lorg/bukkit/inventory/ItemStack;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/removal/ItemRemovalPlan$Entry;
-	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmount ()I
 	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
 	public final fun getMissing ()I
-	public fun hashCode ()I
 	public final fun isAvailable ()Z
 	public fun toString ()Ljava/lang/String;
 }
@@ -1773,17 +1749,9 @@ public final class dev/slne/surf/api/paper/inventory/removal/ItemRemovalResult {
 }
 
 public final class dev/slne/surf/api/paper/inventory/removal/ItemRemovalResult$Entry {
-	public fun <init> (Lorg/bukkit/inventory/ItemStack;II)V
-	public final fun component1 ()Lorg/bukkit/inventory/ItemStack;
-	public final fun component2 ()I
-	public final fun component3 ()I
-	public final fun copy (Lorg/bukkit/inventory/ItemStack;II)Ldev/slne/surf/api/paper/inventory/removal/ItemRemovalResult$Entry;
-	public static synthetic fun copy$default (Ldev/slne/surf/api/paper/inventory/removal/ItemRemovalResult$Entry;Lorg/bukkit/inventory/ItemStack;IIILjava/lang/Object;)Ldev/slne/surf/api/paper/inventory/removal/ItemRemovalResult$Entry;
-	public fun equals (Ljava/lang/Object;)Z
 	public final fun getItem ()Lorg/bukkit/inventory/ItemStack;
 	public final fun getMissing ()I
 	public final fun getRemoved ()I
-	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 

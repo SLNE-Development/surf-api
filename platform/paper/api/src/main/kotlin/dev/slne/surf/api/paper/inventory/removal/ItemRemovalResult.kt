@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.inventory.removal
 
-import dev.slne.surf.api.paper.inventory.insertion.similarTo
+import dev.slne.surf.api.paper.inventory.internal.similarTo
 import org.bukkit.inventory.ItemStack
 
 /**
@@ -49,5 +49,10 @@ class ItemRemovalResult internal constructor(val entries: List<Entry>) {
      * @property removed the number of these items the commit took out of the inventory
      * @property missing the number of these items the commit did not remove
      */
-    data class Entry(val item: ItemStack, val removed: Int, val missing: Int)
+    class Entry internal constructor(val item: ItemStack, val removed: Int, val missing: Int) {
+
+        override fun toString(): String {
+            return "Entry(item=$item, removed=$removed, missing=$missing)"
+        }
+    }
 }

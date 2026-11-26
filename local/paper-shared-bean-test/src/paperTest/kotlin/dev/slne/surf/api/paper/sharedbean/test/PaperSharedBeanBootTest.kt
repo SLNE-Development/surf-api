@@ -66,11 +66,13 @@ import kotlin.io.path.*
  * - the inventory command logs [EXPECTED_INVENTORY_COMMAND_FIELDS]: insertion plans on the server's
  *   own inventories predict what fits, alone and for several items together, commits follow each
  *   insertion policy, drops land with the right owner and never despawn, a player keeps armor,
- *   crafting grid and, unless included, the offhand; removal plans report what is missing, alone and
- *   for several items together, ignore items that are not similar, commits follow each removal
+ *   crafting grid and, unless included, the offhand; removal plans report what is missing, alone
+ *   and for several items together, ignore items that are not similar, commits follow each removal
  *   policy, a player keeps worn armor and the offhand unless included, and planning or committing
  *   off the owning thread throws; the suspending variants plan and commit from an async thread on a
- *   plain, a block and an entity inventory, and a cancelled commit leaves the inventory unchanged
+ *   plain, a block and an entity inventory, and a cancelled commit leaves the inventory unchanged.
+ *   The chest minecart stands in for a player: both switch to the thread of the holding entity,
+ *   and the detached test player is not added to a world, so the probe cannot switch to its thread
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -185,8 +187,8 @@ class PaperSharedBeanBootTest {
 
         val inventoryLine = server.linesContaining(listOf(INVENTORY_COMMAND_LINE)).last()
         val inventoryFields = inventoryLine.substringAfter(INVENTORY_COMMAND_LINE).split(' ')
-        val missingInventoryFields = EXPECTED_INVENTORY_COMMAND_FIELDS.filterNot {
-            it in inventoryFields
+        val missingInventoryFields = EXPECTED_INVENTORY_COMMAND_FIELDS.filterNot { field ->
+            field in inventoryFields
         }
 
         if (missingInventoryFields.isNotEmpty()) {
@@ -818,6 +820,7 @@ class PaperSharedBeanBootTest {
             "insertMaxStack99=false/9",
             "insertCommit99=891/0/slot:99",
             "insertCommit=true/0/200/0/dirt:450",
+            "insertCommitNotFitting=REJECT:0/640/dirt:0,PARTIAL:576/64/dirt:576",
             "insertReject=true/0/0/128/dirt:0",
             "insertPlayer=false/8/32/0/dirt:64/armor:AIR,AIR,AIR,DIAMOND_HELMET/offhand:AIR/" +
                 "crafting:AIR,AIR,AIR,AIR,AIR",
@@ -851,6 +854,7 @@ class PaperSharedBeanBootTest {
             "removeOffThreadCommit=IllegalStateException",
             "removeOffThreadPlayer=IllegalStateException",
             "asyncPlain=true/10/true/4/dirt:6",
+            "asyncPlainOnTickThread=true/10/true/4/dirt:6",
             "asyncBlock=true/10/true/4/dirt:6",
             "asyncEntity=true/10/true/4/dirt:6",
             "asyncBlockingStillThrows=IllegalStateException",

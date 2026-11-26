@@ -85,6 +85,7 @@ class PlayerProfileIdTest {
 
     private fun colorsOf(component: Component): Set<TextColor?> {
         val colors = mutableSetOf(component.color())
+
         for (child in component.children()) {
             colors += colorsOf(child)
         }

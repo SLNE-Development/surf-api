@@ -1,9 +1,9 @@
 package dev.slne.surf.api.paper.inventory.removal
 
-import dev.slne.surf.api.paper.inventory.insertion.ItemAmount
-import dev.slne.surf.api.paper.inventory.insertion.RequestStacks
-import dev.slne.surf.api.paper.inventory.insertion.detachedInventoryOf
-import dev.slne.surf.api.paper.inventory.insertion.retry
+import dev.slne.surf.api.paper.inventory.internal.ItemAmount
+import dev.slne.surf.api.paper.inventory.internal.RequestStacks
+import dev.slne.surf.api.paper.inventory.internal.detachedInventoryOf
+import dev.slne.surf.api.paper.inventory.internal.retry
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory

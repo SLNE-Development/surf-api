@@ -666,7 +666,9 @@ abstract class SurfComponentBuilder internal constructor() : ComponentLike {
      *
      * @return this builder
      */
-    fun appendEmDash(): SurfComponentBuilder = spacer(" — ")
+    fun appendEmDash(): SurfComponentBuilder {
+        return spacer(" ").append(CommonComponents.EM_DASH).spacer(" ")
+    }
 
     /**
      * Appends an en dash without spaces (`–`) in spacer color, as in a range such as `1–5`.

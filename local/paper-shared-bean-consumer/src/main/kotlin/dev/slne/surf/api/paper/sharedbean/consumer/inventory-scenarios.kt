@@ -20,15 +20,7 @@ internal fun thrownBy(action: () -> Unit): String {
     }
 }
 
-internal fun observe(name: String, scenario: () -> String): String {
-    return "$name=" + try {
-        scenario()
-    } catch (failure: Exception) {
-        reportFailure(name, failure)
-    }
-}
-
-internal suspend fun observeSuspend(name: String, scenario: suspend () -> String): String {
+internal inline fun observe(name: String, scenario: () -> String): String {
     return "$name=" + try {
         scenario()
     } catch (failure: Exception) {

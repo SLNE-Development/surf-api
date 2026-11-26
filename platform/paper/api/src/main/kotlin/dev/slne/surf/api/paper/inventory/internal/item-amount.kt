@@ -1,4 +1,4 @@
-package dev.slne.surf.api.paper.inventory.insertion
+package dev.slne.surf.api.paper.inventory.internal
 
 import org.bukkit.inventory.ItemStack
 
@@ -38,62 +38,8 @@ internal fun itemAmountsOf(items: Map<ItemStack, Int>): List<ItemAmount> {
  */
 internal inline fun <T> List<T>.similarTo(item: ItemStack, itemOf: (T) -> ItemStack): T {
     return requireNotNull(find { entry -> itemOf(entry).isSimilar(item) }) {
-        "The plan holds no item similar to $item."
+        "No entry holds an item similar to $item."
     }
-}
-
-/**
- * Item amounts split into stacks of at most each item's max stack size, for Bukkit's `addItem` and
- * `removeItem`, which key their leftovers by the index of the stack they were given.
- */
-internal class RequestStacks(private val requests: List<ItemAmount>) {
-    private val owners = ArrayList<Int>()
-
-    /**
-     * The stacks of all requests, in request order.
-     */
-    val stacks: Array<ItemStack>
-
-    init {
-        val split = ArrayList<ItemStack>()
-
-        for ((index, request) in requests.withIndex()) {
-            for (stack in request.item.splitIntoStacks(request.amount)) {
-                owners += index
-                split += stack
-            }
-        }
-
-        stacks = split.toTypedArray()
-    }
-
-    /**
-     * Groups [leftovers], keyed by stack index, by the request each stack belongs to.
-     */
-    fun leftoversPerRequest(leftovers: Map<Int, ItemStack>): List<List<ItemStack>> {
-        val leftoversPerRequest = List(requests.size) { ArrayList<ItemStack>() }
-
-        for ((stackIndex, stack) in leftovers) {
-            leftoversPerRequest[owners[stackIndex]] += stack
-        }
-
-        return leftoversPerRequest
-    }
-}
-
-/**
- * Hands these leftovers, keyed by their index in an earlier `addItem` or `removeItem` call, to
- * [operation] and returns what is still left over under the same keys.
- */
-internal fun Map<Int, ItemStack>.retry(
-    operation: (Array<ItemStack>) -> Map<Int, ItemStack>,
-): Map<Int, ItemStack> {
-    if (isEmpty()) return this
-
-    val stackIndices = keys.sorted()
-    val remaining = operation(stackIndices.map(::getValue).toTypedArray())
-
-    return remaining.mapKeys { (index, _) -> stackIndices[index] }
 }
 
 /**

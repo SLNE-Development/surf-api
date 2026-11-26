@@ -1,6 +1,6 @@
 package dev.slne.surf.api.paper.inventory.removal
 
-import dev.slne.surf.api.paper.inventory.insertion.*
+import dev.slne.surf.api.paper.inventory.internal.*
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -25,10 +25,11 @@ private const val OFF_THREAD_REASON = "Item removal off the thread that owns the
  * A commit takes from the storage slots first, then from the offhand, then from the armor slots.
  *
  * Planning and committing must run on the thread that owns the inventory: the thread of the
- * holding entity, the region thread of the inventory's location, or the global tick thread for an
- * inventory with neither. On any other thread they throw [IllegalStateException]. The suspending
- * variants, `planRemovalAsync` and [commitAsync], switch to that thread themselves, so a coroutine
- * can plan and commit from any thread:
+ * holding entity, or the region thread of the inventory's location. An inventory with neither,
+ * such as one from `Bukkit.createInventory`, belongs to no region, and every tick thread owns it.
+ * On any other thread, planning and committing throw [IllegalStateException]. The suspending
+ * variants, `planRemovalAsync` and [commitAsync], switch to an owning thread themselves, so a
+ * coroutine can plan and commit from any thread:
  *
  * ```kotlin
  * scope.launch {
@@ -126,13 +127,17 @@ class ItemRemovalPlan internal constructor(
      * @property amount the number of these items to remove
      * @property missing the number of these items the inventory lacks
      */
-    data class Entry(val item: ItemStack, val amount: Int, val missing: Int) {
+    class Entry internal constructor(val item: ItemStack, val amount: Int, val missing: Int) {
 
         /**
          * Whether the inventory holds all [amount] items of this entry.
          */
         val isAvailable: Boolean
             get() = missing == 0
+
+        override fun toString(): String {
+            return "Entry(item=$item, amount=$amount, missing=$missing)"
+        }
     }
 }
 
@@ -202,7 +207,7 @@ fun Player.planRemoval(
 ): ItemRemovalPlan {
     return inventory.planItemRemoval(
         listOf(ItemAmount.of(item, amount)),
-        RemovalScope(includeOffhand, includeArmor),
+        RemovalScope(includeOffhand = includeOffhand, includeArmor = includeArmor),
     )
 }
 
@@ -218,7 +223,11 @@ fun Player.planRemoval(
     includeOffhand: Boolean = false,
     includeArmor: Boolean = false,
 ): ItemRemovalPlan {
-    return planRemoval(items.asList(), includeOffhand, includeArmor)
+    return planRemoval(
+        items.asList(),
+        includeOffhand = includeOffhand,
+        includeArmor = includeArmor,
+    )
 }
 
 /**
@@ -235,7 +244,7 @@ fun Player.planRemoval(
 ): ItemRemovalPlan {
     return inventory.planItemRemoval(
         itemAmountsOf(items),
-        RemovalScope(includeOffhand, includeArmor),
+        RemovalScope(includeOffhand = includeOffhand, includeArmor = includeArmor),
     )
 }
 
@@ -254,7 +263,7 @@ fun Player.planRemoval(
 ): ItemRemovalPlan {
     return inventory.planItemRemoval(
         itemAmountsOf(items),
-        RemovalScope(includeOffhand, includeArmor),
+        RemovalScope(includeOffhand = includeOffhand, includeArmor = includeArmor),
     )
 }
 

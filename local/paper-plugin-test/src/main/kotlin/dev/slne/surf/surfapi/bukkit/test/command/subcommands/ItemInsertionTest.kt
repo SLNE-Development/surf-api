@@ -64,7 +64,7 @@ class ItemInsertionTest(name: String) : CommandAPICommand(name) {
                 val amount: Int by args
                 val policy: String by args
                 val includeOffhand: Boolean by args
-                val result = player.planInsertion(item, amount, includeOffhand)
+                val result = player.planInsertion(item, amount, includeOffhand = includeOffhand)
                     .commit(ItemInsertionPolicy.valueOf(policy))
 
                 player.sendText {

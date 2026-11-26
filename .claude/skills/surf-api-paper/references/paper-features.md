@@ -204,9 +204,9 @@ val plan = player.planInsertion(ItemStack.of(Material.DIAMOND), 200)
 if (!plan.fits) {
     player.sendText {
         appendErrorPrefix()
-        error("Free up space for ")
+        error("Dir fehlt Platz für ")
         variableValue(plan.leftover)
-        error(" more items.")
+        error(" Items.")
     }
     return
 }
@@ -245,11 +245,13 @@ val result = plan.commit()
   The `ItemInsertionResult` carries `inserted` and `leftover` in total, per item in `entries`, and
   through `insertedOf(item)` and `leftoverOf(item)`. Under `DROP`, the leftover is what was dropped.
 - Planning and committing run on the thread that owns the inventory: the holding entity's thread,
-  the region thread of the inventory's location, or the global tick thread for an inventory with
-  neither. Anywhere else they throw `IllegalStateException` through `TickThreadGuard`.
-- The suspending variants switch to that thread themselves: `planInsertionAsync` with the same
-  eight overloads as `planInsertion`, and `commitAsync(policy)` on the plan. A whole flow then reads
-  as one coroutine of the plugin, started from any thread:
+  or the region thread of the inventory's location. An inventory with neither, such as one from
+  `Bukkit.createInventory`, belongs to no region, so every tick thread owns it, for example the
+  region thread of a player who clicks in it. Anywhere else they throw `IllegalStateException`.
+- The suspending variants switch to an owning thread themselves: `planInsertionAsync` with the
+  same eight overloads as `planInsertion`, and `commitAsync(policy)` on the plan. For an inventory
+  without a region, they stay on a tick thread and switch to the global region thread from any
+  other thread. A whole flow then reads as one coroutine of the plugin, started from any thread:
 
   ```kotlin
   scope.launch {
@@ -278,9 +280,9 @@ val plan = player.planRemoval(ItemStack.of(Material.EMERALD), 32)
 if (!plan.isAvailable) {
     player.sendText {
         appendErrorPrefix()
-        error("You lack ")
+        error("Dir fehlen ")
         variableValue(plan.missing)
-        error(" emeralds.")
+        error(" Smaragde.")
     }
     return
 }
@@ -309,7 +311,7 @@ val result = plan.commit()
   through `removedOf(item)` and `missingOf(item)`.
 - The thread rule of item insertion applies: plan and commit on the thread that owns the
   inventory, or they throw `IllegalStateException`. `planRemovalAsync` and `commitAsync(policy)`
-  switch to that thread themselves, with the same rules as for item insertion:
+  switch to an owning thread themselves, with the same rules as for item insertion:
 
   ```kotlin
   scope.launch {

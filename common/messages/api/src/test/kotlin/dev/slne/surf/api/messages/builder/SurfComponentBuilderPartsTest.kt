@@ -52,7 +52,8 @@ class SurfComponentBuilderPartsTest {
         }
 
         assertEquals("a — b", plain(built))
-        assertEquals(Colors.SPACER, findText(built, " — ")?.color())
+        assertEquals(Colors.SPACER, findText(built, "—")?.color())
+        assertEquals(Colors.SPACER, findText(built, " ")?.color())
     }
 
     @Test

@@ -17,8 +17,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Runs the suspending variants of item insertion and item removal from a thread that does not own
- * the inventory and reports what it observed.
+ * Runs the suspending variants of item insertion and item removal, mostly from a thread that does
+ * not own the inventory, and reports what it observed.
  *
  * A commit succeeds only on the owning thread, so a scenario that inserts and removes from
  * `Dispatchers.Default` shows that the variant switched threads. Each scenario has a timeout, so a
@@ -35,6 +35,7 @@ class ConsumerAsyncInventoryProbe {
     suspend fun run(): List<String> {
         return listOf(
             observeAsync("asyncPlain") { insertAndRemoveOffThread(plainInventory()) },
+            observeAsync("asyncPlainOnTickThread") { insertAndRemoveOnTickThread() },
             observeAsync("asyncBlock") { inChest(::insertAndRemoveOffThread) },
             observeAsync("asyncEntity") { inStorageMinecart(::insertAndRemoveOffThread) },
             observeAsync("asyncBlockingStillThrows") { blockingCommitOffThread() },
@@ -59,6 +60,20 @@ class ConsumerAsyncInventoryProbe {
         }
 
         return "$outcome/dirt:${inventory.countOf(Material.DIRT)}"
+    }
+
+    /**
+     * Inserts 10 dirt into an inventory without a region and removes 4 again from the server
+     * thread, where the suspending variants run in place.
+     */
+    private suspend fun insertAndRemoveOnTickThread(): String {
+        val inventory = plainInventory()
+        val inserted = inventory.planInsertionAsync(dirt(), 10).commitAsync()
+        val removal = inventory.planRemovalAsync(dirt(), 4)
+        val removed = removal.commitAsync()
+
+        return "${inserted.leftover == 0}/${inserted.inserted}/${removal.isAvailable}/" +
+            "${removed.removed}/dirt:${inventory.countOf(Material.DIRT)}"
     }
 
     private suspend fun blockingCommitOffThread(): String {
@@ -110,6 +125,7 @@ class ConsumerAsyncInventoryProbe {
             check(started.await(LATCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 "The commit did not start."
             }
+
             job.cancel()
             job.join()
 
@@ -216,7 +232,7 @@ class ConsumerAsyncInventoryProbe {
     }
 
     private suspend fun observeAsync(name: String, scenario: suspend () -> String): String {
-        return observeSuspend(name) {
+        return observe(name) {
             withTimeout(SCENARIO_TIMEOUT) { scenario() }
         }
     }

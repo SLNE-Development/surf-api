@@ -1,12 +1,13 @@
 package dev.slne.surf.api.paper.inventory.insertion
 
-import org.bukkit.Bukkit
+import dev.slne.surf.api.paper.inventory.internal.ItemAmount
+import dev.slne.surf.api.paper.inventory.internal.RequestStacks
+import dev.slne.surf.api.paper.inventory.internal.detachedInventoryOf
+import dev.slne.surf.api.paper.inventory.internal.retry
 import org.bukkit.Material
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
-
-private const val ROW_SIZE = 9
 
 /**
  * Inserts [requests] into the real inventory and returns the leftover stacks per request.
@@ -18,7 +19,7 @@ internal fun Inventory.insert(
     requests: List<ItemAmount>,
     includeOffhand: Boolean,
 ): List<List<ItemStack>> {
-    val offhand = copyOffhand(includeOffhand)
+    val offhand = copyOffhand(includeOffhand = includeOffhand)
     val leftovers = insertStacks(this, offhand, requests)
 
     if (offhand != null) {
@@ -64,18 +65,6 @@ internal fun Inventory.copyOffhand(includeOffhand: Boolean): Inventory? {
 }
 
 /**
- * Splits [amount] items similar to this item into stacks of at most its max stack size.
- */
-internal fun ItemStack.splitIntoStacks(amount: Int): Array<ItemStack> {
-    val stackSize = maxStackSize
-    val stackCount = (amount + stackSize - 1) / stackSize
-
-    return Array(stackCount) { index ->
-        asQuantity(minOf(stackSize, amount - index * stackSize))
-    }
-}
-
-/**
  * Copies [slots] into a detached inventory with the stack limit of this inventory.
  *
  * The slots past the copied ones hold full stacks that accept nothing.
@@ -88,20 +77,6 @@ private fun Inventory.copySlots(slots: Array<ItemStack?>): Inventory {
     for (slot in slots.size until shadow.size) {
         shadow.setItem(slot, fullPaddingStack())
     }
-
-    return shadow
-}
-
-/**
- * Copies [slots] into the first slots of a detached inventory and leaves the rest empty.
- *
- * Bukkit only creates inventories in whole rows, so the copy may have more slots than [slots].
- */
-internal fun detachedInventoryOf(slots: Array<ItemStack?>): Inventory {
-    val rows = (slots.size + ROW_SIZE - 1) / ROW_SIZE
-    val shadow = Bukkit.createInventory(null, rows.coerceAtLeast(1) * ROW_SIZE)
-
-    shadow.storageContents = slots
 
     return shadow
 }
