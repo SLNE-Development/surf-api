@@ -440,6 +440,8 @@ public abstract class dev/slne/surf/api/messages/builder/SurfComponentBuilder : 
 	public static synthetic fun appendDisconnectMessage$default (Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public static synthetic fun appendDisconnectMessage$default (Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;Ljava/lang/String;Lnet/kyori/adventure/text/Component;Lnet/kyori/adventure/text/Component;ILjava/lang/Object;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun appendDiscordLink ()Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun appendEmDash ()Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun appendEnDash ()Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun appendErrorPrefix ()Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun appendInfoPrefix ()Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun appendKickDisconnectMessage (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
@@ -564,6 +566,10 @@ public abstract class dev/slne/surf/api/messages/builder/SurfComponentBuilder : 
 	public final fun info (Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun info (Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public abstract fun insertion (Ljava/lang/String;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun keyValue (Ljava/lang/String;C)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun keyValue (Ljava/lang/String;Ljava/lang/Number;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun keyValue (Ljava/lang/String;Ljava/lang/String;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun keyValue (Ljava/lang/String;Z)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun lightPurple (C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun lightPurple (Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun lightPurple (Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
@@ -573,7 +579,10 @@ public abstract class dev/slne/surf/api/messages/builder/SurfComponentBuilder : 
 	public abstract fun mergeStyle (Lnet/kyori/adventure/text/Component;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public abstract fun mergeStyle (Lnet/kyori/adventure/text/Component;Ljava/util/Set;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public abstract fun mergeStyle (Lnet/kyori/adventure/text/Component;[Lnet/kyori/adventure/text/format/Style$Merge;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
-	public final fun note (Ljava/lang/Object;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun note (C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun note (Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun note (Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
+	public final fun note (Z[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun primary (C[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun primary (Ljava/lang/Number;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;
 	public final fun primary (Ljava/lang/String;[Lnet/kyori/adventure/text/format/TextDecoration;)Ldev/slne/surf/api/messages/builder/SurfComponentBuilder;

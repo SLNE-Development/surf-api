@@ -44,7 +44,6 @@ text(char: Char,       color: TextColor? = null, vararg decoration: TextDecorati
 text(number: Number,   color: TextColor? = null, vararg decoration: TextDecoration)
 appendText(text: String, color: TextColor? = null)
 appendText(text: String, color: TextColor? = null, block: TextComponent.Builder.() -> Unit)
-note(any: Any, vararg decoration: TextDecoration)        // NOTE colour, via toString()
 ellipsis(color: TextColor? = SPACER)                     // "..."
 translatable(key: String, color: TextColor? = Colors.WHITE, vararg decoration: TextDecoration)
 ```
@@ -56,10 +55,21 @@ The colour vocabulary is a set of plain members. Each name has the same four ove
 `Boolean`, `Char`, `Number`) plus `vararg decoration: TextDecoration`, and delegates to
 `colored(value, color, vararg decoration)`, which takes any `TextColor`:
 
-- Surf: `primary`, `secondary`, `info`, `success`, `warning`, `error`, `variableKey`,
-  `variableValue`, `spacer`, `darkSpacer` (`note` takes `Any`, see above)
+- Surf: `primary`, `secondary`, `info`, `success`, `warning`, `error`, `note`, `variableKey`,
+  `variableValue`, `spacer`, `darkSpacer`
 - Minecraft: `black`, `darkBlue`, `darkGreen`, `darkAqua`, `darkRed`, `darkPurple`, `gold`, `gray`,
   `darkGray`, `blue`, `green`, `aqua`, `red`, `lightPurple`, `yellow`, `white`
+
+Message parts, all plain (non-inline) members:
+
+```kotlin
+keyValue(key: String, value: String)    // also Boolean, Char, Number: "key: value"
+appendEmDash()                          // " — " in SPACER, spaces included
+appendEnDash()                          // "–" in SPACER, no spaces
+```
+
+`keyValue` colours the key `VARIABLE_KEY`, the `": "` separator `SPACER` and the value
+`VARIABLE_VALUE`.
 
 Inside a builder block, `error` shadows `kotlin.error`.
 

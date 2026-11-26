@@ -601,9 +601,79 @@ abstract class SurfComponentBuilder internal constructor() : ComponentLike {
         return colored(number, Colors.WHITE, *decoration)
     }
 
-    fun note(any: Any, vararg decoration: TextDecoration): SurfComponentBuilder {
-        return text(any.toString(), Colors.NOTE, *decoration)
+    fun note(text: String, vararg decoration: TextDecoration): SurfComponentBuilder {
+        return colored(text, Colors.NOTE, *decoration)
     }
+
+    fun note(boolean: Boolean, vararg decoration: TextDecoration): SurfComponentBuilder {
+        return colored(boolean, Colors.NOTE, *decoration)
+    }
+
+    fun note(char: Char, vararg decoration: TextDecoration): SurfComponentBuilder {
+        return colored(char, Colors.NOTE, *decoration)
+    }
+
+    fun note(number: Number, vararg decoration: TextDecoration): SurfComponentBuilder {
+        return colored(number, Colors.NOTE, *decoration)
+    }
+
+    /**
+     * Appends a key-value pair such as `Coins: 42`.
+     *
+     * The key is in variable-key color, the `": "` separator in spacer color and the value in
+     * variable-value color.
+     *
+     * @return this builder
+     */
+    fun keyValue(key: String, value: String): SurfComponentBuilder {
+        return appendKeyAndSeparator(key).variableValue(value)
+    }
+
+    /**
+     * Appends a key-value pair with a [Boolean] value, styled like `keyValue(String, String)`.
+     *
+     * @return this builder
+     */
+    fun keyValue(key: String, value: Boolean): SurfComponentBuilder {
+        return appendKeyAndSeparator(key).variableValue(value)
+    }
+
+    /**
+     * Appends a key-value pair with a [Char] value, styled like `keyValue(String, String)`.
+     *
+     * @return this builder
+     */
+    fun keyValue(key: String, value: Char): SurfComponentBuilder {
+        return appendKeyAndSeparator(key).variableValue(value)
+    }
+
+    /**
+     * Appends a key-value pair with a [Number] value, styled like `keyValue(String, String)`.
+     *
+     * @return this builder
+     */
+    fun keyValue(key: String, value: Number): SurfComponentBuilder {
+        return appendKeyAndSeparator(key).variableValue(value)
+    }
+
+    private fun appendKeyAndSeparator(key: String): SurfComponentBuilder {
+        return variableKey(key).spacer(": ")
+    }
+
+    /**
+     * Appends an em dash with a space on each side (` — `) in spacer color to separate two parts
+     * of a sentence.
+     *
+     * @return this builder
+     */
+    fun appendEmDash(): SurfComponentBuilder = spacer(" — ")
+
+    /**
+     * Appends an en dash without spaces (`–`) in spacer color, as in a range such as `1–5`.
+     *
+     * @return this builder
+     */
+    fun appendEnDash(): SurfComponentBuilder = append(CommonComponents.EN_DASH)
 
     fun appendInfoPrefix(): SurfComponentBuilder = append(Colors.INFO_PREFIX)
 

@@ -34,15 +34,12 @@ Text lives in `surf-api-messages-api`.
 the palette, the prefixes, collection and time formatting, click helpers. Two entry points:
 
 ```kotlin
-import dev.slne.surf.api.messages.CommonComponents
 import dev.slne.surf.api.messages.adventure.buildText
 import dev.slne.surf.api.messages.adventure.sendText
 
-// build a TextComponent
+// build a TextComponent: "Name: Steve"
 val line = buildText {
-    variableKey("Name")
-    append(CommonComponents.MAP_SEPARATOR)
-    variableValue(player.name)
+    keyValue("Name", player.name)
 }
 
 // build and send in one step
@@ -60,11 +57,18 @@ you need to hand it around; `SurfComponentBuilder { }` is the same thing as `bui
 can be built more than once.
 
 The colour helpers are plain members of `SurfComponentBuilder` (`primary`, `secondary`, `info`,
-`success`, `warning`, `error`, `variableKey`, `variableValue`, `spacer`, `darkSpacer`, plus the
-sixteen Minecraft colours `black` … `white`). Each comes in `String`, `Boolean`, `Char` and
-`Number` overloads with a trailing `vararg decoration: TextDecoration`; `colored(text, color)`
-covers any other colour, and `note(any)` takes any value. Outside a builder, use `Colors.PRIMARY`
-and `Component.text(...)`.
+`success`, `warning`, `error`, `note`, `variableKey`, `variableValue`, `spacer`, `darkSpacer`,
+plus the sixteen Minecraft colours `black` … `white`). Each comes in `String`, `Boolean`, `Char`
+and `Number` overloads with a trailing `vararg decoration: TextDecoration`; `colored(text, color)`
+covers any other colour. Outside a builder, use `Colors.PRIMARY` and `Component.text(...)`.
+
+Three members build the recurring parts of a message, so every plugin renders them alike:
+
+| Member | Appends |
+| --- | --- |
+| `keyValue(key, value)` | `key` in variable-key colour, `": "` in spacer colour, `value` in variable-value colour; `value` takes `String`, `Boolean`, `Char` or `Number` |
+| `appendEmDash()` | `" — "` (space, em dash, space) in spacer colour, between two parts of a sentence |
+| `appendEnDash()` | `"–"` without spaces in spacer colour, for a range such as `1–5` |
 
 `SurfComponentBuilder` is an abstract class that only surf-api implements. Its block members
 (`append { }`, `appendNewline { }`, `appendNewInfoPrefixedLine { }`, `appendKickDisconnectMessage`,
