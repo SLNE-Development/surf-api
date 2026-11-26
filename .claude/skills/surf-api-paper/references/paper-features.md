@@ -249,6 +249,49 @@ val result = plan.commit()
   neither. Anywhere else they throw `IllegalStateException` through `TickThreadGuard`; switch with
   `PaperDispatchers` first.
 
+## `inventory/removal/` - item removal
+
+A removal plan answers whether an inventory holds enough of one or more items before anything
+changes, for example to check whether a player can pay a price or a crafting cost:
+
+```kotlin
+val plan = player.planRemoval(ItemStack.of(Material.EMERALD), 32)
+
+if (!plan.isAvailable) {
+    player.sendText {
+        appendErrorPrefix()
+        error("You lack ")
+        variableValue(plan.missing)
+        error(" emeralds.")
+    }
+    return
+}
+
+val result = plan.commit()
+```
+
+- `planRemoval` has the same four overloads as `planInsertion`: one item and an amount, `vararg`
+  items, a `Collection<ItemStack>` and a `Map<ItemStack, Int>`. The amount may be spread over any
+  number of stacks. The set is available only when the inventory holds every item in full;
+  `entries` and `missingOf(item)` give the missing amount per item, `missing` the total.
+- Similarity follows `ItemStack.isSimilar`: an item with a different name, enchantment or other
+  data does not count.
+- On a player inventory, only the storage slots count. The `Player` overloads take
+  `includeOffhand = true` and `includeArmor = true` to count the offhand and the worn armor as
+  well; a commit takes from the storage slots first, then the offhand, then the armor. Every other
+  inventory uses all its slots.
+- `isAvailable` and `missing` describe the inventory when the plan was made. Planning runs Bukkit's
+  own `removeItem` on a copy of the slots in scope; committing runs it on the inventory itself.
+- `commit(policy)` removes from the current inventory under an `ItemRemovalPolicy`:
+  - `REJECT` (default) checks again with `containsAtLeast` and removes nothing when the inventory
+    no longer holds every item in full.
+  - `PARTIAL` removes what is there, up to each item's amount.
+
+  The `ItemRemovalResult` carries `removed` and `missing` in total, per item in `entries`, and
+  through `removedOf(item)` and `missingOf(item)`.
+- The thread rule of item insertion applies: plan and commit on the thread that owns the
+  inventory, or they throw `IllegalStateException`.
+
 ## `region/` - tick-thread assertions
 
 `TickThreadGuard` fails fast when code runs on the wrong thread, which is what makes Folia bugs

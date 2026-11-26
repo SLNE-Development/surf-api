@@ -6,7 +6,6 @@ import dev.slne.surf.api.paper.command.executors.anyExecutorSuspend
 import dev.slne.surf.api.paper.inventory.insertion.ItemInsertionPlan
 import dev.slne.surf.api.paper.inventory.insertion.ItemInsertionPolicy
 import dev.slne.surf.api.paper.inventory.insertion.planInsertion
-import io.papermc.paper.datacomponent.DataComponentTypes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
@@ -29,8 +28,6 @@ import java.util.*
  */
 @Service
 class ConsumerInventoryProbe {
-
-    private val log = logger()
 
     /**
      * Runs every scenario and returns its fields in `name=observation` form.
@@ -345,39 +342,6 @@ class ConsumerInventoryProbe {
         }
     }
 
-    private fun thrownBy(action: () -> Unit): String {
-        return try {
-            action()
-            "none"
-        } catch (failure: Exception) {
-            failure.javaClass.simpleName
-        }
-    }
-
-    private fun observe(name: String, scenario: () -> String): String {
-        return "$name=" + try {
-            scenario()
-        } catch (failure: Exception) {
-            reportFailure(name, failure)
-        }
-    }
-
-    private suspend fun observeSuspend(name: String, scenario: suspend () -> String): String {
-        return "$name=" + try {
-            scenario()
-        } catch (failure: Exception) {
-            reportFailure(name, failure)
-        }
-    }
-
-    private fun reportFailure(name: String, failure: Exception): String {
-        log.atWarning()
-            .withCause(failure)
-            .log("The inventory scenario '%s' failed", name)
-
-        return "failed:${failure.javaClass.simpleName}"
-    }
-
     private fun describe(plan: ItemInsertionPlan) = "${plan.fits}/${plan.leftover}"
 
     private fun describeEntries(plan: ItemInsertionPlan): String {
@@ -387,69 +351,23 @@ class ConsumerInventoryProbe {
 
         return "${plan.fits}/$leftovers"
     }
-
-    private fun dirtStack(amount: Int): ItemStack = ItemStack.of(Material.DIRT, amount)
-
-    private fun cobblestone(amount: Int = 1): ItemStack = ItemStack.of(Material.COBBLESTONE, amount)
-
-    @Suppress("UnstableApiUsage")
-    private fun dirt(maxStackSize: Int? = null): ItemStack {
-        val item = ItemStack.of(Material.DIRT)
-
-        if (maxStackSize != null) {
-            item.setData(DataComponentTypes.MAX_STACK_SIZE, maxStackSize)
-        }
-
-        return item
-    }
-
-    private fun Inventory.countOf(material: Material): Int {
-        return contents.filterNotNull()
-            .filter { it.type == material }
-            .sumOf { it.amount }
-    }
-
-    private fun ItemStack?.typeName(): String = (this?.type ?: Material.AIR).name
-
-    /**
-     * Creates a player that never joined: a real server player with Bukkit's own player inventory,
-     * neither connected nor added to a world.
-     *
-     * The boot test has no client, and Bukkit offers no way to create a player, so the server's own
-     * classes are reached reflectively. The server runs with Mojang's names.
-     */
-    private fun createDetachedPlayer(): Player {
-        val server = Bukkit.getServer()
-        val world = Bukkit.getWorlds().first()
-        val minecraftServer = server.javaClass.getMethod("getServer").invoke(server)
-        val level = world.javaClass.getMethod("getHandle").invoke(world)
-        val profile = Class.forName("com.mojang.authlib.GameProfile")
-            .getConstructor(UUID::class.java, String::class.java)
-            .newInstance(UUID.randomUUID(), "InventoryProbe")
-        val clientInformation = Class.forName("net.minecraft.server.level.ClientInformation")
-            .getMethod("createDefault")
-            .invoke(null)
-        val serverPlayerClass = Class.forName("net.minecraft.server.level.ServerPlayer")
-        val serverPlayer = serverPlayerClass.constructors
-            .single { it.parameterCount == 4 }
-            .newInstance(minecraftServer, level, profile, clientInformation)
-
-        return serverPlayerClass.getMethod("getBukkitEntity").invoke(serverPlayer) as Player
-    }
 }
 
 /**
- * A command bean whose console run executes [ConsumerInventoryProbe] and logs its fields.
+ * A command bean whose console run executes [ConsumerInventoryProbe] and [ConsumerRemovalProbe]
+ * and logs their fields on one line.
  */
 @Service
-class SpikeInventoryCommand(private val probe: ConsumerInventoryProbe) :
-    CommandAPICommand(SharedBeanReport.INVENTORY_COMMAND) {
+class SpikeInventoryCommand(
+    private val insertionProbe: ConsumerInventoryProbe,
+    private val removalProbe: ConsumerRemovalProbe,
+) : CommandAPICommand(SharedBeanReport.INVENTORY_COMMAND) {
 
     private val log = logger()
 
     init {
         anyExecutorSuspend { _, _ ->
-            val fields = probe.run()
+            val fields = insertionProbe.run() + removalProbe.run()
             log.atInfo()
                 .log("%s inventory %s", SharedBeanReport.SPIKE_MARKER, fields.joinToString(" "))
         }

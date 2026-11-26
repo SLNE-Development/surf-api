@@ -66,8 +66,10 @@ import kotlin.io.path.*
  * - the inventory command logs [EXPECTED_INVENTORY_COMMAND_FIELDS]: insertion plans on the server's
  *   own inventories predict what fits, alone and for several items together, commits follow each
  *   insertion policy, drops land with the right owner and never despawn, a player keeps armor,
- *   crafting grid and, unless included, the offhand, and planning or committing off the owning
- *   thread throws
+ *   crafting grid and, unless included, the offhand; removal plans report what is missing, alone and
+ *   for several items together, ignore items that are not similar, commits follow each removal
+ *   policy, a player keeps worn armor and the offhand unless included, and planning or committing
+ *   off the owning thread throws
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -798,10 +800,11 @@ class PaperSharedBeanBootTest {
         /**
          * The fields of the inventory command's line, worked out by hand from each scenario.
          *
-         * A plan reads `fits/leftover`, or `fits/type:leftover,...` per item; a commit adds
-         * `inserted/leftover` and what the inventory holds afterwards, and a drop what lies on the
-         * ground. The off-thread fields name the exception that planning or committing
-         * threw on `Dispatchers.Default`.
+         * An insertion plan reads `fits/leftover`, or `fits/type:leftover,...` per item; a commit
+         * adds `inserted/leftover` and what the inventory holds afterwards, and a drop what lies
+         * on the ground. A removal plan reads `isAvailable/missing` in the same way, and its
+         * commit adds `removed/missing`. The off-thread fields name the exception that planning
+         * or committing threw on `Dispatchers.Default`.
          */
         val EXPECTED_INVENTORY_COMMAND_FIELDS = listOf(
             "insertEmpty=true/0",
@@ -827,6 +830,23 @@ class PaperSharedBeanBootTest {
             "insertOffThreadPlan=IllegalStateException",
             "insertOffThreadCommit=IllegalStateException",
             "insertOffThreadPlayer=IllegalStateException",
+            "removeSpread=true/0/false/52",
+            "removeCommit=true/0/100/0/dirt:48",
+            "removeSeveral=false/DIRT:0,COBBLESTONE:10",
+            "removeSeveralMap=true/DIRT:0,COBBLESTONE:0",
+            "removeSeveralCommit=DIRT:30/0,COBBLESTONE:10/10/40/10/dirt:34/cobblestone:0",
+            "removeSeveralReject=true/0/0/40/dirt:64/cobblestone:5",
+            "removeSimilarMerged=1/30/0",
+            "removeNotSimilar=false/10/10/10/dirt:64",
+            "removePolicyReject=true/0/0/50/dirt:30",
+            "removePolicyPartial=true/0/30/20/dirt:0",
+            "removeArmor=false/1/true/0/2/0/helmets:0",
+            "removeArmorUntouched=1/1/head:DIAMOND_HELMET",
+            "removeOffhand=false/5/true/0/15/0/offhand:AIR/dirt:0",
+            "removeOffhandUntouched=10/5/offhand:DIRT:5",
+            "removeOffThreadPlan=IllegalStateException",
+            "removeOffThreadCommit=IllegalStateException",
+            "removeOffThreadPlayer=IllegalStateException",
         )
 
         /**

@@ -37,7 +37,7 @@ object SharedBeanReport {
 
     /**
      * The name of the consumer's inventory command bean, which the boot test runs from the console
-     * to exercise item insertion on the server's own inventories.
+     * to exercise item insertion and item removal on the server's own inventories.
      */
     const val INVENTORY_COMMAND = "surfspikeinventory"
 }
