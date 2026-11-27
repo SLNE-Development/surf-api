@@ -17,6 +17,7 @@ val notPublished = setOf(
     "surf-api-paper-shared-bean-test",
     "surf-api-paper-server-harness",
     "surf-api-paper-scenario-probe",
+    "surf-api-paper-scenario-owner",
     "surf-api-paper-scenario-test",
     "surf-api-velocity-shared-bean-provider",
     "surf-api-velocity-shared-bean-consumer",

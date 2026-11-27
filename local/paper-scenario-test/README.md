@@ -2,7 +2,9 @@
 
 Scenario tests with real player connections against a real Paper server. Bots built on
 MCProtocolLib join the offline-mode server and act like players. The probe plugin of
-`local/paper-scenario-probe` reports what the server sees. The server comes from
+`local/paper-scenario-probe` reports what the server sees. The plugin of
+`local/paper-scenario-owner` owns temporary inventory sessions that must outlive their owner.
+The server comes from
 `local/paper-server-harness`, which the Paper shared-bean boot test also uses.
 
 Local only, because it downloads and boots a real server. Missing inputs, a checksum mismatch or a

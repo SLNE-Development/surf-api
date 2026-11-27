@@ -365,6 +365,10 @@ sessions.remove(player.uniqueId)?.end()
   grid. An item the server cannot read, for example from a removed datapack, stays in the player's
   data and is logged. Items from older Minecraft versions are upgraded.
 - `Player.temporaryInventorySession` returns the active session or `null` from any thread.
+- A session that a crash left in the player's data ends when the player next joins, before other
+  join listeners run: the original inventory saved with it comes back and the event fires with
+  `RECOVERED`. This works without the owning plugin installed; a recovered session cannot be
+  resumed.
 - The owning plugin keeps everything outside the inventory to itself: ender chest, experience,
   health, effects, game mode, flight and world border. It also keeps the temporary items where
   they belong while the session runs: surf-api does not stop drops, container access, pickups,

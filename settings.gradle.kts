@@ -216,6 +216,7 @@ if (!ci) {
     includeModule("local/paper-shared-bean-test")
     includeModule("local/paper-server-harness")
     includeModule("local/paper-scenario-probe")
+    includeModule("local/paper-scenario-owner")
     includeModule("local/paper-scenario-test")
     includeModule("local/velocity-shared-bean-provider")
     includeModule("local/velocity-shared-bean-consumer")

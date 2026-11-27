@@ -66,12 +66,17 @@ class TemporaryInventoryBeginner(
 ) {
 
     /**
-     * Begins a session for [player] and returns the reply for it: `started <session id>`,
-     * `already-active <key>`, `unstorable <slot>` or `unavailable`.
+     * Begins a session owned by [owner] for [player] and returns the reply for it:
+     * `started <session id>`, `already-active <key>`, `unstorable <slot>` or `unavailable`.
      */
-    suspend fun begin(player: Player, key: String, items: Map<Int, ItemStack>): String {
+    suspend fun begin(
+        player: Player,
+        key: String,
+        items: Map<Int, ItemStack>,
+        owner: Plugin = plugin,
+    ): String {
         val sessionKey = Key.key(key)
-        val result = player.beginTemporaryInventorySession(plugin, sessionKey) { inventory, data ->
+        val result = player.beginTemporaryInventorySession(owner, sessionKey) { inventory, data ->
             for ((slot, item) in items) {
                 inventory.setItem(slot, item)
             }
@@ -336,7 +341,7 @@ class TemporaryInventoryEndLog(private val plugin: Plugin) {
 /**
  * Reads `slot:MATERIAL:amount,...`, or `none` for no items.
  */
-private fun parseItems(items: String): Map<Int, ItemStack> {
+internal fun parseItems(items: String): Map<Int, ItemStack> {
     if (items == "none") return emptyMap()
 
     return items.split(',').associate { item ->

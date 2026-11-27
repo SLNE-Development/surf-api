@@ -25,6 +25,9 @@ dependencies {
     serverPlugins(
         project(path = ":surf-api-paper-scenario-probe", configuration = "runtimeElements"),
     )
+    serverPlugins(
+        project(path = ":surf-api-paper-scenario-owner", configuration = "runtimeElements"),
+    )
 }
 
 /**
