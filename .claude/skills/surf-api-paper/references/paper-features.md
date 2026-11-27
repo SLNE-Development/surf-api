@@ -373,6 +373,9 @@ sessions.remove(player.uniqueId)?.end()
   `HIGHEST`; cancelled deaths change nothing. surf-api clears every drop, also those other
   listeners added, sets keep inventory and puts the original inventory back, so the player
   respawns with it. Temporary items on the cursor and in the crafting inputs are discarded.
+- A quit ends the session with the cause `QUIT` before the server saves the player, so the saved
+  playerdata holds the original inventory. Temporary items on the cursor, in the crafting grid or
+  in the crafting inputs of an open view are discarded instead of dropped into the world.
 - The owning plugin keeps everything outside the inventory to itself: ender chest, experience,
   health, effects, game mode, flight and world border. It also keeps the temporary items where
   they belong while the session runs: surf-api does not stop drops, container access, pickups,
