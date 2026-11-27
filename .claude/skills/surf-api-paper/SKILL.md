@@ -157,8 +157,9 @@ verifies. With a named bootstrapper, the scan starts at that class's package.
 The api's own lifecycle, for reference: `PaperBoostrapper.bootstrap` installs NATS and Redis, builds
 surf-api's root bootstrap context through `PaperSpringRuntime` and runs `PaperInstance.bootstrap()`.
 `PaperMain.onLoad` starts bStats, builds the root context (`loadRoot`, which also installs it for
-surf-api's static entry points) and runs `PaperInstance.onLoad()`. `onEnable` runs the root's enable
-hooks, then `PaperInstance.onEnable()` (packet api, listeners).
+surf-api's static entry points) and runs `PaperInstance.onLoad()`. `onEnable` registers the root
+context's listener beans, runs the root's enable hooks, then `PaperInstance.onEnable()` (packet api,
+the listeners that are not beans).
 `onDisable` closes the plugin contexts that are still open, tears surf-api down and closes the root
 last. `PaperInstance` extends `CoreInstance` (`common/core/impl/.../core/server/CoreInstance.kt`),
 whose `bootstrap`/`onLoad`/`onEnable`/`onDisable` are `@MustBeInvokedByOverriders`.

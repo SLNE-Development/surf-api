@@ -1,5 +1,7 @@
 package dev.slne.surf.api.paper.server.impl.sidebar
 
+import dev.slne.surf.api.paper.event.BukkitListener
+import dev.slne.surf.api.spring.SurfLifecycle
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -8,7 +10,12 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.server.PluginDisableEvent
 import java.util.concurrent.ConcurrentHashMap
 
-object SidebarRegistry : Listener {
+/**
+ * Tracks the open sidebars, passes player joins and quits to them, and closes a plugin's sidebars
+ * when the plugin is disabled and every remaining one when surf-api is disabled.
+ */
+@BukkitListener
+class SidebarRegistry : Listener, SurfLifecycle {
     private val sidebars = ConcurrentHashMap.newKeySet<SurfSidebarImpl>()
 
     fun add(sidebar: SurfSidebarImpl) {
@@ -19,7 +26,7 @@ object SidebarRegistry : Listener {
         sidebars.remove(sidebar)
     }
 
-    fun closeAll() {
+    override suspend fun onDisable() {
         for (sidebar in sidebars.toList()) {
             sidebar.close()
         }

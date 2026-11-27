@@ -2,25 +2,16 @@ package dev.slne.surf.api.paper.server.listener
 
 import dev.slne.surf.api.paper.event.register
 import dev.slne.surf.api.paper.server.command.SuspendRequirementServiceImpl
-import dev.slne.surf.api.paper.server.impl.glow.GlowingListener
-import dev.slne.surf.api.paper.server.impl.pdc.block.BlockDataListener
-import dev.slne.surf.api.paper.server.impl.sidebar.SidebarRegistry
-import dev.slne.surf.api.paper.server.impl.visualizer.visualizer.VisualizerListener
 import dev.slne.surf.api.paper.server.plugin
 import org.bukkit.Bukkit
 
 object ListenerManager {
     /**
-     * Registers all listeners.
+     * Registers the listeners that are not beans; listener beans are registered with the root
+     * context.
      */
     fun registerListeners() {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, "BungeeCord")
-        VisualizerListener.register()
-        GlowingListener.register()
-        SidebarRegistry.register()
-
-        BlockDataListener.register()
-
         SuspendRequirementServiceImpl.instance.getEventListener().register()
     }
 

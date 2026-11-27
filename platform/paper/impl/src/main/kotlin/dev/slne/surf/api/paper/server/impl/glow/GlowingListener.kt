@@ -1,14 +1,16 @@
 package dev.slne.surf.api.paper.server.impl.glow
 
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.nms.common.GlowingLifecycleHandler
-import dev.slne.surf.api.spring.surfBean
 import io.papermc.paper.event.packet.PlayerChunkLoadEvent
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerQuitEvent
 
-object GlowingListener : Listener {
-    private val glowingLifecycleHandler: GlowingLifecycleHandler by surfBean()
+@BukkitListener
+internal class GlowingListener(
+    private val glowingLifecycleHandler: GlowingLifecycleHandler,
+) : Listener {
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {

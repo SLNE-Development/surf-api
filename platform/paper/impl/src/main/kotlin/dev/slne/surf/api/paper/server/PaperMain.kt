@@ -2,7 +2,6 @@ package dev.slne.surf.api.paper.server
 
 import dev.slne.surf.api.paper.api.metrics.Metrics
 import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
-import dev.slne.surf.api.paper.server.impl.sidebar.SidebarRegistry
 import org.bukkit.plugin.java.JavaPlugin
 
 class PaperMain : JavaPlugin() {
@@ -51,7 +50,6 @@ class PaperMain : JavaPlugin() {
             bstats.shutdown()
         }
 
-        SidebarRegistry.closeAll()
         PaperInstance.onDisable()
     }
 

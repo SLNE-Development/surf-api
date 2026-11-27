@@ -19,6 +19,7 @@ import kotlin.time.Duration
 abstract class SurfSidebarImpl(
     final override val plugin: Plugin,
     private val definition: SidebarDefinition,
+    private val registry: SidebarRegistry,
 ) : SurfSidebar {
     private val sessions = ConcurrentHashMap<UUID, ViewerSession>()
     private val lifecycleLock = Any()
@@ -47,7 +48,7 @@ abstract class SurfSidebarImpl(
     init {
         check(plugin.isEnabled) { "Plugin ${plugin.name} is not enabled" }
 
-        SidebarRegistry.add(this)
+        registry.add(this)
 
         if (!hasSharedContent) {
             sharedReady.complete(Unit)
@@ -130,7 +131,7 @@ abstract class SurfSidebarImpl(
             closed = true
         }
 
-        SidebarRegistry.remove(this)
+        registry.remove(this)
         scope.cancel()
 
         for (session in sessions.values) {
@@ -292,7 +293,8 @@ abstract class SurfSidebarImpl(
 open class SurfViewerSidebarImpl(
     plugin: Plugin,
     definition: SidebarDefinition,
-) : SurfSidebarImpl(plugin, definition), SurfViewerSidebar {
+    registry: SidebarRegistry,
+) : SurfSidebarImpl(plugin, definition, registry), SurfViewerSidebar {
 
     override fun addViewer(player: Player) {
         addViewerInternal(player)
@@ -306,8 +308,9 @@ open class SurfViewerSidebarImpl(
 class SurfAutoUpdatingSidebarImpl(
     plugin: Plugin,
     definition: SidebarDefinition,
+    registry: SidebarRegistry,
     override val updateInterval: Duration,
-) : SurfViewerSidebarImpl(plugin, definition), SurfAutoUpdatingSidebar {
+) : SurfViewerSidebarImpl(plugin, definition, registry), SurfAutoUpdatingSidebar {
     init {
         launchUpdater(updateInterval)
     }
@@ -316,8 +319,9 @@ class SurfAutoUpdatingSidebarImpl(
 class SurfGlobalSidebarImpl(
     plugin: Plugin,
     definition: SidebarDefinition,
+    registry: SidebarRegistry,
     override val updateInterval: Duration,
-) : SurfSidebarImpl(plugin, definition), SurfGlobalSidebar {
+) : SurfSidebarImpl(plugin, definition, registry), SurfGlobalSidebar {
     init {
         forEachPlayer(::addViewerInternal)
         launchUpdater(updateInterval)

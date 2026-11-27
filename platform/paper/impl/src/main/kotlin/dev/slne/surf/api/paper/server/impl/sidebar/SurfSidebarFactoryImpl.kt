@@ -5,7 +5,7 @@ import org.bukkit.plugin.Plugin
 import org.springframework.stereotype.Service
 
 @Service
-class SurfSidebarFactoryImpl : SurfSidebarFactory {
+class SurfSidebarFactoryImpl(private val registry: SidebarRegistry) : SurfSidebarFactory {
 
     override fun createSidebar(
         plugin: Plugin,
@@ -13,7 +13,7 @@ class SurfSidebarFactoryImpl : SurfSidebarFactory {
     ): SurfViewerSidebar {
         val builder = SidebarBuilderImpl().apply(block)
 
-        return SurfViewerSidebarImpl(plugin, builder.definition())
+        return SurfViewerSidebarImpl(plugin, builder.definition(), registry)
     }
 
     override fun createAutoUpdatingSidebar(
@@ -22,7 +22,12 @@ class SurfSidebarFactoryImpl : SurfSidebarFactory {
     ): SurfAutoUpdatingSidebar {
         val builder = AutoUpdatingSidebarBuilderImpl().apply(block)
 
-        return SurfAutoUpdatingSidebarImpl(plugin, builder.definition(), builder.updateInterval)
+        return SurfAutoUpdatingSidebarImpl(
+            plugin,
+            builder.definition(),
+            registry,
+            builder.updateInterval,
+        )
     }
 
     override fun createGlobalSidebar(
@@ -31,6 +36,11 @@ class SurfSidebarFactoryImpl : SurfSidebarFactory {
     ): SurfGlobalSidebar {
         val builder = AutoUpdatingSidebarBuilderImpl().apply(block)
 
-        return SurfGlobalSidebarImpl(plugin, builder.definition(), builder.updateInterval)
+        return SurfGlobalSidebarImpl(
+            plugin,
+            builder.definition(),
+            registry,
+            builder.updateInterval,
+        )
     }
 }

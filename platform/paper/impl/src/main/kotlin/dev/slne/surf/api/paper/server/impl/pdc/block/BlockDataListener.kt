@@ -23,6 +23,7 @@
 package dev.slne.surf.api.paper.server.impl.pdc.block
 
 import com.destroystokyo.paper.event.block.BlockDestroyEvent
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.pdc.block.CustomBlockPersistentDataContainer
 import dev.slne.surf.api.paper.pdc.block.pdc
 import org.bukkit.block.Block
@@ -36,7 +37,8 @@ import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.world.StructureGrowEvent
 
-object BlockDataListener : Listener {
+@BukkitListener
+internal class BlockDataListener : Listener {
     private fun remove(event: BlockEvent) {
         removeFromBlock(event.block)
     }
