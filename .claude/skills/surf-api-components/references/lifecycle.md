@@ -71,7 +71,8 @@ Only singletons that exist when a phase starts take part. A `@Lazy` bean created
 phases that already ran, and a prototype bean never takes part.
 
 The hooks block the thread that calls the phase; on Paper that is the main thread for load, enable
-and disable. Paper runs each of these phases inside `PluginDispatchers.lifecycle`, which routes the
+and disable; SurfCanvas runs the disable phase on a thread of its own (see
+`docs/spring-migration.md`). Paper runs each of these phases inside `PluginDispatchers.lifecycle`, which routes the
 `PaperDispatchers.main` work of every plugin into the blocked phase, so a hook may wait for work on
 `main`. On a server without regionized ticking the same holds for `region(...)` and `entity(...)`;
 on Folia that work goes to Paper, and a hook must not wait for it. A hook must not wait for a task

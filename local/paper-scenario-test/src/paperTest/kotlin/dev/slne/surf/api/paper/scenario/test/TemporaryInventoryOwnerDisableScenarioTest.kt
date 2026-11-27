@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.scenario.test
 
+import dev.slne.surf.api.paper.scenario.probe.DisableOwnershipLog
 import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryDisableHook
 import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryEndContextLog
 import org.junit.jupiter.api.AfterAll
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.TestInstance
  * back.
  *
  * The probe owns the sessions that end at shutdown, so it observes its own end event and calls
- * `endAsync()` for them in its disable phase. The owner plugin of `local/paper-scenario-owner` owns
+ * `endAsync()` for them in its disable phase. That phase must own the player while the server
+ * stops, also on SurfCanvas, which disables a plugin on a thread of its own. The owner plugin of `local/paper-scenario-owner` owns
  * the sessions that end at runtime, because a disabled probe observes nothing.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -72,6 +74,10 @@ class TemporaryInventoryOwnerDisableScenarioTest {
             assertEquals(
                 "false",
                 probe.awaitEvent(TemporaryInventoryDisableHook.DISABLE_END_EVENT, "Stopper"),
+            )
+            assertEquals(
+                "true",
+                probe.awaitEvent(DisableOwnershipLog.DISABLE_OWNS_EVENT, "Stopper"),
             )
         } finally {
             scenario.start()

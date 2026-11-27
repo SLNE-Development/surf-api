@@ -129,7 +129,9 @@ Rules that follow from it:
   calls the phase on, which is the main thread. `PluginDispatchers.lifecycle` runs
   `PaperDispatchers.main` work inside the blocked phase, so a hook may wait for it; on Folia it must
   not wait for region or entity work, and it must never wait for a task handed to the Bukkit
-  scheduler directly. A plugin whose load phase failed is never enabled.
+  scheduler directly. A plugin whose load phase failed is never enabled. SurfCanvas runs the
+  disable phase on a thread of its own, which passes every ownership check while the server stops
+  (see the SurfCanvas paragraph in `docs/spring-migration.md`).
 - **The plugin instance is a bean.** The plugin context injects it under every type it has
   (`Plugin`, `JavaPlugin`, the concrete class). The bootstrap context injects it only as
   `org.bukkit.plugin.Plugin`, a proxy (`PluginInstanceHolder`) that forwards every call

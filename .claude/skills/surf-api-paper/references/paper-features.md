@@ -389,8 +389,7 @@ sessions.remove(player.uniqueId)?.end()
   `PluginDisableEvent`, before the owner's disable phase, so the owner still receives the event
   while it is enabled. The players are about to be saved: revert state there, but do not teleport,
   because on SurfCanvas the region threads are already halted. The owner's own `onDisable` meets
-  its sessions ended; on SurfCanvas it runs on a thread that owns no player, so it must not touch
-  inventories, and `endAsync()` there only returns `false`.
+  its sessions ended, and `endAsync()` there only returns `false`.
 - When the owning plugin is disabled while the server keeps running, each session ends with the
   cause `OWNER_DISABLED` on the player's thread, scheduled through surf-api's own plugin. On Paper
   this runs after the owner's disable phase, so the owner receives no event, and state it changed

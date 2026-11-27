@@ -97,6 +97,35 @@ class TemporaryInventoryDisableHook(
     }
 }
 
+/**
+ * Logs in the probe's disable phase, for every online player, whether the thread running the phase
+ * owns the player, as the event `disable-owns <player> <owns player>`.
+ */
+@Component
+class DisableOwnershipLog(
+    private val server: Server,
+) : SurfLifecycle {
+
+    private val log = logger()
+
+    override suspend fun onDisable() {
+        for (player in server.onlinePlayers) {
+            log.atInfo()
+                .log(
+                    "%s %s %s %s",
+                    ProbeProtocol.EVENT,
+                    DISABLE_OWNS_EVENT,
+                    player.name,
+                    server.isOwnedByCurrentRegion(player),
+                )
+        }
+    }
+
+    companion object {
+        const val DISABLE_OWNS_EVENT = "disable-owns"
+    }
+}
+
 private fun Server.installedPlugin(name: String): Plugin {
     return pluginManager.getPlugin(name) ?: throw IllegalArgumentException("no plugin $name")
 }

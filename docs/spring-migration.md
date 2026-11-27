@@ -322,14 +322,14 @@ entity work or for a task handed to the Bukkit scheduler directly. A plugin whos
 is never enabled; Paper disables it instead.
 
 SurfCanvas runs a plugin's disable phase on a thread of its own, `Plugin Disable - <name>`, and
-continues without it once a configured timeout passes. That thread owns no region and no player, so
-the tick-thread guard rejects world and player access in a disable hook
-([SLNE-Development/surf-canvas#13](https://github.com/SLNE-Development/surf-canvas/issues/13)). The
-plugin's `PluginDisableEvent` fires before the phase, on the thread that disables the plugin. While
-the server stops, that is the region shutdown thread, which passes every ownership check although
-the region threads are already halted. surf-api therefore ends a plugin's temporary inventory
-sessions in that event, not in a disable hook. A disable hook then meets them ended, and
-`endAsync()` returns `false` there without waiting for the halted region threads.
+continues without it once a configured timeout passes. While the server stops, that thread acts for
+the region shutdown thread and passes every ownership check as it does, although the region threads
+are already halted: a disable hook can read and change players and their inventories, but cannot
+teleport or load chunks. A plugin disabled while the server keeps running gets a plain thread that
+owns no region and no player. The plugin's `PluginDisableEvent` fires before the phase, on the
+thread that disables the plugin; while the server stops, that is the region shutdown thread.
+surf-api ends a plugin's temporary inventory sessions in that event, so a disable hook meets them
+ended, and `endAsync()` returns `false` there without waiting for the halted region threads.
 
 There is no hot reload or unloading. At shutdown, contexts close in reverse dependency order:
 consumers and their import contexts first, then providers, then the root context.
