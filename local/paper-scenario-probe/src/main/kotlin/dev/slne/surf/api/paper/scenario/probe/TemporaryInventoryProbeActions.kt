@@ -16,6 +16,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.PrepareItemCraftEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
@@ -68,12 +69,15 @@ class TemporaryInventoryBeginner(
     /**
      * Begins a session owned by [owner] for [player] and returns the reply for it:
      * `started <session id>`, `already-active <key>`, `unstorable <slot>` or `unavailable`.
+     *
+     * @param afterFill runs at the end of the fill, on the player's thread
      */
     suspend fun begin(
         player: Player,
         key: String,
         items: Map<Int, ItemStack>,
         owner: Plugin = plugin,
+        afterFill: () -> Unit = {},
     ): String {
         val sessionKey = Key.key(key)
         val result = player.beginTemporaryInventorySession(owner, sessionKey) { inventory, data ->
@@ -83,6 +87,7 @@ class TemporaryInventoryBeginner(
 
             inventory.heldItemSlot = 0
             data.set(NamespacedKey(plugin, STATE_KEY), PersistentDataType.STRING, key)
+            afterFill()
         }
 
         return when (result) {
@@ -123,6 +128,95 @@ class TemporaryInventoryBeginProbe(
         val (playerName, key, items) = arguments
 
         return beginner.begin(state.player(playerName), key, parseItems(items))
+    }
+}
+
+/**
+ * `temp-begin-failing <player> <key> <items>`: begins a session as `temp-begin` does, with a fill
+ * that throws after it filled the inventory, and replies `threw <exception class>`.
+ */
+@SpringComponent
+class TemporaryInventoryFailingBeginProbe(
+    private val server: Server,
+    private val beginner: TemporaryInventoryBeginner,
+) : ProbeAction {
+
+    override val name = "temp-begin-failing"
+
+    override suspend fun run(arguments: List<String>): String {
+        val (playerName, key, items) = arguments
+        val player = server.onlinePlayer(playerName)
+
+        return try {
+            beginner.begin(player, key, parseItems(items), afterFill = { error("The fill failed") })
+        } catch (failure: IllegalStateException) {
+            "threw ${failure.javaClass.name}"
+        }
+    }
+}
+
+/**
+ * `temp-begin-cancelled <player> <key> <items>`: begins a session as `temp-begin` does, from a
+ * coroutine that the fill cancels, and replies `cancelled` or the begin's result.
+ */
+@SpringComponent
+class TemporaryInventoryCancelledBeginProbe(
+    private val server: Server,
+    private val scope: CoroutineScope,
+    private val beginner: TemporaryInventoryBeginner,
+) : ProbeAction {
+
+    override val name = "temp-begin-cancelled"
+
+    override suspend fun run(arguments: List<String>): String {
+        val (playerName, key, items) = arguments
+        val player = server.onlinePlayer(playerName)
+        val attempt = scope.async {
+            val caller = coroutineContext.job
+
+            beginner.begin(player, key, parseItems(items), afterFill = { caller.cancel() })
+        }
+
+        return try {
+            attempt.await()
+        } catch (_: CancellationException) {
+            "cancelled"
+        }
+    }
+}
+
+/**
+ * `temp-end-on-craft <player>`: makes the next crafting update of the player end the player's
+ * session, as a plugin may from `PrepareItemCraftEvent`, and logs the result of that end as the
+ * event `temp-end-on-craft <player> <result>`.
+ */
+@SpringComponent
+class TemporaryInventoryEndOnCraftProbe : ProbeAction, Listener {
+
+    private val log = logger()
+    private val armedPlayers = ConcurrentHashMap.newKeySet<String>()
+
+    override val name = END_ON_CRAFT
+
+    override suspend fun run(arguments: List<String>): String {
+        armedPlayers += arguments.single()
+
+        return "ok"
+    }
+
+    @EventHandler
+    fun onPrepareCraft(event: PrepareItemCraftEvent) {
+        val player = event.view.player as? Player ?: return
+        if (!armedPlayers.remove(player.name)) return
+
+        val ended = player.temporaryInventorySession?.end()
+
+        log.atInfo()
+            .log("%s %s %s %s", ProbeProtocol.EVENT, END_ON_CRAFT, player.name, ended)
+    }
+
+    companion object {
+        const val END_ON_CRAFT = "temp-end-on-craft"
     }
 }
 

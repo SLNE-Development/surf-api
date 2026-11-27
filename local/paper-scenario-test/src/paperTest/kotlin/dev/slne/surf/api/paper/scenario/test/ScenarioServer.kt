@@ -116,11 +116,11 @@ class ScenarioServer private constructor(
             )
             val brokers = BrokerContainers.start()
             val server = PaperServer(
-                directory,
-                inputs.javaLauncher,
-                inputs.jvmArgs,
-                brokers.environment,
-                INTERESTING,
+                directory = directory,
+                javaLauncher = inputs.javaLauncher,
+                jvmArgs = inputs.jvmArgs,
+                environment = brokers.environment,
+                interesting = INTERESTING,
             )
             val scenario = ScenarioServer(server, brokers)
 

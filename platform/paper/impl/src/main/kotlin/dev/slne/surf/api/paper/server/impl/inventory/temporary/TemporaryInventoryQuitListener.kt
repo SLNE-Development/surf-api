@@ -1,8 +1,8 @@
 package dev.slne.surf.api.paper.server.impl.inventory.temporary
 
+import dev.slne.surf.api.paper.event.register
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndCause
 import dev.slne.surf.api.spring.SurfLifecycle
-import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -10,7 +10,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
-import org.bukkit.plugin.Plugin
 import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -21,21 +20,19 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * A view still open when the server removes the player closes with
  * [InventoryCloseEvent.Reason.DISCONNECT], after which the server drops the cursor item and the
- * view's crafting inputs into the world. Those temporary items are discarded on that close and
- * reported with the end event. The cursor item and the player's own crafting grid are discarded at
- * the quit.
+ * inputs of a workstation menu, such as a crafting table or an anvil, into the world. Those
+ * temporary items are discarded on that close and reported with the end event. The cursor item and
+ * the player's own crafting grid are discarded at the quit.
  */
 @Component
 class TemporaryInventoryQuitListener(
-    private val server: Server,
-    private val plugin: Plugin,
     private val sessions: TemporaryInventoryService,
 ) : Listener, SurfLifecycle {
 
     private val discardedOnDisconnect = ConcurrentHashMap<UUID, List<ItemStack>>()
 
     override suspend fun onEnable() {
-        server.pluginManager.registerEvents(this, plugin)
+        register()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

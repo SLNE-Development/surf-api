@@ -37,8 +37,11 @@ sealed interface TemporaryInventoryBeginResult {
     }
 
     /**
-     * The player is dead, offline or no longer in the world, or the player's data holds an entry
-     * this server cannot read, so nothing changed.
+     * No session can begin now, so nothing changed.
+     *
+     * The player is dead, offline or no longer in the world; the cursor item and the inputs of the
+     * open workstation menu do not fit into the inventory; the owning plugin is disabled or being
+     * disabled; or the player's data holds an entry this server cannot read.
      */
     data object Unavailable : TemporaryInventoryBeginResult
 }

@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.scenario.test
 
+import dev.slne.surf.api.paper.scenario.probe.DeathOverrideProbe
 import dev.slne.surf.api.paper.scenario.probe.ProbeProtocol
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -81,6 +82,44 @@ class TemporaryInventoryDeathScenarioTest {
         assertEquals("DIAMOND_PICKAXE:1,GRAVEL:4,STICK:2", death.event.discarded)
         assertRespawnsWithOriginalInventory("Tinkerer", bot, original, death)
         assertEquals(1, sessions.endEventCount(begin.sessionId()))
+    }
+
+    @Test
+    fun `a death that a later listener drops the inventory for keeps the original inventory`() {
+        val bot = scenario.connect("Dropper")
+        val original = giveOriginalInventory("Dropper", bot)
+        val begin = sessions.begin("Dropper", SESSION_KEY, "1:DIAMOND_PICKAXE:1")
+        assertTrue(begin.startsWith("started "), begin)
+
+        probe.request(DeathOverrideProbe.DEATH_OVERRIDE, "Dropper", "drop")
+        val death = killDuringSession("Dropper", bot)
+
+        assertEquals("DEATH", death.event.cause)
+        assertRespawnsWithOriginalInventory("Dropper", bot, original, death)
+    }
+
+    @Test
+    fun `a death that a later listener cancels keeps the session`() {
+        scenario.connect("Survivor")
+        probe.give("Survivor", slot = 3, material = "STONE", amount = 7)
+        val begin = sessions.begin("Survivor", SESSION_KEY, "1:DIAMOND_PICKAXE:1")
+        assertTrue(begin.startsWith("started "), begin)
+
+        probe.request(DeathOverrideProbe.DEATH_OVERRIDE, "Survivor", "cancel")
+        val beforeDeath = scenario.server.mark()
+        probe.kill("Survivor")
+
+        assertEquals(
+            "cancel",
+            probe.awaitEvent(DeathOverrideProbe.DEATH_OVERRIDE, "Survivor", beforeDeath),
+        )
+        assertEquals("$SESSION_KEY ${begin.sessionId()}", sessions.session("Survivor"))
+        assertEquals(mapOf(1 to "DIAMOND_PICKAXE:1"), probe.inventory("Survivor").slots)
+        assertEquals(0, sessions.endEventCount(begin.sessionId()))
+
+        assertTrue(sessions.end("Survivor"))
+        assertEquals(mapOf(3 to "STONE:7"), probe.inventory("Survivor").slots)
+        assertEquals(emptyList<String>(), droppedItems(probe.position("Survivor")))
     }
 
     /**

@@ -16,12 +16,14 @@ import org.springframework.stereotype.Component
  * [TemporaryInventoryEndCause.DEATH].
  *
  * The server computes the drops from the temporary inventory before [PlayerDeathEvent] and wipes
- * the inventory after it. The death handler clears every drop, keeps the inventory and puts the
- * original inventory back inside the event. Cancelled deaths change nothing.
+ * the inventory after it, unless the event keeps it. At [EventPriority.HIGHEST] the death handler
+ * clears every drop and keeps the inventory, so later listeners see no temporary drop. At
+ * [EventPriority.MONITOR] it does both again, in case a later listener changed them, and puts the
+ * original inventory back. A death that any listener cancels changes nothing.
  *
  * The view the dead player had open closes after the event, when the end has already discarded
- * its cursor item and crafting inputs. The close handler covers a session the death handler could
- * not end, before the server drops those items.
+ * its loose items. The close handler covers a session the death handler could not end, before the
+ * server drops those items.
  */
 @Component
 class TemporaryInventoryDeathListener(
@@ -34,11 +36,17 @@ class TemporaryInventoryDeathListener(
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onDeath(event: PlayerDeathEvent) {
+        if (service.activeSession(event.player.uniqueId) == null) return
+
+        event.keepTemporaryItemsOut()
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun onDeathOutcome(event: PlayerDeathEvent) {
         val player = event.player
         if (service.activeSession(player.uniqueId) == null) return
 
-        event.drops.clear()
-        event.keepInventory = true
+        event.keepTemporaryItemsOut()
         service.end(player, TemporaryInventoryEndCause.DEATH)
     }
 
@@ -50,5 +58,10 @@ class TemporaryInventoryDeathListener(
         if (service.activeSession(player.uniqueId) == null) return
 
         service.discardLooseItems(player)
+    }
+
+    private fun PlayerDeathEvent.keepTemporaryItemsOut() {
+        drops.clear()
+        keepInventory = true
     }
 }

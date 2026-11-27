@@ -78,7 +78,7 @@ class TemporaryInventoryQuitScenarioTest {
     }
 
     @Test
-    fun `a kick with temporary items in a crafting table and on the cursor restores the original`() {
+    fun `a kick with temporary items in a table and on the cursor restores the original`() {
         val quit = beginBeforeQuit("TableKicked")
         val table = probe.place(quit.name, "CRAFTING_TABLE")
 

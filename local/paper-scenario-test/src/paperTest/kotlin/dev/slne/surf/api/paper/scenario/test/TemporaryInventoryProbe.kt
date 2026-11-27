@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.scenario.test
 
 import dev.slne.surf.api.paper.scenario.probe.ProbeProtocol
 import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryEndLog
+import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryEndOnCraftProbe
 import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryMenuProbe
 import dev.slne.surf.api.paper.server.harness.PaperServer
 
@@ -19,6 +20,37 @@ class TemporaryInventoryProbe(private val server: PaperServer, private val probe
      */
     fun begin(player: String, key: String, items: String = NONE): String {
         return probe.request("temp-begin", player, key, items)
+    }
+
+    /**
+     * Begins a session as [begin] does, with a fill that throws after it filled the inventory, and
+     * returns `threw <exception class>`.
+     */
+    fun beginFailing(player: String, key: String, items: String): String {
+        return probe.request("temp-begin-failing", player, key, items)
+    }
+
+    /**
+     * Begins a session as [begin] does, from a coroutine that the fill cancels, and returns
+     * `cancelled` or the begin's result.
+     */
+    fun beginCancelled(player: String, key: String, items: String): String {
+        return probe.request("temp-begin-cancelled", player, key, items)
+    }
+
+    /**
+     * Makes the player's next crafting update end the player's session.
+     */
+    fun endOnCraft(player: String) {
+        probe.request(TemporaryInventoryEndOnCraftProbe.END_ON_CRAFT, player)
+    }
+
+    /**
+     * Waits for the result of the end that a crafting update started, logged at or after line
+     * [from].
+     */
+    fun awaitEndOnCraft(player: String, from: Int): String {
+        return probe.awaitEvent(TemporaryInventoryEndOnCraftProbe.END_ON_CRAFT, player, from)
     }
 
     /**
@@ -69,7 +101,7 @@ class TemporaryInventoryProbe(private val server: PaperServer, private val probe
             .awaitEvent(TemporaryInventoryEndLog.END_EVENT, player, from)
             .split(' ')
 
-        return EndEvent(cause, sessionId, state, discarded)
+        return EndEvent(cause = cause, sessionId = sessionId, state = state, discarded = discarded)
     }
 
     /**

@@ -83,7 +83,14 @@ internal object TemporaryInventoryFormat {
         val selectedSlot = readInt()
         val slots = List(readCount()) { readBytes() }
 
-        return StoredSession(id, owner, key, selectedSlot, slots, state = readBytes())
+        return StoredSession(
+            id = id,
+            owner = owner,
+            key = key,
+            selectedSlot = selectedSlot,
+            slots = slots,
+            state = readBytes(),
+        )
     }
 
     private fun DataOutputStream.writeUuid(uuid: UUID) {
@@ -178,7 +185,14 @@ internal class StoredSession(
 ) {
 
     fun withState(state: ByteArray): StoredSession {
-        return StoredSession(id, owner, key, selectedSlot, slots, state)
+        return StoredSession(
+            id = id,
+            owner = owner,
+            key = key,
+            selectedSlot = selectedSlot,
+            slots = slots,
+            state = state,
+        )
     }
 
     /**

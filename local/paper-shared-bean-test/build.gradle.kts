@@ -5,13 +5,9 @@ plugins {
 description = "surf-api-paper-shared-bean-test"
 
 dependencies {
-    // For the marker strings the consuming plugin writes, so the test and the plugin cannot drift.
-    // They are `const val`, so nothing of these modules is needed at runtime.
     paperTestCompileOnly(projects.surfApiPaperSharedBeanConsumer)
     paperTestCompileOnly(projects.surfApiPaperSharedBeanProvider)
 
-    // The consumer's shadow jar relocates Configurate like surf-api's; the provider has nothing to
-    // shade.
     serverPlugins(
         project(path = ":surf-api-paper-shared-bean-provider", configuration = "runtimeElements"),
     )

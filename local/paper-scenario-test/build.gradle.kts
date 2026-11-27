@@ -18,8 +18,6 @@ repositories {
 dependencies {
     paperTestImplementation(libs.mcprotocollib)
 
-    // For the protocol constants the probe logs; they are `const val`, so nothing of the probe is
-    // needed at runtime.
     paperTestCompileOnly(projects.surfApiPaperScenarioProbe)
 
     serverPlugins(
@@ -27,9 +25,6 @@ dependencies {
     )
     serverPlugins(
         project(path = ":surf-api-paper-scenario-owner", configuration = "runtimeElements"),
-    )
-    serverPlugins(
-        project(path = ":surf-api-paper-shared-bean-provider", configuration = "runtimeElements"),
     )
 }
 

@@ -1,6 +1,7 @@
 package dev.slne.surf.api.paper.server.impl.inventory.temporary
 
 import dev.slne.surf.api.common.util.logger
+import dev.slne.surf.api.paper.event.register
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndCause
 import dev.slne.surf.api.spring.SurfLifecycle
 import org.bukkit.Server
@@ -8,20 +9,25 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginDisableEvent
+import org.bukkit.event.server.PluginEnableEvent
 import org.bukkit.plugin.Plugin
 import org.springframework.stereotype.Component
 
 /**
  * Ends the temporary inventory sessions of a plugin that is being disabled.
  *
+ * From its [PluginDisableEvent] on, the plugin cannot begin new sessions until it is enabled
+ * again.
+ *
  * While the server stops, every session of the plugin ends at once in its [PluginDisableEvent].
  * The event fires before the plugin's disable phase, so the owner still receives the end event. On
- * Paper it fires on the main thread; on SurfCanvas on the region shutdown thread, which passes every
- * ownership check although the region threads are already halted.
+ * Paper it fires on the main thread; on SurfCanvas on the region shutdown thread, which passes
+ * every ownership check although the region threads are already halted.
  *
  * While the server keeps running, each end is scheduled on the player's entity scheduler on behalf
- * of surf-api's [plugin] and runs after the owner's disable phase. A session that ended in between
- * stays ended, and a session begun since stays untouched.
+ * of surf-api's [plugin]. On Paper it runs after the owner's disable phase. On Folia and
+ * SurfCanvas it runs in the player's next region tick, which can fall within the owner's disable
+ * phase. A session that ended in between stays ended.
  */
 @Component
 internal class TemporaryInventoryOwnerDisableListener(
@@ -33,12 +39,17 @@ internal class TemporaryInventoryOwnerDisableListener(
     private val log = logger()
 
     override suspend fun onEnable() {
-        server.pluginManager.registerEvents(this, plugin)
+        register(plugin)
+    }
+
+    @EventHandler
+    fun onPluginEnable(event: PluginEnableEvent) {
+        sessions.openAdmission(event.plugin.name)
     }
 
     @EventHandler
     fun onPluginDisable(event: PluginDisableEvent) {
-        val owned = sessions.activeSessionsOwnedBy(event.plugin.name)
+        val owned = sessions.closeAdmission(event.plugin.name)
         val isShutdown = server.isStopping
 
         for (session in owned) {

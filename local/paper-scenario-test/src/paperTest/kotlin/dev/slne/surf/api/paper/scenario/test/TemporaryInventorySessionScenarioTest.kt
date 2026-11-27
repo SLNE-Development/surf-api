@@ -9,8 +9,8 @@ import org.junit.jupiter.api.TestInstance
 
 /**
  * Begins and ends temporary inventory sessions for bots and checks what the server sees: the
- * temporary inventory while the session runs, the original inventory afterwards, and the end
- * event.
+ * temporary inventory while the session runs, the original inventory afterwards, the end event,
+ * and that no item lies in the world.
  *
  * Every test joins bots under names of its own, so the tests do not depend on each other or on
  * their order.
@@ -60,6 +60,33 @@ class TemporaryInventorySessionScenarioTest {
         val original = probe.inventory("MenuUser")
         assertEquals("DIRT:5", original.slots[3])
         assertEquals(listOf("DIRT:5", "EMERALD:1"), original.slots.values.sorted())
+        assertNoItemsAround("MenuUser")
+    }
+
+    @Test
+    fun `a begin whose cursor item does not fit refuses and drops nothing`() {
+        val bot = scenario.connect("Packrat")
+        sessions.fillSlots("Packrat", "STONE")
+        val full = probe.awaitInventory("Packrat", "every slot filled") { report ->
+            report.slots.size == PLAYER_SLOTS
+        }
+        val beforeClick = scenario.server.mark()
+
+        sessions.openMenu("Packrat", "probe:full", "1:DIAMOND_PICKAXE:1")
+        bot.awaitOpenContainer()
+        bot.click(MENU_BUTTON)
+
+        assertEquals("unavailable", sessions.awaitMenuBegin("Packrat", beforeClick))
+
+        val refused = probe.inventory("Packrat")
+        assertEquals(full.slots, refused.slots)
+        assertEquals("EMERALD:1", refused.cursor)
+        assertEquals(NO_SESSION, sessions.session("Packrat"))
+        assertNoItemsAround("Packrat")
+
+        probe.give("Packrat", slot = 0, material = "AIR", amount = 0)
+        bot.closeContainer()
+        probe.awaitInventory("Packrat", "the emerald put away") { it.slots[0] == "EMERALD:1" }
     }
 
     @Test
@@ -86,6 +113,112 @@ class TemporaryInventorySessionScenarioTest {
         assertEquals("probe:first ${first.sessionId()}", sessions.session("Doubler"))
 
         assertTrue(sessions.end("Doubler"))
+        assertNoItemsAround("Doubler")
+    }
+
+    @Test
+    fun `a fill that throws puts the original inventory back`() {
+        scenario.connect("Fumbler")
+        probe.give("Fumbler", slot = 3, material = "DIRT", amount = 5)
+
+        assertEquals(
+            "threw java.lang.IllegalStateException",
+            sessions.beginFailing("Fumbler", "probe:fumble", "0:STICK:1"),
+        )
+        assertEquals(mapOf(3 to "DIRT:5"), probe.inventory("Fumbler").slots)
+        assertEquals(NO_SESSION, sessions.session("Fumbler"))
+
+        val begin = sessions.begin("Fumbler", "probe:fumble", "0:STICK:1")
+        assertTrue(begin.startsWith("started "), begin)
+        assertTrue(sessions.end("Fumbler"))
+        assertEquals(mapOf(3 to "DIRT:5"), probe.inventory("Fumbler").slots)
+        assertNoItemsAround("Fumbler")
+    }
+
+    @Test
+    fun `a begin whose caller is cancelled after it ran ends the session again`() {
+        scenario.connect("Canceller")
+        probe.give("Canceller", slot = 3, material = "DIRT", amount = 5)
+        val beforeBegin = scenario.server.mark()
+
+        assertEquals("cancelled", sessions.beginCancelled("Canceller", "probe:cancel", "0:STICK:1"))
+
+        val event = sessions.awaitEnd("Canceller", beforeBegin)
+        assertEquals("ENDED", event.cause)
+        assertEquals("STICK:1", event.discarded)
+        assertEquals(mapOf(3 to "DIRT:5"), probe.inventory("Canceller").slots)
+        assertEquals(NO_SESSION, sessions.session("Canceller"))
+        assertNoItemsAround("Canceller")
+    }
+
+    @Test
+    fun `an end that a crafting callback repeats fires one end event`() {
+        scenario.connect("Crafter")
+        val begin = sessions.begin("Crafter", "probe:craft", "0:STICK:1")
+        assertTrue(begin.startsWith("started "), begin)
+
+        probe.request("set-crafting-input", "Crafter", 1, "BONE", 1)
+        sessions.endOnCraft("Crafter")
+        val beforeEnd = scenario.server.mark()
+
+        assertTrue(sessions.end("Crafter"))
+
+        assertEquals("false", sessions.awaitEndOnCraft("Crafter", beforeEnd))
+        assertEquals("BONE:1,STICK:1", sessions.awaitEnd("Crafter", beforeEnd).discarded)
+        assertEquals(1, sessions.endEventCount(begin.sessionId()))
+        assertEquals(emptyMap<Int, String>(), probe.inventory("Crafter").slots)
+        assertNoItemsAround("Crafter")
+    }
+
+    @Test
+    fun `an end in creative mode discards temporary items in the own crafting grid`() {
+        scenario.connect("Creator")
+        val begin = sessions.begin("Creator", "probe:creative", "0:STICK:1")
+        assertTrue(begin.startsWith("started "), begin)
+
+        probe.request("set-crafting-input", "Creator", 0, "BONE", 1)
+        probe.request("game-mode", "Creator", "CREATIVE")
+        val beforeEnd = scenario.server.mark()
+
+        assertTrue(sessions.end("Creator"))
+
+        assertEquals("BONE:1,STICK:1", sessions.awaitEnd("Creator", beforeEnd).discarded)
+        assertEquals("none", probe.request("crafting-inputs", "Creator"))
+        assertEquals(emptyMap<Int, String>(), probe.inventory("Creator").slots)
+        assertNoItemsAround("Creator")
+    }
+
+    @Test
+    fun `an end discards temporary items in an open anvil`() {
+        scenario.connect("Smith")
+        probe.give("Smith", slot = 3, material = "DIRT", amount = 5)
+        val begin = sessions.begin("Smith", "probe:anvil", "0:STICK:1")
+        assertTrue(begin.startsWith("started "), begin)
+
+        probe.request("open-anvil", "Smith", "BONE", 1)
+        val beforeEnd = scenario.server.mark()
+
+        assertTrue(sessions.end("Smith"))
+        assertEquals("BONE:1,STICK:1", sessions.awaitEnd("Smith", beforeEnd).discarded)
+
+        probe.request("close-view", "Smith")
+        assertEquals(mapOf(3 to "DIRT:5"), probe.inventory("Smith").slots)
+        assertNoItemsAround("Smith")
+    }
+
+    @Test
+    fun `a session whose stored entry another plugin removed is gone after a rejoin`() {
+        val bot = scenario.connect("Wiped")
+        val begin = sessions.begin("Wiped", "probe:wiped", "0:STICK:1")
+        assertTrue(begin.startsWith("started "), begin)
+
+        probe.request("clear-data", "Wiped")
+        val beforeQuit = scenario.server.mark()
+        bot.disconnect()
+        probe.awaitEvent(ProbeProtocol.QUIT, "Wiped", beforeQuit)
+        scenario.connect("Wiped")
+
+        assertEquals(NO_SESSION, sessions.session("Wiped"))
     }
 
     @Test
@@ -176,10 +309,15 @@ class TemporaryInventorySessionScenarioTest {
         )
 
         assertFalse(sessions.end(name, async))
+        assertEquals("returned false", sessions.endOffThread(name))
         assertEquals(1, sessions.endEventCount(begin.sessionId()))
+        assertNoItemsAround(name)
+    }
+
+    private fun assertNoItemsAround(player: String) {
         assertEquals(
             emptyList<String>(),
-            probe.items(scenario.worldName, probe.position(name), radius = DROP_RADIUS),
+            probe.items(scenario.worldName, probe.position(player), radius = DROP_RADIUS),
         )
     }
 

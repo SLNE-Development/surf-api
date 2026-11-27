@@ -7,7 +7,6 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
@@ -63,7 +62,7 @@ class PaperServerInputs(
         val declared = (values.getProperty("pluginJars") ?: "")
             .split(File.pathSeparatorChar)
             .filter { it.isNotBlank() }
-            .map { Path.of(it) }
+            .map { Path(it) }
 
         if (declared.isEmpty()) {
             abort<Nothing>("The build resolved no plugin jars for the test to install.")
@@ -176,7 +175,7 @@ class PaperServerInputs(
             }
 
             val values = Properties()
-            Files.newBufferedReader(inputsFile).use { values.load(it) }
+            inputsFile.bufferedReader().use { values.load(it) }
 
             return PaperServerInputs(
                 workDir = systemPath("surf.paperServerTest.workDir").createDirectories(),
@@ -198,7 +197,7 @@ class PaperServerInputs(
                         "registerPaperServerTest registered.",
                 )
 
-            return Path.of(value)
+            return Path(value)
         }
 
         private fun sha256(file: Path): String {

@@ -4,6 +4,7 @@ import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.paper.coroutine.PaperDispatchers
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndEvent
+import dev.slne.surf.api.spring.SurfLifecycle
 import kotlinx.coroutines.withContext
 import org.bukkit.Server
 import org.bukkit.plugin.Plugin
@@ -63,6 +64,36 @@ class TemporaryInventoryEndContextLog(
 
     companion object {
         const val END_CONTEXT_EVENT = "temp-end-context"
+    }
+}
+
+/**
+ * Calls `endAsync()` in the probe's disable phase for every session the probe began that already
+ * ended, as an owning plugin may, and logs each result as the event
+ * `temp-disable-end <player> <result>`.
+ *
+ * At shutdown the probe's sessions end before its disable phase, so the hook meets them ended.
+ */
+@Component
+class TemporaryInventoryDisableHook(
+    private val state: TemporaryInventoryProbeState,
+) : SurfLifecycle {
+
+    private val log = logger()
+
+    override suspend fun onDisable() {
+        for ((playerName, session) in state.sessions) {
+            if (session.isActive) continue
+
+            val ended = session.endAsync()
+
+            log.atInfo()
+                .log("%s %s %s %s", ProbeProtocol.EVENT, DISABLE_END_EVENT, playerName, ended)
+        }
+    }
+
+    companion object {
+        const val DISABLE_END_EVENT = "temp-disable-end"
     }
 }
 

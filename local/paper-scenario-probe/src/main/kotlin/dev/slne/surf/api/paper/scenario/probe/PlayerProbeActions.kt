@@ -2,6 +2,7 @@ package dev.slne.surf.api.paper.scenario.probe
 
 import dev.slne.surf.api.paper.coroutine.PaperDispatchers
 import kotlinx.coroutines.withContext
+import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.Server
 import org.bukkit.entity.Player
@@ -136,6 +137,56 @@ class KillProbe(
 
         withContext(dispatchers.entity(player)) {
             player.health = 0.0
+        }
+
+        return "ok"
+    }
+}
+
+/**
+ * `game-mode <player> <mode>`: sets the player's game mode, such as `CREATIVE`.
+ */
+@Component
+class GameModeProbe(
+    private val server: Server,
+    private val dispatchers: PaperDispatchers,
+) : ProbeAction {
+
+    override val name = "game-mode"
+
+    override suspend fun run(arguments: List<String>): String {
+        val (playerName, mode) = arguments
+        val player = server.onlinePlayer(playerName)
+
+        withContext(dispatchers.entity(player)) {
+            player.gameMode = GameMode.valueOf(mode)
+        }
+
+        return "ok"
+    }
+}
+
+/**
+ * `clear-data <player>`: removes every key from the player's persistent data container, as a
+ * plugin that wipes player data may.
+ */
+@Component
+class ClearDataProbe(
+    private val server: Server,
+    private val dispatchers: PaperDispatchers,
+) : ProbeAction {
+
+    override val name = "clear-data"
+
+    override suspend fun run(arguments: List<String>): String {
+        val player = server.onlinePlayer(arguments.single())
+
+        withContext(dispatchers.entity(player)) {
+            val container = player.persistentDataContainer
+
+            for (key in container.keys) {
+                container.remove(key)
+            }
         }
 
         return "ok"

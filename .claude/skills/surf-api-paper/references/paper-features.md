@@ -345,37 +345,58 @@ sessions.remove(player.uniqueId)?.end()
 
 - `Player.beginTemporaryInventorySession(plugin, key, fill)` suspends and runs the begin on the
   player's thread in the player's next tick, also when called there, so a begin from a menu click
-  runs after the click took effect. In one step it closes the open view (the cursor item and the
-  crafting grid go back into the inventory), stores all 43 slots (armor, offhand, body armor and
-  saddle included) and the selected hotbar slot, empties the inventory and runs `fill`. `fill`
-  gets the emptied `PlayerInventory` and an empty `PersistentDataContainer` for the plugin's own
-  session state, which is stored with the original inventory. If `fill` throws, the original
-  inventory comes back, nothing stays stored, and the exception is rethrown.
+  runs after the click took effect. In one step it moves the cursor item and the inputs of an
+  open workstation menu (crafting grid, anvil, merchant and the like) into the inventory and
+  closes the view, stores all 43 slots (armor, offhand, body armor and saddle included) and the
+  selected hotbar slot, empties the inventory and runs `fill`. `fill` gets the emptied
+  `PlayerInventory` and an empty `PersistentDataContainer` for the plugin's own session state,
+  which is stored with the original inventory. If `fill` throws, the original inventory comes
+  back, nothing stays stored, and the exception is rethrown. If the calling coroutine is cancelled
+  after the begin ran, the session ends again in the player's next tick with the cause `ENDED`.
 - The `TemporaryInventoryBeginResult` is `Started(session)`, `AlreadyActive(key)` when the player
   already has a session (one per player), `Unstorable(slot, cause)` when an item of the original
-  inventory cannot be serialized, or `Unavailable` when the player is dead, offline or no longer
-  in the world. Every result except `Started` leaves the inventory as it was.
+  inventory cannot be serialized, or `Unavailable`. `Unavailable` means the player is dead,
+  offline or no longer in the world, the cursor item and workstation inputs do not fit into the
+  inventory, the owning plugin is disabled or being disabled, or the player's data holds an entry
+  this server cannot read; the player cannot begin any session until that entry is dealt with.
+  Every result except `Started` leaves the inventory as it was.
 - `TemporaryInventorySession` has `id`, `key`, `playerUuid` and `isActive`. `end()` runs on the
-  player's thread and throws `IllegalStateException` anywhere else; `endAsync()` switches there.
-  Both return `false` when the session had already ended, so ending twice is harmless.
+  player's thread and throws `IllegalStateException` anywhere else while the session is active;
+  `endAsync()` switches there. Both return `false` at once, on any thread, when the session had
+  already ended, so ending twice is harmless.
 - The end puts back every slot the server can read and the selected hotbar slot, and fires
   `TemporaryInventoryEndEvent` on the player's thread before `end()` returns. The event carries the
   player, `key`, `sessionId`, `cause` (`TemporaryInventoryEndCause`), the stored `state` read-only
-  and the `discardedItems`: the temporary items from the inventory, the cursor and the crafting
-  grid. An item the server cannot read, for example from a removed datapack, stays in the player's
-  data and is logged. Items from older Minecraft versions are upgraded.
+  and the `discardedItems`: the temporary items from the inventory, the cursor and the inputs of an
+  open workstation menu. An item the server cannot read, for example from a removed datapack,
+  stays in the player's data and is logged. Items from older Minecraft versions are upgraded. An
+  end that a listener starts while the same end runs, for example from `PrepareItemCraftEvent`,
+  returns `false`.
 - `Player.temporaryInventorySession` returns the active session or `null` from any thread.
 - A session that a crash left in the player's data ends when the player next joins, before other
   join listeners run: the original inventory saved with it comes back and the event fires with
   `RECOVERED`. This works without the owning plugin installed; a recovered session cannot be
   resumed.
-- A death ends the session with the cause `DEATH` inside `PlayerDeathEvent` at priority
-  `HIGHEST`; cancelled deaths change nothing. surf-api clears every drop, also those other
-  listeners added, sets keep inventory and puts the original inventory back, so the player
-  respawns with it. Temporary items on the cursor and in the crafting inputs are discarded.
+- A death ends the session with the cause `DEATH` inside `PlayerDeathEvent`. At priority
+  `HIGHEST` surf-api clears every drop and sets keep inventory; at `MONITOR` it does both again,
+  in case a later listener changed them, and puts the original inventory back, so the player
+  respawns with it. A death that any listener cancels changes nothing. Temporary items on the
+  cursor and in workstation inputs are discarded.
 - A quit ends the session with the cause `QUIT` before the server saves the player, so the saved
   playerdata holds the original inventory. Temporary items on the cursor, in the crafting grid or
-  in the crafting inputs of an open view are discarded instead of dropped into the world.
+  in the inputs of an open workstation menu are discarded instead of dropped into the world.
+- When the server stops, each session ends with the cause `SHUTDOWN` inside its owner's
+  `PluginDisableEvent`, before the owner's disable phase, so the owner still receives the event
+  while it is enabled. The players are about to be saved: revert state there, but do not teleport,
+  because on SurfCanvas the region threads are already halted. The owner's own `onDisable` meets
+  its sessions ended; on SurfCanvas it runs on a thread that owns no player, so it must not touch
+  inventories, and `endAsync()` there only returns `false`.
+- When the owning plugin is disabled while the server keeps running, each session ends with the
+  cause `OWNER_DISABLED` on the player's thread, scheduled through surf-api's own plugin. On Paper
+  this runs after the owner's disable phase, so the owner receives no event, and state it changed
+  outside the inventory, such as flight, stays unless its disable phase reverts it. On Folia and
+  SurfCanvas the end may run while that phase still runs. From its `PluginDisableEvent` until it
+  is enabled again, the plugin cannot begin sessions.
 - The owning plugin keeps everything outside the inventory to itself: ender chest, experience,
   health, effects, game mode, flight and world border. It also keeps the temporary items where
   they belong while the session runs: surf-api does not stop drops, container access, pickups,

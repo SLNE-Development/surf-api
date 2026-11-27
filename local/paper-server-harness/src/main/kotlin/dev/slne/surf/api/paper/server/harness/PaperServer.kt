@@ -2,13 +2,13 @@ package dev.slne.surf.api.paper.server.harness
 
 import org.junit.jupiter.api.Assertions
 import java.io.Writer
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.bufferedWriter
 import kotlin.io.path.deleteIfExists
 
 /**
@@ -213,10 +213,8 @@ class PaperServer(
 
     private fun drainOutput(process: Process, sink: MutableList<String>, run: String): Thread {
         val drainer = Thread {
-            Files.newBufferedWriter(
-                consoleLog,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.APPEND,
+            consoleLog.bufferedWriter(
+                options = arrayOf(StandardOpenOption.CREATE, StandardOpenOption.APPEND),
             ).use { log ->
                 log.write("---- $run of ${directory.serverJarName} ----\n")
 

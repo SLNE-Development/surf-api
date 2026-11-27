@@ -1,5 +1,6 @@
 package dev.slne.surf.api.paper.scenario.test
 
+import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryDisableHook
 import dev.slne.surf.api.paper.scenario.probe.TemporaryInventoryEndContextLog
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,8 +14,9 @@ import org.junit.jupiter.api.TestInstance
  * stops and once while it keeps running, and checks that each player gets the original inventory
  * back.
  *
- * The probe owns the sessions that end at shutdown, so it observes its own end event. A second
- * plugin owns the sessions that end at runtime, because a disabled probe observes nothing.
+ * The probe owns the sessions that end at shutdown, so it observes its own end event and calls
+ * `endAsync()` for them in its disable phase. The owner plugin of `local/paper-scenario-owner` owns
+ * the sessions that end at runtime, because a disabled probe observes nothing.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TemporaryInventoryOwnerDisableScenarioTest {
@@ -59,8 +61,17 @@ class TemporaryInventoryOwnerDisableScenarioTest {
                 sessions.awaitEnd("Stopper", from = 0),
             )
             assertEquals(
-                EndContext(cause = "SHUTDOWN", sessionId, ownsPlayer = true, isProbeEnabled = true),
+                EndContext(
+                    cause = "SHUTDOWN",
+                    sessionId = sessionId,
+                    ownsPlayer = true,
+                    isProbeEnabled = true,
+                ),
                 awaitEndContext("Stopper", from = 0),
+            )
+            assertEquals(
+                "false",
+                probe.awaitEvent(TemporaryInventoryDisableHook.DISABLE_END_EVENT, "Stopper"),
             )
         } finally {
             scenario.start()
@@ -101,7 +112,20 @@ class TemporaryInventoryOwnerDisableScenarioTest {
             assertTrue(awaitEndContext(name, beforeDisable).ownsPlayer)
             assertEquals(ORIGINAL_SLOTS, probe.inventory(name).slots)
             assertEquals(NO_SESSION, sessions.session(name))
+            assertEquals(
+                emptyList<String>(),
+                probe.items(scenario.worldName, probe.position(name), radius = DROP_RADIUS),
+            )
         }
+
+        val lateBegin = probe.request(
+            "temp-begin-owned",
+            RUNTIME_PLAYERS.first(),
+            RUNTIME_OWNER,
+            SESSION_KEY,
+            "0:$TEMPORARY_ITEM",
+        )
+        assertEquals("unavailable", lateBegin)
     }
 
     /**
@@ -125,10 +149,10 @@ class TemporaryInventoryOwnerDisableScenarioTest {
             .split(' ')
 
         return EndContext(
-            cause,
-            sessionId,
-            ownsPlayer.toBooleanStrict(),
-            isProbeEnabled.toBooleanStrict(),
+            cause = cause,
+            sessionId = sessionId,
+            ownsPlayer = ownsPlayer.toBooleanStrict(),
+            isProbeEnabled = isProbeEnabled.toBooleanStrict(),
         )
     }
 
@@ -159,7 +183,7 @@ class TemporaryInventoryOwnerDisableScenarioTest {
          * A plugin besides the probe that the server runs, so the probe keeps observing after it
          * was disabled.
          */
-        const val RUNTIME_OWNER = "SurfSharedBeanProvider"
+        const val RUNTIME_OWNER = "SurfScenarioOwner"
 
         val RUNTIME_PLAYERS = listOf("OwnedOne", "OwnedTwo")
 

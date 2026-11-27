@@ -328,7 +328,8 @@ the tick-thread guard rejects world and player access in a disable hook
 plugin's `PluginDisableEvent` fires before the phase, on the thread that disables the plugin. While
 the server stops, that is the region shutdown thread, which passes every ownership check although
 the region threads are already halted. surf-api therefore ends a plugin's temporary inventory
-sessions in that event, not in a disable hook.
+sessions in that event, not in a disable hook. A disable hook then meets them ended, and
+`endAsync()` returns `false` there without waiting for the halted region threads.
 
 There is no hot reload or unloading. At shutdown, contexts close in reverse dependency order:
 consumers and their import contexts first, then providers, then the root context.

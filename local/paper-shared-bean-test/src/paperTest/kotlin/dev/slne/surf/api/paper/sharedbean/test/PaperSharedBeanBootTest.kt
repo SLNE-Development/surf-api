@@ -111,11 +111,11 @@ class PaperSharedBeanBootTest {
 
         val brokers = BrokerContainers.start().also { startedBrokers = it }
         val server = PaperServer(
-            directory,
-            inputs.javaLauncher,
-            inputs.jvmArgs,
-            brokers.environment,
-            INTERESTING,
+            directory = directory,
+            javaLauncher = inputs.javaLauncher,
+            jvmArgs = inputs.jvmArgs,
+            environment = brokers.environment,
+            interesting = INTERESTING,
         )
 
         val line = try {

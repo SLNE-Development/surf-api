@@ -36,16 +36,19 @@ interface TemporaryInventorySession {
      * Every slot whose item the server can read again is restored, together with the selected
      * hotbar slot. An item it cannot read, for example one from a removed datapack, stays in the
      * player's data and is logged. The temporary items in the inventory, on the cursor and in the
-     * crafting grid are discarded and reach listeners through [TemporaryInventoryEndEvent]. The
-     * event fires before this function returns.
+     * inputs of an open workstation menu are discarded and reach listeners through
+     * [TemporaryInventoryEndEvent]. The event fires before this function returns.
      *
-     * @return `false` if the session had already ended
-     * @throws IllegalStateException off the thread that owns the player
+     * @return `false` if the session had already ended, on any thread
+     * @throws IllegalStateException off the thread that owns the player, if the session is active
      */
     fun end(): Boolean
 
     /**
      * Runs [end] on the thread that owns the player, switching there first.
+     *
+     * A session that already ended returns `false` at once, without switching threads, so a
+     * plugin's disable phase may call it for sessions that ended at shutdown.
      *
      * @return `false` if the session had already ended, or the player left before the end ran
      */

@@ -17,7 +17,8 @@ import java.util.*
  * @property key the kind of the session
  * @property state the persistent data the owning plugin stored for the session, read-only
  * @property discardedItems the temporary items the player carried in the inventory, on the cursor
- * and in the crafting grid; they no longer exist anywhere else
+ * and in the inputs of an open workstation menu, such as the crafting grid; they no longer exist
+ * anywhere else
  */
 class TemporaryInventoryEndEvent(
     val player: Player,
@@ -61,8 +62,9 @@ enum class TemporaryInventoryEndCause {
     SHUTDOWN,
 
     /**
-     * The owning plugin was disabled while the server kept running. The owning plugin no longer
-     * receives the event.
+     * The owning plugin was disabled while the server kept running. On Paper the owning plugin no
+     * longer receives the event; on Folia and SurfCanvas it may still receive it while its disable
+     * phase runs.
      */
     OWNER_DISABLED,
 

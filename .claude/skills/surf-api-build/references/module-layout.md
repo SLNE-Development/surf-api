@@ -110,8 +110,8 @@ which is on the settings classpath.
 The `local/*-shared-bean-*` modules are two test plugins and a harness per platform that boot a
 real Paper server or Velocity proxy; they stay local because the harness downloads the server.
 `local/paper-scenario-test` drives bots against a real Paper server with the probe plugin of
-`local/paper-scenario-probe` and the session owner plugin of `local/paper-scenario-owner`. Both Paper tests share the server assembly of
-`local/paper-server-harness`.
+`local/paper-scenario-probe` and the session owner plugin of `local/paper-scenario-owner`. Both
+Paper tests share the server assembly of `local/paper-server-harness`.
 
 ## The infra trees
 

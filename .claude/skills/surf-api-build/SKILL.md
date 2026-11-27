@@ -208,7 +208,7 @@ constraints come from `rootProject.subprojects` names, so the infra modules are 
 `notPublished` lists what the BOM leaves out: `surf-api-bom`,
 `surf-api-registry-key-generator`, `surf-api-paper-plugin-test`, `surf-api-minestom-example`,
 `surf-api-minestom-example-plugin`, the six `local/*-shared-bean-*` modules,
-`surf-api-paper-server-harness` and the two `local/paper-scenario-*` modules. Add every module
+`surf-api-paper-server-harness` and the three `local/paper-scenario-*` modules. Add every module
 that `settings.gradle.kts` includes only outside CI to that set; otherwise it becomes a constraint
 in a locally built BOM but not in a CI-built one.
 
