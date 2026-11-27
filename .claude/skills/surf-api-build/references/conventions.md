@@ -13,6 +13,7 @@ surf.aggregate    ->  core-convention
 api-validation    ->  kotlin("jvm")            (opt-in, applied next to a role or the surf plugin)
 vendor-bundle-convention -> core-convention    (opt-in)
 surf.nms-shared-26 -> kotlin("jvm")           (opt-in, the 26.x NMS modules)
+paper-server-test ->  core-convention          (local Paper server tests)
 
 core-convention   ->  publish-convention, java-toolchain-convention, test-convention,
                       java, java-library, kotlin("jvm"), kotlin("plugin.serialization"),
@@ -118,6 +119,25 @@ Not bundled: everything a Minestom server already provides (`org.slf4j`, `org.js
 `org.jetbrains*`, `org.checkerframework`, Gson, Guava, errorprone), most Adventure modules, and
 `org.ow2.asm` - a bundled ASM would land on the system class path ahead of the ASM the server's
 library download relocates with.
+
+## paper-server-test
+
+Applied by the local modules whose tests boot a real Paper server: `local/paper-shared-bean-test`
+and `local/paper-scenario-test`. It applies `core-convention` and adds:
+
+- a `paperTest` source set, which neither `test`, `check` nor CI reaches, with the stdlib, JUnit
+  and `surf-api-paper-server-harness` on it
+- a non-transitive `serverPlugins` configuration that already holds surf-api's Paper shadow jar;
+  each module adds its own test plugins
+- `writePaperServerTestInputs`, which writes the pinned downloads of `PaperServerTest.kt` (Paper,
+  CommandAPI, packetevents, LuckPerms, each with its sha256) and the plugin jars to
+  `build/paper-server-test/inputs.properties`
+
+`registerPaperServerTest(name, description)` in `PaperServerTest.kt` registers the `Test` task that
+runs `paperTest`. It hands the inputs, the work directory, the shared download directory
+`build/paper-server-downloads` of the root project and the toolchain's java launcher to the test as
+system properties. `-Psurf.bootTest.jvmArgs` adds JVM arguments to the test JVM and the server, and
+`-Psurf.paperServerTest.serverJar=<path>` replaces the pinned Paper jar.
 
 ## SurfModuleRole
 

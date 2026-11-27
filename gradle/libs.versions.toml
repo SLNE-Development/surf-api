@@ -84,6 +84,7 @@ mockk = "1.14.11"
 assertj = "3.27.7" # the version spring-boot-test is built against
 lincheck = "3.7"
 minestom-testing = "26_3-SNAPSHOT"
+mcprotocollib = "26.3-4"
 
 # Plugin versions
 maven-repo-auth = "3.0.4"
@@ -241,6 +242,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform-launcher" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+mcprotocollib = { module = "org.geysermc.mcprotocollib:protocol", version.ref = "mcprotocollib" }
 lincheck = { module = "org.jetbrains.lincheck:lincheck", version.ref = "lincheck" }
 minestom-testing = { module = "net.minestom:testing", version.ref = "minestom-testing" }
 kotlinxCoroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }

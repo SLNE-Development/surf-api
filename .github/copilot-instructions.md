@@ -85,7 +85,8 @@ Every platform follows an **API/implementation split**, carried by the module su
   Gradle plugins downstream projects apply, including `dev.slne.surf.api.gradle.paper-plugin`,
   `.velocity`, `.minestom`, `.minestom-server`, `.standalone`, `.core`, `.microservice` and `.nats`
 - `local/`: never published. `surf-api-paper-plugin-test`, the `paper-shared-bean-*` and
-  `velocity-shared-bean-*` boot tests, `surf-api-minestom-example`,
+  `velocity-shared-bean-*` boot tests, the bot-driven `paper-scenario-*` tests with the
+  `paper-server-harness` they share with the Paper boot test, `surf-api-minestom-example`,
   `surf-api-minestom-example-plugin`
 
 `local/` and `surf-api-registry-key-generator` are skipped when `CI=true`.

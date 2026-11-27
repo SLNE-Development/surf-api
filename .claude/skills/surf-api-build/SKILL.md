@@ -61,8 +61,10 @@ implementation module `...-impl`.
 
 These projects apply bare `core-convention` and get no role check: `platform/paper/nms/api` (it
 depends on `surf-api-internal`, which classifies as `IMPL`), `platform/standalone/testing`, every
-`local/` module and `tooling/registry-key-generator`. Most `infra/` modules apply the surf Gradle
-plugin (`dev.slne.surf.api.gradle.core` and friends) the way a downstream project does;
+`local/` module and `tooling/registry-key-generator`. The local Paper server tests apply
+`paper-server-test` on top of it, which adds the `paperTest` source set, the pinned downloads and
+`registerPaperServerTest`; see `references/conventions.md`. Most `infra/` modules apply the surf
+Gradle plugin (`dev.slne.surf.api.gradle.core` and friends) the way a downstream project does;
 `surf-nats-api` and `surf-nats-core` are Kotlin Multiplatform modules configured by
 `infra/nats`'s own build script. The root build sets the group and version of every `infra/`
 module. The surf Gradle plugin's `checkInternalApiUsage` runs in their `check` as in any
@@ -205,7 +207,8 @@ breaks a downstream coordinate as long as the aggregate keeps exporting the righ
 constraints come from `rootProject.subprojects` names, so the infra modules are included.
 `notPublished` lists what the BOM leaves out: `surf-api-bom`,
 `surf-api-registry-key-generator`, `surf-api-paper-plugin-test`, `surf-api-minestom-example`,
-`surf-api-minestom-example-plugin` and the six `local/*-shared-bean-*` modules. Add every module
+`surf-api-minestom-example-plugin`, the six `local/*-shared-bean-*` modules,
+`surf-api-paper-server-harness` and the two `local/paper-scenario-*` modules. Add every module
 that `settings.gradle.kts` includes only outside CI to that set; otherwise it becomes a constraint
 in a locally built BOM but not in a CI-built one.
 

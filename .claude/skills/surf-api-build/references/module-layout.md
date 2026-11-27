@@ -91,6 +91,9 @@ The `name` argument is passed once: `infra/database-r2dbc` becomes `surf-api-dat
 | `local/paper-shared-bean-provider` | `surf-api-paper-shared-bean-provider` (non-CI only) |
 | `local/paper-shared-bean-consumer` | `surf-api-paper-shared-bean-consumer` (non-CI only) |
 | `local/paper-shared-bean-test` | `surf-api-paper-shared-bean-test` (non-CI only) |
+| `local/paper-server-harness` | `surf-api-paper-server-harness` (non-CI only) |
+| `local/paper-scenario-probe` | `surf-api-paper-scenario-probe` (non-CI only) |
+| `local/paper-scenario-test` | `surf-api-paper-scenario-test` (non-CI only) |
 | `local/velocity-shared-bean-provider` | `surf-api-velocity-shared-bean-provider` (non-CI only) |
 | `local/velocity-shared-bean-consumer` | `surf-api-velocity-shared-bean-consumer` (non-CI only) |
 | `local/velocity-shared-bean-test` | `surf-api-velocity-shared-bean-test` (non-CI only) |
@@ -105,6 +108,9 @@ which is on the settings classpath.
 
 The `local/*-shared-bean-*` modules are two test plugins and a harness per platform that boot a
 real Paper server or Velocity proxy; they stay local because the harness downloads the server.
+`local/paper-scenario-test` drives bots against a real Paper server with the probe plugin of
+`local/paper-scenario-probe`. Both Paper tests share the server assembly of
+`local/paper-server-harness`.
 
 ## The infra trees
 
@@ -195,6 +201,9 @@ val notPublished = setOf(
     "surf-api-paper-shared-bean-provider",
     "surf-api-paper-shared-bean-consumer",
     "surf-api-paper-shared-bean-test",
+    "surf-api-paper-server-harness",
+    "surf-api-paper-scenario-probe",
+    "surf-api-paper-scenario-test",
     "surf-api-velocity-shared-bean-provider",
     "surf-api-velocity-shared-bean-consumer",
     "surf-api-velocity-shared-bean-test",

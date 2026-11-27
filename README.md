@@ -144,6 +144,8 @@ surf-api
 └── local/                            # Never published, excluded from CI
     ├── paper-plugin-test             # surf-api-paper-plugin-test: Paper test server
     ├── paper-shared-bean-*           # Provider, consumer and boot test for plugin exports on Paper
+    ├── paper-server-harness          # Server assembly shared by the Paper boot and scenario tests
+    ├── paper-scenario-*              # Probe plugin and bot-driven scenario tests on Paper
     ├── velocity-shared-bean-*        # The same boot test on Velocity
     ├── minestom-example              # surf-api-minestom-example: runnable Minestom example server
     └── minestom-example-plugin       # surf-api-minestom-example-plugin: example Minestom plugin
