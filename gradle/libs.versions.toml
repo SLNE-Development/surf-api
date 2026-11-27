@@ -6,7 +6,7 @@ canvas-api = "26.3.build.+"
 # Kolin
 kotlinVersion = "2.4.21"
 kotlinxCoroutines = "1.11.0"
-kotlinx-serialization = "1.12.0"
+kotlinx-serialization = "1.13.0"
 
 # Packet Events
 packetevents = "2.14.0"
