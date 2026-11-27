@@ -1755,6 +1755,72 @@ public final class dev/slne/surf/api/paper/inventory/removal/ItemRemovalResult$E
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult {
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult$AlreadyActive : dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult {
+	public fun <init> (Lnet/kyori/adventure/key/Key;)V
+	public final fun getKey ()Lnet/kyori/adventure/key/Key;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult$Started : dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult {
+	public fun <init> (Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventorySession;)V
+	public final fun getSession ()Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventorySession;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult$Unavailable : dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult {
+	public static final field INSTANCE Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult$Unavailable;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult$Unstorable : dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryBeginResult {
+	public fun <init> (ILjava/lang/Exception;)V
+	public final fun getCause ()Ljava/lang/Exception;
+	public final fun getSlot ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause : java/lang/Enum {
+	public static final field DEATH Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static final field ENDED Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static final field OWNER_DISABLED Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static final field QUIT Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static final field RECOVERED Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static final field SHUTDOWN Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public static fun values ()[Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndEvent : dev/slne/surf/api/event/SurfSyncEvent {
+	public fun <init> (Lorg/bukkit/entity/Player;Lnet/kyori/adventure/key/Key;Ljava/util/UUID;Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;Lio/papermc/paper/persistence/PersistentDataContainerView;Ljava/util/List;)V
+	public final fun getCause ()Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventoryEndCause;
+	public final fun getDiscardedItems ()Ljava/util/List;
+	public final fun getKey ()Lnet/kyori/adventure/key/Key;
+	public final fun getPlayer ()Lorg/bukkit/entity/Player;
+	public final fun getSessionId ()Ljava/util/UUID;
+	public final fun getState ()Lio/papermc/paper/persistence/PersistentDataContainerView;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class dev/slne/surf/api/paper/inventory/temporary/TemporaryInventorySession {
+	public abstract fun end ()Z
+	public abstract fun endAsync (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun getId ()Ljava/util/UUID;
+	public abstract fun getKey ()Lnet/kyori/adventure/key/Key;
+	public abstract fun getPlayerUuid ()Ljava/util/UUID;
+	public abstract fun isActive ()Z
+}
+
+public final class dev/slne/surf/api/paper/inventory/temporary/Temporary_inventory_sessionKt {
+	public static final fun beginTemporaryInventorySession (Lorg/bukkit/entity/Player;Lorg/bukkit/plugin/Plugin;Lnet/kyori/adventure/key/Key;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun getTemporaryInventorySession (Lorg/bukkit/entity/Player;)Ldev/slne/surf/api/paper/inventory/temporary/TemporaryInventorySession;
+}
+
 public abstract interface annotation class dev/slne/surf/api/paper/nms/NmsUseWithCaution : java/lang/annotation/Annotation {
 }
 

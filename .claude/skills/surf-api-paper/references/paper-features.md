@@ -322,6 +322,55 @@ val result = plan.commit()
   }
   ```
 
+## `inventory/temporary/` - temporary inventory sessions
+
+A temporary inventory session hands a player a temporary inventory for a while, such as the tools
+of an editing mode, and gives the original inventory back afterwards. The terms are in
+`GLOSSARY.md`; ADR 0001 explains why the original inventory lives only in the player's persistent
+data container.
+
+```kotlin
+val result = player.beginTemporaryInventorySession(plugin, EDIT_MODE) { inventory, state ->
+    inventory.setItem(0, editTool)
+    state.set(RETURN_WORLD, PersistentDataType.STRING, player.world.name)
+}
+
+if (result is TemporaryInventoryBeginResult.Started) {
+    sessions[player.uniqueId] = result.session
+}
+
+// later, on the player's thread
+sessions.remove(player.uniqueId)?.end()
+```
+
+- `Player.beginTemporaryInventorySession(plugin, key, fill)` suspends and runs the begin on the
+  player's thread in the player's next tick, also when called there, so a begin from a menu click
+  runs after the click took effect. In one step it closes the open view (the cursor item and the
+  crafting grid go back into the inventory), stores all 43 slots (armor, offhand, body armor and
+  saddle included) and the selected hotbar slot, empties the inventory and runs `fill`. `fill`
+  gets the emptied `PlayerInventory` and an empty `PersistentDataContainer` for the plugin's own
+  session state, which is stored with the original inventory. If `fill` throws, the original
+  inventory comes back, nothing stays stored, and the exception is rethrown.
+- The `TemporaryInventoryBeginResult` is `Started(session)`, `AlreadyActive(key)` when the player
+  already has a session (one per player), `Unstorable(slot, cause)` when an item of the original
+  inventory cannot be serialized, or `Unavailable` when the player is dead, offline or no longer
+  in the world. Every result except `Started` leaves the inventory as it was.
+- `TemporaryInventorySession` has `id`, `key`, `playerUuid` and `isActive`. `end()` runs on the
+  player's thread and throws `IllegalStateException` anywhere else; `endAsync()` switches there.
+  Both return `false` when the session had already ended, so ending twice is harmless.
+- The end puts back every slot the server can read and the selected hotbar slot, and fires
+  `TemporaryInventoryEndEvent` on the player's thread before `end()` returns. The event carries the
+  player, `key`, `sessionId`, `cause` (`TemporaryInventoryEndCause`), the stored `state` read-only
+  and the `discardedItems`: the temporary items from the inventory, the cursor and the crafting
+  grid. An item the server cannot read, for example from a removed datapack, stays in the player's
+  data and is logged. Items from older Minecraft versions are upgraded.
+- `Player.temporaryInventorySession` returns the active session or `null` from any thread.
+- The owning plugin keeps everything outside the inventory to itself: ender chest, experience,
+  health, effects, game mode, flight and world border. It also keeps the temporary items where
+  they belong while the session runs: surf-api does not stop drops, container access, pickups,
+  crafting, creative-mode slot edits or world and game-mode changes. A plugin that clears the
+  player's persistent data container deletes the original inventory too.
+
 ## `region/` - tick-thread assertions
 
 `TickThreadGuard` fails fast when code runs on the wrong thread, which is what makes Folia bugs
