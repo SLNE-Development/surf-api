@@ -50,7 +50,8 @@ enum class TemporaryInventoryEndCause {
     QUIT,
 
     /**
-     * The player died.
+     * The player died. No temporary item dropped, and the player respawns with the original
+     * inventory.
      */
     DEATH,
 

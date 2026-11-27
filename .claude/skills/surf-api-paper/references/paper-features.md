@@ -369,6 +369,10 @@ sessions.remove(player.uniqueId)?.end()
   join listeners run: the original inventory saved with it comes back and the event fires with
   `RECOVERED`. This works without the owning plugin installed; a recovered session cannot be
   resumed.
+- A death ends the session with the cause `DEATH` inside `PlayerDeathEvent` at priority
+  `HIGHEST`; cancelled deaths change nothing. surf-api clears every drop, also those other
+  listeners added, sets keep inventory and puts the original inventory back, so the player
+  respawns with it. Temporary items on the cursor and in the crafting inputs are discarded.
 - The owning plugin keeps everything outside the inventory to itself: ender chest, experience,
   health, effects, game mode, flight and world border. It also keeps the temporary items where
   they belong while the session runs: surf-api does not stop drops, container access, pickups,
