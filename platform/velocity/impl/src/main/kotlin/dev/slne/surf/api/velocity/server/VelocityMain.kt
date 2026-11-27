@@ -94,6 +94,7 @@ class VelocityMain @Inject constructor(
      */
     @Subscribe(priority = Short.MAX_VALUE)
     suspend fun onProxyInitialization(unused: ProxyInitializeEvent) {
+        springRuntime.registerRootListeners(this)
         root.enable()
 
         onEnable()

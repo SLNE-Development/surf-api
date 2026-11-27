@@ -733,6 +733,10 @@ public final class dev/slne/surf/api/paper/dialog/search/SearchInput {
 public abstract interface class dev/slne/surf/api/paper/dialog/state/DialogState {
 }
 
+public abstract interface annotation class dev/slne/surf/api/paper/event/BukkitListener : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
 public final class dev/slne/surf/api/paper/event/Listener_extensionKt {
 	public static final fun cancel (Lorg/bukkit/event/Cancellable;)V
 	public static final fun listen (Lorg/bukkit/plugin/Plugin;Lkotlin/reflect/KClass;Lorg/bukkit/event/EventPriority;ZZLkotlin/jvm/functions/Function1;)Ldev/slne/surf/api/paper/event/SingleListener;

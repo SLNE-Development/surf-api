@@ -7,6 +7,7 @@ import dev.slne.surf.api.paper.coroutine.PaperDispatchers
 import dev.slne.surf.api.paper.coroutine.PaperDispatchersElement
 import dev.slne.surf.api.paper.coroutine.PaperSchedulers
 import dev.slne.surf.api.paper.coroutine.PluginDispatchers
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.nms.common.NmsVersionResolver
 import dev.slne.surf.api.paper.plugin.SurfPaperBootstrapper
 import dev.slne.surf.api.paper.plugin.SurfPaperPlugin
@@ -14,6 +15,7 @@ import dev.slne.surf.api.paper.plugin.SurfPaperPluginRuntime
 import dev.slne.surf.api.paper.server.hook.papi.PapiExpansionBeans
 import dev.slne.surf.api.paper.server.hook.papi.PapiExpansionRegistration
 import dev.slne.surf.api.paper.server.hook.papi.SurfPaperPAPIHookImpl
+import dev.slne.surf.api.spring.ManualListenerRegistration
 import dev.slne.surf.api.spring.PluginPresence
 import dev.slne.surf.api.spring.SurfContexts
 import dev.slne.surf.api.spring.context.*
@@ -27,8 +29,10 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger
 import org.bukkit.Bukkit
 import org.bukkit.event.Listener
 import org.bukkit.plugin.Plugin
+import org.springframework.beans.factory.ListableBeanFactory
+import org.springframework.beans.factory.findAnnotationOnBean
 import org.springframework.beans.factory.getBean
-import org.springframework.beans.factory.getBeansOfType
+import org.springframework.beans.factory.getBeanNamesForAnnotation
 import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import java.nio.file.Path
@@ -54,7 +58,8 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * In the enable phase it registers the plugin's Bukkit listeners, commands, event bus listeners and
  * PlaceholderAPI expansions before the plugin's enable hooks run. A plugin whose load phase failed
- * is never enabled: [enable] throws, and Paper disables it.
+ * is never enabled: [enable] throws, and Paper disables it. surf-api's own enable phase registers
+ * the Bukkit listener beans of the root context in the same way, for surf-api's plugin.
  */
 @Suppress("UnstableApiUsage")
 internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
@@ -142,13 +147,16 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
     }
 
     /**
-     * Lets surf-api's own dispatchers through to Paper and runs the enable hooks of both root
-     * contexts.
+     * Lets surf-api's own dispatchers through to Paper, registers the Bukkit listener beans of the
+     * root context for surf-api's plugin and runs the enable hooks of both root contexts.
      */
     suspend fun enableRoot() {
         rootDispatchers.enable()
         rootBootstrap.enable()
-        root?.enable()
+
+        val root = root ?: return
+        registerListeners(root.context, attachedRootPlugin())
+        root.enable()
     }
 
     override fun bootstrap(bootstrapper: SurfPaperBootstrapper, context: BootstrapContext) {
@@ -222,9 +230,7 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         }
 
         for (context in pluginContext.beanContexts) {
-            for (listener in context.getBeansOfType<Listener>().values) {
-                plugin.server.pluginManager.registerEvents(listener, plugin)
-            }
+            registerListeners(context, plugin)
         }
 
         CommandApiCommandBeans.register(pluginContext.beanContexts)
@@ -387,6 +393,32 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
         return root?.context?.getBean<SurfPaperPAPIHookImpl>()
     }
 
+    /**
+     * Registers the Bukkit listener beans of [context] itself, not those of its ancestors, for
+     * [plugin], except those marked with [ManualListenerRegistration].
+     *
+     * @throws IllegalStateException if a bean marked with [BukkitListener] is no [Listener]
+     */
+    private fun registerListeners(context: ListableBeanFactory, plugin: Plugin) {
+        for (name in context.getBeanNamesForAnnotation<BukkitListener>()) {
+            check(context.isTypeMatch(name, Listener::class.java)) {
+                "Bean '$name' is annotated with @BukkitListener but does not implement Listener"
+            }
+        }
+
+        val names = context.getBeanNamesForType(Listener::class.java).filter { name ->
+            context.findAnnotationOnBean<ManualListenerRegistration>(name) == null
+        }
+
+        for (name in names) {
+            plugin.server.pluginManager.registerEvents(context.getBean<Listener>(name), plugin)
+        }
+    }
+
+    private fun attachedRootPlugin(): Plugin {
+        return checkNotNull(rootPlugin) { "surf-api's plugin is not attached" }
+    }
+
     private fun stateOf(plugin: SurfPaperPlugin): PaperPluginState {
         return checkNotNull(plugins[plugin.name]) {
             "Plugin '${plugin.name}' was not bootstrapped by surf-api. Its bootstrapper must extend " +
@@ -399,7 +431,7 @@ internal class PaperSpringRuntime(private val surfClassLoader: ClassLoader) :
      * wins whenever it injects [Plugin].
      */
     private fun rootPluginDefinition(): RootBeanDefinition {
-        val plugin = checkNotNull(rootPlugin) { "surf-api's plugin is not attached" }
+        val plugin = attachedRootPlugin()
 
         return RootBeanDefinition(Plugin::class.java).apply {
             setInstanceSupplier { plugin }

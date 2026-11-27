@@ -20,13 +20,23 @@ fun beansDeclaringMethodsAnnotated(
     annotation: Class<out Annotation>,
 ): List<Any> {
     return contexts.flatMap { context ->
-        context.beanDefinitionNames
-            .filter { name ->
-                context.isConcreteSingleton(name) && context.getType(name)?.declaresMethodAnnotated(
-                    annotation,
-                ) == true
-            }
-            .map(context::getBean)
+        beanNamesDeclaringMethodsAnnotated(context, annotation).map(context::getBean)
+    }
+}
+
+/**
+ * Returns the names of the singleton beans of [context] whose class declares or inherits a method
+ * annotated with [annotation], by the rules of [beansDeclaringMethodsAnnotated], without creating
+ * any bean.
+ */
+@InternalSurfApi
+fun beanNamesDeclaringMethodsAnnotated(
+    context: ConfigurableApplicationContext,
+    annotation: Class<out Annotation>,
+): List<String> {
+    return context.beanDefinitionNames.filter { name ->
+        context.isConcreteSingleton(name) &&
+            context.getType(name)?.declaresMethodAnnotated(annotation) == true
     }
 }
 
@@ -36,8 +46,6 @@ private fun ConfigurableApplicationContext.isConcreteSingleton(name: String): Bo
 
 private fun Class<*>.declaresMethodAnnotated(annotation: Class<out Annotation>): Boolean {
     return ReflectionUtils.getAllDeclaredMethods(ClassUtils.getUserClass(this)).any {
-        it.isAnnotationPresent(
-            annotation,
-        )
+        it.isAnnotationPresent(annotation)
     }
 }

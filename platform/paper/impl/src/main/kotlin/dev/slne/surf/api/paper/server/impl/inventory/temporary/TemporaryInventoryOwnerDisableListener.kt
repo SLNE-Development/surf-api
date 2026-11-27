@@ -1,9 +1,8 @@
 package dev.slne.surf.api.paper.server.impl.inventory.temporary
 
 import dev.slne.surf.api.common.util.logger
-import dev.slne.surf.api.paper.event.register
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndCause
-import dev.slne.surf.api.spring.SurfLifecycle
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -11,7 +10,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.event.server.PluginEnableEvent
 import org.bukkit.plugin.Plugin
-import org.springframework.stereotype.Component
 
 /**
  * Ends the temporary inventory sessions of a plugin that is being disabled.
@@ -29,18 +27,14 @@ import org.springframework.stereotype.Component
  * SurfCanvas it runs in the player's next region tick, which can fall within the owner's disable
  * phase. A session that ended in between stays ended.
  */
-@Component
+@BukkitListener
 internal class TemporaryInventoryOwnerDisableListener(
     private val sessions: TemporaryInventoryService,
     private val server: Server,
     private val plugin: Plugin,
-) : Listener, SurfLifecycle {
+) : Listener {
 
     private val log = logger()
-
-    override suspend fun onEnable() {
-        register(plugin)
-    }
 
     @EventHandler
     fun onPluginEnable(event: PluginEnableEvent) {

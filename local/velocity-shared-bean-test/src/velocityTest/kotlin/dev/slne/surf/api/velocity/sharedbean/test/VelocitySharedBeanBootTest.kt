@@ -558,8 +558,9 @@ class VelocitySharedBeanBootTest {
          * consumer's own, the context class loader is the plugin's during bean creation, only the
          * LuckPerms adapter exists because the absent plugin's adapter is skipped, configuration
          * classes get their CGLIB subclass, the suspending Velocity listener and the surf event
-         * listener both received their event, no context registered a JVM shutdown hook, and Spring
-         * logs through the proxy's own logging. Spring picks Log4j 2 first when it finds it, and
+         * listener both received their event while the listener marked with
+         * `@ManualListenerRegistration` did not, no context registered a JVM shutdown hook, and
+         * Spring logs through the proxy's own logging. Spring picks Log4j 2 first when it finds it, and
          * Velocity runs on it. The plugin instance had finished its constructor before its context
          * was built, the plugin's logger bean is named after the plugin, and Guice injects the main
          * class's own `@Inject` field and method only after the load phase, as `SurfVelocityPlugin`
@@ -575,6 +576,7 @@ class VelocitySharedBeanBootTest {
             "configProxy=true",
             "surfEvent=true",
             "velocityEvent=true",
+            "manualVelocityEvent=false",
             "shutdownHooks=0",
             "logImpl=Log4j2Log",
             "pluginConstructed=true",

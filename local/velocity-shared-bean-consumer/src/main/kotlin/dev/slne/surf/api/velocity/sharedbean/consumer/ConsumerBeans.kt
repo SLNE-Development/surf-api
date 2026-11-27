@@ -10,7 +10,9 @@ import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.event.SurfSyncEvent
 import dev.slne.surf.api.luckperms.SurfLuckPerms
 import dev.slne.surf.api.spring.ConditionalOnPlugin
+import dev.slne.surf.api.spring.ManualListenerRegistration
 import dev.slne.surf.api.spring.SurfLifecycle
+import dev.slne.surf.api.velocity.event.VelocityListener
 import dev.slne.surf.api.velocity.sharedbean.SharedBeanConsumerPlugin
 import dev.slne.surf.api.velocity.sharedbean.provider.ProviderInternals
 import dev.slne.surf.api.velocity.sharedbean.provider.SharedGreeting
@@ -40,6 +42,7 @@ class SharedGreetingConsumer(
     private val probes: List<HookProbe>,
     private val configuration: ConsumerConfiguration,
     private val velocityListener: SpikeVelocityListener,
+    private val manualVelocityListener: ManualSpikeVelocityListener,
     private val surfEventListener: SpikeSurfEventListener,
     private val pluginLogger: ComponentLogger,
 ) : SurfLifecycle {
@@ -63,8 +66,8 @@ class SharedGreetingConsumer(
             .log(
                 "%s greeting=%s sameLoader=%s privateVisible=%s pluginIsInstance=%s containerIsOwn=%s " +
                     "tccl=%s probes=%s configProxy=%s surfEvent=%s velocityEvent=%s " +
-                    "shutdownHooks=%s logImpl=%s pluginConstructed=%s pluginLogger=%s " +
-                    "subclassField=%s subclassMethod=%s",
+                    "manualVelocityEvent=%s shutdownHooks=%s logImpl=%s pluginConstructed=%s " +
+                    "pluginLogger=%s subclassField=%s subclassMethod=%s",
                 SharedBeanReport.MARKER,
                 greeting.greet(),
                 greeting.javaClass.classLoader === SharedGreeting::class.java.classLoader,
@@ -76,6 +79,7 @@ class SharedGreetingConsumer(
                 configuration.javaClass.name.contains("CGLIB"),
                 surfEventListener.received,
                 velocityListener.received,
+                manualVelocityListener.received,
                 countShutdownHooks(context),
                 LogFactory.getLog(javaClass).javaClass.simpleName,
                 pluginConstructed,
@@ -146,7 +150,7 @@ class SpikeVelocityEvent
 /**
  * A Velocity listener bean with a suspending handler, which surf-api registers in the enable phase.
  */
-@Service
+@VelocityListener
 class SpikeVelocityListener {
 
     @Volatile
@@ -154,6 +158,22 @@ class SpikeVelocityListener {
 
     @Subscribe
     suspend fun on(event: SpikeVelocityEvent) {
+        received = true
+    }
+}
+
+/**
+ * A Velocity listener bean that opted out of the registration; it must never receive the event.
+ */
+@VelocityListener
+@ManualListenerRegistration
+class ManualSpikeVelocityListener {
+
+    @Volatile
+    var received = false
+
+    @Subscribe
+    fun on(event: SpikeVelocityEvent) {
         received = true
     }
 }

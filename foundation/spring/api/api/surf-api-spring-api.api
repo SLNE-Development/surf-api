@@ -10,6 +10,9 @@ public abstract interface annotation class dev/slne/surf/api/spring/ConditionalO
 	public abstract fun value ()[Ldev/slne/surf/api/spring/ConditionalOnPlugin;
 }
 
+public abstract interface annotation class dev/slne/surf/api/spring/ManualListenerRegistration : java/lang/annotation/Annotation {
+}
+
 public final class dev/slne/surf/api/spring/OnPluginCondition : org/springframework/context/annotation/Condition {
 	public fun matches (Lorg/springframework/context/annotation/ConditionContext;Lorg/springframework/core/type/AnnotatedTypeMetadata;)Z
 }

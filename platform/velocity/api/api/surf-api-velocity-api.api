@@ -150,6 +150,10 @@ public final class dev/slne/surf/api/velocity/command/executors/SuspendCommandEx
 	public static final fun sendSyntaxMessageOrRethrow (Lcom/velocitypowered/api/command/CommandSource;Ljava/lang/String;Ljava/lang/Throwable;)V
 }
 
+public abstract interface annotation class dev/slne/surf/api/velocity/event/VelocityListener : java/lang/annotation/Annotation {
+	public abstract fun value ()Ljava/lang/String;
+}
+
 public abstract class dev/slne/surf/api/velocity/plugin/SurfVelocityPlugin {
 	public fun <init> ()V
 }

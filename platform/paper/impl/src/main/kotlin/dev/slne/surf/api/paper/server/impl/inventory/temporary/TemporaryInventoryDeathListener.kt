@@ -1,15 +1,13 @@
 package dev.slne.surf.api.paper.server.impl.inventory.temporary
 
-import dev.slne.surf.api.paper.event.register
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndCause
-import dev.slne.surf.api.spring.SurfLifecycle
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
-import org.springframework.stereotype.Component
 
 /**
  * Ends the temporary inventory session of a player who dies, with the cause
@@ -25,14 +23,10 @@ import org.springframework.stereotype.Component
  * its loose items. The close handler covers a session the death handler could not end, before the
  * server drops those items.
  */
-@Component
-class TemporaryInventoryDeathListener(
+@BukkitListener
+internal class TemporaryInventoryDeathListener(
     private val service: TemporaryInventoryService,
-) : Listener, SurfLifecycle {
-
-    override suspend fun onEnable() {
-        register()
-    }
+) : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onDeath(event: PlayerDeathEvent) {

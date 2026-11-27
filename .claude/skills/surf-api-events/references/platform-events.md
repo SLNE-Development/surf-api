@@ -23,15 +23,24 @@ own contexts count:
 | Minestom | beans of type `EventNode`, attached as children of the plugin's event node |
 | every platform, including standalone and microservices | beans with `@SurfEventHandler` methods, on the surf bus |
 
+`@BukkitListener` (Paper) and `@VelocityListener` (Velocity) mark a component whose role is to
+handle platform events. Both are `@Component` stereotypes like `@Service`. A `@BukkitListener` class
+must implement `Listener`, a `@VelocityListener` class must declare a `@Subscribe` method, or the
+enable phase fails. Any other bean of the same shape is registered the same way.
+
 ```kotlin
-@Component
+@BukkitListener
 class JoinListener : Listener {
     @EventHandler
     fun onJoin(event: PlayerJoinEvent) { … }
 }
 ```
 
-A listener bean needs no `register()` call of its own.
+A listener bean needs no `register()` call of its own. `@ManualListenerRegistration`
+(`dev.slne.surf.api.spring`) on the class, or on the `@Bean` method that declares it, excludes a
+Paper or Velocity listener bean from the registration; its owner then registers it itself. On
+Paper and Velocity, surf-api's own root context registers its listener beans the same way, for
+surf-api's plugin.
 
 ## Paper
 

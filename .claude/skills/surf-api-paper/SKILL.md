@@ -113,7 +113,7 @@ The phases, in order:
 | --- | --- |
 | bootstrap (`SurfPaperBootstrapper.bootstrap`) | builds the **bootstrap context**: only the components that implement `SurfBootstrapLifecycle` or carry `@BootstrapComponent`, then runs `onBootstrap` |
 | load (`SurfPaperPlugin.onLoad`) | builds the **plugin context** with every other component, below the import context that holds its dependencies' exports and below the bootstrap context, then runs `onLoad` |
-| enable (`SurfPaperPlugin.onEnable`) | registers the context's Bukkit `Listener` beans, its commands (`CommandAPICommand` and `CommandTree` beans, `CommandRegistrar` beans), its `@SurfEventHandler` beans and its `@PapiExpansion` beans, then runs `onEnable` |
+| enable (`SurfPaperPlugin.onEnable`) | registers the context's Bukkit `Listener` beans (`@BukkitListener` or any `Listener` bean, except those marked `@ManualListenerRegistration`; see the surf-api-events skill), its commands (`CommandAPICommand` and `CommandTree` beans, `CommandRegistrar` beans), its `@SurfEventHandler` beans and its `@PapiExpansion` beans, then runs `onEnable` |
 | disable (`SurfPaperPlugin.onDisable`) | runs `onDisable` in reverse order, unregisters the `@SurfEventHandler` and `@PapiExpansion` beans and closes the contexts; Paper itself unregisters the Bukkit listeners |
 
 Rules that follow from it:

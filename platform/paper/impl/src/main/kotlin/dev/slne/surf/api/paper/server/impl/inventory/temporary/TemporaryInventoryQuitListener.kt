@@ -1,8 +1,7 @@
 package dev.slne.surf.api.paper.server.impl.inventory.temporary
 
-import dev.slne.surf.api.paper.event.register
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndCause
-import dev.slne.surf.api.spring.SurfLifecycle
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -10,7 +9,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
-import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -24,16 +22,12 @@ import java.util.concurrent.ConcurrentHashMap
  * temporary items are discarded on that close and reported with the end event. The cursor item and
  * the player's own crafting grid are discarded at the quit.
  */
-@Component
-class TemporaryInventoryQuitListener(
+@BukkitListener
+internal class TemporaryInventoryQuitListener(
     private val sessions: TemporaryInventoryService,
-) : Listener, SurfLifecycle {
+) : Listener {
 
     private val discardedOnDisconnect = ConcurrentHashMap<UUID, List<ItemStack>>()
-
-    override suspend fun onEnable() {
-        register()
-    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onDisconnectClose(event: InventoryCloseEvent) {

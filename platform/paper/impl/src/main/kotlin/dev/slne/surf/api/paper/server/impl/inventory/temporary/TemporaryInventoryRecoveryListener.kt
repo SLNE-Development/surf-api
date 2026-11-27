@@ -1,13 +1,11 @@
 package dev.slne.surf.api.paper.server.impl.inventory.temporary
 
-import dev.slne.surf.api.paper.event.register
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.inventory.temporary.TemporaryInventoryEndCause
-import dev.slne.surf.api.spring.SurfLifecycle
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
-import org.springframework.stereotype.Component
 
 /**
  * Ends, with [TemporaryInventoryEndCause.RECOVERED], a session that a joining player's data still
@@ -20,14 +18,10 @@ import org.springframework.stereotype.Component
  * It runs at [EventPriority.LOWEST], so every other join listener already sees the original
  * inventory.
  */
-@Component
+@BukkitListener
 internal class TemporaryInventoryRecoveryListener(
     private val sessions: TemporaryInventoryService,
-) : Listener, SurfLifecycle {
-
-    override suspend fun onEnable() {
-        register()
-    }
+) : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onJoin(event: PlayerJoinEvent) {

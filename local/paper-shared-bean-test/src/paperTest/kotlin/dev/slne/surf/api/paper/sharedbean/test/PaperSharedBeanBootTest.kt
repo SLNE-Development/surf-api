@@ -56,6 +56,8 @@ import org.junit.jupiter.api.Test
  *   plain, a block and an entity inventory, and a cancelled commit leaves the inventory unchanged.
  *   The chest minecart stands in for a player: both switch to the thread of the holding entity,
  *   and the detached test player is not added to a world, so the probe cannot switch to its thread
+ * - the `@BukkitListener` bean logs [LISTENER_LINE] when startup ends, while the one marked with
+ *   `@ManualListenerRegistration` never logs [MANUAL_LISTENER_LINE]
  * - after `stop`, the disable hook logs `disableJoin=returned`: it cancelled and joined a
  *   coroutine that was suspended on server thread work while that thread was blocked in the hook
  *
@@ -200,6 +202,14 @@ class PaperSharedBeanBootTest {
             )
         }
 
+        // The listener bean marked with @ManualListenerRegistration reacts to the same event as
+        // the registered one, but must not have been registered.
+        if (server.linesContaining(listOf(MANUAL_LISTENER_LINE)).isNotEmpty()) {
+            server.fail(
+                "surf-api registered a listener bean marked with @ManualListenerRegistration",
+            )
+        }
+
         val failures = server.linesContaining(FAILURE_MARKERS)
 
         if (failures.isNotEmpty()) {
@@ -292,6 +302,11 @@ class PaperSharedBeanBootTest {
          * What the consumer's listener bean logs when the server finished starting.
          */
         val LISTENER_LINE = "${SharedBeanReport.SPIKE_MARKER} listener=serverLoad"
+
+        /**
+         * What the consumer's opted-out listener bean would log if surf-api registered it.
+         */
+        val MANUAL_LISTENER_LINE = "${SharedBeanReport.SPIKE_MARKER} listener=manual"
 
         /**
          * What the consumer's command bean logs when the console runs it.

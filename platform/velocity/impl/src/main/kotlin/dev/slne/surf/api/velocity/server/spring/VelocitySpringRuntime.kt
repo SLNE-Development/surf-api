@@ -6,14 +6,18 @@ import com.velocitypowered.api.proxy.ProxyServer
 import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.core.server.spring.CommandApiCommandBeans
 import dev.slne.surf.api.core.server.spring.SurfEventHandlerBeans
-import dev.slne.surf.api.core.server.spring.beansDeclaringMethodsAnnotated
+import dev.slne.surf.api.core.server.spring.beanNamesDeclaringMethodsAnnotated
+import dev.slne.surf.api.spring.ManualListenerRegistration
 import dev.slne.surf.api.spring.PluginPresence
 import dev.slne.surf.api.spring.context.*
+import dev.slne.surf.api.velocity.event.VelocityListener
 import dev.slne.surf.api.velocity.plugin.SurfVelocityPlugin
 import dev.slne.surf.api.velocity.plugin.SurfVelocityPluginRuntime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger
+import org.springframework.beans.factory.findAnnotationOnBean
+import org.springframework.beans.factory.getBeanNamesForAnnotation
 import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.context.ConfigurableApplicationContext
 import java.nio.file.Path
@@ -45,7 +49,7 @@ import java.util.*
  */
 internal class VelocitySpringRuntime(
     private val server: ProxyServer,
-    rootContext: ConfigurableApplicationContext,
+    private val rootContext: ConfigurableApplicationContext,
     private val pluginsDirectory: Path,
 ) : SurfVelocityPluginRuntime {
 
@@ -84,6 +88,16 @@ internal class VelocitySpringRuntime(
 
         synchronized(loaded) {
             loaded[descriptor.name] = VelocityPluginState(plugin, pluginContext)
+        }
+    }
+
+    /**
+     * Registers the listener beans of surf-api's root context for surf-api's [plugin], the same way
+     * a plugin's own are registered when it enables.
+     */
+    fun registerRootListeners(plugin: Any) {
+        for (listener in velocityListeners(listOf(rootContext), plugin)) {
+            server.eventManager.register(plugin, listener)
         }
     }
 
@@ -265,14 +279,33 @@ private class VelocityPluginState(
 }
 
 /**
- * The singleton beans of [contexts] with `@Subscribe` methods, except [plugin], which Velocity
- * registers as a listener on its own and refuses to register a second time.
+ * The singleton beans of [contexts] with `@Subscribe` methods, except those marked with
+ * [ManualListenerRegistration] and except [plugin], which Velocity registers as a listener on its
+ * own and refuses to register a second time.
  *
  * Only the beans defined in each context itself are considered, never those of its ancestors.
+ *
+ * @throws IllegalStateException if a bean marked with [VelocityListener] has no `@Subscribe` method
  */
 private fun velocityListeners(
     contexts: List<ConfigurableApplicationContext>,
     plugin: Any,
 ): List<Any> {
-    return beansDeclaringMethodsAnnotated(contexts, Subscribe::class.java).filter { it !== plugin }
+    return contexts.flatMap(::velocityListeners).filter { it !== plugin }
+}
+
+private fun velocityListeners(context: ConfigurableApplicationContext): List<Any> {
+    val names = beanNamesDeclaringMethodsAnnotated(context, Subscribe::class.java)
+
+    for (name in context.getBeanNamesForAnnotation<VelocityListener>()) {
+        check(name in names) {
+            "Bean '$name' is annotated with @VelocityListener but has no @Subscribe method"
+        }
+    }
+
+    return names
+        .filter { name ->
+            context.findAnnotationOnBean<ManualListenerRegistration>(name) == null
+        }
+        .map(context::getBean)
 }

@@ -6,10 +6,12 @@ import dev.slne.surf.api.common.util.logger
 import dev.slne.surf.api.event.SurfEventHandler
 import dev.slne.surf.api.event.SurfSyncEvent
 import dev.slne.surf.api.luckperms.SurfLuckPerms
+import dev.slne.surf.api.paper.event.BukkitListener
 import dev.slne.surf.api.paper.plugin.SurfPaperPlugin
 import dev.slne.surf.api.paper.sharedbean.provider.ProviderInternals
 import dev.slne.surf.api.paper.sharedbean.provider.SharedGreeting
 import dev.slne.surf.api.spring.ConditionalOnPlugin
+import dev.slne.surf.api.spring.ManualListenerRegistration
 import dev.slne.surf.api.spring.SurfBootstrapLifecycle
 import dev.slne.surf.api.spring.SurfLifecycle
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
@@ -186,7 +188,7 @@ class ConsumerAnswer(val value: Int)
 /**
  * A Bukkit listener bean, which surf-api registers in the enable phase.
  */
-@Service
+@BukkitListener
 class SpikeServerListener : Listener {
 
     private val log = logger()
@@ -195,6 +197,22 @@ class SpikeServerListener : Listener {
     fun onServerLoad(event: ServerLoadEvent) {
         log.atInfo()
             .log("%s listener=serverLoad", SharedBeanReport.SPIKE_MARKER)
+    }
+}
+
+/**
+ * A Bukkit listener bean that opted out of the registration; it must never log.
+ */
+@BukkitListener
+@ManualListenerRegistration
+class ManualSpikeListener : Listener {
+
+    private val log = logger()
+
+    @EventHandler
+    fun onServerLoad(event: ServerLoadEvent) {
+        log.atInfo()
+            .log("%s listener=manual", SharedBeanReport.SPIKE_MARKER)
     }
 }
 
