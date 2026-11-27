@@ -315,11 +315,20 @@ plugin. The plugin context injects the instance itself under every type it has. 
 until Paper has created the instance in the load phase. Keep it for registration and setup; code
 that runs per tick injects the instance in the plugin context instead.
 
-The plugin's hooks block the thread Paper calls the phase on, which is the main thread for load,
-enable and disable. A hook may wait for `PaperDispatchers.main` work, which the blocked phase runs
-itself (see [Paper dispatchers](#paper-dispatchers)); it must not wait for Folia region or entity
-work or for a task handed to the Bukkit scheduler directly. A plugin whose load phase failed is
-never enabled; Paper disables it instead.
+The plugin's hooks block the thread Paper calls the phase on, which on Paper is the main thread for
+load, enable and disable. A hook may wait for `PaperDispatchers.main` work, which the blocked phase
+runs itself (see [Paper dispatchers](#paper-dispatchers)); it must not wait for Folia region or
+entity work or for a task handed to the Bukkit scheduler directly. A plugin whose load phase failed
+is never enabled; Paper disables it instead.
+
+SurfCanvas runs a plugin's disable phase on a thread of its own, `Plugin Disable - <name>`, and
+continues without it once a configured timeout passes. That thread owns no region and no player, so
+the tick-thread guard rejects world and player access in a disable hook
+([SLNE-Development/surf-canvas#13](https://github.com/SLNE-Development/surf-canvas/issues/13)). The
+plugin's `PluginDisableEvent` fires before the phase, on the thread that disables the plugin. While
+the server stops, that is the region shutdown thread, which passes every ownership check although
+the region threads are already halted. surf-api therefore ends a plugin's temporary inventory
+sessions in that event, not in a disable hook.
 
 There is no hot reload or unloading. At shutdown, contexts close in reverse dependency order:
 consumers and their import contexts first, then providers, then the root context.

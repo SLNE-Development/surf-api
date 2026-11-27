@@ -28,6 +28,9 @@ dependencies {
     serverPlugins(
         project(path = ":surf-api-paper-scenario-owner", configuration = "runtimeElements"),
     )
+    serverPlugins(
+        project(path = ":surf-api-paper-shared-bean-provider", configuration = "runtimeElements"),
+    )
 }
 
 /**
